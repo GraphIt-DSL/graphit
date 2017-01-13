@@ -1,2 +1,2 @@
 # graphit
-GraphIt DSL compiler
+GraphIt DSL compiler.
