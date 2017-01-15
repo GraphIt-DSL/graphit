@@ -1,6 +1,7 @@
-#include <iostream>
+#include <graphit/scanner.h>
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
+    Scanner* sc = new Scanner();
+    sc->lex();
     return 0;
 }
