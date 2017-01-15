@@ -11,5 +11,5 @@ include_directories(./include/)
 
 add_subdirectory(src)
 
-set(SOURCE_FILES src/main.cpp include/graphit/scanner.h src/frontend/scanner.cpp)
+set(SOURCE_FILES src/main.cpp include/graphit/scanner.h src/frontend/scanner.cpp include/graphit/frontend.h src/frontend/frontend.cpp include/graphit/parser.h src/frontend/parser.cpp)
 add_executable(graphitc ${SOURCE_FILES})
