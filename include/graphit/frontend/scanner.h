@@ -6,14 +6,16 @@
 #define GRAPHIT_SCANNER_H
 
 #endif //GRAPHIT_SCANNER_H
+namespace graphit {
 
 
-class Scanner {
+    class Scanner {
 
-public:
-    Scanner() {}
+    public:
+        Scanner() {}
 
-    void lex();
+        void lex();
 
-};
+    };
 
+}

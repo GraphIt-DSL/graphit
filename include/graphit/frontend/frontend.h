@@ -6,3 +6,7 @@
 #define GRAPHIT_FRONTEND_H_H
 
 #endif //GRAPHIT_FRONTEND_H_H
+namespace graphit {
+
+
+}

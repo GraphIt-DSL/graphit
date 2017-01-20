@@ -6,3 +6,7 @@
 #define GRAPHIT_PARSER_H
 
 #endif //GRAPHIT_PARSER_H
+namespace graphit {
+
+
+}

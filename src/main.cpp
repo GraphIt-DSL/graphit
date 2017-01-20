@@ -1,7 +1,12 @@
-#include <graphit/scanner.h>
+#include <graphit/frontend/scanner.h>
+#include <fstream>
 
-int main() {
-    Scanner* sc = new Scanner();
-    sc->lex();
-    return 0;
-}
+
+    int main() {
+
+        graphit::Scanner *sc = new graphit::Scanner();
+        sc->lex();
+        return 0;
+
+    }
+

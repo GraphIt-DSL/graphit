@@ -1,13 +1,14 @@
 //
 // Created by Yunming Zhang on 1/14/17.
 //
-#include <graphit/scanner.h>
+#include <graphit/frontend/scanner.h>
 #include <iostream>
 
+namespace graphit {
 
 
-void Scanner::lex() {
-    std::cout << "Hello, World!" << std::endl;
+    void Scanner::lex() {
+        std::cout << "hello world" << std::endl;
+    }
 
 }
-
