@@ -3,22 +3,17 @@
 //
 
 #include <gtest.h>
-#include <math.h>
+#include <graphit/frontend/frontend.h>
 
-double square_root (double input)
-{
-    return 0;
-}
 
-TEST(SquareRootTest, PositiveNos) {
-EXPECT_EQ (18.0, square_root (324.0));
-EXPECT_EQ (25.4, square_root (645.16));
-EXPECT_EQ (50.3321, square_root (2533.310224));
-}
+using namespace std;
+using namespace graphit;
 
-TEST (SquareRootTest, ZeroAndNegativeNos) {
-ASSERT_EQ (0.0, square_root (0.0));
-ASSERT_EQ (-1, square_root (-22.0));
+Frontend * fe = new Frontend();
+
+TEST(LexTest, SimpleAdd ) {
+    istringstream is("abc...");
+    EXPECT_EQ (0 ,  fe->parseStream(is));
 }
 
 int main(int argc, char **argv) {
