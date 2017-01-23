@@ -12,7 +12,7 @@ using namespace graphit;
 Frontend * fe = new Frontend();
 
 TEST(LexTest, SimpleAdd ) {
-    istringstream is("abc...");
+    istringstream is("int a = b + c");
     EXPECT_EQ (0 ,  fe->parseStream(is));
 }
 

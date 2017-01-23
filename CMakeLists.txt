@@ -15,7 +15,7 @@ add_subdirectory(src)
 file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp)
 add_executable(graphitc ${SOURCE_FILES})
 
-
+# build a front end library used for unit testing
 file(GLOB HEADER_FILES include/frontend/*.h)
 file(GLOB FRONT_END_SOURCE_FILES src/frontend/*.cpp)
 add_library(frontend ${HEADER_FILES} ${FRONT_END_SOURCE_FILES})
