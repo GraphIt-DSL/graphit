@@ -12,13 +12,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # build the compiler
 include_directories(./include/)
 add_subdirectory(src)
-file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp)
+file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp src/utils/*.cpp)
 add_executable(graphitc ${SOURCE_FILES})
 
 # build a front end library used for unit testing
-file(GLOB HEADER_FILES include/frontend/*.h)
-file(GLOB FRONT_END_SOURCE_FILES src/frontend/*.cpp)
-add_library(frontend ${HEADER_FILES} ${FRONT_END_SOURCE_FILES})
+file(GLOB LIB_SOURCE_FILES src/frontend/*.cpp src/utils/*.cpp)
+file(GLOB HEADER_FILES include/frontend/*.h include/utils/*.h)
+
+add_library(graphitlib ${HEADER_FILES} ${LIB_SOURCE_FILES})
 
 # build test suite
 include_directories(./test/gtest/)
@@ -31,4 +32,4 @@ add_library(gtest ${GTEST_HEADER} ${GTEST_SOURCE})
 set(TEST_SOURCE_FILES ./test/c++/frontend_test.cpp)
 add_executable(graphit_test ${TEST_SOURCE_FILES})
 target_link_libraries(graphit_test gtest)
-target_link_libraries(graphit_test frontend)
+target_link_libraries(graphit_test graphitlib)

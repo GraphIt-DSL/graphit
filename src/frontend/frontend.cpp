@@ -3,8 +3,9 @@
 //
 
 #include <graphit/frontend/frontend.h>
-#include<graphit/frontend/scanner.h>
 #include<graphit/frontend/token.h>
+#include <graphit/frontend/parser.h>
+
 
 namespace graphit {
 
@@ -12,9 +13,10 @@ namespace graphit {
 
     /// Parses, typechecks and turns a given Simit-formated stream into Simit IR.
     int Frontend::parseStream(std::istream &programStream) {
+
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner().lex(programStream);
-
+        fir::Program::Ptr program = Parser().parse(tokens);
 
         return 0;
     }
