@@ -42,5 +42,11 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+
+        FIRNode::Ptr Stmt::cloneNode() {
+            const auto node = std::make_shared<Stmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
     }
 }

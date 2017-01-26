@@ -11,5 +11,14 @@ namespace graphit {
                 elem->accept(this);
             }
         }
+
+        void FIRVisitor::visit(Stmt::Ptr stmt) {
+            stmt->accept(this);
+        };
+
+        void FIRVisitor::visit(Expr::Ptr expr) {
+            expr->accept(this);
+        };
+
     }
 }

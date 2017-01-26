@@ -30,8 +30,10 @@ namespace graphit {
         SymbolTable decls;
         TokenStream tokens;
 
-    private:
         fir::Program::Ptr                   parseProgram();
+        fir::Stmt::Ptr                      parseStmt();
+        fir::Expr::Ptr                      parseExpr();
 
+        Token consume(Token::Type type);
     };
 }

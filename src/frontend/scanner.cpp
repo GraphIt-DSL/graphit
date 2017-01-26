@@ -65,6 +65,26 @@ namespace graphit {
                         programStream.get();
                         tokens.addToken(Token::Type::SEMICOL, line, col++);
                         break;
+                    default: {
+                        Token newToken;
+                        newToken.type = Token::Type::INT_LITERAL;
+                        newToken.lineBegin = line;
+                        newToken.colBegin = col;
+
+                        if (programStream.peek() != '.' &&
+                            !std::isdigit(programStream.peek())) {
+                            std::stringstream errMsg;
+                            std::cout << "unexpected symbol '"
+                                      << (char) programStream.peek() << std::endl;
+
+                            while (programStream.peek() != EOF &&
+                                   !std::isspace(programStream.peek())) {
+                                programStream.get();
+                                ++col;
+                            }
+                            break;
+                        }
+                    }
                 }
             }
 

@@ -75,15 +75,33 @@ namespace graphit {
 
         struct Program : public FIRNode {
             std::vector<FIRNode::Ptr> elems;
-
             typedef std::shared_ptr<Program> Ptr;
-
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Program>());
             }
         protected:
             virtual void copy(FIRNode::Ptr);
+            virtual FIRNode::Ptr cloneNode();
+        };
 
+
+        struct Expr : public FIRNode {
+            typedef std::shared_ptr<Expr> Ptr;
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<Expr>());
+            }
+        protected:
+            virtual void copy(FIRNode::Ptr);
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+        struct Stmt : public FIRNode {
+            Expr::Ptr expr;
+            typedef std::shared_ptr<Stmt> Ptr;
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<Stmt>());
+            }
+        protected:
             virtual FIRNode::Ptr cloneNode();
         };
 
