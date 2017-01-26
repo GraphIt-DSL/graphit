@@ -4,6 +4,7 @@
 #include <graphit/frontend/scanner.h>
 #include <iostream>
 #include <graphit/frontend/token.h>
+#include <graphit/utils/util.h>
 
 namespace graphit {
 
@@ -15,6 +16,13 @@ namespace graphit {
         return Token::Type::IDENT;
     }
 
+    void Scanner::printDebugInfo(const std::string & tokenString, TokenStream & tokenStream){
+        util::printDebugInfo(("current token string: "  + tokenString));
+        std::stringstream ss;
+        ss << tokenStream;
+        util::printDebugInfo((ss.str() + "\n ----- \n"));
+    }
+
 
     TokenStream Scanner::lex(std::istream &programStream) {
         TokenStream tokens;
@@ -23,10 +31,12 @@ namespace graphit {
         ScanState state = ScanState::INITIAL;
         //outer loop that goes from token to token
         while (programStream.peek() != EOF) {
-            std::string tokenString(1, programStream.get());
+            std::string tokenString;
+
 
             // [_ | [a-zA-Z]]+ [a-zA-Z | 0-9 | _]*
             if (programStream.peek() == '_' || std::isalpha(programStream.peek())) {
+                tokenString = programStream.get();
                 while (programStream.peek() == '_' ||
                        std::isalnum(programStream.peek())) {
                     //a token can have _ or a number as content of the token
@@ -45,6 +55,7 @@ namespace graphit {
                 tokens.addToken(newToken);
                 col += tokenString.length();
             }else {
+                tokenString += programStream.peek();
                 switch(programStream.peek()) {
                     case '=':
                         programStream.get();
@@ -57,6 +68,14 @@ namespace graphit {
                             tokens.addToken(Token::Type::ASSIGN, line, col++);
                         }
                         break;
+                    case ' ':
+                        programStream.get();
+                        ++col;
+                        break;
+                    case '\t':
+                        programStream.get();
+                        ++col;
+                        break;
                     case '+':
                         programStream.get();
                         tokens.addToken(Token::Type::PLUS, line, col++);
@@ -66,15 +85,16 @@ namespace graphit {
                         tokens.addToken(Token::Type::SEMICOL, line, col++);
                         break;
                     default: {
+
                         Token newToken;
                         newToken.type = Token::Type::INT_LITERAL;
                         newToken.lineBegin = line;
                         newToken.colBegin = col;
 
-                        if (programStream.peek() != '.' &&
-                            !std::isdigit(programStream.peek())) {
+
+                        if (!std::isdigit(programStream.peek())) {
                             std::stringstream errMsg;
-                            std::cout << "unexpected symbol '"
+                            std::cout << "unexpected symbol :"
                                       << (char) programStream.peek() << std::endl;
 
                             while (programStream.peek() != EOF &&
@@ -84,17 +104,33 @@ namespace graphit {
                             }
                             break;
                         }
+
+                        tokenString = "";
+                        while (std::isdigit(programStream.peek())) {
+                            tokenString += programStream.get();
+                            ++col;
+                        }
+
+                        char *end;
+                        if (newToken.type == Token::Type::INT_LITERAL) {
+                            newToken.num = std::strtol(tokenString.c_str(), &end, 0);
+                        } else {
+                            newToken.fnum = std::strtod(tokenString.c_str(), &end);
+                        }
+                        newToken.lineEnd = line;
+                        newToken.colEnd = col - 1;
+                        tokens.addToken(newToken);
+                        break;
                     }
                 }
             }
-
+            this->printDebugInfo(tokenString, tokens);
         }
 
         if (state != ScanState::INITIAL) {
             std::cout << "unclosed test" << std::endl;
         }
 
-        tokens.addToken(Token::Type::END, line, col);
         return tokens;
     }
 }

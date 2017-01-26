@@ -21,6 +21,7 @@ namespace graphit {
     private:
         enum class ScanState {INITIAL, SLTEST, MLTEST};
         static Token::Type getTokenType(const std::string);
+        void printDebugInfo(const std::string & tokenString, TokenStream & tokenStream);
 
     };
 }

@@ -131,4 +131,9 @@ namespace graphit {
             }
         }
 
-    }}
+        void printDebugInfo(const std::string &message){
+            std::cout << message << std::endl;
+        }
+
+    }
+}

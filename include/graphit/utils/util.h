@@ -10,6 +10,7 @@
 #include <map>
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 namespace graphit {
     namespace util {
@@ -89,4 +90,5 @@ namespace graphit {
                           std::vector<int>::iterator indicesEnd,
                           std::function<void()> inner);
 
+        void printDebugInfo(const std::string &message);
     }}
