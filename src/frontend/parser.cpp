@@ -58,12 +58,12 @@ namespace graphit {
 
     // expr: term ExprApost
     fir::Expr::Ptr Parser::parseExpr() {
-        Token::Type symbol_type = peek().type;
 //        if (symbol_type == Token::Type::PLUS || symbol_type == Token::Type::MINUS){
 //            parseFactor();
 //        }
         fir::Expr::Ptr expr = parseTerm();
-        while (symbol_type == Token::Type::PLUS || symbol_type == Token::Type::MINUS){
+        while (peek().type == Token::Type::PLUS || peek().type == Token::Type::MINUS){
+            Token::Type symbol_type = peek().type;
 
             auto temp_expr = std::make_shared<fir::BinaryExpr>(); //init
 
@@ -102,8 +102,8 @@ namespace graphit {
 
     fir::Expr::Ptr Parser::parseTerm() {
         auto expr = parseFactor();
-        Token::Type symbol_type = peek().type;
-        while (symbol_type == Token::Type::PLUS || symbol_type == Token::Type::MINUS){
+        while (peek().type == Token::Type::PLUS || peek().type == Token::Type::MINUS){
+            Token::Type symbol_type = peek().type;
             auto temp_expr = std::make_shared<fir::BinaryExpr>(); //init
 
             if (symbol_type == Token::Type::PLUS){

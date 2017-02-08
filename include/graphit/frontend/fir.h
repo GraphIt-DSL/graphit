@@ -88,11 +88,10 @@ namespace graphit {
 
         struct Expr : public FIRNode {
             typedef std::shared_ptr<Expr> Ptr;
+
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Expr>());
             }
-//        protected:
-//            virtual FIRNode::Ptr cloneNode();
         };
 
         struct Stmt : public FIRNode {
@@ -119,6 +118,10 @@ namespace graphit {
 
         struct Identifier : public Expr {
             std::string identifier;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<Identifier>());
+            }
         };
 
         struct BinaryExpr : public Expr {
@@ -134,10 +137,17 @@ namespace graphit {
 
         struct AddExpr : public BinaryExpr {
             typedef std::shared_ptr<AddExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<AddExpr>());
+            }
         };
 
         struct MinusExpr : public BinaryExpr {
-            typedef std::shared_ptr<AddExpr> Ptr;
+            typedef std::shared_ptr<MinusExpr> Ptr;
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<MinusExpr>());
+            }
         };
 
     }
