@@ -33,6 +33,8 @@ namespace graphit {
         fir::Program::Ptr                   parseProgram();
         fir::Stmt::Ptr                      parseStmt();
         fir::Expr::Ptr                      parseExpr();
+        fir::Expr::Ptr                      parseTerm();
+        fir::Expr::Ptr                      parseFactor();
 
         Token consume(Token::Type type);
     };

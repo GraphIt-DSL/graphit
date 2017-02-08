@@ -25,6 +25,7 @@ namespace graphit {
             SEMICOL,
             EQ,
             PLUS,
+            MINUS,
             END,
             ASSIGN
         };

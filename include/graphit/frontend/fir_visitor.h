@@ -14,11 +14,13 @@ namespace graphit {
         struct Program;
         struct Stmt;
         struct Expr;
+        struct IntLiteral;
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
             virtual void visit(std::shared_ptr<Stmt>);
             virtual void visit(std::shared_ptr<Expr>);
+            virtual void visit(std::shared_ptr<IntLiteral> op) {}
         };
     }
 

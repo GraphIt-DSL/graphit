@@ -16,14 +16,6 @@ namespace graphit {
         return Token::Type::IDENT;
     }
 
-    void Scanner::printDebugInfo(const std::string & tokenString, TokenStream & tokenStream){
-        util::printDebugInfo(("current token string: "  + tokenString));
-        std::stringstream ss;
-        ss << tokenStream;
-        util::printDebugInfo((ss.str() + "\n ----- \n"));
-    }
-
-
     TokenStream Scanner::lex(std::istream &programStream) {
         TokenStream tokens;
         unsigned line = 1;
@@ -132,5 +124,12 @@ namespace graphit {
         }
 
         return tokens;
+    }
+
+    void Scanner::printDebugInfo(const std::string & tokenString, TokenStream & tokenStream){
+        util::printDebugInfo(("current token string: "  + tokenString));
+        std::stringstream ss;
+        ss << tokenStream;
+        util::printDebugInfo((ss.str() + "\n ----- \n"));
     }
 }

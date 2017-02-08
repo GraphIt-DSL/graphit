@@ -40,9 +40,9 @@ namespace graphit {
 
             FIRNode() : lineBegin(0), colBegin(0), lineEnd(0), colEnd(0) {}
 
-            template <typename T = FIRNode> std::shared_ptr<T> clone() {
-                return to<T>(cloneNode());
-            }
+//            template <typename T = FIRNode> std::shared_ptr<T> clone() {
+//                return to<T>(cloneNode());
+//            }
 
             virtual void accept(FIRVisitor *) = 0;
 
@@ -62,9 +62,9 @@ namespace graphit {
                 return to<T>(shared_from_this());
             }
 
-            virtual void copy(FIRNode::Ptr);
-
-            virtual FIRNode::Ptr cloneNode() = 0;
+//            virtual void copy(FIRNode::Ptr);
+//
+//            virtual FIRNode::Ptr cloneNode() = 0;
 
         private:
             unsigned lineBegin;
@@ -79,10 +79,11 @@ namespace graphit {
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Program>());
             }
-        protected:
-            virtual void copy(FIRNode::Ptr);
-            virtual FIRNode::Ptr cloneNode();
+//        protected:
+//            virtual void copy(FIRNode::Ptr);
+//            virtual FIRNode::Ptr cloneNode();
         };
+
 
 
         struct Expr : public FIRNode {
@@ -90,9 +91,8 @@ namespace graphit {
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Expr>());
             }
-        protected:
-            virtual void copy(FIRNode::Ptr);
-            virtual FIRNode::Ptr cloneNode();
+//        protected:
+//            virtual FIRNode::Ptr cloneNode();
         };
 
         struct Stmt : public FIRNode {
@@ -101,8 +101,43 @@ namespace graphit {
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());
             }
-        protected:
-            virtual FIRNode::Ptr cloneNode();
+//        protected:
+//            virtual FIRNode::Ptr cloneNode();
+        };
+
+        struct IntLiteral : public Expr {
+            int val = 0;
+            typedef std::shared_ptr<IntLiteral> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<IntLiteral>());
+            }
+
+//        protected:
+//            virtual FIRNode::Ptr cloneNode();
+        };
+
+        struct Identifier : public Expr {
+            std::string identifier;
+        };
+
+        struct BinaryExpr : public Expr {
+            Expr::Ptr lhs, rhs;
+            typedef std::shared_ptr<BinaryExpr> Ptr;
+
+            virtual unsigned getLineBegin() { return lhs->getLineBegin(); }
+            virtual unsigned getColBegin() { return lhs->getColBegin(); }
+            virtual unsigned getLineEnd() { return rhs->getLineEnd(); }
+            virtual unsigned getColEnd() { return rhs->getColEnd(); }
+
+        };
+
+        struct AddExpr : public BinaryExpr {
+            typedef std::shared_ptr<AddExpr> Ptr;
+        };
+
+        struct MinusExpr : public BinaryExpr {
+            typedef std::shared_ptr<AddExpr> Ptr;
         };
 
     }
