@@ -21,6 +21,7 @@ namespace graphit {
             expr->accept(this);
         };
 
+
         void FIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -33,6 +34,5 @@ namespace graphit {
             expr->lhs->accept(this);
             expr->rhs->accept(this);
         }
-
     }
 }

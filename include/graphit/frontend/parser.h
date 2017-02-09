@@ -11,7 +11,7 @@
 
 
 
-#endif //GRAPHIT_PARSER_H
+
 namespace graphit {
 
     class Parser {
@@ -39,3 +39,5 @@ namespace graphit {
         Token consume(Token::Type type);
     };
 }
+
+#endif //GRAPHIT_PARSER_H

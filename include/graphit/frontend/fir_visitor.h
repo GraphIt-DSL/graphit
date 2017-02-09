@@ -5,7 +5,7 @@
 #ifndef GRAPHIT_FIR_VISITOR_H
 #define GRAPHIT_FIR_VISITOR_H
 
-#endif //GRAPHIT_FIR_VISITOR_H
+
 #include <memory>
 
 namespace graphit {
@@ -23,7 +23,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Program>);
             virtual void visit(std::shared_ptr<Stmt>);
             virtual void visit(std::shared_ptr<Expr>);
-            virtual void visit(std::shared_ptr<IntLiteral> op) {}
+            virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<AddExpr> op);
             virtual void visit(std::shared_ptr<MinusExpr> op);
         private:
@@ -34,3 +34,4 @@ namespace graphit {
     }
 
 }
+#endif //GRAPHIT_FIR_VISITOR_H

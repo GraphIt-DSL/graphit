@@ -5,7 +5,8 @@
 #include <graphit/frontend/frontend.h>
 #include<graphit/frontend/token.h>
 #include <graphit/frontend/parser.h>
-
+#include <graphit/frontend/fir_printer.h>
+#include <graphit/frontend/mir_emitter.h>
 
 namespace graphit {
 
@@ -17,7 +18,11 @@ namespace graphit {
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner().lex(programStream);
         fir::Program::Ptr program = Parser().parse(tokens);
+        fir::MIREmitter();
 
+
+        //fir::FIRPrinter();
+        //std::cout << *program;
         return 0;
     }
 

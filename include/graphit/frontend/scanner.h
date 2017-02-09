@@ -10,7 +10,7 @@
 #include <vector>
 #include <graphit/frontend/token.h>
 
-#endif //GRAPHIT_SCANNER_H
+
 namespace graphit {
     class Scanner {
 
@@ -25,3 +25,5 @@ namespace graphit {
 
     };
 }
+
+#endif //GRAPHIT_SCANNER_H

@@ -5,10 +5,8 @@
 #ifndef GRAPHIT_TOKEN_H
 #define GRAPHIT_TOKEN_H
 
-#endif //GRAPHIT_TOKEN_H
 
-#ifndef TOKEN_H
-#define TOKEN_H
+
 
 #include <list>
 #include <sstream>
@@ -65,4 +63,4 @@ namespace graphit {
 
 }
 
-#endif
+#endif //GRAPHIT_TOKEN_H

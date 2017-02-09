@@ -5,7 +5,7 @@
 #ifndef GRAPHIT_FIR_H
 #define GRAPHIT_FIR_H
 
-#endif //GRAPHIT_FIR_H
+
 
 #include <string>
 #include <vector>
@@ -152,3 +152,5 @@ namespace graphit {
 
     }
 }
+
+#endif //GRAPHIT_FIR_H

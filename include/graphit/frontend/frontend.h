@@ -10,7 +10,7 @@
 #include <fstream>
 
 
-#endif //GRAPHIT_FRONTEND_H_H
+
 namespace graphit {
 
     class Frontend {
@@ -25,3 +25,5 @@ namespace graphit {
     };
 
 }
+
+#endif //GRAPHIT_FRONTEND_H_H
