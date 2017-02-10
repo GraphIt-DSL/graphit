@@ -16,13 +16,13 @@ namespace graphit {
             MIREmitter() {}
             void emitIR(Program::Ptr program) {program->accept(this);}
 
-        private:
             virtual void visit(Program::Ptr);
             virtual void visit(Stmt::Ptr);
             virtual void visit(Expr::Ptr);
             virtual void visit(AddExpr::Ptr);
             virtual void visit(MinusExpr::Ptr);
             virtual void visit(IntLiteral::Ptr);
+
 
         };
     }

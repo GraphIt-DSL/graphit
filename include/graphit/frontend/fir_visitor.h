@@ -24,8 +24,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Stmt>);
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
-            virtual void visit(std::shared_ptr<AddExpr> op);
-            virtual void visit(std::shared_ptr<MinusExpr> op);
+            virtual void visit(std::shared_ptr<AddExpr>);
+            virtual void visit(std::shared_ptr<MinusExpr>);
+
+
         private:
             //void visitUnaryExpr(std::shared_ptr<UnaryExpr>);
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);

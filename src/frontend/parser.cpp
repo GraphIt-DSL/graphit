@@ -87,9 +87,9 @@ namespace graphit {
     fir::Expr::Ptr Parser::parseFactor() {
         Token::Type symbol_type = peek().type;
         switch (symbol_type){
-            case Token::Type::IDENT:
-                consume(Token::Type::IDENT);
-                return std::make_shared<fir::Identifier>();
+//            case Token::Type::IDENT:
+//                consume(Token::Type::IDENT);
+//                return std::make_shared<fir::Identifier>();
             case Token::Type::INT_LITERAL:
                 consume(Token::Type::INT_LITERAL);
                 return std::make_shared<fir::IntLiteral>();

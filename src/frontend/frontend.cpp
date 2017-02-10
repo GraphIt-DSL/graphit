@@ -18,7 +18,7 @@ namespace graphit {
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner().lex(programStream);
         fir::Program::Ptr program = Parser().parse(tokens);
-        fir::MIREmitter();
+        fir::MIREmitter().emitIR(program);
 
 
         //fir::FIRPrinter();

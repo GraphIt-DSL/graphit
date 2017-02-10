@@ -116,13 +116,14 @@ namespace graphit {
 //            virtual FIRNode::Ptr cloneNode();
         };
 
-        struct Identifier : public Expr {
-            std::string identifier;
-
-            virtual void accept(FIRVisitor *visitor) {
-                visitor->visit(self<Identifier>());
-            }
-        };
+//        struct Identifier : public Expr {
+//            std::string identifier;
+//            typedef std::shared_ptr<Identifier> Ptr;
+//
+//            virtual void accept(FIRVisitor *visitor) {
+//                visitor->visit(self<Identifier>());
+//            }
+//        };
 
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
@@ -137,7 +138,6 @@ namespace graphit {
 
         struct AddExpr : public BinaryExpr {
             typedef std::shared_ptr<AddExpr> Ptr;
-
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<AddExpr>());
             }

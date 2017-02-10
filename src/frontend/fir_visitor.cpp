@@ -2,6 +2,8 @@
 // Created by Yunming Zhang on 1/24/17.
 //
 
+
+#include <graphit/frontend/fir_visitor.h>
 #include <graphit/frontend/fir.h>
 
 namespace graphit {
