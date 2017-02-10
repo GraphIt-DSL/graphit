@@ -22,7 +22,7 @@ namespace graphit {
 
 
         //fir::FIRPrinter();
-        //std::cout << *program;
+        std::cout << *program;
         return 0;
     }
 

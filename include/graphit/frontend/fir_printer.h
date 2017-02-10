@@ -13,7 +13,7 @@
 namespace graphit {
     namespace fir{
         struct FIRPrinter : public FIRVisitor {
-            FIRPrinter() : oss(std::cout), indentLevel(0) {}
+            FIRPrinter(std::ostream &oss) : oss(oss), indentLevel(0) {}
 
             //void printFIR(fir::Program::Ptr program){program->accept(this);};
 

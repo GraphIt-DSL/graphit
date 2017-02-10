@@ -86,17 +86,30 @@ namespace graphit {
 
     fir::Expr::Ptr Parser::parseFactor() {
         Token::Type symbol_type = peek().type;
+        fir::Expr::Ptr literal;
+
         switch (symbol_type){
 //            case Token::Type::IDENT:
 //                consume(Token::Type::IDENT);
 //                return std::make_shared<fir::Identifier>();
             case Token::Type::INT_LITERAL:
-                consume(Token::Type::INT_LITERAL);
-                return std::make_shared<fir::IntLiteral>();
+            {
+                const Token intToken = consume(Token::Type::INT_LITERAL);
+                auto int_literal =  std::make_shared<fir::IntLiteral>();
+                int_literal->setLoc(intToken);
+                int_literal->val = intToken.num;
+                literal =  int_literal;
+                break;
+            }
+
             default:
+            {
                 util::printDebugInfo("Error in parseFactor");
-                return std::make_shared<fir::Expr>();
+                break;
+            }
+
         }
+        return literal;
     }
 
 

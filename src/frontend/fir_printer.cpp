@@ -16,7 +16,7 @@ namespace graphit {
         }
 
         void FIRPrinter::visit(Stmt::Ptr stmt) {
-            stmt->accept(this);
+            stmt->expr->accept(this);
         };
 
         void FIRPrinter::visit(Expr::Ptr expr) {
@@ -42,12 +42,12 @@ namespace graphit {
             expr->rhs->accept(this);
             oss << ")";
         }
-//
-//        std::ostream &operator<<(std::ostream &oss, FIRNode &node) {
-//            FIRPrinter printer();
-//            node.accept(&printer);
-//            return oss;
-//        }
+
+        std::ostream &operator<<(std::ostream &oss, FIRNode &node) {
+            FIRPrinter printer(oss);
+            node.accept(&printer);
+            return oss;
+        }
 
     }
 }
