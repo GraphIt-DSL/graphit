@@ -10,6 +10,7 @@
 #include "fir.h"
 #include "fir_visitor.h"
 
+// prints FIR using visitor pattern. Overloads the stream (<<) operator of FIRNode in fir_printer.cpp
 namespace graphit {
     namespace fir{
         struct FIRPrinter : public FIRVisitor {

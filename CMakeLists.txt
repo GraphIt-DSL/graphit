@@ -16,8 +16,8 @@ file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp src/utils/*.cpp)
 add_executable(graphitc ${SOURCE_FILES})
 
 # build a front end library used for unit testing
-file(GLOB LIB_SOURCE_FILES src/frontend/*.cpp src/utils/*.cpp)
-file(GLOB HEADER_FILES include/frontend/*.h include/utils/*.h)
+file(GLOB LIB_SOURCE_FILES src/frontend/*.cpp src/backend/*.cpp src/utils/*.cpp)
+file(GLOB HEADER_FILES include/frontend/*.h include/backend/*.h include/utils/*.h)
 
 add_library(graphitlib ${HEADER_FILES} ${LIB_SOURCE_FILES})
 

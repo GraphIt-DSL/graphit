@@ -88,7 +88,6 @@ namespace graphit {
 
         struct Expr : public FIRNode {
             typedef std::shared_ptr<Expr> Ptr;
-
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<Expr>());
             }

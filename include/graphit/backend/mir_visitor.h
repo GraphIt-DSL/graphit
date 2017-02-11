@@ -1,16 +1,14 @@
 //
-// Created by Yunming Zhang on 1/24/17.
+// Created by Yunming Zhang on 2/10/17.
 //
 
-#ifndef GRAPHIT_FIR_VISITOR_H
-#define GRAPHIT_FIR_VISITOR_H
-
+#ifndef GRAPHIT_MIR_VISITOR_H
+#define GRAPHIT_MIR_VISITOR_H
 
 #include <memory>
 
-// Visitor pattern abstract class
 namespace graphit {
-    namespace fir {
+    namespace mir {
 
         struct Program;
         struct Stmt;
@@ -20,7 +18,7 @@ namespace graphit {
         struct MinusExpr;
         struct BinaryExpr;
 
-        struct FIRVisitor {
+        struct MIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
             virtual void visit(std::shared_ptr<Stmt>);
             virtual void visit(std::shared_ptr<Expr>);
@@ -30,11 +28,10 @@ namespace graphit {
 
 
         private:
-            //void visitUnaryExpr(std::shared_ptr<UnaryExpr>);
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
-
         };
     }
-
 }
-#endif //GRAPHIT_FIR_VISITOR_H
+
+
+#endif //GRAPHIT_MIR_VISITOR_H
