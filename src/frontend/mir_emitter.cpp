@@ -3,12 +3,14 @@
 //
 
 #include <graphit/frontend/mir_emitter.h>
+#include <graphit/midend/mir.h>
 
 namespace graphit {
     namespace fir {
 
 
         void MIREmitter::visit(Program::Ptr){
+            auto program = std::make_shared<mir::Program>();
 
         };
         void MIREmitter::visit(Stmt::Ptr){

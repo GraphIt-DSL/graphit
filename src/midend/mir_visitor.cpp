@@ -7,8 +7,8 @@
 //
 
 
-#include <graphit/backend/mir_visitor.h>
-#include <graphit/backend/mir.h>
+#include <graphit/midend/mir_visitor.h>
+#include <graphit/midend/mir.h>
 
 namespace graphit {
     namespace mir {

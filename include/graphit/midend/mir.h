@@ -10,7 +10,7 @@
 #include <memory>
 #include <iostream>
 #include <unordered_set>
-#include <graphit/backend/mir_visitor.h>
+#include <graphit/midend/mir_visitor.h>
 
 
 namespace graphit {
