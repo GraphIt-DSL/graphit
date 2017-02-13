@@ -7,13 +7,14 @@
 
 #include <graphit/frontend/fir.h>
 #include <graphit/frontend/fir_visitor.h>
+#include <graphit/midend/program_context.h>
 
 namespace graphit {
     namespace fir {
 
         class MIREmitter : public FIRVisitor {
         public:
-            MIREmitter() {}
+            MIREmitter(internal::ProgramContext* ctx) : ctx(ctx)  {}
             void emitIR(Program::Ptr program) {program->accept(this);}
 
             virtual void visit(Program::Ptr);
@@ -22,6 +23,8 @@ namespace graphit {
             virtual void visit(AddExpr::Ptr);
             virtual void visit(MinusExpr::Ptr);
             virtual void visit(IntLiteral::Ptr);
+
+            internal::ProgramContext *ctx;
 
 
         };
