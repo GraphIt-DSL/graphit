@@ -71,6 +71,7 @@ namespace graphit {
 
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
+            int val = 0;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<IntLiteral>());
             }

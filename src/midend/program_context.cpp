@@ -6,10 +6,5 @@
 namespace graphit {
     namespace internal {
 
-
-        void ProgramContext::addStatement(mir::Stmt::Ptr stmt){
-            statements.front().push_back(stmt);
-        };
-
     }
 }

@@ -22,20 +22,20 @@ namespace graphit {
 
         public:
             ProgramContext() {
-
             }
 
 
             ~ProgramContext() {
-
             }
 
-            void addStatement(mir::Stmt::Ptr stmt);
-
+            //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
+            void addStatement(mir::Stmt::Ptr stmt){
+                statements.push_back(stmt);
+            }
 
         private:
-            std::list<std::vector<mir::Stmt::Ptr>> statements;
-
+            //mir::Program::Ptr mir_program;
+            std::vector<mir::Stmt::Ptr> statements;
         };
     }
 }

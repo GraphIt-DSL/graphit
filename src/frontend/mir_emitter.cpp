@@ -9,35 +9,46 @@ namespace graphit {
 
 
         void MIREmitter::visit(fir::Program::Ptr program){
-            //auto mir_program = std::make_shared<mir::Program>();
+//            for (auto elem : program->elems) {
+//                elem->accept(this);
+//            }
+            //ctx->mid_ir = mir_program;
+            auto mir_program = std::make_shared<mir::Program>();
             for (auto elem : program->elems) {
                 elem->accept(this);
             }
-            //ctx->mid_ir = mir_program;
+
         };
 
-        void MIREmitter::visit(fir::Stmt::Ptr stmt){
+        void MIREmitter::visit(fir::Stmt::Ptr fir_stmt){
             auto mir_stmt = std::make_shared<mir::Stmt>();
-            auto expr = this->emitExpr(stmt->expr);
+            auto expr = this->emitExpr(fir_stmt->expr);
             mir_stmt->expr = expr;
+            //useful for later implementing emitStmt
+            retStmt = mir_stmt;
             ctx->addStatement(mir_stmt);
         };
 
 
-
-        void MIREmitter::visit(AddExpr::Ptr){
-
+        void MIREmitter::visit(AddExpr::Ptr fir_expr){
+            auto mir_expr = std::make_shared<mir::AddExpr>();
+            mir_expr->lhs = emitExpr(fir_expr->lhs);
+            mir_expr->rhs = emitExpr(fir_expr->rhs);
+            retExpr = mir_expr;
         };
-        void MIREmitter::visit(MinusExpr::Ptr){
-
+        void MIREmitter::visit(MinusExpr::Ptr fir_expr){
+            auto mir_expr = std::make_shared<mir::MinusExpr>();
+            mir_expr->lhs = emitExpr(fir_expr->lhs);
+            mir_expr->rhs = emitExpr(fir_expr->rhs);
+            retExpr = mir_expr;
         };
-        void MIREmitter::visit(IntLiteral::Ptr){
-
+        void MIREmitter::visit(IntLiteral::Ptr fir_expr){
+            auto mir_expr = std::make_shared<mir::IntLiteral>();
+            mir_expr->val = fir_expr->val;
+            retExpr = mir_expr;
         };
 
-
-        //Currently retExpr seems to be useless, but it might be useful in the future
-        mir::Expr::Ptr MIREmitter::emitExpr(FIRNode::Ptr ptr){
+        mir::Expr::Ptr MIREmitter::emitExpr(fir::Expr::Ptr ptr){
             auto tmpExpr = retExpr;
             retExpr = std::make_shared<mir::Expr>();
 
@@ -45,6 +56,17 @@ namespace graphit {
             const mir::Expr::Ptr ret = retExpr;
 
             retExpr = tmpExpr;
+            return ret;
+        };
+
+        mir::Stmt::Ptr MIREmitter::emitStmt(fir::Stmt::Ptr ptr){
+            auto tmpStmt = retStmt;
+            retStmt = std::make_shared<mir::Stmt>();
+
+            ptr->accept(this);
+            const mir::Stmt::Ptr ret = retStmt;
+
+            retStmt = tmpStmt;
             return ret;
         };
 

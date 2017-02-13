@@ -15,7 +15,9 @@ namespace graphit {
         class MIREmitter : public FIRVisitor {
         public:
             MIREmitter(internal::ProgramContext* ctx) : ctx(ctx)  {}
-            void emitIR(Program::Ptr program) {program->accept(this);}
+            void emitIR(Program::Ptr program) {
+                program->accept(this);
+            }
 
             virtual void visit(Program::Ptr);
             virtual void visit(Stmt::Ptr);
@@ -27,9 +29,11 @@ namespace graphit {
             internal::ProgramContext *ctx;
 
             mir::Expr::Ptr retExpr;
+            mir::Stmt::Ptr retStmt;
 
         private:
-            mir::Expr::Ptr     emitExpr(FIRNode::Ptr);
+            mir::Expr::Ptr     emitExpr(fir::Expr::Ptr);
+            mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
 
         };
     }
