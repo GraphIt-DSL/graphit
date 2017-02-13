@@ -19,13 +19,17 @@ namespace graphit {
 
             virtual void visit(Program::Ptr);
             virtual void visit(Stmt::Ptr);
-            virtual void visit(Expr::Ptr);
+            //virtual void visit(Expr::Ptr);
             virtual void visit(AddExpr::Ptr);
             virtual void visit(MinusExpr::Ptr);
             virtual void visit(IntLiteral::Ptr);
 
             internal::ProgramContext *ctx;
 
+            mir::Expr::Ptr retExpr;
+
+        private:
+            mir::Expr::Ptr     emitExpr(FIRNode::Ptr);
 
         };
     }

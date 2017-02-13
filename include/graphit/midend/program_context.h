@@ -30,8 +30,11 @@ namespace graphit {
 
             }
 
+            void addStatement(mir::Stmt::Ptr stmt);
 
-            mir::Program::Ptr mid_ir;
+
+        private:
+            std::list<std::vector<mir::Stmt::Ptr>> statements;
 
         };
     }

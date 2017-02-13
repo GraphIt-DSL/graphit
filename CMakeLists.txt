@@ -12,7 +12,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # build the compiler
 include_directories(./include/)
 add_subdirectory(src)
-file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp src/utils/*.cpp)
+file(GLOB SOURCE_FILES src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/utils/*.cpp)
 add_executable(graphitc ${SOURCE_FILES})
 
 # build a front end library used for unit testing
