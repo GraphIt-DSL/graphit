@@ -33,6 +33,10 @@ namespace graphit {
                 statements.push_back(stmt);
             }
 
+            std::vector<mir::Stmt::Ptr> getStatements(){
+                return statements;
+            }
+
         private:
             //mir::Program::Ptr mir_program;
             std::vector<mir::Stmt::Ptr> statements;

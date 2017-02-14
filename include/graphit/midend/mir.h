@@ -39,6 +39,8 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *) = 0;
 
+            friend std::ostream &operator<<(std::ostream &, MIRNode &);
+
         protected:
             template <typename T = MIRNode> std::shared_ptr<T> self() {
                 return to<T>(shared_from_this());
