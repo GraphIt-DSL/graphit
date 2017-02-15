@@ -1,10 +1,13 @@
 #include <graphit/frontend/scanner.h>
+#include <graphit/midend/midend.h>
 #include <fstream>
+#include <graphit/frontend/frontend.h>
 
 
-    int main() {
+int main() {
 
-        graphit::Scanner *sc = new graphit::Scanner();
+        graphit::Frontend* frontend = new graphit::Frontend();
+         //graphit::Midend* midend = new graphit::Midend();
         return 0;
 
     }

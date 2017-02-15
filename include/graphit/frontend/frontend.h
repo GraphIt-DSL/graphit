@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <graphit/frontend/fir_context.h>
 
 
 
@@ -15,7 +16,7 @@ namespace graphit {
 
     class Frontend {
     public:
-        int parseStream(std::istream &programStream);
+        int parseStream(std::istream &programStream, FIRContext* ctx);
 
         /// Parses, typechecks and turns a given Simit-formated string into Simit IR.
         int parseString(const std::string &programString);

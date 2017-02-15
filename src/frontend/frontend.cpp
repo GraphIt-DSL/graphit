@@ -6,14 +6,14 @@
 #include<graphit/frontend/token.h>
 #include <graphit/frontend/parser.h>
 #include <graphit/frontend/fir_printer.h>
-#include <graphit/frontend/mir_emitter.h>
+#include <graphit/midend/mir_context.h>
 
 namespace graphit {
 
 
 
     /// Parses, typechecks and turns a given Simit-formated stream into Simit IR.
-    int Frontend::parseStream(std::istream &programStream) {
+    int Frontend::parseStream(std::istream &programStream, FIRContext *context) {
 
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner().lex(programStream);
@@ -24,14 +24,8 @@ namespace graphit {
         std::cout << *program;
         std::cout << std::endl;
 
+        context->setProgram(program);
 
-        internal::ProgramContext* context = new internal::ProgramContext();
-        fir::MIREmitter(context).emitIR(program);
-
-        //prints out the MIR
-        std::cout << "mir: " << std::endl;
-        std::cout << *context->getStatements().front();
-        std::cout << std::endl;
         return 0;
     }
 

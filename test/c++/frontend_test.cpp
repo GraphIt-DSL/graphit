@@ -4,6 +4,7 @@
 
 #include <gtest.h>
 #include <graphit/frontend/frontend.h>
+#include <graphit/midend/mir_context.h>
 
 
 using namespace std;
@@ -11,12 +12,13 @@ using namespace graphit;
 
 Frontend * fe = new Frontend();
 
+//tests front end
 TEST(LexTest, SimpleAdd ) {
     istringstream is("3 + 4;");
-    EXPECT_EQ (0 ,  fe->parseStream(is));
+    graphit::FIRContext* context = new graphit::FIRContext();
+
+    EXPECT_EQ (0 ,  fe->parseStream(is, context));
 }
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+
+

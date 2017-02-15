@@ -1,4 +1,3 @@
-//
 // Created by Yunming Zhang on 2/9/17.
 //
 
@@ -7,26 +6,28 @@
 
 #include <graphit/frontend/fir.h>
 #include <graphit/frontend/fir_visitor.h>
-#include <graphit/midend/program_context.h>
+#include <graphit/midend/mir.h>
+#include <graphit/midend/mir_visitor.h>
+#include <graphit/midend/mir_context.h>
 
 namespace graphit {
-    namespace fir {
 
-        class MIREmitter : public FIRVisitor {
+
+        class MIREmitter : public fir::FIRVisitor {
         public:
-            MIREmitter(internal::ProgramContext* ctx) : ctx(ctx)  {}
-            void emitIR(Program::Ptr program) {
+            MIREmitter(MIRContext* ctx) : ctx(ctx)  {}
+            void emitIR(fir::Program::Ptr program) {
                 program->accept(this);
             }
 
-            virtual void visit(Program::Ptr);
-            virtual void visit(Stmt::Ptr);
+            virtual void visit(fir::Program::Ptr);
+            virtual void visit(fir::Stmt::Ptr);
             //virtual void visit(Expr::Ptr);
-            virtual void visit(AddExpr::Ptr);
-            virtual void visit(MinusExpr::Ptr);
-            virtual void visit(IntLiteral::Ptr);
+            virtual void visit(fir::AddExpr::Ptr);
+            virtual void visit(fir::MinusExpr::Ptr);
+            virtual void visit(fir::IntLiteral::Ptr);
 
-            internal::ProgramContext *ctx;
+            MIRContext *ctx;
 
             mir::Expr::Ptr retExpr;
             mir::Stmt::Ptr retStmt;
@@ -36,7 +37,8 @@ namespace graphit {
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
 
         };
-    }
+
 }
 
 #endif //GRAPHIT_MIR_EMITTER_H
+

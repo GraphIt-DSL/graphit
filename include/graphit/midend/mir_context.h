@@ -15,17 +15,17 @@
 #include <graphit/midend/mir.h>
 
 namespace graphit {
-    namespace internal {
+
 
         // Data structure that holds the internal representation of the program
-        class ProgramContext {
+        class MIRContext {
 
         public:
-            ProgramContext() {
+            MIRContext() {
             }
 
 
-            ~ProgramContext() {
+            ~MIRContext() {
             }
 
             //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
@@ -41,7 +41,7 @@ namespace graphit {
             //mir::Program::Ptr mir_program;
             std::vector<mir::Stmt::Ptr> statements;
         };
-    }
+
 }
 
 #endif //GRAPHIT_PROGRAM_CONTEXT_H
