@@ -8,24 +8,29 @@
 #include <graphit/midend/mir.h>
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/mir_context.h>
+#include <iostream>
+#include <sstream>
 
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{
     public:
 
-        CodeGenCPP(){
+        CodeGenCPP(std::ostream &stream) : stream(stream){
 
         }
 
         int genCPP(MIRContext* mir_context);
 
     protected:
-        virtual void visit(mir::Program::Ptr);
+        /** The stream we're outputting on */
+        std::ostream &stream;
+
         virtual void visit(mir::Stmt::Ptr);
-        virtual void visit(mir::Expr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::MinusExpr::Ptr);
         virtual void visit(mir::IntLiteral::Ptr);
+
+
     };
 }
 

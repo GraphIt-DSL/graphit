@@ -24,5 +24,6 @@ TEST(CodeGenTest, SimpleAdd ) {
     graphit::Midend* me = new graphit::Midend(fir_context);
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
+    std::cout << "generated c++: " << std::endl;
     EXPECT_EQ (0 ,  be->emitCPP());
 }

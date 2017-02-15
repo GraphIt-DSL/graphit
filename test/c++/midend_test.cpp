@@ -21,5 +21,10 @@ TEST(MIRGenTest, SimpleAdd ) {
     fe->parseStream(is, fir_context);
     graphit::MIRContext* mir_context  = new graphit::MIRContext();
     graphit::Midend* me = new graphit::Midend(fir_context);
-    EXPECT_EQ (0 ,  me->emitMIR(mir_context));
+    int output = me->emitMIR(mir_context);
+    std::cout << "mir: " << std::endl;
+    std::cout << *(mir_context->getStatements().front());
+    std::cout << std::endl;
+
+    EXPECT_EQ (0 ,  output);
 }

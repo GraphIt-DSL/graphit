@@ -8,10 +8,10 @@ namespace graphit {
     int Midend::emitMIR(MIRContext* mir_context) {
         MIREmitter(mir_context).emitIR(fir_context_->getProgram());
 
-        //prints out the MIR
-        std::cout << "mir: " << std::endl;
-        std::cout << *mir_context->getStatements().front();
-        std::cout << std::endl;
+//        //prints out the MIR
+//        std::cout << "mir: " << std::endl;
+//        std::cout << *mir_context->getStatements().front();
+//        std::cout << std::endl;
 
         return 0;
     }

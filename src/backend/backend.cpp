@@ -6,7 +6,7 @@
 
 namespace graphit{
     int Backend::emitCPP() {
-        CodeGenCPP* codegen_cpp = new CodeGenCPP();
+        CodeGenCPP* codegen_cpp = new CodeGenCPP(std::cout);
         return codegen_cpp->genCPP(mir_context_);
 
     }

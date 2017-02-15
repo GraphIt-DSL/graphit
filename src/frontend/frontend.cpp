@@ -19,10 +19,10 @@ namespace graphit {
         TokenStream tokens = Scanner().lex(programStream);
         fir::Program::Ptr program = Parser().parse(tokens);
 
-        //prints out the FIR
-        std::cout << "fir: " << std::endl;
-        std::cout << *program;
-        std::cout << std::endl;
+//        //prints out the FIR
+//        std::cout << "fir: " << std::endl;
+//        std::cout << *program;
+//        std::cout << std::endl;
 
         context->setProgram(program);
 

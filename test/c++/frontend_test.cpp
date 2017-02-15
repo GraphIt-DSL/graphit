@@ -16,8 +16,12 @@ Frontend * fe = new Frontend();
 TEST(LexTest, SimpleAdd ) {
     istringstream is("3 + 4;");
     graphit::FIRContext* context = new graphit::FIRContext();
-
-    EXPECT_EQ (0 ,  fe->parseStream(is, context));
+    int output = fe->parseStream(is, context);
+    //prints out the FIR
+    std::cout << "fir: " << std::endl;
+    std::cout << *context->getProgram();
+    std::cout << std::endl;
+    EXPECT_EQ (0 ,  output);
 }
 
 
