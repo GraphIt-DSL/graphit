@@ -1,7 +1,7 @@
 #ifndef GRAPHIT_UTIL_H
 #define GRAPHIT_UTIL_H
 
-#endif //GRAPHIT_UTIL_H
+
 #include <string>
 #include <sstream>
 #include <memory>
@@ -92,3 +92,4 @@ namespace graphit {
 
         void printDebugInfo(const std::string &message);
     }}
+#endif //GRAPHIT_UTIL_H

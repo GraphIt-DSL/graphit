@@ -3,10 +3,8 @@
 //
 
 #include <graphit/frontend/frontend.h>
-#include<graphit/frontend/token.h>
 #include <graphit/frontend/parser.h>
-#include <graphit/frontend/fir_printer.h>
-#include <graphit/midend/mir_context.h>
+
 
 namespace graphit {
 
@@ -15,7 +13,7 @@ namespace graphit {
     int Frontend::parseStream(std::istream &programStream, FIRContext *context, std::vector<ParseError> *errors) {
 
         // Lexical and syntactic analyses.
-        TokenStream tokens = Scanner().lex(programStream);
+        TokenStream tokens = Scanner(errors).lex(programStream);
         fir::Program::Ptr program = Parser().parse(tokens);
 
 //        //prints out the FIR

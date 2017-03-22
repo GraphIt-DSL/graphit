@@ -5,7 +5,7 @@
 #ifndef GRAPHIT_SCOPEDMAP_H
 #define GRAPHIT_SCOPEDMAP_H
 
-#endif //GRAPHIT_SCOPEDMAP_H
+
 
 #include <string>
 #include <map>
@@ -96,7 +96,7 @@ namespace graphit {
                              const SearchScope searchScope = SearchScope::All) const {
                 switch (searchScope) {
                     case SearchScope::CurrentOnly:
-                        iassert(scopes.front().find(symbol) != scopes.front().end()) <<
+                        //iassert(scopes.front().find(symbol) != scopes.front().end()) <<
                                                                                      "Attempting to load symbol (" << symbol << ") not in current scope";
                         return scopes.front().at(symbol);
                     default:
@@ -153,3 +153,5 @@ namespace graphit {
         };
     }
 }
+
+#endif //GRAPHIT_SCOPEDMAP_H

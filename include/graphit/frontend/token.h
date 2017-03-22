@@ -5,9 +5,6 @@
 #ifndef GRAPHIT_TOKEN_H
 #define GRAPHIT_TOKEN_H
 
-
-
-
 #include <list>
 #include <sstream>
 #include <string>
@@ -16,16 +13,84 @@ namespace graphit {
 
     struct Token {
         enum class Type {
+            END,
+            UNKNOWN,
             INT_LITERAL,
             FLOAT_LITERAL,
-            INT,
+            STRING_LITERAL,
             IDENT,
+            AND,
+            OR,
+            NEG,
+            INT,
+            FLOAT,
+            BOOL,
+            COMPLEX,
+            STRING,
+            TENSOR,
+            MATRIX,
+            VECTOR,
+            ELEMENT,
+            SET,
+            GRID,
+            OPAQUE,
+            VAR,
+            CONST,
+            EXTERN,
+            EXPORT,
+            FUNC,
+            INOUT,
+            APPLY,
+            MAP,
+            TO,
+            WITH,
+            THROUGH,
+            REDUCE,
+            WHILE,
+            DO,
+            IF,
+            ELIF,
+            ELSE,
+            FOR,
+            IN,
+            BLOCKEND,
+            RETURN,
+            TEST,
+            PRINT,
+            PRINTLN,
+            NEW,
+            DELETE,
+            RARROW,
+            LP,
+            RP,
+            LB,
+            RB,
+            LC,
+            RC,
+            LA,
+            RA,
+            COMMA,
+            PERIOD,
+            COL,
             SEMICOL,
-            EQ,
+            ASSIGN,
             PLUS,
             MINUS,
-            END,
-            ASSIGN
+            STAR,
+            SLASH,
+            DOTSTAR,
+            DOTSLASH,
+            EXP,
+            TRANSPOSE,
+            BACKSLASH,
+            EQ,
+            NE,
+            LE,
+            GE,
+            NOT,
+            XOR,
+            TRUE,
+            FALSE
         };
 
         Type        type;
