@@ -11,9 +11,8 @@
 namespace graphit {
 
 
-
     /// Parses, typechecks and turns a given Simit-formated stream into Simit IR.
-    int Frontend::parseStream(std::istream &programStream, FIRContext *context) {
+    int Frontend::parseStream(std::istream &programStream, FIRContext *context, std::vector<ParseError> *errors) {
 
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner().lex(programStream);

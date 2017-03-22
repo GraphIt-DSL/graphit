@@ -13,10 +13,11 @@
 
 
 namespace graphit {
+    class ParseError;
 
     class Frontend {
     public:
-        int parseStream(std::istream &programStream, FIRContext* ctx);
+        int parseStream(std::istream &programStream, FIRContext* ctx, std::vector<ParseError> *errors);
 
         /// Parses, typechecks and turns a given Simit-formated string into Simit IR.
         int parseString(const std::string &programString);

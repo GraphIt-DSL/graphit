@@ -7,7 +7,7 @@
 #include <graphit/midend/mir_context.h>
 #include <graphit/midend/midend.h>
 #include <graphit/backend/backend.h>
-
+#include <graphit/frontend/error.h>
 
 using namespace std;
 using namespace graphit;
@@ -19,7 +19,8 @@ TEST(CodeGenTest, SimpleAdd ) {
     Frontend * fe = new Frontend();
     istringstream is("3 + 4;");
     graphit::FIRContext* fir_context = new graphit::FIRContext();
-    fe->parseStream(is, fir_context);
+    std::vector<ParseError> * errors = new std::vector<ParseError>();
+    fe->parseStream(is, fir_context, errors);
     graphit::MIRContext* mir_context  = new graphit::MIRContext();
     graphit::Midend* me = new graphit::Midend(fir_context);
     me->emitMIR(mir_context);

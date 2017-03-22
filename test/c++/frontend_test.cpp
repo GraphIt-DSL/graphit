@@ -5,7 +5,7 @@
 #include <gtest.h>
 #include <graphit/frontend/frontend.h>
 #include <graphit/midend/mir_context.h>
-
+#include <graphit/frontend/error.h>
 
 using namespace std;
 using namespace graphit;
@@ -16,7 +16,8 @@ Frontend * fe = new Frontend();
 TEST(LexTest, SimpleAdd ) {
     istringstream is("3 + 4;");
     graphit::FIRContext* context = new graphit::FIRContext();
-    int output = fe->parseStream(is, context);
+    std::vector<ParseError> * errors = new std::vector<ParseError>();
+    int output = fe->parseStream(is, context, errors);
     //prints out the FIR
     std::cout << "fir: " << std::endl;
     std::cout << *context->getProgram();
