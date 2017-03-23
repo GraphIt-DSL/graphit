@@ -14,7 +14,7 @@ namespace graphit {
 
         // Lexical and syntactic analyses.
         TokenStream tokens = Scanner(errors).lex(programStream);
-        fir::Program::Ptr program = Parser().parse(tokens);
+        fir::Program::Ptr program = Parser(errors).parse(tokens);
 
 //        //prints out the FIR
 //        std::cout << "fir: " << std::endl;

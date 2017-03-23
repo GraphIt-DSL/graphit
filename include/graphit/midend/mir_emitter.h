@@ -16,16 +16,18 @@ namespace graphit {
         class MIREmitter : public fir::FIRVisitor {
         public:
             MIREmitter(MIRContext* ctx) : ctx(ctx)  {}
+            ~MIREmitter()  {}
+
             void emitIR(fir::Program::Ptr program) {
                 program->accept(this);
             }
 
-            virtual void visit(fir::Program::Ptr);
-            virtual void visit(fir::Stmt::Ptr);
+//            virtual void visit(fir::Program::Ptr);
+//            virtual void visit(fir::Stmt::Ptr);
             //virtual void visit(Expr::Ptr);
-            virtual void visit(fir::AddExpr::Ptr);
-            virtual void visit(fir::MinusExpr::Ptr);
-            virtual void visit(fir::IntLiteral::Ptr);
+//            virtual void visit(fir::AddExpr::Ptr);
+//            virtual void visit(fir::SubExpr::Ptr);
+//            virtual void visit(fir::IntLiteral::Ptr);
 
             MIRContext *ctx;
 

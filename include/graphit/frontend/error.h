@@ -199,7 +199,7 @@ namespace graphit {
 #endif
 
 #define unreachable                                                            \
-  ierror << "reached unreachable location"
+  std::cout << "reached unreachable location"
 
 // internal assert helpers
 #define iassert_scalar(a)                                                      \

@@ -76,7 +76,7 @@ namespace graphit {
                 switch (searchScope) {
                     case SearchScope::CurrentOnly:
                         //iassert(scopes.front().find(symbol) != scopes.front().end()) <<
-                        "Attempting to load symbol (" << symbol << ") not in current scope";
+                        //"Attempting to load symbol (" << symbol << ") not in current scope";
                         return scopes.front().at(symbol);
                     default:
                         break;
