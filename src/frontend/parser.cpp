@@ -69,9 +69,6 @@ namespace graphit {
     }
 
 // element_type_decl: 'element' ident field_decl_list 'end'
-
-    // struct
-
     fir::ElementTypeDecl::Ptr Parser::parseElementTypeDecl() {
         auto elemTypeDecl = std::make_shared<fir::ElementTypeDecl>();
 
@@ -88,10 +85,6 @@ namespace graphit {
     }
 
 // field_decl_list: {field_decl}
-    // element {  field_decl .... }
-
-
-
     std::vector<fir::FieldDecl::Ptr> Parser::parseFieldDeclList() {
         std::vector<fir::FieldDecl::Ptr> fields;
 
@@ -265,7 +258,6 @@ namespace graphit {
     }
 
 // arguments: '(' [argument_decl {',' argument_decl}] ')'
-    //function arguments
     std::vector<fir::Argument::Ptr> Parser::parseArguments() {
         std::vector<fir::Argument::Ptr> arguments;
 
@@ -282,7 +274,6 @@ namespace graphit {
     }
 
 // argument_decl: ['inout'] ident_decl
-    //wether the argument gets modified or not (INOUT)
     fir::Argument::Ptr Parser::parseArgumentDecl() {
         auto argDecl = std::make_shared<fir::Argument>();
 
@@ -301,8 +292,6 @@ namespace graphit {
     }
 
 // results: ['->' (ident_decl | ('(' ident_decl {',' ident_decl} ')')]
-    //return types
-
     std::vector<fir::IdentDecl::Ptr> Parser::parseResults() {
         std::vector<fir::IdentDecl::Ptr> results;
 
@@ -347,10 +336,6 @@ namespace graphit {
 
 // stmt: var_decl | const_decl | if_stmt | while_stmt | do_while_stmt
 //     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt
-
-
-
-
     fir::Stmt::Ptr Parser::parseStmt() {
         switch (peek().type) {
             case Token::Type::VAR:

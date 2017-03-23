@@ -16,7 +16,7 @@ using namespace graphit;
 //tests mid end
 TEST(MIRGenTest, SimpleAdd ) {
     Frontend * fe = new Frontend();
-    istringstream is("3 + 4;");
+    istringstream is("const a = 3 + 4;");
     graphit::FIRContext* fir_context = new graphit::FIRContext();
     std::vector<ParseError> * errors = new std::vector<ParseError>();
     fe->parseStream(is, fir_context, errors);
