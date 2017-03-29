@@ -29,17 +29,17 @@ namespace graphit {
             }
 
             //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
-//            void addStatement(mir::Stmt::Ptr stmt){
-//                statements.push_back(stmt);
-//            }
+            void addConstant(mir::VarDecl::Ptr var_decl){
+                constants.push_back(var_decl);
+            }
 
-//            std::vector<mir::Stmt::Ptr> getStatements(){
-//                return statements;
-//            }
+            std::vector<mir::VarDecl::Ptr> getConstants(){
+                return constants;
+            }
 
         private:
             //mir::Program::Ptr mir_program;
-            std::vector<mir::Stmt::Ptr> constants;
+            std::vector<mir::VarDecl::Ptr> constants;
         };
 
 }

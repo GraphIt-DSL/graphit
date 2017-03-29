@@ -22,12 +22,10 @@ namespace graphit {
                 program->accept(this);
             }
 
-//            virtual void visit(fir::Program::Ptr);
-//            virtual void visit(fir::Stmt::Ptr);
-            //virtual void visit(Expr::Ptr);
-//            virtual void visit(fir::AddExpr::Ptr);
-//            virtual void visit(fir::SubExpr::Ptr);
-//            virtual void visit(fir::IntLiteral::Ptr);
+            virtual void visit(fir::ConstDecl::Ptr);
+            virtual void visit(fir::AddExpr::Ptr);
+            virtual void visit(fir::SubExpr::Ptr);
+            virtual void visit(fir::IntLiteral::Ptr);
 
             MIRContext *ctx;
 
@@ -37,6 +35,8 @@ namespace graphit {
         private:
             mir::Expr::Ptr     emitExpr(fir::Expr::Ptr);
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
+
+            void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
 
         };
 
