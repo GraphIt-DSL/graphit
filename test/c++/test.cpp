@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "LexandParseTest*";
+    ::testing::GTEST_FLAG(filter) = "LexandParseTest.SimpleAdd";
 
     return RUN_ALL_TESTS();
 }

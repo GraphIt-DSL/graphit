@@ -5,12 +5,6 @@
 
 namespace graphit {
     namespace mir {
-        void MIRPrinter::visit(Program::Ptr program) {
-            for (auto elem : program->elems) {
-                elem->accept(this);
-            }
-            oss << std::endl;
-        }
 
         void MIRPrinter::visit(Stmt::Ptr stmt) {
             stmt->expr->accept(this);
@@ -28,7 +22,7 @@ namespace graphit {
             printBinaryExpr(expr, "+");
         }
 
-        void MIRPrinter::visit(MinusExpr::Ptr expr) {
+        void MIRPrinter::visit(SubExpr::Ptr expr) {
             printBinaryExpr(expr, "-");
         }
 

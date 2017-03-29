@@ -13,12 +13,6 @@
 namespace graphit {
     namespace mir {
 
-        void MIRVisitor::visit(Program::Ptr program) {
-            for (auto elem : program->elems) {
-                elem->accept(this);
-            }
-        }
-
         void MIRVisitor::visit(Stmt::Ptr stmt) {
             stmt->expr->accept(this);
         };
@@ -32,7 +26,7 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
-        void MIRVisitor::visit(MinusExpr::Ptr expr) {
+        void MIRVisitor::visit(SubExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
 

@@ -16,11 +16,10 @@ namespace graphit {
             //void printMIR(MIR::Program::Ptr program){program->accept(this);};
 
         protected:
-            virtual void visit(Program::Ptr);
             virtual void visit(Stmt::Ptr);
             virtual void visit(Expr::Ptr);
             virtual void visit(AddExpr::Ptr);
-            virtual void visit(MinusExpr::Ptr);
+            virtual void visit(SubExpr::Ptr);
             virtual void visit(IntLiteral::Ptr);
 
             void printBinaryExpr(BinaryExpr::Ptr expr, const std::string op);

@@ -47,15 +47,6 @@ namespace graphit {
             }
         };
 
-        struct Program : public MIRNode {
-            std::vector<MIRNode::Ptr> elems;
-            typedef std::shared_ptr<Program> Ptr;
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<Program>());
-            }
-        };
-
-
         struct Expr : public MIRNode {
             typedef std::shared_ptr<Expr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
@@ -70,6 +61,27 @@ namespace graphit {
                 visitor->visit(self<Stmt>());
             }
         };
+
+        struct Type : public MIRNode {
+            typedef std::shared_ptr<Type> Ptr;
+        };
+
+        struct VarDecl : public Stmt {
+            std::string modifier;
+            std::string name;
+            Type::Ptr       type;
+            Expr::Ptr       initVal;
+
+            typedef std::shared_ptr<VarDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VarDecl>());
+            }
+        };
+
+
+
+
 
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
@@ -94,10 +106,10 @@ namespace graphit {
             }
         };
 
-        struct MinusExpr : public BinaryExpr {
-            typedef std::shared_ptr<MinusExpr> Ptr;
+        struct SubExpr : public BinaryExpr {
+            typedef std::shared_ptr<SubExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<MinusExpr>());
+                visitor->visit(self<SubExpr>());
             }
         };
 

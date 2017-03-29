@@ -6,7 +6,7 @@
 
 namespace graphit {
     int CodeGenCPP::genCPP(MIRContext *mir_context) {
-        mir_context->getStatements().front()->accept(this);
+        //mir_context->getStatements().front()->accept(this);
         return 0;
     };
 
@@ -23,7 +23,7 @@ namespace graphit {
         expr->rhs->accept(this);
         stream << ')';
     };
-    void CodeGenCPP::visit(mir::MinusExpr::Ptr expr){
+    void CodeGenCPP::visit(mir::SubExpr::Ptr expr){
         stream << '(';
         expr->lhs->accept(this);
         stream << " - ";
