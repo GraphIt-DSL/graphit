@@ -17,6 +17,8 @@ namespace graphit {
         struct AddExpr;
         struct SubExpr;
         struct BinaryExpr;
+        struct Type;
+        struct ScalarType;
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>);
@@ -24,6 +26,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);
+            virtual void visit(std::shared_ptr<Type>){};
+            virtual void visit(std::shared_ptr<ScalarType>){};
 
 
         private:

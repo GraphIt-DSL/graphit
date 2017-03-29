@@ -80,9 +80,6 @@ namespace graphit {
         };
 
 
-
-
-
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
             int val = 0;
@@ -110,6 +107,15 @@ namespace graphit {
             typedef std::shared_ptr<SubExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<SubExpr>());
+            }
+        };
+
+        struct ScalarType : public Type {
+            enum class Type {INT, FLOAT, BOOL, COMPLEX, STRING};
+            Type type;
+            typedef std::shared_ptr<ScalarType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ScalarType>());
             }
         };
 

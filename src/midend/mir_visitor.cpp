@@ -34,5 +34,6 @@ namespace graphit {
             expr->lhs->accept(this);
             expr->rhs->accept(this);
         }
+
     }
 }

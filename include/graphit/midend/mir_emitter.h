@@ -26,15 +26,19 @@ namespace graphit {
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);
+            virtual void visit(fir::ScalarType::Ptr);
 
             MIRContext *ctx;
 
             mir::Expr::Ptr retExpr;
             mir::Stmt::Ptr retStmt;
+            mir::Type::Ptr retType;
 
         private:
+            //helper methods for the visitor pattern to return MIR nodes
             mir::Expr::Ptr     emitExpr(fir::Expr::Ptr);
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
+            mir::Type::Ptr     emitType(fir::Type::Ptr);
 
             void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
 

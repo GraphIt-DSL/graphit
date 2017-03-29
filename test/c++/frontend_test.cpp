@@ -14,7 +14,7 @@ Frontend * fe = new Frontend();
 
 //tests front end
 TEST(LexandParseTest, SimpleAdd ) {
-    istringstream is("const a = 3 + 4;");
+    istringstream is("const a : int = 3 + 4;");
     graphit::FIRContext* context = new graphit::FIRContext();
     std::vector<ParseError> * errors = new std::vector<ParseError>();
     int output = fe->parseStream(is, context, errors);
