@@ -55,7 +55,6 @@ namespace graphit {
         };
 
         struct Stmt : public MIRNode {
-            Expr::Ptr expr;
             typedef std::shared_ptr<Stmt> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());

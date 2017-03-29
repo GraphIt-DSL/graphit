@@ -16,7 +16,6 @@ namespace graphit {
             //void printMIR(MIR::Program::Ptr program){program->accept(this);};
 
         protected:
-            virtual void visit(Stmt::Ptr);
             virtual void visit(Expr::Ptr);
             virtual void visit(AddExpr::Ptr);
             virtual void visit(SubExpr::Ptr);

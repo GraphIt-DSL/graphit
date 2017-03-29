@@ -25,10 +25,11 @@ namespace graphit {
         /** The stream we're outputting on */
         std::ostream &stream;
 
-        virtual void visit(mir::Stmt::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
         virtual void visit(mir::IntLiteral::Ptr);
+        virtual void visit(mir::VarDecl::Ptr);
+        virtual void visit(mir::ScalarType::Ptr scalar_type);
 
 
     };

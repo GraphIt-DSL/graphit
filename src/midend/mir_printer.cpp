@@ -6,10 +6,6 @@
 namespace graphit {
     namespace mir {
 
-        void MIRPrinter::visit(Stmt::Ptr stmt) {
-            stmt->expr->accept(this);
-        };
-
         void MIRPrinter::visit(Expr::Ptr expr) {
             expr->accept(this);
         };

@@ -13,10 +13,6 @@
 namespace graphit {
     namespace mir {
 
-        void MIRVisitor::visit(Stmt::Ptr stmt) {
-            stmt->expr->accept(this);
-        };
-
         void MIRVisitor::visit(Expr::Ptr expr) {
             expr->accept(this);
         };
@@ -30,10 +26,15 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<VarDecl> var_decl) {
+            var_decl->initVal->accept(this);
+        }
+
         void MIRVisitor::visitBinaryExpr(BinaryExpr::Ptr expr) {
             expr->lhs->accept(this);
             expr->rhs->accept(this);
         }
+
 
     }
 }
