@@ -14,9 +14,27 @@ using namespace graphit;
 
 
 //tests mid end
-TEST(MIRGenTest, SimpleAdd ) {
+TEST(MIRGenTest, SimpleVarDecl ) {
     Frontend * fe = new Frontend();
     istringstream is("const a : int = 3 + 4;");
+    graphit::FIRContext* fir_context = new graphit::FIRContext();
+    std::vector<ParseError> * errors = new std::vector<ParseError>();
+    fe->parseStream(is, fir_context, errors);
+    graphit::MIRContext* mir_context  = new graphit::MIRContext();
+    graphit::Midend* me = new graphit::Midend(fir_context);
+    int output = me->emitMIR(mir_context);
+    //std::cout << "mir: " << std::endl;
+    //std::cout << *(mir_context->getStatements().front());
+    //std::cout << std::endl;
+
+    EXPECT_EQ (0 ,  output);
+}
+
+
+//tests mid end
+TEST(MIRGenTest, SimpleFunctionDecl) {
+    Frontend * fe = new Frontend();
+    istringstream is("func add(a : int, b: int) -> c : int  c = a + b; end");
     graphit::FIRContext* fir_context = new graphit::FIRContext();
     std::vector<ParseError> * errors = new std::vector<ParseError>();
     fe->parseStream(is, fir_context, errors);

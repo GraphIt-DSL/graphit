@@ -15,7 +15,7 @@ using namespace graphit;
 //Frontend * fe = new Frontend();
 
 //tests back end
-TEST(CodeGenTest, SimpleAdd ) {
+TEST(CodeGenTest, SimpleVarDecl) {
     Frontend * fe = new Frontend();
     istringstream is("const a : int = 3 + 4;");
     graphit::FIRContext* fir_context = new graphit::FIRContext();
