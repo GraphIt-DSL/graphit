@@ -77,27 +77,7 @@ namespace graphit {
                 visitor->visit(self<VarDecl>());
             }
         };
-
-
-        struct FuncDecl : public FIRNode {
-            Identifier::Ptr                name;
-            std::vector<IdentDecl::Ptr>     args;
-            std::vector<IdentDecl::Ptr>    results;
-            StmtBlock::Ptr                 body;
-            Type                           type;
-            std::string                    originalName;
-
-            typedef std::shared_ptr<FuncDecl> Ptr;
-
-            virtual void accept(FIRVisitor *visitor) {
-                visitor->visit(self<FuncDecl>());
-            }
-
-        protected:
-            virtual void copy(FIRNode::Ptr);
-
-            virtual FIRNode::Ptr cloneNode();
-        };
+        
 
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;

@@ -184,7 +184,7 @@ namespace graphit {
 
             const Token funcToken = peek();
             funcDecl->setBeginLoc(funcToken);
-            funcDecl-> = (funcToken.type == Token::Type::EXPORT) ?
+            funcDecl->type = (funcToken.type == Token::Type::EXPORT) ?
                              fir::FuncDecl::Type::EXPORTED :
                              fir::FuncDecl::Type::INTERNAL;
 
