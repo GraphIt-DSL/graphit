@@ -17,6 +17,24 @@ namespace graphit {
             expr->accept(this);
         };
 
+        void MIRVisitor::visit(StmtBlock::Ptr stmt_block) {
+            for (auto stmt : stmt_block->stmts) {
+                stmt->accept(this);
+            }
+        }
+
+        void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
+
+            func_decl->name->accept(this);
+            for (auto arg : func_decl->args) {
+                arg->accept(this);
+            }
+            func_decl->result->accept(this);
+
+            if (func_decl->body) {
+                func_decl->body->accept(this);
+            }
+        }
 
         void MIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);

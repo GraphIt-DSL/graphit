@@ -18,20 +18,22 @@ namespace graphit {
 
         struct MIRNode;
 
-        template <typename T>
+        template<typename T>
         inline bool isa(std::shared_ptr<MIRNode> ptr) {
-            return (bool)std::dynamic_pointer_cast<T>(ptr);
+            return (bool) std::dynamic_pointer_cast<T>(ptr);
         }
 
-        template <typename T>
+        template<typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<MIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
             return ret;
         }
 
-        struct MIRNode : public std::enable_shared_from_this<MIRNode>{
+        struct MIRNode : public std::enable_shared_from_this<MIRNode> {
             typedef std::shared_ptr<MIRNode> Ptr;
+
             MIRNode() {}
+
             /** We use the visitor pattern to traverse MIR nodes throughout the
             * compiler, so we have a virtual accept method which accepts
             * visitors.
@@ -42,13 +44,15 @@ namespace graphit {
             friend std::ostream &operator<<(std::ostream &, MIRNode &);
 
         protected:
-            template <typename T = MIRNode> std::shared_ptr<T> self() {
+            template<typename T = MIRNode>
+            std::shared_ptr<T> self() {
                 return to<T>(shared_from_this());
             }
         };
 
         struct Expr : public MIRNode {
             typedef std::shared_ptr<Expr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Expr>());
             }
@@ -56,9 +60,21 @@ namespace graphit {
 
         struct Stmt : public MIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());
             }
+        };
+
+        struct StmtBlock : public Stmt {
+            std::vector<Stmt::Ptr> stmts;
+
+            typedef std::shared_ptr<StmtBlock> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StmtBlock>());
+            }
+
         };
 
         struct Type : public MIRNode {
@@ -68,8 +84,8 @@ namespace graphit {
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;
-            Type::Ptr       type;
-            Expr::Ptr       initVal;
+            Type::Ptr type;
+            Expr::Ptr initVal;
 
             typedef std::shared_ptr<VarDecl> Ptr;
 
@@ -90,7 +106,7 @@ namespace graphit {
 
         struct IdentDecl : public MIRNode {
             Identifier::Ptr name;
-            Type::Ptr       type;
+            Type::Ptr type;
 
             typedef std::shared_ptr<IdentDecl> Ptr;
 
@@ -100,9 +116,23 @@ namespace graphit {
 
         };
 
+        struct FuncDecl : public MIRNode {
+            Identifier::Ptr name;
+            std::vector<IdentDecl::Ptr> args;
+            IdentDecl::Ptr result;
+            StmtBlock::Ptr body;
+            typedef std::shared_ptr<FuncDecl> Ptr;
+
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<FuncDecl>());
+            }
+        };
+
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
             int val = 0;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<IntLiteral>());
             }
@@ -111,6 +141,7 @@ namespace graphit {
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
             typedef std::shared_ptr<BinaryExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BinaryExpr>());
             }
@@ -118,6 +149,7 @@ namespace graphit {
 
         struct AddExpr : public BinaryExpr {
             typedef std::shared_ptr<AddExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<AddExpr>());
             }
@@ -125,15 +157,19 @@ namespace graphit {
 
         struct SubExpr : public BinaryExpr {
             typedef std::shared_ptr<SubExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<SubExpr>());
             }
         };
 
         struct ScalarType : public Type {
-            enum class Type {INT, FLOAT, BOOL, COMPLEX, STRING};
+            enum class Type {
+                INT, FLOAT, BOOL, COMPLEX, STRING
+            };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ScalarType>());
             }
