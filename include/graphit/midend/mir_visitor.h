@@ -20,6 +20,8 @@ namespace graphit {
         struct Type;
         struct ScalarType;
         struct VarDecl;
+        struct Identifier;
+        struct IdentDecl;
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
@@ -30,6 +32,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Type>){};
             virtual void visit(std::shared_ptr<ScalarType>){};
             virtual void visit(std::shared_ptr<VarDecl>);
+            virtual void visit(std::shared_ptr<Identifier>){};
+            virtual void visit(std::shared_ptr<IdentDecl>){};
+
 
         private:
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);

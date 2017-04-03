@@ -77,7 +77,28 @@ namespace graphit {
                 visitor->visit(self<VarDecl>());
             }
         };
-        
+
+        struct Identifier : public MIRNode {
+            std::string ident;
+
+            typedef std::shared_ptr<Identifier> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<Identifier>());
+            }
+        };
+
+        struct IdentDecl : public MIRNode {
+            Identifier::Ptr name;
+            Type::Ptr       type;
+
+            typedef std::shared_ptr<IdentDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IdentDecl>());
+            }
+
+        };
 
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
