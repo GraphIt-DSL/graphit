@@ -12,6 +12,7 @@
 #include <map>
 #include <utility>
 
+#include <graphit/utils/scopedmap.h>
 #include <graphit/midend/mir.h>
 
 namespace graphit {
@@ -28,19 +29,18 @@ namespace graphit {
             ~MIRContext() {
             }
 
-//            void scope() {
-//                exprSymtable.scope();
-//                statements.push_front(std::vector<ir::Stmt>());
-//                builder.setInsertionPoint(&statements.front());
-//            }
-//
-//            void unscope() {
-//                exprSymtable.unscope();
-//                statements.pop_front();
-//                builder.setInsertionPoint(statements.size() > 0
-//                                          ? &statements.front() : nullptr);
-//            }
-//
+            void scope() {
+                //symbol_table.scope();
+                statements.push_front(std::vector<mir::Stmt::Ptr>());
+                //builder.setInsertionPoint(&statements.front());
+            }
+
+            void unscope() {
+                //symbol_table.unscope();
+                statements.pop_front();
+                //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
+            }
+
 //            void addSymbol(mir::Var var) {
 //                addSymbol(var.getName(), var, Symbol::ReadWrite);
 //            }
@@ -73,6 +73,7 @@ namespace graphit {
             //mir::Program::Ptr mir_program;
             std::vector<mir::VarDecl::Ptr> constants;
             std::list<std::vector<mir::Stmt::Ptr>> statements;
+//            util::ScopedMap<std::string, mir::Var> symbol_table;
 
         };
 
