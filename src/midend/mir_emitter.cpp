@@ -53,15 +53,24 @@ namespace graphit {
 
 
 
-    void MIREmitter::visit(fir::StmtBlock){
+    void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){
+        for (auto stmt : stmt_block->stmts) {
+            stmt->accept(this);
+        }
+        retStmt = std::make_shared<mir::StmtBlock>();
+        if (stmt_block->stmts.size() != 0) {
+
+        } else {
+
+        }
 
     }
 
-    void MIREmitter::visit(fir::Identifier){
+    void MIREmitter::visit(fir::Identifier::Ptr ){
 
     }
 
-    void MIREmitter::visit(fir::IdentDecl){
+    void MIREmitter::visit(fir::IdentDecl::Ptr ){
 
     }
 
