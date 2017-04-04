@@ -51,6 +51,24 @@ namespace graphit {
         }
     }
 
+
+
+    void MIREmitter::visit(fir::StmtBlock){
+
+    }
+
+    void MIREmitter::visit(fir::Identifier){
+
+    }
+
+    void MIREmitter::visit(fir::IdentDecl){
+
+    }
+
+    void MIREmitter::visit(fir::FuncDecl::Ptr){
+
+    }
+
     void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::IntLiteral>();
         mir_expr->val = fir_expr->val;

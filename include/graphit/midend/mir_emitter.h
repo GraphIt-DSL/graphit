@@ -23,10 +23,21 @@ namespace graphit {
             }
 
             virtual void visit(fir::ConstDecl::Ptr);
+
+            virtual void visit(fir::StmtBlock);
+            virtual void visit(fir::Identifier);
+            virtual void visit(fir::IdentDecl);
+
+            virtual void visit(fir::FuncDecl::Ptr);
+
+
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);
+
+
             virtual void visit(fir::ScalarType::Ptr);
+
 
             MIRContext *ctx;
 
