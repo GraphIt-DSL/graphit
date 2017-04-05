@@ -18,14 +18,13 @@ namespace graphit {
         };
 
         void MIRVisitor::visit(StmtBlock::Ptr stmt_block) {
-            for (auto stmt : stmt_block->stmts) {
+            for (auto stmt : *(stmt_block->stmts)) {
                 stmt->accept(this);
             }
         }
 
         void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
 
-            func_decl->name->accept(this);
             for (auto arg : func_decl->args) {
                 arg->accept(this);
             }

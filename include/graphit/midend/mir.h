@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <graphit/midend/mir_visitor.h>
+#include <graphit/midend/var.h>
 
 
 namespace graphit {
@@ -67,7 +68,7 @@ namespace graphit {
         };
 
         struct StmtBlock : public Stmt {
-            std::vector<Stmt::Ptr> stmts;
+            std::vector<Stmt::Ptr>* stmts;
 
             typedef std::shared_ptr<StmtBlock> Ptr;
 
@@ -94,18 +95,17 @@ namespace graphit {
             }
         };
 
-        struct Identifier : public MIRNode {
-            std::string ident;
-
-            typedef std::shared_ptr<Identifier> Ptr;
+        struct VarExpr : public Expr {
+            mir::Var var;
+            typedef std::shared_ptr<VarExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<Identifier>());
+                visitor->visit(self<VarExpr>());
             }
         };
 
         struct IdentDecl : public MIRNode {
-            Identifier::Ptr name;
+            std::string name;
             Type::Ptr type;
 
             typedef std::shared_ptr<IdentDecl> Ptr;
@@ -117,7 +117,7 @@ namespace graphit {
         };
 
         struct FuncDecl : public MIRNode {
-            Identifier::Ptr name;
+            std::string name;
             std::vector<IdentDecl::Ptr> args;
             IdentDecl::Ptr result;
             StmtBlock::Ptr body;

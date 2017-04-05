@@ -9,6 +9,7 @@
 #include <graphit/midend/mir.h>
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/mir_context.h>
+#include <graphit/midend/var.h>
 
 namespace graphit {
 
@@ -25,11 +26,11 @@ namespace graphit {
             virtual void visit(fir::ConstDecl::Ptr);
 
             virtual void visit(fir::StmtBlock::Ptr);
-            virtual void visit(fir::Identifier::Ptr);
             virtual void visit(fir::IdentDecl::Ptr);
 
             virtual void visit(fir::FuncDecl::Ptr);
 
+            virtual void visit(fir::VarExpr::Ptr);
 
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
@@ -44,12 +45,14 @@ namespace graphit {
             mir::Expr::Ptr retExpr;
             mir::Stmt::Ptr retStmt;
             mir::Type::Ptr retType;
+            mir::Var  retVar;
 
         private:
             //helper methods for the visitor pattern to return MIR nodes
             mir::Expr::Ptr     emitExpr(fir::Expr::Ptr);
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
             mir::Type::Ptr     emitType(fir::Type::Ptr);
+            mir::Var      emitVar (fir::IdentDecl::Ptr);
 
             void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
 

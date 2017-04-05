@@ -41,13 +41,17 @@ namespace graphit {
                 //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
             }
 
-//            void addSymbol(mir::Var var) {
-//                addSymbol(var.getName(), var, Symbol::ReadWrite);
-//            }
-//
-//            bool hasSymbol(const std::string &name) {
-//                return exprSymtable.contains(name);
-//            }
+            void addSymbol(mir::Var var) {
+                symbol_table.insert(var.getName(), var);
+            }
+
+            bool hasSymbol(const std::string &name) {
+                return symbol_table.contains(name);
+            }
+
+            const mir::Var &getSymbol(const std::string &name) {
+                return symbol_table.get(name);
+            }
 
 
             //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
@@ -73,7 +77,7 @@ namespace graphit {
             //mir::Program::Ptr mir_program;
             std::vector<mir::VarDecl::Ptr> constants;
             std::list<std::vector<mir::Stmt::Ptr>> statements;
-//            util::ScopedMap<std::string, mir::Var> symbol_table;
+            util::ScopedMap<std::string, mir::Var> symbol_table;
 
         };
 

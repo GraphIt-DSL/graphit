@@ -57,21 +57,27 @@ namespace graphit {
         for (auto stmt : stmt_block->stmts) {
             stmt->accept(this);
         }
-        retStmt = std::make_shared<mir::StmtBlock>();
+
+        auto output_stmt_block = std::make_shared<mir::StmtBlock>();
         if (stmt_block->stmts.size() != 0) {
-
-        } else {
-
+            output_stmt_block->stmts = ctx->getStatements();
         }
-
+        retStmt = output_stmt_block;
     }
 
-    void MIREmitter::visit(fir::Identifier::Ptr ){
-
+    // use of variables
+    void MIREmitter::visit(fir::VarExpr::Ptr var_expr){
+        auto output_var_expr = std::make_shared<mir::VarExpr>();
+        mir::Var associated_var = ctx->getSymbol(var_expr->ident);
+        output_var_expr->var = associated_var;
+        retExpr = output_var_expr;
     }
 
-    void MIREmitter::visit(fir::IdentDecl::Ptr ){
-
+    void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
+        auto type = emitType(ident_decl->type);
+        //TODO: add type info
+        retVar = mir::Var(ident_decl->name->ident);
+        //retField in the future ??
     }
 
     void MIREmitter::visit(fir::FuncDecl::Ptr){
@@ -117,10 +123,20 @@ namespace graphit {
     }
 
 
+    mir::Var MIREmitter::emitVar(fir::IdentDecl::Ptr ptr) {
+        auto tmpVar = retVar;
+
+        ptr->accept(this);
+        auto ret = retVar;
+
+        retVar = tmpVar;
+        return ret;
+    }
+
     void MIREmitter::addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const){
         if (is_const){
+            //TODO: see if there is a cleaner way to do this
             const auto mir_var = std::make_shared<mir::VarDecl>();
-
             mir_var->initVal = emitExpr(var_decl->initVal);
             mir_var->name = var_decl->name->ident;
             mir_var->modifier = "const";
