@@ -4,6 +4,8 @@
 #ifndef GRAPHIT_MIR_EMITTER_H
 #define GRAPHIT_MIR_EMITTER_H
 
+#include <cassert>
+
 #include <graphit/frontend/fir.h>
 #include <graphit/frontend/fir_visitor.h>
 #include <graphit/midend/mir.h>

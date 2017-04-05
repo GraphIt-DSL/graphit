@@ -77,10 +77,42 @@ namespace graphit {
         auto type = emitType(ident_decl->type);
         //TODO: add type info
         retVar = mir::Var(ident_decl->name->ident);
-        //retField in the future ??
+        //TODO: retField in the future ??
     }
 
-    void MIREmitter::visit(fir::FuncDecl::Ptr){
+    void MIREmitter::visit(fir::FuncDecl::Ptr func_decl){
+        auto output_func_decl = std::make_shared<mir::FuncDecl>();
+        ctx->scope();
+        std::vector<mir::Var> arguments;
+
+        //processing the arguments to the function declaration
+        for (auto arg : func_decl->args){
+            const mir::Var arg_var = emitVar(arg);
+            arguments.push_back(arg_var);
+            ctx->addSymbol(arg_var);
+        }
+        output_func_decl->args = arguments;
+
+        //Processing the output of the function declaration
+        //we assume there is only one argument for easy C++ code generation
+        assert(func_decl->results.size() == 1);
+        const mir::Var result = emitVar(func_decl->results.front());
+        output_func_decl->result = result;
+
+        //Processing the body of the function declaration
+        mir::Stmt::Ptr body;
+        if (func_decl->body != nullptr) {
+            body = emitStmt(func_decl->body);
+            //Aiming for not using the Scope Node
+            //body = ir::Scope::make(body);
+        }
+
+        //cast the output to StmtBody
+        output_func_decl->body = std::dynamic_pointer_cast<mir::StmtBlock>(body);
+
+        ctx->unscope();
+
+        const auto funcName = func_decl->name->ident;
 
     }
 

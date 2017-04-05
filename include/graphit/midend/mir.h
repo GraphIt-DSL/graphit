@@ -118,8 +118,8 @@ namespace graphit {
 
         struct FuncDecl : public MIRNode {
             std::string name;
-            std::vector<IdentDecl::Ptr> args;
-            IdentDecl::Ptr result;
+            std::vector<mir::Var> args;
+            mir::Var result;
             StmtBlock::Ptr body;
             typedef std::shared_ptr<FuncDecl> Ptr;
 
