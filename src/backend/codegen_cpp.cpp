@@ -6,9 +6,19 @@
 
 namespace graphit {
     int CodeGenCPP::genCPP(MIRContext *mir_context) {
-        //mir_context->getStatements().front()->accept(this);
+
+        //Processing the constants
         for (auto constant : mir_context->getConstants()){
             constant->accept(this);
+        }
+
+        //Processing the functions
+        std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
+        auto functions = mir_context->getFunctions();
+
+        for ( it = functions.begin(); it != functions.end(); it++ )
+        {
+            it->second->accept(this);
         }
 
         return 0;

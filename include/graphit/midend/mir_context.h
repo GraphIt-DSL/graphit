@@ -58,6 +58,10 @@ namespace graphit {
                 symbol_table.insert(var.getName(), var);
             }
 
+            const std::map<std::string, mir::FuncDecl::Ptr> &getFunctions() {
+                return functions;
+            }
+
             bool hasSymbol(const std::string &name) {
                 return symbol_table.contains(name);
             }

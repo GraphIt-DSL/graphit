@@ -30,7 +30,7 @@ namespace graphit {
 //            }
 //            func_decl->result->accept(this);
 
-            if (func_decl->body) {
+            if (func_decl->body->stmts) {
                 func_decl->body->accept(this);
             }
         }

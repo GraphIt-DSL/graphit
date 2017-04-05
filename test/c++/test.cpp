@@ -8,7 +8,8 @@ int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
     //::testing::GTEST_FLAG(filter) = "LexandParseTest.SimpleFunctionDecl";
-    ::testing::GTEST_FLAG(filter) = "MIRGenTest.SimpleFunctionDecl";
+    //::testing::GTEST_FLAG(filter) = "MIRGenTest.SimpleFunctionDecl";
+    //::testing::GTEST_FLAG(filter) = "CodeGenTest.SimpleFunctionDecl";
 
 
 

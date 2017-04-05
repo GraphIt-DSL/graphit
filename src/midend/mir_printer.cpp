@@ -6,6 +6,34 @@
 namespace graphit {
     namespace mir {
 
+//        void MIRPrinter::visit(VarDecl::Ptr expr) {
+//            expr->accept(this);
+//        };
+
+
+//        void MIRPrinter::visit(FuncDecl::Ptr func_decl) {
+//            oss << "func ";
+//            oss << func_decl->name << " ";
+//
+//            oss << "(";
+//
+//            bool printDelimiter = false;
+//            for (auto arg : func_decl->args) {
+//                if (printDelimiter) {
+//                    oss << ", ";
+//                }
+//
+//                arg->accept(this);
+//                printDelimiter = true;
+//            }
+//
+//            oss << ") ";
+//
+//            if (!func_decl->result) {
+//
+//            }
+//        };
+
         void MIRPrinter::visit(Expr::Ptr expr) {
             expr->accept(this);
         };

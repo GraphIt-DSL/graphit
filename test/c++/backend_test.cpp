@@ -28,3 +28,18 @@ TEST(CodeGenTest, SimpleVarDecl) {
     std::cout << "generated c++: " << std::endl;
     EXPECT_EQ (0 ,  be->emitCPP());
 }
+
+
+TEST(CodeGenTest, SimpleFunctionDecl) {
+    Frontend * fe = new Frontend();
+    istringstream is("func add(a : int, b: int) -> c : int  end");
+    graphit::FIRContext* fir_context = new graphit::FIRContext();
+    std::vector<ParseError> * errors = new std::vector<ParseError>();
+    fe->parseStream(is, fir_context, errors);
+    graphit::MIRContext* mir_context  = new graphit::MIRContext();
+    graphit::Midend* me = new graphit::Midend(fir_context);
+    me->emitMIR(mir_context);
+    graphit::Backend* be = new graphit::Backend(mir_context);
+    std::cout << "generated c++: " << std::endl;
+    EXPECT_EQ (0 ,  be->emitCPP());
+}

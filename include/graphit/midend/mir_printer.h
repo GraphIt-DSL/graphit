@@ -16,10 +16,22 @@ namespace graphit {
             //void printMIR(MIR::Program::Ptr program){program->accept(this);};
 
         protected:
+
+
+            //Delayed for later
+//            virtual void visit(VarDecl::Ptr);
+//            virtual void visit(FuncDecl::Ptr);
+
+
             virtual void visit(Expr::Ptr);
             virtual void visit(AddExpr::Ptr);
             virtual void visit(SubExpr::Ptr);
             virtual void visit(IntLiteral::Ptr);
+
+
+            void indent() { ++indentLevel; }
+            void dedent() { --indentLevel; }
+            void printIndent() { oss << std::string(2 * indentLevel, ' '); }
 
             void printBinaryExpr(BinaryExpr::Ptr expr, const std::string op);
 

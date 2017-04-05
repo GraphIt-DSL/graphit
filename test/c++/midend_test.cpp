@@ -34,7 +34,7 @@ TEST(MIRGenTest, SimpleVarDecl ) {
 //tests mid end
 TEST(MIRGenTest, SimpleFunctionDecl) {
     Frontend * fe = new Frontend();
-    istringstream is("func add(a : int, b: int) -> c : int  c = a + b; end");
+    istringstream is("func add(a : int, b: int) -> c : int  end");
     graphit::FIRContext* fir_context = new graphit::FIRContext();
     std::vector<ParseError> * errors = new std::vector<ParseError>();
     fe->parseStream(is, fir_context, errors);

@@ -27,7 +27,7 @@ TEST(LexandParseTest, SimpleVarDecl ) {
 
 
 TEST(LexandParseTest, SimpleFunctionDecl ) {
-    istringstream is("func add(a : int, b: int) -> c : int  c = a + b; end");
+    istringstream is("func add(a : int, b: int) -> c : int  end");
     graphit::FIRContext* context = new graphit::FIRContext();
     std::vector<ParseError> * errors = new std::vector<ParseError>();
     int output = fe->parseStream(is, context, errors);
