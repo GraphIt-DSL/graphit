@@ -41,7 +41,20 @@ namespace graphit {
                 //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
             }
 
-            void addSymbol(mir::Var var) {
+            void addFunction(mir::FuncDecl::Ptr f) {
+                functions[f->name] = f;
+            }
+
+            bool containsFunction(const std::string &name) const {
+                return functions.find(name) != functions.end();
+            }
+
+            mir::FuncDecl::Ptr getFunction(const std::string &name) {
+                assert(containsFunction(name));
+                return functions[name];
+            }
+
+                void addSymbol(mir::Var var) {
                 symbol_table.insert(var.getName(), var);
             }
 
@@ -77,6 +90,7 @@ namespace graphit {
             //mir::Program::Ptr mir_program;
             std::vector<mir::VarDecl::Ptr> constants;
             std::list<std::vector<mir::Stmt::Ptr>> statements;
+            std::map<std::string, mir::FuncDecl::Ptr>  functions;
             util::ScopedMap<std::string, mir::Var> symbol_table;
 
         };

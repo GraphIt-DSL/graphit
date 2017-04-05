@@ -11,7 +11,8 @@ namespace graphit {
 
 
         class Var {
-            //Type::Ptr type;
+            //TODO: figure out why can't I just use Type here???
+            std::shared_ptr<Type> type;
             std::string name_;
 
         public:

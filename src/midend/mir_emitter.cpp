@@ -6,10 +6,9 @@
 
 namespace graphit {
 
-
     void MIREmitter::visit(fir::ConstDecl::Ptr const_decl){
         addVarOrConst(const_decl, true);
-    }
+    };
 
 
     void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
@@ -18,6 +17,7 @@ namespace graphit {
         mir_expr->rhs = emitExpr(fir_expr->rhs);
         retExpr = mir_expr;
     };
+
     void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::SubExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
@@ -114,6 +114,8 @@ namespace graphit {
 
         const auto funcName = func_decl->name->ident;
 
+        //add the constructed function decl to functions
+        ctx->addFunction(output_func_decl);
     }
 
     void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr){

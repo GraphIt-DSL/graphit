@@ -41,6 +41,7 @@ TEST(MIRGenTest, SimpleFunctionDecl) {
     graphit::MIRContext* mir_context  = new graphit::MIRContext();
     graphit::Midend* me = new graphit::Midend(fir_context);
     int output = me->emitMIR(mir_context);
+
     //std::cout << "mir: " << std::endl;
     //std::cout << *(mir_context->getStatements().front());
     //std::cout << std::endl;
