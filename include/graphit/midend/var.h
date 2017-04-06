@@ -5,6 +5,7 @@
 #ifndef GRAPHIT_VAR_H
 #define GRAPHIT_VAR_H
 #include <graphit/midend/mir.h>
+#include <graphit/midend/mir_visitor.h>
 
 namespace graphit {
     namespace mir {
@@ -13,6 +14,7 @@ namespace graphit {
         class Var {
             //TODO: figure out why can't I just use Type here???
             std::shared_ptr<Type> type_;
+            //Type::Ptr type_;
             std::string name_;
             bool is_initialized_;
 

@@ -12,34 +12,48 @@
 using namespace std;
 using namespace graphit;
 
-//Frontend * fe = new Frontend();
+class BackendTest : public ::testing::Test {
+protected:
+    virtual void SetUp(){
+        context_ = new graphit::FIRContext();
+        errors_ = new std::vector<ParseError>();
+        fe_ = new Frontend();
+        mir_context_  = new graphit::MIRContext();
+
+    }
+
+    virtual void TearDown() {
+        // Code here will be called immediately after each test (right
+        // before the destructor).
+
+        //prints out the MIR, just a hack for now
+        //std::cout << "mir: " << std::endl;
+        //std::cout << *(mir_context->getStatements().front());
+        //std::cout << std::endl;
+
+    }
+
+    bool basicTest(std::istream & is){
+        fe_->parseStream(is, context_, errors_);
+        graphit::Midend* me = new graphit::Midend(context_);
+        me->emitMIR(mir_context_);
+        graphit::Backend* be = new graphit::Backend(mir_context_);
+        return be->emitCPP();
+    }
+
+    std::vector<ParseError> * errors_;
+    graphit::FIRContext* context_;
+    Frontend * fe_;
+    graphit::MIRContext* mir_context_;
+};
 
 //tests back end
-TEST(CodeGenTest, SimpleVarDecl) {
-    Frontend * fe = new Frontend();
+TEST_F(BackendTest, SimpleVarDecl) {
     istringstream is("const a : int = 3 + 4;");
-    graphit::FIRContext* fir_context = new graphit::FIRContext();
-    std::vector<ParseError> * errors = new std::vector<ParseError>();
-    fe->parseStream(is, fir_context, errors);
-    graphit::MIRContext* mir_context  = new graphit::MIRContext();
-    graphit::Midend* me = new graphit::Midend(fir_context);
-    me->emitMIR(mir_context);
-    graphit::Backend* be = new graphit::Backend(mir_context);
-    std::cout << "generated c++: " << std::endl;
-    EXPECT_EQ (0 ,  be->emitCPP());
+    EXPECT_EQ (0 , basicTest(is));
 }
 
-
-TEST(CodeGenTest, SimpleFunctionDecl) {
-    Frontend * fe = new Frontend();
+TEST_F(BackendTest, SimpleFunctionDecl) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
-    graphit::FIRContext* fir_context = new graphit::FIRContext();
-    std::vector<ParseError> * errors = new std::vector<ParseError>();
-    fe->parseStream(is, fir_context, errors);
-    graphit::MIRContext* mir_context  = new graphit::MIRContext();
-    graphit::Midend* me = new graphit::Midend(fir_context);
-    me->emitMIR(mir_context);
-    graphit::Backend* be = new graphit::Backend(mir_context);
-    std::cout << "generated c++: " << std::endl;
-    EXPECT_EQ (0 ,  be->emitCPP());
+    EXPECT_EQ (0 ,  basicTest(is));
 }
