@@ -23,10 +23,10 @@ protected:
         // Code here will be called immediately after each test (right
         // before the destructor).
 
-        //prints out the FIR, just a hack for now
-        std::cout << "fir: " << std::endl;
-        std::cout << *context_->getProgram();
-        std::cout << std::endl;
+//        //prints out the FIR, just a hack for now
+//        std::cout << "fir: " << std::endl;
+//        std::cout << *context_->getProgram();
+//        std::cout << std::endl;
     }
 
     std::vector<ParseError> * errors_;
@@ -52,3 +52,14 @@ TEST_F(FrontendTest, SimpleFunctionDecl ) {
 }
 
 
+TEST_F(FrontendTest, SimpleFunctionDeclWithNoReturn ) {
+    istringstream is("func add(a : int, b: int) end");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (0 ,  output);
+}
+
+TEST_F(FrontendTest, SimpleFunctionDecBreaks ) {
+    istringstream is("func add(a : int, b: int) ");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (1 ,  output);
+}

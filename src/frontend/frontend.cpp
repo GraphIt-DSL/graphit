@@ -21,6 +21,12 @@ namespace graphit {
 //        std::cout << *program;
 //        std::cout << std::endl;
 
+        // Only emit IR if no syntactic or semantic error was found.
+        if (!errors->empty()) {
+            std::stable_sort(errors->begin(), errors->end());
+            return 1;
+        }
+
         context->setProgram(program);
 
         return 0;
