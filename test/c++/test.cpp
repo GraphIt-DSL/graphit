@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LexandParseTest.SimpleFunctionDecl";
     //::testing::GTEST_FLAG(filter) = "MIRGenTest.SimpleFunctionDecl";
-    //::testing::GTEST_FLAG(filter) = "CodeGenTest.SimpleFunctionDecl";
+    ::testing::GTEST_FLAG(filter) = "CodeGenTest.SimpleFunctionDecl";
 
 
 

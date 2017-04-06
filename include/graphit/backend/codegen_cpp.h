@@ -14,18 +14,15 @@
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{
     public:
-
-        CodeGenCPP(std::ostream &stream) : stream(stream){
+        CodeGenCPP(std::ostream &oss) : oss(oss), indentLevel(0) {
 
         }
 
         int genCPP(MIRContext* mir_context);
 
     protected:
-        /** The stream we're outputting on */
-        std::ostream &stream;
 
-        //virtual void visit(mir::FuncDecl::Ptr);
+        virtual void visit(mir::FuncDecl::Ptr);
         //virtual void visit(mir::VarExpr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
@@ -33,7 +30,11 @@ namespace graphit {
         virtual void visit(mir::VarDecl::Ptr);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
-
+        void indent() { ++indentLevel; }
+        void dedent() { --indentLevel; }
+        void printIndent() { oss << std::string(2 * indentLevel, ' '); }
+        std::ostream &oss;
+        unsigned      indentLevel;
     };
 }
 

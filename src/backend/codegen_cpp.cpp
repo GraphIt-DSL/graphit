@@ -25,29 +25,37 @@ namespace graphit {
     };
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl){
-        stream << var_decl->modifier << ' ';
+        oss << var_decl->modifier << ' ';
         var_decl->type->accept(this);
-        stream << var_decl->name << " = " ;
+        oss << var_decl->name << " = " ;
         var_decl->initVal->accept(this);
-        stream << ";" << std::endl;
+        oss << ";" << std::endl;
     }
+
+
+
+    void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl){
+
+
+
+    };
 
     void CodeGenCPP::visit(mir::ScalarType::Ptr scalar_type){
         switch (scalar_type->type) {
             case mir::ScalarType::Type::INT:
-                stream << "int ";
+                oss << "int ";
                 break;
             case mir::ScalarType::Type::FLOAT:
-                stream << "float ";
+                oss << "float ";
                 break;
             case mir::ScalarType::Type::BOOL:
-                stream << "bool ";
+                oss << "bool ";
                 break;
             case mir::ScalarType::Type::COMPLEX:
-                stream << "complex ";
+                oss << "complex ";
                 break;
             case mir::ScalarType::Type::STRING:
-                stream << "string ";
+                oss << "string ";
                 break;
             default:
                 //unreachable;
@@ -57,24 +65,24 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::AddExpr::Ptr expr){
-        stream << '(';
+        oss << '(';
         expr->lhs->accept(this);
-        stream << " + ";
+        oss << " + ";
         expr->rhs->accept(this);
-        stream << ')';
+        oss << ')';
     };
     void CodeGenCPP::visit(mir::SubExpr::Ptr expr){
-        stream << '(';
+        oss << '(';
         expr->lhs->accept(this);
-        stream << " - ";
+        oss << " - ";
         expr->rhs->accept(this);
-        stream << ')';
+        oss << ')';
     };
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr){
-        stream << "(";
-        stream << "(int) ";
-        stream << expr->val;
-        stream << ")";
+        oss << "(";
+        oss << "(int) ";
+        oss << expr->val;
+        oss << ")";
     };
 
 
