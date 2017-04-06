@@ -76,7 +76,7 @@ namespace graphit {
     void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
         auto type = emitType(ident_decl->type);
         //TODO: add type info
-        retVar = mir::Var(ident_decl->name->ident);
+        retVar = mir::Var(ident_decl->name->ident, type);
         //TODO: retField in the future ??
     }
 
@@ -95,9 +95,11 @@ namespace graphit {
 
         //Processing the output of the function declaration
         //we assume there is only one argument for easy C++ code generation
-        assert(func_decl->results.size() == 1);
-        const mir::Var result = emitVar(func_decl->results.front());
-        output_func_decl->result = result;
+        assert(func_decl->results.size() <= 1);
+        if (func_decl->results.size()){
+            const mir::Var result = emitVar(func_decl->results.front());
+            output_func_decl->result = result;
+        }
 
         //Processing the body of the function declaration
         mir::Stmt::Ptr body;
@@ -112,8 +114,8 @@ namespace graphit {
 
         ctx->unscope();
 
-        const auto funcName = func_decl->name->ident;
-
+        const auto func_name = func_decl->name->ident;
+        output_func_decl->name = func_name;
         //add the constructed function decl to functions
         ctx->addFunction(output_func_decl);
     }

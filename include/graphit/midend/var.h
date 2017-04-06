@@ -12,16 +12,26 @@ namespace graphit {
 
         class Var {
             //TODO: figure out why can't I just use Type here???
-            std::shared_ptr<Type> type;
+            std::shared_ptr<Type> type_;
             std::string name_;
+            bool is_initialized_;
 
         public:
             //TODO: figure out where is this constructor used in scoped map
-            Var(){};
-            Var(std::string name) : name_(name){};
+            Var() : is_initialized_(false) {};
+            Var(std::string name, std::shared_ptr<Type> type)
+                    : name_(name), type_(type), is_initialized_{true} {};
             //typedef std::shared_ptr<Var> Ptr;
             std::string getName(){
                 return name_;
+            }
+
+            std::shared_ptr<Type> getType(){
+                return type_;
+            }
+
+            bool isInitialized(){
+                return is_initialized_;
             }
         };
 

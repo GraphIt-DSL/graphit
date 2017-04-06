@@ -21,6 +21,8 @@ namespace graphit {
             it->second->accept(this);
         }
 
+
+        oss << std::endl;
         return 0;
     };
 
@@ -36,7 +38,40 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl){
 
+        //generate the return type
+        if (func_decl->result.isInitialized()) {
+            func_decl->result.getType()->accept(this);
+        } else {
+            //void return type
+            oss << "void ";
+        }
 
+        //generate the function name and left paren
+        oss << func_decl->name << "(";
+
+        bool printDelimiter = false;
+        for (auto arg : func_decl->args) {
+            if (printDelimiter) {
+                oss << ", ";
+            }
+
+            arg.getType()->accept(this);
+            oss << arg.getName();
+            printDelimiter = true;
+        }
+        oss << ") ";
+
+        //if the function has a body
+        if (func_decl->body->stmts) {
+            oss << std::endl;
+
+            indent();
+            func_decl->body->accept(this);
+            dedent();
+
+        }
+
+        oss << ";";
 
     };
 
