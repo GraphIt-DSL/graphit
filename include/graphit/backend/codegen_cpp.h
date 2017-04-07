@@ -33,6 +33,8 @@ namespace graphit {
         void indent() { ++indentLevel; }
         void dedent() { --indentLevel; }
         void printIndent() { oss << std::string(2 * indentLevel, ' '); }
+        void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" ; }
+        void printEndIndent() { oss << std::string(2 * indentLevel, ' ') << "}"; }
         std::ostream &oss;
         unsigned      indentLevel;
     };

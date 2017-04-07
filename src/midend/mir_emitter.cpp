@@ -10,6 +10,16 @@ namespace graphit {
         addVarOrConst(const_decl, true);
     };
 
+    void MIREmitter::visit(fir::VarDecl::Ptr var_decl){
+        addVarOrConst(var_decl, false);
+        auto output_var_decl = std::make_shared<mir::VarDecl>();
+        output_var_decl->name = var_decl->name->ident;
+        output_var_decl->initVal = emitExpr(var_decl->initVal);
+        output_var_decl->type = emitType(var_decl->type);
+
+
+        retStmt = output_var_decl;
+    };
 
     void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::AddExpr>();
@@ -179,14 +189,24 @@ namespace graphit {
     }
 
     void MIREmitter::addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const){
+        //TODO: see if there is a cleaner way to do this, constructor may be???
+        //construct a var decl variable
+        const auto mir_var_decl = std::make_shared<mir::VarDecl>();
+        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+        mir_var_decl->name = var_decl->name->ident;
+        mir_var_decl->type = emitType(var_decl->type);
+
+        //construct a var variable
+        const auto mir_var = mir::Var(mir_var_decl->name, mir_var_decl->type);
+        ctx->addSymbol(mir_var);
+
+
         if (is_const){
-            //TODO: see if there is a cleaner way to do this
-            const auto mir_var = std::make_shared<mir::VarDecl>();
-            mir_var->initVal = emitExpr(var_decl->initVal);
-            mir_var->name = var_decl->name->ident;
-            mir_var->modifier = "const";
-            mir_var->type = emitType(var_decl->type);
-            ctx->addConstant(mir_var);
+            mir_var_decl->modifier = "const";
+            ctx->addConstant(mir_var_decl);
+        } else {
+            //regular var decl
+            //TODO:: need to figure out what we do here
         }
     }
 

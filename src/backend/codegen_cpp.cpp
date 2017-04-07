@@ -64,14 +64,17 @@ namespace graphit {
         //if the function has a body
         if (func_decl->body->stmts) {
             oss << std::endl;
-
+            printBeginIndent();
             indent();
-            func_decl->body->accept(this);
-            dedent();
 
+            func_decl->body->accept(this);
+
+            dedent();
+            printEndIndent();
+            oss << ";";
         }
 
-        oss << ";";
+
 
     };
 
