@@ -69,3 +69,15 @@ TEST_F(FrontendTest, SimpleFunctionDecFailNoEnd) {
     int output = fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (1 ,  output);
 }
+
+TEST_F(FrontendTest, SimpleFunctionWithVarDecl) {
+    istringstream is("func add(a : int, b: int) -> c : int var d : int = 3; end");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (0 ,  output);
+}
+
+TEST_F(FrontendTest, SimpleFunctionWithAdd) {
+    istringstream is("func add(a : int, b: int) -> c : int c = a + b; end");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (0, output);
+}

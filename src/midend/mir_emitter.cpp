@@ -55,18 +55,18 @@ namespace graphit {
 
     void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){
 
-        //initialzie std:;vector<mir::Stmt> stmts;
+        //initialize
+        std::vector<mir::Stmt::Ptr>* stmts = new std::vector<mir::Stmt::Ptr>();
 
         for (auto stmt : stmt_block->stmts) {
-            stmt->accept(this);
-
-            //stmts.push_back(emitStmt(stmt))
+            //stmt->accept(this);
+            stmts->push_back(emitStmt(stmt));
         }
 
         auto output_stmt_block = std::make_shared<mir::StmtBlock>();
         if (stmt_block->stmts.size() != 0) {
-            output_stmt_block->stmts = ctx->getStatements();
-            //output_stmt_block->stmts = stmts;
+            //output_stmt_block->stmts = ctx->getStatements();
+            output_stmt_block->stmts = stmts;
         }
 
 
@@ -113,8 +113,6 @@ namespace graphit {
         mir::Stmt::Ptr body;
         if (func_decl->body != nullptr) {
             body = emitStmt(func_decl->body);
-
-
 
             //Aiming for not using the Scope Node
             //body = ir::Scope::make(body);

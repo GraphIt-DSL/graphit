@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "MidendTest.*";
     //::testing::GTEST_FLAG(filter) = "BackendTest.*";
 
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionWithVarDecl";
     //::testing::GTEST_FLAG(filter) = "MIRGenTest.SimpleFunctionDecl";
 //    ::testing::GTEST_FLAG(filter) = "CodeGenTest.SimpleFunctionDecl";
 

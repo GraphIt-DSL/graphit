@@ -62,3 +62,14 @@ TEST_F(BackendTest, SimpleFunctionDeclWithNoReturn) {
     istringstream is("func add(a : int, b: int)  end");
     EXPECT_EQ (0 , basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleFunctionWithVarDecl) {
+    istringstream is("func add(a : int, b: int) -> c : int var d : int = 3; end");
+    EXPECT_EQ (0 , basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleFunctionWithAdd) {
+    istringstream is("func add(a : int, b: int) -> c : int c = a + b; end");
+    EXPECT_EQ (0 , basicTest(is));
+
+}
