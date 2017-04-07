@@ -58,8 +58,14 @@ TEST_F(FrontendTest, SimpleFunctionDeclWithNoReturn ) {
     EXPECT_EQ (0 ,  output);
 }
 
-TEST_F(FrontendTest, SimpleFunctionDecBreaks ) {
+TEST_F(FrontendTest, SimpleFunctionDecFail) {
     istringstream is("func add(a : int, b: int) ");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (1 ,  output);
+}
+
+TEST_F(FrontendTest, SimpleFunctionDecFailNoEnd) {
+    istringstream is("func add(a : int, b: int) -> c : int ");
     int output = fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (1 ,  output);
 }

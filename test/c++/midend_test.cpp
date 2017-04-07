@@ -59,3 +59,8 @@ TEST_F(MidendTest, SimpleFunctionDecl) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
     EXPECT_EQ (0 , basicTest(is));
 }
+
+TEST_F(MidendTest, SimpleFunctionDeclWithNoReturn) {
+    istringstream is("func add(a : int, b: int)  end");
+    EXPECT_EQ (0 , basicTest(is));
+}
