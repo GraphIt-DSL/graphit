@@ -71,9 +71,8 @@ namespace graphit {
 
             dedent();
             printEndIndent();
-            oss << ";";
         }
-
+        oss << ";";
 
 
     };

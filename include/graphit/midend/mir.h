@@ -82,6 +82,29 @@ namespace graphit {
             typedef std::shared_ptr<Type> Ptr;
         };
 
+
+        struct ExprStmt : public Stmt {
+            Expr::Ptr expr;
+
+            typedef std::shared_ptr<ExprStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ExprStmt>());
+            }
+        };
+
+        struct AssignStmt : public ExprStmt {
+            //TODO: do we really need a vector??
+            //std::vector<Expr::Ptr> lhs;
+            Expr::Ptr lhs;
+
+            typedef std::shared_ptr<AssignStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<AssignStmt>());
+            }
+        };
+
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;

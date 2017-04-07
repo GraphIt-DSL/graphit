@@ -28,7 +28,11 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
+        
+    }
+
+        void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::SubExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
