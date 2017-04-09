@@ -12,13 +12,13 @@ namespace graphit {
 
     void MIREmitter::visit(fir::VarDecl::Ptr var_decl){
         addVarOrConst(var_decl, false);
-        auto output_var_decl = std::make_shared<mir::VarDecl>();
-        output_var_decl->name = var_decl->name->ident;
-        output_var_decl->initVal = emitExpr(var_decl->initVal);
-        output_var_decl->type = emitType(var_decl->type);
+        auto mir_var_decl = std::make_shared<mir::VarDecl>();
+        mir_var_decl->name = var_decl->name->ident;
+        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+        mir_var_decl->type = emitType(var_decl->type);
 
 
-        retStmt = output_var_decl;
+        retStmt = mir_var_decl;
     };
 
     void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
@@ -29,10 +29,15 @@ namespace graphit {
     };
 
     void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
-        
+        auto mir_assign_stmt = std::make_shared<mir::AssignStmt>();
+        //we only have one expression on the left hand size
+        assert(assign_stmt->lhs.size() == 1);
+        mir_assign_stmt->lhs = emitExpr(assign_stmt->lhs.front());
+        mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
+        retStmt = mir_assign_stmt;
     }
 
-        void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::SubExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
@@ -89,10 +94,10 @@ namespace graphit {
 
     // use of variables
     void MIREmitter::visit(fir::VarExpr::Ptr var_expr){
-        auto output_var_expr = std::make_shared<mir::VarExpr>();
+        auto mir_var_expr = std::make_shared<mir::VarExpr>();
         mir::Var associated_var = ctx->getSymbol(var_expr->ident);
-        output_var_expr->var = associated_var;
-        retExpr = output_var_expr;
+        mir_var_expr->var = associated_var;
+        retExpr = mir_var_expr;
     }
 
     void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
@@ -103,7 +108,7 @@ namespace graphit {
     }
 
     void MIREmitter::visit(fir::FuncDecl::Ptr func_decl){
-        auto output_func_decl = std::make_shared<mir::FuncDecl>();
+        auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
         std::vector<mir::Var> arguments;
 
@@ -113,14 +118,15 @@ namespace graphit {
             arguments.push_back(arg_var);
             ctx->addSymbol(arg_var);
         }
-        output_func_decl->args = arguments;
+        mir_func_decl->args = arguments;
 
         //Processing the output of the function declaration
         //we assume there is only one argument for easy C++ code generation
         assert(func_decl->results.size() <= 1);
         if (func_decl->results.size()){
-            const mir::Var result = emitVar(func_decl->results.front());
-            output_func_decl->result = result;
+            const mir::Var result_var = emitVar(func_decl->results.front());
+            mir_func_decl->result = result_var;
+            ctx->addSymbol(result_var);
         }
 
         //Processing the body of the function declaration
@@ -133,14 +139,14 @@ namespace graphit {
         }
 
         //cast the output to StmtBody
-        output_func_decl->body = std::dynamic_pointer_cast<mir::StmtBlock>(body);
+        mir_func_decl->body = std::dynamic_pointer_cast<mir::StmtBlock>(body);
 
         ctx->unscope();
 
         const auto func_name = func_decl->name->ident;
-        output_func_decl->name = func_name;
+        mir_func_decl->name = func_name;
         //add the constructed function decl to functions
-        ctx->addFunction(output_func_decl);
+        ctx->addFunction(mir_func_decl);
     }
 
     void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr){

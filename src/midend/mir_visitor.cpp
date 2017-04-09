@@ -17,6 +17,16 @@ namespace graphit {
             expr->accept(this);
         };
 
+
+        void MIRVisitor::visit(ExprStmt::Ptr stmt) {
+            stmt->expr->accept(this);
+        }
+
+        void MIRVisitor::visit(AssignStmt::Ptr stmt) {
+            stmt->lhs->accept(this);
+            stmt->expr->accept(this);
+        }
+
         void MIRVisitor::visit(StmtBlock::Ptr stmt_block) {
             for (auto stmt : *(stmt_block->stmts)) {
                 stmt->accept(this);
