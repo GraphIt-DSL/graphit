@@ -103,6 +103,12 @@ namespace graphit {
 
             func_decl->body->accept(this);
 
+            //print a return statemetn if there is a result
+            if(func_decl->result.isInitialized()){
+                printIndent();
+                oss << "return " << func_decl->result.getName() << ";" << std::endl;
+            }
+
             dedent();
             printEndIndent();
         }
@@ -122,14 +128,10 @@ namespace graphit {
             case mir::ScalarType::Type::BOOL:
                 oss << "bool ";
                 break;
-            case mir::ScalarType::Type::COMPLEX:
-                oss << "complex ";
-                break;
             case mir::ScalarType::Type::STRING:
                 oss << "string ";
                 break;
             default:
-                //unreachable;
                 break;
         }
     }
