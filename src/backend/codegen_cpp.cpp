@@ -7,6 +7,8 @@
 namespace graphit {
     int CodeGenCPP::genCPP(MIRContext *mir_context) {
 
+        genIncludeStmts();
+
         //Processing the constants
         for (auto constant : mir_context->getConstants()){
             constant->accept(this);
@@ -25,6 +27,10 @@ namespace graphit {
         oss << std::endl;
         return 0;
     };
+
+    void CodeGenCPP::genIncludeStmts(){
+        oss << "#include <iostream> " << std::endl;
+    }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt){
         printIndent();

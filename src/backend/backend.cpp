@@ -5,8 +5,8 @@
 #include <graphit/backend/backend.h>
 
 namespace graphit{
-    int Backend::emitCPP() {
-        CodeGenCPP* codegen_cpp = new CodeGenCPP(std::cout);
+    int Backend::emitCPP(std::ostream &oss) {
+        CodeGenCPP* codegen_cpp = new CodeGenCPP(oss);
         int flag = codegen_cpp->genCPP(mir_context_);
         delete codegen_cpp;
         return flag;

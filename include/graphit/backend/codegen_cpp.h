@@ -33,6 +33,8 @@ namespace graphit {
         virtual void visit(mir::VarDecl::Ptr);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
+        void genIncludeStmts();
+
         void indent() { ++indentLevel; }
         void dedent() { --indentLevel; }
         void printIndent() { oss << std::string(2 * indentLevel, ' '); }

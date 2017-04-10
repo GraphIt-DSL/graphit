@@ -15,7 +15,7 @@ namespace graphit {
 
         }
 
-        int emitCPP();
+        int emitCPP(std::ostream &oss = std::cout);
 
     private:
         MIRContext* mir_context_;

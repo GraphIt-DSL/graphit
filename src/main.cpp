@@ -4,11 +4,9 @@
 #include <graphit/frontend/frontend.h>
 
 #include <graphit/utils/command_line.h>
-#include <graphit/frontend/frontend.h>
-#include <graphit/midend/mir_context.h>
-#include <graphit/midend/midend.h>
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
+#include <fstream>
 
 using namespace graphit;
 
@@ -33,12 +31,18 @@ int main(int argc, char* argv[]) {
     buffer << file.rdbuf();
     file.close();
 
+    //set up the output file
+    std::ofstream output_file;
+    output_file.open(cli.output_filename());
+
     //compile the input file
     fe->parseStream(buffer, context, errors);
     graphit::Midend* me = new graphit::Midend(context);
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
-    be->emitCPP();
+    be->emitCPP(output_file);
+
+    output_file.close();
 
     return 0;
 

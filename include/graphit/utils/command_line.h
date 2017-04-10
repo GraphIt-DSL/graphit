@@ -71,7 +71,7 @@ public:
     void virtual HandleArg(signed char opt, char* opt_arg) {
         switch (opt) {
             case 'f': input_filename_ = std::string(opt_arg);           break;
-            case 'o': output_filename_ = atoi(opt_arg);                     break;
+            case 'o': output_filename_ = std::string(opt_arg);                     break;
             case 'h': PrintUsage();                               break;
         }
     }
