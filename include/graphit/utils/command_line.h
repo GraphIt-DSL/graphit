@@ -56,6 +56,11 @@ public:
             std::cout << "No input file specified. (Use -h for help)" << std::endl;
             return false;
         }
+        if (output_filename_ == "") {
+            std::cout << "No output file specified. (Use -h for help)" << std::endl;
+            return false;
+        }
+
         return true;
     }
 
