@@ -81,3 +81,9 @@ TEST_F(FrontendTest, SimpleFunctionWithAdd) {
     int output = fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0, output);
 }
+
+TEST_F(FrontendTest, MainFunctionWithPrint) {
+    istringstream is("func main() print 4; end");
+    int output = fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (0, output);
+}
