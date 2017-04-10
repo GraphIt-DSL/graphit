@@ -17,9 +17,9 @@ namespace graphit {
         fir::Program::Ptr program = Parser(errors).parse(tokens);
 
 //        //prints out the FIR
-        std::cout << "fir: " << std::endl;
-        std::cout << *program;
-        std::cout << std::endl;
+//        std::cout << "fir: " << std::endl;
+//        std::cout << *program;
+//        std::cout << std::endl;
 
         // Only emit IR if no syntactic or semantic error was found.
         if (!errors->empty()) {

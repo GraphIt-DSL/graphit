@@ -23,10 +23,18 @@ protected:
         // Code here will be called immediately after each test (right
         // before the destructor).
 
-//        //prints out the FIR, just a hack for now
+
+    }
+
+    bool basicTest(std::istream & is){
+        fe_->parseStream(is, context_, errors_);
+        bool output =  fe_->parseStream(is, context_, errors_);
+        //prints out the FIR, just a hack for now
+        //TODO: fix the bug with unable to print FIR outside of the function
 //        std::cout << "fir: " << std::endl;
 //        std::cout << *context_->getProgram();
 //        std::cout << std::endl;
+        return output;
     }
 
     std::vector<ParseError> * errors_;
@@ -40,50 +48,42 @@ protected:
 //tests front end
 TEST_F(FrontendTest, SimpleVarDecl ) {
     istringstream is("const a : int = 3 + 4;");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0 ,  output);
+    EXPECT_EQ (0,  basicTest(is));
 }
 
 
 TEST_F(FrontendTest, SimpleFunctionDecl ) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0 ,  output);
+    EXPECT_EQ (0,  basicTest(is));
 }
 
 
 TEST_F(FrontendTest, SimpleFunctionDeclWithNoReturn ) {
     istringstream is("func add(a : int, b: int) end");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0 ,  output);
+    EXPECT_EQ (0,  basicTest(is));
 }
 
 TEST_F(FrontendTest, SimpleFunctionDecFail) {
     istringstream is("func add(a : int, b: int) ");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (1 ,  output);
+    EXPECT_EQ (1,  basicTest(is));
 }
 
 TEST_F(FrontendTest, SimpleFunctionDecFailNoEnd) {
     istringstream is("func add(a : int, b: int) -> c : int ");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (1 ,  output);
+    EXPECT_EQ (1,  basicTest(is));
 }
 
 TEST_F(FrontendTest, SimpleFunctionWithVarDecl) {
     istringstream is("func add(a : int, b: int) -> c : int var d : int = 3; end");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0 ,  output);
+    EXPECT_EQ (0,  basicTest(is));
 }
 
 TEST_F(FrontendTest, SimpleFunctionWithAdd) {
     istringstream is("func add(a : int, b: int) -> c : int c = a + b; end");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0, output);
+    EXPECT_EQ (0,  basicTest(is));
 }
 
 TEST_F(FrontendTest, MainFunctionWithPrint) {
     istringstream is("func main() print 4; end");
-    int output = fe_->parseStream(is, context_, errors_);
-    EXPECT_EQ (0, output);
+    EXPECT_EQ (0,  basicTest(is));
 }

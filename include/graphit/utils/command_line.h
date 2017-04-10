@@ -13,6 +13,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * Code borrowed from GAPBS benchmark project by Scott Beamer
+ */
+
 class CLBase {
 protected:
     int argc_;
