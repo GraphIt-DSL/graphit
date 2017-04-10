@@ -23,6 +23,7 @@ namespace graphit {
     protected:
 
         virtual void visit(mir::AssignStmt::Ptr);
+        virtual void visit(mir::PrintStmt::Ptr);
 
         virtual void visit(mir::FuncDecl::Ptr);
         virtual void visit(mir::VarExpr::Ptr);
@@ -35,7 +36,7 @@ namespace graphit {
         void indent() { ++indentLevel; }
         void dedent() { --indentLevel; }
         void printIndent() { oss << std::string(2 * indentLevel, ' '); }
-        void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" ; }
+        void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" << std::endl; }
         void printEndIndent() { oss << std::string(2 * indentLevel, ' ') << "}"; }
         std::ostream &oss;
         unsigned      indentLevel;

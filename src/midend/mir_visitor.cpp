@@ -27,6 +27,10 @@ namespace graphit {
             stmt->expr->accept(this);
         }
 
+        void MIRVisitor::visit(PrintStmt::Ptr stmt) {
+            stmt->expr->accept(this);
+        }
+
         void MIRVisitor::visit(StmtBlock::Ptr stmt_block) {
             for (auto stmt : *(stmt_block->stmts)) {
                 stmt->accept(this);

@@ -37,6 +37,14 @@ namespace graphit {
         retStmt = mir_assign_stmt;
     }
 
+    void MIREmitter::visit(fir::PrintStmt::Ptr print_stmt) {
+        auto mir_print_stmt = std::make_shared<mir::PrintStmt>();
+        //we support printing only one argument first
+        assert(print_stmt->args.size() == 1);
+        mir_print_stmt->expr = emitExpr(print_stmt->args.front());
+        retStmt = mir_print_stmt;
+    }
+
     void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::SubExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);

@@ -105,6 +105,17 @@ namespace graphit {
             }
         };
 
+        struct PrintStmt : public Stmt {
+            Expr::Ptr expr;
+            std::string format;
+
+            typedef std::shared_ptr<PrintStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PrintStmt>());
+            }
+        };
+
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;

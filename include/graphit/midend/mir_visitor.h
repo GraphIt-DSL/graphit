@@ -13,6 +13,7 @@ namespace graphit {
         struct Program;
         struct Stmt;
         struct ExprStmt;
+        struct PrintStmt;
         struct AssignStmt;
         struct StmtBlock;
         struct Expr;
@@ -30,6 +31,7 @@ namespace graphit {
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
             virtual void visit(std::shared_ptr<AssignStmt>);
+            virtual void visit(std::shared_ptr<PrintStmt>);
             virtual void visit(std::shared_ptr<ExprStmt>);
             virtual void visit(std::shared_ptr<StmtBlock>);
             virtual void visit(std::shared_ptr<Expr>);

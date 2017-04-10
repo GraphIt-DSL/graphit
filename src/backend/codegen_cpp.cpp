@@ -34,12 +34,22 @@ namespace graphit {
         oss << ";" << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt){
+        printIndent();
+        oss << "std::cout << ";
+        print_stmt->expr->accept(this);
+        oss << "<< std::endl;" << std::endl;
+    }
+
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl){
         printIndent();
         oss << var_decl->modifier << ' ';
         var_decl->type->accept(this);
-        oss << var_decl->name << " = " ;
-        var_decl->initVal->accept(this);
+        oss << var_decl->name << " " ;
+        if (var_decl->initVal != nullptr){
+            oss << "= ";
+            var_decl->initVal->accept(this);
+        }
         oss << ";" << std::endl;
     }
 
@@ -50,8 +60,21 @@ namespace graphit {
         //generate the return type
         if (func_decl->result.isInitialized()) {
             func_decl->result.getType()->accept(this);
+
+            //insert an additional var_decl for returning result
+            const auto var_decl = std::make_shared<mir::VarDecl>();
+            var_decl->name = func_decl->result.getName();
+            var_decl->type = func_decl->result.getType();
+            if (func_decl->body->stmts == nullptr){
+                func_decl->body->stmts = new std::vector<mir::Stmt::Ptr>();
+            }
+            auto it = func_decl->body->stmts->begin();
+            func_decl->body->stmts->insert(it, var_decl);
+
+        } else if (func_decl->name == "main"){
+            oss << "int ";
         } else {
-            //void return type
+            //default to int return type
             oss << "void ";
         }
 
@@ -69,6 +92,8 @@ namespace graphit {
             printDelimiter = true;
         }
         oss << ") ";
+
+
 
         //if the function has a body
         if (func_decl->body->stmts) {
@@ -129,9 +154,9 @@ namespace graphit {
     };
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr){
         oss << "(";
-        oss << "(int) ";
+        //oss << "(int) ";
         oss << expr->val;
-        oss << ")";
+        oss << ") ";
     };
 
 
