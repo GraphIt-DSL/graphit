@@ -37,3 +37,8 @@ file(GLOB TEST_SOURCE_FILES test/c++/*.cpp)
 add_executable(graphit_test ${TEST_SOURCE_FILES})
 target_link_libraries(graphit_test gtest)
 target_link_libraries(graphit_test graphitlib)
+
+# Python tests
+set(PYTHON_SOURCE_FILES ./test/python/test.py)
+#add_executable(PYTHON_TEST ${PYTHON_SOURCE_FILES})
+#target_link_libraries(PYTHON_TEST ${PYTHON_LIBRARIES})
