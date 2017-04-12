@@ -19,15 +19,15 @@ namespace graphit {
         }
 
         void setProgram(fir::Program::Ptr program){
-            fir_program  = program;
+            fir_program_  = program;
         }
 
         fir::Program::Ptr getProgram(){
-            return fir_program;
+            return fir_program_;
         }
 
     private:
-        fir::Program::Ptr fir_program;
+        fir::Program::Ptr fir_program_;
     };
 }
 
