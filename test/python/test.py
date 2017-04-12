@@ -55,7 +55,6 @@ class TestGraphitCompiler(unittest.TestCase):
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
         # check the return code of the call as a way to check if compilation happened correctly
-        print graphit_compile_cmd
         self.assertNotEqual(subprocess.call(graphit_compile_cmd), 0)
 
 
@@ -64,6 +63,13 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_main_fail(self):
         self.basic_compile_test_fail("simple_main_fail.gt")
+
+    def test_main_print_four(self):
+        self.basic_compile_test("simple_main.gt")
+        proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        #check the value printed to stdout is 4
+        output = proc.stdout.readline()
+        self.assertEqual(int(output.strip()), 4)
 
 if __name__ == '__main__':
     #unittest.main()
