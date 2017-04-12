@@ -29,10 +29,11 @@ protected:
     bool basicTest(std::istream & is){
         bool output =  fe_->parseStream(is, context_, errors_);
         //prints out the FIR, just a hack for now
-        //TODO: fix the bug with unable to print FIR outside of the function
-        std::cout << "fir: " << std::endl;
-        std::cout << *(context_->getProgram());
-        std::cout << std::endl;
+        if (output == 0){
+            std::cout << "fir: " << std::endl;
+            std::cout << *(context_->getProgram());
+            std::cout << std::endl;
+        }
         return output;
     }
 
@@ -88,7 +89,7 @@ TEST_F(FrontendTest, MainFunctionWithPrint) {
 }
 
 TEST_F(FrontendTest, MainFunctionWithCall) {
-    istringstream is("func add(a : int, b: int) -> c:int c = a + b; end"
-                             "func main() add(4, 5); end");
+    istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
+                             " func main() add(4, 5); end");
     EXPECT_EQ (0,  basicTest(is));
 }

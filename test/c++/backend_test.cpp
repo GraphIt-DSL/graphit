@@ -77,3 +77,9 @@ TEST_F(BackendTest, MainFunctionWithPrint) {
     istringstream is("func main() print 4; end");
     EXPECT_EQ (0 , basicTest(is));
 }
+
+TEST_F(BackendTest, MainFunctionWithCall) {
+    istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
+                             " func main() add(4, 5); end");
+    EXPECT_EQ (0,  basicTest(is));
+}

@@ -119,7 +119,7 @@ namespace graphit {
             printEndIndent();
         }
         oss << ";";
-
+        oss << std::endl;
 
     };
 

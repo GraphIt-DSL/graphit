@@ -23,7 +23,7 @@ namespace graphit {
 
         // Only emit IR if no syntactic or semantic error was found.
         if (!errors->empty()) {
-            std::cout << "Error in parseing: " << std::endl;
+            std::cout << "Error in parsing: " << std::endl;
             for (auto & error : *errors){
                 std::cout << error << std::endl;
             }
