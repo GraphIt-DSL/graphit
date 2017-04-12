@@ -32,6 +32,12 @@ namespace graphit {
         oss << "#include <iostream> " << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){
+        printIndent();
+        expr_stmt->expr->accept(this);
+        oss << ";" << std::endl;
+    }
+
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt){
         printIndent();
         assign_stmt->lhs->accept(this);
@@ -141,6 +147,22 @@ namespace graphit {
                 break;
         }
     }
+
+    void CodeGenCPP::visit(mir::Call::Ptr call_expr){
+        oss << call_expr->name << "(";
+
+        bool printDelimiter = false;
+
+        for (auto arg : call_expr->args){
+            if (printDelimiter) {
+                oss << ", ";
+            }
+            arg->accept(this);
+            printDelimiter = true;
+        }
+
+        oss << ") ";
+    };
 
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr){
         oss << expr->var.getName();

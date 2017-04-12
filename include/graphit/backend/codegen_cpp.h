@@ -22,10 +22,13 @@ namespace graphit {
 
     protected:
 
+        virtual void visit(mir::ExprStmt::Ptr);
         virtual void visit(mir::AssignStmt::Ptr);
         virtual void visit(mir::PrintStmt::Ptr);
 
         virtual void visit(mir::FuncDecl::Ptr);
+
+        virtual void visit(mir::Call::Ptr);
         virtual void visit(mir::VarExpr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);

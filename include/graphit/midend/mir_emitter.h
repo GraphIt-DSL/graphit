@@ -28,6 +28,7 @@ namespace graphit {
             virtual void visit(fir::ConstDecl::Ptr);
             virtual void visit(fir::VarDecl::Ptr);
 
+            virtual void visit(fir::ExprStmt::Ptr);
             virtual void visit(fir::AssignStmt::Ptr);
             virtual void visit(fir::PrintStmt::Ptr);
 
@@ -36,8 +37,9 @@ namespace graphit {
 
             virtual void visit(fir::FuncDecl::Ptr);
 
-            virtual void visit(fir::VarExpr::Ptr);
 
+            virtual void visit(fir::CallExpr::Ptr);
+            virtual void visit(fir::VarExpr::Ptr);
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);

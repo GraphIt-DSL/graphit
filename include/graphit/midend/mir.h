@@ -172,7 +172,7 @@ namespace graphit {
         /// Calls a function that may any number of arguments.
         struct Call : public Expr {
             std::string name;
-            std::vector<Expr> args;
+            std::vector<Expr::Ptr> args;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

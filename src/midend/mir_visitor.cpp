@@ -49,6 +49,12 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(Call::Ptr expr) {
+            for (auto arg : expr->args){
+                arg->accept(this);
+            }
+        };
+
         void MIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }

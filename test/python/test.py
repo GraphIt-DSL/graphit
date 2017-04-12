@@ -10,15 +10,16 @@ class TestGraphitCompiler(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if not os.path.isdir("../../build_dir"):
+        build_dir = "../../cmake-build-debug"
+        if not os.path.isdir(build_dir):
             print "build the binaries"
             #shutil.rmtree("../../build_dir")
-            os.mkdir("../../build_dir")
-            os.chdir("../../build_dir")
+            os.mkdir(build_dir)
+            os.chdir(build_dir)
             subprocess.call(["cmake", ".."])
             subprocess.call(["make"])
         else:
-            os.chdir("../../build_dir")
+            os.chdir(build_dir)
 
         cls.root_test_input_dir = "../test/input/"
         cls.cpp_compiler = "g++"
@@ -28,8 +29,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def setUp(self):
         self.clean_up()
 
-    def tearDown(self):
-        self.clean_up()
+    #def tearDown(self):
+        #self.clean_up()
 
     def clean_up(self):
         #clean up previously generated files
@@ -37,6 +38,8 @@ class TestGraphitCompiler(unittest.TestCase):
             os.remove(self.output_file_name)
         if os.path.isfile(self.executable_file_name):
             os.remove(self.executable_file_name)
+
+    # utilities for setting up tests
 
     def basic_compile_test(self, input_file_name):
 
@@ -63,6 +66,14 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.output_file_name, "-o", self.executable_file_name]),
             0)
 
+    def expect_output_val(self, input_file_name, expected_output_val):
+        self.basic_compile_test(input_file_name)
+        proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        self.assertEqual(int(output.strip()), expected_output_val)
+
+    # actual test cases
 
     def test_main(self):
         self.basic_compile_test("simple_main.gt")
@@ -70,17 +81,21 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_main_fail(self):
         self.basic_compile_test_graphit_compile_fail("simple_main_fail.gt")
 
-    def test_main_print_four(self):
-        self.basic_compile_test("simple_main.gt")
-        proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        #check the value printed to stdout is 4
-        output = proc.stdout.readline()
-        self.assertEqual(int(output.strip()), 4)
+    def test_main_expect(self):
+        self.expect_output_val("simple_main.gt", 4)
 
     def test_simple_func_add_no_return(self):
         self.basic_compile_test_cpp_compile_fail("simple_func_add_no_return.gt")
 
+    def test_main_print_add(self):
+        self.basic_compile_test("main_print_add.gt")
+
+    def test_main_print_add_expect(self):
+        self.expect_output_val("main_print_add.gt", 9)
+
 if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_main_print_add'))
     unittest.TextTestRunner(verbosity=2).run(suite)

@@ -21,12 +21,11 @@ namespace graphit {
         retStmt = mir_var_decl;
     };
 
-    void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
-        auto mir_expr = std::make_shared<mir::AddExpr>();
-        mir_expr->lhs = emitExpr(fir_expr->lhs);
-        mir_expr->rhs = emitExpr(fir_expr->rhs);
-        retExpr = mir_expr;
-    };
+    void MIREmitter::visit(fir::ExprStmt::Ptr expr_stmt) {
+        auto mir_expr_stmt = std::make_shared<mir::ExprStmt>();
+        mir_expr_stmt->expr = emitExpr(expr_stmt->expr);
+        retStmt = mir_expr_stmt;
+    }
 
     void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
         auto mir_assign_stmt = std::make_shared<mir::AssignStmt>();
@@ -107,6 +106,25 @@ namespace graphit {
         mir_var_expr->var = associated_var;
         retExpr = mir_var_expr;
     }
+
+    void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::AddExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
+    void MIREmitter::visit(fir::CallExpr::Ptr call_expr){
+        auto mir_expr = std::make_shared<mir::Call>();
+        mir_expr->name = call_expr->func->ident;
+        std::vector<mir::Expr::Ptr> args;
+        for (auto & fir_arg : call_expr->args){
+            const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+            args.push_back(mir_arg);
+        }
+        mir_expr->args = args;
+        retExpr = mir_expr;
+    };
 
     void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
         auto type = emitType(ident_decl->type);

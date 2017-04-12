@@ -1,0 +1,7 @@
+func add(a : int, b: int) -> c:int
+    c = a + b;
+end
+
+func main()
+    print add(4, 5);
+ end

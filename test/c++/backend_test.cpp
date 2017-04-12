@@ -36,6 +36,11 @@ protected:
     bool basicTest(std::istream & is){
         fe_->parseStream(is, context_, errors_);
         graphit::Midend* me = new graphit::Midend(context_);
+
+        std::cout << "fir: " << std::endl;
+        std::cout << *(context_->getProgram());
+        std::cout << std::endl;
+
         me->emitMIR(mir_context_);
         graphit::Backend* be = new graphit::Backend(mir_context_);
         return be->emitCPP();
@@ -81,5 +86,11 @@ TEST_F(BackendTest, MainFunctionWithPrint) {
 TEST_F(BackendTest, MainFunctionWithCall) {
     istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
                              " func main() add(4, 5); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, MainFunctionWithPrintCall) {
+    istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
+                             " func main() print add(4, 5); end");
     EXPECT_EQ (0,  basicTest(is));
 }
