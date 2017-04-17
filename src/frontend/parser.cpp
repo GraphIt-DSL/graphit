@@ -1535,7 +1535,7 @@ namespace graphit {
         return tensorType;
     }
 
-// vector_block_type: 'vector' ['[' index_set ']']
+// vector_block_type: 'vector' ['[' index_set ']' | '{' element_type '}' ]
 //                    '(' (vector_block_type | tensor_component_type) ')'
     fir::NDTensorType::Ptr Parser::parseVectorBlockType() {
         auto tensorType = std::make_shared<fir::NDTensorType>();
@@ -1548,6 +1548,14 @@ namespace graphit {
             const fir::IndexSet::Ptr indexSet = parseIndexSet();
             tensorType->indexSets.push_back(indexSet);
             consume(Token::Type::RB);
+        }
+
+        // added to support specifying the Element Type.
+        // The vector is essentially a field of the Element
+        if (tryConsume(Token::Type::LC)) {
+            const fir::ElementType::Ptr element = parseElementType();
+            tensorType->element = element;
+            consume(Token::Type::RC);
         }
 
         consume(Token::Type::LP);

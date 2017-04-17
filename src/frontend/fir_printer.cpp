@@ -154,7 +154,13 @@ namespace graphit {
                 printDelimiter = true;
             }
 
-            oss << "](";
+            oss << "]";
+
+            oss << "{";
+            type->element->accept(this);
+            oss << "}";
+
+            oss << "(";
             type->blockType->accept(this);
             oss << ")";
 

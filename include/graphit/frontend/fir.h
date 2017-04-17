@@ -400,6 +400,8 @@ namespace graphit {
             std::vector<IndexSet::Ptr> indexSets;
             TensorType::Ptr            blockType;
             bool                       transposed = false;
+            //adding support for element type in vectors
+            ElementType::Ptr element;
 
             typedef std::shared_ptr<NDTensorType> Ptr;
 

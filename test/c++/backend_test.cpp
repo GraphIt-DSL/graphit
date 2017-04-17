@@ -94,3 +94,8 @@ TEST_F(BackendTest, MainFunctionWithPrintCall) {
                              " func main() print add(4, 5); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, ElementDecl) {
+    istringstream is("element Vertex end");
+    EXPECT_EQ (0,  basicTest(is));
+}

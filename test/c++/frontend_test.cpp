@@ -99,3 +99,14 @@ TEST_F(FrontendTest, MainFunctionWithPrintCall) {
                              " func main() print add(4, 5); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, ElementDecl) {
+    istringstream is("element Vertex end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleVecDecl) {
+    istringstream is("element Vertex end\n"
+                    "const vector_a : vector{Vertex}(float) = 0.0;");
+    EXPECT_EQ (0,  basicTest(is));
+}
