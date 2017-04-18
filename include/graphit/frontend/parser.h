@@ -127,6 +127,8 @@ namespace graphit {
         std::vector<ParseError>               *errors;
 
         fir::Expr::Ptr parseNewExpr();
+
+        fir::Type::Ptr parseVertexSetType();
     };
 }
 

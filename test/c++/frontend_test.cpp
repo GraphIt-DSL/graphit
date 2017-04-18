@@ -111,6 +111,13 @@ TEST_F(FrontendTest, SimpleVecDecl) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, SimpleVertexSet) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "extern vertices : VertexSet{Vertex};");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 //TEST_F(FrontendTest, SimpleVertexSetAlloc) {
 //    istringstream is("element Vertex end\n"
 //                             "const vector_a : vector{Vertex}(float) = 0.0;\n"

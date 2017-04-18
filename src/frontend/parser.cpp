@@ -1325,6 +1325,11 @@ namespace graphit {
             case Token::Type::SET:
                 type = parseUnstructuredSetType();
                 break;
+
+            case Token::Type::VERTEX_SET:
+                type = parseVertexSetType();
+                break;
+
             case Token::Type::GRID:
                 type = parseGridSetType();
                 break;
@@ -2114,6 +2119,10 @@ namespace graphit {
         }
 
         return token;
+    }
+
+    fir::Type::Ptr Parser::parseVertexSetType() {
+        return graphit::fir::Type::Ptr();
     }
 
     // added for parsing the allocation expression for GraphIt

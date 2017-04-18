@@ -934,6 +934,13 @@ namespace graphit {
             return node;
         }
 
+        void VertexSetType::copy(FIRNode::Ptr node) {
+            const auto vertexSetType = to<VertexSetType>(node);
+            Type::copy(vertexSetType);
+            element = vertexSetType->element->clone<ElementType>();
+        }
+
+
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,
                                        bool transposed) {
