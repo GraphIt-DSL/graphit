@@ -1403,16 +1403,25 @@ namespace graphit {
             virtual void copy(FIRNode::Ptr);
         };
 
+        struct NewExpr : public Expr {
+            typedef std::shared_ptr<NewExpr> Ptr;
+
+            ElementType::Ptr elementType;
+            int numElements;
+        };
 
         // Allocator expression for VertexSet
-//        struct VertexSetAllocExpr : public Expr {
-//            typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
-//            ElementType elementType;
-//            int numElements;
-//            virtual void accept(FIRVisitor *visitor) {
-//                visitor->visit(self<VertexSetAllocExpr>());
-//            }
-//        };
+        struct VertexSetAllocExpr : public NewExpr {
+            typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<VertexSetAllocExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+            virtual void copy(FIRNode::Ptr);
+        };
 
 
 // Utility functions

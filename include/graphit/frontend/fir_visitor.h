@@ -252,7 +252,7 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VertexSetType>){};
 
-            //virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+            virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
 
 
         private:

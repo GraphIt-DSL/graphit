@@ -934,6 +934,8 @@ namespace graphit {
             return node;
         }
 
+        //GraphIt additions
+
         void VertexSetType::copy(FIRNode::Ptr node) {
             const auto vertexSetType = to<VertexSetType>(node);
             Type::copy(vertexSetType);
@@ -944,6 +946,19 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+
+
+        void VertexSetAllocExpr::copy(FIRNode::Ptr node) {
+            //TODO: figure out what the copy operator should do
+
+        }
+
+        FIRNode::Ptr VertexSetAllocExpr::cloneNode() {
+            const auto node = std::make_shared<VertexSetAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
 
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,
