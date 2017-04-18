@@ -939,7 +939,11 @@ namespace graphit {
             Type::copy(vertexSetType);
             element = vertexSetType->element->clone<ElementType>();
         }
-
+        FIRNode::Ptr VertexSetType::cloneNode() {
+            const auto node = std::make_shared<VertexSetType>();
+            node->copy(shared_from_this());
+            return node;
+        }
 
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,

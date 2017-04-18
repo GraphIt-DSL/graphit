@@ -111,6 +111,10 @@ namespace graphit {
         double                              parseSignedFloatLiteral();
         fir::Test::Ptr                      parseTest();
 
+        //Graphit Set system
+        fir::VertexSetType::Ptr parseVertexSetType();
+
+
         void reportError(const Token &, std::string);
 
         Token peek(unsigned k = 0) const { return tokens.peek(k); }
@@ -126,9 +130,8 @@ namespace graphit {
         //const std::vector<fir::FuncDecl::Ptr> &intrinsics;
         std::vector<ParseError>               *errors;
 
-        fir::Expr::Ptr parseNewExpr();
+        //fir::Expr::Ptr parseNewExpr();
 
-        fir::Type::Ptr parseVertexSetType();
     };
 }
 

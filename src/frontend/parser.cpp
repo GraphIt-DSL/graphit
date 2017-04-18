@@ -2121,8 +2121,18 @@ namespace graphit {
         return token;
     }
 
-    fir::Type::Ptr Parser::parseVertexSetType() {
-        return graphit::fir::Type::Ptr();
+    fir::VertexSetType::Ptr Parser::parseVertexSetType() {
+        const Token setToken = consume(Token::Type::VERTEX_SET);
+        consume(Token::Type::LC);
+        const fir::ElementType::Ptr element = parseElementType();
+        const Token rightCurlyToken = consume(Token::Type::RC);
+
+        auto vertexSetType = std::make_shared<fir::VertexSetType>();
+        vertexSetType->setBeginLoc(setToken);
+        vertexSetType->element = element;
+        vertexSetType->setEndLoc(rightCurlyToken);
+
+        return vertexSetType;
     }
 
     // added for parsing the allocation expression for GraphIt

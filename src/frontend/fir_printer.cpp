@@ -811,5 +811,13 @@ namespace graphit {
             return oss;
         }
 
+
+        void FIRPrinter::visit(VertexSetType::Ptr type) {
+            oss << "vertexset{";
+            type->element->accept(this);
+            oss << "}";
+        }
+
+
     }
 }

@@ -1399,6 +1399,7 @@ namespace graphit {
             }
 
         protected:
+            virtual FIRNode::Ptr cloneNode();
             virtual void copy(FIRNode::Ptr);
         };
 

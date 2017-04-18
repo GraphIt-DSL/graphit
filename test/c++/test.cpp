@@ -15,6 +15,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithCall";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVecDecl";
 
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSet";
+
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetAlloc";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionWithVarDecl";
