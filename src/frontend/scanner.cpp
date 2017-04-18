@@ -50,6 +50,8 @@ namespace graphit {
         if (token == "xor") return Token::Type::XOR;
         if (token == "true") return Token::Type::TRUE;
         if (token == "false") return Token::Type::FALSE;
+        if (token == "vertexset") return Token::Type::VERTEX_SET;
+
 
         // If string does not correspond to a keyword, assume it is an identifier.
         return Token::Type::IDENT;

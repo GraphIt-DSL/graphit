@@ -90,7 +90,8 @@ namespace graphit {
             NOT,
             XOR,
             TRUE,
-            FALSE
+            FALSE,
+            VERTEX_SET
         };
 
         Type        type;

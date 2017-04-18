@@ -752,9 +752,16 @@ namespace graphit {
         }
     }
 
-// expr: map_expr | or_expr
+// expr: map_expr | new_expr | or_expr
     fir::Expr::Ptr Parser::parseExpr() {
-        return (peek().type == Token::Type::MAP) ? parseMapExpr() : parseOrExpr();
+        switch(peek().type){
+            case Token::Type::MAP:
+                return parseMapExpr();
+//            case Token::Type::NEW:
+//                return parseNewExpr();
+            default:
+                return parseOrExpr();
+        }
     }
 
 // map_expr: 'map' ident ['<' endpoints '>'] ['(' [expr_params] ')']
@@ -2108,6 +2115,29 @@ namespace graphit {
 
         return token;
     }
+
+    // added for parsing the allocation expression for GraphIt
+    // new_expr: 'new' 'VertexSet' '{' element_type '}' '(' [expr] ')'
+//    fir::Expr::Ptr Parser::parseNewExpr() {
+//
+//        const Token newToken = consume(Token::Type::NEW);
+//        const Token vertexSetToken = consume(Token::Type::VERTEX_SET);
+//        consume(Token::Type::LC);
+//        const fir::ElementType::Ptr element = parseElementType();
+//        consume(Token::Type::RC);
+//
+//        consume(Token::Type::LP);
+//
+//        if (tryConsume(Token::Type::RP)){
+//            // no expression in parenthesis
+//
+//        } else {
+//            //expression in parenthesis
+//
+//        }
+//
+//        return graphit::fir::Expr::Ptr();
+//    }
 
 }
 

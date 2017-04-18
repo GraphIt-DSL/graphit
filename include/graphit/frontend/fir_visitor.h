@@ -93,6 +93,8 @@ namespace graphit {
         struct ApplyStmt;
         struct Test;
 
+        struct VertexSetAllocExpr;
+
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
 
@@ -245,6 +247,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ApplyStmt>);
 
             virtual void visit(std::shared_ptr<Test>);
+
+            //virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+
 
         private:
             void visitUnaryExpr(std::shared_ptr<UnaryExpr>);

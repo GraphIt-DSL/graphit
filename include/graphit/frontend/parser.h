@@ -57,6 +57,7 @@ namespace graphit {
         fir::ExprStmt::Ptr                  parseExprOrAssignStmt();
         fir::Expr::Ptr                      parseExpr();
         fir::MapExpr::Ptr                   parseMapExpr();
+        //fir::NewExpr::Ptr                   parseNewExpr();
         fir::Expr::Ptr                      parseOrExpr();
         fir::Expr::Ptr                      parseAndExpr();
         fir::Expr::Ptr                      parseXorExpr();
@@ -124,6 +125,8 @@ namespace graphit {
 
         //const std::vector<fir::FuncDecl::Ptr> &intrinsics;
         std::vector<ParseError>               *errors;
+
+        fir::Expr::Ptr parseNewExpr();
     };
 }
 

@@ -1389,6 +1389,16 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+        // Allocator expression for VertexSet
+//        struct VertexSetAllocExpr : public Expr {
+//            typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
+//            ElementType elementType;
+//            int numElements;
+//            virtual void accept(FIRVisitor *visitor) {
+//                visitor->visit(self<VertexSetAllocExpr>());
+//            }
+//        };
+
 
 // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;
