@@ -403,7 +403,10 @@ namespace graphit {
 
             constDecl->name = parseIdent();
             if (tryConsume(Token::Type::COL)) {
-                constDecl->type = parseTensorType();
+                //constDecl->type = parseTensorType();
+                // GraphIt wants to be able to support const SET types, more than just TensorTypes.
+                // Needed for dynamic sets and loaders.
+                constDecl->type = parseType();
             }
             consume(Token::Type::ASSIGN);
             constDecl->initVal = parseExpr();
@@ -757,8 +760,8 @@ namespace graphit {
         switch(peek().type){
             case Token::Type::MAP:
                 return parseMapExpr();
-//            case Token::Type::NEW:
-//                return parseNewExpr();
+            case Token::Type::NEW:
+                return parseNewExpr();
             default:
                 return parseOrExpr();
         }
@@ -2137,10 +2140,37 @@ namespace graphit {
 
     // added for parsing the allocation expression for GraphIt
     // new_expr: 'new' 'VertexSet' '{' element_type '}' '(' [expr] ')'
-//    fir::Expr::Ptr Parser::parseNewExpr() {
-//
-//        const Token newToken = consume(Token::Type::NEW);
-//        const Token vertexSetToken = consume(Token::Type::VERTEX_SET);
+    fir::NewExpr::Ptr Parser::parseNewExpr() {
+
+        const Token newToken = consume(Token::Type::NEW);
+
+        fir::NewExpr::Ptr output_new_expr;
+
+        if (tryConsume(Token::Type::VERTEX_SET)){
+            output_new_expr = std::make_shared<fir::VertexSetAllocExpr>();
+
+            consume(Token::Type::LC);
+            const auto element_type = parseElementType();
+            output_new_expr->elementType = element_type;
+            consume(Token::Type::RC);
+
+            consume(Token::Type::LP);
+            if (tryConsume(Token::Type::RP)){
+                //no expression in the
+            }else {
+                const auto expr = parseExpr();
+                output_new_expr->numElements = expr;
+                consume(Token::Type::RP);
+            }
+        }
+
+        output_new_expr->setBeginLoc(newToken);
+        // TODO: fix the hack for the end line number
+        output_new_expr->setEndLoc(newToken);
+
+        return output_new_expr;
+
+        //const Token vertexSetToken = consume(Token::Type::VERTEX_SET);
 //        consume(Token::Type::LC);
 //        const fir::ElementType::Ptr element = parseElementType();
 //        consume(Token::Type::RC);
@@ -2155,8 +2185,7 @@ namespace graphit {
 //
 //        }
 //
-//        return graphit::fir::Expr::Ptr();
-//    }
+    }
 
 }
 

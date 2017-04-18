@@ -1407,7 +1407,7 @@ namespace graphit {
             typedef std::shared_ptr<NewExpr> Ptr;
 
             ElementType::Ptr elementType;
-            int numElements;
+            Expr::Ptr numElements;
         };
 
         // Allocator expression for VertexSet

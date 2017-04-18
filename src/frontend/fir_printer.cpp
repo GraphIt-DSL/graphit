@@ -818,6 +818,16 @@ namespace graphit {
             oss << "}";
         }
 
+        void FIRPrinter::visit(VertexSetAllocExpr::Ptr expr) {
+            oss << "alloc vertexset {";
+            expr->elementType->accept(this);
+            oss << "}(";
+            if (expr->numElements != nullptr){
+                expr->numElements->accept(this);
+            }
+            oss << ")";
+        }
+
 
     }
 }

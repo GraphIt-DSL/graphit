@@ -57,7 +57,6 @@ namespace graphit {
         fir::ExprStmt::Ptr                  parseExprOrAssignStmt();
         fir::Expr::Ptr                      parseExpr();
         fir::MapExpr::Ptr                   parseMapExpr();
-        //fir::NewExpr::Ptr                   parseNewExpr();
         fir::Expr::Ptr                      parseOrExpr();
         fir::Expr::Ptr                      parseAndExpr();
         fir::Expr::Ptr                      parseXorExpr();
@@ -112,7 +111,8 @@ namespace graphit {
         fir::Test::Ptr                      parseTest();
 
         //Graphit Set system
-        fir::VertexSetType::Ptr parseVertexSetType();
+        fir::VertexSetType::Ptr             parseVertexSetType();
+        fir::NewExpr::Ptr                   parseNewExpr();
 
 
         void reportError(const Token &, std::string);
