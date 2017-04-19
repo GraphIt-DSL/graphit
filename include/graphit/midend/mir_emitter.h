@@ -46,6 +46,8 @@ namespace graphit {
 
 
             virtual void visit(fir::ScalarType::Ptr);
+            virtual void visit(fir::ElementType::Ptr);
+            virtual void visit(fir::VertexSetType::Ptr);
 
 
             MIRContext *ctx;
@@ -60,10 +62,10 @@ namespace graphit {
             mir::Expr::Ptr     emitExpr(fir::Expr::Ptr);
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
             mir::Type::Ptr     emitType(fir::Type::Ptr);
-            mir::Var      emitVar (fir::IdentDecl::Ptr);
+            mir::Var           emitVar (fir::IdentDecl::Ptr);
 
             void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
-
+            void addElementType(mir::ElementType::Ptr);
         };
 
 }

@@ -51,6 +51,10 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::VertexSetType::Ptr) {
+        retType = std::make_shared<mir::VertexSetType>();
+    }
+
     void MIREmitter::visit(fir::ScalarType::Ptr type){
         switch (type->type) {
             case fir::ScalarType::Type::INT: {
@@ -224,6 +228,13 @@ namespace graphit {
         return ret;
     }
 
+    void MIREmitter::visit(fir::ElementType::Ptr element_type) {
+        const auto mir_element_type = std::make_shared<mir::ElementType>();
+        mir_element_type->ident = element_type->ident;
+        addElementType(mir_element_type);
+    }
+
+
     void MIREmitter::addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const){
         //TODO: see if there is a cleaner way to do this, constructor may be???
         //construct a var decl variable
@@ -245,6 +256,11 @@ namespace graphit {
             //TODO:: need to figure out what we do here
         }
     }
+
+    void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
+        ctx->addElementType(element_type);
+    }
+
 
 
 

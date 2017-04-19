@@ -89,9 +89,36 @@ namespace graphit {
             }
 
 
+            void addElementType(mir::ElementType::Ptr element_type){
+                //set up entries in the relevant maps
+                num_elements_map[element_type] = 0;
+                properties_map[element_type] = new std::vector<mir::VarDecl::Ptr>();
+            }
+
+            bool updateElementCount(mir::ElementType::Ptr element_type, int count){
+                if (num_elements_map.find(element_type) == num_elements_map.end()){
+                    //map does not contain the element type
+                    return false;
+                } else {
+                    num_elements_map[element_type] = count;
+                    return true;
+                }
+            }
+
+            bool updateElementProperties(mir::ElementType::Ptr element_type, mir::VarDecl::Ptr var_decl){
+                if (properties_map.find(element_type) == properties_map.end()){
+                    //map does not contain the element type
+                    return false;
+                } else {
+                    properties_map[element_type]->push_back(var_decl);
+                    return true;
+                }
+            }
 
         private:
             //mir::Program::Ptr mir_program;
+            std::map<mir::ElementType::Ptr, int> num_elements_map;
+            std::map<mir::ElementType::Ptr, std::vector<mir::VarDecl::Ptr>*> properties_map;
             std::vector<mir::VarDecl::Ptr> constants;
             std::list<std::vector<mir::Stmt::Ptr>> statements;
             std::map<std::string, mir::FuncDecl::Ptr>  functions;

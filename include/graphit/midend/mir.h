@@ -235,6 +235,16 @@ namespace graphit {
 
         };
 
+        struct VertexSetType : public Type {
+            ElementType::Ptr element;
+
+            typedef std::shared_ptr<VertexSetType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VertexSetType>());
+            }
+
+        };
+
     }
 
 }

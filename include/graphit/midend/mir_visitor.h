@@ -29,6 +29,7 @@ namespace graphit {
         struct IdentDecl;
         struct FuncDecl;
         struct ElementType;
+        struct VertexSetType;
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
@@ -48,6 +49,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IdentDecl>){};
             virtual void visit(std::shared_ptr<FuncDecl>);
             virtual void visit(std::shared_ptr<ElementType>){};
+            virtual void visit(std::shared_ptr<VertexSetType>){};
 
 
         private:
