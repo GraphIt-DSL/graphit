@@ -234,11 +234,17 @@ namespace graphit {
         assert(vector_element_type != nullptr);
 
         // read the size of the array
-        const auto size = mir_context_->getElementCount(vector_type->element_type);
-        assert(size != nullptr);
-
+        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+        assert(size_expr != nullptr);
         vector_element_type->accept(this);
-        oss << name << " ";
+        // pointer declaration
+        oss << "* ";
+        oss << "__restrict ";
+        oss << name << " = new ";
+        vector_element_type->accept(this);
+        oss << "[ ";
+        size_expr->accept(this);
+        oss << "]; ";
     }
 
 
