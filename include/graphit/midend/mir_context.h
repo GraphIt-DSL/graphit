@@ -91,34 +91,45 @@ namespace graphit {
 
             void addElementType(mir::ElementType::Ptr element_type){
                 //set up entries in the relevant maps
-                num_elements_map[element_type] = 0;
-                properties_map[element_type] = new std::vector<mir::VarDecl::Ptr>();
+                const auto zero_int = std::make_shared<mir::IntLiteral>();
+                zero_int->val = 0;
+
+                num_elements_map[element_type->ident] = zero_int;
+                properties_map[element_type->ident] = new std::vector<mir::VarDecl::Ptr>();
             }
 
-            bool updateElementCount(mir::ElementType::Ptr element_type, int count){
-                if (num_elements_map.find(element_type) == num_elements_map.end()){
+            bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
+                if (num_elements_map.find(element_type->ident) == num_elements_map.end()){
                     //map does not contain the element type
                     return false;
                 } else {
-                    num_elements_map[element_type] = count;
+                    num_elements_map[element_type->ident] = count_expr;
                     return true;
                 }
             }
 
             bool updateElementProperties(mir::ElementType::Ptr element_type, mir::VarDecl::Ptr var_decl){
-                if (properties_map.find(element_type) == properties_map.end()){
+                if (properties_map.find(element_type->ident) == properties_map.end()){
                     //map does not contain the element type
                     return false;
                 } else {
-                    properties_map[element_type]->push_back(var_decl);
+                    properties_map[element_type->ident]->push_back(var_decl);
                     return true;
                 }
             }
 
-        private:
+            mir::Expr::Ptr getElementCount(mir::ElementType::Ptr element_type){
+                if (num_elements_map.find(element_type->ident) == num_elements_map.end()) {
+                    return nullptr;
+                } else {
+                    return num_elements_map[element_type->ident];
+                }
+            }
+
+        //private:
             //mir::Program::Ptr mir_program;
-            std::map<mir::ElementType::Ptr, int> num_elements_map;
-            std::map<mir::ElementType::Ptr, std::vector<mir::VarDecl::Ptr>*> properties_map;
+            std::map<std::string, mir::Expr::Ptr> num_elements_map;
+            std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map;
             std::vector<mir::VarDecl::Ptr> constants;
             std::list<std::vector<mir::Stmt::Ptr>> statements;
             std::map<std::string, mir::FuncDecl::Ptr>  functions;

@@ -8,6 +8,7 @@ namespace graphit {
 
 
     void MIREmitter::visit(fir::ConstDecl::Ptr const_decl){
+
         addVarOrConst(const_decl, true);
     };
 
@@ -282,8 +283,28 @@ namespace graphit {
 
 
         if (is_const){
-            mir_var_decl->modifier = "const";
-            ctx->addConstant(mir_var_decl);
+
+            if (std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type) != nullptr){
+                mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type);
+                if (type->element_type !=nullptr) {
+                    // this is a field / system vector associated with an ElementType
+
+                    if (ctx->updateElementProperties(
+                            type->element_type, mir_var_decl) != true)
+                        std::cout << "error in adding constant" << std::endl;
+                }
+            }
+            else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr){
+                mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
+                if (mir_var_decl->initVal != nullptr){
+                    ctx->updateElementCount(type->element, mir_var_decl->initVal);
+                }
+            }
+            else{
+                mir_var_decl->modifier = "const";
+                ctx->addConstant(mir_var_decl);
+            }
+
         } else {
             //regular var decl
             //TODO:: need to figure out what we do here

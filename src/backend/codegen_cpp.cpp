@@ -6,14 +6,27 @@
 
 namespace graphit {
     int CodeGenCPP::genCPP(MIRContext *mir_context) {
-
+        mir_context_ = mir_context;
         genIncludeStmts();
+        genElementData();
 
         //Processing the constants
         for (auto constant : mir_context->getConstants()){
-            constant->accept(this);
-        }
 
+//            if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) !=nullptr){
+//                mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
+//                // if the constant decl is a field property of an element (system vector)
+//                if (type->element_type != nullptr){
+//                    genPropertyArrayImplementation(constant);
+//                }
+//            } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+//                // if the constant is a vertex set  decl
+//                // currently, no code is generated
+//            } else {
+//                // regular constant declaration
+            constant->accept(this);
+//            }
+        }
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         auto functions = mir_context->getFunctions();
@@ -195,7 +208,40 @@ namespace graphit {
         //oss << "(int) ";
         oss << expr->val;
         oss << ") ";
+    }
+
+    // Materialize the Element Data
+    void CodeGenCPP::genElementData() {
+        for (auto const & element_type_entry : mir_context_->properties_map){
+            // for each element type
+            for (auto const & var_decl : *element_type_entry.second){
+                // for each field / system vector of the element
+                // generate just array implementation for now
+                genPropertyArrayImplementation(var_decl);
+            }
+        }
+
     };
+
+    void CodeGenCPP::genPropertyArrayImplementation(mir::VarDecl::Ptr var_decl) {
+        // read the name of the array
+        const auto name = var_decl->name;
+
+        // read the type of the array
+        mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+        assert(vector_type != nullptr);
+        mir::ScalarType::Ptr vector_element_type = vector_type->vector_element_type;
+        assert(vector_element_type != nullptr);
+
+        // read the size of the array
+        const auto size = mir_context_->getElementCount(vector_type->element_type);
+        assert(size != nullptr);
+
+        vector_element_type->accept(this);
+        oss << name << " ";
+    }
+
+
 
 
 

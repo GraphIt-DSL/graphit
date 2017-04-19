@@ -50,6 +50,12 @@ namespace graphit {
         void printEndIndent() { oss << std::string(2 * indentLevel, ' ') << "}"; }
         std::ostream &oss;
         unsigned      indentLevel;
+
+        void genPropertyArrayImplementation(mir::VarDecl::Ptr shared_ptr);
+
+        MIRContext * mir_context_;
+
+        void genElementData();
     };
 }
 
