@@ -53,8 +53,15 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::VertexSetType::Ptr) {
-        retType = std::make_shared<mir::VertexSetType>();
+    void MIREmitter::visit(fir::VertexSetType::Ptr vertex_set_type) {
+        const auto mir_vertex_set_type = std::make_shared<mir::VertexSetType>();
+        mir_vertex_set_type->element = std::dynamic_pointer_cast<mir::ElementType>(
+                emitType(vertex_set_type->element));
+        if (! mir_vertex_set_type){
+            std::cout << "Error in Emitting MIR VertexSetType " << std::endl;
+            return;
+        };
+        retType = mir_vertex_set_type;
     }
 
     void MIREmitter::visit(fir::ScalarType::Ptr type){
@@ -124,6 +131,13 @@ namespace graphit {
         retStmt = output_stmt_block;
     }
 
+    void MIREmitter::visit(fir::VertexSetAllocExpr::Ptr expr){
+        // Currently we only record a size information in the MIR::VertexSetAllocExpr
+        const auto mir_vertexsetalloc_expr = std::make_shared<mir::VertexSetAllocExpr>();
+        mir_vertexsetalloc_expr->size_expr = emitExpr(expr->numElements);
+        retExpr = mir_vertexsetalloc_expr;
+    }
+
     // use of variables
     void MIREmitter::visit(fir::VarExpr::Ptr var_expr){
         auto mir_var_expr = std::make_shared<mir::VarExpr>();
@@ -155,6 +169,7 @@ namespace graphit {
         const auto mir_element_type = std::make_shared<mir::ElementType>();
         mir_element_type->ident = element_type_decl->name->ident;
         addElementType(mir_element_type);
+        retType = mir_element_type;
     }
 
     void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){

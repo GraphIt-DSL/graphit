@@ -198,6 +198,16 @@ namespace graphit {
             }
         };
 
+
+        struct VertexSetAllocExpr : public Expr {
+            Expr::Ptr size_expr;
+            typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VertexSetAllocExpr>());
+            }
+
+        };
+
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
             typedef std::shared_ptr<BinaryExpr> Ptr;

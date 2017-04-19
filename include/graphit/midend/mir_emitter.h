@@ -38,7 +38,7 @@ namespace graphit {
 
             virtual void visit(fir::FuncDecl::Ptr);
 
-
+            virtual void visit(fir::VertexSetAllocExpr::Ptr);
             virtual void visit(fir::CallExpr::Ptr);
             virtual void visit(fir::VarExpr::Ptr);
             virtual void visit(fir::AddExpr::Ptr);

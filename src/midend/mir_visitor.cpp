@@ -72,6 +72,10 @@ namespace graphit {
             expr->rhs->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<VertexSetAllocExpr> expr) {
+            expr->size_expr->accept(this);
+        }
+
 
     }
 }
