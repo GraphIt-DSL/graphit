@@ -17,6 +17,7 @@ namespace graphit {
         struct AssignStmt;
         struct StmtBlock;
         struct Expr;
+        struct FloatLiteral;
         struct IntLiteral;
         struct Call;
         struct VarExpr;
@@ -40,6 +41,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<StmtBlock>);
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
+            virtual void visit(std::shared_ptr<FloatLiteral>){}
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VarExpr>){};
             virtual void visit(std::shared_ptr<AddExpr>);

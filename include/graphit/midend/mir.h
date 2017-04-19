@@ -189,6 +189,15 @@ namespace graphit {
             }
         };
 
+        struct FloatLiteral : public Expr {
+            typedef std::shared_ptr<FloatLiteral> Ptr;
+            float val = 0;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<FloatLiteral>());
+            }
+        };
+
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
             typedef std::shared_ptr<BinaryExpr> Ptr;

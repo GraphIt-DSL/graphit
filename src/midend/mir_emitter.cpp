@@ -56,16 +56,17 @@ namespace graphit {
     }
 
     void MIREmitter::visit(fir::ScalarType::Ptr type){
+        auto output = std::make_shared<mir::ScalarType>();
+
         switch (type->type) {
-            case fir::ScalarType::Type::INT: {
-                auto output = std::make_shared<mir::ScalarType>();
+            case fir::ScalarType::Type::INT:
                 output->type = mir::ScalarType::Type::INT;
                 retType = output;
                 break;
-            }
-//            case ScalarType::Type::FLOAT:
-//                retType = ir::Float;
-//                break;
+            case fir::ScalarType::Type::FLOAT:
+                output->type = mir::ScalarType::Type::FLOAT;
+                retType = output;
+                break;
 //            case ScalarType::Type::BOOL:
 //                retType = ir::Boolean;
 //                break;
@@ -76,11 +77,29 @@ namespace graphit {
 //                retType = ir::String;
 //                break;
             default:
+                std::cout << "visit(fir::ScalarType) unrecognized scalar type" << std::endl;
                 unreachable;
                 break;
         }
     }
 
+    void MIREmitter::visit(fir::NDTensorType::Ptr ND_tensor_type) {
+        const auto mir_vector_type = std::make_shared<mir::VectorType>();
+        //TODO: fix the code to deal with emitting various different types
+        if (ND_tensor_type->element != nullptr){
+            mir_vector_type->element_type = std::dynamic_pointer_cast<mir::ElementType> (
+                    emitType(ND_tensor_type->element));
+            assert(mir_vector_type->element_type != nullptr);
+        }
+
+
+        mir_vector_type->vector_element_type = std::dynamic_pointer_cast<mir::ScalarType>(
+                emitType(ND_tensor_type->blockType));
+        assert(mir_vector_type->vector_element_type != nullptr);
+
+
+        retType = mir_vector_type;
+    }
 
 
     void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){
@@ -185,9 +204,16 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::FloatLiteral::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::FloatLiteral>();
+        mir_expr->val = fir_expr->val;
+        retExpr = mir_expr;
+    };
+
     mir::Expr::Ptr MIREmitter::emitExpr(fir::Expr::Ptr ptr){
         auto tmpExpr = retExpr;
-        retExpr = std::make_shared<mir::Expr>();
+        //we should get a null when we don't emit the right type of expr
+        //retExpr = std::make_shared<mir::Expr>();
 
         ptr->accept(this);
         const mir::Expr::Ptr ret = retExpr;
@@ -232,6 +258,7 @@ namespace graphit {
         const auto mir_element_type = std::make_shared<mir::ElementType>();
         mir_element_type->ident = element_type->ident;
         addElementType(mir_element_type);
+        retType = mir_element_type;
     }
 
 

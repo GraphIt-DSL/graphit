@@ -42,12 +42,14 @@ namespace graphit {
             virtual void visit(fir::VarExpr::Ptr);
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
-            virtual void visit(fir::IntLiteral::Ptr);
 
+            virtual void visit(fir::FloatLiteral::Ptr);
+            virtual void visit(fir::IntLiteral::Ptr);
 
             virtual void visit(fir::ScalarType::Ptr);
             virtual void visit(fir::ElementType::Ptr);
             virtual void visit(fir::VertexSetType::Ptr);
+            virtual void visit(fir::NDTensorType::Ptr);
 
 
             MIRContext *ctx;
