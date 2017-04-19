@@ -28,6 +28,7 @@ namespace graphit {
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+        struct ElementType;
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
@@ -46,6 +47,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VarDecl>);
             virtual void visit(std::shared_ptr<IdentDecl>){};
             virtual void visit(std::shared_ptr<FuncDecl>);
+            virtual void visit(std::shared_ptr<ElementType>){};
 
 
         private:

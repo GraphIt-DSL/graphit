@@ -99,3 +99,10 @@ TEST_F(BackendTest, ElementDecl) {
     istringstream is("element Vertex end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleVertexSetDeclAlloc) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);");
+    EXPECT_EQ (0,  basicTest(is));
+}

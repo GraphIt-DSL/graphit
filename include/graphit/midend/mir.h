@@ -226,6 +226,15 @@ namespace graphit {
             }
         };
 
+        struct ElementType : public Type {
+            std::string ident;
+            typedef std::shared_ptr<ElementType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ElementType>());
+            }
+
+        };
+
     }
 
 }

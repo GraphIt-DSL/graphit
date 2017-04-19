@@ -15,18 +15,24 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithCall";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVecDecl";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSet";
-    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetAlloc";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetAlloc";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetDeclAlloc";
+
+
+    //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
+    //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithCall";
+    //::testing::GTEST_FLAG(filter) = "MidendTest.SimpleVertexSetDeclAlloc";
+
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionWithVarDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionWithAdd";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MainFunctionWithPrint";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MainFunctionWithCall";
     //::testing::GTEST_FLAG(filter) = "BackendTest.ElementDecl";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetDeclAlloc";
 
 
 
-    //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
-    //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithCall";
 
 
 
