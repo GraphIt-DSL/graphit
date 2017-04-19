@@ -214,6 +214,7 @@ namespace graphit {
             }
         };
 
+
         struct ScalarType : public Type {
             enum class Type {
                 INT, FLOAT, BOOL, COMPLEX, STRING
@@ -233,6 +234,17 @@ namespace graphit {
                 visitor->visit(self<ElementType>());
             }
 
+        };
+
+        struct VectorType : public Type {
+            ElementType::Ptr element_type;
+            ScalarType::Ptr vector_element_type;
+
+            typedef std::shared_ptr<VectorType> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VectorType>());
+            }
         };
 
         struct VertexSetType : public Type {
