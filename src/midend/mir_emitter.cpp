@@ -6,6 +6,7 @@
 
 namespace graphit {
 
+
     void MIREmitter::visit(fir::ConstDecl::Ptr const_decl){
         addVarOrConst(const_decl, true);
     };
@@ -149,6 +150,12 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
+        const auto mir_element_type = std::make_shared<mir::ElementType>();
+        mir_element_type->ident = element_type_decl->name->ident;
+        addElementType(mir_element_type);
+    }
+
     void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
         auto type = emitType(ident_decl->type);
         //TODO: add type info
@@ -257,7 +264,6 @@ namespace graphit {
     void MIREmitter::visit(fir::ElementType::Ptr element_type) {
         const auto mir_element_type = std::make_shared<mir::ElementType>();
         mir_element_type->ident = element_type->ident;
-        addElementType(mir_element_type);
         retType = mir_element_type;
     }
 

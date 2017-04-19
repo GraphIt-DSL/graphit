@@ -29,6 +29,7 @@ namespace graphit {
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+
         struct ElementType;
         struct VertexSetType;
         struct VectorType;

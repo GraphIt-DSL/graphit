@@ -29,10 +29,15 @@ namespace graphit {
         virtual void visit(mir::FuncDecl::Ptr);
 
         virtual void visit(mir::Call::Ptr);
+
         virtual void visit(mir::VarExpr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
+
+        virtual void visit(mir::FloatLiteral::Ptr);
         virtual void visit(mir::IntLiteral::Ptr);
+
+
         virtual void visit(mir::VarDecl::Ptr);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 

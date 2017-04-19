@@ -25,6 +25,7 @@ namespace graphit {
                 program->accept(this);
             }
 
+            virtual void visit(fir::ElementTypeDecl::Ptr);
             virtual void visit(fir::ConstDecl::Ptr);
             virtual void visit(fir::VarDecl::Ptr);
 
