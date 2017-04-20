@@ -103,3 +103,11 @@ TEST_F(MidendTest, SimpleVertexSetDeclAlloc) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(MidendTest, SimpleVertexSetDeclAllocWithMain) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func main() print 4; end");
+    EXPECT_EQ (0, basicTest(is));
+}

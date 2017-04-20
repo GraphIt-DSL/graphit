@@ -244,7 +244,7 @@ namespace graphit {
         vector_element_type->accept(this);
         oss << "[ ";
         size_expr->accept(this);
-        oss << "]; ";
+        oss << "]; " << std::endl;
     }
 
 

@@ -1,0 +1,8 @@
+element Vertex end
+
+const vector_a : vector{Vertex}(float) = 0.0;
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+
+func main()
+    print 4;
+end

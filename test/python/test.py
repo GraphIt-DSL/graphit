@@ -93,9 +93,16 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_main_print_add_expect(self):
         self.expect_output_val("main_print_add.gt", 9)
 
+    def test_simple_array(self):
+        self.basic_compile_test("simple_array.gt")
+
 if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))
+
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_simple_array'))
+
     unittest.TextTestRunner(verbosity=2).run(suite)
