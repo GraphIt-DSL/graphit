@@ -256,7 +256,9 @@ namespace graphit {
         };
 
         struct VectorType : public Type {
+            // optional, used for element field / system vectors
             ElementType::Ptr element_type;
+            // scalar type for each element of the vector (not the global Elements) 
             ScalarType::Ptr vector_element_type;
 
             typedef std::shared_ptr<VectorType> Ptr;
