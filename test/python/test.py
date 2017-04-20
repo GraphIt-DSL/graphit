@@ -96,13 +96,16 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_array(self):
         self.basic_compile_test("simple_array.gt")
 
+    def test_simple_multi_arrays(self):
+        self.basic_compile_test("simple_multi_arrays.gt")
+
 if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_simple_array'))
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_multi_arrays'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

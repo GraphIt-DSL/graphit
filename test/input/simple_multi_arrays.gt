@@ -1,0 +1,11 @@
+element Vertex end
+
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+
+const old_rank : vector{Vertex}(float) = 0.0;
+const new_rank : vector{Vertex}(float) = 0.0;
+
+
+func main()
+    print 4;
+end

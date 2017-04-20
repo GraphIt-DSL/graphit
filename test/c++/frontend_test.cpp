@@ -135,3 +135,13 @@ TEST_F(FrontendTest, SimpleVertexSetDeclAllocWithMain) {
                              "func main() print 4; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimpleMultiArrayAllocWithMain) {
+    istringstream is("element Vertex end\n"
+                             "const old_rank : vector{Vertex}(float) = 0.0;\n"
+                             "const new_rank : vector{Vertex}(float) = 0.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func main() print 4; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
