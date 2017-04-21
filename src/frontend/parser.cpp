@@ -56,7 +56,7 @@ namespace graphit {
                 case Token::Type::CONST:
                     return parseConstDecl();
                 default:
-                    reportError(peek(), "a program element");
+                    reportError(peek(), "a program element type");
                     throw SyntaxError();
                     break;
             }
@@ -2148,10 +2148,21 @@ namespace graphit {
         const fir::ElementType::Ptr element = parseElementType();
         const Token rightCurlyToken = consume(Token::Type::RC);
 
+        consume(Token::Type::LP);
+        std::vector<fir::ElementType::Ptr> vertex_element_type_list;
+        do {
+            const fir::ElementType::Ptr vertex_element_type = parseElementType();
+            vertex_element_type_list.push_back(vertex_element_type);
+        } while (tryConsume(Token::Type::COMMA));
+
+        const Token rightP = consume(Token::Type::RP);
+
+
         auto edgeSetType = std::make_shared<fir::EdgeSetType>();
         edgeSetType->setBeginLoc(setToken);
-        edgeSetType->element = element;
+        edgeSetType->edge_element_type = element;
         edgeSetType->setEndLoc(rightCurlyToken);
+
         return edgeSetType;
     }
 
@@ -2189,7 +2200,7 @@ namespace graphit {
 
         //const Token vertexSetToken = consume(Token::Type::VERTEX_SET);
 //        consume(Token::Type::LC);
-//        const fir::ElementType::Ptr element = parseElementType();
+//        const fir::ElementType::Ptr element_type = parseElementType();
 //        consume(Token::Type::RC);
 //
 //        consume(Token::Type::LP);
@@ -2204,8 +2215,17 @@ namespace graphit {
 //
     }
 
+    // load_expr: 'load' '(' expr ')'
     fir::LoadExpr::Ptr Parser::parseLoadExpr() {
-        return nullptr;
+
+        const Token newToken = consume(Token::Type::LOAD);
+        const auto load_expr = std::make_shared<fir::EdgeSetLoadExpr>();
+
+        consume(Token::Type::LP);
+        const auto file_name = parseExpr();
+        consume(Token::Type::RP);
+        load_expr->file_name = file_name;
+        return load_expr;
     }
 
 

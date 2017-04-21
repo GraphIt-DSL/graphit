@@ -400,7 +400,7 @@ namespace graphit {
             std::vector<IndexSet::Ptr> indexSets;
             TensorType::Ptr            blockType;
             bool                       transposed = false;
-            //adding support for element type in vectors
+            //adding support for edge_element_type type in vectors
             ElementType::Ptr element;
 
             typedef std::shared_ptr<NDTensorType> Ptr;
@@ -1405,7 +1405,8 @@ namespace graphit {
 
 
         struct EdgeSetType : public Type {
-            ElementType::Ptr element;
+            ElementType::Ptr edge_element_type;
+            std::vector<ElementType::Ptr> vertex_element_type_list;
 
             typedef std::shared_ptr<EdgeSetType> Ptr;
             virtual void accept(FIRVisitor *visitor) {
@@ -1441,8 +1442,8 @@ namespace graphit {
 
         struct LoadExpr : public Expr {
             typedef std::shared_ptr<LoadExpr> Ptr;
-
-            ElementType::Ptr element_type;
+            //Currently unused for cleaner syntax
+            //ElementType::Ptr element_type;
             Expr::Ptr file_name;
         };
 

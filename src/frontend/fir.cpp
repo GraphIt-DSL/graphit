@@ -950,9 +950,10 @@ namespace graphit {
         void EdgeSetType::copy(FIRNode::Ptr node) {
             const auto edgeSetType = to<EdgeSetType>(node);
             Type::copy(edgeSetType);
-            element = edgeSetType->element->clone<ElementType>();
+            edge_element_type = edgeSetType->edge_element_type->clone<ElementType>();
         }
         FIRNode::Ptr EdgeSetType::cloneNode() {
+            // TODO: need to add some support for the list of vertex element list
             const auto node = std::make_shared<EdgeSetType>();
             node->copy(shared_from_this());
             return node;
@@ -977,7 +978,7 @@ namespace graphit {
             //TODO: figure out what the copy operator should do
             const auto edge_set_load_expr = to<EdgeSetLoadExpr>(node);
             Expr::copy(edge_set_load_expr);
-            element_type = edge_set_load_expr->element_type->clone<ElementType>();
+            //element_type = edge_set_load_expr->element_type->clone<ElementType>();
             file_name = edge_set_load_expr->file_name->clone<Expr>();
         }
 
