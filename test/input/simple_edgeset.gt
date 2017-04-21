@@ -1,0 +1,4 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("test.el");
+func main() print 0; end

@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.MainFunctionWithCall";
     //::testing::GTEST_FLAG(filter) = "BackendTest.ElementDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetDeclAlloc";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetWithMain";
 
 
 

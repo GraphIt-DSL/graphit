@@ -123,3 +123,11 @@ TEST_F(BackendTest, SimpleMultiArrayAllocWithMain) {
                              "func main() print 4; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleEdgeSetWithMain) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "func main() print 0; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

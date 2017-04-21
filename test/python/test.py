@@ -99,6 +99,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_multi_arrays(self):
         self.basic_compile_test("simple_multi_arrays.gt")
 
+    def test_simple_edgeset(self):
+        self.basic_compile_test("simple_edgeset.gt")
+
 if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
