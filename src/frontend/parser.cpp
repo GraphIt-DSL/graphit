@@ -762,6 +762,8 @@ namespace graphit {
                 return parseMapExpr();
             case Token::Type::NEW:
                 return parseNewExpr();
+            case Token::Type::LOAD:
+                return parseLoadExpr();
             default:
                 return parseOrExpr();
         }
@@ -1328,7 +1330,9 @@ namespace graphit {
             case Token::Type::SET:
                 type = parseUnstructuredSetType();
                 break;
-
+            case Token::Type::EDGE_SET:
+                type = parseEdgeSetType();
+                break;
             case Token::Type::VERTEX_SET:
                 type = parseVertexSetType();
                 break;
@@ -2138,6 +2142,19 @@ namespace graphit {
         return vertexSetType;
     }
 
+    fir::Type::Ptr Parser::parseEdgeSetType() {
+        const Token setToken = consume(Token::Type::EDGE_SET);
+        consume(Token::Type::LC);
+        const fir::ElementType::Ptr element = parseElementType();
+        const Token rightCurlyToken = consume(Token::Type::RC);
+
+        auto edgeSetType = std::make_shared<fir::EdgeSetType>();
+        edgeSetType->setBeginLoc(setToken);
+        edgeSetType->element = element;
+        edgeSetType->setEndLoc(rightCurlyToken);
+        return edgeSetType;
+    }
+
     // added for parsing the allocation expression for GraphIt
     // new_expr: 'new' 'VertexSet' '{' element_type '}' '(' [expr] ')'
     fir::NewExpr::Ptr Parser::parseNewExpr() {
@@ -2186,6 +2203,11 @@ namespace graphit {
 //        }
 //
     }
+
+    fir::LoadExpr::Ptr Parser::parseLoadExpr() {
+        return nullptr;
+    }
+
 
 }
 

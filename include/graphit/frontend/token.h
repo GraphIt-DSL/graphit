@@ -91,7 +91,11 @@ namespace graphit {
             XOR,
             TRUE,
             FALSE,
-            VERTEX_SET
+
+            VERTEX_SET,
+            EDGE_SET,
+
+            LOAD
         };
 
         Type        type;

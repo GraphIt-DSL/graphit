@@ -351,8 +351,13 @@ namespace graphit {
 
         void FIRVisitor::visit(std::shared_ptr<VertexSetAllocExpr> expr){
             expr->elementType->accept(this);
+            expr->numElements->accept(this);
         }
 
+        void FIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> expr) {
+            expr->element_type->accept(this);
+            expr->file_name->accept(this);
+        }
 
 
     }

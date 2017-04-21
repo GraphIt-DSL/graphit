@@ -112,7 +112,9 @@ namespace graphit {
 
         //Graphit Set system
         fir::VertexSetType::Ptr             parseVertexSetType();
+        fir::Type::Ptr                      parseEdgeSetType();
         fir::NewExpr::Ptr                   parseNewExpr();
+        fir::LoadExpr::Ptr                  parseLoadExpr();
 
 
         void reportError(const Token &, std::string);

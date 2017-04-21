@@ -94,6 +94,9 @@ namespace graphit {
         struct Test;
 
         struct VertexSetType;
+        struct EdgeSetType;
+
+        struct EdgeSetLoadExpr;
         struct VertexSetAllocExpr;
 
 
@@ -250,9 +253,13 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<Test>);
 
-            virtual void visit(std::shared_ptr<VertexSetType>){};
 
+            //GraphIt additions
+
+            virtual void visit(std::shared_ptr<VertexSetType>){};
+            virtual void visit(std::shared_ptr<EdgeSetType>){};
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
 
         private:

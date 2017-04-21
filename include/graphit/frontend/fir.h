@@ -1403,6 +1403,21 @@ namespace graphit {
             virtual void copy(FIRNode::Ptr);
         };
 
+
+        struct EdgeSetType : public Type {
+            ElementType::Ptr element;
+
+            typedef std::shared_ptr<EdgeSetType> Ptr;
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetType>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+            virtual void copy(FIRNode::Ptr);
+        };
+
+
         struct NewExpr : public Expr {
             typedef std::shared_ptr<NewExpr> Ptr;
 
@@ -1424,7 +1439,29 @@ namespace graphit {
         };
 
 
-// Utility functions
+        struct LoadExpr : public Expr {
+            typedef std::shared_ptr<LoadExpr> Ptr;
+
+            ElementType::Ptr element_type;
+            Expr::Ptr file_name;
+        };
+
+        // Allocator expression for VertexSet
+        struct EdgeSetLoadExpr : public LoadExpr {
+            typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetLoadExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+            virtual void copy(FIRNode::Ptr);
+        };
+
+
+
+        // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;
         typedef std::vector<IndexDomain>   TensorDimensions;
 
