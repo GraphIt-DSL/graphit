@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSet";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetAlloc";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetDeclAlloc";
+    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleEdgeSetWithMain";
 
 
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
