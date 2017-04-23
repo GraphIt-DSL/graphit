@@ -212,7 +212,7 @@ namespace graphit {
 
     // Materialize the Element Data
     void CodeGenCPP::genElementData() {
-        for (auto const & element_type_entry : mir_context_->properties_map){
+        for (auto const & element_type_entry : mir_context_->properties_map_){
             // for each element type
             for (auto const & var_decl : *element_type_entry.second){
                 // for each field / system vector of the element

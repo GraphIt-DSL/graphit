@@ -31,61 +31,61 @@ namespace graphit {
 
             void scope() {
                 //symbol_table.scope();
-                statements.push_front(std::vector<mir::Stmt::Ptr>());
+                statements_.push_front(std::vector<mir::Stmt::Ptr>());
                 //builder.setInsertionPoint(&statements.front());
             }
 
             void unscope() {
                 //symbol_table.unscope();
-                statements.pop_front();
+                statements_.pop_front();
                 //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
             }
 
             void addFunction(mir::FuncDecl::Ptr f) {
-                functions[f->name] = f;
+                functions_[f->name] = f;
             }
 
             bool containsFunction(const std::string &name) const {
-                return functions.find(name) != functions.end();
+                return functions_.find(name) != functions_.end();
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
                 assert(containsFunction(name));
-                return functions[name];
+                return functions_[name];
             }
 
                 void addSymbol(mir::Var var) {
-                symbol_table.insert(var.getName(), var);
+                symbol_table_.insert(var.getName(), var);
             }
 
             const std::map<std::string, mir::FuncDecl::Ptr> &getFunctions() {
-                return functions;
+                return functions_;
             }
 
             bool hasSymbol(const std::string &name) {
-                return symbol_table.contains(name);
+                return symbol_table_.contains(name);
             }
 
             const mir::Var &getSymbol(const std::string &name) {
-                return symbol_table.get(name);
+                return symbol_table_.get(name);
             }
 
 
             //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
             void addConstant(mir::VarDecl::Ptr var_decl){
-                constants.push_back(var_decl);
+                constants_.push_back(var_decl);
             }
 
             std::vector<mir::VarDecl::Ptr> getConstants(){
-                return constants;
+                return constants_;
             }
 
             void addStatement(mir::Stmt::Ptr stmt) {
-                statements.front().push_back(stmt);
+                statements_.front().push_back(stmt);
             }
 
             std::vector<mir::Stmt::Ptr> * getStatements() {
-                return &statements.front();
+                return &statements_.front();
             }
 
 
@@ -94,46 +94,61 @@ namespace graphit {
                 const auto zero_int = std::make_shared<mir::IntLiteral>();
                 zero_int->val = 0;
 
-                num_elements_map[element_type->ident] = zero_int;
-                properties_map[element_type->ident] = new std::vector<mir::VarDecl::Ptr>();
+                num_elements_map_[element_type->ident] = zero_int;
+                properties_map_[element_type->ident] = new std::vector<mir::VarDecl::Ptr>();
             }
 
             bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
-                if (num_elements_map.find(element_type->ident) == num_elements_map.end()){
+                if (num_elements_map_.find(element_type->ident) == num_elements_map_.end()){
                     //map does not contain the element type
                     return false;
                 } else {
-                    num_elements_map[element_type->ident] = count_expr;
+                    num_elements_map_[element_type->ident] = count_expr;
                     return true;
                 }
             }
 
             bool updateElementProperties(mir::ElementType::Ptr element_type, mir::VarDecl::Ptr var_decl){
-                if (properties_map.find(element_type->ident) == properties_map.end()){
+                if (properties_map_.find(element_type->ident) == properties_map_.end()){
                     //map does not contain the element type
                     return false;
                 } else {
-                    properties_map[element_type->ident]->push_back(var_decl);
+                    properties_map_[element_type->ident]->push_back(var_decl);
                     return true;
                 }
             }
 
-            mir::Expr::Ptr getElementCount(mir::ElementType::Ptr element_type){
-                if (num_elements_map.find(element_type->ident) == num_elements_map.end()) {
+            bool updateElementInputFilename(mir::ElementType::Ptr  element_type, mir::Expr::Ptr file_name){
+                input_filename_map_[element_type->ident] = file_name;
+                return true;
+            }
+
+            mir::Expr::Ptr getElementInputFilename(mir::ElementType::Ptr element_type){
+                if (input_filename_map_.find(element_type->ident) == input_filename_map_.end()) {
                     return nullptr;
                 } else {
-                    return num_elements_map[element_type->ident];
+                    return input_filename_map_[element_type->ident];
+                }
+            }
+
+
+            mir::Expr::Ptr getElementCount(mir::ElementType::Ptr element_type){
+                if (num_elements_map_.find(element_type->ident) == num_elements_map_.end()) {
+                    return nullptr;
+                } else {
+                    return num_elements_map_[element_type->ident];
                 }
             }
 
         //private:
             //mir::Program::Ptr mir_program;
-            std::map<std::string, mir::Expr::Ptr> num_elements_map;
-            std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map;
-            std::vector<mir::VarDecl::Ptr> constants;
-            std::list<std::vector<mir::Stmt::Ptr>> statements;
-            std::map<std::string, mir::FuncDecl::Ptr>  functions;
-            util::ScopedMap<std::string, mir::Var> symbol_table;
+            std::map<std::string, mir::Expr::Ptr> input_filename_map_;
+            std::map<std::string, mir::Expr::Ptr> num_elements_map_;
+            std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
+            std::vector<mir::VarDecl::Ptr> constants_;
+            std::list<std::vector<mir::Stmt::Ptr>> statements_;
+            std::map<std::string, mir::FuncDecl::Ptr>  functions_;
+            util::ScopedMap<std::string, mir::Var> symbol_table_;
 
         };
 

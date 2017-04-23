@@ -64,6 +64,25 @@ namespace graphit {
         retType = mir_vertex_set_type;
     }
 
+    void MIREmitter::visit(fir::EdgeSetType::Ptr edge_set_type) {
+        const auto mir_edgeset_type = std::make_shared<mir::EdgeSetType>();
+        mir_edgeset_type->element = std::dynamic_pointer_cast<mir::ElementType>(
+                emitType(edge_set_type->edge_element_type));
+        if (! mir_edgeset_type){
+            std::cout << "Error in Emitting MIR EdgeSetType " << std::endl;
+            return;
+        };
+        auto mir_vector_element_type_list = new std::vector<mir::ElementType::Ptr>();
+        for (auto  vertex_element_type : edge_set_type->vertex_element_type_list){
+            auto mir_vertex_element_type = emitType(vertex_element_type);
+            mir_vector_element_type_list->push_back(
+                    std::dynamic_pointer_cast<mir::ElementType>(mir_vertex_element_type));
+        }
+        mir_edgeset_type->vertex_element_type_list = mir_vector_element_type_list;
+
+        retType = mir_edgeset_type;
+    }
+
     void MIREmitter::visit(fir::ScalarType::Ptr type){
         auto output = std::make_shared<mir::ScalarType>();
 
@@ -304,8 +323,7 @@ namespace graphit {
                 if (type->element_type !=nullptr) {
                     // this is a field / system vector associated with an ElementType
 
-                    if (ctx->updateElementProperties(
-                            type->element_type, mir_var_decl) != true)
+                    if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
                         std::cout << "error in adding constant" << std::endl;
                 }
             }
@@ -313,6 +331,16 @@ namespace graphit {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
                 if (mir_var_decl->initVal != nullptr){
                     ctx->updateElementCount(type->element, mir_var_decl->initVal);
+                }
+            }
+            else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
+                mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
+                if (mir_var_decl->initVal != nullptr){
+                    if (std::dynamic_pointer_cast<fir::LoadExpr>(mir_var_decl->initVal)){
+                        const auto init_val = std::dynamic_pointer_cast<fir::LoadExpr>(mir_var_decl->initVal);
+                        const auto mir_name_expr = emitExpr(init_val->file_name);
+                        ctx->updateElementInputFilename(type->element, mir_name_expr);
+                    }
                 }
             }
             else{

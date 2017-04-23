@@ -12,6 +12,8 @@
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/mir_context.h>
 #include <graphit/midend/var.h>
+#include <vector>
+
 
 namespace graphit {
 
@@ -50,6 +52,7 @@ namespace graphit {
             virtual void visit(fir::ScalarType::Ptr);
             virtual void visit(fir::ElementType::Ptr);
             virtual void visit(fir::VertexSetType::Ptr);
+            virtual void visit(fir::EdgeSetType::Ptr);
             virtual void visit(fir::NDTensorType::Ptr);
 
 

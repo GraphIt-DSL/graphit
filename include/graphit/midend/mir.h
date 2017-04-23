@@ -278,6 +278,17 @@ namespace graphit {
 
         };
 
+        struct EdgeSetType : public Type {
+            ElementType::Ptr element;
+            std::vector<ElementType::Ptr>* vertex_element_type_list;
+
+            typedef std::shared_ptr<EdgeSetType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetType>());
+            }
+
+        };
+
     }
 
 }
