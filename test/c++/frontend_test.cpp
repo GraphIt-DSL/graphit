@@ -153,3 +153,49 @@ TEST_F(FrontendTest, SimpleEdgeSetWithMain) {
                              "func main() print 0; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, SimpleVariable){
+    istringstream is("func main() a : int = 4; print a; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleVectorSum){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func main() sum : float = vector_a.sum(); print sum; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimpleVertexSetApply){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() print vector_a.sum(); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimpleVertexSetLoad){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "func main() print 0; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleEdgeSetApply) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "func srcAddOne(src : Vertex, dst : Vertex, edge : Edge) "
+                             "vector_a[src] = vector_a[src] + 1; end\n"
+                             "func main() edges.apply(srcAddOne); print vector_a.sum() end");
+    EXPECT_EQ (0,  basicTest(is));
+}
