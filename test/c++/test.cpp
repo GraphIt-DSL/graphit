@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetAlloc";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetDeclAlloc";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleEdgeSetWithMain";
-
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVariable";
 
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithCall";
@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.ElementDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetDeclAlloc";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetWithMain";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVariable";
 
 
 

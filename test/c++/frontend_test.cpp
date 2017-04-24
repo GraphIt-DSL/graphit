@@ -155,7 +155,7 @@ TEST_F(FrontendTest, SimpleEdgeSetWithMain) {
 }
 
 TEST_F(FrontendTest, SimpleVariable){
-    istringstream is("func main() a : int = 4; print a; end");
+    istringstream is("func main() var a : int = 4; print a; end");
     EXPECT_EQ (0,  basicTest(is));
 }
 
@@ -163,7 +163,7 @@ TEST_F(FrontendTest, SimpleVectorSum){
     istringstream is("element Vertex end\n"
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
-                             "func main() sum : float = vector_a.sum(); print sum; end");
+                             "func main() var sum : float = vector_a.sum(); print sum; end");
     EXPECT_EQ (0,  basicTest(is));
 }
 

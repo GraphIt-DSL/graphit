@@ -102,6 +102,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_edgeset(self):
         self.basic_compile_test("simple_edgeset.gt")
 
+    def test_simple_variable(self):
+        self.basic_compile_test("simple_variable.gt")
+
+    def test_simple_variable_expect(self):
+        self.expect_output_val("simple_variable.gt", 0)
+
 if __name__ == '__main__':
     #unittest.main()
     suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)

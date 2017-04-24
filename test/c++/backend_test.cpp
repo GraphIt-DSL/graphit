@@ -131,3 +131,8 @@ TEST_F(BackendTest, SimpleEdgeSetWithMain) {
                              "func main() print 0; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleVariable){
+    istringstream is("func main() var a : int = 4; print a; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

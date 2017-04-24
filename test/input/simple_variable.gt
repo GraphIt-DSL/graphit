@@ -1,0 +1,4 @@
+func main()
+    var a : int = 0;
+    print a;
+end
