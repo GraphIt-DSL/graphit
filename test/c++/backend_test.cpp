@@ -136,3 +136,11 @@ TEST_F(BackendTest, SimpleVariable){
     istringstream is("func main() var a : int = 4; print a; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleVectorSum){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func main() var sum : float = vector_a.sum(); print sum; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
