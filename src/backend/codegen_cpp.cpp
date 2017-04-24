@@ -17,7 +17,7 @@ namespace graphit {
 //                mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
 //                // if the constant decl is a field property of an element (system vector)
 //                if (type->element_type != nullptr){
-//                    genPropertyArrayImplementation(constant);
+//                    genPropertyArrayImplementationWithInitialization(constant);
 //                }
 //            } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
 //                // if the constant is a vertex set  decl
@@ -43,6 +43,7 @@ namespace graphit {
 
     void CodeGenCPP::genIncludeStmts(){
         oss << "#include <iostream> " << std::endl;
+        oss << "#include <vector>" << std::endl;
     }
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){
@@ -217,13 +218,13 @@ namespace graphit {
             for (auto const & var_decl : *element_type_entry.second){
                 // for each field / system vector of the element
                 // generate just array implementation for now
-                genPropertyArrayImplementation(var_decl);
+                genPropertyArrayImplementationWithInitialization(var_decl);
             }
         }
 
     };
 
-    void CodeGenCPP::genPropertyArrayImplementation(mir::VarDecl::Ptr var_decl) {
+    void CodeGenCPP::genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr var_decl) {
         // read the name of the array
         const auto name = var_decl->name;
 
@@ -236,15 +237,32 @@ namespace graphit {
         // read the size of the array
         const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
         assert(size_expr != nullptr);
+        const auto init_val = var_decl->initVal;
+
+        //generate std::vector implementation
+        oss << "std::vector< ";
         vector_element_type->accept(this);
         // pointer declaration
-        oss << "* ";
-        oss << "__restrict ";
-        oss << name << " = new ";
-        vector_element_type->accept(this);
-        oss << "[ ";
+        oss << " >  ";
+        oss << name;
+        oss << " ( ";
         size_expr->accept(this);
-        oss << "]; " << std::endl;
+        oss << " , ";
+        init_val->accept(this);
+        oss << " ); " << std::endl;
+
+
+        // Not sure what we need to do for this to work on std::vectors
+        //oss << "__restrict ";
+
+        //DEPRECATED
+//        oss << name << " = new ";
+//        vector_element_type->accept(this);
+//        oss << "[ ";
+//        size_expr->accept(this);
+//        oss << "]; " << std::endl;
+
+
     }
 
 

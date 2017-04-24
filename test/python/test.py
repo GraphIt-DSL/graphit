@@ -117,4 +117,8 @@ if __name__ == '__main__':
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_multi_arrays'))
 
+
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_simple_array'))
+
     unittest.TextTestRunner(verbosity=2).run(suite)

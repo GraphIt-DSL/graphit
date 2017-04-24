@@ -83,7 +83,6 @@ namespace graphit {
 
         return elemTypeDecl;
     }
-
 // field_decl_list: {field_decl}
     std::vector<fir::FieldDecl::Ptr> Parser::parseFieldDeclList() {
         std::vector<fir::FieldDecl::Ptr> fields;

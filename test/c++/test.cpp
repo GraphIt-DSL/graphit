@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetDeclAlloc";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleEdgeSetWithMain";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVariable";
-    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVectorSum";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVectorSum";
 
 
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetDeclAlloc";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetWithMain";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVariable";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
 
 
 

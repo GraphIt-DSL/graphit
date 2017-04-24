@@ -51,7 +51,7 @@ namespace graphit {
         std::ostream &oss;
         unsigned      indentLevel;
 
-        void genPropertyArrayImplementation(mir::VarDecl::Ptr shared_ptr);
+        void genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr shared_ptr);
 
         MIRContext * mir_context_;
 
