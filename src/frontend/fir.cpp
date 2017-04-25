@@ -989,6 +989,28 @@ namespace graphit {
         }
 
 
+
+        void MethodCallExpr::copy(FIRNode::Ptr node) {
+            const auto method_call_expr = to<MethodCallExpr>(node);
+            Expr::copy(method_call_expr);
+            method_name = method_call_expr->method_name->clone<Identifier>();
+            target = method_call_expr->target->clone<Expr>();
+
+//            for (const auto &genericArg : method_call_expr->genericArgs) {
+//                genericArgs.push_back(genericArg->clone<IndexSet>());
+//            }
+            for (const auto &arg : method_call_expr->args) {
+                args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
+            }
+        }
+
+        FIRNode::Ptr MethodCallExpr::cloneNode() {
+            const auto node = std::make_shared<MethodCallExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,
                                        bool transposed) {

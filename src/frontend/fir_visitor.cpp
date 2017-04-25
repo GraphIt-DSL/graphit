@@ -359,6 +359,14 @@ namespace graphit {
             expr->file_name->accept(this);
         }
 
+        void FIRVisitor::visit(std::shared_ptr<MethodCallExpr> expr) {
+            expr->method_name->accept(this);
+            expr->target->accept(this);
+            for (auto arg : expr->args) {
+                arg->accept(this);
+            }
+        }
+
 
     }
 }

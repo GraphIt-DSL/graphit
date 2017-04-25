@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleEdgeSetWithMain";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVariable";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVectorSum";
-
+    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleMethodCallsChaining";
 
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithCall";

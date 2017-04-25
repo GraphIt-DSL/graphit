@@ -828,6 +828,22 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(MethodCallExpr::Ptr expr) {
+            expr->target->accept(this);
+            oss << ".";
+            expr->method_name->accept(this);
+            oss  << "(";
+            bool printDelimiter = false;
+            for (auto arg : expr->args) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
+            }
+            oss << ")";
+        }
+
 
     }
 }

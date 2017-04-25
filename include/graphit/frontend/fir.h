@@ -1460,7 +1460,25 @@ namespace graphit {
             virtual void copy(FIRNode::Ptr);
         };
 
+        struct MethodCallExpr : public Expr {
+            Identifier::Ptr            method_name;
+            Expr::Ptr                  target;
+            std::vector<Expr::Ptr>     args;
 
+            typedef std::shared_ptr<MethodCallExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<MethodCallExpr>());
+            }
+
+            virtual unsigned getLineBegin() { return method_name->getLineBegin(); }
+            virtual unsigned getColBegin() { return method_name->getColBegin(); }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
 
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;

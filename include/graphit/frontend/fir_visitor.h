@@ -99,6 +99,7 @@ namespace graphit {
         struct EdgeSetLoadExpr;
         struct VertexSetAllocExpr;
 
+        struct MethodCallExpr;
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -260,6 +261,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<EdgeSetType>){};
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
+
+            virtual void visit(std::shared_ptr<MethodCallExpr>);
 
 
         private:

@@ -89,6 +89,8 @@ namespace graphit {
 
             virtual void visit(VertexSetType::Ptr);
             virtual void visit(VertexSetAllocExpr::Ptr);
+            virtual void visit(MethodCallExpr::Ptr);
+
             void indent() { ++indentLevel; }
             void dedent() { --indentLevel; }
             void printIndent() { oss << std::string(2 * indentLevel, ' '); }

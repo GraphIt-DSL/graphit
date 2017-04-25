@@ -1054,6 +1054,10 @@ namespace graphit {
     }
 
 // tensor_read_expr: field_read_expr {'(' [read_params] ')'}
+// TODO: change to square brackets
+// tensor_read_expr: field_read_expr {'[' [read_params] ']'}
+
+
     fir::Expr::Ptr Parser::parseTensorReadExpr() {
         fir::Expr::Ptr expr = parseFieldReadExpr();
 
@@ -1074,17 +1078,32 @@ namespace graphit {
         return expr;
     }
 
-// field_read_expr: set_read_expr ['.' ident]
+// DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
+    // field_read_expr: sed_read_expr {'.' ident( [ expr_params ] )}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         fir::Expr::Ptr expr = parseSetReadExpr();
 
-        if (tryConsume(Token::Type::PERIOD)) {
-            auto fieldRead = std::make_shared<fir::FieldReadExpr>();
+        while (tryConsume(Token::Type::PERIOD)) {
+            auto ident = parseIdent();
+            if (tryConsume(Token::Type::LP)){
+                //make a  method call expression
+                auto method_call_expr = std::make_shared<fir::MethodCallExpr>();
+                method_call_expr->target = expr;
+                method_call_expr->method_name = ident;
 
-            fieldRead->setOrElem = expr;
-            fieldRead->field = parseIdent();
+                if (peek().type != Token::Type::RP) {
+                    method_call_expr->args = parseExprParams();
+                }
 
-            expr = fieldRead;
+                consume(Token::Type::RP);
+                expr = method_call_expr;
+            } else {
+                auto field_read = std::make_shared<fir::FieldReadExpr>();
+
+                field_read->setOrElem = expr;
+                field_read->field = ident;
+                expr = field_read;
+            }
         }
 
         return expr;

@@ -159,6 +159,11 @@ TEST_F(FrontendTest, SimpleVariable){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, SimpleMethodCallsChaining){
+    istringstream is("func main() var sum : float = vector_a.sum().foo().bar(); print sum; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 TEST_F(FrontendTest, SimpleVectorSum){
     istringstream is("element Vertex end\n"
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"
