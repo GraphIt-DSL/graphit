@@ -164,6 +164,11 @@ TEST_F(FrontendTest, SimpleMethodCallsChaining){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, SimpleTensorRead){
+    istringstream is("func main() var first_element : float = vector_a[0]; print first_element; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 TEST_F(FrontendTest, SimpleVectorSum){
     istringstream is("element Vertex end\n"
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"

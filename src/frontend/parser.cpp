@@ -1053,19 +1053,19 @@ namespace graphit {
         return expr;
     }
 
-// tensor_read_expr: field_read_expr {'(' [read_params] ')'}
-// TODO: change to square brackets
+// DEPRECATED: tensor_read_expr: field_read_expr {'(' [read_params] ')'}
+// changed to square brackets
 // tensor_read_expr: field_read_expr {'[' [read_params] ']'}
 
 
     fir::Expr::Ptr Parser::parseTensorReadExpr() {
         fir::Expr::Ptr expr = parseFieldReadExpr();
 
-        while (tryConsume(Token::Type::LP)) {
+        while (tryConsume(Token::Type::LB)) {
             auto tensorRead = std::make_shared<fir::TensorReadExpr>();
             tensorRead->tensor = expr;
 
-            if (peek().type != Token::Type::RP) {
+            if (peek().type != Token::Type::RB) {
                 tensorRead->indices = parseReadParams();
             }
 

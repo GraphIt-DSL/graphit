@@ -563,7 +563,7 @@ namespace graphit {
 
         void FIRPrinter::visit(TensorReadExpr::Ptr expr) {
             expr->tensor->accept(this);
-            oss << "(";
+            oss << "[";
 
             bool printDelimiter = false;
             for (auto param : expr->indices) {
@@ -575,7 +575,7 @@ namespace graphit {
                 printDelimiter = true;
             }
 
-            oss << ")";
+            oss << "]";
         }
 
         void FIRPrinter::visit(SetReadExpr::Ptr expr) {
