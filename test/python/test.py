@@ -23,6 +23,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cls.root_test_input_dir = "../test/input/"
         cls.cpp_compiler = "g++"
+        cls.include_path = "../src/runtime_lib"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
 
@@ -49,7 +50,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
         # check if g++ compilation succeeded
         self.assertEqual(
-            subprocess.call([self.cpp_compiler, self.output_file_name, "-o", self.executable_file_name]),
+            subprocess.call([self.cpp_compiler,"-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
             0)
         self.assertEqual(subprocess.call(["./"+ self.executable_file_name]), 0)
 
@@ -108,9 +109,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_variable_expect(self):
         self.expect_output_val("simple_variable.gt", 0)
 
+    def test_simple_vector_sum(self):
+        self.basic_compile_test("simple_vector_sum.gt")
+
 if __name__ == '__main__':
     #unittest.main()
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
+    # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))
 
@@ -118,7 +122,7 @@ if __name__ == '__main__':
     # suite.addTest(TestGraphitCompiler('test_simple_multi_arrays'))
 
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_simple_array'))
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_array'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

@@ -44,6 +44,7 @@ namespace graphit {
     void CodeGenCPP::genIncludeStmts(){
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
+        oss << "#include \"intrinsics.h\"" << std::endl;
     }
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){

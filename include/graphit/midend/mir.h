@@ -173,6 +173,7 @@ namespace graphit {
         struct Call : public Expr {
             std::string name;
             std::vector<Expr::Ptr> args;
+            std::string generic_type;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

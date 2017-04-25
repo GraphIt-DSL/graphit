@@ -184,6 +184,12 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+
+
+    void MIREmitter::visit(fir::MethodCallExpr::Ptr method_call_expr) {
+
+    }
+
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
         const auto mir_element_type = std::make_shared<mir::ElementType>();
         mir_element_type->ident = element_type_decl->name->ident;
@@ -357,7 +363,6 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
 
 
 
