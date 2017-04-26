@@ -7,5 +7,6 @@ func addone(v : Vertex)
 end
 
 func main()
+    vertices.apply(addone);
     print vector_a.sum();
 end

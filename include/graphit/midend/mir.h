@@ -223,6 +223,16 @@ namespace graphit {
             }
         };
 
+        struct TensorReadExpr : public Expr {
+            Expr::Ptr target;
+            Expr::Ptr index;
+
+            typedef std::shared_ptr<FuncDecl> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<TensorReadExpr>());
+            }
+
+        };
 
         /// Calls a function that may any number of arguments.
         struct Call : public Expr {
