@@ -122,8 +122,18 @@ namespace graphit {
                     return false;
                 } else {
                     properties_map_[element_type->ident]->push_back(var_decl);
+                    setElementTypeWithVectorOrSetName(var_decl->name, element_type);
                     return true;
                 }
+            }
+
+            void setElementTypeWithVectorOrSetName(std::string vectorOrSetName, mir::ElementType::Ptr element_type){
+                vector_set_element_type_map_[vectorOrSetName] = element_type;
+
+            };
+
+            mir::ElementType::Ptr getElementTypeFromVectorOrSetName(std::string vector_name){
+                return vector_set_element_type_map_[vector_name];
             }
 
             bool updateElementInputFilename(mir::ElementType::Ptr  element_type, mir::Expr::Ptr file_name){
@@ -154,7 +164,8 @@ namespace graphit {
 
             //maps a vector reference to its physical layout in the current scope
             util::ScopedMap<std::string, std::string> layout_map_;
-
+            //maps a vector to the Element it is associated with;
+            std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
             // maps a vector reference to item type
             std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
             // maps element type to an input file that reads the set from

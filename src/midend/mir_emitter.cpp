@@ -211,6 +211,19 @@ namespace graphit {
 
     }
 
+    void MIREmitter::visit(fir::TensorReadExpr::Ptr tensor_read_expr) {
+        auto mir_tensor_read_expr = std::make_shared<mir::TensorReadExpr>();
+        mir_tensor_read_expr->target = emitExpr(tensor_read_expr->tensor);
+        assert(tensor_read_expr->indices.size() == 1);
+        if (!std::dynamic_pointer_cast<fir::ExprParam>(tensor_read_expr->indices.front())){
+            std::cout << "error in emitting mir TensorReadExpr, read param is not an ExprParam" << std::endl;
+            return;
+        }
+        auto expr_param = std::dynamic_pointer_cast<fir::ExprParam>(tensor_read_expr->indices.front());
+        mir_tensor_read_expr->index = emitExpr(expr_param->expr);
+        retExpr = mir_tensor_read_expr;
+    }
+
 
     void MIREmitter::visit(fir::ApplyExpr::Ptr apply_expr) {
         auto mir_apply_expr = std::make_shared<mir::ApplyExpr>();
@@ -368,6 +381,8 @@ namespace graphit {
                 if (mir_var_decl->initVal != nullptr){
                     ctx->updateElementCount(type->element, mir_var_decl->initVal);
                 }
+                //TODO: later may be fix this to vector or set name directly map to count
+                ctx->setElementTypeWithVectorOrSetName(mir_var_decl->name, type->element);
             }
             else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
@@ -393,7 +408,6 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
 
 
 

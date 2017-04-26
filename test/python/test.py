@@ -23,6 +23,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cls.root_test_input_dir = "../test/input/"
         cls.cpp_compiler = "g++"
+        cls.compile_flags = "-std=c++11"
         cls.include_path = "../src/runtime_lib"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
@@ -50,7 +51,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
         # check if g++ compilation succeeded
         self.assertEqual(
-            subprocess.call([self.cpp_compiler,"-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
+            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
             0)
         self.assertEqual(subprocess.call(["./"+ self.executable_file_name]), 0)
 

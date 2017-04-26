@@ -30,6 +30,9 @@ namespace graphit {
 
         virtual void visit(mir::Call::Ptr);
 
+        virtual void visit(mir::TensorReadExpr::Ptr);
+        virtual void visit(mir::ApplyExpr::Ptr);
+
         virtual void visit(mir::VarExpr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
@@ -39,6 +42,7 @@ namespace graphit {
 
 
         virtual void visit(mir::VarDecl::Ptr);
+        virtual void visit(mir::ElementType::Ptr element_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
         void genIncludeStmts();

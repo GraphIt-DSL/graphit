@@ -187,6 +187,14 @@ namespace graphit {
         oss << ") ";
     };
 
+    void CodeGenCPP::visit(mir::TensorReadExpr::Ptr expr){
+        //for dense array tensor read
+        expr->target->accept(this);
+        oss << "[";
+        expr->index->accept(this);
+        oss << "]";
+    };
+
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr){
         oss << expr->var.getName();
     };
@@ -274,8 +282,39 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {
+        //currently, we generate an index id into the vectors
+       oss << "int ";
+    }
+
+    void CodeGenCPP::visit(mir::ApplyExpr::Ptr apply_expr) {
 
 
+
+        //dense vector apply
+        auto vector_name = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
+        if (!vector_name) {
+            std::cout << "error in getting name of the vector in ApplyExpr" << std::endl;
+            return;
+        }
+
+        //vertex set apply
+        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(vector_name->var.getName());
+        assert(associated_element_type);
+        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+        assert(associated_element_type_size);
+        oss << "for (int i = 0; i < ";
+        associated_element_type_size->accept(this);
+        oss << "; i++) {" << std::endl;
+        indent();
+        printIndent();
+        oss << apply_expr->input_function_name << "(i);" << std::endl;
+        dedent();
+        printIndent();
+        oss << "}";
+
+        //edge set apply
+    }
 
 
 }

@@ -84,7 +84,5 @@ namespace graphit {
             expr->target->accept(this);
             expr->index->accept(this);
         }
-
-
     }
 }

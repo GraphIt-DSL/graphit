@@ -227,7 +227,7 @@ namespace graphit {
             Expr::Ptr target;
             Expr::Ptr index;
 
-            typedef std::shared_ptr<FuncDecl> Ptr;
+            typedef std::shared_ptr<TensorReadExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorReadExpr>());
             }
