@@ -1070,7 +1070,7 @@ namespace graphit {
                 tensorRead->indices = parseReadParams();
             }
 
-            const Token rightParenToken = consume(Token::Type::RP);
+            const Token rightParenToken = consume(Token::Type::RB);
             tensorRead->setEndLoc(rightParenToken);
 
             expr = tensorRead;
@@ -1082,7 +1082,9 @@ namespace graphit {
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
     // field_read_expr: sed_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' }
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
-        fir::Expr::Ptr expr = parseSetReadExpr();
+        // We don't need to supprot set read expressions, so we just work with factors directly
+        //fir::Expr::Ptr expr = parseSetReadExpr();
+        fir::Expr::Ptr expr = parseFactor();
 
         while (tryConsume(Token::Type::PERIOD)) {
 

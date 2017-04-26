@@ -212,8 +212,11 @@ namespace graphit {
     }
 
 
-    void MIREmitter::visit(fir::ApplyExpr::Ptr) {
-
+    void MIREmitter::visit(fir::ApplyExpr::Ptr apply_expr) {
+        auto mir_apply_expr = std::make_shared<mir::ApplyExpr>();
+        mir_apply_expr->target = emitExpr(apply_expr->target);
+        mir_apply_expr->input_function_name = apply_expr->input_function->ident;
+        retExpr = mir_apply_expr;
     }
 
 
