@@ -36,7 +36,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetDeclAlloc";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetWithMain";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVariable";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
 
 
 

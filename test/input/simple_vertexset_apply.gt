@@ -1,0 +1,11 @@
+element Vertex end
+const vector_a : vector{Vertex}(float) = 1.0;
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+
+func addone(v : Vertex)
+    vector_a[v] = vector_a[v] + 1;
+end
+
+func main()
+    print vector_a.sum();
+end
