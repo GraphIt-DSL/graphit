@@ -82,6 +82,61 @@ namespace graphit {
             typedef std::shared_ptr<Type> Ptr;
         };
 
+        struct ScalarType : public Type {
+            enum class Type {
+                INT, FLOAT, BOOL, COMPLEX, STRING
+            };
+            Type type;
+            typedef std::shared_ptr<ScalarType> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ScalarType>());
+            }
+        };
+
+        struct ElementType : public Type {
+            std::string ident;
+            typedef std::shared_ptr<ElementType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ElementType>());
+            }
+
+        };
+
+        struct VectorType : public Type {
+            // optional, used for element field / system vectors
+            ElementType::Ptr element_type;
+            // scalar type for each element of the vector (not the global Elements)
+            ScalarType::Ptr vector_element_type;
+
+            typedef std::shared_ptr<VectorType> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VectorType>());
+            }
+        };
+
+        struct VertexSetType : public Type {
+            ElementType::Ptr element;
+
+            typedef std::shared_ptr<VertexSetType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VertexSetType>());
+            }
+
+        };
+
+        struct EdgeSetType : public Type {
+            ElementType::Ptr element;
+            std::vector<ElementType::Ptr>* vertex_element_type_list;
+
+            typedef std::shared_ptr<EdgeSetType> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetType>());
+            }
+
+        };
+
 
         struct ExprStmt : public Stmt {
             Expr::Ptr expr;
@@ -173,7 +228,7 @@ namespace graphit {
         struct Call : public Expr {
             std::string name;
             std::vector<Expr::Ptr> args;
-            std::string generic_type;
+            ScalarType::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -235,60 +290,7 @@ namespace graphit {
         };
 
 
-        struct ScalarType : public Type {
-            enum class Type {
-                INT, FLOAT, BOOL, COMPLEX, STRING
-            };
-            Type type;
-            typedef std::shared_ptr<ScalarType> Ptr;
 
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<ScalarType>());
-            }
-        };
-
-        struct ElementType : public Type {
-            std::string ident;
-            typedef std::shared_ptr<ElementType> Ptr;
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<ElementType>());
-            }
-
-        };
-
-        struct VectorType : public Type {
-            // optional, used for element field / system vectors
-            ElementType::Ptr element_type;
-            // scalar type for each element of the vector (not the global Elements)
-            ScalarType::Ptr vector_element_type;
-
-            typedef std::shared_ptr<VectorType> Ptr;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<VectorType>());
-            }
-        };
-
-        struct VertexSetType : public Type {
-            ElementType::Ptr element;
-
-            typedef std::shared_ptr<VertexSetType> Ptr;
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<VertexSetType>());
-            }
-
-        };
-
-        struct EdgeSetType : public Type {
-            ElementType::Ptr element;
-            std::vector<ElementType::Ptr>* vertex_element_type_list;
-
-            typedef std::shared_ptr<EdgeSetType> Ptr;
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<EdgeSetType>());
-            }
-
-        };
 
     }
 

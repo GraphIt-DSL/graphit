@@ -164,7 +164,15 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::Call::Ptr call_expr){
-        oss << call_expr->name << "(";
+        oss << call_expr->name;
+
+
+        if (call_expr->generic_type != nullptr){
+            oss << " < ";
+            call_expr->generic_type->accept(this);
+            oss << " > ";
+        }
+        oss<< "(";
 
         bool printDelimiter = false;
 

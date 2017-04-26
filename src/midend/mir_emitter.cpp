@@ -187,6 +187,27 @@ namespace graphit {
 
 
     void MIREmitter::visit(fir::MethodCallExpr::Ptr method_call_expr) {
+        auto mir_call_expr = std::make_shared<mir::Call>();
+
+        if (std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target) == nullptr){
+            std::cout << "error in emitting method call expression" << std::endl;
+        }
+        auto vector_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
+        mir_call_expr->generic_type = ctx->getVectorItemType(vector_expr->ident);
+        mir_call_expr->name = method_call_expr->method_name->ident;
+
+        std::vector<mir::Expr::Ptr> args;
+        const auto self_arg = emitExpr(method_call_expr->target);
+        //add the target to the argument
+        args.push_back(self_arg);
+
+        for (auto & fir_arg : method_call_expr->args){
+            const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+            args.push_back(mir_arg);
+        }
+        mir_call_expr->args = args;
+        retExpr = mir_call_expr;
+
 
     }
 
@@ -328,7 +349,7 @@ namespace graphit {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type);
                 if (type->element_type !=nullptr) {
                     // this is a field / system vector associated with an ElementType
-
+                    ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
                         std::cout << "error in adding constant" << std::endl;
                 }

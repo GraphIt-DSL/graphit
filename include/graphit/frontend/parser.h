@@ -125,11 +125,16 @@ namespace graphit {
         Token consume(Token::Type);
         bool  tryConsume(Token::Type type) { return tokens.consume(type); }
 
+        bool isIntrinsic(std::string func_name){
+            return std::find(intrinsics_.begin(), intrinsics_.end(), func_name) != intrinsics_.end();
+        }
+
     private:
         SymbolTable decls;
         TokenStream tokens;
 
         //const std::vector<fir::FuncDecl::Ptr> &intrinsics;
+        std::vector<std::string> intrinsics_;
         std::vector<ParseError>               *errors;
 
         //fir::Expr::Ptr parseNewExpr();

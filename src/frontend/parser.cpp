@@ -17,6 +17,7 @@ namespace graphit {
         this->tokens = tokens;
 
         decls = SymbolTable();
+        intrinsics_.push_back("sum");
 
 //        for (const auto kv : intrinsics) {
 //            decls.insert(kv->name->ident, IdentType::FUNCTION);
@@ -1089,6 +1090,11 @@ namespace graphit {
                 //make a  method call expression
                 auto method_call_expr = std::make_shared<fir::MethodCallExpr>();
                 method_call_expr->target = expr;
+
+                if (isIntrinsic(ident->ident)){
+                    ident->ident = "builtin_" + ident->ident;
+                }
+
                 method_call_expr->method_name = ident;
 
                 if (peek().type != Token::Type::RP) {

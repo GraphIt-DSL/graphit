@@ -112,6 +112,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vector_sum(self):
         self.basic_compile_test("simple_vector_sum.gt")
 
+    def test_simple_vector_sum_expect(self):
+        self.expect_output_val("simple_vector_sum.gt", 5)
+
 if __name__ == '__main__':
     #unittest.main()
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)

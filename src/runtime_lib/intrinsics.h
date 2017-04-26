@@ -8,7 +8,7 @@
 #include <vector>
 
 template <typename T>
-T vec_sum(std::vector<T> input_vector){
+T builtin_sum(std::vector<T> input_vector){
     T output_sum = 0;
     for (T elem : input_vector){
         output_sum += elem;

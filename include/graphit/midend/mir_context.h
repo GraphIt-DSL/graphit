@@ -98,6 +98,14 @@ namespace graphit {
                 properties_map_[element_type->ident] = new std::vector<mir::VarDecl::Ptr>();
             }
 
+            void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
+                vector_item_type_map_[vector_name] = item_type;
+            }
+
+            mir::ScalarType::Ptr getVectorItemType(std::string vector_name){
+                return vector_item_type_map_[vector_name];
+            }
+
             bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
                 if (num_elements_map_.find(element_type->ident) == num_elements_map_.end()){
                     //map does not contain the element type
@@ -141,9 +149,19 @@ namespace graphit {
             }
 
         //private:
+
             //mir::Program::Ptr mir_program;
+
+            //maps a vector reference to its physical layout in the current scope
+            util::ScopedMap<std::string, std::string> layout_map_;
+
+            // maps a vector reference to item type
+            std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
+            // maps element type to an input file that reads the set from
             std::map<std::string, mir::Expr::Ptr> input_filename_map_;
+            // maps element type to the number of elements (initially)
             std::map<std::string, mir::Expr::Ptr> num_elements_map_;
+            // maps element type to the fields associated with the type
             std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
             std::vector<mir::VarDecl::Ptr> constants_;
             std::list<std::vector<mir::Stmt::Ptr>> statements_;
