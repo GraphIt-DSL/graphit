@@ -367,6 +367,12 @@ namespace graphit {
             }
         }
 
+        void FIRVisitor::visit(std::shared_ptr<ApplyExpr> expr) {
+            expr->input_function->accept(this);
+            expr->target->accept(this);
+
+        }
+
 
     }
 }

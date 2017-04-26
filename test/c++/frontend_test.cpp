@@ -183,7 +183,7 @@ TEST_F(FrontendTest, SimpleVertexSetApply){
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
-                             "func main() print vector_a.sum(); end");
+                             "func main() vertices.apply(addone); print vector_a.sum(); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 

@@ -145,11 +145,11 @@ TEST_F(BackendTest, SimpleVectorSum){
     EXPECT_EQ (0,  basicTest(is));
 }
 
-TEST_F(BackendTest, SimpleVertexSetApply){
-    istringstream is("element Vertex end\n"
-                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
-                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
-                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
-                             "func main() print vector_a.sum(); end");
-    EXPECT_EQ (0,  basicTest(is));
-}
+//TEST_F(BackendTest, SimpleVertexSetApply){
+//    istringstream is("element Vertex end\n"
+//                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+//                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+//                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+//                             "func main() vertices.apply(addone); print vector_a.sum(); end");
+//    EXPECT_EQ (0,  basicTest(is));
+//}

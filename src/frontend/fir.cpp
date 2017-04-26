@@ -1011,6 +1011,20 @@ namespace graphit {
         }
 
 
+        void ApplyExpr::copy(FIRNode::Ptr node) {
+            const auto apply_expr = to<ApplyExpr>(node);
+            Expr::copy(apply_expr);
+            target = apply_expr->target->clone<Expr>();
+            input_function = apply_expr->input_function->clone<Identifier>();
+        }
+
+        FIRNode::Ptr ApplyExpr::cloneNode() {
+            const auto node = std::make_shared<ApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,
                                        bool transposed) {

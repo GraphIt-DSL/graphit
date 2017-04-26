@@ -236,6 +236,16 @@ namespace graphit {
             }
         };
 
+
+        struct ApplyExpr : public Expr {
+            Expr::Ptr target;
+            std::string input_function_name;
+            typedef std::shared_ptr<ApplyExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ApplyExpr>());
+            }
+        };
+
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
             int val = 0;

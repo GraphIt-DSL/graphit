@@ -76,6 +76,10 @@ namespace graphit {
             expr->size_expr->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
 
     }
 }

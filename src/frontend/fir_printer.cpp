@@ -844,6 +844,14 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(ApplyExpr::Ptr expr) {
+            expr->target->accept(this);
+            oss << ".apply(";
+            expr->input_function->accept(this);
+            oss <<")";
+
+        }
+
 
     }
 }

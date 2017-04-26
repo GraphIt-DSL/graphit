@@ -1080,38 +1080,43 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-    // field_read_expr: sed_read_expr {'.' ident( [ expr_params ] )}
+    // field_read_expr: sed_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' }
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         fir::Expr::Ptr expr = parseSetReadExpr();
 
         while (tryConsume(Token::Type::PERIOD)) {
-            auto ident = parseIdent();
-            if (tryConsume(Token::Type::LP)){
-                //make a  method call expression
-                auto method_call_expr = std::make_shared<fir::MethodCallExpr>();
-                method_call_expr->target = expr;
 
-                if (isIntrinsic(ident->ident)){
-                    ident->ident = "builtin_" + ident->ident;
-                }
-
-                method_call_expr->method_name = ident;
-
-                if (peek().type != Token::Type::RP) {
-                    method_call_expr->args = parseExprParams();
-                }
-
+            if (tryConsume(Token::Type::APPLY)){
+                consume(Token::Type::LP);
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
                 consume(Token::Type::RP);
-                expr = method_call_expr;
+                expr = apply_expr;
             } else {
-                auto field_read = std::make_shared<fir::FieldReadExpr>();
+                auto ident = parseIdent();
+                if (tryConsume(Token::Type::LP)) {
+                    //make a  method call expression
+                    auto method_call_expr = std::make_shared<fir::MethodCallExpr>();
+                    method_call_expr->target = expr;
+                    if (isIntrinsic(ident->ident)) {
+                        ident->ident = "builtin_" + ident->ident;
+                    }
+                    method_call_expr->method_name = ident;
+                    if (peek().type != Token::Type::RP) {
+                        method_call_expr->args = parseExprParams();
+                    }
+                    consume(Token::Type::RP);
+                    expr = method_call_expr;
+                } else {
+                    auto field_read = std::make_shared<fir::FieldReadExpr>();
 
-                field_read->setOrElem = expr;
-                field_read->field = ident;
-                expr = field_read;
+                    field_read->setOrElem = expr;
+                    field_read->field = ident;
+                    expr = field_read;
+                }
             }
         }
-
         return expr;
     }
 

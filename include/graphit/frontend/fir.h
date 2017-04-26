@@ -1480,6 +1480,24 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+
+        struct ApplyExpr : public Expr {
+            Expr::Ptr                  target;
+            Identifier::Ptr            input_function;
+
+            typedef std::shared_ptr<ApplyExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ApplyExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;
         typedef std::vector<IndexDomain>   TensorDimensions;
