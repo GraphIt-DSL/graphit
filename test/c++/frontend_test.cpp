@@ -187,7 +187,7 @@ TEST_F(FrontendTest, SimpleVertexSetApply){
     EXPECT_EQ (0,  basicTest(is));
 }
 
-/**
+
 TEST_F(FrontendTest, SimpleVertexSetLoad){
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -198,6 +198,7 @@ TEST_F(FrontendTest, SimpleVertexSetLoad){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+/**
 TEST_F(FrontendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"

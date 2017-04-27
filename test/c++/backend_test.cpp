@@ -153,3 +153,13 @@ TEST_F(BackendTest, SimpleVertexSetApply){
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleVertexSetLoad){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "func main() print 0; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

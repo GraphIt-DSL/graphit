@@ -119,6 +119,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertexset_apply(self):
         self.basic_compile_test("simple_vertexset_apply.gt")
 
+    def test_simple_vertexset_apply_expect(self):
+        self.expect_output_val("simple_vertexset_apply.gt", 10)
+
 if __name__ == '__main__':
     #unittest.main()
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
