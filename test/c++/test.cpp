@@ -40,11 +40,13 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVariable";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetLoad";
 
 
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";
 
 
+    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 
 
     return RUN_ALL_TESTS();

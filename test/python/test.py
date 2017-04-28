@@ -123,7 +123,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.expect_output_val("simple_vertexset_apply.gt", 10)
 
 if __name__ == '__main__':
-    #unittest.main()
+    unittest.main()
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))

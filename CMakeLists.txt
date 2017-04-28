@@ -11,11 +11,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # build the compiler
 include_directories(./include/)
+include_directories(./src/runtime_lib)
 add_subdirectory(src)
 
 # header files
 #file(GLOB HEADER_FILES include/graphit/frontend/*.h include/graphit/midend/*.h include/graphit/backend/*.h include/graphit/utils/*.h)
-file(GLOB_RECURSE HEADER_FILES include/*.h)
+file(GLOB_RECURSE HEADER_FILES include/*.h src/runtime_lib/*.h)
 
 file(GLOB_RECURSE SOURCE_FILES include/*.h include/graphit/midend/*.h src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/utils/*.h include/utils/*.h)
 add_executable(graphitc ${SOURCE_FILES})

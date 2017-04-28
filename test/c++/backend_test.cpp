@@ -154,6 +154,14 @@ TEST_F(BackendTest, SimpleVertexSetApply){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleEdgeSetLoad){
+    istringstream is("element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "func main() print 0; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
 TEST_F(BackendTest, SimpleVertexSetLoad){
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
