@@ -18,6 +18,7 @@ namespace graphit {
 
         decls = SymbolTable();
         intrinsics_.push_back("sum");
+        intrinsics_.push_back("getVertices");
 
 //        for (const auto kv : intrinsics) {
 //            decls.insert(kv->name->ident, IdentType::FUNCTION);

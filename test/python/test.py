@@ -73,7 +73,8 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
-        self.assertEqual(int(output.strip()), expected_output_val)
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), expected_output_val)
 
     # actual test cases
 
@@ -122,6 +123,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertexset_apply_expect(self):
         self.expect_output_val("simple_vertexset_apply.gt", 10)
 
+    def test_simple_vertex_edge_load_expect(self):
+        self.expect_output_val("simple_vertex_edge_load.gt", 5)
+
+
 if __name__ == '__main__':
     unittest.main()
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
@@ -134,5 +139,11 @@ if __name__ == '__main__':
 
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_array'))
+
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset'))
+
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_vertex_edge_load_expect'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

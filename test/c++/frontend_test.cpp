@@ -198,7 +198,7 @@ TEST_F(FrontendTest, SimpleVertexSetLoad){
     EXPECT_EQ (0,  basicTest(is));
 }
 
-/**
+
 TEST_F(FrontendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -210,4 +210,3 @@ TEST_F(FrontendTest, SimpleEdgeSetApply) {
                              "func main() edges.apply(srcAddOne); print vector_a.sum() end");
     EXPECT_EQ (0,  basicTest(is));
 }
- **/

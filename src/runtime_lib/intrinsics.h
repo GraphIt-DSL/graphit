@@ -28,11 +28,15 @@ T builtin_sum(std::vector<T> input_vector){
     return output_sum;
 }
 
-Graph loadEdgesFromFile(std::string file_name){
+Graph builtin_loadEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     Builder builder (cli);
     Graph g = builder.MakeGraph();
     return g;
+}
+
+int builtin_getVertices(Graph &edges){
+    return edges.num_nodes();
 }
 
 

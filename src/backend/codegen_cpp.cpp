@@ -8,8 +8,8 @@ namespace graphit {
     int CodeGenCPP::genCPP(MIRContext *mir_context) {
         mir_context_ = mir_context;
         genIncludeStmts();
-        genElementData();
         genEdgeSets();
+        genElementData();
 
         //Processing the constants
         for (auto constant : mir_context->getConstants()){
@@ -325,7 +325,7 @@ namespace graphit {
 
     void CodeGenCPP::genEdgeSets() {
         for (auto edgeset : mir_context_->getEdgeSets()){
-            oss << "Graph " << edgeset->name << " = loadEdgesFromFile ( ";
+            oss << "Graph " << edgeset->name << " = builtin_loadEdgesFromFile ( ";
             edgeset->initVal->accept(this);
             oss << " ); " << std::endl;
         }

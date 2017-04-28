@@ -22,6 +22,13 @@ protected:
 
 
 TEST_F(RuntimeLibTest, SimpleLoadGraphFromFileTest) {
-    Graph g = loadEdgesFromFile("../../test/graphs/test.el");
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
     EXPECT_EQ (7 , g.num_edges());
+}
+
+TEST_F(RuntimeLibTest, SimpleLoadVerticesromEdges) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    int num_vertices = builtin_getVertices(g);
+    //max node id + 1, assumes the first node has id 0
+    EXPECT_EQ (5 , num_vertices);
 }

@@ -215,7 +215,7 @@ class BuilderBase {
     if (!symmetrize_ && invert)
       MakeCSR(el, true, &inv_index, &inv_neighs);
     t.Stop();
-    PrintTime("Build Time", t.Seconds());
+    //PrintTime("Build Time", t.Seconds());
     if (symmetrize_)
       return CSRGraph<NodeID_, DestID_, invert>(num_nodes_, index, neighs);
     else

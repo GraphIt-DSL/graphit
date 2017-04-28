@@ -244,7 +244,7 @@ class Reader {
     }
     file.close();
     t.Stop();
-    PrintTime("Read Time", t.Seconds());
+    //PrintTime("Read Time", t.Seconds());
     return el;
   }
 
@@ -295,7 +295,7 @@ class Reader {
     }
     file.close();
     t.Stop();
-    PrintTime("Read Time", t.Seconds());
+    //PrintTime("Read Time", t.Seconds());
     if (directed)
       return CSRGraph<NodeID_, DestID_, invert>(num_nodes, index, neighs,
                                                 inv_index, inv_neighs);
