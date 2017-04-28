@@ -622,6 +622,9 @@ namespace graphit {
         void FIRPrinter::visit(IntLiteral::Ptr lit) {
             oss << lit->val;
         }
+        void FIRPrinter::visit(StringLiteral::Ptr lit) {
+            oss << lit->val;
+        }
 
         void FIRPrinter::visit(FloatLiteral::Ptr lit) {
             oss << lit->val;
@@ -850,6 +853,12 @@ namespace graphit {
             expr->input_function->accept(this);
             oss <<")";
 
+        }
+
+        void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
+            oss << "edgeset_load (";
+            expr->file_name->accept(this);
+            oss << ") " << std::endl;
         }
 
 

@@ -157,6 +157,12 @@ namespace graphit {
         retExpr = mir_vertexsetalloc_expr;
     }
 
+    void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
+        auto mir_load_expr = std::make_shared<mir::LoadExpr>();
+        mir_load_expr->file_name = emitExpr(load_expr->file_name);
+        retExpr = mir_load_expr;
+    }
+
     // use of variables
     void MIREmitter::visit(fir::VarExpr::Ptr var_expr){
         auto mir_var_expr = std::make_shared<mir::VarExpr>();
@@ -301,6 +307,12 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::StringLiteral::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::StringLiteral>();
+        mir_expr->val = fir_expr->val;
+        retExpr = mir_expr;
+    };
+
     mir::Expr::Ptr MIREmitter::emitExpr(fir::Expr::Ptr ptr){
         auto tmpExpr = retExpr;
         //we should get a null when we don't emit the right type of expr
@@ -387,12 +399,16 @@ namespace graphit {
             else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
                 if (mir_var_decl->initVal != nullptr){
-                    if (std::dynamic_pointer_cast<fir::LoadExpr>(mir_var_decl->initVal)){
-                        const auto init_val = std::dynamic_pointer_cast<fir::LoadExpr>(mir_var_decl->initVal);
-                        const auto mir_name_expr = emitExpr(init_val->file_name);
+                    if (std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal)){
+                        const auto init_val = std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal);
+                        const auto mir_name_expr = init_val->file_name;
+                        //reset the initial value to the name NOT the load expresion
+                        mir_var_decl->initVal = mir_name_expr;
                         ctx->updateElementInputFilename(type->element, mir_name_expr);
+                        ctx->addEdgeSet(mir_var_decl);
                     }
                 }
+
             }
             else{
                 mir_var_decl->modifier = "const";
@@ -408,6 +424,7 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
+
 
 
 

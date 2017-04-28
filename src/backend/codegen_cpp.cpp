@@ -9,6 +9,7 @@ namespace graphit {
         mir_context_ = mir_context;
         genIncludeStmts();
         genElementData();
+        genEdgeSets();
 
         //Processing the constants
         for (auto constant : mir_context->getConstants()){
@@ -214,6 +215,12 @@ namespace graphit {
         oss << ')';
     };
 
+    void CodeGenCPP::visit(mir::StringLiteral::Ptr expr){
+        oss << "\"" ;
+        oss << expr->val;
+        oss << "\"" ;
+    };
+
     void CodeGenCPP::visit(mir::FloatLiteral::Ptr expr){
         oss << "(";
         //oss << "(float) ";
@@ -314,6 +321,14 @@ namespace graphit {
         oss << "}";
 
         //edge set apply
+    }
+
+    void CodeGenCPP::genEdgeSets() {
+        for (auto edgeset : mir_context_->getEdgeSets()){
+            oss << "Graph " << edgeset->name << " = loadEdgesFromFile ( ";
+            edgeset->initVal->accept(this);
+            oss << " ); " << std::endl;
+        }
     }
 
 

@@ -17,6 +17,8 @@ namespace graphit {
         struct AssignStmt;
         struct StmtBlock;
         struct Expr;
+
+        struct StringLiteral;
         struct FloatLiteral;
         struct IntLiteral;
         struct Call;
@@ -24,7 +26,7 @@ namespace graphit {
         struct ApplyExpr;
 
         struct TensorReadExpr;
-
+        struct LoadExpr;
         struct VertexSetAllocExpr;
         struct VarExpr;
         struct AddExpr;
@@ -51,7 +53,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Call>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
             virtual void visit(std::shared_ptr<TensorReadExpr>);
-            virtual void visit(std::shared_ptr<FloatLiteral>){}
+            virtual void visit(std::shared_ptr<StringLiteral>){};
+            virtual void visit(std::shared_ptr<FloatLiteral>){};
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};

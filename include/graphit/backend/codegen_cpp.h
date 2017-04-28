@@ -37,6 +37,7 @@ namespace graphit {
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
 
+        virtual void visit(mir::StringLiteral::Ptr);
         virtual void visit(mir::FloatLiteral::Ptr);
         virtual void visit(mir::IntLiteral::Ptr);
 
@@ -60,6 +61,8 @@ namespace graphit {
         MIRContext * mir_context_;
 
         void genElementData();
+
+        void genEdgeSets();
     };
 }
 

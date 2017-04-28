@@ -98,6 +98,14 @@ namespace graphit {
                 properties_map_[element_type->ident] = new std::vector<mir::VarDecl::Ptr>();
             }
 
+            void addEdgeSet(mir::VarDecl::Ptr edgeset){
+                edge_sets_.push_back(edgeset);
+            }
+
+            std::vector<mir::VarDecl::Ptr> getEdgeSets(){
+                return edge_sets_;
+            }
+
             void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
                 vector_item_type_map_[vector_name] = item_type;
             }
@@ -164,6 +172,7 @@ namespace graphit {
 
             //maps a vector reference to its physical layout in the current scope
             util::ScopedMap<std::string, std::string> layout_map_;
+            std::vector<mir::VarDecl::Ptr> edge_sets_;
             //maps a vector to the Element it is associated with;
             std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
             // maps a vector reference to item type

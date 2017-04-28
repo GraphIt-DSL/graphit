@@ -92,6 +92,10 @@ namespace graphit {
             virtual void visit(MethodCallExpr::Ptr);
             virtual void visit(ApplyExpr::Ptr);
 
+            virtual void visit(EdgeSetLoadExpr::Ptr);
+            virtual void visit(StringLiteral::Ptr);
+
+
             void indent() { ++indentLevel; }
             void dedent() { --indentLevel; }
             void printIndent() { oss << std::string(2 * indentLevel, ' '); }

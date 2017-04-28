@@ -246,6 +246,13 @@ namespace graphit {
             }
         };
 
+        struct LoadExpr : public Expr {
+            Expr::Ptr file_name;
+            typedef std::shared_ptr<LoadExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<LoadExpr>());
+            }
+        };
 
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
@@ -255,6 +262,16 @@ namespace graphit {
                 visitor->visit(self<ApplyExpr>());
             }
         };
+
+        struct StringLiteral : public Expr {
+            typedef std::shared_ptr<StringLiteral> Ptr;
+            std::string val;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StringLiteral>());
+            }
+        };
+
 
         struct IntLiteral : public Expr {
             typedef std::shared_ptr<IntLiteral> Ptr;
