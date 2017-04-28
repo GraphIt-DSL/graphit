@@ -1,0 +1,10 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const vector_a : vector{Vertex}(float) = 1.0;
+func main()
+    var sum : int = vector_a.sum();
+    print sum;
+end
