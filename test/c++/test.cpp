@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetLoad";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";
