@@ -126,6 +126,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertex_edge_load_expect(self):
         self.expect_output_val("simple_vertex_edge_load.gt", 5)
 
+    def test_simple_edgeset_apply(self):
+        self.basic_compile_test("simple_edgeset_apply.gt")
+
+    def test_simple_edgeset_apply_expect(self):
+        self.expect_output_val("simple_edgeset_apply.gt", 7)
+
 
 if __name__ == '__main__':
     unittest.main()

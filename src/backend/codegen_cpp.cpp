@@ -30,11 +30,11 @@ namespace graphit {
         }
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
-        auto functions = mir_context->getFunctions();
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context->getFunctionList();
 
-        for ( it = functions.begin(); it != functions.end(); it++ )
+        for ( auto it = functions.begin(); it != functions.end(); it++ )
         {
-            it->second->accept(this);
+            it->get()->accept(this);
         }
 
 
@@ -299,28 +299,35 @@ namespace graphit {
 
 
         //dense vector apply
-        auto vector_name = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        if (!vector_name) {
+        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
+        if (!mir_var) {
             std::cout << "error in getting name of the vector in ApplyExpr" << std::endl;
             return;
         }
 
-        //vertex set apply
-        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(vector_name->var.getName());
-        assert(associated_element_type);
-        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-        assert(associated_element_type_size);
-        oss << "for (int i = 0; i < ";
-        associated_element_type_size->accept(this);
-        oss << "; i++) {" << std::endl;
-        indent();
-        printIndent();
-        oss << apply_expr->input_function_name << "(i);" << std::endl;
-        dedent();
-        printIndent();
-        oss << "}";
+        //dense vertex set apply
+        if (mir_context_->isVertexSet(mir_var->var.getName())){
+            auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+            assert(associated_element_type);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            assert(associated_element_type_size);
+            oss << "for (int i = 0; i < ";
+            associated_element_type_size->accept(this);
+            oss << "; i++) {" << std::endl;
+            indent();
+            printIndent();
+            oss << apply_expr->input_function_name << "(i);" << std::endl;
+            dedent();
+            printIndent();
+            oss << "}";
+        }
 
         //edge set apply
+        if (mir_context_->isEdgeSet(mir_var->var.getName())){
+            //push edgeset apply
+            genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
+        }
+
     }
 
     void CodeGenCPP::genEdgeSets() {
@@ -329,6 +336,24 @@ namespace graphit {
             edgeset->initVal->accept(this);
             oss << " ); " << std::endl;
         }
+    }
+
+    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name) {
+        auto edgeset_name = var_expr->var.getName();
+
+        oss << "for (NodeID u=0; u < " << edgeset_name << ".num_nodes(); u++) {" << std::endl;
+        indent();
+        printIndent();
+        oss << "for (NodeID v : " << edgeset_name << ".in_neigh(u)) {" << std::endl;
+        indent();
+        printIndent();
+        oss << function_name << "( u , v );" << std::endl;
+        dedent();
+        printIndent();
+        oss << "}" << std::endl;
+        dedent();
+        printIndent();
+        oss << "}" << std::endl;
     }
 
 

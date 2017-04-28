@@ -395,6 +395,7 @@ namespace graphit {
                 }
                 //TODO: later may be fix this to vector or set name directly map to count
                 ctx->setElementTypeWithVectorOrSetName(mir_var_decl->name, type->element);
+                ctx->addVertexSet(mir_var_decl);
             }
             else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);

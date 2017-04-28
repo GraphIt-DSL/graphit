@@ -42,24 +42,31 @@ namespace graphit {
             }
 
             void addFunction(mir::FuncDecl::Ptr f) {
-                functions_[f->name] = f;
+                functions_map_[f->name] = f;
+                functions_list_.push_back(f);
             }
 
+
+
             bool containsFunction(const std::string &name) const {
-                return functions_.find(name) != functions_.end();
+                return functions_map_.find(name) != functions_map_.end();
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
                 assert(containsFunction(name));
-                return functions_[name];
+                return functions_map_[name];
             }
 
                 void addSymbol(mir::Var var) {
                 symbol_table_.insert(var.getName(), var);
             }
 
-            const std::map<std::string, mir::FuncDecl::Ptr> &getFunctions() {
-                return functions_;
+            const std::map<std::string, mir::FuncDecl::Ptr> &getFunctionMap() {
+                return functions_map_;
+            }
+
+            const std::vector<mir::FuncDecl::Ptr> &getFunctionList() {
+                return functions_list_;
             }
 
             bool hasSymbol(const std::string &name) {
@@ -104,6 +111,28 @@ namespace graphit {
 
             std::vector<mir::VarDecl::Ptr> getEdgeSets(){
                 return edge_sets_;
+            }
+
+            bool isVertexSet(std::string var_name){
+                for (auto vertexset : vertex_sets_) {
+                    if (vertexset->name == var_name) return  true;
+                }
+                return false;
+            }
+
+            void addVertexSet(mir::VarDecl::Ptr vertexset){
+                vertex_sets_.push_back(vertexset);
+            }
+
+            std::vector<mir::VarDecl::Ptr> getVertexSets(){
+                return vertex_sets_;
+            }
+
+            bool isEdgeSet(std::string var_name){
+                for (auto edgeset : edge_sets_) {
+                    if (edgeset->name == var_name) return  true;
+                }
+                return false;
             }
 
             void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
@@ -172,6 +201,7 @@ namespace graphit {
 
             //maps a vector reference to its physical layout in the current scope
             util::ScopedMap<std::string, std::string> layout_map_;
+            std::vector<mir::VarDecl::Ptr> vertex_sets_;
             std::vector<mir::VarDecl::Ptr> edge_sets_;
             //maps a vector to the Element it is associated with;
             std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
@@ -185,7 +215,9 @@ namespace graphit {
             std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
             std::vector<mir::VarDecl::Ptr> constants_;
             std::list<std::vector<mir::Stmt::Ptr>> statements_;
-            std::map<std::string, mir::FuncDecl::Ptr>  functions_;
+            std::map<std::string, mir::FuncDecl::Ptr>  functions_map_;
+            //need to store the ordering of function declarations
+            std::vector<mir::FuncDecl::Ptr> functions_list_;
             util::ScopedMap<std::string, mir::Var> symbol_table_;
 
         };
