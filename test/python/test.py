@@ -136,7 +136,7 @@ class TestGraphitCompiler(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
-    
+
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))
