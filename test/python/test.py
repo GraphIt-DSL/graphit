@@ -10,7 +10,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        build_dir = "../../cmake-build-debug"
+        build_dir = "../../build"
         if not os.path.isdir(build_dir):
             print "build the binaries"
             #shutil.rmtree("../../build_dir")
@@ -135,6 +135,8 @@ class TestGraphitCompiler(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    # used for enabling a specific test
+    
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_main_print_add'))
