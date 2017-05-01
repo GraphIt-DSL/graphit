@@ -48,6 +48,24 @@ namespace graphit {
         oss << "#include \"intrinsics.h\"" << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
+        printIndent();
+        auto for_domain = for_stmt->domain;
+        auto loop_var = for_stmt->loopVar;
+        oss << "for ( int " << loop_var << " = ";
+        for_domain->lower->accept(this);
+        oss << "; " << loop_var << " < ";
+        for_domain->upper->accept(this);
+        oss << "; " << loop_var << "++ )" << std::endl;
+        printBeginIndent();
+        indent();
+        for_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+
+    }
+
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){
         printIndent();
         expr_stmt->expr->accept(this);
@@ -356,13 +374,7 @@ namespace graphit {
         oss << "}" << std::endl;
     }
 
-    void CodeGenCPP::visit(mir::ForStmt::Ptr) {
 
-    }
-
-    void CodeGenCPP::visit(mir::ForDomain::Ptr) {
-
-    }
 
 
 }

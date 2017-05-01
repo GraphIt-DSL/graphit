@@ -21,12 +21,15 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             os.chdir(build_dir)
 
+        cwd = os.getcwd()
+
         cls.root_test_input_dir = "../test/input/"
         cls.cpp_compiler = "g++"
         cls.compile_flags = "-std=c++11"
         cls.include_path = "../src/runtime_lib"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
+
 
     def setUp(self):
         self.clean_up()
@@ -44,7 +47,6 @@ class TestGraphitCompiler(unittest.TestCase):
     # utilities for setting up tests
 
     def basic_compile_test(self, input_file_name):
-
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
         # check the return code of the call as a way to check if compilation happened correctly

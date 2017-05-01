@@ -387,7 +387,7 @@ namespace graphit {
         const mir::ForDomain::Ptr ret = retForDomain;
 
         retForDomain = tmpDomain;
-        return retForDomain;
+        return ret;
     }
 
     void MIREmitter::visit(fir::ElementType::Ptr element_type) {
