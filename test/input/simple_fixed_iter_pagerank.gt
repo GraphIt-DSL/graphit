@@ -1,0 +1,31 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const old_rank : vector{Vertex}(float) = 1.0;
+const new_rank : vector{Vertex}(float) = 0.0;
+const out_degree : vector {Vertex}(int) = edge.getOutDegrees();
+
+const damp : float = 0.85;
+const beta_score : float = (1.0 - damp) / vertices.size();
+
+
+func updateEdge(src : Vertex, dst : Vertex)
+    new_rank[dst] = old_rank[src] / out_degree[src];
+end
+
+func updateVertex(v : Vertex)
+    new_rank[v] = beta_score + damp*(new_rank[v]);
+end
+
+func main()
+
+    for i in 1:10
+        edges.apply(updateEdge);
+        vertices.apply(updateVertex);
+        swap(old_rank, new_rank);
+        new_rank = 0.0;
+    end
+end

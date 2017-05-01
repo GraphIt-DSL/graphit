@@ -134,6 +134,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_edgeset_apply_expect(self):
         self.expect_output_val("simple_edgeset_apply.gt", 7)
 
+    def test_simple_for_loop(self):
+        self.basic_compile_test("simple_for_loop.gt")
+
 
 if __name__ == '__main__':
     unittest.main()
