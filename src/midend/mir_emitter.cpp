@@ -130,6 +130,28 @@ namespace graphit {
     }
 
 
+    void MIREmitter::visit(fir::ForStmt::Ptr for_stmt) {
+        ctx->scope();
+        auto mir_for_stmt = std::make_shared<mir::ForStmt>();
+        mir_for_stmt->loopVar = for_stmt->loopVar->ident;
+        auto loop_var_type = std::make_shared<mir::ScalarType>();
+        loop_var_type->type = mir::ScalarType::Type::INT;
+        auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
+        ctx->addSymbol(mir_var);
+        ctx->unscope();
+
+        mir_for_stmt->body = std::dynamic_pointer_cast<mir::StmtBlock>(emitStmt(for_stmt->body));
+        mir_for_stmt->domain = emitDomain(for_stmt->domain);
+        retStmt = mir_for_stmt;
+    }
+
+    void MIREmitter::visit(fir::RangeDomain::Ptr for_domain) {
+        auto mir_for_domain = std::make_shared<mir::ForDomain>();
+        mir_for_domain->upper = emitExpr(for_domain->upper);
+        mir_for_domain->lower = emitExpr(for_domain->lower);
+        retForDomain = mir_for_domain;
+    }
+
     void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){
 
         //initialize
@@ -355,6 +377,17 @@ namespace graphit {
 
         retVar = tmpVar;
         return ret;
+    }
+
+    mir::ForDomain::Ptr MIREmitter::emitDomain(fir::ForDomain::Ptr ptr){
+        auto tmpDomain = retForDomain;
+        retForDomain = std::make_shared<mir::ForDomain>();
+
+        ptr->accept(this);
+        const mir::ForDomain::Ptr ret = retForDomain;
+
+        retForDomain = tmpDomain;
+        return retForDomain;
     }
 
     void MIREmitter::visit(fir::ElementType::Ptr element_type) {

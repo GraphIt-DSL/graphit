@@ -137,6 +137,30 @@ namespace graphit {
 
         };
 
+        struct ForDomain : public MIRNode {
+            Expr::Ptr lower;
+            Expr::Ptr upper;
+
+            typedef std::shared_ptr<ForDomain> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ForDomain>());
+            }
+
+        };
+
+        struct ForStmt : public Stmt {
+            std::string loopVar;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
+
+            typedef std::shared_ptr<ForStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ForStmt>());
+            }
+        };
+
 
         struct ExprStmt : public Stmt {
             Expr::Ptr expr;

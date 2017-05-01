@@ -611,14 +611,16 @@ namespace graphit {
         }
     }
 
-// for_domain: set_index_set | (expr ':' expr)
+// DEPRECATED: for_domain: set_index_set | (expr ':' expr)
+    // for_domain: (expr ':' expr)
     fir::ForDomain::Ptr Parser::parseForDomain() {
-        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
-            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
-            indexSetDomain->set = parseSetIndexSet();
-
-            return indexSetDomain;
-        }
+//        GraphIt currently do not support for loop over set_index_set
+//        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
+//            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
+//            indexSetDomain->set = parseSetIndexSet();
+//
+//            return indexSetDomain;
+//        }
 
         auto rangeDomain = std::make_shared<fir::RangeDomain>();
 

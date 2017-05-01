@@ -356,5 +356,13 @@ namespace graphit {
         oss << "}" << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::ForStmt::Ptr) {
+
+    }
+
+    void CodeGenCPP::visit(mir::ForDomain::Ptr) {
+
+    }
+
 
 }

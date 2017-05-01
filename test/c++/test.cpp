@@ -25,6 +25,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexSetLoad";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleForLoops";
+
 
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithPrint";
     //::testing::GTEST_FLAG(filter) = "MidendTest.MainFunctionWithCall";
@@ -43,6 +45,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetLoad";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleForLoops";
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";

@@ -210,3 +210,9 @@ TEST_F(FrontendTest, SimpleEdgeSetApply) {
                              "func main() edges.apply(srcAddOne); print vector_a.sum(); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimpleForLoops) {
+    istringstream is("func main() for i in 1:10; print i; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
