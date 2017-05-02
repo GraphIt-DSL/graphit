@@ -140,6 +140,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_outdegree_sum(self):
         self.basic_compile_test("outdegree_sum.gt")
 
+    def test_outdegree_sum_expect(self):
+        self.expect_output_val("outdegree_sum.gt", 7)
+
+    def test_simple_fixediter_pagerank(self):
+        self.basic_compile_test("simple_fixed_iter_pagerank.gt")
 
 if __name__ == '__main__':
     unittest.main()

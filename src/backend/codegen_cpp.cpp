@@ -69,7 +69,10 @@ namespace graphit {
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){
         printIndent();
         expr_stmt->expr->accept(this);
-        oss << ";" << std::endl;
+        if (!std::dynamic_pointer_cast<mir::ApplyExpr>(expr_stmt->expr)){
+            oss << ";" ;
+        }
+        oss << std::endl;
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt){
@@ -378,7 +381,7 @@ namespace graphit {
         oss << "for (NodeID v : " << edgeset_name << ".in_neigh(u)) {" << std::endl;
         indent();
         printIndent();
-        oss << function_name << "( u , v );" << std::endl;
+        oss << function_name << "( v , u );" << std::endl;
         dedent();
         printIndent();
         oss << "}" << std::endl;

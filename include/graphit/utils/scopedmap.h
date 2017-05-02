@@ -87,8 +87,8 @@ namespace graphit {
                         return scope.at(symbol);
                     }
                 }
-                assert(false);
                 std::cout << "Attempting to load symbol " << symbol << " which is not in the symbol table";
+                assert(false);
                 return scopes.begin()->begin()->second;  // silence warning
             }
 

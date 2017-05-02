@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleForLoops";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetGetSize";
     //::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetGetOutDegrees";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";
 

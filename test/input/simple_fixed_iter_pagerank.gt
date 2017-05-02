@@ -6,7 +6,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 
 const old_rank : vector{Vertex}(float) = 1.0;
 const new_rank : vector{Vertex}(float) = 0.0;
-const out_degree : vector {Vertex}(int) = edge.getOutDegrees();
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
 
 const damp : float = 0.85;
 const beta_score : float = (1.0 - damp) / vertices.size();
