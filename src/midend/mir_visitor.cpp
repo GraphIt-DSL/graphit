@@ -54,6 +54,13 @@ namespace graphit {
                 arg->accept(this);
             }
         };
+        void MIRVisitor::visit(MulExpr::Ptr expr) {
+            visitBinaryExpr(expr);
+        }
+
+        void MIRVisitor::visit(DivExpr::Ptr expr) {
+            visitBinaryExpr(expr);
+        }
 
         void MIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
@@ -94,5 +101,7 @@ namespace graphit {
             for_domain->lower->accept(this);
             for_domain->upper->accept(this);
         }
+
+
     }
 }

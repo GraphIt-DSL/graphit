@@ -218,6 +218,22 @@ namespace graphit {
         oss << expr->var.getName();
     };
 
+    void CodeGenCPP::visit(mir::MulExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " * ";
+        expr->rhs->accept(this);
+        oss << ')';
+    }
+
+    void CodeGenCPP::visit(mir::DivExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " / ";
+        expr->rhs->accept(this);
+        oss << ')';
+    }
+
     void CodeGenCPP::visit(mir::AddExpr::Ptr expr){
         oss << '(';
         expr->lhs->accept(this);
@@ -276,35 +292,32 @@ namespace graphit {
         mir::ScalarType::Ptr vector_element_type = vector_type->vector_element_type;
         assert(vector_element_type != nullptr);
 
-        // read the size of the array
-        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
-        assert(size_expr != nullptr);
-        const auto init_val = var_decl->initVal;
-
         //generate std::vector implementation
         oss << "std::vector< ";
         vector_element_type->accept(this);
         // pointer declaration
         oss << " >  ";
         oss << name;
-        oss << " ( ";
-        size_expr->accept(this);
-        oss << " , ";
-        init_val->accept(this);
-        oss << " ); " << std::endl;
 
+        // read the size of the array
+        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+        assert(size_expr != nullptr);
+        const auto init_val = var_decl->initVal;
 
-        // Not sure what we need to do for this to work on std::vectors
-        //oss << "__restrict ";
+        if (std::dynamic_pointer_cast<mir::Call>(init_val)){
+            auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
+            oss << " = ";
+            call_expr->accept(this);
+            oss << ";" << std::endl;
 
-        //DEPRECATED
-//        oss << name << " = new ";
-//        vector_element_type->accept(this);
-//        oss << "[ ";
-//        size_expr->accept(this);
-//        oss << "]; " << std::endl;
+        } else {
+            oss << " ( ";
+            size_expr->accept(this);
+            oss << " , ";
+            init_val->accept(this);
+            oss << " ); " << std::endl;
 
-
+        }
     }
 
     void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {

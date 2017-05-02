@@ -32,6 +32,8 @@ namespace graphit {
         struct LoadExpr;
         struct VertexSetAllocExpr;
         struct VarExpr;
+        struct MulExpr;
+        struct DivExpr;
         struct AddExpr;
         struct SubExpr;
         struct BinaryExpr;
@@ -65,6 +67,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VarExpr>){};
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);
+            virtual void visit(std::shared_ptr<MulExpr>);
+            virtual void visit(std::shared_ptr<DivExpr>);
             virtual void visit(std::shared_ptr<Type>){};
             virtual void visit(std::shared_ptr<ScalarType>){};
             virtual void visit(std::shared_ptr<VarDecl>);

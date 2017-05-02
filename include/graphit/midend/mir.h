@@ -342,6 +342,22 @@ namespace graphit {
             }
         };
 
+        struct MulExpr : public BinaryExpr {
+            typedef std::shared_ptr<MulExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<MulExpr>());
+            }
+        };
+
+        struct DivExpr : public BinaryExpr {
+            typedef std::shared_ptr<DivExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<DivExpr>());
+            }
+        };
+
         struct SubExpr : public BinaryExpr {
             typedef std::shared_ptr<SubExpr> Ptr;
 

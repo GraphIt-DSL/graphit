@@ -137,6 +137,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_for_loop(self):
         self.basic_compile_test("simple_for_loop.gt")
 
+    def test_outdegree_sum(self):
+        self.basic_compile_test("outdegree_sum.gt")
+
 
 if __name__ == '__main__':
     unittest.main()

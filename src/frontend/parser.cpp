@@ -17,8 +17,10 @@ namespace graphit {
         this->tokens = tokens;
 
         decls = SymbolTable();
-        intrinsics_.push_back("sum");
-        intrinsics_.push_back("getVertices");
+
+        initIntrinsics();
+
+
 
 //        for (const auto kv : intrinsics) {
 //            decls.insert(kv->name->ident, IdentType::FUNCTION);
@@ -2260,6 +2262,12 @@ namespace graphit {
         consume(Token::Type::RP);
         load_expr->file_name = file_name;
         return load_expr;
+    }
+
+    void Parser::initIntrinsics() {
+        intrinsics_.push_back("sum");
+        intrinsics_.push_back("getVertices");
+        intrinsics_.push_back("getOutDegrees");
     }
 
 

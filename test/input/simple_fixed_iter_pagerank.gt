@@ -18,14 +18,14 @@ end
 
 func updateVertex(v : Vertex)
     new_rank[v] = beta_score + damp*(new_rank[v]);
+    old_rank[v] = new_rank[v];
+    new_rank[v] = 0.0;
 end
 
-func main()
 
+func main()
     for i in 1:10
         edges.apply(updateEdge);
         vertices.apply(updateVertex);
-        swap(old_rank, new_rank);
-        new_rank = 0.0;
     end
 end

@@ -35,6 +35,8 @@ namespace graphit {
         virtual void visit(mir::ApplyExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);
+        virtual void visit(mir::MulExpr::Ptr);
+        virtual void visit(mir::DivExpr::Ptr);
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
 

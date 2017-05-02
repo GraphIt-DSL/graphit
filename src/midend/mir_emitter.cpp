@@ -200,6 +200,20 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::DivExpr::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::DivExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
+    void MIREmitter::visit(fir::MulExpr::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::MulExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
     void MIREmitter::visit(fir::CallExpr::Ptr call_expr){
         auto mir_expr = std::make_shared<mir::Call>();
         mir_expr->name = call_expr->func->ident;
@@ -220,23 +234,34 @@ namespace graphit {
         if (std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target) == nullptr){
             std::cout << "error in emitting method call expression" << std::endl;
         }
-        auto vector_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
-        mir_call_expr->generic_type = ctx->getVectorItemType(vector_expr->ident);
-        mir_call_expr->name = method_call_expr->method_name->ident;
 
-        std::vector<mir::Expr::Ptr> args;
-        const auto self_arg = emitExpr(method_call_expr->target);
-        //add the target to the argument
-        args.push_back(self_arg);
+        auto target_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
 
-        for (auto & fir_arg : method_call_expr->args){
-            const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
-            args.push_back(mir_arg);
+        if (ctx->isVertexSet(target_expr->ident)) {
+            // If target is a vertexset (vertexset is not an actual concrete object)
+            if (method_call_expr->method_name->ident == "size"){
+                // get the expression directly from the data structures if it is looking for size
+                auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
+                retExpr = ctx->getElementCount(vertex_element_type);
+            }
+
+        } else {
+            // If target is a vector or an edgeset (actual concrete object)
+            mir_call_expr->generic_type = ctx->getVectorItemType(target_expr->ident);
+            mir_call_expr->name = method_call_expr->method_name->ident;
+
+            std::vector<mir::Expr::Ptr> args;
+            const auto self_arg = emitExpr(method_call_expr->target);
+            //add the target to the argument
+            args.push_back(self_arg);
+
+            for (auto & fir_arg : method_call_expr->args){
+                const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                args.push_back(mir_arg);
+            }
+            mir_call_expr->args = args;
+            retExpr = mir_call_expr;
         }
-        mir_call_expr->args = args;
-        retExpr = mir_call_expr;
-
-
     }
 
     void MIREmitter::visit(fir::TensorReadExpr::Ptr tensor_read_expr) {

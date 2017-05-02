@@ -39,5 +39,13 @@ int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
 
+std::vector<int> builtin_getOutDegrees(Graph &edges){
+    std::vector<int> out_degrees (edges.num_nodes(), 0);
+    for (NodeID n=0; n < edges.num_nodes(); n++){
+        out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
 
 #endif //GRAPHIT_INTRINSICS_H_H
