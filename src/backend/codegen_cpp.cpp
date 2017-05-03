@@ -260,14 +260,14 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::FloatLiteral::Ptr expr){
         oss << "(";
-        //oss << "(float) ";
+        oss << "(float) ";
         oss << expr->val;
         oss << ") ";
     };
 
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr){
         oss << "(";
-        //oss << "(int) ";
+        oss << "(int) ";
         oss << expr->val;
         oss << ") ";
     }

@@ -4,7 +4,7 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
 const vertices : vertexset{Vertex} = edges.getVertices();
 
-const old_rank : vector{Vertex}(float) = 1.0;
+const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
 const new_rank : vector{Vertex}(float) = 0.0;
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
 
@@ -13,7 +13,7 @@ const beta_score : float = (1.0 - damp) / vertices.size();
 
 
 func updateEdge(src : Vertex, dst : Vertex)
-    new_rank[dst] = old_rank[src] / out_degree[src];
+    new_rank[dst] = new_rank[dst] + old_rank[src] / out_degree[src];
 end
 
 func updateVertex(v : Vertex)
@@ -28,4 +28,5 @@ func main()
         edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
+    print old_rank.sum();
 end
