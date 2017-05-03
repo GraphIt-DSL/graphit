@@ -2265,9 +2265,13 @@ namespace graphit {
     }
 
     void Parser::initIntrinsics() {
+        // set up method call intrinsics
         intrinsics_.push_back("sum");
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+
+        // set up function call intrinsics
+        decls.insert("fabs",  IdentType::FUNCTION);
     }
 
 

@@ -147,7 +147,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("simple_fixed_iter_pagerank.gt")
 
     def test_simple_fixediter_pagerank_expect(self):
-        self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.83)
+        self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.00289518)
 
 if __name__ == '__main__':
     unittest.main()
