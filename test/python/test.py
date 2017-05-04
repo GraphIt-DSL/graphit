@@ -149,6 +149,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_fixediter_pagerank_expect(self):
         self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.00289518)
 
+    def test_simple_timer(self):
+        self.basic_compile_test("simple_timer.gt")
+
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
@@ -165,7 +169,7 @@ if __name__ == '__main__':
     # suite.addTest(TestGraphitCompiler('test_simple_array'))
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset'))
+    # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
 
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_vertex_edge_load_expect'))

@@ -26,9 +26,17 @@ end
 
 
 func main()
+
+    var start_time : float = getTime();
+
     for i in 1:10
         edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
     print error.sum();
+
+    var end_time : float = getTime();
+    print "elapsed time: ";
+    print end_time - start_time;
+
 end

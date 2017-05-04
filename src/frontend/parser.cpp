@@ -2272,6 +2272,8 @@ namespace graphit {
 
         // set up function call intrinsics
         decls.insert("fabs",  IdentType::FUNCTION);
+        decls.insert("getTime",  IdentType::FUNCTION);
+
     }
 
 

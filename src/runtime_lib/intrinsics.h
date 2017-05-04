@@ -47,5 +47,12 @@ std::vector<int> builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
+float getTime(){
+    using namespace std::chrono;
+    auto t = high_resolution_clock::now();
+    time_point<high_resolution_clock,microseconds> usec = time_point_cast<microseconds>(t);
+    return (float)(usec.time_since_epoch().count())/1000;
+}
+
 
 #endif //GRAPHIT_INTRINSICS_H_H

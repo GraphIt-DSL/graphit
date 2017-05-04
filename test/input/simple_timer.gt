@@ -1,0 +1,8 @@
+func main()
+    var start_time : float = getTime();
+    var end_time : float = getTime();
+    print start_time;
+    print end_time;
+    print "elapsed time: ";
+    print end_time - start_time;
+end

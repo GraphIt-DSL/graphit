@@ -26,13 +26,14 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleForLoops";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetGetSize";
     //::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetGetOutDegrees";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetLoad";
 
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.GetOutDegrees";
 
+    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
 
     return RUN_ALL_TESTS();
 }
