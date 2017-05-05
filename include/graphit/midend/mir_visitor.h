@@ -12,6 +12,9 @@ namespace graphit {
 
         struct Program;
         struct Stmt;
+
+        struct ForStmt;
+        struct ForDomain;
         struct ExprStmt;
         struct PrintStmt;
         struct AssignStmt;
@@ -29,6 +32,8 @@ namespace graphit {
         struct LoadExpr;
         struct VertexSetAllocExpr;
         struct VarExpr;
+        struct MulExpr;
+        struct DivExpr;
         struct AddExpr;
         struct SubExpr;
         struct BinaryExpr;
@@ -45,6 +50,8 @@ namespace graphit {
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
+            virtual void visit(std::shared_ptr<ForStmt>);
+            virtual void visit(std::shared_ptr<ForDomain>);
             virtual void visit(std::shared_ptr<AssignStmt>);
             virtual void visit(std::shared_ptr<PrintStmt>);
             virtual void visit(std::shared_ptr<ExprStmt>);
@@ -60,6 +67,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VarExpr>){};
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);
+            virtual void visit(std::shared_ptr<MulExpr>);
+            virtual void visit(std::shared_ptr<DivExpr>);
             virtual void visit(std::shared_ptr<Type>){};
             virtual void visit(std::shared_ptr<ScalarType>){};
             virtual void visit(std::shared_ptr<VarDecl>);

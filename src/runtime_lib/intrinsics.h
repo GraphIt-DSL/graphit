@@ -39,5 +39,20 @@ int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
 
+std::vector<int> builtin_getOutDegrees(Graph &edges){
+    std::vector<int> out_degrees (edges.num_nodes(), 0);
+    for (NodeID n=0; n < edges.num_nodes(); n++){
+        out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
+float getTime(){
+    using namespace std::chrono;
+    auto t = high_resolution_clock::now();
+    time_point<high_resolution_clock,microseconds> usec = time_point_cast<microseconds>(t);
+    return (float)(usec.time_since_epoch().count())/1000;
+}
+
 
 #endif //GRAPHIT_INTRINSICS_H_H

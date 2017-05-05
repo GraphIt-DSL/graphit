@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.7)
 project(graphit)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -37,6 +37,8 @@ add_library(gtest ${GTEST_HEADER} ${GTEST_SOURCE})
 file(GLOB TEST_SOURCE_FILES test/c++/*.cpp)
 add_executable(graphit_test ${TEST_SOURCE_FILES})
 target_link_libraries(graphit_test gtest)
+target_link_libraries(graphit_test pthread)
+
 target_link_libraries(graphit_test graphitlib)
 
 # Python tests

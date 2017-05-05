@@ -183,3 +183,59 @@ TEST_F(BackendTest, SimpleEdgeSetApply) {
                              "func main() edges.apply(srcAddOne); print vector_a.sum(); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleForLoops) {
+    istringstream is("func main() for i in 1:10; print i; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, VertexSetGetSize) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const size : int = vertices.size();\n"
+                             "func main() print size; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, EdgeSetGetOutDegrees) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                             "func main() print out_degrees.sum(); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleFixedIterPageRank) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const old_rank : vector{Vertex}(float) = 1.0;\n"
+                             "const new_rank : vector{Vertex}(float) = 0.0;\n"
+                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                             "const error : vector{Vertex}(float) = 0.0;\n"
+                             "const damp : float = 0.85;\n"
+                             "const beta_score : float = (1.0 - damp) / vertices.size();\n"
+                             "func updateEdge(src : Vertex, dst : Vertex)\n"
+                             "    new_rank[dst] = old_rank[src] / out_degrees[src];\n"
+                             "end\n"
+                             "func updateVertex(v : Vertex)\n"
+                             "    new_rank[v] = beta_score + damp*(new_rank[v]);\n"
+                             "    error[v]    = fabs ( new_rank[v] - old_rank[v]);\n"
+                             "    old_rank[v] = new_rank[v];\n"
+                             "    new_rank[v] = 0.0;\n"
+                             "end\n"
+                             "func main()\n"
+                             "    for i in 1:10\n"
+                             "        edges.apply(updateEdge);\n"
+                             "        vertices.apply(updateVertex);\n"
+                             "        print error.sum();"
+                             "    end\n"
+                             "end"
+    );
+    EXPECT_EQ (0,  basicTest(is));
+}

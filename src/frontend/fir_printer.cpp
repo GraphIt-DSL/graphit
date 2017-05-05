@@ -858,7 +858,7 @@ namespace graphit {
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
             oss << "edgeset_load (";
             expr->file_name->accept(this);
-            oss << ") " << std::endl;
+            oss << ") ";
         }
 
 

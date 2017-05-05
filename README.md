@@ -1,4 +1,4 @@
-# graphit
+ # graphit
 GraphIt DSL compiler.
 
 Build Graphit
