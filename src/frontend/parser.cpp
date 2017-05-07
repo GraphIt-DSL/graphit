@@ -17,8 +17,10 @@ namespace graphit {
         this->tokens = tokens;
 
         decls = SymbolTable();
-        intrinsics_.push_back("sum");
-        intrinsics_.push_back("getVertices");
+
+        initIntrinsics();
+
+
 
 //        for (const auto kv : intrinsics) {
 //            decls.insert(kv->name->ident, IdentType::FUNCTION);
@@ -611,14 +613,16 @@ namespace graphit {
         }
     }
 
-// for_domain: set_index_set | (expr ':' expr)
+// DEPRECATED: for_domain: set_index_set | (expr ':' expr)
+    // for_domain: (expr ':' expr)
     fir::ForDomain::Ptr Parser::parseForDomain() {
-        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
-            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
-            indexSetDomain->set = parseSetIndexSet();
-
-            return indexSetDomain;
-        }
+//        GraphIt currently do not support for loop over set_index_set
+//        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
+//            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
+//            indexSetDomain->set = parseSetIndexSet();
+//
+//            return indexSetDomain;
+//        }
 
         auto rangeDomain = std::make_shared<fir::RangeDomain>();
 
@@ -2258,6 +2262,19 @@ namespace graphit {
         consume(Token::Type::RP);
         load_expr->file_name = file_name;
         return load_expr;
+    }
+
+    void Parser::initIntrinsics() {
+        // set up method call intrinsics
+        intrinsics_.push_back("sum");
+        intrinsics_.push_back("getVertices");
+        intrinsics_.push_back("getOutDegrees");
+
+        // set up function call intrinsics
+        decls.insert("fabs",  IdentType::FUNCTION);
+        decls.insert("startTimer",  IdentType::FUNCTION);
+        decls.insert("stopTimer",  IdentType::FUNCTION);
+
     }
 
 

@@ -1,0 +1,6 @@
+func main()
+    startTimer();
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+end

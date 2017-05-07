@@ -48,10 +48,31 @@ namespace graphit {
         oss << "#include \"intrinsics.h\"" << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
+        printIndent();
+        auto for_domain = for_stmt->domain;
+        auto loop_var = for_stmt->loopVar;
+        oss << "for ( int " << loop_var << " = ";
+        for_domain->lower->accept(this);
+        oss << "; " << loop_var << " < ";
+        for_domain->upper->accept(this);
+        oss << "; " << loop_var << "++ )" << std::endl;
+        printBeginIndent();
+        indent();
+        for_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+
+    }
+
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt){
         printIndent();
         expr_stmt->expr->accept(this);
-        oss << ";" << std::endl;
+        if (!std::dynamic_pointer_cast<mir::ApplyExpr>(expr_stmt->expr)){
+            oss << ";" ;
+        }
+        oss << std::endl;
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt){
@@ -200,6 +221,22 @@ namespace graphit {
         oss << expr->var.getName();
     };
 
+    void CodeGenCPP::visit(mir::MulExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " * ";
+        expr->rhs->accept(this);
+        oss << ')';
+    }
+
+    void CodeGenCPP::visit(mir::DivExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " / ";
+        expr->rhs->accept(this);
+        oss << ')';
+    }
+
     void CodeGenCPP::visit(mir::AddExpr::Ptr expr){
         oss << '(';
         expr->lhs->accept(this);
@@ -223,14 +260,14 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::FloatLiteral::Ptr expr){
         oss << "(";
-        //oss << "(float) ";
+        oss << "(float) ";
         oss << expr->val;
         oss << ") ";
     };
 
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr){
         oss << "(";
-        //oss << "(int) ";
+        oss << "(int) ";
         oss << expr->val;
         oss << ") ";
     }
@@ -258,35 +295,32 @@ namespace graphit {
         mir::ScalarType::Ptr vector_element_type = vector_type->vector_element_type;
         assert(vector_element_type != nullptr);
 
-        // read the size of the array
-        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
-        assert(size_expr != nullptr);
-        const auto init_val = var_decl->initVal;
-
         //generate std::vector implementation
         oss << "std::vector< ";
         vector_element_type->accept(this);
         // pointer declaration
         oss << " >  ";
         oss << name;
-        oss << " ( ";
-        size_expr->accept(this);
-        oss << " , ";
-        init_val->accept(this);
-        oss << " ); " << std::endl;
 
+        // read the size of the array
+        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+        assert(size_expr != nullptr);
+        const auto init_val = var_decl->initVal;
 
-        // Not sure what we need to do for this to work on std::vectors
-        //oss << "__restrict ";
+        if (std::dynamic_pointer_cast<mir::Call>(init_val)){
+            auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
+            oss << " = ";
+            call_expr->accept(this);
+            oss << ";" << std::endl;
 
-        //DEPRECATED
-//        oss << name << " = new ";
-//        vector_element_type->accept(this);
-//        oss << "[ ";
-//        size_expr->accept(this);
-//        oss << "]; " << std::endl;
+        } else {
+            oss << " ( ";
+            size_expr->accept(this);
+            oss << " , ";
+            init_val->accept(this);
+            oss << " ); " << std::endl;
 
-
+        }
     }
 
     void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {
@@ -347,7 +381,7 @@ namespace graphit {
         oss << "for (NodeID v : " << edgeset_name << ".in_neigh(u)) {" << std::endl;
         indent();
         printIndent();
-        oss << function_name << "( u , v );" << std::endl;
+        oss << function_name << "( v , u );" << std::endl;
         dedent();
         printIndent();
         oss << "}" << std::endl;
@@ -355,6 +389,8 @@ namespace graphit {
         printIndent();
         oss << "}" << std::endl;
     }
+
+
 
 
 }
