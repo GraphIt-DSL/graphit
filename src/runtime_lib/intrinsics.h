@@ -50,12 +50,28 @@ std::vector<int> builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
-float getTime(){
-    using namespace std::chrono;
-    auto t = high_resolution_clock::now();
-    time_point<high_resolution_clock,microseconds> usec = time_point_cast<microseconds>(t);
-    return (float)(usec.time_since_epoch().count())/1000;
+//float getTime(){
+//    using namespace std::chrono;
+//    auto t = high_resolution_clock::now();
+//    time_point<high_resolution_clock,microseconds> usec = time_point_cast<microseconds>(t);
+//    return (float)(usec.time_since_epoch().count())/1000;
+//}
+
+struct timeval start_time_;
+struct timeval elapsed_time_;
+
+void startTimer(){
+    gettimeofday(&start_time_, NULL);
 }
+
+float stopTimer(){
+    gettimeofday(&elapsed_time_, NULL);
+    elapsed_time_.tv_sec  -= start_time_.tv_sec;
+    elapsed_time_.tv_usec -= start_time_.tv_usec;
+    return elapsed_time_.tv_sec + elapsed_time_.tv_usec/1e6;
+
+}
+
 
 
 #endif //GRAPHIT_INTRINSICS_H_H

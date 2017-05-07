@@ -41,11 +41,17 @@ TEST_F(RuntimeLibTest, GetOutDegrees) {
 }
 
 TEST_F(RuntimeLibTest, TimerTest) {
-    float start_time = getTime();
+//    float start_time = getTime();
+//    sleep(1);
+//    float end_time = getTime();
+    startTimer();
     sleep(1);
-    float end_time = getTime();
-    std::cout << "start_time: " << start_time << std::endl;
-    std::cout << "end_time: " << end_time << std::endl;
-    std::cout << "elapsed_time: " << end_time - start_time << std::endl;
+    float elapsed_time = stopTimer();
+    std::cout << "elapsed_time: " << elapsed_time << std::endl;
+
+    startTimer();
+    sleep(2);
+    elapsed_time = stopTimer();
+    std::cout << "elapsed_time: " << elapsed_time << std::endl;
     EXPECT_EQ (5 , 5);
 }

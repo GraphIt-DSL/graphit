@@ -168,8 +168,8 @@ if __name__ == '__main__':
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_array'))
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
 
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_vertex_edge_load_expect'))

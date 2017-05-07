@@ -1,8 +1,6 @@
 func main()
-    var start_time : float = getTime();
-    var end_time : float = getTime();
-    print start_time;
-    print end_time;
+    startTimer();
+    var elapsed_time : float = stopTimer();
     print "elapsed time: ";
-    print end_time - start_time;
+    print elapsed_time;
 end

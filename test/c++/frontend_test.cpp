@@ -265,4 +265,10 @@ TEST_F(FrontendTest, SimpleFixedIterPageRank) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
-
+TEST_F(FrontendTest, TimerTest) {
+    istringstream is("func main() \n"
+                             "startTimer(); \n"
+                             "var elapsed : float = stopTimer(); \n"
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
