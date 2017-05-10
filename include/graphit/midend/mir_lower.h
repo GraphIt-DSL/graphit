@@ -6,7 +6,7 @@
 #define GRAPHIT_MIR_LOWER_H
 
 #include <graphit/midend/mir_context.h>
-#include <graphit/midend/lower_physical_data_layout.h>
+#include <graphit/midend/physical_data_layout_lower.h>
 
 namespace graphit {
     class MIRLower {

@@ -9,7 +9,15 @@
 
 namespace graphit {
 
-    void lower_physical_data_layout(MIRContext * mir_context);
+    class PhysicalDataLayoutLower {
+    public:
+
+        PhysicalDataLayoutLower(){};
+
+        void lower(MIRContext * mir_context);
+
+    };
+
 
 }
 
