@@ -7,7 +7,7 @@
 
 namespace graphit {
     void MIRLower::lower(MIRContext* mir_context){
-        PhysicalDataLayoutLower().lower(mir_context);
+        PhysicalDataLayoutLower(mir_context).lower();
     }
 }
 

@@ -6,12 +6,20 @@
 #define GRAPHIT_SCHEDULE_H
 
 #include <string>
+#include <map>
 
 namespace graphit {
 
+    /** An enum describing a type of physical data layout */
+    enum class DataLayoutType {
+        ARRAY,
+        DICT,
+        STRUCT
+    };
+
     struct PhysicalDataLayout {
         std::string var_name;
-        std::string data_layout_type;
+        DataLayoutType data_layout_type;
         // Records the name of the struct for all fused fields
         std::string fused_struct_name;
     };
@@ -20,7 +28,8 @@ namespace graphit {
     public:
         Schedule() {};
         //TODO: what does it mean??
-        std::vector<PhysicalDataLayout> &physical_data_layouts();
+        std::map<std::string, PhysicalDataLayout> *physical_data_layouts
+                = new std::map<std::string, PhysicalDataLayout>();
     };
 }
 
