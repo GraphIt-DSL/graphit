@@ -138,10 +138,11 @@ namespace graphit {
         loop_var_type->type = mir::ScalarType::Type::INT;
         auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
         ctx->addSymbol(mir_var);
-        ctx->unscope();
 
         mir_for_stmt->body = std::dynamic_pointer_cast<mir::StmtBlock>(emitStmt(for_stmt->body));
         mir_for_stmt->domain = emitDomain(for_stmt->domain);
+        ctx->unscope();
+
         retStmt = mir_for_stmt;
     }
 
