@@ -36,17 +36,23 @@ namespace  graphit {
                     }
                 }
 
+                //By default, we generate dense array implementations
                 genArrayDecl(var_decl);
 
             }
         }
+
+        // process non property constants
+        for (auto constant : mir_context_->getConstants()){
+            mir_context_->addLoweredConstant(constant);
+        }
     }
 
     void PhysicalDataLayoutLower::genStructDecl(const mir::VarDecl::Ptr &shared_ptr) {
-
+        //mir_context_->struct_type_decls.push_back();
     }
 
-    void PhysicalDataLayoutLower::genArrayDecl(const mir::VarDecl::Ptr &shared_ptr) {
-
+    void PhysicalDataLayoutLower::genArrayDecl(const mir::VarDecl::Ptr &var_decl) {
+        mir_context_->addLoweredConstant(var_decl);
     }
 }

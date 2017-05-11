@@ -74,13 +74,20 @@ namespace graphit {
             }
 
 
-            //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
             void addConstant(mir::VarDecl::Ptr var_decl){
                 constants_.push_back(var_decl);
             }
 
             std::vector<mir::VarDecl::Ptr> getConstants(){
                 return constants_;
+            }
+
+            void addLoweredConstant(mir::VarDecl::Ptr var_decl){
+                lowered_constants_.push_back(var_decl);
+            }
+
+            std::vector<mir::VarDecl::Ptr> getLoweredConstants(){
+                return lowered_constants_;
             }
 
 
@@ -202,8 +209,12 @@ namespace graphit {
             // maps a vector reference to item type
             std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
 
-            // constants declared in the FIR
+            // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
+            // struct declarations
+            std::vector<mir::StructTypeDecl::Ptr> struct_type_decls;
+            // constants after the physical data layout lower pass
+            std::vector<mir::VarDecl::Ptr> lowered_constants_;
 
             std::map<std::string, mir::FuncDecl::Ptr>  functions_map_;
             //need to store the ordering of function declarations

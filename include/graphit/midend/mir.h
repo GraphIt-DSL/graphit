@@ -195,6 +195,29 @@ namespace graphit {
             }
         };
 
+        struct IdentDecl : public MIRNode {
+            std::string name;
+            Type::Ptr type;
+
+            typedef std::shared_ptr<IdentDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IdentDecl>());
+            }
+
+        };
+
+        struct StructTypeDecl : public MIRNode {
+            std::string             name;
+            std::vector<IdentDecl::Ptr> fields;
+
+            typedef std::shared_ptr<StructTypeDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StructTypeDecl>());
+            }
+        };
+
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;
@@ -217,17 +240,8 @@ namespace graphit {
             }
         };
 
-        struct IdentDecl : public MIRNode {
-            std::string name;
-            Type::Ptr type;
 
-            typedef std::shared_ptr<IdentDecl> Ptr;
 
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<IdentDecl>());
-            }
-
-        };
 
         struct FuncDecl : public MIRNode {
             std::string name;

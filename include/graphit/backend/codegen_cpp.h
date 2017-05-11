@@ -68,6 +68,8 @@ namespace graphit {
         void genEdgeSets();
 
         void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name);
+
+        void genStructTypeDecls();
     };
 }
 

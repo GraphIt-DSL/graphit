@@ -39,9 +39,12 @@ namespace graphit {
         struct BinaryExpr;
         struct Type;
         struct ScalarType;
+
+        struct StructTypeDecl;
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+
 
         struct ElementType;
         struct VertexSetType;
@@ -71,6 +74,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<DivExpr>);
             virtual void visit(std::shared_ptr<Type>){};
             virtual void visit(std::shared_ptr<ScalarType>){};
+            virtual void visit(std::shared_ptr<StructTypeDecl>);
             virtual void visit(std::shared_ptr<VarDecl>);
             virtual void visit(std::shared_ptr<IdentDecl>){};
             virtual void visit(std::shared_ptr<FuncDecl>);

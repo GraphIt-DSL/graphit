@@ -102,6 +102,12 @@ namespace graphit {
             for_domain->upper->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<StructTypeDecl> struct_type_decl) {
+            for (auto field : struct_type_decl->fields) {
+                field->accept(this);
+            }
+        }
+
 
     }
 }
