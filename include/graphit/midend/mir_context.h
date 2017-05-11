@@ -212,7 +212,7 @@ namespace graphit {
             // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
             // struct declarations
-            std::vector<mir::StructTypeDecl::Ptr> struct_type_decls;
+            std::map<std::string, mir::StructTypeDecl::Ptr> struct_type_decls;
             // constants after the physical data layout lower pass
             std::vector<mir::VarDecl::Ptr> lowered_constants_;
 

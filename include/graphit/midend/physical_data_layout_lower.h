@@ -25,8 +25,8 @@ namespace graphit {
         MIRContext * mir_context_ = nullptr;
         void genVariableDecls();
 
-        void genStructDecl(const mir::VarDecl::Ptr &shared_ptr);
-        void genArrayDecl(const mir::VarDecl::Ptr &shared_ptr);
+        void genStructDecl(const mir::VarDecl::Ptr var_decl,  const PhysicalDataLayout data_layout);
+        void genArrayDecl(const mir::VarDecl::Ptr var_decl);
     };
 
 

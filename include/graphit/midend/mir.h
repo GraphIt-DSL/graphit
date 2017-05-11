@@ -207,16 +207,7 @@ namespace graphit {
 
         };
 
-        struct StructTypeDecl : public MIRNode {
-            std::string             name;
-            std::vector<IdentDecl::Ptr> fields;
 
-            typedef std::shared_ptr<StructTypeDecl> Ptr;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<StructTypeDecl>());
-            }
-        };
 
         struct VarDecl : public Stmt {
             std::string modifier;
@@ -228,6 +219,17 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VarDecl>());
+            }
+        };
+
+        struct StructTypeDecl : public Type {
+            std::string             name;
+            std::vector<VarDecl::Ptr> fields;
+
+            typedef std::shared_ptr<StructTypeDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StructTypeDecl>());
             }
         };
 
