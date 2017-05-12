@@ -107,7 +107,7 @@ namespace graphit {
             // optional, used for element field / system vectors
             ElementType::Ptr element_type;
             // scalar type for each element of the vector (not the global Elements)
-            ScalarType::Ptr vector_element_type;
+            Type::Ptr vector_element_type;
 
             typedef std::shared_ptr<VectorType> Ptr;
 
@@ -278,7 +278,7 @@ namespace graphit {
         struct Call : public Expr {
             std::string name;
             std::vector<Expr::Ptr> args;
-            ScalarType::Ptr generic_type;
+            Type::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

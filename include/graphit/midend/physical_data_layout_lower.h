@@ -14,7 +14,7 @@ namespace graphit {
     public:
 
         PhysicalDataLayoutLower( MIRContext* mir_context): mir_context_(mir_context) {};
-        PhysicalDataLayoutLower(Schedule* schedule, MIRContext* mir_context)
+        PhysicalDataLayoutLower(MIRContext* mir_context, Schedule* schedule)
                 : schedule_(schedule), mir_context_(mir_context){};
 
 

@@ -183,6 +183,10 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::StructTypeDecl::Ptr struct_type) {
+        oss << struct_type->name << " ";
+    }
+
     void CodeGenCPP::visit(mir::Call::Ptr call_expr) {
         oss << call_expr->name;
 
@@ -291,7 +295,7 @@ namespace graphit {
         // read the type of the array
         mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
         assert(vector_type != nullptr);
-        mir::ScalarType::Ptr vector_element_type = vector_type->vector_element_type;
+        auto vector_element_type = vector_type->vector_element_type;
         assert(vector_element_type != nullptr);
 
         //generate std::vector implementation
@@ -315,8 +319,11 @@ namespace graphit {
         } else {
             oss << " ( ";
             size_expr->accept(this);
-            oss << " , ";
-            init_val->accept(this);
+            if (init_val) {
+                // struct types don't have initial values
+                oss << " , ";
+                init_val->accept(this);
+            }
             oss << " ); " << std::endl;
 
         }
@@ -393,7 +400,23 @@ namespace graphit {
      * Generate the struct types before the arrays are generated
      */
     void CodeGenCPP::genStructTypeDecls() {
+        for (auto const & struct_type_decl_entry : mir_context_->struct_type_decls){
+            auto struct_type_decl = struct_type_decl_entry.second;
+            oss << "typedef struct ";
+            oss << struct_type_decl->name << " { " << std::endl;
 
+            for (auto var_decl : struct_type_decl->fields){
+                indent();
+                printIndent();
+                var_decl->type->accept(this);
+                oss << var_decl->name << " = ";
+                var_decl->initVal->accept(this);
+                oss << ";" << std::endl;
+                dedent();
+            }
+
+            oss << "} " << struct_type_decl->name << ";" << std::endl;
+        }
     }
 
 

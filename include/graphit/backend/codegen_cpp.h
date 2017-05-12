@@ -47,6 +47,8 @@ namespace graphit {
 
         virtual void visit(mir::VarDecl::Ptr);
         virtual void visit(mir::ElementType::Ptr element_type);
+
+        virtual void visit(mir::StructTypeDecl::Ptr struct_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
         void genIncludeStmts();

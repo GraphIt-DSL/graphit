@@ -130,11 +130,11 @@ namespace graphit {
                 return false;
             }
 
-            void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
+            void updateVectorItemType(std::string vector_name, mir::Type::Ptr item_type){
                 vector_item_type_map_[vector_name] = item_type;
             }
 
-            mir::ScalarType::Ptr getVectorItemType(std::string vector_name){
+            mir::Type::Ptr getVectorItemType(std::string vector_name){
                 return vector_item_type_map_[vector_name];
             }
 
@@ -207,7 +207,7 @@ namespace graphit {
             //maps a vector to the Element it is associated with;
             std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
             // maps a vector reference to item type
-            std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
+            std::map<std::string, mir::Type::Ptr> vector_item_type_map_;
 
             // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;

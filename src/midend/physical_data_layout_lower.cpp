@@ -59,15 +59,32 @@ namespace  graphit {
             auto struct_type_decl = std::make_shared<mir::StructTypeDecl>();
             mir_context_->struct_type_decls[data_layout.fused_struct_name] = struct_type_decl;
             auto array_of_struct_decl = std::make_shared<mir::VarDecl>();
-            array_of_struct_decl->name = data_layout.fused_struct_name;
-            array_of_struct_decl->type = struct_type_decl;
+            array_of_struct_decl->name = "array_of_" + data_layout.fused_struct_name;
+
+            //initialize the struct type for the array of struct declaration
+            //including its vector_element_type, associated element_type (Vertex, Edge),
+            auto array_of_struct_type = std::make_shared<mir::VectorType>();
+            array_of_struct_type->vector_element_type = struct_type_decl;
+            auto vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+            assert(vector_type != nullptr);
+            array_of_struct_type->element_type = vector_type->element_type;
+
+            //set the type of each struct in the array of struct
+            array_of_struct_decl->type = array_of_struct_type;
             mir_context_->addLoweredConstant(array_of_struct_decl);
         }
 
         // initialize the value of the field
         auto struct_type_decl = mir_context_->struct_type_decls[data_layout.fused_struct_name];
         struct_type_decl->name = data_layout.fused_struct_name;
-        struct_type_decl->fields.push_back(var_decl);
+
+        //currently we don't support struct as field of astruct
+        auto field_var_decl = std::make_shared<mir::VarDecl>();
+        field_var_decl->name = var_decl->name;
+        field_var_decl->initVal = var_decl->initVal;
+        field_var_decl->type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type)->vector_element_type;
+
+        struct_type_decl->fields.push_back(field_var_decl);
 
     }
 

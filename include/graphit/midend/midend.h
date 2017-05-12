@@ -8,6 +8,7 @@
 #include <graphit/frontend/fir_context.h>
 #include <graphit/midend/mir_context.h>
 #include <graphit/midend/mir_emitter.h>
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
     class Midend {
@@ -16,10 +17,16 @@ namespace graphit {
 
         }
 
+        Midend(FIRContext* fir_context, Schedule * schedule)
+                : fir_context_(fir_context), schedule_(schedule) {
+
+        }
+
         int emitMIR(MIRContext * mir_context);
 
     private:
-        FIRContext* fir_context_;
+        Schedule* schedule_ = nullptr;
+        FIRContext* fir_context_ = nullptr;
     };
 }
 #endif //GRAPHIT_MIDEND_H

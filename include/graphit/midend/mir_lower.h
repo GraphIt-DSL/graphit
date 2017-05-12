@@ -12,8 +12,8 @@ namespace graphit {
     class MIRLower {
     public:
         MIRLower(){};
-        
-        void lower(MIRContext* mir_context);
+
+        void lower(MIRContext* mir_context, Schedule* schedule);
         
     };
 }
