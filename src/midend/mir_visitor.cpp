@@ -108,6 +108,22 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<VertexSetType> vertexset_type) {
+            vertexset_type->element->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<EdgeSetType> edgeset_type) {
+            edgeset_type->element->accept(this);
+            for (auto element_type : *edgeset_type->vertex_element_type_list){
+                element_type->accept(this);
+            }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<VectorType> vector_type) {
+            vector_type->element_type->accept(this);
+            vector_type->vector_element_type->accept(this);
+        }
+
 
     }
 }

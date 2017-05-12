@@ -81,13 +81,12 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IdentDecl>){};
             virtual void visit(std::shared_ptr<FuncDecl>);
             virtual void visit(std::shared_ptr<ElementType>){};
-            virtual void visit(std::shared_ptr<VertexSetType>){};
-            virtual void visit(std::shared_ptr<EdgeSetType>){};
-            virtual void visit(std::shared_ptr<VectorType>){};
+            virtual void visit(std::shared_ptr<VertexSetType>);
+            virtual void visit(std::shared_ptr<EdgeSetType>);
+            virtual void visit(std::shared_ptr<VectorType>);
 
 
-        private:
-            void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
         };
     }
 }
