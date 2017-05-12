@@ -10,6 +10,8 @@
 namespace graphit {
     namespace mir {
 
+        struct MIRNode;
+
         struct Program;
         struct Stmt;
 
