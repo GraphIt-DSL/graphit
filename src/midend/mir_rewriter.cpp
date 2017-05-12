@@ -9,45 +9,47 @@ namespace graphit {
     namespace mir {
 
         void MIRRewriter::visit(Expr::Ptr expr) {
-            expr->accept(this);
+            node = rewrite<Expr>(expr);
         };
 
 
         void MIRRewriter::visit(ExprStmt::Ptr stmt) {
-            stmt->expr->accept(this);
+            stmt->expr = rewrite<Expr>(stmt->expr);
+            node = stmt;
         }
 
         void MIRRewriter::visit(AssignStmt::Ptr stmt) {
-            stmt->lhs->accept(this);
-            stmt->expr->accept(this);
+            stmt->lhs = rewrite<Expr>(stmt->lhs);
+            stmt->expr = rewrite<Expr>(stmt->expr);
+            node = stmt;
         }
 
         void MIRRewriter::visit(PrintStmt::Ptr stmt) {
-            stmt->expr->accept(this);
+            stmt->expr = rewrite<Expr>(stmt->expr);
+            node = stmt;
         }
 
         void MIRRewriter::visit(StmtBlock::Ptr stmt_block) {
+
             for (auto stmt : *(stmt_block->stmts)) {
-                stmt->accept(this);
+                stmt = rewrite<Stmt>(stmt);
             }
+            node = stmt_block;
         }
 
         void MIRRewriter::visit(FuncDecl::Ptr func_decl) {
 
-//            for (auto arg : func_decl->args) {
-//                arg->accept(this);
-//            }
-//            func_decl->result->accept(this);
-
             if (func_decl->body->stmts) {
-                func_decl->body->accept(this);
+                func_decl->body = rewrite<StmtBlock>(func_decl->body);
             }
+            node = func_decl;
         }
 
         void MIRRewriter::visit(Call::Ptr expr) {
             for (auto arg : expr->args){
-                arg->accept(this);
+                arg = rewrite<Expr>(expr);
             }
+            node = expr;
         };
         void MIRRewriter::visit(MulExpr::Ptr expr) {
             visitBinaryExpr(expr);
@@ -66,54 +68,63 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<VarDecl> var_decl) {
-            var_decl->initVal->accept(this);
+            var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            node = var_decl;
         }
-
 
 
         void MIRRewriter::visit(std::shared_ptr<VertexSetAllocExpr> expr) {
-            expr->size_expr->accept(this);
+            expr->size_expr = rewrite<Expr>(expr->size_expr);
+            node = expr;
         }
 
         void MIRRewriter::visit(std::shared_ptr<ApplyExpr> expr) {
-            expr->target->accept(this);
+            expr->target = rewrite<Expr>(expr->target);
+            node = expr;
         }
 
         void MIRRewriter::visit(std::shared_ptr<TensorReadExpr> expr) {
-            expr->target->accept(this);
-            expr->index->accept(this);
+            expr->target = rewrite<Expr>(expr->target);
+            expr->index = rewrite<Expr>(expr->index);
+            node = expr;
         }
 
         void MIRRewriter::visit(std::shared_ptr<ForStmt> for_stmt) {
-            for_stmt->domain->accept(this);
-            for_stmt->body->accept(this);
+            for_stmt->domain = rewrite<ForDomain>(for_stmt->domain);
+            for_stmt->body = rewrite<StmtBlock>(for_stmt->body);
+            node = for_stmt;
         }
 
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {
-            for_domain->lower->accept(this);
-            for_domain->upper->accept(this);
+            for_domain->lower = rewrite<Expr>(for_domain->lower);
+            for_domain->upper = rewrite<Expr>(for_domain->upper);
+            node = for_domain;
         }
 
         void MIRRewriter::visit(std::shared_ptr<StructTypeDecl> struct_type_decl) {
             for (auto field : struct_type_decl->fields) {
-                field->accept(this);
+                field = rewrite<VarDecl>(field);
             }
+            node = struct_type_decl;
         }
 
         void MIRRewriter::visit(std::shared_ptr<VertexSetType> vertexset_type) {
-            vertexset_type->element->accept(this);
+            vertexset_type->element = rewrite<ElementType>(vertexset_type->element);
+            node = vertexset_type;
         }
 
         void MIRRewriter::visit(std::shared_ptr<EdgeSetType> edgeset_type) {
-            edgeset_type->element->accept(this);
+            edgeset_type->element = rewrite<ElementType>(edgeset_type->element);
             for (auto element_type : *edgeset_type->vertex_element_type_list){
-                element_type->accept(this);
+                element_type = rewrite<ElementType>(element_type);
             }
+            node = edgeset_type;
         }
 
         void MIRRewriter::visit(std::shared_ptr<VectorType> vector_type) {
-            vector_type->element_type->accept(this);
-            vector_type->vector_element_type->accept(this);
+            vector_type->element_type = rewrite<ElementType>(vector_type->element_type);
+            vector_type->vector_element_type = rewrite<Type>(vector_type->vector_element_type);
+            node = vector_type;
         }
 
         void MIRRewriter::visitBinaryExpr(BinaryExpr::Ptr expr) {
