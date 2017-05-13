@@ -4,6 +4,7 @@
 #include <graphit/midend/physical_data_layout_lower.h>
 namespace  graphit {
 
+
     void PhysicalDataLayoutLower::lower() {
 
         //generate variable declarations
@@ -90,5 +91,9 @@ namespace  graphit {
 
     void PhysicalDataLayoutLower::genArrayDecl(const mir::VarDecl::Ptr var_decl) {
         mir_context_->addLoweredConstant(var_decl);
+    }
+
+    void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
+
     }
 }
