@@ -102,11 +102,18 @@ namespace  graphit {
         mir_context_->addLoweredConstant(var_decl);
     }
 
+    /**
+     * Reads the schedule and generate concrete tensor read type
+     * It generates TensorArrayReadExpr when no schedule is specified or ARRAY is explicitly specified
+     * It generates TensorStructReadExpr or TensorDictReadExpr when the appropriate scheule is supplied
+     * @param tensor_read
+     */
     void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
         //make no changes to the default array implementation
-        tensor_read->target = rewrite<mir::Expr>(tensor_read->target);
-        tensor_read->index = rewrite<mir::Expr>(tensor_read->index);
-        node = tensor_read;
+        auto tensor_array_read = std::make_shared<mir::TensorArrayReadExpr>();
+        tensor_array_read->index = rewrite<mir::Expr>(tensor_read->index);
+        tensor_array_read->target = rewrite<mir::Expr>(tensor_read->target);
+        node = tensor_array_read;
     }
 
 }

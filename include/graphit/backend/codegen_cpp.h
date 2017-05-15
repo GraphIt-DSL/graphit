@@ -31,7 +31,8 @@ namespace graphit {
 
         virtual void visit(mir::Call::Ptr);
 
-        virtual void visit(mir::TensorReadExpr::Ptr);
+        //virtual void visit(mir::TensorReadExpr::Ptr);
+        virtual void visit(mir::TensorArrayReadExpr::Ptr);
         virtual void visit(mir::ApplyExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);

@@ -212,13 +212,28 @@ namespace graphit {
         oss << ") ";
     };
 
-    void CodeGenCPP::visit(mir::TensorReadExpr::Ptr expr) {
+    /**
+     * DEPRECATED, we don't generate code for TensorReadExpr
+     * We only generate code for TensorArrayReadExpr and TensorStructReadExpr
+     * @param expr
+     */
+//    void CodeGenCPP::visit(mir::TensorReadExpr::Ptr expr) {
+//        //for dense array tensor read
+//        expr->target->accept(this);
+//        oss << "[";
+//        expr->index->accept(this);
+//        oss << "]";
+//    };
+
+
+    void CodeGenCPP::visit(mir::TensorArrayReadExpr::Ptr expr) {
         //for dense array tensor read
         expr->target->accept(this);
         oss << "[";
         expr->index->accept(this);
         oss << "]";
     };
+
 
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr) {
         oss << expr->var.getName();
@@ -401,12 +416,12 @@ namespace graphit {
      * Generate the struct types before the arrays are generated
      */
     void CodeGenCPP::genStructTypeDecls() {
-        for (auto const & struct_type_decl_entry : mir_context_->struct_type_decls){
+        for (auto const &struct_type_decl_entry : mir_context_->struct_type_decls) {
             auto struct_type_decl = struct_type_decl_entry.second;
             oss << "typedef struct ";
             oss << struct_type_decl->name << " { " << std::endl;
 
-            for (auto var_decl : struct_type_decl->fields){
+            for (auto var_decl : struct_type_decl->fields) {
                 indent();
                 printIndent();
                 var_decl->type->accept(this);

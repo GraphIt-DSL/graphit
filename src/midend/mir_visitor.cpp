@@ -92,6 +92,18 @@ namespace graphit {
             expr->index->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<TensorArrayReadExpr> expr) {
+            expr->target->accept(this);
+            expr->index->accept(this);
+
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<TensorStructReadExpr> expr) {
+            expr->index->accept(this);
+            expr->field_target->accept(this);
+            expr->struct_target->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<ForStmt> for_stmt) {
             for_stmt->domain->accept(this);
             for_stmt->body->accept(this);
@@ -123,6 +135,8 @@ namespace graphit {
             vector_type->element_type->accept(this);
             vector_type->vector_element_type->accept(this);
         }
+
+
 
 
     }

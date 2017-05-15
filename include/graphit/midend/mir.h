@@ -262,12 +262,31 @@ namespace graphit {
         };
 
         struct TensorReadExpr : public Expr {
-            Expr::Ptr target;
             Expr::Ptr index;
+            Expr::Ptr target;
 
             typedef std::shared_ptr<TensorReadExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorReadExpr>());
+            }
+
+        };
+
+        struct TensorStructReadExpr : TensorReadExpr {
+            Expr::Ptr field_target;
+            Expr::Ptr struct_target;
+
+            typedef std::shared_ptr<TensorStructReadExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<TensorStructReadExpr>());
+            }
+        };
+
+        struct TensorArrayReadExpr : public TensorReadExpr {
+
+            typedef std::shared_ptr<TensorArrayReadExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<TensorArrayReadExpr>());
             }
 
         };
