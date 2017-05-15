@@ -11,7 +11,10 @@
 
 namespace graphit {
 
-
+/**
+ *  A class for doing the lowering of physical data layout
+ *  including struct, array, and dictionary (hashmap) layouts
+ */
     class PhysicalDataLayoutLower {
     public:
 
@@ -23,7 +26,7 @@ namespace graphit {
 
         void lower();
 
-
+        //mir rewriter for rewriting the abstract tensor reads into the right type of reads
         struct LowerTensorRead : public mir::MIRRewriter {
             using mir::MIRRewriter::visit;
 
@@ -31,7 +34,7 @@ namespace graphit {
 
             };
 
-            //virtual void visit(mir::TensorReadExpr::Ptr tensor_read);
+            virtual void visit(mir::TensorReadExpr::Ptr tensor_read);
 
             Schedule * schedule_;
         };

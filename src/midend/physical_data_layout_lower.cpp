@@ -102,11 +102,11 @@ namespace  graphit {
         mir_context_->addLoweredConstant(var_decl);
     }
 
-//    void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
-//        //make no changes to the default array implementation
-//        tensor_read->target = rewrite<mir::Expr>(tensor_read->target);
-//        tensor_read->index = rewrite<mir::Expr>(tensor_read->index);
-//        node = tensor_read;
-//    }
+    void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
+        //make no changes to the default array implementation
+        tensor_read->target = rewrite<mir::Expr>(tensor_read->target);
+        tensor_read->index = rewrite<mir::Expr>(tensor_read->index);
+        node = tensor_read;
+    }
 
 }
