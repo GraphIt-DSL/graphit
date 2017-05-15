@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/var.h>
+#include <assert.h>
 
 
 namespace graphit {
@@ -27,6 +28,7 @@ namespace graphit {
         template<typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<MIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
+            assert(ret != nullptr);
             return ret;
         }
 
@@ -274,7 +276,7 @@ namespace graphit {
 
         struct TensorStructReadExpr : TensorReadExpr {
             Expr::Ptr field_target;
-            Expr::Ptr struct_target;
+            std::string array_of_struct_target;
 
             typedef std::shared_ptr<TensorStructReadExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {

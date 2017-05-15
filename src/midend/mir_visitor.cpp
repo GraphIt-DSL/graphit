@@ -101,7 +101,8 @@ namespace graphit {
         void MIRVisitor::visit(std::shared_ptr<TensorStructReadExpr> expr) {
             expr->index->accept(this);
             expr->field_target->accept(this);
-            expr->struct_target->accept(this);
+            // This is now changed to a string
+            //expr->struct_target->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<ForStmt> for_stmt) {

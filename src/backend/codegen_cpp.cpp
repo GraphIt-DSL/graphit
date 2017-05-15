@@ -225,13 +225,29 @@ namespace graphit {
 //        oss << "]";
 //    };
 
-
+/**
+ * Generate tensor read code for array implementation
+ * @param expr
+ */
     void CodeGenCPP::visit(mir::TensorArrayReadExpr::Ptr expr) {
         //for dense array tensor read
         expr->target->accept(this);
         oss << "[";
         expr->index->accept(this);
         oss << "]";
+    };
+
+/**
+ * Generate tensor read code for struct implementation
+ * @param expr
+ */
+    void CodeGenCPP::visit(mir::TensorStructReadExpr::Ptr expr) {
+        //for dense array tensor read
+        oss << expr->array_of_struct_target << "[";
+        expr->index->accept(this);
+        oss << "].";
+        expr->field_target->accept(this);
+        oss << " ";
     };
 
 

@@ -14,6 +14,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetGetOutDegrees";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
+
 
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.GetOutDegrees";

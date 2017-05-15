@@ -75,8 +75,7 @@ namespace  graphit {
             //including its vector_element_type, associated element_type (Vertex, Edge),
             auto array_of_struct_type = std::make_shared<mir::VectorType>();
             array_of_struct_type->vector_element_type = struct_type_decl;
-            auto vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
-            assert(vector_type != nullptr);
+            auto vector_type = mir::to<mir::VectorType>(var_decl->type);
             array_of_struct_type->element_type = vector_type->element_type;
 
             //set the type of each struct in the array of struct
@@ -92,7 +91,7 @@ namespace  graphit {
         auto field_var_decl = std::make_shared<mir::VarDecl>();
         field_var_decl->name = var_decl->name;
         field_var_decl->initVal = var_decl->initVal;
-        field_var_decl->type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type)->vector_element_type;
+        field_var_decl->type = mir::to<mir::VectorType>(var_decl->type)->vector_element_type;
 
         struct_type_decl->fields.push_back(field_var_decl);
 
@@ -109,7 +108,27 @@ namespace  graphit {
      * @param tensor_read
      */
     void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
-        //make no changes to the default array implementation
+
+        auto target_expr = mir::to<mir::VarExpr>(tensor_read->target);
+        auto target_name = target_expr->var.getName();
+
+        if(schedule_ !=nullptr && schedule_->physical_data_layouts != nullptr) {
+            auto physical_data_layout = schedule_->physical_data_layouts->find(target_name);
+
+            if (physical_data_layout != schedule_->physical_data_layouts->end()) {
+                if (physical_data_layout->second.data_layout_type == DataLayoutType::STRUCT){
+                    //Generate TensorStructReadExpr
+                    auto tensor_struct_read = std::make_shared<mir::TensorStructReadExpr>();
+                    tensor_struct_read->index = rewrite<mir::Expr>(tensor_read->index);
+                    tensor_struct_read->field_target = rewrite<mir::Expr>(tensor_read->target);
+                    tensor_struct_read->array_of_struct_target = "array_of_" + physical_data_layout->second.fused_struct_name;
+                    node = tensor_struct_read;
+                    return;
+                }
+            }
+        }
+
+        //Generate TensorArrayReadExpr for no schedule specified or ARRAY data layout type
         auto tensor_array_read = std::make_shared<mir::TensorArrayReadExpr>();
         tensor_array_read->index = rewrite<mir::Expr>(tensor_read->index);
         tensor_array_read->target = rewrite<mir::Expr>(tensor_read->target);
