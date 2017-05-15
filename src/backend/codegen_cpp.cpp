@@ -12,6 +12,7 @@ namespace graphit {
         //genElementData();
         genStructTypeDecls();
 
+
         //Processing the constants
         for (auto constant : mir_context->getLoweredConstants()) {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {

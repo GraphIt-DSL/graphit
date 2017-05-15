@@ -270,3 +270,50 @@ TEST_F(BackendTest, SimpleStructSchedule) {
     EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
 
 }
+
+TEST_F(BackendTest, AddoneWithNoSchedule) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vector_b : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() vertices.apply(addone); print vector_a.sum(); end");
+
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, AddoneWithArraySchedule) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vector_b : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() vertices.apply(addone); print vector_a.sum(); end");
+    Schedule * schedule = new Schedule();
+    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::ARRAY, ""};
+    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::ARRAY, ""};
+    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+    (*physical_layouts)["vector_a"] = vector_a_layout;
+    (*physical_layouts)["vector_b"] = vector_b_layout;
+
+    schedule->physical_data_layouts = physical_layouts;
+    EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
+}
+
+TEST_F(BackendTest, AddoneWithStructSchedule) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vector_b : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() vertices.apply(addone); print vector_a.sum(); end");
+    Schedule * schedule = new Schedule();
+    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
+    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
+    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+    (*physical_layouts)["vector_a"] = vector_a_layout;
+    (*physical_layouts)["vector_b"] = vector_b_layout;
+
+    schedule->physical_data_layouts = physical_layouts;
+    EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
+}

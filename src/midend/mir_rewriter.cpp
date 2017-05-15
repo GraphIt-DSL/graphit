@@ -47,7 +47,7 @@ namespace graphit {
 
         void MIRRewriter::visit(Call::Ptr expr) {
             for (auto arg : expr->args){
-                arg = rewrite<Expr>(expr);
+                arg = rewrite<Expr>(arg);
             }
             node = expr;
         };

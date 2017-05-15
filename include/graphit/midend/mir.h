@@ -253,8 +253,6 @@ namespace graphit {
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
 
-
-
             typedef std::shared_ptr<FuncDecl> Ptr;
 
 

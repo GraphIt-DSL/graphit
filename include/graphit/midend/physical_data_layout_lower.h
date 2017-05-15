@@ -27,9 +27,11 @@ namespace graphit {
         struct LowerTensorRead : public mir::MIRRewriter {
             using mir::MIRRewriter::visit;
 
-            LowerTensorRead(Schedule* schedule);
+            LowerTensorRead(Schedule* schedule) : schedule_(schedule){
 
-            virtual void visit(mir::TensorReadExpr::Ptr tensor_read);
+            };
+
+            //virtual void visit(mir::TensorReadExpr::Ptr tensor_read);
 
             Schedule * schedule_;
         };

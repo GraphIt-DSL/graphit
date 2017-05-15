@@ -7,6 +7,7 @@
 
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/mir.h>
+#include <assert.h>
 
 namespace graphit {
     namespace mir {
@@ -78,7 +79,7 @@ namespace graphit {
 
                 ptr->accept(this);
                 auto ret = std::static_pointer_cast<T>(node);
-
+                assert(ret != nullptr);
                 node = tmp;
 
                 return ret;

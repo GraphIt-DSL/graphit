@@ -11,6 +11,15 @@ namespace  graphit {
         genVariableDecls();
 
         //reset the tensor reads
+        auto lower_tensor_read = LowerTensorRead(schedule_);
+
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+
+        for (auto function : functions){
+            lower_tensor_read.rewrite(function);
+        }
+
+
     }
 
     void PhysicalDataLayoutLower::genVariableDecls() {
@@ -93,7 +102,11 @@ namespace  graphit {
         mir_context_->addLoweredConstant(var_decl);
     }
 
-    void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
+//    void PhysicalDataLayoutLower::LowerTensorRead::visit(mir::TensorReadExpr::Ptr tensor_read) {
+//        //make no changes to the default array implementation
+//        tensor_read->target = rewrite<mir::Expr>(tensor_read->target);
+//        tensor_read->index = rewrite<mir::Expr>(tensor_read->index);
+//        node = tensor_read;
+//    }
 
-    }
 }
