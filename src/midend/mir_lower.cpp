@@ -6,7 +6,14 @@
 
 
 namespace graphit {
+    /**
+     * Perfomrms the lowering passes on MIR_Context
+     * @param mir_context
+     * @param schedule
+     */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
+        // The pass on lowering abstract data structures to
+        // concrete data structures with physical layout information
         PhysicalDataLayoutLower(mir_context, schedule).lower();
     }
 }

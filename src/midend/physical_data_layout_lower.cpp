@@ -87,7 +87,7 @@ namespace  graphit {
         auto struct_type_decl = mir_context_->struct_type_decls[data_layout.fused_struct_name];
         struct_type_decl->name = data_layout.fused_struct_name;
 
-        //currently we don't support struct as field of astruct
+        //currently we don't support struct as field of a struct
         auto field_var_decl = std::make_shared<mir::VarDecl>();
         field_var_decl->name = var_decl->name;
         field_var_decl->initVal = var_decl->initVal;

@@ -24,6 +24,9 @@ namespace graphit {
         std::string fused_struct_name;
     };
 
+    /**
+     * User specified schedule object
+     */
     class Schedule {
     public:
         Schedule() {};

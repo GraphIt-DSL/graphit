@@ -307,6 +307,8 @@ TEST_F(BackendTest, AddoneWithStructSchedule) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
+
+    // constructs a schedule object that fuses vector_a and vector_b into an array of struct
     Schedule * schedule = new Schedule();
     PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
     PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
@@ -317,3 +319,4 @@ TEST_F(BackendTest, AddoneWithStructSchedule) {
     schedule->physical_data_layouts = physical_layouts;
     EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
 }
+
