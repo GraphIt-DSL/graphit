@@ -10,6 +10,8 @@
 namespace graphit {
     namespace mir {
 
+        struct MIRNode;
+
         struct Program;
         struct Stmt;
 
@@ -29,6 +31,9 @@ namespace graphit {
         struct ApplyExpr;
 
         struct TensorReadExpr;
+        struct TensorArrayReadExpr;
+        struct TensorStructReadExpr;
+
         struct LoadExpr;
         struct VertexSetAllocExpr;
         struct VarExpr;
@@ -39,9 +44,12 @@ namespace graphit {
         struct BinaryExpr;
         struct Type;
         struct ScalarType;
+
+        struct StructTypeDecl;
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+
 
         struct ElementType;
         struct VertexSetType;
@@ -59,7 +67,12 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
+
             virtual void visit(std::shared_ptr<TensorReadExpr>);
+            virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
+            virtual void visit(std::shared_ptr<TensorStructReadExpr>);
+
+
             virtual void visit(std::shared_ptr<StringLiteral>){};
             virtual void visit(std::shared_ptr<FloatLiteral>){};
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
@@ -71,17 +84,17 @@ namespace graphit {
             virtual void visit(std::shared_ptr<DivExpr>);
             virtual void visit(std::shared_ptr<Type>){};
             virtual void visit(std::shared_ptr<ScalarType>){};
+            virtual void visit(std::shared_ptr<StructTypeDecl>);
             virtual void visit(std::shared_ptr<VarDecl>);
             virtual void visit(std::shared_ptr<IdentDecl>){};
             virtual void visit(std::shared_ptr<FuncDecl>);
             virtual void visit(std::shared_ptr<ElementType>){};
-            virtual void visit(std::shared_ptr<VertexSetType>){};
-            virtual void visit(std::shared_ptr<EdgeSetType>){};
-            virtual void visit(std::shared_ptr<VectorType>){};
+            virtual void visit(std::shared_ptr<VertexSetType>);
+            virtual void visit(std::shared_ptr<EdgeSetType>);
+            virtual void visit(std::shared_ptr<VectorType>);
 
 
-        private:
-            void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
         };
     }
 }

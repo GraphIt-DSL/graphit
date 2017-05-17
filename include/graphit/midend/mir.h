@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/var.h>
+#include <assert.h>
 
 
 namespace graphit {
@@ -27,6 +28,7 @@ namespace graphit {
         template<typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<MIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
+            assert(ret != nullptr);
             return ret;
         }
 
@@ -107,7 +109,7 @@ namespace graphit {
             // optional, used for element field / system vectors
             ElementType::Ptr element_type;
             // scalar type for each element of the vector (not the global Elements)
-            ScalarType::Ptr vector_element_type;
+            Type::Ptr vector_element_type;
 
             typedef std::shared_ptr<VectorType> Ptr;
 
@@ -195,6 +197,20 @@ namespace graphit {
             }
         };
 
+        struct IdentDecl : public MIRNode {
+            std::string name;
+            Type::Ptr type;
+
+            typedef std::shared_ptr<IdentDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IdentDecl>());
+            }
+
+        };
+
+
+
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;
@@ -208,6 +224,17 @@ namespace graphit {
             }
         };
 
+        struct StructTypeDecl : public Type {
+            std::string             name;
+            std::vector<VarDecl::Ptr> fields;
+
+            typedef std::shared_ptr<StructTypeDecl> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StructTypeDecl>());
+            }
+        };
+
         struct VarExpr : public Expr {
             mir::Var var;
             typedef std::shared_ptr<VarExpr> Ptr;
@@ -217,17 +244,8 @@ namespace graphit {
             }
         };
 
-        struct IdentDecl : public MIRNode {
-            std::string name;
-            Type::Ptr type;
 
-            typedef std::shared_ptr<IdentDecl> Ptr;
 
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<IdentDecl>());
-            }
-
-        };
 
         struct FuncDecl : public MIRNode {
             std::string name;
@@ -236,8 +254,6 @@ namespace graphit {
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
-
-
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 
@@ -248,8 +264,8 @@ namespace graphit {
         };
 
         struct TensorReadExpr : public Expr {
-            Expr::Ptr target;
             Expr::Ptr index;
+            Expr::Ptr target;
 
             typedef std::shared_ptr<TensorReadExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
@@ -258,11 +274,30 @@ namespace graphit {
 
         };
 
+        struct TensorStructReadExpr : TensorReadExpr {
+            Expr::Ptr field_target;
+            std::string array_of_struct_target;
+
+            typedef std::shared_ptr<TensorStructReadExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<TensorStructReadExpr>());
+            }
+        };
+
+        struct TensorArrayReadExpr : public TensorReadExpr {
+
+            typedef std::shared_ptr<TensorArrayReadExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<TensorArrayReadExpr>());
+            }
+
+        };
+
         /// Calls a function that may any number of arguments.
         struct Call : public Expr {
             std::string name;
             std::vector<Expr::Ptr> args;
-            ScalarType::Ptr generic_type;
+            Type::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

@@ -31,7 +31,9 @@ namespace graphit {
 
         virtual void visit(mir::Call::Ptr);
 
-        virtual void visit(mir::TensorReadExpr::Ptr);
+        //virtual void visit(mir::TensorReadExpr::Ptr);
+        virtual void visit(mir::TensorStructReadExpr::Ptr);
+        virtual void visit(mir::TensorArrayReadExpr::Ptr);
         virtual void visit(mir::ApplyExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);
@@ -47,6 +49,8 @@ namespace graphit {
 
         virtual void visit(mir::VarDecl::Ptr);
         virtual void visit(mir::ElementType::Ptr element_type);
+
+        virtual void visit(mir::StructTypeDecl::Ptr struct_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
         void genIncludeStmts();
@@ -68,6 +72,8 @@ namespace graphit {
         void genEdgeSets();
 
         void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name);
+
+        void genStructTypeDecls();
     };
 }
 

@@ -92,6 +92,19 @@ namespace graphit {
             expr->index->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<TensorArrayReadExpr> expr) {
+            expr->target->accept(this);
+            expr->index->accept(this);
+
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<TensorStructReadExpr> expr) {
+            expr->index->accept(this);
+            expr->field_target->accept(this);
+            // This is now changed to a string
+            //expr->struct_target->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<ForStmt> for_stmt) {
             for_stmt->domain->accept(this);
             for_stmt->body->accept(this);
@@ -101,6 +114,30 @@ namespace graphit {
             for_domain->lower->accept(this);
             for_domain->upper->accept(this);
         }
+
+        void MIRVisitor::visit(std::shared_ptr<StructTypeDecl> struct_type_decl) {
+            for (auto field : struct_type_decl->fields) {
+                field->accept(this);
+            }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<VertexSetType> vertexset_type) {
+            vertexset_type->element->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<EdgeSetType> edgeset_type) {
+            edgeset_type->element->accept(this);
+            for (auto element_type : *edgeset_type->vertex_element_type_list){
+                element_type->accept(this);
+            }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<VectorType> vector_type) {
+            vector_type->element_type->accept(this);
+            vector_type->vector_element_type->accept(this);
+        }
+
+
 
 
     }

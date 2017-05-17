@@ -30,15 +30,11 @@ namespace graphit {
             }
 
             void scope() {
-                //symbol_table.scope();
-                statements_.push_front(std::vector<mir::Stmt::Ptr>());
-                //builder.setInsertionPoint(&statements.front());
+                symbol_table_.scope();
             }
 
             void unscope() {
-                //symbol_table.unscope();
-                statements_.pop_front();
-                //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
+                symbol_table_.unscope();
             }
 
             void addFunction(mir::FuncDecl::Ptr f) {
@@ -78,7 +74,6 @@ namespace graphit {
             }
 
 
-            //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
             void addConstant(mir::VarDecl::Ptr var_decl){
                 constants_.push_back(var_decl);
             }
@@ -87,12 +82,12 @@ namespace graphit {
                 return constants_;
             }
 
-            void addStatement(mir::Stmt::Ptr stmt) {
-                statements_.front().push_back(stmt);
+            void addLoweredConstant(mir::VarDecl::Ptr var_decl){
+                lowered_constants_.push_back(var_decl);
             }
 
-            std::vector<mir::Stmt::Ptr> * getStatements() {
-                return &statements_.front();
+            std::vector<mir::VarDecl::Ptr> getLoweredConstants(){
+                return lowered_constants_;
             }
 
 
@@ -135,11 +130,11 @@ namespace graphit {
                 return false;
             }
 
-            void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
+            void updateVectorItemType(std::string vector_name, mir::Type::Ptr item_type){
                 vector_item_type_map_[vector_name] = item_type;
             }
 
-            mir::ScalarType::Ptr getVectorItemType(std::string vector_name){
+            mir::Type::Ptr getVectorItemType(std::string vector_name){
                 return vector_item_type_map_[vector_name];
             }
 
@@ -197,27 +192,35 @@ namespace graphit {
 
         //private:
 
-            //mir::Program::Ptr mir_program;
-
-            //maps a vector reference to its physical layout in the current scope
-            util::ScopedMap<std::string, std::string> layout_map_;
-            std::vector<mir::VarDecl::Ptr> vertex_sets_;
-            std::vector<mir::VarDecl::Ptr> edge_sets_;
-            //maps a vector to the Element it is associated with;
-            std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
-            // maps a vector reference to item type
-            std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
             // maps element type to an input file that reads the set from
+            // for example, reading an edge set
             std::map<std::string, mir::Expr::Ptr> input_filename_map_;
             // maps element type to the number of elements (initially)
             std::map<std::string, mir::Expr::Ptr> num_elements_map_;
             // maps element type to the fields associated with the type
             std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
+
+            //vertex_sets and edge_sets
+            std::vector<mir::VarDecl::Ptr> vertex_sets_;
+            std::vector<mir::VarDecl::Ptr> edge_sets_;
+
+            //maps a vector to the Element it is associated with;
+            std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
+            // maps a vector reference to item type
+            std::map<std::string, mir::Type::Ptr> vector_item_type_map_;
+
+            // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
-            std::list<std::vector<mir::Stmt::Ptr>> statements_;
+            // struct declarations
+            std::map<std::string, mir::StructTypeDecl::Ptr> struct_type_decls;
+            // constants after the physical data layout lower pass
+            std::vector<mir::VarDecl::Ptr> lowered_constants_;
+
             std::map<std::string, mir::FuncDecl::Ptr>  functions_map_;
             //need to store the ordering of function declarations
             std::vector<mir::FuncDecl::Ptr> functions_list_;
+
+            // symbol table
             util::ScopedMap<std::string, mir::Var> symbol_table_;
 
         };
