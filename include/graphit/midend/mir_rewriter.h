@@ -33,6 +33,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ApplyExpr>);
 
+            virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
+
+
             virtual void visit(std::shared_ptr<TensorReadExpr>);
 
             virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};

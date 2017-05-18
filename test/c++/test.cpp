@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilter";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilterComplete";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";

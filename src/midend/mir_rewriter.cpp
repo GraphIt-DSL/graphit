@@ -83,6 +83,11 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
+            expr->input_expr = rewrite<Expr>(expr->input_expr);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<TensorReadExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             expr->index = rewrite<Expr>(expr->index);
