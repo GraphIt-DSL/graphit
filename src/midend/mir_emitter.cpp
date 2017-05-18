@@ -286,6 +286,18 @@ namespace graphit {
         retExpr = mir_apply_expr;
     }
 
+    void MIREmitter::visit(fir::WhereExpr::Ptr where_expr) {
+        auto mir_where_expr = std::make_shared<mir::WhereExpr>();
+        ctx->scope();
+        //builtin var 'v' to allow users directly write an expression
+        //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
+        auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
+        ctx->addSymbol(v_var);
+        mir_where_expr->target = emitExpr(where_expr->target);
+        mir_where_expr->input_expr = emitExpr(where_expr->input_expr);
+        ctx->unscope();
+        retExpr = mir_where_expr;
+    }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
         const auto mir_element_type = std::make_shared<mir::ElementType>();

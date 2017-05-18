@@ -322,6 +322,15 @@ namespace graphit {
             }
         };
 
+        struct WhereExpr : public Expr {
+            Expr::Ptr target;
+            Expr::Ptr input_expr;
+            typedef std::shared_ptr<WhereExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<WhereExpr>());
+            }
+        };
+
         struct StringLiteral : public Expr {
             typedef std::shared_ptr<StringLiteral> Ptr;
             std::string val;

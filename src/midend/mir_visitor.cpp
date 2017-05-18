@@ -87,6 +87,11 @@ namespace graphit {
             expr->target->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<WhereExpr> expr) {
+            expr->target->accept(this);
+            expr->input_expr->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<TensorReadExpr> expr) {
             expr->target->accept(this);
             expr->index->accept(this);

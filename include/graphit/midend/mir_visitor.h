@@ -29,6 +29,7 @@ namespace graphit {
         struct Call;
 
         struct ApplyExpr;
+        struct WhereExpr;
 
         struct TensorReadExpr;
         struct TensorArrayReadExpr;
@@ -67,6 +68,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
+            virtual void visit(std::shared_ptr<WhereExpr>);
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
             virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
