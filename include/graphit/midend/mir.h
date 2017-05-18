@@ -323,11 +323,23 @@ namespace graphit {
         };
 
         struct WhereExpr : public Expr {
-            Expr::Ptr target;
+            std::string target;
+            bool is_constant_set = false;
             Expr::Ptr input_expr;
             typedef std::shared_ptr<WhereExpr> Ptr;
+        };
+
+        struct VertexSetWhereExpr : public WhereExpr {
+            typedef std::shared_ptr<VertexSetWhereExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<WhereExpr>());
+                visitor->visit(self<VertexSetWhereExpr>());
+            }
+        };
+
+        struct EdgeSetWhereExpr : public WhereExpr {
+            typedef std::shared_ptr<EdgeSetWhereExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetWhereExpr>());
             }
         };
 
