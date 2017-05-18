@@ -238,7 +238,7 @@ namespace graphit {
 
         auto target_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
 
-        if (ctx->isVertexSet(target_expr->ident)) {
+        if (ctx->isConstVertexSet(target_expr->ident)) {
             // If target is a vertexset (vertexset is not an actual concrete object)
             if (method_call_expr->method_name->ident == "size"){
                 // get the expression directly from the data structures if it is looking for size
@@ -288,6 +288,14 @@ namespace graphit {
 
     void MIREmitter::visit(fir::WhereExpr::Ptr where_expr) {
         auto mir_where_expr = std::make_shared<mir::WhereExpr>();
+
+        //target needs to be an varexpr
+        //we use the varexpr to determine whether this is vertexset filtering or edgeset filtering
+
+        auto fir_target_expr = fir::to<fir::VarExpr>(where_expr->target);
+        //if it is a vertexset
+        //if (fir_target_expr->ident)
+
         ctx->scope();
         //builtin var 'v' to allow users directly write an expression
         //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
@@ -466,7 +474,7 @@ namespace graphit {
                 }
                 //TODO: later may be fix this to vector or set name directly map to count
                 ctx->setElementTypeWithVectorOrSetName(mir_var_decl->name, type->element);
-                ctx->addVertexSet(mir_var_decl);
+                ctx->addConstVertexSet(mir_var_decl);
             }
             else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);

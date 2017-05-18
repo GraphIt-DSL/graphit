@@ -378,7 +378,7 @@ namespace graphit {
         }
 
         //dense vertex set apply
-        if (mir_context_->isVertexSet(mir_var->var.getName())) {
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
             auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
