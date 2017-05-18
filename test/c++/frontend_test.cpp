@@ -272,3 +272,8 @@ TEST_F(FrontendTest, TimerTest) {
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, SimpleVertexsetFilter) {
+    istringstream is("func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(v.age > 40); end");
+    EXPECT_EQ (0,  basicTest(is));
+}

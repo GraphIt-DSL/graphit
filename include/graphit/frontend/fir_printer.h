@@ -91,6 +91,7 @@ namespace graphit {
             virtual void visit(VertexSetAllocExpr::Ptr);
             virtual void visit(MethodCallExpr::Ptr);
             virtual void visit(ApplyExpr::Ptr);
+            virtual void visit(WhereExpr::Ptr);
 
             virtual void visit(EdgeSetLoadExpr::Ptr);
             virtual void visit(StringLiteral::Ptr);
