@@ -47,6 +47,10 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VarExpr> op) {node = op;};
 
+            virtual void visit(std::shared_ptr<EqExpr>);
+
+
+
             virtual void visit(std::shared_ptr<AddExpr>);
 
             virtual void visit(std::shared_ptr<SubExpr>);
@@ -89,6 +93,7 @@ namespace graphit {
             }
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
         protected:
             MIRNode::Ptr node;

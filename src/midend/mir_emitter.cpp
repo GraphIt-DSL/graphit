@@ -208,6 +208,49 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::EqExpr::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::EqExpr>();
+        std::vector<mir::Expr::Ptr> mir_operands;
+        for (auto expr : fir_expr->operands) {
+            mir_operands.push_back(emitExpr(expr));
+        }
+
+        std::vector<mir::EqExpr::Op> mir_ops;
+        for (unsigned i = 0; i < fir_expr->ops.size(); ++i) {
+            mir::EqExpr::Op mir_op;
+
+            switch (fir_expr->ops[i]) {
+                case fir::EqExpr::Op::LT:
+                    mir_op = mir::EqExpr::Op::LT;
+                    break;
+                case fir::EqExpr::Op::LE:
+                    mir_op = mir::EqExpr::Op::LE;
+                    break;
+                case fir::EqExpr::Op::GT:
+                    mir_op = mir::EqExpr::Op::GT;
+                    break;
+                case fir::EqExpr::Op::GE:
+                    mir_op = mir::EqExpr::Op::GE;
+                    break;
+                case fir::EqExpr::Op::EQ:
+                    mir_op = mir::EqExpr::Op::EQ;
+                    break;
+                case fir::EqExpr::Op::NE:
+                    mir_op = mir::EqExpr::Op::NE;
+                    break;
+                default:
+                    unreachable;
+                    break;
+            }
+            mir_ops.push_back(mir_op);
+        }
+
+
+        mir_expr->ops = mir_ops;
+        mir_expr->operands = mir_operands;
+        retExpr = mir_expr;
+    };
+
     void MIREmitter::visit(fir::MulExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::MulExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
@@ -509,8 +552,6 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
-
 
 
 }

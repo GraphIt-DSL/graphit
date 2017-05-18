@@ -381,12 +381,29 @@ namespace graphit {
 
         };
 
+        struct NaryExpr : public Expr {
+            std::vector<Expr::Ptr> operands;
+            typedef std::shared_ptr<NaryExpr> Ptr;
+        };
+
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
             typedef std::shared_ptr<BinaryExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BinaryExpr>());
+            }
+        };
+
+        struct EqExpr : public NaryExpr {
+            enum class Op {LT, LE, GT, GE, EQ, NE};
+
+            std::vector<Op> ops;
+
+            typedef std::shared_ptr<EqExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EqExpr>());
             }
         };
 

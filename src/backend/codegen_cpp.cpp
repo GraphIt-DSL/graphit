@@ -268,6 +268,41 @@ namespace graphit {
         oss << expr->var.getName();
     };
 
+    void CodeGenCPP::visit(mir::EqExpr::Ptr expr) {
+        oss << "(";
+        expr->operands[0]->accept(this);
+        oss << ")";
+
+        for (unsigned i = 0; i < expr->ops.size(); ++i) {
+            switch (expr->ops[i]) {
+                case mir::EqExpr::Op::LT:
+                    oss << " < ";
+                    break;
+                case mir::EqExpr::Op::LE:
+                    oss << " <= ";
+                    break;
+                case mir::EqExpr::Op::GT:
+                    oss << " > ";
+                    break;
+                case mir::EqExpr::Op::GE:
+                    oss << " >= ";
+                    break;
+                case mir::EqExpr::Op::EQ:
+                    oss << " == ";
+                    break;
+                case mir::EqExpr::Op::NE:
+                    oss << " != ";
+                    break;
+                default:
+                    break;
+            }
+
+            oss << "(";
+            expr->operands[i + 1]->accept(this);
+            oss << ")";
+        }
+    }
+
     void CodeGenCPP::visit(mir::MulExpr::Ptr expr) {
         oss << '(';
         expr->lhs->accept(this);

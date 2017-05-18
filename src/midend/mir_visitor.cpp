@@ -62,6 +62,10 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRVisitor::visit(EqExpr::Ptr expr) {
+            visitNaryExpr(expr);
+        }
+
         void MIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -148,7 +152,11 @@ namespace graphit {
         }
 
 
-
+        void MIRVisitor::visitNaryExpr(NaryExpr::Ptr expr) {
+            for (auto operand : expr->operands) {
+                operand->accept(this);
+            }
+        }
 
     }
 }

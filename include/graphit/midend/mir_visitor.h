@@ -47,6 +47,10 @@ namespace graphit {
         struct Type;
         struct ScalarType;
 
+        struct NaryExpr;
+        struct EqExpr;
+
+
         struct StructTypeDecl;
         struct VarDecl;
         struct IdentDecl;
@@ -83,6 +87,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
+
+            virtual void visit(std::shared_ptr<EqExpr>);
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);
             virtual void visit(std::shared_ptr<MulExpr>);
@@ -100,6 +106,8 @@ namespace graphit {
 
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
         };
     }
 }

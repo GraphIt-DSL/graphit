@@ -59,6 +59,10 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRRewriter::visit(EqExpr::Ptr expr) {
+            visitNaryExpr(expr);
+        }
+
         void MIRRewriter::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -135,6 +139,14 @@ namespace graphit {
         void MIRRewriter::visitBinaryExpr(BinaryExpr::Ptr expr) {
             expr->lhs = rewrite<Expr> (expr->lhs);
             expr->rhs = rewrite<Expr> (expr->rhs);
+            node = expr;
+        }
+
+        void MIRRewriter::visitNaryExpr(NaryExpr::Ptr expr) {
+            // Here we are modifying the original operand, so need the & before operand
+            for (auto &operand : expr->operands) {
+                operand = rewrite<Expr>(operand);
+            }
             node = expr;
         }
 
