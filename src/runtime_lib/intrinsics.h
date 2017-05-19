@@ -19,6 +19,8 @@
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
 
+#include "vertexsubset.h"
+
 #include <time.h>
 #include <chrono>
 
