@@ -1,0 +1,6 @@
+element Vertex end
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+const age : vector{Vertex}(int) = 0;
+func main()
+    var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40);
+end

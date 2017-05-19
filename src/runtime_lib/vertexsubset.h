@@ -42,7 +42,7 @@ struct VertexSubset {
         return boolean_index_vector_[v];
     }
 
-    bool addVertex(NodeID_ v){
+    void addVertex(NodeID_ v){
         boolean_index_vector_[v] = true;
     }
 

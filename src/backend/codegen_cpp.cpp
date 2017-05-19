@@ -460,6 +460,16 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
+            oss << "auto ____graphit_tmp_out = new VertexSubset <int> ( ";
+
+            //get the total number of vertices in the vertex set
+            auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            auto vertices_range_expr =
+                    mir_context_->getElementCount(vertex_type);
+            vertices_range_expr->accept(this);
+            oss << " );" << std::endl;
+
+            printIndent();
             oss << "for (int v = 0; v < ";
             associated_element_type_size->accept(this);
             oss << "; v++) {" << std::endl;
@@ -468,6 +478,10 @@ namespace graphit {
             oss << "if ( ";
             vertexset_where_expr->input_expr->accept(this);
             oss << ") " << std::endl;
+            indent();
+            printIndent();
+            oss << "____graphit_tmp_out->addVertex(v);" << std::endl;
+            dedent();
             dedent();
             printIndent();
             oss << "}";
@@ -522,6 +536,10 @@ namespace graphit {
 
             oss << "} " << struct_type_decl->name << ";" << std::endl;
         }
+    }
+
+    void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
+        oss << "VertexSubset<int> *  ";
     }
 
 

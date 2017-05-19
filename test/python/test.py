@@ -152,6 +152,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_timer(self):
         self.basic_compile_test("simple_timer.gt")
 
+    def test_simple_vertex_filter(self):
+        self.basic_compile_test("simple_vertexset_filter.gt")
+
 
 if __name__ == '__main__':
     unittest.main()
@@ -172,6 +175,6 @@ if __name__ == '__main__':
     #suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_vertex_edge_load_expect'))
+    # suite.addTest(TestGraphitCompiler('test_simple_vertex_filter'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)
