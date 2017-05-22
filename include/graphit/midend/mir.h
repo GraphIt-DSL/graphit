@@ -322,6 +322,27 @@ namespace graphit {
             }
         };
 
+        struct WhereExpr : public Expr {
+            std::string target;
+            bool is_constant_set = false;
+            Expr::Ptr input_expr;
+            typedef std::shared_ptr<WhereExpr> Ptr;
+        };
+
+        struct VertexSetWhereExpr : public WhereExpr {
+            typedef std::shared_ptr<VertexSetWhereExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VertexSetWhereExpr>());
+            }
+        };
+
+        struct EdgeSetWhereExpr : public WhereExpr {
+            typedef std::shared_ptr<EdgeSetWhereExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetWhereExpr>());
+            }
+        };
+
         struct StringLiteral : public Expr {
             typedef std::shared_ptr<StringLiteral> Ptr;
             std::string val;
@@ -360,12 +381,29 @@ namespace graphit {
 
         };
 
+        struct NaryExpr : public Expr {
+            std::vector<Expr::Ptr> operands;
+            typedef std::shared_ptr<NaryExpr> Ptr;
+        };
+
         struct BinaryExpr : public Expr {
             Expr::Ptr lhs, rhs;
             typedef std::shared_ptr<BinaryExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BinaryExpr>());
+            }
+        };
+
+        struct EqExpr : public NaryExpr {
+            enum class Op {LT, LE, GT, GE, EQ, NE};
+
+            std::vector<Op> ops;
+
+            typedef std::shared_ptr<EqExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EqExpr>());
             }
         };
 

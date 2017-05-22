@@ -91,15 +91,28 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
-        printIndent();
-        oss << var_decl->modifier << ' ';
-        var_decl->type->accept(this);
-        oss << var_decl->name << " ";
-        if (var_decl->initVal != nullptr) {
-            oss << "= ";
+
+        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)){
+            printIndent();
             var_decl->initVal->accept(this);
+            oss << std::endl;
+
+            printIndent();
+            var_decl->type->accept(this);
+            oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
+
+
+        } else {
+            printIndent();
+            oss << var_decl->modifier << ' ';
+            var_decl->type->accept(this);
+            oss << var_decl->name << " ";
+            if (var_decl->initVal != nullptr) {
+                oss << "= ";
+                var_decl->initVal->accept(this);
+            }
+            oss << ";" << std::endl;
         }
-        oss << ";" << std::endl;
     }
 
 
@@ -255,6 +268,41 @@ namespace graphit {
         oss << expr->var.getName();
     };
 
+    void CodeGenCPP::visit(mir::EqExpr::Ptr expr) {
+        oss << "(";
+        expr->operands[0]->accept(this);
+        oss << ")";
+
+        for (unsigned i = 0; i < expr->ops.size(); ++i) {
+            switch (expr->ops[i]) {
+                case mir::EqExpr::Op::LT:
+                    oss << " < ";
+                    break;
+                case mir::EqExpr::Op::LE:
+                    oss << " <= ";
+                    break;
+                case mir::EqExpr::Op::GT:
+                    oss << " > ";
+                    break;
+                case mir::EqExpr::Op::GE:
+                    oss << " >= ";
+                    break;
+                case mir::EqExpr::Op::EQ:
+                    oss << " == ";
+                    break;
+                case mir::EqExpr::Op::NE:
+                    oss << " != ";
+                    break;
+                default:
+                    break;
+            }
+
+            oss << "(";
+            expr->operands[i + 1]->accept(this);
+            oss << ")";
+        }
+    }
+
     void CodeGenCPP::visit(mir::MulExpr::Ptr expr) {
         oss << '(';
         expr->lhs->accept(this);
@@ -378,7 +426,7 @@ namespace graphit {
         }
 
         //dense vertex set apply
-        if (mir_context_->isVertexSet(mir_var->var.getName())) {
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
             auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
@@ -398,6 +446,45 @@ namespace graphit {
         if (mir_context_->isEdgeSet(mir_var->var.getName())) {
             //push edgeset apply
             genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
+        }
+
+    }
+
+    void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
+
+
+        //dense vertex set apply
+        if (vertexset_where_expr->is_constant_set) {
+            auto associated_element_type =
+                    mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            assert(associated_element_type);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            assert(associated_element_type_size);
+            oss << "auto ____graphit_tmp_out = new VertexSubset <int> ( ";
+
+            //get the total number of vertices in the vertex set
+            auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            auto vertices_range_expr =
+                    mir_context_->getElementCount(vertex_type);
+            vertices_range_expr->accept(this);
+            oss << " );" << std::endl;
+
+            printIndent();
+            oss << "for (int v = 0; v < ";
+            associated_element_type_size->accept(this);
+            oss << "; v++) {" << std::endl;
+            indent();
+            printIndent();
+            oss << "if ( ";
+            vertexset_where_expr->input_expr->accept(this);
+            oss << ") " << std::endl;
+            indent();
+            printIndent();
+            oss << "____graphit_tmp_out->addVertex(v);" << std::endl;
+            dedent();
+            dedent();
+            printIndent();
+            oss << "}";
         }
 
     }
@@ -449,6 +536,10 @@ namespace graphit {
 
             oss << "} " << struct_type_decl->name << ";" << std::endl;
         }
+    }
+
+    void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
+        oss << "VertexSubset<int> *  ";
     }
 
 

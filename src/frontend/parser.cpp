@@ -363,7 +363,10 @@ namespace graphit {
         }
     }
 
-// var_decl: 'var' ident (('=' expr) | (':' tensor_type ['=' expr])) ';'
+// DEPRECATED SIMIT grammar var_decl: 'var' ident (('=' expr) | (':' tensor_type ['=' expr])) ';'
+// var_decl: 'var' ident (('=' expr) | (':' type ['=' expr])) ';'
+// Similar to Const Declaration, we extend the grammar to support more than just tensor types
+
     fir::VarDecl::Ptr Parser::parseVarDecl() {
         try {
             auto varDecl = std::make_shared<fir::VarDecl>();
@@ -373,7 +376,9 @@ namespace graphit {
 
             varDecl->name = parseIdent();
             if (tryConsume(Token::Type::COL)) {
-                varDecl->type = parseTensorType();
+                // Extend the grammar to support more than just tensor types
+                //varDecl->type = parseTensorType();
+                varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
                     varDecl->initVal = parseExpr();
                 }
@@ -396,7 +401,9 @@ namespace graphit {
         }
     }
 
-// const_decl: 'const' ident [':' tensor_type] '=' expr ';'
+// DEPRECATED SIMIT Grammar: const_decl: 'const' ident [':' tensor_type | ] '=' expr ';
+// const_decl: 'const' ident [':' type | ] '=' expr ';' GraphIt grammar to support more than tensor type
+
     fir::ConstDecl::Ptr Parser::parseConstDecl() {
         try {
             auto constDecl = std::make_shared<fir::ConstDecl>();
@@ -1085,7 +1092,7 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-    // field_read_expr: sed_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' }
+// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' expr ')'}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1100,6 +1107,13 @@ namespace graphit {
                 apply_expr->input_function = parseIdent();
                 consume(Token::Type::RP);
                 expr = apply_expr;
+            } else if (tryConsume(Token::Type::WHERE)) {
+                consume(Token::Type::LP);
+                auto where_expr = std::make_shared<fir::WhereExpr>();
+                where_expr->input_expr = parseExpr();
+                where_expr->target = expr;
+                consume(Token::Type::RP);
+                expr = where_expr;
             } else {
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {

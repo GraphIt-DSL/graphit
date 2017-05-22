@@ -373,6 +373,11 @@ namespace graphit {
 
         }
 
+        void FIRVisitor::visit(std::shared_ptr<WhereExpr> expr) {
+            expr->input_expr->accept(this);
+            expr->target->accept(this);
+
+        }
 
     }
 }

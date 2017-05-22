@@ -1024,6 +1024,19 @@ namespace graphit {
             return node;
         }
 
+        void WhereExpr::copy(FIRNode::Ptr node) {
+            const auto where_expr = to<WhereExpr>(node);
+            Expr::copy(where_expr);
+            target = where_expr->target->clone<Expr>();
+            input_expr = where_expr->input_expr->clone<Expr>();
+        }
+
+        FIRNode::Ptr WhereExpr::cloneNode() {
+            const auto node = std::make_shared<WhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
 
         TensorType::Ptr makeTensorType(ScalarType::Type componentType,
                                        const TensorDimensions &dimensions,

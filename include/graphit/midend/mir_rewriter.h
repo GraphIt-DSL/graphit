@@ -33,6 +33,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ApplyExpr>);
 
+            virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
+
+
             virtual void visit(std::shared_ptr<TensorReadExpr>);
 
             virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};
@@ -43,6 +46,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
 
             virtual void visit(std::shared_ptr<VarExpr> op) {node = op;};
+
+            virtual void visit(std::shared_ptr<EqExpr>);
+
+
 
             virtual void visit(std::shared_ptr<AddExpr>);
 
@@ -86,6 +93,7 @@ namespace graphit {
             }
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
         protected:
             MIRNode::Ptr node;

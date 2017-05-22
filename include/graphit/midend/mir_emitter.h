@@ -49,10 +49,15 @@ namespace graphit {
 
             virtual void visit(fir::CallExpr::Ptr);
             virtual void visit(fir::MethodCallExpr::Ptr);
+
             virtual void visit(fir::ApplyExpr::Ptr);
+            virtual void visit(fir::WhereExpr::Ptr);
 
             virtual void visit(fir::EdgeSetLoadExpr::Ptr);
             virtual void visit(fir::VarExpr::Ptr);
+
+            virtual void visit(fir::EqExpr::Ptr);
+
 
             virtual void visit(fir::MulExpr::Ptr);
             virtual void visit(fir::DivExpr::Ptr);

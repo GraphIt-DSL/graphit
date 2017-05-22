@@ -55,3 +55,26 @@ TEST_F(RuntimeLibTest, TimerTest) {
     std::cout << "elapsed_time: " << elapsed_time << std::endl;
     EXPECT_EQ (5 , 5);
 }
+
+TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
+    bool test_flag = true;
+    auto vertexSubset = new VertexSubset<int>(5);
+    for (int v = 0; v < 5; v = v+2){
+        vertexSubset->addVertex(v);
+    }
+
+    for (int v = 1; v < 5; v = v+2){
+        if (vertexSubset->contains(v))
+            test_flag = false;
+    }
+
+    for (int v = 0; v < 5; v = v+2){
+        if (!vertexSubset->contains(v))
+            test_flag = false;
+    }
+
+    delete vertexSubset;
+
+    EXPECT_EQ(true, test_flag);
+
+}

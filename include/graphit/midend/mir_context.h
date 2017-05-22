@@ -101,30 +101,30 @@ namespace graphit {
             }
 
             void addEdgeSet(mir::VarDecl::Ptr edgeset){
-                edge_sets_.push_back(edgeset);
+                const_edge_sets_.push_back(edgeset);
             }
 
             std::vector<mir::VarDecl::Ptr> getEdgeSets(){
-                return edge_sets_;
+                return const_edge_sets_;
             }
 
-            bool isVertexSet(std::string var_name){
-                for (auto vertexset : vertex_sets_) {
+            bool isConstVertexSet(std::string var_name){
+                for (auto vertexset : const_vertex_sets_) {
                     if (vertexset->name == var_name) return  true;
                 }
                 return false;
             }
 
-            void addVertexSet(mir::VarDecl::Ptr vertexset){
-                vertex_sets_.push_back(vertexset);
+            void addConstVertexSet(mir::VarDecl::Ptr vertexset){
+                const_vertex_sets_.push_back(vertexset);
             }
 
-            std::vector<mir::VarDecl::Ptr> getVertexSets(){
-                return vertex_sets_;
+            std::vector<mir::VarDecl::Ptr> getConstVertexSets(){
+                return const_vertex_sets_;
             }
 
             bool isEdgeSet(std::string var_name){
-                for (auto edgeset : edge_sets_) {
+                for (auto edgeset : const_edge_sets_) {
                     if (edgeset->name == var_name) return  true;
                 }
                 return false;
@@ -200,9 +200,10 @@ namespace graphit {
             // maps element type to the fields associated with the type
             std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
 
-            //vertex_sets and edge_sets
-            std::vector<mir::VarDecl::Ptr> vertex_sets_;
-            std::vector<mir::VarDecl::Ptr> edge_sets_;
+            // const vertex_sets and edge_sets
+            // These are global sets that are loaded from outside sources and cannot be modified
+            std::vector<mir::VarDecl::Ptr> const_vertex_sets_;
+            std::vector<mir::VarDecl::Ptr> const_edge_sets_;
 
             //maps a vector to the Element it is associated with;
             std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;

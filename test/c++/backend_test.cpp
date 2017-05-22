@@ -320,3 +320,12 @@ TEST_F(BackendTest, AddoneWithStructSchedule) {
     EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
 }
 
+TEST_F(BackendTest, SimpleVertexsetFilterComplete) {
+    istringstream is("element Vertex end\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "func main() \n"
+                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40);"
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}

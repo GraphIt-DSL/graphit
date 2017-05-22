@@ -53,6 +53,7 @@ namespace graphit {
         if (token == "vertexset") return Token::Type::VERTEX_SET;
         if (token == "edgeset") return Token::Type::EDGE_SET;
         if (token == "load") return Token::Type::LOAD;
+        if (token == "where") return Token::Type::WHERE;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.

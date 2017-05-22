@@ -29,6 +29,8 @@ namespace graphit {
         struct Call;
 
         struct ApplyExpr;
+        struct VertexSetWhereExpr;
+        struct EdgeSetWhereExpr;
 
         struct TensorReadExpr;
         struct TensorArrayReadExpr;
@@ -44,6 +46,10 @@ namespace graphit {
         struct BinaryExpr;
         struct Type;
         struct ScalarType;
+
+        struct NaryExpr;
+        struct EqExpr;
+
 
         struct StructTypeDecl;
         struct VarDecl;
@@ -67,6 +73,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
+            virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetWhereExpr>);
+
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
             virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
@@ -78,6 +87,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
+
+            virtual void visit(std::shared_ptr<EqExpr>);
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);
             virtual void visit(std::shared_ptr<MulExpr>);
@@ -95,6 +106,8 @@ namespace graphit {
 
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+            virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
         };
     }
 }

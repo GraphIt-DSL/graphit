@@ -208,6 +208,49 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
+    void MIREmitter::visit(fir::EqExpr::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::EqExpr>();
+        std::vector<mir::Expr::Ptr> mir_operands;
+        for (auto expr : fir_expr->operands) {
+            mir_operands.push_back(emitExpr(expr));
+        }
+
+        std::vector<mir::EqExpr::Op> mir_ops;
+        for (unsigned i = 0; i < fir_expr->ops.size(); ++i) {
+            mir::EqExpr::Op mir_op;
+
+            switch (fir_expr->ops[i]) {
+                case fir::EqExpr::Op::LT:
+                    mir_op = mir::EqExpr::Op::LT;
+                    break;
+                case fir::EqExpr::Op::LE:
+                    mir_op = mir::EqExpr::Op::LE;
+                    break;
+                case fir::EqExpr::Op::GT:
+                    mir_op = mir::EqExpr::Op::GT;
+                    break;
+                case fir::EqExpr::Op::GE:
+                    mir_op = mir::EqExpr::Op::GE;
+                    break;
+                case fir::EqExpr::Op::EQ:
+                    mir_op = mir::EqExpr::Op::EQ;
+                    break;
+                case fir::EqExpr::Op::NE:
+                    mir_op = mir::EqExpr::Op::NE;
+                    break;
+                default:
+                    unreachable;
+                    break;
+            }
+            mir_ops.push_back(mir_op);
+        }
+
+
+        mir_expr->ops = mir_ops;
+        mir_expr->operands = mir_operands;
+        retExpr = mir_expr;
+    };
+
     void MIREmitter::visit(fir::MulExpr::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::MulExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
@@ -238,7 +281,7 @@ namespace graphit {
 
         auto target_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
 
-        if (ctx->isVertexSet(target_expr->ident)) {
+        if (ctx->isConstVertexSet(target_expr->ident)) {
             // If target is a vertexset (vertexset is not an actual concrete object)
             if (method_call_expr->method_name->ident == "size"){
                 // get the expression directly from the data structures if it is looking for size
@@ -286,6 +329,31 @@ namespace graphit {
         retExpr = mir_apply_expr;
     }
 
+    void MIREmitter::visit(fir::WhereExpr::Ptr where_expr) {
+        //auto mir_where_expr = std::make_shared<mir::WhereExpr>();
+
+        //target needs to be an varexpr
+        //we use the varexpr to determine whether this is vertexset filtering or edgeset filtering
+
+        auto fir_target_var_name = fir::to<fir::VarExpr>(where_expr->target)->ident;
+
+        if (ctx->isConstVertexSet(fir_target_var_name)) {
+            auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
+
+            // if this is constant / global vertexset
+            ctx->scope();
+            //builtin var 'v' to allow users directly write an expression
+            //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
+            auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
+            ctx->addSymbol(v_var);
+            verteset_where_expr->target = fir_target_var_name;
+            verteset_where_expr->input_expr = emitExpr(where_expr->input_expr);
+            verteset_where_expr->is_constant_set = true;
+            ctx->unscope();
+            retExpr = verteset_where_expr;
+        }
+
+    }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
         const auto mir_element_type = std::make_shared<mir::ElementType>();
@@ -454,7 +522,7 @@ namespace graphit {
                 }
                 //TODO: later may be fix this to vector or set name directly map to count
                 ctx->setElementTypeWithVectorOrSetName(mir_var_decl->name, type->element);
-                ctx->addVertexSet(mir_var_decl);
+                ctx->addConstVertexSet(mir_var_decl);
             }
             else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
@@ -484,8 +552,6 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
-
 
 
 }

@@ -62,6 +62,10 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRVisitor::visit(EqExpr::Ptr expr) {
+            visitNaryExpr(expr);
+        }
+
         void MIRVisitor::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -85,6 +89,16 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<ApplyExpr> expr) {
             expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
+            //expr->target->accept(this);
+            expr->input_expr->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<EdgeSetWhereExpr> expr) {
+            //expr->target->accept(this);
+            expr->input_expr->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<TensorReadExpr> expr) {
@@ -138,7 +152,11 @@ namespace graphit {
         }
 
 
-
+        void MIRVisitor::visitNaryExpr(NaryExpr::Ptr expr) {
+            for (auto operand : expr->operands) {
+                operand->accept(this);
+            }
+        }
 
     }
 }

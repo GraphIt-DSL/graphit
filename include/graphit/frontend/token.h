@@ -94,7 +94,7 @@ namespace graphit {
 
             VERTEX_SET,
             EDGE_SET,
-
+            WHERE,
             LOAD
         };
 

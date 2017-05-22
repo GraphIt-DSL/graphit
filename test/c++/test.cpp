@@ -9,16 +9,17 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "FrontendTest.EdgeSetGetOutDegrees";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleFixedIterPageRank";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.TimerTest";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilter";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilterComplete";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetGetOutDegrees";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
-    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.GetOutDegrees";
+    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
 
