@@ -320,12 +320,18 @@ TEST_F(BackendTest, AddoneWithStructSchedule) {
     EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
 }
 
-TEST_F(BackendTest, SimpleVertexsetFilterComplete) {
+TEST_F(BackendTest, SimpleFromToApplyFilter) {
     istringstream is("element Vertex end\n"
-                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
-                             "const age : vector{Vertex}(int) = 0;\n"
-                             "func main() \n"
-                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40);"
-                             "end");
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const old_rank : vector{Vertex}(float) = 1.0;\n"
+                             "func updateEdge(src : Vertex, dst : Vertex)\n"
+                             "    old_rank[dst] = old_rank[src];\n"
+                             "end\n"
+                             "func main()\n"
+                             "    edges.from(old_rank[v] >0).to(old_rank[v] < 10).apply(updateEdge);\n"
+                             "end"
+    );
     EXPECT_EQ (0,  basicTest(is));
 }

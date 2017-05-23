@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFromToApplyFilter";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 
