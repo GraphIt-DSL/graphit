@@ -352,8 +352,10 @@ namespace graphit {
             ctx->scope();
             //builtin var 'v' to allow users directly write an expression
             //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
-            auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(v_var);
+            auto s_var = mir::Var("s", std::make_shared<mir::ElementType>());
+            ctx->addSymbol(s_var);
+            auto d_var = mir::Var("d", std::make_shared<mir::ElementType>());
+            ctx->addSymbol(d_var);
 
             auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
             edgeset_apply_expr->target = target_expr;
@@ -390,7 +392,6 @@ namespace graphit {
             ctx->unscope();
             retExpr = verteset_where_expr;
         }
-
     }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {

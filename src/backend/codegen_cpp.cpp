@@ -436,7 +436,7 @@ namespace graphit {
         //edgeset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
         //push edgeset apply
-        genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
+        genEdgeSetPullApply(mir_var, apply_expr);
     }
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
@@ -486,19 +486,44 @@ namespace graphit {
         }
     }
 
-    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name) {
+    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr apply_expr) {
         auto edgeset_name = var_expr->var.getName();
 
-        oss << "for (NodeID u=0; u < " << edgeset_name << ".num_nodes(); u++) {" << std::endl;
+        oss << "for (NodeID d=0; d < " << edgeset_name << ".num_nodes(); d++) {" << std::endl;
         indent();
         printIndent();
-        oss << "for (NodeID v : " << edgeset_name << ".in_neigh(u)) {" << std::endl;
+
+        if (apply_expr->to_expr){
+            oss << "if (";
+            apply_expr->to_expr->accept(this);
+            oss << ") { " << std::endl;
+            indent();
+        }
+
+        printIndent();
+        oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
         indent();
         printIndent();
-        oss << function_name << "( v , u );" << std::endl;
+
+        if(apply_expr->from_expr){
+            oss << "if (";
+            apply_expr->from_expr->accept(this);
+            oss << ") ";
+        }
+
+        oss << apply_expr->input_function_name << "( s , d );" << std::endl;
         dedent();
         printIndent();
         oss << "}" << std::endl;
+
+
+        if (apply_expr->to_expr){
+            dedent();
+            printIndent();
+            oss << "} " << std::endl;
+        }
+
+
         dedent();
         printIndent();
         oss << "}" << std::endl;
