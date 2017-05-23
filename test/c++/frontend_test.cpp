@@ -287,3 +287,14 @@ TEST_F(FrontendTest, SimpleVertexsetFilterComplete) {
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimpleApplyFromFilterWithBoolExpression){
+    istringstream is("func main() var active_vertices : vertexset{Vertex} = edges.from(age[v] > 40).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleApplyFromToFilterWithBoolExpression){
+    istringstream is("func main() var active_vertices : vertexset{Vertex} = edges.from(age[v] > 40).to(age[v] < 60).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}

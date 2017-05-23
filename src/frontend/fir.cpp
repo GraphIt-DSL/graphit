@@ -1016,6 +1016,12 @@ namespace graphit {
             Expr::copy(apply_expr);
             target = apply_expr->target->clone<Expr>();
             input_function = apply_expr->input_function->clone<Identifier>();
+            if (apply_expr->from_expr){
+                from_expr = apply_expr->from_expr->clone<FromExpr>();
+            }
+            if (apply_expr->to_expr){
+                to_expr = apply_expr->to_expr->clone<ToExpr>();
+            }
         }
 
         FIRNode::Ptr ApplyExpr::cloneNode() {
@@ -1033,6 +1039,30 @@ namespace graphit {
 
         FIRNode::Ptr WhereExpr::cloneNode() {
             const auto node = std::make_shared<WhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void FromExpr::copy(FIRNode::Ptr node) {
+            const auto from_expr = to<FromExpr>(node);
+            Expr::copy(from_expr);
+            input_expr = from_expr->input_expr->clone<Expr>();
+       }
+
+        FIRNode::Ptr FromExpr::cloneNode() {
+            const auto node = std::make_shared<FromExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ToExpr::copy(FIRNode::Ptr node) {
+            const auto from_expr = to<ToExpr>(node);
+            Expr::copy(from_expr);
+            input_expr = from_expr->input_expr->clone<Expr>();
+        }
+
+        FIRNode::Ptr ToExpr::cloneNode() {
+            const auto node = std::make_shared<ToExpr>();
             node->copy(shared_from_this());
             return node;
         }

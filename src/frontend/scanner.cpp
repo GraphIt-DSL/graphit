@@ -54,6 +54,7 @@ namespace graphit {
         if (token == "edgeset") return Token::Type::EDGE_SET;
         if (token == "load") return Token::Type::LOAD;
         if (token == "where") return Token::Type::WHERE;
+        if (token == "from") return Token::Type::FROM;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.

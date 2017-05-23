@@ -8,9 +8,10 @@ int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
     //::testing::GTEST_FLAG(filter) = "FrontendTest.EdgeSetGetOutDegrees";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleFixedIterPageRank";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilter";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilterComplete";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithBoolExpression";
+
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";

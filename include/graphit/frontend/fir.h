@@ -31,7 +31,7 @@ namespace graphit {
         template <typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<FIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
-            //iassert((bool)ret);
+            assert(ret != nullptr);
             return ret;
         }
 
@@ -1481,22 +1481,7 @@ namespace graphit {
         };
 
 
-        struct ApplyExpr : public Expr {
-            Expr::Ptr                  target;
-            Identifier::Ptr            input_function;
 
-            typedef std::shared_ptr<ApplyExpr> Ptr;
-
-            virtual void accept(FIRVisitor *visitor) {
-                visitor->visit(self<ApplyExpr>());
-            }
-
-
-        protected:
-            virtual void copy(FIRNode::Ptr);
-
-            virtual FIRNode::Ptr cloneNode();
-        };
 
 
         struct WhereExpr : public Expr {
@@ -1515,6 +1500,61 @@ namespace graphit {
 
             virtual FIRNode::Ptr cloneNode();
         };
+
+
+        struct FromExpr : public Expr {
+            Expr::Ptr            input_expr;
+
+            typedef std::shared_ptr<FromExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<FromExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
+        struct ToExpr : public Expr {
+            Expr::Ptr            input_expr;
+
+            typedef std::shared_ptr<ToExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ToExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
+        struct ApplyExpr : public Expr {
+            Expr::Ptr                  target;
+            Identifier::Ptr            input_function;
+            FromExpr::Ptr              from_expr;
+            ToExpr::Ptr                to_expr;
+
+            typedef std::shared_ptr<ApplyExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ApplyExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
 
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;

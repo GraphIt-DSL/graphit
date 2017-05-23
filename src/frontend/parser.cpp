@@ -1092,7 +1092,8 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' expr ')'}
+// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' expr ')'
+// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')'}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1114,6 +1115,36 @@ namespace graphit {
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
+            } else if (tryConsume(Token::Type::FROM)){
+                //edgesets.from().apply() or edgesets.from().to().apply() pattern
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+
+
+                consume(Token::Type::LP);
+                fir::FromExpr::Ptr from_expr = std::make_shared<fir::FromExpr>();
+                from_expr->input_expr = parseExpr();
+                consume(Token::Type::RP);
+                consume(Token::Type::PERIOD);
+
+                if (tryConsume(Token::Type::TO)){
+                    //.from(expr).to(expr).apply(func)
+                    consume(Token::Type::LP);
+                    auto to_expr = std::make_shared<fir::ToExpr>();
+                    to_expr->input_expr = parseExpr();
+                    apply_expr->to_expr = to_expr;
+                    consume(Token::Type::RP);
+                    consume(Token::Type::PERIOD);
+                }
+
+                consume(Token::Type::APPLY);
+                consume(Token::Type::LP);
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
+                apply_expr->from_expr = from_expr;
+
+                consume(Token::Type::RP);
+                expr = apply_expr;
+
             } else {
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
