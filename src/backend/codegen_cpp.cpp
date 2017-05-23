@@ -135,7 +135,7 @@ namespace graphit {
         } else if (func_decl->name == "main") {
             oss << "int ";
         } else {
-            //default to int return type
+            //default to void return type
             oss << "void ";
         }
 
@@ -464,9 +464,7 @@ namespace graphit {
             oss << "; v++) {" << std::endl;
             indent();
             printIndent();
-            oss << "if ( ";
-            vertexset_where_expr->input_expr->accept(this);
-            oss << ") " << std::endl;
+            oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
             indent();
             printIndent();
             oss << "____graphit_tmp_out->addVertex(v);" << std::endl;

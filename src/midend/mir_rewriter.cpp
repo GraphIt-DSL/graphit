@@ -95,7 +95,7 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
-            expr->input_expr = rewrite<Expr>(expr->input_expr);
+            //expr->input_func = rewrite<Expr>(expr->input_func);
             node = expr;
         }
 

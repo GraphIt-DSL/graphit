@@ -1092,7 +1092,7 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' expr ')'
+// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' ident ')'
 // | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')'}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
@@ -1111,7 +1111,7 @@ namespace graphit {
             } else if (tryConsume(Token::Type::WHERE)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
-                where_expr->input_expr = parseExpr();
+                where_expr->input_func = parseIdent();
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;

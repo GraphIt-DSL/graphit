@@ -274,7 +274,8 @@ TEST_F(FrontendTest, TimerTest) {
 }
 
 TEST_F(FrontendTest, SimpleVertexsetFilter) {
-    istringstream is("func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40); end");
+    istringstream is("func filter(v: Vertex) -> output :bool c = (age[v] > 40); end\n"
+                             "func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(filter); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 
@@ -282,8 +283,9 @@ TEST_F(FrontendTest, SimpleVertexsetFilterComplete) {
     istringstream is("element Vertex end\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "const age : vector{Vertex}(int) = 0;\n"
+                             "func filter(v: Vertex) -> output : bool output = (age[v] > 40); end\n"
                              "func main() \n"
-                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40);"
+                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(filter);"
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }

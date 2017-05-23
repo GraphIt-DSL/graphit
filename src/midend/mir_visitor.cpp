@@ -99,12 +99,12 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->target->accept(this);
-            expr->input_expr->accept(this);
+            //expr->input_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetWhereExpr> expr) {
             //expr->target->accept(this);
-            expr->input_expr->accept(this);
+            //expr->input_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<TensorReadExpr> expr) {

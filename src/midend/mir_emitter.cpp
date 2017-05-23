@@ -95,15 +95,17 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;
                 break;
-//            case ScalarType::Type::BOOL:
-//                retType = ir::Boolean;
-//                break;
+            case fir::ScalarType::Type::BOOL:
+                output->type = mir::ScalarType::Type::BOOL;
+                retType = output;
+                break;
 //            case ScalarType::Type::COMPLEX:
 //                retType = ir::Complex;
 //                break;
-//            case ScalarType::Type::STRING:
-//                retType = ir::String;
-//                break;
+            case fir::ScalarType::Type::STRING:
+                output->type = mir::ScalarType::Type::STRING;
+                retType = output;
+                break;
             default:
                 std::cout << "visit(fir::ScalarType) unrecognized scalar type" << std::endl;
                 unreachable;
@@ -379,17 +381,9 @@ namespace graphit {
 
         if (ctx->isConstVertexSet(fir_target_var_name)) {
             auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
-
-            // if this is constant / global vertexset
-            ctx->scope();
-            //builtin var 'v' to allow users directly write an expression
-            //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
-            auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(v_var);
             verteset_where_expr->target = fir_target_var_name;
-            verteset_where_expr->input_expr = emitExpr(where_expr->input_expr);
+            verteset_where_expr->input_func = where_expr->input_func->ident;
             verteset_where_expr->is_constant_set = true;
-            ctx->unscope();
             retExpr = verteset_where_expr;
         }
     }

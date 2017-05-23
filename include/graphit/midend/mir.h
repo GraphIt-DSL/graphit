@@ -338,7 +338,7 @@ namespace graphit {
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;
-            Expr::Ptr input_expr;
+            std::string input_func;
             typedef std::shared_ptr<WhereExpr> Ptr;
         };
 

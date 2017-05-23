@@ -1034,7 +1034,7 @@ namespace graphit {
             const auto where_expr = to<WhereExpr>(node);
             Expr::copy(where_expr);
             target = where_expr->target->clone<Expr>();
-            input_expr = where_expr->input_expr->clone<Expr>();
+            input_func = where_expr->input_func->clone<Identifier>();
         }
 
         FIRNode::Ptr WhereExpr::cloneNode() {
