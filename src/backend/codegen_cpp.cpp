@@ -92,7 +92,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
-        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)){
+        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
             printIndent();
             var_decl->initVal->accept(this);
             oss << std::endl;
@@ -414,40 +414,29 @@ namespace graphit {
         oss << "int ";
     }
 
-    void CodeGenCPP::visit(mir::ApplyExpr::Ptr apply_expr) {
-
-
-
-        //dense vector apply
+    void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
+        //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        if (!mir_var) {
-            std::cout << "error in getting name of the vector in ApplyExpr" << std::endl;
-            return;
-        }
+        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+        assert(associated_element_type);
+        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+        assert(associated_element_type_size);
+        oss << "for (int i = 0; i < ";
+        associated_element_type_size->accept(this);
+        oss << "; i++) {" << std::endl;
+        indent();
+        printIndent();
+        oss << apply_expr->input_function_name << "(i);" << std::endl;
+        dedent();
+        printIndent();
+        oss << "}";
+    }
 
-        //dense vertex set apply
-        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
-            auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
-            assert(associated_element_type);
-            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-            assert(associated_element_type_size);
-            oss << "for (int i = 0; i < ";
-            associated_element_type_size->accept(this);
-            oss << "; i++) {" << std::endl;
-            indent();
-            printIndent();
-            oss << apply_expr->input_function_name << "(i);" << std::endl;
-            dedent();
-            printIndent();
-            oss << "}";
-        }
-
-        //edge set apply
-        if (mir_context_->isEdgeSet(mir_var->var.getName())) {
-            //push edgeset apply
-            genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
-        }
-
+    void CodeGenCPP::visit(mir::EdgeSetApplyExpr::Ptr apply_expr) {
+        //edgeset apply
+        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
+        //push edgeset apply
+        genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
     }
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {

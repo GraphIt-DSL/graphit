@@ -28,7 +28,8 @@ namespace graphit {
         struct IntLiteral;
         struct Call;
 
-        struct ApplyExpr;
+        struct VertexSetApplyExpr;
+        struct EdgeSetApplyExpr;
         struct VertexSetWhereExpr;
         struct EdgeSetWhereExpr;
 
@@ -72,7 +73,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<StmtBlock>);
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
-            virtual void visit(std::shared_ptr<ApplyExpr>);
+
+            virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
             virtual void visit(std::shared_ptr<EdgeSetWhereExpr>);
 

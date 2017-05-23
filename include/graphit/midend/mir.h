@@ -317,8 +317,21 @@ namespace graphit {
             Expr::Ptr target;
             std::string input_function_name;
             typedef std::shared_ptr<ApplyExpr> Ptr;
+        };
+
+        struct VertexSetApplyExpr : public ApplyExpr {
+            typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<ApplyExpr>());
+                visitor->visit(self<VertexSetApplyExpr>());
+            }
+        };
+
+        struct EdgeSetApplyExpr : public ApplyExpr {
+            Expr::Ptr from_expr;
+            Expr::Ptr to_expr;
+            typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetApplyExpr>());
             }
         };
 

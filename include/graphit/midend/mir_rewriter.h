@@ -31,7 +31,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<Call>);
 
-            virtual void visit(std::shared_ptr<ApplyExpr>);
+            virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
 
