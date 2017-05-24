@@ -502,7 +502,7 @@ namespace graphit {
         printIndent();
 
         if(apply_expr->from_func != ""){
-            oss << "if (";
+            oss << "if ";
             oss << " ( " << apply_expr->from_func << " ( s )";
             oss << ") ";
         }

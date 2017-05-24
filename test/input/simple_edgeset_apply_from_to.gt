@@ -1,0 +1,16 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const old_rank : vector{Vertex}(float) = 1.0;
+
+func from_filter(v: Vertex) -> output :bool output = (old_rank[v] > 40); end
+func to_filter (v: Vertex) -> output :bool output = (old_rank[v] < 60); end
+
+func updateEdge(src : Vertex, dst : Vertex)
+     old_rank[dst] = old_rank[src];
+end
+func main()
+     edges.from(from_filter).to(to_filter).apply(updateEdge);
+end
