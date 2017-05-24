@@ -411,7 +411,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {
         //currently, we generate an index id into the vectors
-        oss << "int ";
+        oss << "NodeID ";
     }
 
     void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
@@ -491,10 +491,8 @@ namespace graphit {
         indent();
         printIndent();
 
-        if (apply_expr->to_expr){
-            oss << "if (";
-            apply_expr->to_expr->accept(this);
-            oss << ") { " << std::endl;
+        if (apply_expr->to_func != ""){
+            oss << "if (" << apply_expr->to_func << "( d ) ) { " << std::endl;
             indent();
         }
 
@@ -503,19 +501,25 @@ namespace graphit {
         indent();
         printIndent();
 
-        if(apply_expr->from_expr){
+        if(apply_expr->from_func != ""){
             oss << "if (";
-            apply_expr->from_expr->accept(this);
+            oss << " ( " << apply_expr->from_func << " ( s )";
             oss << ") ";
         }
 
         oss << apply_expr->input_function_name << "( s , d );" << std::endl;
+
+        if (apply_expr->to_func != ""){
+            printIndent();
+            oss << "if (" << apply_expr->to_func << "( d ) ) break; " << std::endl;
+        }
+
         dedent();
         printIndent();
         oss << "}" << std::endl;
 
 
-        if (apply_expr->to_expr){
+        if (apply_expr->to_func != ""){
             dedent();
             printIndent();
             oss << "} " << std::endl;

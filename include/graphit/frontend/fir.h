@@ -1503,7 +1503,7 @@ namespace graphit {
 
 
         struct FromExpr : public Expr {
-            Expr::Ptr            input_expr;
+            Identifier::Ptr            input_func;
 
             typedef std::shared_ptr<FromExpr> Ptr;
 
@@ -1520,7 +1520,7 @@ namespace graphit {
 
 
         struct ToExpr : public Expr {
-            Expr::Ptr            input_expr;
+            Identifier::Ptr            input_func;
 
             typedef std::shared_ptr<ToExpr> Ptr;
 

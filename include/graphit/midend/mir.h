@@ -327,8 +327,8 @@ namespace graphit {
         };
 
         struct EdgeSetApplyExpr : public ApplyExpr {
-            Expr::Ptr from_expr;
-            Expr::Ptr to_expr;
+            std::string from_func = "";
+            std::string to_func = "";
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetApplyExpr>());

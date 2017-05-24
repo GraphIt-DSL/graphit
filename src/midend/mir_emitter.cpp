@@ -335,37 +335,22 @@ namespace graphit {
         }
 
         if (ctx->isConstVertexSet(mir_var->var.getName())) {
-            ctx->scope();
-            //builtin var 'v' to allow users directly write an expression
-            //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
-            auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(v_var);
 
             //dense vertexset apply
             auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
             vertexset_apply_expr->target = target_expr;
             vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
 
-            ctx->unscope();
             retExpr = vertexset_apply_expr;
         }
 
         if (ctx->isEdgeSet(mir_var->var.getName())) {
-            ctx->scope();
-            //builtin var 'v' to allow users directly write an expression
-            //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
-            auto s_var = mir::Var("s", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(s_var);
-            auto d_var = mir::Var("d", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(d_var);
-
             auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
             edgeset_apply_expr->target = target_expr;
             edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
-            if(apply_expr->to_expr) edgeset_apply_expr->to_expr = emitExpr(apply_expr->to_expr);
-            if(apply_expr->from_expr) edgeset_apply_expr->from_expr = emitExpr(apply_expr->from_expr);
+            if(apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
+            if(apply_expr->from_expr) edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
 
-            ctx->unscope();
             retExpr = edgeset_apply_expr;
         }
 
@@ -585,6 +570,5 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
 
 }

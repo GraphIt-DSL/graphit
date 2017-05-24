@@ -274,7 +274,7 @@ TEST_F(FrontendTest, TimerTest) {
 }
 
 TEST_F(FrontendTest, SimpleVertexsetFilter) {
-    istringstream is("func filter(v: Vertex) -> output :bool c = (age[v] > 40); end\n"
+    istringstream is("func filter(v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(filter); end");
     EXPECT_EQ (0,  basicTest(is));
 }
@@ -292,11 +292,14 @@ TEST_F(FrontendTest, SimpleVertexsetFilterComplete) {
 
 
 TEST_F(FrontendTest, SimpleApplyFromFilterWithBoolExpression){
-    istringstream is("func main() var active_vertices : vertexset{Vertex} = edges.from(age[s] > 40).apply(foo); end");
+    istringstream is("func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+            "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).apply(foo); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 
 TEST_F(FrontendTest, SimpleApplyFromToFilterWithBoolExpression){
-    istringstream is("func main() var active_vertices : vertexset{Vertex} = edges.from(age[s] > 40).to(age[d] < 60).apply(foo); end");
+    istringstream is("func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo); end");
     EXPECT_EQ (0,  basicTest(is));
 }

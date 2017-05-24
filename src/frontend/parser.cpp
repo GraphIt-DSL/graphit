@@ -1122,7 +1122,7 @@ namespace graphit {
 
                 consume(Token::Type::LP);
                 fir::FromExpr::Ptr from_expr = std::make_shared<fir::FromExpr>();
-                from_expr->input_expr = parseExpr();
+                from_expr->input_func = parseIdent();
                 consume(Token::Type::RP);
                 consume(Token::Type::PERIOD);
 
@@ -1130,7 +1130,7 @@ namespace graphit {
                     //.from(expr).to(expr).apply(func)
                     consume(Token::Type::LP);
                     auto to_expr = std::make_shared<fir::ToExpr>();
-                    to_expr->input_expr = parseExpr();
+                    to_expr->input_func = parseIdent();
                     apply_expr->to_expr = to_expr;
                     consume(Token::Type::RP);
                     consume(Token::Type::PERIOD);

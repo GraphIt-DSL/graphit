@@ -89,8 +89,8 @@ namespace graphit {
 
         void MIRRewriter::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
-            if(expr->from_expr) expr->from_expr = rewrite<Expr>(expr->from_expr);
-            if(expr->to_expr)   expr->to_expr = rewrite<Expr>(expr->to_expr);
+            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
+            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
             node = expr;
         }
 

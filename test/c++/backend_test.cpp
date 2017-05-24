@@ -337,11 +337,13 @@ TEST_F(BackendTest, SimpleFromToApplyFilter) {
                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
                              "const old_rank : vector{Vertex}(float) = 1.0;\n"
+                             "func from_filter(v: Vertex) -> output :bool output = (old_rank[v] > 40); end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (old_rank[v] < 60); end\n"
                              "func updateEdge(src : Vertex, dst : Vertex)\n"
                              "    old_rank[dst] = old_rank[src];\n"
                              "end\n"
                              "func main()\n"
-                             "    edges.from(old_rank[s] >0).to(old_rank[d] < 10).apply(updateEdge);\n"
+                             "    edges.from(from_filter).to(to_filter).apply(updateEdge);\n"
                              "end"
     );
     EXPECT_EQ (0,  basicTest(is));

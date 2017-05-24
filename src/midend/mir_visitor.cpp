@@ -93,8 +93,8 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {
             expr->target->accept(this);
-            expr->from_expr->accept(this);
-            expr->to_expr->accept(this);
+            //expr->from_func->accept(this);
+            //expr->to_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {

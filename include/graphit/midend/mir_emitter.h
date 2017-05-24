@@ -51,6 +51,9 @@ namespace graphit {
             virtual void visit(fir::MethodCallExpr::Ptr);
 
             virtual void visit(fir::ApplyExpr::Ptr);
+            //virtual void visit(fir::FromExpr::Ptr);
+            //virtual void visit(fir::ToExpr::Ptr);
+
             virtual void visit(fir::WhereExpr::Ptr);
 
             virtual void visit(fir::EdgeSetLoadExpr::Ptr);
