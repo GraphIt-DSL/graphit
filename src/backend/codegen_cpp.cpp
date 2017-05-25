@@ -498,23 +498,31 @@ namespace graphit {
 
         // Check if the apply function has a return value
         auto apply_func = mir_context_->getFunction(apply_expr->input_function_name);
-        if (apply_func->result.isInitialized()){
-            // If apply function has a return value, then we need to return a temporary vertexsubset
-            apply_expr_gen_frontier = true;
 
-            // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
-            // Need to get the Vertex end point type from the edgeset, probably through the Edge type
-            mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
-            auto edgeset_name = edgeset_expr->var.getName();
-            mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
-            mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
-            assert(edgeset_type->vertex_element_type_list->size() == 2);
-            mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
-            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+        // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
+        // Need to get the Vertex end point type from the edgeset, probably through the Edge type
+        mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
+        mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
+        mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
+        assert(edgeset_type->vertex_element_type_list->size() == 2);
+        mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
+        auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+
+
+        // If apply function has a return value, then we need to return a temporary vertexsubset
+        if (apply_func->result.isInitialized()){
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
             dst_vertices_range_expr->accept(this);
             oss << " );" << std::endl;
 
+        } else {
+            // If no return value is specified for the apply function, then it would return the entire set
+            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
+            dst_vertices_range_expr->accept(this);
+            oss << " , true);" << std::endl;
         }
 
         printIndent();
@@ -539,10 +547,23 @@ namespace graphit {
             oss << ") { " << std::endl;
         }
 
-        // generating the C++ code for the apply function call
         indent();
         printIndent();
-        oss << apply_expr->input_function_name << "( s , d );" << std::endl;
+        if (apply_expr_gen_frontier){
+            oss << "if ( ";
+        }
+
+        // generating the C++ code for the apply function call
+
+        oss << apply_expr->input_function_name << "( s , d )";
+
+        if (!apply_expr_gen_frontier){
+            // no need to generate a frontier
+            oss << ";" << std::endl;
+        } else {
+            //generate the code for adding destination to "next" frontier
+                oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
+        }
 
         // generating code for early break
         if (apply_expr->to_func != ""){
