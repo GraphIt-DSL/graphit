@@ -336,6 +336,13 @@ namespace graphit {
         oss << ')';
     };
 
+    void CodeGenCPP::visit(mir::BoolLiteral::Ptr expr) {
+        oss << "\"";
+        oss << "(bool) ";
+        oss << (bool) expr->val;
+        oss << "\"";
+    };
+
     void CodeGenCPP::visit(mir::StringLiteral::Ptr expr) {
         oss << "\"";
         oss << expr->val;
@@ -525,23 +532,35 @@ namespace graphit {
         indent();
         printIndent();
 
+        // print the checks on filtering on sources s
         if(apply_expr->from_func != ""){
             oss << "if ";
             oss << " ( " << apply_expr->from_func << " ( s )";
-            oss << ") ";
+            oss << ") { " << std::endl;
         }
 
+        // generating the C++ code for the apply function call
+        indent();
+        printIndent();
         oss << apply_expr->input_function_name << "( s , d );" << std::endl;
 
+        // generating code for early break
         if (apply_expr->to_func != ""){
             printIndent();
             oss << "if (!" << apply_expr->to_func << "( d ) ) break; " << std::endl;
         }
 
+        // end of from filtering
+        if(apply_expr->from_func != "") {
+            dedent();
+            printIndent();
+            oss << "}" << std::endl;
+        }
+
+        //end of for loop on the neighbors
         dedent();
         printIndent();
         oss << "}" << std::endl;
-
 
         if (apply_expr->to_func != ""){
             dedent();

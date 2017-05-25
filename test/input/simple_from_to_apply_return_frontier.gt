@@ -1,0 +1,25 @@
+element Vertex end
+element Edge end
+
+const age : vector{Vertex}(int) = 0;
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func update (src: Vertex, dst: Vertex) -> output :bool
+    output = true;
+end
+
+func to_filter (v: Vertex) -> output :bool
+    output = (age[v] < 60);
+end
+
+func from_filter (v: Vertex) -> output :bool
+    output = (age[v] > 40);
+end
+
+func main()
+    var active_vertices : vertexset{Vertex} =
+                                    edges.from(from_filter)
+                                    .to(to_filter)
+                                    .apply(update);
+end

@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleVertexsetFilter";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromFilterWithBoolExpression";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithBoolExpression";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 
