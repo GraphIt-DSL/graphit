@@ -2243,7 +2243,7 @@ namespace graphit {
         edgeSetType->setBeginLoc(setToken);
         edgeSetType->edge_element_type = element;
         edgeSetType->setEndLoc(rightCurlyToken);
-
+        edgeSetType->vertex_element_type_list = vertex_element_type_list;
         return edgeSetType;
     }
 

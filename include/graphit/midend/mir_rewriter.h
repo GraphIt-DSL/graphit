@@ -39,10 +39,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
 
+            virtual void visit(std::shared_ptr<BoolLiteral> op) {node = op;};
             virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};
-
             virtual void visit(std::shared_ptr<FloatLiteral> op) {node = op;};
-
             virtual void visit(std::shared_ptr<IntLiteral> op) {node = op;} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
 

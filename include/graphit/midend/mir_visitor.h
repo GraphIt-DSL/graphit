@@ -23,6 +23,7 @@ namespace graphit {
         struct StmtBlock;
         struct Expr;
 
+        struct BoolLiteral;
         struct StringLiteral;
         struct FloatLiteral;
         struct IntLiteral;
@@ -85,7 +86,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
             virtual void visit(std::shared_ptr<TensorStructReadExpr>);
 
-
+            virtual void visit(std::shared_ptr<BoolLiteral>){};
             virtual void visit(std::shared_ptr<StringLiteral>){};
             virtual void visit(std::shared_ptr<FloatLiteral>){};
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls

@@ -108,6 +108,15 @@ namespace graphit {
                 return const_edge_sets_;
             }
 
+            mir::VarDecl::Ptr getConstEdgeSetByName(std::string var_name){
+
+                for (auto edgeset : const_edge_sets_) {
+                    if (edgeset->name == var_name)
+                        return  edgeset;
+                }
+                return nullptr;
+            }
+
             bool isConstVertexSet(std::string var_name){
                 for (auto vertexset : const_vertex_sets_) {
                     if (vertexset->name == var_name) return  true;

@@ -67,6 +67,7 @@ namespace graphit {
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
 
+            virtual void visit(fir::BoolLiteral::Ptr);
             virtual void visit(fir::StringLiteral::Ptr);
             virtual void visit(fir::FloatLiteral::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);

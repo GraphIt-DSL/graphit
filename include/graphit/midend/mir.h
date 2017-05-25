@@ -375,6 +375,15 @@ namespace graphit {
             }
         };
 
+        struct BoolLiteral : public Expr {
+            typedef std::shared_ptr<BoolLiteral> Ptr;
+            bool val = false;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<BoolLiteral>());
+            }
+        };
+
         struct FloatLiteral : public Expr {
             typedef std::shared_ptr<FloatLiteral> Ptr;
             float val = 0;

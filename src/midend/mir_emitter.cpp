@@ -429,6 +429,13 @@ namespace graphit {
         ctx->addFunction(mir_func_decl);
     }
 
+    void MIREmitter::visit(fir::BoolLiteral::Ptr fir_expr){
+        auto mir_expr = std::make_shared<mir::BoolLiteral>();
+        mir_expr->val = fir_expr->val;
+        retExpr = mir_expr;
+    };
+
+
     void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr){
         auto mir_expr = std::make_shared<mir::IntLiteral>();
         mir_expr->val = fir_expr->val;

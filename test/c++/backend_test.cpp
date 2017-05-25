@@ -348,3 +348,17 @@ TEST_F(BackendTest, SimpleFromToApplyFilter) {
     );
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleApplyReturnFrontier){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (v: Vertex) -> output :bool output = true; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(update); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+

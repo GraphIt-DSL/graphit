@@ -92,7 +92,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
-        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
+        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal) ||
+                mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+            // declaring a new vertexset as output from where expression
             printIndent();
             var_decl->initVal->accept(this);
             oss << std::endl;
@@ -100,7 +102,6 @@ namespace graphit {
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
-
 
         } else {
             printIndent();
@@ -449,7 +450,7 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
-            oss << "auto ____graphit_tmp_out = new VertexSubset <int> ( ";
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
 
             //get the total number of vertices in the vertex set
             auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
@@ -486,7 +487,30 @@ namespace graphit {
 
     void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr apply_expr) {
         auto edgeset_name = var_expr->var.getName();
+        bool apply_expr_gen_frontier = false;
 
+        // Check if the apply function has a return value
+        auto apply_func = mir_context_->getFunction(apply_expr->input_function_name);
+        if (apply_func->result.isInitialized()){
+            // If apply function has a return value, then we need to return a temporary vertexsubset
+            apply_expr_gen_frontier = true;
+
+            // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
+            // Need to get the Vertex end point type from the edgeset, probably through the Edge type
+            mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
+            auto edgeset_name = edgeset_expr->var.getName();
+            mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
+            mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
+            assert(edgeset_type->vertex_element_type_list->size() == 2);
+            mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
+            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
+            dst_vertices_range_expr->accept(this);
+            oss << " );" << std::endl;
+
+        }
+
+        printIndent();
         oss << "for (NodeID d=0; d < " << edgeset_name << ".num_nodes(); d++) {" << std::endl;
         indent();
         printIndent();
@@ -511,7 +535,7 @@ namespace graphit {
 
         if (apply_expr->to_func != ""){
             printIndent();
-            oss << "if (" << apply_expr->to_func << "( d ) ) break; " << std::endl;
+            oss << "if (!" << apply_expr->to_func << "( d ) ) break; " << std::endl;
         }
 
         dedent();
