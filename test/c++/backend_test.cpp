@@ -363,3 +363,7 @@ TEST_F(BackendTest, SimpleApplyReturnFrontier){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleWhileLoop){
+    istringstream is("func main() while 3 < 4 print 3; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}

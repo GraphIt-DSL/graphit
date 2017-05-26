@@ -311,3 +311,37 @@ TEST_F(FrontendTest, SimpleApplyReturnFrontier){
                              "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, SimpleWhileLoop){
+    istringstream is("func main() while 3 < 4 print 3; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, VertexSetAddElement){
+    istringstream is("func main() frontier.addVertex(5); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+//TEST_F(FrontendTest, SimpleBFS){
+//    istringstream is("element Vertex end\n"
+//                        "element Edge end\n"
+//                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+//                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+//                        "const parent : vector{Vertex}(int) = -1;\n"
+//                        "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+//                            "parent[dst] = src; "
+//                            "return true; "
+//                        "end\n"
+//                        "func toFilter(v : Vertex) -> output : bool "
+//                        "return parent[dst] == -1; "
+//                        "end\n"
+//                        "func main() "
+//                        "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+//                        "frontier.addVertex(1); "
+//                        "while (frontier.size() != 0) "
+//                        "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+//                        "end\n"
+//                        "end");
+//    EXPECT_EQ (0,  basicTest(is));
+//}
+

@@ -157,5 +157,11 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<WhileStmt> stmt) {
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            stmt->cond = rewrite<Expr>(stmt->cond);
+            node = stmt;
+        }
+
     }
 }

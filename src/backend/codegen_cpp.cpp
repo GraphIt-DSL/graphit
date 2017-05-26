@@ -66,6 +66,20 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::WhileStmt::Ptr while_stmt) {
+        printIndent();
+        oss << "while ( ";
+        while_stmt->cond->accept(this);
+        oss << ")" << std::endl;
+        printBeginIndent();
+        indent();
+        while_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+
+    }
+
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
         printIndent();
         expr_stmt->expr->accept(this);

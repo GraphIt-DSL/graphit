@@ -164,6 +164,18 @@ namespace graphit {
         };
 
 
+        struct WhileStmt : public Stmt {
+            Expr::Ptr cond;
+            StmtBlock::Ptr body;
+
+            typedef std::shared_ptr<WhileStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<WhileStmt>());
+            }
+        };
+
+
         struct ExprStmt : public Stmt {
             Expr::Ptr expr;
 

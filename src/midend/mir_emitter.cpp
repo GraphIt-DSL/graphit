@@ -141,7 +141,7 @@ namespace graphit {
         auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
         ctx->addSymbol(mir_var);
 
-        mir_for_stmt->body = std::dynamic_pointer_cast<mir::StmtBlock>(emitStmt(for_stmt->body));
+        mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(for_stmt->body));
         mir_for_stmt->domain = emitDomain(for_stmt->domain);
         ctx->unscope();
 
@@ -153,6 +153,13 @@ namespace graphit {
         mir_for_domain->upper = emitExpr(for_domain->upper);
         mir_for_domain->lower = emitExpr(for_domain->lower);
         retForDomain = mir_for_domain;
+    }
+
+    void MIREmitter::visit(fir::WhileStmt::Ptr while_stmt) {
+        auto mir_while_stmt = std::make_shared<mir::WhileStmt>();
+        mir_while_stmt->cond = emitExpr(while_stmt->cond);
+        mir_while_stmt->body = mir::to<mir::StmtBlock>(emitStmt(while_stmt->body));
+        retStmt = mir_while_stmt;
     }
 
     void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){

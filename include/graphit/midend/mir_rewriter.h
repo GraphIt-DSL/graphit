@@ -16,6 +16,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Stmt> op) {node = op;};
 
             virtual void visit(std::shared_ptr<ForStmt>);
+            virtual void visit(std::shared_ptr<WhileStmt>);
+
 
             virtual void visit(std::shared_ptr<ForDomain>);
 

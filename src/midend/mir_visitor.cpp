@@ -164,5 +164,10 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<WhileStmt> while_stmt) {
+            while_stmt->cond->accept(this);
+            while_stmt->body->accept(this);
+        }
+
     }
 }

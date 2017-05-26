@@ -23,6 +23,9 @@ namespace graphit {
     protected:
 
         virtual void visit(mir::ForStmt::Ptr);
+        virtual void visit(mir::WhileStmt::Ptr);
+
+
         virtual void visit(mir::ExprStmt::Ptr);
         virtual void visit(mir::AssignStmt::Ptr);
         virtual void visit(mir::PrintStmt::Ptr);
