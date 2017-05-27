@@ -66,6 +66,20 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::WhileStmt::Ptr while_stmt) {
+        printIndent();
+        oss << "while ( ";
+        while_stmt->cond->accept(this);
+        oss << ")" << std::endl;
+        printBeginIndent();
+        indent();
+        while_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+
+    }
+
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
         printIndent();
         expr_stmt->expr->accept(this);
@@ -76,11 +90,26 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
-        printIndent();
-        assign_stmt->lhs->accept(this);
-        oss << " = ";
-        assign_stmt->expr->accept(this);
-        oss << ";" << std::endl;
+
+        if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr) ||
+            mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+            // declaring a new vertexset as output from where expression
+            printIndent();
+            assign_stmt->expr->accept(this);
+            oss << std::endl;
+
+            printIndent();
+
+            assign_stmt->lhs->accept(this);
+            oss << "  = ____graphit_tmp_out; " << std::endl;
+
+        }else{
+            printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << " = ";
+            assign_stmt->expr->accept(this);
+            oss << ";" << std::endl;
+        }
     }
 
     void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt) {
@@ -92,7 +121,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
-        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)){
+        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal) ||
+            mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+            // declaring a new vertexset as output from where expression
             printIndent();
             var_decl->initVal->accept(this);
             oss << std::endl;
@@ -100,7 +131,6 @@ namespace graphit {
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
-
 
         } else {
             printIndent();
@@ -135,7 +165,7 @@ namespace graphit {
         } else if (func_decl->name == "main") {
             oss << "int ";
         } else {
-            //default to int return type
+            //default to void return type
             oss << "void ";
         }
 
@@ -335,6 +365,13 @@ namespace graphit {
         oss << ')';
     };
 
+    void CodeGenCPP::visit(mir::BoolLiteral::Ptr expr) {
+        oss << "\"";
+        oss << "(bool) ";
+        oss << (bool) expr->val;
+        oss << "\"";
+    };
+
     void CodeGenCPP::visit(mir::StringLiteral::Ptr expr) {
         oss << "\"";
         oss << expr->val;
@@ -350,7 +387,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr) {
         oss << "(";
-        oss << "(int) ";
+        //oss << "(int) ";
         oss << expr->val;
         oss << ") ";
     }
@@ -411,43 +448,38 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {
         //currently, we generate an index id into the vectors
-        oss << "int ";
+        oss << "NodeID ";
     }
 
-    void CodeGenCPP::visit(mir::ApplyExpr::Ptr apply_expr) {
+    void CodeGenCPP::visit(mir::VertexSetAllocExpr::Ptr alloc_expr) {
+        oss << "new VertexSubset<int> ( ";
+        alloc_expr->size_expr->accept(this);
+        oss << ")";
+    }
 
-
-
-        //dense vector apply
+    void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
+        //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        if (!mir_var) {
-            std::cout << "error in getting name of the vector in ApplyExpr" << std::endl;
-            return;
-        }
+        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+        assert(associated_element_type);
+        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+        assert(associated_element_type_size);
+        oss << "for (int i = 0; i < ";
+        associated_element_type_size->accept(this);
+        oss << "; i++) {" << std::endl;
+        indent();
+        printIndent();
+        oss << apply_expr->input_function_name << "(i);" << std::endl;
+        dedent();
+        printIndent();
+        oss << "}";
+    }
 
-        //dense vertex set apply
-        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
-            auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
-            assert(associated_element_type);
-            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-            assert(associated_element_type_size);
-            oss << "for (int i = 0; i < ";
-            associated_element_type_size->accept(this);
-            oss << "; i++) {" << std::endl;
-            indent();
-            printIndent();
-            oss << apply_expr->input_function_name << "(i);" << std::endl;
-            dedent();
-            printIndent();
-            oss << "}";
-        }
-
-        //edge set apply
-        if (mir_context_->isEdgeSet(mir_var->var.getName())) {
-            //push edgeset apply
-            genEdgeSetPullApply(mir_var, apply_expr->input_function_name);
-        }
-
+    void CodeGenCPP::visit(mir::EdgeSetApplyExpr::Ptr apply_expr) {
+        //edgeset apply
+        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
+        //push edgeset apply
+        genEdgeSetPullApply(mir_var, apply_expr);
     }
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
@@ -460,7 +492,7 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
-            oss << "auto ____graphit_tmp_out = new VertexSubset <int> ( ";
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
 
             //get the total number of vertices in the vertex set
             auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
@@ -475,9 +507,7 @@ namespace graphit {
             oss << "; v++) {" << std::endl;
             indent();
             printIndent();
-            oss << "if ( ";
-            vertexset_where_expr->input_expr->accept(this);
-            oss << ") " << std::endl;
+            oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
             indent();
             printIndent();
             oss << "____graphit_tmp_out->addVertex(v);" << std::endl;
@@ -497,19 +527,115 @@ namespace graphit {
         }
     }
 
-    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name) {
+    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr apply_expr) {
         auto edgeset_name = var_expr->var.getName();
+        bool apply_expr_gen_frontier = false;
 
-        oss << "for (NodeID u=0; u < " << edgeset_name << ".num_nodes(); u++) {" << std::endl;
+        // Check if the apply function has a return value
+        auto apply_func = mir_context_->getFunction(apply_expr->input_function_name);
+
+        // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
+        // Need to get the Vertex end point type from the edgeset, probably through the Edge type
+        mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
+        mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
+        mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
+        assert(edgeset_type->vertex_element_type_list->size() == 2);
+        mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
+        auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+
+
+        // If apply function has a return value, then we need to return a temporary vertexsubset
+        if (apply_func->result.isInitialized()) {
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
+            dst_vertices_range_expr->accept(this);
+            oss << " );" << std::endl;
+
+        } else {
+            // If no return value is specified for the apply function, then it would return the entire set
+            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
+            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
+            dst_vertices_range_expr->accept(this);
+            oss << " , true);" << std::endl;
+        }
+
+        printIndent();
+        oss << "for (NodeID d=0; d < " << edgeset_name << ".num_nodes(); d++) {" << std::endl;
         indent();
         printIndent();
-        oss << "for (NodeID v : " << edgeset_name << ".in_neigh(u)) {" << std::endl;
+
+        if (apply_expr->to_func != "") {
+            oss << "if (" << apply_expr->to_func << "( d ) ) { " << std::endl;
+            indent();
+        }
+
+        printIndent();
+        oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
         indent();
         printIndent();
-        oss << function_name << "( v , u );" << std::endl;
+
+        // print the checks on filtering on sources s
+        if (apply_expr->from_func != "") {
+            oss << "if ";
+            //TODO: move this logic in to MIR at some point
+            if (mir_context_->isFunction(apply_expr->from_func)){
+                //if the input expression is a function call
+                oss << " ( " << apply_expr->from_func << " ( s )";
+
+            } else {
+                //the input expression is a vertex subset
+                oss << " ( " << apply_expr->from_func << "->contains( s ) ";
+            }
+
+
+
+            oss << ") { " << std::endl;
+        }
+
+        indent();
+        printIndent();
+        if (apply_expr_gen_frontier) {
+            oss << "if ( ";
+        }
+
+        // generating the C++ code for the apply function call
+
+        oss << apply_expr->input_function_name << "( s , d )";
+
+        if (!apply_expr_gen_frontier) {
+            // no need to generate a frontier
+            oss << ";" << std::endl;
+        } else {
+            //generate the code for adding destination to "next" frontier
+            oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
+        }
+
+        // generating code for early break
+        if (apply_expr->to_func != "") {
+            printIndent();
+            oss << "if (!" << apply_expr->to_func << "( d ) ) break; " << std::endl;
+        }
+
+        // end of from filtering
+        if (apply_expr->from_func != "") {
+            dedent();
+            printIndent();
+            oss << "}" << std::endl;
+        }
+
+        //end of for loop on the neighbors
         dedent();
         printIndent();
         oss << "}" << std::endl;
+
+        if (apply_expr->to_func != "") {
+            dedent();
+            printIndent();
+            oss << "} " << std::endl;
+        }
+
+
         dedent();
         printIndent();
         oss << "}" << std::endl;
@@ -540,6 +666,11 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
         oss << "VertexSubset<int> *  ";
+    }
+
+    void CodeGenCPP::visit(mir::NegExpr::Ptr neg_expr) {
+        if (neg_expr->negate) oss << " -";
+        neg_expr->operand->accept(this);
     }
 
 

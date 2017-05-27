@@ -59,6 +59,11 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRRewriter::visit(NegExpr::Ptr expr) {
+            expr->operand = rewrite<mir::Expr>(expr->operand);
+            node = expr;
+        }
+
         void MIRRewriter::visit(EqExpr::Ptr expr) {
             visitNaryExpr(expr);
         }
@@ -82,13 +87,20 @@ namespace graphit {
             node = expr;
         }
 
-        void MIRRewriter::visit(std::shared_ptr<ApplyExpr> expr) {
+        void MIRRewriter::visit(std::shared_ptr<VertexSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
+            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
-            expr->input_expr = rewrite<Expr>(expr->input_expr);
+            //expr->input_func = rewrite<Expr>(expr->input_func);
             node = expr;
         }
 
@@ -148,6 +160,12 @@ namespace graphit {
                 operand = rewrite<Expr>(operand);
             }
             node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<WhileStmt> stmt) {
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            stmt->cond = rewrite<Expr>(stmt->cond);
+            node = stmt;
         }
 
     }

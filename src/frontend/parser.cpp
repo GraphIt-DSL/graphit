@@ -1092,7 +1092,8 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' expr ')'}
+// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' ident ')'
+// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')'}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1110,10 +1111,40 @@ namespace graphit {
             } else if (tryConsume(Token::Type::WHERE)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
-                where_expr->input_expr = parseExpr();
+                where_expr->input_func = parseIdent();
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
+            } else if (tryConsume(Token::Type::FROM)){
+                //edgesets.from().apply() or edgesets.from().to().apply() pattern
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+
+
+                consume(Token::Type::LP);
+                fir::FromExpr::Ptr from_expr = std::make_shared<fir::FromExpr>();
+                from_expr->input_func = parseIdent();
+                consume(Token::Type::RP);
+                consume(Token::Type::PERIOD);
+
+                if (tryConsume(Token::Type::TO)){
+                    //.from(expr).to(expr).apply(func)
+                    consume(Token::Type::LP);
+                    auto to_expr = std::make_shared<fir::ToExpr>();
+                    to_expr->input_func = parseIdent();
+                    apply_expr->to_expr = to_expr;
+                    consume(Token::Type::RP);
+                    consume(Token::Type::PERIOD);
+                }
+
+                consume(Token::Type::APPLY);
+                consume(Token::Type::LP);
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
+                apply_expr->from_expr = from_expr;
+
+                consume(Token::Type::RP);
+                expr = apply_expr;
+
             } else {
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
@@ -2212,7 +2243,7 @@ namespace graphit {
         edgeSetType->setBeginLoc(setToken);
         edgeSetType->edge_element_type = element;
         edgeSetType->setEndLoc(rightCurlyToken);
-
+        edgeSetType->vertex_element_type_list = vertex_element_type_list;
         return edgeSetType;
     }
 
@@ -2283,6 +2314,10 @@ namespace graphit {
         intrinsics_.push_back("sum");
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+        intrinsics_.push_back("getVertexSetSize");
+        intrinsics_.push_back("addVertex");
+
+
 
         // set up function call intrinsics
         decls.insert("fabs",  IdentType::FUNCTION);

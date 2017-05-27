@@ -44,12 +44,12 @@ namespace graphit {
 
 
 
-            bool containsFunction(const std::string &name) const {
+            bool isFunction(const std::string &name) const {
                 return functions_map_.find(name) != functions_map_.end();
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
-                assert(containsFunction(name));
+                assert(isFunction(name));
                 return functions_map_[name];
             }
 
@@ -106,6 +106,15 @@ namespace graphit {
 
             std::vector<mir::VarDecl::Ptr> getEdgeSets(){
                 return const_edge_sets_;
+            }
+
+            mir::VarDecl::Ptr getConstEdgeSetByName(std::string var_name){
+
+                for (auto edgeset : const_edge_sets_) {
+                    if (edgeset->name == var_name)
+                        return  edgeset;
+                }
+                return nullptr;
             }
 
             bool isConstVertexSet(std::string var_name){

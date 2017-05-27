@@ -15,6 +15,7 @@ namespace graphit {
         struct Program;
         struct Stmt;
 
+        struct WhileStmt;
         struct ForStmt;
         struct ForDomain;
         struct ExprStmt;
@@ -23,12 +24,14 @@ namespace graphit {
         struct StmtBlock;
         struct Expr;
 
+        struct BoolLiteral;
         struct StringLiteral;
         struct FloatLiteral;
         struct IntLiteral;
         struct Call;
 
-        struct ApplyExpr;
+        struct VertexSetApplyExpr;
+        struct EdgeSetApplyExpr;
         struct VertexSetWhereExpr;
         struct EdgeSetWhereExpr;
 
@@ -47,6 +50,7 @@ namespace graphit {
         struct Type;
         struct ScalarType;
 
+        struct NegExpr;
         struct NaryExpr;
         struct EqExpr;
 
@@ -64,7 +68,12 @@ namespace graphit {
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
+
+
             virtual void visit(std::shared_ptr<ForStmt>);
+            virtual void visit(std::shared_ptr<WhileStmt>);
+
+
             virtual void visit(std::shared_ptr<ForDomain>);
             virtual void visit(std::shared_ptr<AssignStmt>);
             virtual void visit(std::shared_ptr<PrintStmt>);
@@ -72,7 +81,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<StmtBlock>);
             virtual void visit(std::shared_ptr<Expr>);
             virtual void visit(std::shared_ptr<Call>);
-            virtual void visit(std::shared_ptr<ApplyExpr>);
+
+            virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
             virtual void visit(std::shared_ptr<EdgeSetWhereExpr>);
 
@@ -81,13 +93,14 @@ namespace graphit {
             virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
             virtual void visit(std::shared_ptr<TensorStructReadExpr>);
 
-
+            virtual void visit(std::shared_ptr<BoolLiteral>){};
             virtual void visit(std::shared_ptr<StringLiteral>){};
             virtual void visit(std::shared_ptr<FloatLiteral>){};
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
 
+            virtual void visit(std::shared_ptr<NegExpr>);
             virtual void visit(std::shared_ptr<EqExpr>);
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);

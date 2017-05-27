@@ -26,6 +26,15 @@ struct VertexSubset {
         boolean_index_vector_ = new bool(vertices_range);
     }
 
+    //set every vertex to true in the vertex subset
+    VertexSubset(int64_t vertices_range, bool set_all_to_true) : num_vertices_(0), vertices_range_(vertices_range), is_dense(0) {
+        boolean_index_vector_ = new bool(vertices_range);
+        if (set_all_to_true){
+            for (int i = 0; i < vertices_range; i++)
+                boolean_index_vector_[i] = true;
+        }
+    }
+
     // make vertexSubset from array of vertex indices
     // n is range, and m is size of array
 

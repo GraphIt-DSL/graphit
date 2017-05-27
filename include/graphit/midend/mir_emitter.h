@@ -33,6 +33,8 @@ namespace graphit {
 
             virtual void visit(fir::ForStmt::Ptr);
             virtual void visit(fir::RangeDomain::Ptr);
+            virtual void visit(fir::WhileStmt::Ptr);
+
 
             virtual void visit(fir::ExprStmt::Ptr);
             virtual void visit(fir::AssignStmt::Ptr);
@@ -51,11 +53,15 @@ namespace graphit {
             virtual void visit(fir::MethodCallExpr::Ptr);
 
             virtual void visit(fir::ApplyExpr::Ptr);
+            //virtual void visit(fir::FromExpr::Ptr);
+            //virtual void visit(fir::ToExpr::Ptr);
+
             virtual void visit(fir::WhereExpr::Ptr);
 
             virtual void visit(fir::EdgeSetLoadExpr::Ptr);
             virtual void visit(fir::VarExpr::Ptr);
 
+            virtual void visit(fir::NegExpr::Ptr);
             virtual void visit(fir::EqExpr::Ptr);
 
 
@@ -64,6 +70,7 @@ namespace graphit {
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
 
+            virtual void visit(fir::BoolLiteral::Ptr);
             virtual void visit(fir::StringLiteral::Ptr);
             virtual void visit(fir::FloatLiteral::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);

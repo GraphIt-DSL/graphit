@@ -23,6 +23,9 @@ namespace graphit {
     protected:
 
         virtual void visit(mir::ForStmt::Ptr);
+        virtual void visit(mir::WhileStmt::Ptr);
+
+
         virtual void visit(mir::ExprStmt::Ptr);
         virtual void visit(mir::AssignStmt::Ptr);
         virtual void visit(mir::PrintStmt::Ptr);
@@ -35,13 +38,19 @@ namespace graphit {
         virtual void visit(mir::TensorStructReadExpr::Ptr);
         virtual void visit(mir::TensorArrayReadExpr::Ptr);
 
+        virtual void visit(mir::VertexSetAllocExpr::Ptr);
+
+
         //functional operators
-        virtual void visit(mir::ApplyExpr::Ptr);
+        virtual void visit(mir::VertexSetApplyExpr::Ptr);
+        virtual void visit(mir::EdgeSetApplyExpr::Ptr);
+
         virtual void visit(mir::VertexSetWhereExpr::Ptr);
         //virtual void visit(mir::EdgeSetWhereExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);
 
+        virtual void visit(mir::NegExpr::Ptr);
         virtual void visit(mir::EqExpr::Ptr);
 
 
@@ -50,6 +59,8 @@ namespace graphit {
         virtual void visit(mir::AddExpr::Ptr);
         virtual void visit(mir::SubExpr::Ptr);
 
+
+        virtual void visit(mir::BoolLiteral::Ptr);
         virtual void visit(mir::StringLiteral::Ptr);
         virtual void visit(mir::FloatLiteral::Ptr);
         virtual void visit(mir::IntLiteral::Ptr);
@@ -80,7 +91,7 @@ namespace graphit {
 
         void genEdgeSets();
 
-        void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, std::string function_name);
+        void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr function_name);
 
         void genStructTypeDecls();
     };

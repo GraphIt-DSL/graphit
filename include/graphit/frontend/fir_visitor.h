@@ -102,6 +102,8 @@ namespace graphit {
         struct MethodCallExpr;
         struct ApplyExpr;
         struct WhereExpr;
+        struct FromExpr;
+        struct ToExpr;
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -267,7 +269,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<MethodCallExpr>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
             virtual void visit(std::shared_ptr<WhereExpr>);
-
+            virtual void visit(std::shared_ptr<FromExpr>);
+            virtual void visit(std::shared_ptr<ToExpr>);
 
         private:
             void visitUnaryExpr(std::shared_ptr<UnaryExpr>);
