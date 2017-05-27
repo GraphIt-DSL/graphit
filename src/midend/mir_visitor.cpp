@@ -169,5 +169,9 @@ namespace graphit {
             while_stmt->body->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
+            expr->accept(this);
+        }
+
     }
 }

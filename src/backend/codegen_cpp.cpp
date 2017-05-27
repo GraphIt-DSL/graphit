@@ -90,11 +90,26 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
-        printIndent();
-        assign_stmt->lhs->accept(this);
-        oss << " = ";
-        assign_stmt->expr->accept(this);
-        oss << ";" << std::endl;
+
+        if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr) ||
+            mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+            // declaring a new vertexset as output from where expression
+            printIndent();
+            assign_stmt->expr->accept(this);
+            oss << std::endl;
+
+            printIndent();
+
+            assign_stmt->lhs->accept(this);
+            oss << "  = ____graphit_tmp_out; " << std::endl;
+
+        }else{
+            printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << " = ";
+            assign_stmt->expr->accept(this);
+            oss << ";" << std::endl;
+        }
     }
 
     void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt) {
@@ -107,7 +122,7 @@ namespace graphit {
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal) ||
-                mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+            mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
             // declaring a new vertexset as output from where expression
             printIndent();
             var_decl->initVal->accept(this);
@@ -372,7 +387,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::IntLiteral::Ptr expr) {
         oss << "(";
-        oss << "(int) ";
+        //oss << "(int) ";
         oss << expr->val;
         oss << ") ";
     }
@@ -434,6 +449,12 @@ namespace graphit {
     void CodeGenCPP::visit(mir::ElementType::Ptr element_type) {
         //currently, we generate an index id into the vectors
         oss << "NodeID ";
+    }
+
+    void CodeGenCPP::visit(mir::VertexSetAllocExpr::Ptr alloc_expr) {
+        oss << "new VertexSubset<int> ( ";
+        alloc_expr->size_expr->accept(this);
+        oss << ")";
     }
 
     void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
@@ -524,7 +545,7 @@ namespace graphit {
 
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_func->result.isInitialized()){
+        if (apply_func->result.isInitialized()) {
             // build an empty vertex subset if apply function returns
             apply_expr_gen_frontier = true;
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
@@ -544,7 +565,7 @@ namespace graphit {
         indent();
         printIndent();
 
-        if (apply_expr->to_func != ""){
+        if (apply_expr->to_func != "") {
             oss << "if (" << apply_expr->to_func << "( d ) ) { " << std::endl;
             indent();
         }
@@ -555,15 +576,26 @@ namespace graphit {
         printIndent();
 
         // print the checks on filtering on sources s
-        if(apply_expr->from_func != ""){
+        if (apply_expr->from_func != "") {
             oss << "if ";
-            oss << " ( " << apply_expr->from_func << " ( s )";
+            //TODO: move this logic in to MIR at some point
+            if (mir_context_->isFunction(apply_expr->from_func)){
+                //if the input expression is a function call
+                oss << " ( " << apply_expr->from_func << " ( s )";
+
+            } else {
+                //the input expression is a vertex subset
+                oss << " ( " << apply_expr->from_func << "->contains( s ) ";
+            }
+
+
+
             oss << ") { " << std::endl;
         }
 
         indent();
         printIndent();
-        if (apply_expr_gen_frontier){
+        if (apply_expr_gen_frontier) {
             oss << "if ( ";
         }
 
@@ -571,22 +603,22 @@ namespace graphit {
 
         oss << apply_expr->input_function_name << "( s , d )";
 
-        if (!apply_expr_gen_frontier){
+        if (!apply_expr_gen_frontier) {
             // no need to generate a frontier
             oss << ";" << std::endl;
         } else {
             //generate the code for adding destination to "next" frontier
-                oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
+            oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
         }
 
         // generating code for early break
-        if (apply_expr->to_func != ""){
+        if (apply_expr->to_func != "") {
             printIndent();
             oss << "if (!" << apply_expr->to_func << "( d ) ) break; " << std::endl;
         }
 
         // end of from filtering
-        if(apply_expr->from_func != "") {
+        if (apply_expr->from_func != "") {
             dedent();
             printIndent();
             oss << "}" << std::endl;
@@ -597,7 +629,7 @@ namespace graphit {
         printIndent();
         oss << "}" << std::endl;
 
-        if (apply_expr->to_func != ""){
+        if (apply_expr->to_func != "") {
             dedent();
             printIndent();
             oss << "} " << std::endl;
@@ -634,6 +666,11 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
         oss << "VertexSubset<int> *  ";
+    }
+
+    void CodeGenCPP::visit(mir::NegExpr::Ptr neg_expr) {
+        if (neg_expr->negate) oss << " -";
+        neg_expr->operand->accept(this);
     }
 
 

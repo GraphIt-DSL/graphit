@@ -61,6 +61,7 @@ namespace graphit {
             virtual void visit(fir::EdgeSetLoadExpr::Ptr);
             virtual void visit(fir::VarExpr::Ptr);
 
+            virtual void visit(fir::NegExpr::Ptr);
             virtual void visit(fir::EqExpr::Ptr);
 
 

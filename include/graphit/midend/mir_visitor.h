@@ -50,6 +50,7 @@ namespace graphit {
         struct Type;
         struct ScalarType;
 
+        struct NegExpr;
         struct NaryExpr;
         struct EqExpr;
 
@@ -99,6 +100,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
 
+            virtual void visit(std::shared_ptr<NegExpr>);
             virtual void visit(std::shared_ptr<EqExpr>);
             virtual void visit(std::shared_ptr<AddExpr>);
             virtual void visit(std::shared_ptr<SubExpr>);

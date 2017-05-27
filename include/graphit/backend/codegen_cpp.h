@@ -38,6 +38,9 @@ namespace graphit {
         virtual void visit(mir::TensorStructReadExpr::Ptr);
         virtual void visit(mir::TensorArrayReadExpr::Ptr);
 
+        virtual void visit(mir::VertexSetAllocExpr::Ptr);
+
+
         //functional operators
         virtual void visit(mir::VertexSetApplyExpr::Ptr);
         virtual void visit(mir::EdgeSetApplyExpr::Ptr);
@@ -47,6 +50,7 @@ namespace graphit {
 
         virtual void visit(mir::VarExpr::Ptr);
 
+        virtual void visit(mir::NegExpr::Ptr);
         virtual void visit(mir::EqExpr::Ptr);
 
 

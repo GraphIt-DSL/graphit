@@ -44,12 +44,12 @@ namespace graphit {
 
 
 
-            bool containsFunction(const std::string &name) const {
+            bool isFunction(const std::string &name) const {
                 return functions_map_.find(name) != functions_map_.end();
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
-                assert(containsFunction(name));
+                assert(isFunction(name));
                 return functions_map_[name];
             }
 

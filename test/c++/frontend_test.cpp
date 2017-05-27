@@ -317,31 +317,38 @@ TEST_F(FrontendTest, SimpleWhileLoop){
     EXPECT_EQ (0,  basicTest(is));
 }
 
-TEST_F(FrontendTest, VertexSetAddElement){
-    istringstream is("func main() frontier.addVertex(5); end");
+TEST_F(FrontendTest, VertexSetLibraryCalls){
+    istringstream is("func main() print frontier.getVertexSetSize(); frontier.addVertex(5); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 
-//TEST_F(FrontendTest, SimpleBFS){
-//    istringstream is("element Vertex end\n"
-//                        "element Edge end\n"
-//                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
-//                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-//                        "const parent : vector{Vertex}(int) = -1;\n"
-//                        "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
-//                            "parent[dst] = src; "
-//                            "return true; "
-//                        "end\n"
-//                        "func toFilter(v : Vertex) -> output : bool "
-//                        "return parent[dst] == -1; "
-//                        "end\n"
-//                        "func main() "
-//                        "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
-//                        "frontier.addVertex(1); "
-//                        "while (frontier.size() != 0) "
-//                        "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
-//                        "end\n"
-//                        "end");
-//    EXPECT_EQ (0,  basicTest(is));
-//}
+TEST_F(FrontendTest, SimpleApplyFromToFilterWithFromVertexsetExpression){
+    istringstream is("func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(frontier).to(to_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimpleBFS){
+    istringstream is("element Vertex end\n"
+                        "element Edge end\n"
+                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                        "const parent : vector{Vertex}(int) = -1;\n"
+                        "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+                            "parent[dst] = src; "
+                            "output = true; "
+                        "end\n"
+                        "func toFilter(v : Vertex) -> output : bool "
+                            "output = parent[v] == -1; "
+                        "end\n"
+                        "func main() "
+                            "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                            "frontier.addVertex(1); "
+                            "while (frontier.getVertexSetSize() != 0) "
+                                "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+                            "end\n"
+                        "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
 

@@ -429,6 +429,18 @@ namespace graphit {
             }
         };
 
+        struct NegExpr : public Expr {
+            bool negate = false;
+            Expr::Ptr operand;
+
+            typedef std::shared_ptr<NegExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<NegExpr>());
+            }
+        };
+
+
         struct EqExpr : public NaryExpr {
             enum class Op {LT, LE, GT, GE, EQ, NE};
 

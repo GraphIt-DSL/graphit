@@ -367,3 +367,50 @@ TEST_F(BackendTest, SimpleWhileLoop){
     istringstream is("func main() while 3 < 4 print 3; end end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, VertexSetLibraryCalls){
+    istringstream is("element Vertex end\n"
+                            "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "func main() var frontier : vertexset{Vertex} = new vertexset{Vertex}(1); "
+                             "print frontier.getVertexSetSize(); frontier.addVertex(5); print frontier.getVertexSetSize(); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(BackendTest, SimpleApplyFromToFilterWithFromVertexsetExpression){
+    istringstream is("element Vertex end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func foo(src : Vertex, dst : Vertex) -> output : bool output = true; end\n"
+                             "func main() "
+                             "var frontier : vertexset{Vertex} = new vertexset{Vertex}(1);"
+                             "var active_vertices : vertexset{Vertex} = edges.from(frontier).to(to_filter).apply(foo); "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleBFS){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const parent : vector{Vertex}(int) = -1;\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+                             "parent[dst] = src; "
+                             "output = true; "
+                             "end\n"
+                             "func toFilter(v : Vertex) -> output : bool "
+                             "output = parent[v] == -1; "
+                             "end\n"
+                             "func main() "
+                             "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                             "frontier.addVertex(1); "
+                             "while (frontier.getVertexSetSize() != 0) "
+                             "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+                             "end\n"
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}

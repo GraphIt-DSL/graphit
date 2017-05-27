@@ -59,6 +59,11 @@ namespace graphit {
             visitBinaryExpr(expr);
         }
 
+        void MIRRewriter::visit(NegExpr::Ptr expr) {
+            expr->operand = rewrite<mir::Expr>(expr->operand);
+            node = expr;
+        }
+
         void MIRRewriter::visit(EqExpr::Ptr expr) {
             visitNaryExpr(expr);
         }

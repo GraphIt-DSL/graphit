@@ -2314,6 +2314,10 @@ namespace graphit {
         intrinsics_.push_back("sum");
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+        intrinsics_.push_back("getVertexSetSize");
+        intrinsics_.push_back("addVertex");
+
+
 
         // set up function call intrinsics
         decls.insert("fabs",  IdentType::FUNCTION);

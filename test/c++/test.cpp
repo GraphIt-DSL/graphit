@@ -9,12 +9,14 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWhileLoop";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromFilterWithBoolExpression";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleBFS";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
 
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleWhileLoop";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFixedIterPageRank";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFS";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
