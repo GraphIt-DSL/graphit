@@ -849,16 +849,29 @@ namespace graphit {
 
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
+
             oss << ".APPLY(";
             expr->input_function->accept(this);
             oss <<")";
+
+            if (expr->from_expr){
+                oss << " FROM: ";
+                expr->from_expr->accept(this);
+                oss << " ";
+            }
+
+            if (expr->to_expr){
+                oss << " TO: ";
+                expr->to_expr->accept(this);
+                oss << " ";
+            }
 
         }
 
         void FIRPrinter::visit(WhereExpr::Ptr expr) {
             expr->target->accept(this);
             oss << ".WHERE(";
-            expr->input_expr->accept(this);
+            expr->input_func->accept(this);
             oss <<")";
 
         }

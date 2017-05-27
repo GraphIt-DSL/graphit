@@ -16,6 +16,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Stmt> op) {node = op;};
 
             virtual void visit(std::shared_ptr<ForStmt>);
+            virtual void visit(std::shared_ptr<WhileStmt>);
+
 
             virtual void visit(std::shared_ptr<ForDomain>);
 
@@ -31,22 +33,23 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<Call>);
 
-            virtual void visit(std::shared_ptr<ApplyExpr>);
+            virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
+            virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
 
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
 
+            virtual void visit(std::shared_ptr<BoolLiteral> op) {node = op;};
             virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};
-
             virtual void visit(std::shared_ptr<FloatLiteral> op) {node = op;};
-
             virtual void visit(std::shared_ptr<IntLiteral> op) {node = op;} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
 
             virtual void visit(std::shared_ptr<VarExpr> op) {node = op;};
 
+            virtual void visit(std::shared_ptr<NegExpr>);
             virtual void visit(std::shared_ptr<EqExpr>);
 
 

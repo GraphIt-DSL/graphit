@@ -164,6 +164,18 @@ namespace graphit {
         };
 
 
+        struct WhileStmt : public Stmt {
+            Expr::Ptr cond;
+            StmtBlock::Ptr body;
+
+            typedef std::shared_ptr<WhileStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<WhileStmt>());
+            }
+        };
+
+
         struct ExprStmt : public Stmt {
             Expr::Ptr expr;
 
@@ -317,15 +329,28 @@ namespace graphit {
             Expr::Ptr target;
             std::string input_function_name;
             typedef std::shared_ptr<ApplyExpr> Ptr;
+        };
+
+        struct VertexSetApplyExpr : public ApplyExpr {
+            typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<ApplyExpr>());
+                visitor->visit(self<VertexSetApplyExpr>());
+            }
+        };
+
+        struct EdgeSetApplyExpr : public ApplyExpr {
+            std::string from_func = "";
+            std::string to_func = "";
+            typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetApplyExpr>());
             }
         };
 
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;
-            Expr::Ptr input_expr;
+            std::string input_func;
             typedef std::shared_ptr<WhereExpr> Ptr;
         };
 
@@ -362,6 +387,15 @@ namespace graphit {
             }
         };
 
+        struct BoolLiteral : public Expr {
+            typedef std::shared_ptr<BoolLiteral> Ptr;
+            bool val = false;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<BoolLiteral>());
+            }
+        };
+
         struct FloatLiteral : public Expr {
             typedef std::shared_ptr<FloatLiteral> Ptr;
             float val = 0;
@@ -394,6 +428,18 @@ namespace graphit {
                 visitor->visit(self<BinaryExpr>());
             }
         };
+
+        struct NegExpr : public Expr {
+            bool negate = false;
+            Expr::Ptr operand;
+
+            typedef std::shared_ptr<NegExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<NegExpr>());
+            }
+        };
+
 
         struct EqExpr : public NaryExpr {
             enum class Op {LT, LE, GT, GE, EQ, NE};

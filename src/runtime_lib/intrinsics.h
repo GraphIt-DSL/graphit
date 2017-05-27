@@ -52,6 +52,15 @@ std::vector<int> builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
+int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
+    return vertex_subset->size();
+}
+
+void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
+    vertexset->addVertex(vertex_id);
+}
+
+
 //float getTime(){
 //    using namespace std::chrono;
 //    auto t = high_resolution_clock::now();

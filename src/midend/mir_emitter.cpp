@@ -7,12 +7,12 @@
 namespace graphit {
 
 
-    void MIREmitter::visit(fir::ConstDecl::Ptr const_decl){
+    void MIREmitter::visit(fir::ConstDecl::Ptr const_decl) {
 
         addVarOrConst(const_decl, true);
     };
 
-    void MIREmitter::visit(fir::VarDecl::Ptr var_decl){
+    void MIREmitter::visit(fir::VarDecl::Ptr var_decl) {
         addVarOrConst(var_decl, false);
         auto mir_var_decl = std::make_shared<mir::VarDecl>();
         mir_var_decl->name = var_decl->name->ident;
@@ -46,7 +46,7 @@ namespace graphit {
         retStmt = mir_print_stmt;
     }
 
-    void MIREmitter::visit(fir::SubExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::SubExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::SubExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
@@ -57,7 +57,7 @@ namespace graphit {
         const auto mir_vertex_set_type = std::make_shared<mir::VertexSetType>();
         mir_vertex_set_type->element = std::dynamic_pointer_cast<mir::ElementType>(
                 emitType(vertex_set_type->element));
-        if (! mir_vertex_set_type){
+        if (!mir_vertex_set_type) {
             std::cout << "Error in Emitting MIR VertexSetType " << std::endl;
             return;
         };
@@ -68,12 +68,12 @@ namespace graphit {
         const auto mir_edgeset_type = std::make_shared<mir::EdgeSetType>();
         mir_edgeset_type->element = std::dynamic_pointer_cast<mir::ElementType>(
                 emitType(edge_set_type->edge_element_type));
-        if (! mir_edgeset_type){
+        if (!mir_edgeset_type) {
             std::cout << "Error in Emitting MIR EdgeSetType " << std::endl;
             return;
         };
         auto mir_vector_element_type_list = new std::vector<mir::ElementType::Ptr>();
-        for (auto  vertex_element_type : edge_set_type->vertex_element_type_list){
+        for (auto vertex_element_type : edge_set_type->vertex_element_type_list) {
             auto mir_vertex_element_type = emitType(vertex_element_type);
             mir_vector_element_type_list->push_back(
                     std::dynamic_pointer_cast<mir::ElementType>(mir_vertex_element_type));
@@ -83,7 +83,7 @@ namespace graphit {
         retType = mir_edgeset_type;
     }
 
-    void MIREmitter::visit(fir::ScalarType::Ptr type){
+    void MIREmitter::visit(fir::ScalarType::Ptr type) {
         auto output = std::make_shared<mir::ScalarType>();
 
         switch (type->type) {
@@ -95,15 +95,17 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;
                 break;
-//            case ScalarType::Type::BOOL:
-//                retType = ir::Boolean;
-//                break;
+            case fir::ScalarType::Type::BOOL:
+                output->type = mir::ScalarType::Type::BOOL;
+                retType = output;
+                break;
 //            case ScalarType::Type::COMPLEX:
 //                retType = ir::Complex;
 //                break;
-//            case ScalarType::Type::STRING:
-//                retType = ir::String;
-//                break;
+            case fir::ScalarType::Type::STRING:
+                output->type = mir::ScalarType::Type::STRING;
+                retType = output;
+                break;
             default:
                 std::cout << "visit(fir::ScalarType) unrecognized scalar type" << std::endl;
                 unreachable;
@@ -114,8 +116,8 @@ namespace graphit {
     void MIREmitter::visit(fir::NDTensorType::Ptr ND_tensor_type) {
         const auto mir_vector_type = std::make_shared<mir::VectorType>();
         //TODO: fix the code to deal with emitting various different types
-        if (ND_tensor_type->element != nullptr){
-            mir_vector_type->element_type = std::dynamic_pointer_cast<mir::ElementType> (
+        if (ND_tensor_type->element != nullptr) {
+            mir_vector_type->element_type = std::dynamic_pointer_cast<mir::ElementType>(
                     emitType(ND_tensor_type->element));
             assert(mir_vector_type->element_type != nullptr);
         }
@@ -139,7 +141,7 @@ namespace graphit {
         auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
         ctx->addSymbol(mir_var);
 
-        mir_for_stmt->body = std::dynamic_pointer_cast<mir::StmtBlock>(emitStmt(for_stmt->body));
+        mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(for_stmt->body));
         mir_for_stmt->domain = emitDomain(for_stmt->domain);
         ctx->unscope();
 
@@ -153,10 +155,17 @@ namespace graphit {
         retForDomain = mir_for_domain;
     }
 
-    void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block){
+    void MIREmitter::visit(fir::WhileStmt::Ptr while_stmt) {
+        auto mir_while_stmt = std::make_shared<mir::WhileStmt>();
+        mir_while_stmt->cond = emitExpr(while_stmt->cond);
+        mir_while_stmt->body = mir::to<mir::StmtBlock>(emitStmt(while_stmt->body));
+        retStmt = mir_while_stmt;
+    }
+
+    void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block) {
 
         //initialize
-        std::vector<mir::Stmt::Ptr>* stmts = new std::vector<mir::Stmt::Ptr>();
+        std::vector<mir::Stmt::Ptr> *stmts = new std::vector<mir::Stmt::Ptr>();
 
         for (auto stmt : stmt_block->stmts) {
             //stmt->accept(this);
@@ -173,7 +182,7 @@ namespace graphit {
         retStmt = output_stmt_block;
     }
 
-    void MIREmitter::visit(fir::VertexSetAllocExpr::Ptr expr){
+    void MIREmitter::visit(fir::VertexSetAllocExpr::Ptr expr) {
         // Currently we only record a size information in the MIR::VertexSetAllocExpr
         const auto mir_vertexsetalloc_expr = std::make_shared<mir::VertexSetAllocExpr>();
         mir_vertexsetalloc_expr->size_expr = emitExpr(expr->numElements);
@@ -187,28 +196,35 @@ namespace graphit {
     }
 
     // use of variables
-    void MIREmitter::visit(fir::VarExpr::Ptr var_expr){
+    void MIREmitter::visit(fir::VarExpr::Ptr var_expr) {
         auto mir_var_expr = std::make_shared<mir::VarExpr>();
         mir::Var associated_var = ctx->getSymbol(var_expr->ident);
         mir_var_expr->var = associated_var;
         retExpr = mir_var_expr;
     }
 
-    void MIREmitter::visit(fir::AddExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::AddExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::AddExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::DivExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::DivExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::DivExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::EqExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::NegExpr::Ptr neg_expr) {
+        auto mir_expr = std::make_shared<mir::NegExpr>();
+        mir_expr->negate = neg_expr->negate;
+        mir_expr->operand = emitExpr(neg_expr->operand);
+        retExpr = mir_expr;
+    }
+
+    void MIREmitter::visit(fir::EqExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::EqExpr>();
         std::vector<mir::Expr::Ptr> mir_operands;
         for (auto expr : fir_expr->operands) {
@@ -251,18 +267,18 @@ namespace graphit {
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::MulExpr::Ptr fir_expr){
+    void MIREmitter::visit(fir::MulExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::MulExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
         mir_expr->rhs = emitExpr(fir_expr->rhs);
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::CallExpr::Ptr call_expr){
+    void MIREmitter::visit(fir::CallExpr::Ptr call_expr) {
         auto mir_expr = std::make_shared<mir::Call>();
         mir_expr->name = call_expr->func->ident;
         std::vector<mir::Expr::Ptr> args;
-        for (auto & fir_arg : call_expr->args){
+        for (auto &fir_arg : call_expr->args) {
             const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
             args.push_back(mir_arg);
         }
@@ -271,11 +287,10 @@ namespace graphit {
     };
 
 
-
     void MIREmitter::visit(fir::MethodCallExpr::Ptr method_call_expr) {
         auto mir_call_expr = std::make_shared<mir::Call>();
 
-        if (std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target) == nullptr){
+        if (std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target) == nullptr) {
             std::cout << "error in emitting method call expression" << std::endl;
         }
 
@@ -283,7 +298,7 @@ namespace graphit {
 
         if (ctx->isConstVertexSet(target_expr->ident)) {
             // If target is a vertexset (vertexset is not an actual concrete object)
-            if (method_call_expr->method_name->ident == "size"){
+            if (method_call_expr->method_name->ident == "size") {
                 // get the expression directly from the data structures if it is looking for size
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
                 retExpr = ctx->getElementCount(vertex_element_type);
@@ -299,7 +314,7 @@ namespace graphit {
             //add the target to the argument
             args.push_back(self_arg);
 
-            for (auto & fir_arg : method_call_expr->args){
+            for (auto &fir_arg : method_call_expr->args) {
                 const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
                 args.push_back(mir_arg);
             }
@@ -312,7 +327,7 @@ namespace graphit {
         auto mir_tensor_read_expr = std::make_shared<mir::TensorReadExpr>();
         mir_tensor_read_expr->target = emitExpr(tensor_read_expr->tensor);
         assert(tensor_read_expr->indices.size() == 1);
-        if (!std::dynamic_pointer_cast<fir::ExprParam>(tensor_read_expr->indices.front())){
+        if (!std::dynamic_pointer_cast<fir::ExprParam>(tensor_read_expr->indices.front())) {
             std::cout << "error in emitting mir TensorReadExpr, read param is not an ExprParam" << std::endl;
             return;
         }
@@ -323,10 +338,38 @@ namespace graphit {
 
 
     void MIREmitter::visit(fir::ApplyExpr::Ptr apply_expr) {
-        auto mir_apply_expr = std::make_shared<mir::ApplyExpr>();
-        mir_apply_expr->target = emitExpr(apply_expr->target);
-        mir_apply_expr->input_function_name = apply_expr->input_function->ident;
-        retExpr = mir_apply_expr;
+        //dense vector apply
+        auto target_expr = emitExpr(apply_expr->target);
+
+        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(target_expr);
+        if (!mir_var) {
+            std::cout << "error in getting name of the vector in ApplyExpr" << std::endl;
+            return;
+        }
+
+        if (ctx->isConstVertexSet(mir_var->var.getName())) {
+
+            //dense vertexset apply
+            auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
+            vertexset_apply_expr->target = target_expr;
+            vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
+
+            retExpr = vertexset_apply_expr;
+        }
+
+        if (ctx->isEdgeSet(mir_var->var.getName())) {
+            auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
+            edgeset_apply_expr->target = target_expr;
+            edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
+            if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
+            if (apply_expr->from_expr) {
+                //TODO: move the checking from expr is a function or vertexsubset logic here
+                edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
+            }
+
+            retExpr = edgeset_apply_expr;
+        }
+
     }
 
     void MIREmitter::visit(fir::WhereExpr::Ptr where_expr) {
@@ -339,20 +382,11 @@ namespace graphit {
 
         if (ctx->isConstVertexSet(fir_target_var_name)) {
             auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
-
-            // if this is constant / global vertexset
-            ctx->scope();
-            //builtin var 'v' to allow users directly write an expression
-            //TODO: this is a bit of a hack, we might also have to add 'e' for edges.where()
-            auto v_var = mir::Var("v", std::make_shared<mir::ElementType>());
-            ctx->addSymbol(v_var);
             verteset_where_expr->target = fir_target_var_name;
-            verteset_where_expr->input_expr = emitExpr(where_expr->input_expr);
+            verteset_where_expr->input_func = where_expr->input_func->ident;
             verteset_where_expr->is_constant_set = true;
-            ctx->unscope();
             retExpr = verteset_where_expr;
         }
-
     }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
@@ -362,20 +396,20 @@ namespace graphit {
         retType = mir_element_type;
     }
 
-    void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl){
+    void MIREmitter::visit(fir::IdentDecl::Ptr ident_decl) {
         auto type = emitType(ident_decl->type);
         //TODO: add type info
         retVar = mir::Var(ident_decl->name->ident, type);
         //TODO: retField in the future ??
     }
 
-    void MIREmitter::visit(fir::FuncDecl::Ptr func_decl){
+    void MIREmitter::visit(fir::FuncDecl::Ptr func_decl) {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
         std::vector<mir::Var> arguments;
 
         //processing the arguments to the function declaration
-        for (auto arg : func_decl->args){
+        for (auto arg : func_decl->args) {
             const mir::Var arg_var = emitVar(arg);
             arguments.push_back(arg_var);
             ctx->addSymbol(arg_var);
@@ -385,7 +419,7 @@ namespace graphit {
         //Processing the output of the function declaration
         //we assume there is only one argument for easy C++ code generation
         assert(func_decl->results.size() <= 1);
-        if (func_decl->results.size()){
+        if (func_decl->results.size()) {
             const mir::Var result_var = emitVar(func_decl->results.front());
             mir_func_decl->result = result_var;
             ctx->addSymbol(result_var);
@@ -411,25 +445,32 @@ namespace graphit {
         ctx->addFunction(mir_func_decl);
     }
 
-    void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr){
+    void MIREmitter::visit(fir::BoolLiteral::Ptr fir_expr) {
+        auto mir_expr = std::make_shared<mir::BoolLiteral>();
+        mir_expr->val = fir_expr->val;
+        retExpr = mir_expr;
+    };
+
+
+    void MIREmitter::visit(fir::IntLiteral::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::IntLiteral>();
         mir_expr->val = fir_expr->val;
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::FloatLiteral::Ptr fir_expr){
+    void MIREmitter::visit(fir::FloatLiteral::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::FloatLiteral>();
         mir_expr->val = fir_expr->val;
         retExpr = mir_expr;
     };
 
-    void MIREmitter::visit(fir::StringLiteral::Ptr fir_expr){
+    void MIREmitter::visit(fir::StringLiteral::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::StringLiteral>();
         mir_expr->val = fir_expr->val;
         retExpr = mir_expr;
     };
 
-    mir::Expr::Ptr MIREmitter::emitExpr(fir::Expr::Ptr ptr){
+    mir::Expr::Ptr MIREmitter::emitExpr(fir::Expr::Ptr ptr) {
         auto tmpExpr = retExpr;
         //we should get a null when we don't emit the right type of expr
         //retExpr = std::make_shared<mir::Expr>();
@@ -441,7 +482,7 @@ namespace graphit {
         return ret;
     };
 
-    mir::Stmt::Ptr MIREmitter::emitStmt(fir::Stmt::Ptr ptr){
+    mir::Stmt::Ptr MIREmitter::emitStmt(fir::Stmt::Ptr ptr) {
         auto tmpStmt = retStmt;
         retStmt = std::make_shared<mir::Stmt>();
 
@@ -473,7 +514,7 @@ namespace graphit {
         return ret;
     }
 
-    mir::ForDomain::Ptr MIREmitter::emitDomain(fir::ForDomain::Ptr ptr){
+    mir::ForDomain::Ptr MIREmitter::emitDomain(fir::ForDomain::Ptr ptr) {
         auto tmpDomain = retForDomain;
         retForDomain = std::make_shared<mir::ForDomain>();
 
@@ -491,7 +532,7 @@ namespace graphit {
     }
 
 
-    void MIREmitter::addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const){
+    void MIREmitter::addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const) {
         //TODO: see if there is a cleaner way to do this, constructor may be???
         //construct a var decl variable
         const auto mir_var_decl = std::make_shared<mir::VarDecl>();
@@ -504,30 +545,36 @@ namespace graphit {
         ctx->addSymbol(mir_var);
 
 
-        if (is_const){
+        if (is_const) {
 
-            if (std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type) != nullptr){
+            if (std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type);
-                if (type->element_type !=nullptr) {
+                if (type->element_type != nullptr) {
                     // this is a field / system vector associated with an ElementType
                     ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
                         std::cout << "error in adding constant" << std::endl;
                 }
-            }
-            else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr){
+            } else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr) {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
-                if (mir_var_decl->initVal != nullptr){
-                    ctx->updateElementCount(type->element, mir_var_decl->initVal);
+                if (mir_var_decl->initVal != nullptr) {
+
+                    if (mir::isa<mir::VertexSetAllocExpr>(mir_var_decl->initVal)) {
+                        mir::VertexSetAllocExpr::Ptr vertexset_alloc_expr = mir::to<mir::VertexSetAllocExpr>(
+                                mir_var_decl->initVal);
+                        mir::Expr::Ptr size_expr = vertexset_alloc_expr->size_expr;
+                        ctx->updateElementCount(type->element, size_expr);
+                    } else {
+                        ctx->updateElementCount(type->element, mir_var_decl->initVal);
+                    }
                 }
                 //TODO: later may be fix this to vector or set name directly map to count
                 ctx->setElementTypeWithVectorOrSetName(mir_var_decl->name, type->element);
                 ctx->addConstVertexSet(mir_var_decl);
-            }
-            else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr){
+            } else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr) {
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
-                if (mir_var_decl->initVal != nullptr){
-                    if (std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal)){
+                if (mir_var_decl->initVal != nullptr) {
+                    if (std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal)) {
                         const auto init_val = std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal);
                         const auto mir_name_expr = init_val->file_name;
                         //reset the initial value to the name NOT the load expresion
@@ -537,8 +584,7 @@ namespace graphit {
                     }
                 }
 
-            }
-            else{
+            } else {
                 mir_var_decl->modifier = "const";
                 ctx->addConstant(mir_var_decl);
             }
@@ -552,6 +598,5 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
-
 
 }

@@ -274,7 +274,8 @@ TEST_F(FrontendTest, TimerTest) {
 }
 
 TEST_F(FrontendTest, SimpleVertexsetFilter) {
-    istringstream is("func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40); end");
+    istringstream is("func filter(v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var vertices_above_40 : vertexset{Vertex} = vertices.where(filter); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 
@@ -282,8 +283,72 @@ TEST_F(FrontendTest, SimpleVertexsetFilterComplete) {
     istringstream is("element Vertex end\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "const age : vector{Vertex}(int) = 0;\n"
+                             "func filter(v: Vertex) -> output : bool output = (age[v] > 40); end\n"
                              "func main() \n"
-                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(age[v] > 40);"
+                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(filter);"
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimpleApplyFromFilterWithBoolExpression){
+    istringstream is("func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+            "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleApplyFromToFilterWithBoolExpression){
+    istringstream is("func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleApplyReturnFrontier){
+    istringstream is("func update (v: Vertex) -> output :bool output = true; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleWhileLoop){
+    istringstream is("func main() while 3 < 4 print 3; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, VertexSetLibraryCalls){
+    istringstream is("func main() print frontier.getVertexSetSize(); frontier.addVertex(5); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleApplyFromToFilterWithFromVertexsetExpression){
+    istringstream is("func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(frontier).to(to_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimpleBFS){
+    istringstream is("element Vertex end\n"
+                        "element Edge end\n"
+                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                        "const parent : vector{Vertex}(int) = -1;\n"
+                        "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+                            "parent[dst] = src; "
+                            "output = true; "
+                        "end\n"
+                        "func toFilter(v : Vertex) -> output : bool "
+                            "output = parent[v] == -1; "
+                        "end\n"
+                        "func main() "
+                            "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                            "frontier.addVertex(1); "
+                            "while (frontier.getVertexSetSize() != 0) "
+                                "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+                            "end\n"
+                        "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+

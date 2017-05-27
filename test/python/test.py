@@ -155,9 +155,18 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertex_filter(self):
         self.basic_compile_test("simple_vertexset_filter.gt")
 
+    def test_simple_edgeset_apply_from_to(self):
+        self.basic_compile_test("simple_edgeset_apply_from_to.gt")
+
+    def test_simple_edgeset_apply_from_to_return_frontier(self):
+        self.basic_compile_test("simple_from_to_apply_return_frontier.gt")
+
+    def test_simple_bfs(self):
+        self.basic_compile_test("simple_bfs.gt")
+
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
@@ -174,7 +183,7 @@ if __name__ == '__main__':
     #suite = unittest.TestSuite()
     #suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_vertex_filter'))
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_simple_bfs'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

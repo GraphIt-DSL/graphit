@@ -87,18 +87,24 @@ namespace graphit {
             expr->size_expr->accept(this);
         }
 
-        void MIRVisitor::visit(std::shared_ptr<ApplyExpr> expr) {
+        void MIRVisitor::visit(std::shared_ptr<VertexSetApplyExpr> expr) {
             expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+            //expr->from_func->accept(this);
+            //expr->to_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->target->accept(this);
-            expr->input_expr->accept(this);
+            //expr->input_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetWhereExpr> expr) {
             //expr->target->accept(this);
-            expr->input_expr->accept(this);
+            //expr->input_func->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<TensorReadExpr> expr) {
@@ -156,6 +162,15 @@ namespace graphit {
             for (auto operand : expr->operands) {
                 operand->accept(this);
             }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<WhileStmt> while_stmt) {
+            while_stmt->cond->accept(this);
+            while_stmt->body->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
+            expr->accept(this);
         }
 
     }
