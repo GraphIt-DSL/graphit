@@ -23,12 +23,14 @@ struct VertexSubset {
 
     //empty vertex set
     VertexSubset(int64_t vertices_range) : num_vertices_(0), vertices_range_(vertices_range), is_dense(0) {
-        boolean_index_vector_ = new bool(vertices_range);
+        boolean_index_vector_ = new bool[vertices_range]; //() is not the right constructor
+        for (int i = 0; i < vertices_range; i++)
+            boolean_index_vector_[i] = false;
     }
 
     //set every vertex to true in the vertex subset
     VertexSubset(int64_t vertices_range, bool set_all_to_true) : num_vertices_(0), vertices_range_(vertices_range), is_dense(0) {
-        boolean_index_vector_ = new bool(vertices_range);
+        boolean_index_vector_ = new bool[vertices_range];
         if (set_all_to_true){
             for (int i = 0; i < vertices_range; i++)
                 boolean_index_vector_[i] = true;
@@ -43,7 +45,7 @@ struct VertexSubset {
     // make vertexSubset from boolean array giving number of true values
 
     // delete the contents
-    void del(){
+     ~VertexSubset(){
         if (boolean_index_vector_ != NULL) free(boolean_index_vector_);
     }
 
@@ -53,6 +55,7 @@ struct VertexSubset {
 
     void addVertex(NodeID_ v){
         boolean_index_vector_[v] = true;
+        num_vertices_++;
     }
 
     long getVerticesRange() { return vertices_range_; }

@@ -84,6 +84,7 @@ namespace graphit {
 
         void MIRRewriter::visit(std::shared_ptr<VertexSetAllocExpr> expr) {
             expr->size_expr = rewrite<Expr>(expr->size_expr);
+            expr->element_type = rewrite<ElementType>(expr->element_type);
             node = expr;
         }
 

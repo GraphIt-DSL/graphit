@@ -1,7 +1,9 @@
 element Vertex end
 element Edge end
 
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
 const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+
 const vertices : vertexset{Vertex} = edges.getVertices();
 
 const parent : vector{Vertex}(int) = -1;
@@ -23,6 +25,8 @@ func main()
     frontier.addVertex(1);
 
     while (frontier.getVertexSetSize() != 0)
+        print "number of active_vertices: ";
+        print frontier.getVertexSetSize();
         frontier = edges.from(frontier).to(toFilter).apply(updateEdge);
     end
 

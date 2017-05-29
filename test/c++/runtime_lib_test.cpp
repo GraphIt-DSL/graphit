@@ -73,6 +73,9 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
             test_flag = false;
     }
 
+    EXPECT_EQ(builtin_getVertexSetSize(vertexSubset), 3);
+
+
     delete vertexSubset;
 
     EXPECT_EQ(true, test_flag);

@@ -453,7 +453,10 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetAllocExpr::Ptr alloc_expr) {
         oss << "new VertexSubset<int> ( ";
-        alloc_expr->size_expr->accept(this);
+        //This is the current number of elements, but we need the range
+        //alloc_expr->size_expr->accept(this);
+        const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
+        size_expr->accept(this);
         oss << ")";
     }
 
