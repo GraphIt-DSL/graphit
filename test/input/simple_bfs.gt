@@ -1,8 +1,8 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
-% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
 
 const vertices : vertexset{Vertex} = edges.getVertices();
 
