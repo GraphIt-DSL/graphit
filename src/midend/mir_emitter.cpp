@@ -186,6 +186,7 @@ namespace graphit {
         // Currently we only record a size information in the MIR::VertexSetAllocExpr
         const auto mir_vertexsetalloc_expr = std::make_shared<mir::VertexSetAllocExpr>();
         mir_vertexsetalloc_expr->size_expr = emitExpr(expr->numElements);
+        mir_vertexsetalloc_expr->element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
         retExpr = mir_vertexsetalloc_expr;
     }
 

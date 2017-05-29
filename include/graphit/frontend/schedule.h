@@ -17,7 +17,8 @@ namespace graphit {
         STRUCT
     };
 
-    struct PhysicalDataLayout {
+    class PhysicalDataLayout {
+    public:
         std::string var_name;
         DataLayoutType data_layout_type;
         // Records the name of the struct for all fused fields
