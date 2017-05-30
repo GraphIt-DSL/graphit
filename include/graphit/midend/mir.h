@@ -63,7 +63,7 @@ namespace graphit {
 
         struct Stmt : public MIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
-
+            std::string stmt_label;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());
             }
@@ -331,6 +331,7 @@ namespace graphit {
             typedef std::shared_ptr<ApplyExpr> Ptr;
         };
 
+
         struct VertexSetApplyExpr : public ApplyExpr {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
@@ -346,6 +347,17 @@ namespace graphit {
                 visitor->visit(self<EdgeSetApplyExpr>());
             }
         };
+
+        struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
+
+        };
+
+        struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
+
+        };
+
 
         struct WhereExpr : public Expr {
             std::string target;

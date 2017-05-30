@@ -35,6 +35,9 @@ namespace graphit {
         struct VertexSetWhereExpr;
         struct EdgeSetWhereExpr;
 
+        struct PushEdgeSetApplyExpr;
+        struct PullEdgeSetApplyExpr;
+
         struct TensorReadExpr;
         struct TensorArrayReadExpr;
         struct TensorStructReadExpr;
@@ -84,6 +87,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
             virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
+            virtual void visit(std::shared_ptr<PushEdgeSetApplyExpr>);
+            virtual void visit(std::shared_ptr<PullEdgeSetApplyExpr>);
+
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
             virtual void visit(std::shared_ptr<EdgeSetWhereExpr>);

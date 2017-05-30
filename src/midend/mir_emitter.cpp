@@ -26,6 +26,7 @@ namespace graphit {
     void MIREmitter::visit(fir::ExprStmt::Ptr expr_stmt) {
         auto mir_expr_stmt = std::make_shared<mir::ExprStmt>();
         mir_expr_stmt->expr = emitExpr(expr_stmt->expr);
+        mir_expr_stmt->stmt_label = expr_stmt->stmt_label;
         retStmt = mir_expr_stmt;
     }
 
@@ -35,6 +36,7 @@ namespace graphit {
         assert(assign_stmt->lhs.size() == 1);
         mir_assign_stmt->lhs = emitExpr(assign_stmt->lhs.front());
         mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
+        mir_assign_stmt->stmt_label = assign_stmt->stmt_label;
         retStmt = mir_assign_stmt;
     }
 
@@ -139,6 +141,8 @@ namespace graphit {
         auto loop_var_type = std::make_shared<mir::ScalarType>();
         loop_var_type->type = mir::ScalarType::Type::INT;
         auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
+        //copy over the label from fir
+        mir_for_stmt->stmt_label = for_stmt->stmt_label;
         ctx->addSymbol(mir_var);
 
         mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(for_stmt->body));
@@ -159,6 +163,7 @@ namespace graphit {
         auto mir_while_stmt = std::make_shared<mir::WhileStmt>();
         mir_while_stmt->cond = emitExpr(while_stmt->cond);
         mir_while_stmt->body = mir::to<mir::StmtBlock>(emitStmt(while_stmt->body));
+        mir_while_stmt->stmt_label = while_stmt->stmt_label;
         retStmt = mir_while_stmt;
     }
 

@@ -98,6 +98,14 @@ namespace graphit {
             //expr->to_func->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<PushEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PullEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->target->accept(this);
             //expr->input_func->accept(this);

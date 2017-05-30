@@ -426,13 +426,10 @@ TEST_F(BackendTest, SimpleApplychedule) {
                              "end\n"
     );
     Schedule * schedule = new Schedule();
-//    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
-//    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
-//    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
-//    (*physical_layouts)["vector_a"] = vector_a_layout;
-//    (*physical_layouts)["vector_b"] = vector_b_layout;
-
-//    schedule->physical_data_layouts = physical_layouts;
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+    (*apply_schedules)["s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
 
     fe_->parseStream(is, context_, errors_);
 
