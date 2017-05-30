@@ -17,8 +17,7 @@ namespace graphit {
         STRUCT
     };
 
-    class PhysicalDataLayout {
-    public:
+    struct PhysicalDataLayout {
         std::string var_name;
         DataLayoutType data_layout_type;
         // Records the name of the struct for all fused fields
@@ -30,10 +29,12 @@ namespace graphit {
      */
     class Schedule {
     public:
-        Schedule() {};
+        Schedule() {
+            physical_data_layouts = new std::map<std::string, PhysicalDataLayout>();
+        };
         //TODO: what does it mean??
-        std::map<std::string, PhysicalDataLayout> *physical_data_layouts
-                = new std::map<std::string, PhysicalDataLayout>();
+        std::map<std::string, PhysicalDataLayout> *physical_data_layouts;
+
     };
 }
 
