@@ -100,6 +100,20 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<PushEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
+            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
+            node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<PullEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
+            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->input_func = rewrite<Expr>(expr->input_func);
             node = expr;

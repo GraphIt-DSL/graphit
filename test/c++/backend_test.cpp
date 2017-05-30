@@ -414,3 +414,40 @@ TEST_F(BackendTest, SimpleBFS){
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleApplychedule) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) end\n"
+                             "func main() \n"
+                                "edges.apply(updateEdge); \n"
+                             "end\n"
+    );
+    Schedule * schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+    (*apply_schedules)["s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
+
+    fe_->parseStream(is, context_, errors_);
+
+    //auto edges_apply_stmt = context_->getProgram()->elems[]
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(main_func_decl->body->stmts[0]);
+    apply_stmt->stmt_label = "s1";
+
+    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+
+
+    EXPECT_EQ (0,  be->emitCPP());
+
+}

@@ -91,6 +91,7 @@ namespace graphit {
 
         struct Stmt : public FIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
+            std::string stmt_label = "";
         };
 
         struct StmtBlock : public Stmt {

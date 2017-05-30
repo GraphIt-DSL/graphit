@@ -401,6 +401,9 @@ namespace graphit {
 
         void FIRPrinter::visit(ExprStmt::Ptr stmt) {
             printIndent();
+            if (stmt->stmt_label != ""){
+                oss << stmt->stmt_label << ": ";
+            }
             stmt->expr->accept(this);
             oss << ";";
         }
