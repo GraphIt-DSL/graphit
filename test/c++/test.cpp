@@ -15,9 +15,9 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplychedule";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleForEdgesetApplyNoNestedLabelsPullSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";

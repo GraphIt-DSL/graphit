@@ -415,7 +415,7 @@ TEST_F(BackendTest, SimpleBFS){
     EXPECT_EQ (0,  basicTest(is));
 }
 
-TEST_F(BackendTest, SimpleApplychedule) {
+TEST_F(BackendTest, SimpleEdgesetApplyPullSchedule) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
@@ -451,3 +451,180 @@ TEST_F(BackendTest, SimpleApplychedule) {
     EXPECT_EQ (0,  be->emitCPP());
 
 }
+
+
+TEST_F(BackendTest, SimpleEdgesetApplyPushSchedule) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) end\n"
+                             "func main() \n"
+                             "edges.apply(updateEdge); \n"
+                             "end\n"
+    );
+    Schedule * schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+    (*apply_schedules)["s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
+
+    fe_->parseStream(is, context_, errors_);
+
+    //auto edges_apply_stmt = context_->getProgram()->elems[]
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(main_func_decl->body->stmts[0]);
+    apply_stmt->stmt_label = "s1";
+
+    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+
+
+    EXPECT_EQ (0,  be->emitCPP());
+
+}
+
+
+TEST_F(BackendTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) end\n"
+                             "func main() \n"
+                             "for i in 1:10 edges.apply(updateEdge); end\n"
+                             "end\n"
+    );
+    Schedule * schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+
+    //We are constructing a nested scope label this time
+    (*apply_schedules)["l1:s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
+
+    fe_->parseStream(is, context_, errors_);
+
+    //set the label of the edgeset apply expr stamt
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::ForStmt::Ptr for_stmt = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    for_stmt->stmt_label = "l1";
+
+    //set the label of the for loop
+    fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(for_stmt->body->stmts[0]);
+    apply_stmt->stmt_label = "s1";
+
+    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+
+
+    EXPECT_EQ (0,  be->emitCPP());
+
+}
+
+TEST_F(BackendTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) end\n"
+                             "func main() \n"
+                             "for i in 1:10 edges.apply(updateEdge); end\n"
+                             "end\n"
+    );
+    Schedule * schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+
+    //We are constructing a nested scope label this time
+    (*apply_schedules)["s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
+
+    fe_->parseStream(is, context_, errors_);
+
+    //set the label of the edgeset apply expr stamt
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::ForStmt::Ptr for_stmt = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+
+    //set the label of the for loop
+    fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(for_stmt->body->stmts[0]);
+    apply_stmt->stmt_label = "s1";
+
+    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+
+
+    EXPECT_EQ (0,  be->emitCPP());
+
+}
+
+
+TEST_F(BackendTest, SimpleBFSPushSchedule){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const parent : vector{Vertex}(int) = -1;\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+                             "parent[dst] = src; "
+                             "output = true; "
+                             "end\n"
+                             "func toFilter(v : Vertex) -> output : bool "
+                             "output = parent[v] == -1; "
+                             "end\n"
+                             "func main() "
+                             "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                             "frontier.addVertex(1); "
+                             "while (frontier.getVertexSetSize() != 0) "
+                             "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+                             "end\n"
+                             "end");
+    Schedule * schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    auto apply_schedules = new std::map<std::string, ApplySchedule>();
+
+    //We are constructing a nested scope label this time
+    (*apply_schedules)["s1"] = s1_apply_schedule;
+    schedule->apply_schedules = apply_schedules;
+
+    fe_->parseStream(is, context_, errors_);
+
+    //set the label of the edgeset apply expr stamt
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
+    fir::WhileStmt::Ptr while_stmt = fir::to<fir::WhileStmt>(main_func_decl->body->stmts[2]);
+
+    //set the label of the for loop
+    fir::AssignStmt::Ptr assign_stmt = fir::to<fir::AssignStmt>(while_stmt->body->stmts[0]);
+    assign_stmt->stmt_label = "s1";
+
+    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+
+
+    EXPECT_EQ (0,  be->emitCPP());}
+
+
