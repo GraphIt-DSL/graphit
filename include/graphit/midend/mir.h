@@ -350,12 +350,28 @@ namespace graphit {
 
         struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
-
+            PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply){
+                target = edgeset_apply->target;
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+            }
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PushEdgeSetApplyExpr>());
+            }
         };
 
         struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
-
+            PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply){
+                target = edgeset_apply->target;
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+            }
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PullEdgeSetApplyExpr>());
+            }
         };
 
 

@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFS";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplychedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithNoSchedule";

@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_array'))
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_expect'))
 
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
