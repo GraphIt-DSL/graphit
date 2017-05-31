@@ -8,6 +8,7 @@
 #include <graphit/midend/midend.h>
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
+#include <graphit/utils/exec_cmd.h>
 
 using namespace std;
 using namespace graphit;
@@ -580,7 +581,7 @@ TEST_F(BackendTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
 TEST_F(BackendTest, SimpleBFSPushSchedule){
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
-                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
                              "const parent : vector{Vertex}(int) = -1;\n"
                              "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
@@ -596,6 +597,7 @@ TEST_F(BackendTest, SimpleBFSPushSchedule){
                              "while (frontier.getVertexSetSize() != 0) "
                              "frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
                              "end\n"
+                             "print \"finished running BFS\"; \n"
                              "end");
     Schedule * schedule = new Schedule();
     ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
@@ -623,8 +625,13 @@ TEST_F(BackendTest, SimpleBFSPushSchedule){
     me->emitMIR(mir_context_);
     graphit::Backend* be = new graphit::Backend(mir_context_);
 
-
-
-    EXPECT_EQ (0,  be->emitCPP());}
+    ofstream test_file;
+    test_file.open ("../test.cpp");
+    be->emitCPP(test_file);
+    test_file.close();
+    std::cout << exec_cmd("g++ -std=c++11 -I ../../src/runtime_lib/ ../test.cpp  -o test.o 2>&1");
+    std::cout << exec_cmd("./test.o 2>&1");
+    EXPECT_EQ (0,  0);
+}
 
 
