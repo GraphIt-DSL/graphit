@@ -478,11 +478,16 @@ namespace graphit {
         oss << "}";
     }
 
-    void CodeGenCPP::visit(mir::EdgeSetApplyExpr::Ptr apply_expr) {
+    void CodeGenCPP::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
         //edgeset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
         //push edgeset apply
         genEdgeSetPullApply(mir_var, apply_expr);
+    }
+
+    void CodeGenCPP::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
+        // TODO: support code gen
+        assert(nullptr);
     }
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {

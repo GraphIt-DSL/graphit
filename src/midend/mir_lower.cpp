@@ -11,10 +11,11 @@ namespace graphit {
      * @param schedule
      */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
+        // This pass lowers apply expression into concrete versions, including push, pull hybrid and more
+        ApplyExprLower(mir_context, schedule).lower();
         // The pass on lowering abstract data structures to
         // concrete data structures with physical layout information
         PhysicalDataLayoutLower(mir_context, schedule).lower();
-        ApplyExprLower(mir_context, schedule).lower();
     }
 }
 

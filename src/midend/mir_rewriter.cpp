@@ -134,6 +134,19 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<TensorStructReadExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            expr->index = rewrite<Expr>(expr->index);
+            expr->field_target = rewrite<Expr>(expr->field_target);
+            node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<TensorArrayReadExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            expr->index = rewrite<Expr>(expr->index);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ForStmt> stmt) {
             if(stmt->stmt_label != ""){
                 label_scope_.scope(stmt->stmt_label);

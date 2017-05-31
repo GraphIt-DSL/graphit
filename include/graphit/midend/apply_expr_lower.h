@@ -24,6 +24,20 @@ namespace graphit {
 
         void lower();
 
+        //mir rewriter for rewriting the abstract tensor reads into the right type of reads
+        struct LowerApplyExpr : public mir::MIRRewriter {
+            using mir::MIRRewriter::visit;
+
+            LowerApplyExpr(Schedule* schedule) : schedule_(schedule){
+
+            };
+
+            //Lowers edgeset apply expressions
+            virtual void visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply_expr);
+
+            Schedule * schedule_;
+        };
+
     private:
         Schedule *schedule_ = nullptr;
         MIRContext *mir_context_ = nullptr;

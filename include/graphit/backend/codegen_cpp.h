@@ -43,7 +43,8 @@ namespace graphit {
 
         //functional operators
         virtual void visit(mir::VertexSetApplyExpr::Ptr);
-        virtual void visit(mir::EdgeSetApplyExpr::Ptr);
+        virtual void visit(mir::PullEdgeSetApplyExpr::Ptr);
+        virtual void visit(mir::PushEdgeSetApplyExpr::Ptr);
 
         virtual void visit(mir::VertexSetWhereExpr::Ptr);
         //virtual void visit(mir::EdgeSetWhereExpr::Ptr);

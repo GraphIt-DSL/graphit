@@ -43,6 +43,8 @@ namespace graphit {
 
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
+            virtual void visit(std::shared_ptr<TensorStructReadExpr>);
+            virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
 
             virtual void visit(std::shared_ptr<BoolLiteral> op) {node = op;};
             virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};

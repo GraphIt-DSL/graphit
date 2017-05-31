@@ -426,7 +426,7 @@ TEST_F(BackendTest, SimpleApplychedule) {
                              "end\n"
     );
     Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
     (*apply_schedules)["s1"] = s1_apply_schedule;
     schedule->apply_schedules = apply_schedules;

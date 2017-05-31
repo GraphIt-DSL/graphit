@@ -34,8 +34,14 @@ namespace graphit {
         // get the current scope string, which is used to find relevant schedule
         std::string getCurrentScope(){
             std::string concat_of_current_scope;
+            bool first = true;
             for (auto label_scope : label_scope_list_){
-                concat_of_current_scope = concat_of_current_scope + ": " + label_scope;
+                if(first) {
+                    concat_of_current_scope = label_scope;
+                    first = false;
+                } else {
+                    concat_of_current_scope = concat_of_current_scope + ": " + label_scope;
+                }
             }
             return concat_of_current_scope;
         }
