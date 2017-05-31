@@ -20,11 +20,11 @@ namespace graphit {
 
     class SimitException : public std::exception {
     public:
-        SimitException() {
+        SimitException() : hasContext(false) {
             errStringStream << " IR stack:" << std::endl;
         }
 
-        SimitException(SimitException&& other) {
+        SimitException(SimitException&& other) : hasContext(false) {
             errStringStream << other.errStringStream.str();
         }
 
@@ -40,7 +40,7 @@ namespace graphit {
 
     private:
         std::stringstream errStringStream;
-        bool hasContext = false;
+        bool hasContext;
     };
 
 /// Provides information about errors that occur while loading Simit code.
