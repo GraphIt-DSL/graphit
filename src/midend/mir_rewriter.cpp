@@ -14,11 +14,20 @@ namespace graphit {
 
 
         void MIRRewriter::visit(ExprStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRRewriter::visit(AssignStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->lhs = rewrite<Expr>(stmt->lhs);
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
@@ -125,10 +134,16 @@ namespace graphit {
             node = expr;
         }
 
-        void MIRRewriter::visit(std::shared_ptr<ForStmt> for_stmt) {
-            for_stmt->domain = rewrite<ForDomain>(for_stmt->domain);
-            for_stmt->body = rewrite<StmtBlock>(for_stmt->body);
-            node = for_stmt;
+        void MIRRewriter::visit(std::shared_ptr<ForStmt> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain = rewrite<ForDomain>(stmt->domain);
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            node = stmt;
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {
@@ -178,9 +193,15 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<WhileStmt> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->body = rewrite<StmtBlock>(stmt->body);
             stmt->cond = rewrite<Expr>(stmt->cond);
             node = stmt;
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
     }

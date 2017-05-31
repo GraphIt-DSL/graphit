@@ -8,6 +8,7 @@
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/mir.h>
 #include <assert.h>
+#include <graphit/midend/label_scope.h>
 
 namespace graphit {
     namespace mir {
@@ -102,6 +103,7 @@ namespace graphit {
 
         protected:
             MIRNode::Ptr node;
+            LabelScope label_scope_;
         };
     }
 }

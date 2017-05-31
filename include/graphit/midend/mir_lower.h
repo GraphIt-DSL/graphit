@@ -7,6 +7,7 @@
 
 #include <graphit/midend/mir_context.h>
 #include <graphit/midend/physical_data_layout_lower.h>
+#include <graphit/midend/apply_expr_lower.h>
 
 namespace graphit {
     class MIRLower {
