@@ -80,6 +80,45 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::IfStmt::Ptr stmt) {
+        printIndent();
+        oss << "if (";
+        stmt->cond->accept(this);
+        oss << ")" << std::endl;
+
+        printIndent();
+        oss << " { " << std::endl;
+
+        indent();
+        stmt->ifBody->accept(this);
+        dedent();
+
+        printIndent();
+        oss << " } " << std::endl;
+
+        if (stmt->elseBody) {
+            printIndent();
+            oss << "else" << std::endl;
+
+            printIndent();
+            oss << " { " << std::endl;
+
+            indent();
+            stmt->elseBody->accept(this);
+            dedent();
+
+            oss << std::endl;
+
+            printIndent();
+            oss << " } " << std::endl;
+
+        }
+
+        //printIndent();
+        //oss << "end";
+
+    }
+
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
         printIndent();
         expr_stmt->expr->accept(this);
@@ -103,7 +142,7 @@ namespace graphit {
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; " << std::endl;
 
-        }else{
+        } else {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -587,7 +626,7 @@ namespace graphit {
         if (apply_expr->from_func != "") {
             oss << "if ";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)){
+            if (mir_context_->isFunction(apply_expr->from_func)) {
                 //if the input expression is a function call
                 oss << " ( " << apply_expr->from_func << " ( s )";
 
@@ -595,7 +634,6 @@ namespace graphit {
                 //the input expression is a vertex subset
                 oss << " ( " << apply_expr->from_func << "->contains( s ) ";
             }
-
 
 
             oss << ") { " << std::endl;
@@ -692,7 +730,7 @@ namespace graphit {
         if (apply_expr->from_func != "") {
             oss << "if ";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)){
+            if (mir_context_->isFunction(apply_expr->from_func)) {
                 //if the input expression is a function call
                 oss << " ( " << apply_expr->from_func << " ( s )";
 
@@ -713,7 +751,7 @@ namespace graphit {
         if (apply_expr->to_func != "") {
             oss << "if ";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->to_func)){
+            if (mir_context_->isFunction(apply_expr->to_func)) {
                 //if the input expression is a function call
                 oss << " ( " << apply_expr->to_func << " ( d )";
 
@@ -721,7 +759,6 @@ namespace graphit {
                 //the input expression is a vertex subset
                 oss << " ( " << apply_expr->to_func << "->contains( d ) ";
             }
-
 
 
             oss << ") { " << std::endl;
@@ -750,7 +787,7 @@ namespace graphit {
             printIndent();
             oss << "if ";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)){
+            if (mir_context_->isFunction(apply_expr->from_func)) {
                 //if the input expression is a function call
                 oss << " ( " << apply_expr->from_func << " ( s )";
 
@@ -816,7 +853,6 @@ namespace graphit {
         if (neg_expr->negate) oss << " -";
         neg_expr->operand->accept(this);
     }
-
 
 
 }

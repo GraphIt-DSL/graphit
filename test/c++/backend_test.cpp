@@ -635,3 +635,17 @@ TEST_F(BackendTest, SimpleBFSPushSchedule){
 }
 
 
+TEST_F(BackendTest, SimpleIfElifElseStmt) {
+    istringstream is("func main() var x : int = 1; if x < 1 \n"
+                             "print \" x is less than 1\"; \n"
+                             " elif x > 5\n"
+                             "  print \"x is greater than 5\";\n"
+                             "else\n"
+                             "  print \"x is between 1 and 5\"; "
+                             "end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+

@@ -167,6 +167,14 @@ namespace graphit {
         retStmt = mir_while_stmt;
     }
 
+    void MIREmitter::visit(fir::IfStmt::Ptr if_stmt) {
+        auto mir_if_stmt = std::make_shared<mir::IfStmt>();
+        mir_if_stmt->cond = emitExpr(if_stmt->cond);
+        mir_if_stmt->ifBody = emitStmt(if_stmt->ifBody);
+        mir_if_stmt->elseBody = emitStmt(if_stmt->elseBody);
+        retStmt = mir_if_stmt;
+    }
+
     void MIREmitter::visit(fir::StmtBlock::Ptr stmt_block) {
 
         //initialize

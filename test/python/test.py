@@ -164,26 +164,16 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_bfs(self):
         self.basic_compile_test("simple_bfs.gt")
 
+    def test_simple_if_elif_else(self):
+        self.basic_compile_test("simple_if_elif_else.gt")
+
 
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
-    # suite = unittest.TestLoader().loadTestsFromTestCase(TestGraphitCompiler)
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_main_print_add'))
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_multi_arrays'))
-
-
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_expect'))
-
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
-
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_bfs'))
+    # suite.addTest(TestGraphitCompiler('test_simple_if_elif_else'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)
