@@ -217,5 +217,15 @@ namespace graphit {
             }
         }
 
+
+        void MIRRewriter::visit(IfStmt::Ptr stmt) {
+            stmt->cond = rewrite<Expr>(stmt->cond);
+            stmt->ifBody = rewrite<Stmt>(stmt->ifBody);
+            if (stmt->elseBody) {
+                stmt->elseBody = rewrite<Stmt>(stmt->elseBody);
+            }
+            node = stmt;
+        }
+
     }
 }

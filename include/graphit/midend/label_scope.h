@@ -40,7 +40,7 @@ namespace graphit {
                     concat_of_current_scope = label_scope;
                     first = false;
                 } else {
-                    concat_of_current_scope = concat_of_current_scope + ": " + label_scope;
+                    concat_of_current_scope = concat_of_current_scope + ":" + label_scope;
                 }
             }
             return concat_of_current_scope;

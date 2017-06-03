@@ -24,6 +24,7 @@ namespace graphit {
 
         virtual void visit(mir::ForStmt::Ptr);
         virtual void visit(mir::WhileStmt::Ptr);
+        virtual void visit(mir::IfStmt::Ptr);
 
 
         virtual void visit(mir::ExprStmt::Ptr);
@@ -74,6 +75,7 @@ namespace graphit {
         virtual void visit(mir::StructTypeDecl::Ptr struct_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
 
+    private:
         void genIncludeStmts();
 
         void indent() { ++indentLevel; }
@@ -95,6 +97,8 @@ namespace graphit {
         void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr function_name);
 
         void genStructTypeDecls();
+
+        void genEdgesetPushApply(mir::PushEdgeSetApplyExpr::Ptr shared_ptr);
     };
 }
 

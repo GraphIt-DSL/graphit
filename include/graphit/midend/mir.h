@@ -518,7 +518,17 @@ namespace graphit {
         };
 
 
+        struct IfStmt : public Stmt {
+            Expr::Ptr cond;
+            Stmt::Ptr ifBody;
+            Stmt::Ptr elseBody;
 
+            typedef std::shared_ptr<IfStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IfStmt>());
+            }
+        };
 
     }
 

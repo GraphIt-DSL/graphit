@@ -1,0 +1,10 @@
+func main()
+    var x : int = 1;
+    if x < 1
+       print  "x is less than 1";
+     elif x > 5
+       print "x is greater than 5";
+     else
+       print "x is between 1 and 5";
+     end
+end
