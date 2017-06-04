@@ -2224,6 +2224,9 @@ namespace graphit {
     }
 
     fir::Type::Ptr Parser::parseEdgeSetType() {
+
+        auto edgeSetType = std::make_shared<fir::EdgeSetType>();
+
         const Token setToken = consume(Token::Type::EDGE_SET);
         consume(Token::Type::LC);
         const fir::ElementType::Ptr element = parseElementType();
@@ -2231,15 +2234,28 @@ namespace graphit {
 
         consume(Token::Type::LP);
         std::vector<fir::ElementType::Ptr> vertex_element_type_list;
-        do {
-            const fir::ElementType::Ptr vertex_element_type = parseElementType();
-            vertex_element_type_list.push_back(vertex_element_type);
-        } while (tryConsume(Token::Type::COMMA));
+        //do {
+
+        // parse src element type
+        const fir::ElementType::Ptr src_vertex_element_type = parseElementType();
+        vertex_element_type_list.push_back(src_vertex_element_type);
+        consume(Token::Type::COMMA);
+        // parse dst element type
+        const fir::ElementType::Ptr dst_vertex_element_type = parseElementType();
+        vertex_element_type_list.push_back(dst_vertex_element_type);
+
+        // if a third type argument is supplied, we assume that it is a weight
+        if (tryConsume(Token::Type::COMMA)){
+            const fir::ScalarType::Ptr weight_type = parseScalarType();
+            edgeSetType->weight_type = weight_type;
+        }
+
+
+        //} while (tryConsume(Token::Type::COMMA));
 
         const Token rightP = consume(Token::Type::RP);
 
 
-        auto edgeSetType = std::make_shared<fir::EdgeSetType>();
         edgeSetType->setBeginLoc(setToken);
         edgeSetType->edge_element_type = element;
         edgeSetType->setEndLoc(rightCurlyToken);

@@ -568,9 +568,23 @@ namespace graphit {
 
     void CodeGenCPP::genEdgeSets() {
         for (auto edgeset : mir_context_->getEdgeSets()) {
-            oss << "Graph " << edgeset->name << " = builtin_loadEdgesFromFile ( ";
-            edgeset->initVal->accept(this);
-            oss << " ); " << std::endl;
+
+            auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
+            if (edge_set_type->weight_type != nullptr){
+                //weighted edgeset
+                //unweighted edgeset
+                oss << "WGraph " << edgeset->name << " = builtin_loadWeightedEdgesFromFile ( ";
+                edgeset->initVal->accept(this);
+                oss << " ); " << std::endl;
+
+            } else {
+                //unweighted edgeset
+                oss << "Graph " << edgeset->name << " = builtin_loadEdgesFromFile ( ";
+                edgeset->initVal->accept(this);
+                oss << " ); " << std::endl;
+            }
+
+
         }
     }
 
@@ -590,6 +604,10 @@ namespace graphit {
         mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
         auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
 
+        bool is_weighted_edgeset = false;
+        if (edgeset_type->weight_type != nullptr){
+            is_weighted_edgeset = true;
+        }
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
         if (apply_func->result.isInitialized()) {
@@ -618,7 +636,13 @@ namespace graphit {
         }
 
         printIndent();
-        oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
+
+        if (! is_weighted_edgeset){
+            oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
+        } else {
+            oss << "for (WNode s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
+        }
+
         indent();
         printIndent();
 
@@ -646,8 +670,12 @@ namespace graphit {
         }
 
         // generating the C++ code for the apply function call
+        if (is_weighted_edgeset){
+            oss << apply_expr->input_function_name << "( s.v , d, s.w )";
+        } else {
+            oss << apply_expr->input_function_name << "( s , d  )";
 
-        oss << apply_expr->input_function_name << "( s , d )";
+        }
 
         if (!apply_expr_gen_frontier) {
             // no need to generate a frontier

@@ -1408,7 +1408,7 @@ namespace graphit {
         struct EdgeSetType : public Type {
             ElementType::Ptr edge_element_type;
             std::vector<ElementType::Ptr> vertex_element_type_list;
-
+            ScalarType::Ptr weight_type;
             typedef std::shared_ptr<EdgeSetType> Ptr;
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetType>());
@@ -1451,6 +1451,7 @@ namespace graphit {
         // Allocator expression for VertexSet
         struct EdgeSetLoadExpr : public LoadExpr {
             typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+            bool is_weighted = false;
 
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetLoadExpr>());

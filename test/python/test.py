@@ -167,13 +167,16 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_if_elif_else(self):
         self.basic_compile_test("simple_if_elif_else.gt")
 
+    def test_simple_weighted_edgeset_apply(self):
+        self.basic_compile_test("simple_weighted_edgeset_apply.gt")
+
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_if_elif_else'))
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_simple_weighted_edgeset_apply'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

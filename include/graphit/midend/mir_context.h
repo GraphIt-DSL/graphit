@@ -147,6 +147,14 @@ namespace graphit {
                 return vector_item_type_map_[vector_name];
             }
 
+            void addEdgesetType(std::string edgeset_name, mir::EdgeSetType::Ptr edgeset_type){
+                edgeset_element_type_map_[edgeset_name] = edgeset_type;
+            }
+
+            mir::EdgeSetType::Ptr getEdgesetType(std::string edgeset_name){
+                return edgeset_element_type_map_[edgeset_name];
+            }
+
             bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
                 if (num_elements_map_.find(element_type->ident) == num_elements_map_.end()){
                     //map does not contain the element type
@@ -218,6 +226,10 @@ namespace graphit {
             std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
             // maps a vector reference to item type
             std::map<std::string, mir::Type::Ptr> vector_item_type_map_;
+
+            //maps a edgeset name to its edgeset type
+            std::map<std::string, mir::EdgeSetType::Ptr> edgeset_element_type_map_;
+
 
             // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
