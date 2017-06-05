@@ -130,6 +130,7 @@ namespace graphit {
 
         struct EdgeSetType : public Type {
             ElementType::Ptr element;
+            ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr>* vertex_element_type_list;
 
             typedef std::shared_ptr<EdgeSetType> Ptr;

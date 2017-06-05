@@ -33,6 +33,15 @@ T builtin_sum(std::vector<T> input_vector){
     return output_sum;
 }
 
+//For now, assume the weights are ints, this would be good enough for now
+// Later, we can change the parser, to supply type information to the library call
+WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
+    CLBase cli (file_name);
+    WeightedBuilder weighted_builder (cli);
+    WGraph g = weighted_builder.MakeGraph();
+    return g;
+}
+
 Graph builtin_loadEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     Builder builder (cli);
@@ -41,6 +50,10 @@ Graph builtin_loadEdgesFromFile(std::string file_name){
 }
 
 int builtin_getVertices(Graph &edges){
+    return edges.num_nodes();
+}
+
+int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 

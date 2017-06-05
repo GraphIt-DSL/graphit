@@ -81,7 +81,9 @@ namespace graphit {
                     std::dynamic_pointer_cast<mir::ElementType>(mir_vertex_element_type));
         }
         mir_edgeset_type->vertex_element_type_list = mir_vector_element_type_list;
-
+        // emit weight type if it is a weighted edgeset
+        if (edge_set_type->weight_type != nullptr)
+            mir_edgeset_type->weight_type = mir::to<mir::ScalarType>(emitType(edge_set_type->weight_type));
         retType = mir_edgeset_type;
     }
 
@@ -595,6 +597,7 @@ namespace graphit {
                         mir_var_decl->initVal = mir_name_expr;
                         ctx->updateElementInputFilename(type->element, mir_name_expr);
                         ctx->addEdgeSet(mir_var_decl);
+                        ctx->addEdgesetType(mir_var_decl->name, type);
                     }
                 }
 

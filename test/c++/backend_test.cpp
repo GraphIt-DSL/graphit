@@ -647,5 +647,16 @@ TEST_F(BackendTest, SimpleIfElifElseStmt) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleWeightedEdgeSetApply) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const wt_sum : vector{Vertex}(int) = 0;\n"
+                             "func sumEdgeWt(src : Vertex, dst : Vertex, weight : int) "
+                             "wt_sum[dst] = wt_sum[dst] + weight; end\n"
+                             "func main() edges.apply(sumEdgeWt); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
 
 
