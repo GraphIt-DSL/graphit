@@ -172,11 +172,11 @@ class TestGraphitCompiler(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # unittest.main()
+    unittest.main()
     # used for enabling a specific test
 
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_simple_weighted_edgeset_apply'))
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_weighted_edgeset_apply'))
 
     unittest.TextTestRunner(verbosity=2).run(suite)

@@ -5,7 +5,8 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const wt_sum : vector{Vertex}(int) = 0;
 
 func sumEdgeWt(src : Vertex, dst : Vertex, weight : int)
-     wt_sum[dst] = wt_sum[dst] + weight;
+    print weight;
+    wt_sum[dst] = wt_sum[dst] + weight;
 end
 
 func main()
