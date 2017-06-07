@@ -405,10 +405,8 @@ namespace graphit {
     };
 
     void CodeGenCPP::visit(mir::BoolLiteral::Ptr expr) {
-        oss << "\"";
         oss << "(bool) ";
         oss << (bool) expr->val;
-        oss << "\"";
     };
 
     void CodeGenCPP::visit(mir::StringLiteral::Ptr expr) {

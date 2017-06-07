@@ -54,8 +54,11 @@ struct VertexSubset {
     }
 
     void addVertex(NodeID_ v){
-        boolean_index_vector_[v] = true;
-        num_vertices_++;
+        //only increment the count if the vertex is not already in the vertexset
+        if (boolean_index_vector_[v] == false){
+            boolean_index_vector_[v] = true;
+            num_vertices_++;
+        }
     }
 
     long getVerticesRange() { return vertices_range_; }
