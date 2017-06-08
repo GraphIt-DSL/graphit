@@ -158,6 +158,11 @@ namespace graphit {
         oss << "<< std::endl;" << std::endl;
     }
 
+    void CodeGenCPP::visit(mir::BreakStmt::Ptr print_stmt) {
+        printIndent();
+        oss << "break;" << std::endl;
+    }
+
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal) ||

@@ -104,6 +104,7 @@ namespace graphit {
         struct WhereExpr;
         struct FromExpr;
         struct ToExpr;
+        struct BreakStmt;
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -177,6 +178,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ForStmt>);
 
             virtual void visit(std::shared_ptr<PrintStmt>);
+
+            virtual void visit(std::shared_ptr<BreakStmt>) {}
+
 
             virtual void visit(std::shared_ptr<ExprStmt>);
 

@@ -55,6 +55,7 @@ namespace graphit {
         if (token == "load") return Token::Type::LOAD;
         if (token == "where") return Token::Type::WHERE;
         if (token == "from") return Token::Type::FROM;
+        if (token == "break") return Token::Type::BREAK;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.

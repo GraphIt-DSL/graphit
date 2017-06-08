@@ -531,6 +531,14 @@ namespace graphit {
             }
         };
 
+        struct BreakStmt : public Stmt {
+            typedef std::shared_ptr<BreakStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<BreakStmt>());
+            }
+        };
+
     }
 
 }

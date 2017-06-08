@@ -22,6 +22,7 @@ namespace graphit {
         struct ForDomain;
         struct ExprStmt;
         struct PrintStmt;
+        struct BreakStmt;
         struct AssignStmt;
         struct StmtBlock;
         struct Expr;
@@ -83,6 +84,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ForDomain>);
             virtual void visit(std::shared_ptr<AssignStmt>);
             virtual void visit(std::shared_ptr<PrintStmt>);
+            virtual void visit(std::shared_ptr<BreakStmt>) {};
             virtual void visit(std::shared_ptr<ExprStmt>);
             virtual void visit(std::shared_ptr<StmtBlock>);
             virtual void visit(std::shared_ptr<Expr>);

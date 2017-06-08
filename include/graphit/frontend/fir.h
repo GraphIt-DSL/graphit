@@ -719,6 +719,20 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+        struct BreakStmt : public Stmt {
+
+            typedef std::shared_ptr<BreakStmt> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<BreakStmt>());
+            }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
         struct ExprStmt : public Stmt {
             Expr::Ptr expr;
 

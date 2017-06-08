@@ -338,7 +338,7 @@ namespace graphit {
     }
 
 // stmt: var_decl | const_decl | if_stmt | while_stmt | do_while_stmt
-//     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt
+//     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt | break_stmt
     fir::Stmt::Ptr Parser::parseStmt() {
         switch (peek().type) {
             case Token::Type::VAR:
@@ -358,6 +358,8 @@ namespace graphit {
                 return parsePrintStmt();
             case Token::Type::APPLY:
                 return parseApplyStmt();
+            case Token::Type ::BREAK:
+                return parseBreakStmt();
             default:
                 return parseExprOrAssignStmt();
         }
@@ -2340,6 +2342,12 @@ namespace graphit {
         decls.insert("startTimer",  IdentType::FUNCTION);
         decls.insert("stopTimer",  IdentType::FUNCTION);
 
+    }
+
+    fir::BreakStmt::Ptr Parser::parseBreakStmt() {
+        consume(Token::Type::BREAK);
+        consume(Token::Type::SEMICOL);
+        return std::make_shared<fir::BreakStmt>();
     }
 
 
