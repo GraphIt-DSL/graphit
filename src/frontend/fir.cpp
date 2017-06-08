@@ -498,6 +498,18 @@ namespace graphit {
             return node;
         }
 
+
+        void BreakStmt::copy(FIRNode::Ptr node) {
+            const auto printStmt = to<BreakStmt>(node);
+            Stmt::copy(printStmt);
+        }
+
+        FIRNode::Ptr BreakStmt::cloneNode() {
+            const auto node = std::make_shared<BreakStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void ExprStmt::copy(FIRNode::Ptr node) {
             const auto exprStmt = to<ExprStmt>(node);
             Stmt::copy(exprStmt);

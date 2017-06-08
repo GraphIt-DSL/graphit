@@ -28,18 +28,18 @@ func main()
     SP[1] = 0;
 
     var rounds : int = 0;
-   % for j in 1:5;
-   while (frontier.getVertexSetSize() != 0)
+    while (frontier.getVertexSetSize() != 0)
      	for i in 1:n;
  	    	print SP[i];
 		end
         print "number of active_vertices: ";
         print frontier.getVertexSetSize();
         frontier = edges.from(frontier).apply(updateEdge);
-	rounds = rounds + 1;
+	    rounds = rounds + 1;
     	if rounds == n
-	   print "negative cycle";
-	end
+	        print "negative cycle";
+	        break;
+	    end
     end
 
     print rounds;

@@ -399,6 +399,11 @@ namespace graphit {
             oss << ";";
         }
 
+        void FIRPrinter::visit(BreakStmt::Ptr stmt) {
+            printIndent();
+            oss << " break;";
+        }
+
         void FIRPrinter::visit(ExprStmt::Ptr stmt) {
             printIndent();
             if (stmt->stmt_label != ""){

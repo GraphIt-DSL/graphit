@@ -96,7 +96,8 @@ namespace graphit {
             EDGE_SET,
             WHERE,
             LOAD,
-            FROM
+            FROM,
+            BREAK
         };
 
         Type        type;

@@ -375,3 +375,14 @@ TEST_F(FrontendTest, SimpleWeightedEdgeSetApply) {
                              "func main() edges.apply(sumEdgeWt); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimpleBreak) {
+    istringstream is("func main() "
+                             "    for i in 1:10; "
+                             "        if i > 1 break; end "
+                             "        print i; "
+                             "    end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+}

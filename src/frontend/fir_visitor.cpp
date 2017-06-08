@@ -171,6 +171,7 @@ namespace graphit {
             }
         }
 
+
         void FIRVisitor::visit(ExprStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }

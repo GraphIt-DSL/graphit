@@ -10,6 +10,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
 
 func updateEdge(src : Vertex, dst : Vertex) -> output : bool
+    % IDs[dst] = min(IDs[src], IDs[dst]);
      if IDs[src] < IDs[dst]
           IDs[dst] = IDs[src];
 	  output = true;

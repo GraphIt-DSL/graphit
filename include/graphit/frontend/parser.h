@@ -140,6 +140,8 @@ namespace graphit {
         //fir::Expr::Ptr parseNewExpr();
 
         void initIntrinsics();
+
+        fir::BreakStmt::Ptr parseBreakStmt();
     };
 }
 

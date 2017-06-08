@@ -51,6 +51,9 @@ namespace graphit {
             virtual void visit(RangeDomain::Ptr);
             virtual void visit(ForStmt::Ptr);
             virtual void visit(PrintStmt::Ptr);
+
+            virtual void visit(BreakStmt::Ptr);
+
             virtual void visit(ExprStmt::Ptr);
             virtual void visit(AssignStmt::Ptr);
             virtual void visit(Slice::Ptr);
