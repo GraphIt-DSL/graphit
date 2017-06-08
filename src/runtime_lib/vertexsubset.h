@@ -21,17 +21,14 @@ struct VertexSubset {
 //        index_vector_[v] = true;
 //    }
 
-    //empty vertex set
-    VertexSubset(int64_t vertices_range) : num_vertices_(0), vertices_range_(vertices_range), is_dense(0) {
-        boolean_index_vector_ = new bool[vertices_range]; //() is not the right constructor
-        for (int i = 0; i < vertices_range; i++)
-            boolean_index_vector_[i] = false;
-    }
-
     //set every vertex to true in the vertex subset
-    VertexSubset(int64_t vertices_range, bool set_all_to_true) : num_vertices_(0), vertices_range_(vertices_range), is_dense(0) {
+    VertexSubset(int64_t vertices_range, int64_t num_vertices)
+            : num_vertices_(num_vertices),
+              vertices_range_(vertices_range),
+              is_dense(0)
+    {
         boolean_index_vector_ = new bool[vertices_range];
-        if (set_all_to_true){
+        if (num_vertices == vertices_range){
             for (int i = 0; i < vertices_range; i++)
                 boolean_index_vector_[i] = true;
         }

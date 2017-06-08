@@ -27,13 +27,14 @@ func main()
 
     startTimer();
     var n : int = edges.getVertices();
-    print "number of vertices ";
-    print n;
-    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
-    for i in 1:n;
-       frontier.addVertex(i);
-    end
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+
+    % this works too.
+    %var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    %for i in 1:n;
+       %frontier.addVertex(i);
+    %end
 
     vertices.apply(init);
 
