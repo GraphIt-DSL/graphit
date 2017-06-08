@@ -494,6 +494,8 @@ namespace graphit {
         //alloc_expr->size_expr->accept(this);
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
         size_expr->accept(this);
+        oss << " , ";
+        alloc_expr->size_expr->accept(this);
         oss << ")";
     }
 
@@ -544,7 +546,9 @@ namespace graphit {
             auto vertices_range_expr =
                     mir_context_->getElementCount(vertex_type);
             vertices_range_expr->accept(this);
-            oss << " );" << std::endl;
+            oss << " , ";
+            vertices_range_expr->accept(this);
+            oss << " );"  << std::endl;
 
             printIndent();
             oss << "for (int v = 0; v < ";
@@ -613,14 +617,16 @@ namespace graphit {
             apply_expr_gen_frontier = true;
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
             dst_vertices_range_expr->accept(this);
-            oss << " );" << std::endl;
+            oss << " , 0 );" << std::endl;
 
         } else {
             // If no return value is specified for the apply function, then it would return the entire set
             auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
             dst_vertices_range_expr->accept(this);
-            oss << " , true);" << std::endl;
+            oss << " , ";
+            dst_vertices_range_expr->accept(this);
+            oss << " );" << std::endl;
         }
 
         printIndent();

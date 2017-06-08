@@ -170,6 +170,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_weighted_edgeset_apply(self):
         self.basic_compile_test("simple_weighted_edgeset_apply.gt")
 
+    def test_simple_cc(self):
+        self.basic_compile_test("simple_cc.gt")
 
 if __name__ == '__main__':
     unittest.main()
@@ -177,6 +179,5 @@ if __name__ == '__main__':
 
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_weighted_edgeset_apply'))
-
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite.addTest(TestGraphitCompiler('test_simple_cc'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -58,7 +58,7 @@ TEST_F(RuntimeLibTest, TimerTest) {
 
 TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
     bool test_flag = true;
-    auto vertexSubset = new VertexSubset<int>(5);
+    auto vertexSubset = new VertexSubset<int>(5, 0);
     for (int v = 0; v < 5; v = v+2){
         vertexSubset->addVertex(v);
     }
