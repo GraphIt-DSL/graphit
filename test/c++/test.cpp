@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleIfElifElseStmt";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleSSSP";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleWeightedEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";

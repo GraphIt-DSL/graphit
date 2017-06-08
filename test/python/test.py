@@ -173,11 +173,14 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_cc(self):
         self.basic_compile_test("simple_cc.gt")
 
+    def test_simple_sssp(self):
+        self.basic_compile_test("simple_sssp.gt")
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_cc'))
+    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

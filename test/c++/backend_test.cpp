@@ -660,3 +660,47 @@ TEST_F(BackendTest, SimpleWeightedEdgeSetApply) {
 }
 
 
+TEST_F(BackendTest, SimpleSSSP) {
+    istringstream is("element Vertex end\n"
+    "element Edge end\n"
+    "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+    "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+    "const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX \n"
+    "func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool\n"
+        "if SP[dst] > SP[src] + weight \n"
+            "SP[dst] = SP[src] + weight;\n"
+         "output = true;\n"
+        "else\n"
+            "output = false;\n"
+        "end\n"
+    "end\n"
+    "func main() \n"
+     "var n : int = edges.getVertices();\n"
+        "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+        "frontier.addVertex(1); %add source vertex \n"
+    "SP[1] = 0;\n"
+    "var rounds : int = 0;\n"
+    "while (frontier.getVertexSetSize() != 0)\n"
+        "for i in 1:n;\n"
+        "print SP[i];\n"
+    "end \n"
+    "print \"number of active_vertices: \";\n"
+    "print frontier.getVertexSetSize();\n"
+    "frontier = edges.from(frontier).apply(updateEdge);\n"
+    "rounds = rounds + 1;\n"
+    "if rounds == n\n"
+    "print \"negative cycle\";\n"
+    "end\n"
+           " end\n"
+
+    "print rounds;\n"
+    "var elapsed_time : float = stopTimer();\n"
+    "print \"elapsed time: \";\n"
+    "print elapsed_time;\n"
+    "end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+
+
