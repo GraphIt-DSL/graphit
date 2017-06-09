@@ -348,5 +348,6 @@ TEST_F(HighLevelScheduleTest, SimpleBFSPushSchedule){
     test_file.close();
     std::cout << exec_cmd("g++ -std=c++11 -I ../../src/runtime_lib/ ../test.cpp  -o test.o 2>&1");
     std::cout << exec_cmd("./test.o 2>&1");
+
     EXPECT_EQ (0,  0);
 }
