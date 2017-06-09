@@ -66,3 +66,8 @@ protected:
     Frontend * fe_;
     graphit::MIRContext* mir_context_;
 };
+
+TEST_F(LowLevelScheduleTest, SimpleForLoops) {
+    istringstream is("func main() for i in 1:10; print i; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
