@@ -8,7 +8,7 @@
 #include <graphit/midend/midend.h>
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
-//#include <graphit/utils/exec_cmd.h>
+#include <graphit/utils/exec_cmd.h>
 
 
 using namespace std;
