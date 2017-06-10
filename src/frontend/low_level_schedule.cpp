@@ -8,20 +8,21 @@ namespace graphit {
     namespace fir {
         namespace low_level_schedule {
 
-            StmtNode ProgramNode::cloneLabelLoopBody(std::string label) {
-
+            StmtBlockNode::Ptr ProgramNode::cloneLabelLoopBody(std::string label) {
+                auto stmt_blk_node = std::make_shared<StmtBlockNode>();
+                return stmt_blk_node;
             }
 
-            bool ProgramNode::insertAfter(ForStmtNode for_stmt, std::string label) {
-
+            bool ProgramNode::insertAfter(ForStmtNode::Ptr for_stmt, std::string label) {
+                return true;
             }
 
-            bool ProgramNode::insertBefore(ForStmtNode for_stmt, std::string label) {
-
+            bool ProgramNode::insertBefore(ForStmtNode::Ptr for_stmt, std::string label) {
+                return true;
             }
 
             bool ProgramNode::removeLabelNode(std::string label) {
-
+                return true;
             }
 
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
@@ -29,7 +30,7 @@ namespace graphit {
                 return fir_stmt;
             }
 
-            void ForStmtNode::appendLoopBody(StmtBlock stmt_block) {
+            void ForStmtNode::appendLoopBody(StmtBlockNode::Ptr stmt_block) {
 
             }
         }

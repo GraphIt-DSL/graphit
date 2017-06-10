@@ -46,11 +46,18 @@ namespace graphit {
             };
 
             struct ForStmtNode : StmtNode {
-                typedef std::shared_ptr<ForStmt> Ptr;
+                typedef std::shared_ptr<ForStmtNode> Ptr;
                 RangeDomain::Ptr for_domain_;
+
+                ForStmtNode(std::string label) : label_(label) {};
+
                 fir::ForStmt::Ptr emitFIRNode();
                 // append the stmt block to the body of the current for stmt node
-                void appendLoopBody(StmtBlock stmt_block);
+                void appendLoopBody(StmtBlockNode::Ptr stmt_block);
+
+            private:
+                std::string label_;
+
             };
 
 //            struct NameNode : StmtNode {
@@ -61,21 +68,20 @@ namespace graphit {
             struct ProgramNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<ProgramNode> Ptr;
 
-                ProgramNode(graphit::FIRContext fir_context) {
-                    fir_program_ = fir_context.getProgram();
+                ProgramNode(graphit::FIRContext* fir_context) {
+                    fir_program_ = fir_context->getProgram();
                 }
 
-                StmtNode cloneLabelLoopBody(std::string label);
+                StmtBlockNode::Ptr cloneLabelLoopBody(std::string label);
                 // Inserts a ForStmt node before the label
-                bool insertBefore(ForStmtNode for_stmt, std::string label);
-                bool insertAfter(ForStmtNode for_stmt, std::string label);
+                bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);
+                bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
 
                 bool removeLabelNode(std::string label);
 
             private:
                 fir::Program::Ptr fir_program_;
             };
-
 
         }
     }
