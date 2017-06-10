@@ -86,13 +86,19 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
     fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
             = schedule_program_node->cloneLabelLoopBody("l1");
 
-    //create two new fissed loop node with labels "l2" and "l3"
-    fir::low_level_schedule::ForStmtNode::Ptr l2_loop
-            = std::make_shared<fir::low_level_schedule::ForStmtNode>("l2");
-    fir::low_level_schedule::ForStmtNode::Ptr l3_loop
-            = std::make_shared<fir::low_level_schedule::ForStmtNode>("l3");
 
     //create and set bounds for l2_loop and l3_loop
+    fir::low_level_schedule::RangeDomain::Ptr l2_range_domain
+        = std::make_shared<fir::low_level_schedule::RangeDomain>(0, 2);
+    fir::low_level_schedule::RangeDomain::Ptr l3_range_domain
+            = std::make_shared<fir::low_level_schedule::RangeDomain>(2, 10);
+
+    //create two new fissed loop node with labels "l2" and "l3"
+    fir::low_level_schedule::ForStmtNode::Ptr l2_loop
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l2_range_domain, "l2");
+    fir::low_level_schedule::ForStmtNode::Ptr l3_loop
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain, "l3");
+
 
     //append the original l1_loop body to l2_loop and l3_loop
     l2_loop->appendLoopBody(l1_body_blk);

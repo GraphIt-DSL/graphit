@@ -38,10 +38,12 @@ namespace graphit {
 
             // A for loop range domain with integer bounds
             struct RangeDomain {
-                int lower;
-                int upper;
+                int lower_;
+                int upper_;
 
                 typedef std::shared_ptr<RangeDomain> Ptr;
+                RangeDomain(int lower, int upper)
+                        : lower_(lower), upper_(upper) {}
 
             };
 
@@ -49,7 +51,8 @@ namespace graphit {
                 typedef std::shared_ptr<ForStmtNode> Ptr;
                 RangeDomain::Ptr for_domain_;
 
-                ForStmtNode(std::string label) : label_(label) {};
+                ForStmtNode(RangeDomain::Ptr range_domain, std::string label)
+                        : range_domain_(range_domain), label_(label) {};
 
                 fir::ForStmt::Ptr emitFIRNode();
                 // append the stmt block to the body of the current for stmt node
@@ -57,7 +60,7 @@ namespace graphit {
 
             private:
                 std::string label_;
-
+                RangeDomain::Ptr range_domain_;
             };
 
 //            struct NameNode : StmtNode {
