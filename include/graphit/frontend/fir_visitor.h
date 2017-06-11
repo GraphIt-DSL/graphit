@@ -7,6 +7,7 @@
 
 
 #include <memory>
+#include <graphit/midend/label_scope.h>
 
 // Visitor pattern abstract class
 namespace graphit {
@@ -282,6 +283,10 @@ namespace graphit {
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
 
             void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+            LabelScope label_scope_;
+
+
         };
 
     }

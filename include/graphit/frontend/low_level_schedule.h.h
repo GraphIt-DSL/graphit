@@ -33,7 +33,15 @@ namespace graphit {
 
             struct StmtBlockNode : public StmtNode {
                 typedef std::shared_ptr<StmtBlockNode> Ptr;
+                int getNumStmts(){
+                    if (fir_stmt_block_)
+                        return fir_stmt_block_->stmts.size();
+                    else
+                        return 0;
+                }
 
+            private:
+                fir::StmtBlock::Ptr fir_stmt_block_;
             };
 
             // A for loop range domain with integer bounds
@@ -75,6 +83,7 @@ namespace graphit {
                     fir_program_ = fir_context->getProgram();
                 }
 
+                // Clones the body of the loop with the input label
                 StmtBlockNode::Ptr cloneLabelLoopBody(std::string label);
                 // Inserts a ForStmt node before the label
                 bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);

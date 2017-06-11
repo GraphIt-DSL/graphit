@@ -6,7 +6,7 @@
 #define GRAPHIT_LABEL_SCOPE_H
 
 #include <list>
-
+#include <string>
 
 namespace graphit {
     /**

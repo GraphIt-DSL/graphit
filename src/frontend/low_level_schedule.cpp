@@ -10,6 +10,10 @@ namespace graphit {
 
             StmtBlockNode::Ptr ProgramNode::cloneLabelLoopBody(std::string label) {
                 auto stmt_blk_node = std::make_shared<StmtBlockNode>();
+
+                // Traverse the fir::program nodes and copy the labeled node body
+
+
                 return stmt_blk_node;
             }
 
