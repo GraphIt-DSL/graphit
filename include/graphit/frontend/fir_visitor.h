@@ -277,6 +277,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<FromExpr>);
             virtual void visit(std::shared_ptr<ToExpr>);
 
+        protected:
+            LabelScope label_scope_;
+
+
         private:
             void visitUnaryExpr(std::shared_ptr<UnaryExpr>);
 
@@ -284,7 +288,6 @@ namespace graphit {
 
             void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
-            LabelScope label_scope_;
 
 
         };

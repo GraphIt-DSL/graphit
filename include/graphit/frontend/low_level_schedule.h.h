@@ -33,6 +33,10 @@ namespace graphit {
 
             struct StmtBlockNode : public StmtNode {
                 typedef std::shared_ptr<StmtBlockNode> Ptr;
+
+                StmtBlockNode(fir::StmtBlock::Ptr fir_stmt_blk) :
+                    fir_stmt_block_(fir_stmt_blk) {};
+
                 int getNumStmts(){
                     if (fir_stmt_block_)
                         return fir_stmt_block_->stmts.size();

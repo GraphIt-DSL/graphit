@@ -3,16 +3,19 @@
 //
 
 #include <graphit/frontend/low_level_schedule.h.h>
+#include <graphit/frontend/clone_loop_body_visitor.h>
 
 namespace graphit {
     namespace fir {
         namespace low_level_schedule {
 
             StmtBlockNode::Ptr ProgramNode::cloneLabelLoopBody(std::string label) {
-                auto stmt_blk_node = std::make_shared<StmtBlockNode>();
 
                 // Traverse the fir::program nodes and copy the labeled node body
+                auto clone_loop_body_visitor = CloneLoopBodyVisitor();
+                fir::StmtBlock::Ptr fir_stmt_blk = clone_loop_body_visitor.CloneLoopBody(fir_program_, label);
 
+                auto stmt_blk_node = std::make_shared<StmtBlockNode>(fir_stmt_blk);
 
                 return stmt_blk_node;
             }
