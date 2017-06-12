@@ -38,7 +38,7 @@ namespace graphit {
             }
 
             void ForStmtNode::appendLoopBody(StmtBlockNode::Ptr stmt_block) {
-
+                body_ = stmt_block;
             }
         }
     }

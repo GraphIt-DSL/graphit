@@ -44,6 +44,10 @@ namespace graphit {
                         return 0;
                 }
 
+                fir::StmtBlock::Ptr getFirStmtBlk() {
+                    return fir_stmt_block_;
+                }
+
             private:
                 fir::StmtBlock::Ptr fir_stmt_block_;
             };
@@ -70,9 +74,14 @@ namespace graphit {
                 // append the stmt block to the body of the current for stmt node
                 void appendLoopBody(StmtBlockNode::Ptr stmt_block);
 
+                StmtBlockNode::Ptr getBody(){
+                    return body_;
+                }
+
             private:
                 std::string label_;
                 RangeDomain::Ptr range_domain_;
+                StmtBlockNode::Ptr body_;
             };
 
 //            struct NameNode : StmtNode {
