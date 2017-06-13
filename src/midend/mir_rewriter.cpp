@@ -31,6 +31,9 @@ namespace graphit {
             stmt->lhs = rewrite<Expr>(stmt->lhs);
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRRewriter::visit(PrintStmt::Ptr stmt) {

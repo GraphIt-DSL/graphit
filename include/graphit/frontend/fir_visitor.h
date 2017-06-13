@@ -7,6 +7,7 @@
 
 
 #include <memory>
+#include <graphit/midend/label_scope.h>
 
 // Visitor pattern abstract class
 namespace graphit {
@@ -49,6 +50,8 @@ namespace graphit {
         struct RangeDomain;
         struct ForStmt;
         struct PrintStmt;
+        struct NameNode;
+
         struct ExprStmt;
         struct AssignStmt;
         struct Slice;
@@ -177,6 +180,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ForStmt>);
 
+            virtual void visit(std::shared_ptr<NameNode>);
+
+
             virtual void visit(std::shared_ptr<PrintStmt>);
 
             virtual void visit(std::shared_ptr<BreakStmt>) {}
@@ -276,12 +282,19 @@ namespace graphit {
             virtual void visit(std::shared_ptr<FromExpr>);
             virtual void visit(std::shared_ptr<ToExpr>);
 
+        protected:
+            LabelScope label_scope_;
+
+
         private:
             void visitUnaryExpr(std::shared_ptr<UnaryExpr>);
 
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
 
             void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+
+
         };
 
     }
