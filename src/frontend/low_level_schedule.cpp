@@ -2,7 +2,7 @@
 // Created by Yunming Zhang on 6/8/17.
 //
 
-#include <graphit/frontend/low_level_schedule.h.h>
+#include <graphit/frontend/low_level_schedule.h>
 #include <graphit/frontend/clone_loop_body_visitor.h>
 
 namespace graphit {

@@ -9,7 +9,7 @@
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
 #include <graphit/utils/exec_cmd.h>
-#include <graphit/frontend/low_level_schedule.h.h>
+#include <graphit/frontend/low_level_schedule.h>
 #include <graphit/frontend/fir.h>
 
 
