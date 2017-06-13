@@ -329,10 +329,12 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
     //remove l1_loop
     schedule_program_node->removeLabelNode("l1");
 
+    //print FIR
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
+    //construction for midend and backend
     graphit::Midend* me = new graphit::Midend(context_);
     me->emitMIR(mir_context_);
     graphit::Backend* be = new graphit::Backend(mir_context_);
@@ -342,6 +344,5 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
 
     //expects two loops in the main function decl
     EXPECT_EQ (2,  main_func_decl->body->stmts.size());
-
 
 }
