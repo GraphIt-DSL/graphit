@@ -44,7 +44,7 @@ namespace graphit {
                         return 0;
                 }
 
-                fir::StmtBlock::Ptr getFirStmtBlk() {
+                fir::StmtBlock::Ptr emitFIRNode() {
                     return fir_stmt_block_;
                 }
 
@@ -54,12 +54,26 @@ namespace graphit {
 
             // A for loop range domain with integer bounds
             struct RangeDomain {
-                int lower_;
-                int upper_;
+
 
                 typedef std::shared_ptr<RangeDomain> Ptr;
                 RangeDomain(int lower, int upper)
                         : lower_(lower), upper_(upper) {}
+
+                fir::RangeDomain::Ptr emitFIRRangeDomain(){
+                    fir::RangeDomain::Ptr fir_range_domain = std::make_shared<fir::RangeDomain>();
+                    auto lower_expr = std::make_shared<fir::IntLiteral>();
+                    lower_expr->val = lower_;
+                    auto upper_expr = std::make_shared<fir::IntLiteral>();
+                    upper_expr->val = upper_;
+                    fir_range_domain->lower = lower_expr;
+                    fir_range_domain->upper = upper_expr;
+                    return fir_range_domain;
+                }
+
+            private:
+                int lower_;
+                int upper_;
 
             };
 
@@ -69,6 +83,15 @@ namespace graphit {
 
                 ForStmtNode(RangeDomain::Ptr range_domain, std::string label)
                         : range_domain_(range_domain), label_(label) {};
+
+                ForStmtNode(RangeDomain::Ptr range_domain,
+                            StmtBlockNode::Ptr body,
+                            std::string label,
+                            std::string loop_var)
+                        : range_domain_(range_domain),
+                          label_(label),
+                          body_(body),
+                          loop_var_(loop_var) {};
 
                 fir::ForStmt::Ptr emitFIRNode();
                 // append the stmt block to the body of the current for stmt node
@@ -82,12 +105,24 @@ namespace graphit {
                 std::string label_;
                 RangeDomain::Ptr range_domain_;
                 StmtBlockNode::Ptr body_;
+                std::string loop_var_;
             };
 
-//            struct NameNode : StmtNode {
-//                typedef std::shared_ptr<NameNode> Ptr;
-//
-//            };
+            struct NameNode : StmtNode {
+                typedef std::shared_ptr<NameNode> Ptr;
+                NameNode(StmtBlockNode::Ptr stmt_block, std::string label)
+                        : body_(stmt_block), label_(label) {}
+
+                fir::NameNode::Ptr emitFIRNode();
+
+                StmtBlockNode::Ptr getBody(){
+                    return body_;
+                }
+
+            private:
+                StmtBlockNode::Ptr body_;
+                std::string label_;
+            };
 
             struct ProgramNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<ProgramNode> Ptr;
@@ -98,9 +133,14 @@ namespace graphit {
 
                 // Clones the body of the loop with the input label
                 StmtBlockNode::Ptr cloneLabelLoopBody(std::string label);
-                // Inserts a ForStmt node before the label
+                // Inserts a ForStmt node before and after a label
                 bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);
                 bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
+
+                // Inserts a name node before and after a label
+                bool insertBefore(NameNode::Ptr for_stmt, std::string label);
+                bool insertAfter(NameNode::Ptr for_stmt, std::string label);
+
 
                 bool removeLabelNode(std::string label);
 

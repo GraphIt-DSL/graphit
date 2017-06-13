@@ -50,6 +50,8 @@ namespace graphit {
         struct RangeDomain;
         struct ForStmt;
         struct PrintStmt;
+        struct NameNode;
+
         struct ExprStmt;
         struct AssignStmt;
         struct Slice;
@@ -177,6 +179,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<RangeDomain>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
+            virtual void visit(std::shared_ptr<NameNode>);
+
 
             virtual void visit(std::shared_ptr<PrintStmt>);
 

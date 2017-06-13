@@ -183,6 +183,10 @@ namespace graphit {
 
         }
 
+        void FIRVisitor::visit(NameNode::Ptr stmt) {
+            stmt->body->accept(this);
+        }
+
         void FIRVisitor::visit(PrintStmt::Ptr stmt) {
             for (auto arg : stmt->args) {
                 arg->accept(this);

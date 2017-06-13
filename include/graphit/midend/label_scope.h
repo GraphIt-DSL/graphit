@@ -27,6 +27,14 @@ namespace graphit {
             label_scope_list_.pop_back();
         }
 
+        //try to increment the label scope without changing the internal state
+        //used for low level API's insertBefore and insertAfter
+        std::string tryScope(std::string new_label_scope){
+            label_scope_list_.push_back(new_label_scope);
+            auto output = getCurrentScope();
+            label_scope_list_.pop_back();;
+            return output;
+        }
         ~LabelScope(){
 
         }

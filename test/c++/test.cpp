@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
 
-    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopNodeCreation";
+    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleInsertForLoopNodeBefore";
 
 
     return RUN_ALL_TESTS();

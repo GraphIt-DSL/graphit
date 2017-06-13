@@ -483,6 +483,18 @@ namespace graphit {
             return node;
         }
 
+        void NameNode::copy(FIRNode::Ptr node) {
+            const auto name_node = to<NameNode>(node);
+            Stmt::copy(name_node);
+            body = name_node->body->clone<StmtBlock>();
+        }
+
+        FIRNode::Ptr NameNode::cloneNode() {
+            const auto node = std::make_shared<NameNode>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void PrintStmt::copy(FIRNode::Ptr node) {
             const auto printStmt = to<PrintStmt>(node);
             Stmt::copy(printStmt);

@@ -136,10 +136,13 @@ TEST_F(LowLevelScheduleTest, LoopBodyApplyCloning) {
     EXPECT_EQ (1,  l1_body_blk->getNumStmts());
 
     EXPECT_EQ (true, fir::isa<fir::ExprStmt>(
-            l1_body_blk->getFirStmtBlk()->stmts[0]));
+            l1_body_blk->emitFIRNode()->stmts[0]));
 
 }
 
+/**
+ * Test for building a for loop scheduling node
+ */
 TEST_F(LowLevelScheduleTest, SimpleLoopNodeCreation) {
     istringstream is("func main() for i in 1:10; print i; end end");
 
@@ -168,9 +171,123 @@ TEST_F(LowLevelScheduleTest, SimpleLoopNodeCreation) {
 
     EXPECT_EQ (1,  l2_loop->getBody()->getNumStmts());
     EXPECT_EQ (true,  fir::isa<fir::PrintStmt>(
-            l2_loop->getBody()->getFirStmtBlk()->stmts[0]));
+            l2_loop->getBody()->emitFIRNode()->stmts[0]));
 
 }
+
+/**
+ * Test for building a scheduling name node
+ */
+TEST_F(LowLevelScheduleTest, SimpleNameNodeCreation) {
+    istringstream is("func main() for i in 1:10; print i; end end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    l1_loop->stmt_label = "l1";
+
+    // use the low level scheduling API to make clone the body of "l1" loop
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
+            = schedule_program_node->cloneLabelLoopBody("l1");
+
+    //create a new name node with labels "l1"
+    fir::low_level_schedule::NameNode::Ptr l1_name
+            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk, "l1");
+
+
+    EXPECT_EQ (1,  l1_name->getBody()->getNumStmts());
+    EXPECT_EQ (true,  fir::isa<fir::PrintStmt>(
+            l1_name->getBody()->emitFIRNode()->stmts[0]));
+
+}
+
+
+TEST_F(LowLevelScheduleTest, SimpleInsertNameNodeBefore) {
+    istringstream is("func main() for i in 1:2; print 4; end end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    l1_loop->stmt_label = "l1";
+
+    // use the low level scheduling API to make clone the body of "l1" loop
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
+            = schedule_program_node->cloneLabelLoopBody("l1");
+
+    //create a new name node with labels "l1"
+    fir::low_level_schedule::NameNode::Ptr l1_name
+            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk, "l1");
+
+    schedule_program_node->insertBefore(l1_name, "l1");
+
+    //check if the namenode has been inserted by checking the number of stmts in main func
+    EXPECT_EQ (2,  main_func_decl->body->stmts.size());
+
+    //check if the namenode has been inserted by checking the type of the first stmt
+    EXPECT_EQ (true,  fir::isa<fir::NameNode>(
+            main_func_decl->body->stmts[0]));
+
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    graphit::Midend* me = new graphit::Midend(context_);
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+    EXPECT_EQ (0,  be->emitCPP());
+
+}
+
+TEST_F(LowLevelScheduleTest, SimpleInsertForLoopNodeBefore) {
+    istringstream is("func main() for i in 1:2; print 4; end end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    l1_loop->stmt_label = "l1";
+
+    // use the low level scheduling API to make clone the body of "l1" loop
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
+            = schedule_program_node->cloneLabelLoopBody("l1");
+
+    //create and set bounds for l2_loop
+    fir::low_level_schedule::RangeDomain::Ptr l2_range_domain
+            = std::make_shared<fir::low_level_schedule::RangeDomain>(0, 2);
+
+    //create a new name node with labels "l1"
+    fir::low_level_schedule::ForStmtNode::Ptr l2_loop
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(
+                    l2_range_domain, l1_body_blk, "l2", "i");
+
+    schedule_program_node->insertBefore(l2_loop, "l1");
+
+    //check if the for loop has been inserted by checking the number of stmts in main func
+    EXPECT_EQ (2,  main_func_decl->body->stmts.size());
+
+    //check if the for loop has been inserted by checking the type of the first stmt
+    EXPECT_EQ (true,  fir::isa<fir::ForStmt>(
+            main_func_decl->body->stmts[0]));
+
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    graphit::Midend* me = new graphit::Midend(context_);
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+    EXPECT_EQ (0,  be->emitCPP());
+
+}
+
 
 /**
  * A test case that tries to break the 10 iters loop into a 2 iters and a 8 iters loop
