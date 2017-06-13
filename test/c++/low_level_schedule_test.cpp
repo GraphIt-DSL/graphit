@@ -316,14 +316,10 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
 
     //create two new fissed loop node with labels "l2" and "l3"
     fir::low_level_schedule::ForStmtNode::Ptr l2_loop
-            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l2_range_domain, "l2");
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l2_range_domain, l1_body_blk,  "l2", "i");
     fir::low_level_schedule::ForStmtNode::Ptr l3_loop
-            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain, "l3");
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain, l1_body_blk, "l3", "i");
 
-
-    //append the original l1_loop body to l2_loop and l3_loop
-    l2_loop->appendLoopBody(l1_body_blk);
-    l3_loop->appendLoopBody(l1_body_blk);
 
     //insert l2_loop and l3_loop back into the program right before l1_loop
     schedule_program_node->insertBefore(l2_loop, "l1");
@@ -333,5 +329,19 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
     //remove l1_loop
     schedule_program_node->removeLabelNode("l1");
 
-    EXPECT_EQ (0,  basicTest(is));
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    graphit::Midend* me = new graphit::Midend(context_);
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  be->emitCPP());
+
+    //expects two loops in the main function decl
+    EXPECT_EQ (2,  main_func_decl->body->stmts.size());
+
+
 }

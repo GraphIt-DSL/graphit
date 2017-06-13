@@ -44,6 +44,8 @@ namespace graphit {
                         return 0;
                 }
 
+                void appendStmtBlockNode(StmtBlockNode::Ptr stmt_block);
+
                 fir::StmtBlock::Ptr emitFIRNode() {
                     return fir_stmt_block_;
                 }

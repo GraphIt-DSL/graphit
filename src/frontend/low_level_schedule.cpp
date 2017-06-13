@@ -19,7 +19,7 @@ namespace graphit {
                     input_name_node_ = nullptr;
                 }
 
-                bool InsertBeforeLabel(fir::Program::Ptr fir_program,
+                bool insertBeforeLabel(fir::Program::Ptr fir_program,
                                        ForStmtNode::Ptr for_stmt_node, std::string label){
                     // be default, we assume the input label is not found
                     success_flag_ = false;
@@ -29,7 +29,7 @@ namespace graphit {
                     return success_flag_;
                 }
 
-                bool InsertBeforeLabel(fir::Program::Ptr fir_program,
+                bool insertBeforeLabel(fir::Program::Ptr fir_program,
                                        NameNode::Ptr name_node, std::string label){
                     // be default, we assume the input label is not found
                     success_flag_ = false;
@@ -73,6 +73,49 @@ namespace graphit {
                 bool success_flag_;
             };
 
+
+            /**
+            * Visitor used for remove a node with a certain label
+            */
+            struct RemoveLabelVisitor : public FIRVisitor {
+
+                RemoveLabelVisitor(){
+
+                }
+
+                bool removeLabel(fir::Program::Ptr fir_program, std::string label){
+                    // be default, we assume the input label is not found
+                    success_flag_ = false;
+                    target_label_ = label;
+                    fir_program->accept(this);
+                    return success_flag_;
+                }
+
+
+                virtual void visit (fir::StmtBlock::Ptr stmt_block){
+                    int idx = 0;
+                    auto blk_stmts = stmt_block->stmts;
+                    for (auto & stmt : blk_stmts) {
+                        if(stmt->stmt_label != "")
+                            if (label_scope_.tryScope(stmt->stmt_label) == target_label_){
+                                success_flag_ = true;
+
+                                blk_stmts.erase(blk_stmts.begin() + idx);
+
+                                break;
+                            }
+                        idx++;
+                    }
+
+                    stmt_block->stmts = blk_stmts;
+                }
+
+            private:
+                std::string target_label_;
+                bool success_flag_;
+            };
+
+
             StmtBlockNode::Ptr ProgramNode::cloneLabelLoopBody(std::string label) {
 
                 // Traverse the fir::program nodes and copy the labeled node body
@@ -94,15 +137,17 @@ namespace graphit {
 
             bool ProgramNode::insertBefore(NameNode::Ptr name_node, std::string label) {
                 auto insert_before_visitor = InsertBeforeLabelVisitor();
-                return insert_before_visitor.InsertBeforeLabel(fir_program_, name_node, label);
+                return insert_before_visitor.insertBeforeLabel(fir_program_, name_node, label);
             }
 
             bool ProgramNode::insertBefore(ForStmtNode::Ptr for_stmt, std::string label) {
                 auto insert_before_visitor = InsertBeforeLabelVisitor();
-                return insert_before_visitor.InsertBeforeLabel(fir_program_, for_stmt, label);
+                return insert_before_visitor.insertBeforeLabel(fir_program_, for_stmt, label);
             }
 
             bool ProgramNode::removeLabelNode(std::string label) {
+                auto remove_label_visitor = RemoveLabelVisitor();
+                remove_label_visitor.removeLabel(fir_program_, label);
                 return true;
             }
 
@@ -120,7 +165,10 @@ namespace graphit {
             }
 
             void ForStmtNode::appendLoopBody(StmtBlockNode::Ptr stmt_block) {
-                body_ = stmt_block;
+                if (body_ == nullptr)
+                    body_ = stmt_block;
+                else
+                    body_->appendStmtBlockNode(stmt_block);
             }
 
             fir::NameNode::Ptr NameNode::emitFIRNode() {
@@ -128,6 +176,14 @@ namespace graphit {
                 fir_name_node->body = body_->emitFIRNode();
                 fir_name_node->stmt_label = label_;
                 return fir_name_node;
+            }
+
+            void StmtBlockNode::appendStmtBlockNode(StmtBlockNode::Ptr stmt_block) {
+
+                auto other_stmt_blk = stmt_block->emitFIRNode()->stmts;
+
+                fir_stmt_block_->stmts.insert(fir_stmt_block_->stmts.end(),
+                                              other_stmt_blk.begin(), other_stmt_blk.end());
             }
         }
     }
