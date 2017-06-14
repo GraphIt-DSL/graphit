@@ -122,16 +122,22 @@ namespace graphit {
                 auto clone_loop_body_visitor = CloneLoopBodyVisitor();
                 fir::StmtBlock::Ptr fir_stmt_blk = clone_loop_body_visitor.CloneLoopBody(fir_program_, label);
 
+                if (fir_stmt_blk == nullptr){
+                    return nullptr;
+                }
+
                 auto stmt_blk_node = std::make_shared<StmtBlockNode>(fir_stmt_blk);
 
                 return stmt_blk_node;
             }
 
             bool ProgramNode::insertAfter(ForStmtNode::Ptr for_stmt, std::string label) {
+                //TODO: not implemented yet
                 return true;
             }
 
             bool ProgramNode::insertAfter(NameNode::Ptr for_stmt, std::string label) {
+                //TODO: not implemented yet
                 return true;
             }
 
@@ -147,8 +153,7 @@ namespace graphit {
 
             bool ProgramNode::removeLabelNode(std::string label) {
                 auto remove_label_visitor = RemoveLabelVisitor();
-                remove_label_visitor.removeLabel(fir_program_, label);
-                return true;
+                return remove_label_visitor.removeLabel(fir_program_, label);
             }
 
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
