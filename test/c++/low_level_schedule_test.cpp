@@ -461,3 +461,65 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
     EXPECT_EQ (2,  main_func_decl->body->stmts.size());
 
 }
+
+
+TEST_F(LowLevelScheduleTest, SimpleLoopFusion) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 1:10; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    // use the low level scheduling API to make clone the body of "l1" and "l2" loop
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
+            = schedule_program_node->cloneLabelLoopBody("l1");
+    fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk
+            = schedule_program_node->cloneLabelLoopBody("l2");
+
+    //create and set bounds for l2_loop and l3_loop
+    fir::low_level_schedule::RangeDomain::Ptr l3_range_domain
+            = std::make_shared<fir::low_level_schedule::RangeDomain>(1, 10);
+
+    fir::low_level_schedule::ForStmtNode::Ptr l3_loop
+            = std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain, l1_body_blk,  "l3", "i");
+
+    l3_loop->appendLoopBody(l2_body_blk);
+    schedule_program_node->insertBefore(l3_loop, "l1");
+    schedule_program_node->removeLabelNode("l1");
+    schedule_program_node->removeLabelNode("l2");
+
+    //print FIR
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
+    //construction for midend and backend
+    graphit::Midend* me = new graphit::Midend(context_);
+    me->emitMIR(mir_context_);
+    graphit::Backend* be = new graphit::Backend(mir_context_);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  be->emitCPP());
+
+    //ony l3 loop statement left
+    EXPECT_EQ (1,  main_func_decl->body->stmts.size());
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, l3_loop->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = l3_loop->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+
+}
