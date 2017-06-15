@@ -37,6 +37,17 @@ protected:
 
     }
 
+    /**
+     * This test assumes that the fir_context is constructed in the specific test code
+     * @return
+     */
+    bool basicCompileTestWithContext(){
+        graphit::Midend* me = new graphit::Midend(context_);
+        me->emitMIR(mir_context_);
+        graphit::Backend* be = new graphit::Backend(mir_context_);
+        return be->emitCPP();
+    }
+
     bool basicTest(std::istream & is){
         fe_->parseStream(is, context_, errors_);
         graphit::Midend* me = new graphit::Midend(context_);
@@ -280,14 +291,7 @@ TEST_F(LowLevelScheduleTest, SimpleInsertNameNodeBefore) {
     EXPECT_EQ (true,  fir::isa<fir::NameNode>(
             main_func_decl->body->stmts[0]));
 
-    std::cout << "fir: " << std::endl;
-    std::cout << *(context_->getProgram());
-    std::cout << std::endl;
-
-    graphit::Midend* me = new graphit::Midend(context_);
-    me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0,  basicCompileTestWithContext());
 
 }
 
@@ -351,14 +355,7 @@ TEST_F(LowLevelScheduleTest, SimpleInsertForLoopNodeBefore) {
     EXPECT_EQ (true,  fir::isa<fir::ForStmt>(
             main_func_decl->body->stmts[0]));
 
-    std::cout << "fir: " << std::endl;
-    std::cout << *(context_->getProgram());
-    std::cout << std::endl;
-
-    graphit::Midend* me = new graphit::Midend(context_);
-    me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0,  basicCompileTestWithContext());
 
 }
 
@@ -444,18 +441,8 @@ TEST_F(LowLevelScheduleTest, SimpleLoopIndexSplit) {
     //remove l1_loop
     schedule_program_node->removeLabelNode("l1");
 
-    //print FIR
-    std::cout << "fir: " << std::endl;
-    std::cout << *(context_->getProgram());
-    std::cout << std::endl;
-
-    //construction for midend and backend
-    graphit::Midend* me = new graphit::Midend(context_);
-    me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
-
     //generate c++ code successfully
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0,  basicCompileTestWithContext());
 
     //expects two loops in the main function decl
     EXPECT_EQ (2,  main_func_decl->body->stmts.size());
@@ -498,18 +485,8 @@ TEST_F(LowLevelScheduleTest, SimpleLoopFusion) {
     schedule_program_node->removeLabelNode("l1");
     schedule_program_node->removeLabelNode("l2");
 
-    //print FIR
-    std::cout << "fir: " << std::endl;
-    std::cout << *(context_->getProgram());
-    std::cout << std::endl;
-
-    //construction for midend and backend
-    graphit::Midend* me = new graphit::Midend(context_);
-    me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
-
     //generate c++ code successfully
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0,  basicCompileTestWithContext());
 
     //ony l3 loop statement left
     EXPECT_EQ (1,  main_func_decl->body->stmts.size());
@@ -521,5 +498,40 @@ TEST_F(LowLevelScheduleTest, SimpleLoopFusion) {
     //expects both statements of the l3 loop body to be print statements
     EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
     EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+
+}
+
+TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
+    istringstream is(        "func printAddOne (a : int) print a + 1; end\n"
+                             "func printAddTwo (a : int) print a + 2; end\n"
+                             "func main() \n"
+                                "printAddOne(4, 5); \n"
+                             "end");
+    fe_->parseStream(is, context_, errors_);
+
+    fir::FuncDecl::Ptr pddone = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::FuncDecl::Ptr pddtwo = fir::to<fir::FuncDecl>(context_->getProgram()->elems[1]);
+    fir::FuncDecl::Ptr main_func = fir::to<fir::FuncDecl>(context_->getProgram()->elems[2]);
+
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::FuncDeclNode::Ptr fused_func = schedule_program_node->cloneFuncDecl("paddone");
+
+    fused_func->setFunctionName("fused_func");
+    fused_func->appendFuncDeclBody(schedule_program_node->cloneFuncBody("paddtwo"));
+    schedule_program_node->insertFuncDecl(fused_func);
+
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    // Expects four function declarations now 
+    EXPECT_EQ (4,  context_->getProgram()->elems.size());
+
+
+}
+
+
+TEST_F(LowLevelScheduleTest, SimpleApplyFunctionFusion) {
+
 
 }

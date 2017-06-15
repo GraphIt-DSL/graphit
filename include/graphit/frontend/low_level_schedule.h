@@ -26,7 +26,7 @@ namespace graphit {
 
             };
 
-            struct StmtNode : public  LowLevelScheduleNode {
+            struct StmtNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<StmtNode> Ptr;
 
             };
@@ -35,9 +35,9 @@ namespace graphit {
                 typedef std::shared_ptr<StmtBlockNode> Ptr;
 
                 StmtBlockNode(fir::StmtBlock::Ptr fir_stmt_blk) :
-                    fir_stmt_block_(fir_stmt_blk) {};
+                        fir_stmt_block_(fir_stmt_blk) {};
 
-                int getNumStmts(){
+                int getNumStmts() {
                     if (fir_stmt_block_)
                         return fir_stmt_block_->stmts.size();
                     else
@@ -59,10 +59,11 @@ namespace graphit {
 
 
                 typedef std::shared_ptr<RangeDomain> Ptr;
+
                 RangeDomain(int lower, int upper)
                         : lower_(lower), upper_(upper) {}
 
-                fir::RangeDomain::Ptr emitFIRRangeDomain(){
+                fir::RangeDomain::Ptr emitFIRRangeDomain() {
                     fir::RangeDomain::Ptr fir_range_domain = std::make_shared<fir::RangeDomain>();
                     auto lower_expr = std::make_shared<fir::IntLiteral>();
                     lower_expr->val = lower_;
@@ -96,10 +97,11 @@ namespace graphit {
                           loop_var_(loop_var) {};
 
                 fir::ForStmt::Ptr emitFIRNode();
+
                 // append the stmt block to the body of the current for stmt node
                 void appendLoopBody(StmtBlockNode::Ptr stmt_block);
 
-                StmtBlockNode::Ptr getBody(){
+                StmtBlockNode::Ptr getBody() {
                     return body_;
                 }
 
@@ -112,12 +114,13 @@ namespace graphit {
 
             struct NameNode : StmtNode {
                 typedef std::shared_ptr<NameNode> Ptr;
+
                 NameNode(StmtBlockNode::Ptr stmt_block, std::string label)
                         : body_(stmt_block), label_(label) {}
 
                 fir::NameNode::Ptr emitFIRNode();
 
-                StmtBlockNode::Ptr getBody(){
+                StmtBlockNode::Ptr getBody() {
                     return body_;
                 }
 
@@ -126,29 +129,71 @@ namespace graphit {
                 std::string label_;
             };
 
+            struct FuncDeclNode : public LowLevelScheduleNode {
+                // constructs a scheduling func decl node by cloning a decl from func
+                FuncDeclNode(fir::FuncDecl::Ptr fir_func_decl) {
+
+                }
+
+                void setFunctionName(std::string){
+
+                }
+
+                std::string getFunctionName(){
+                    //TODO
+                    return "";
+                }
+
+                typedef std::shared_ptr<FuncDeclNode> Ptr;
+
+                void appendFuncDeclBody(StmtBlockNode::Ptr func_decl_body);
+
+
+                fir::FuncDecl::Ptr emitFIRNode() {
+                    return fir_func_decl_;
+                };
+            private:
+                fir::FuncDecl::Ptr fir_func_decl_;
+
+            };
+
             struct ProgramNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<ProgramNode> Ptr;
 
-                ProgramNode(graphit::FIRContext* fir_context) {
+                ProgramNode(graphit::FIRContext *fir_context) {
                     fir_program_ = fir_context->getProgram();
                 }
 
                 // Clones the body of the loop with the input label
                 StmtBlockNode::Ptr cloneLabelLoopBody(std::string label);
+
                 // Inserts a ForStmt node before and after a label
                 bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);
+
                 bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
 
                 // Inserts a name node before and after a label
                 bool insertBefore(NameNode::Ptr for_stmt, std::string label);
+
                 bool insertAfter(NameNode::Ptr for_stmt, std::string label);
 
-
+                // Removes a statement associated with the label
                 bool removeLabelNode(std::string label);
+
+                void insertFuncDecl(FuncDeclNode::Ptr func_decl_node);
+
+                void updateFuncReferences(std::string apply_expr_label,
+                                          std::string old_func_name,
+                                          std::string new_func_name);
+
+                StmtBlockNode::Ptr cloneFuncBody(std::string func_name);
+                FuncDeclNode::Ptr cloneFuncDecl(std::string func_name);
 
             private:
                 fir::Program::Ptr fir_program_;
             };
+
+
 
         }
     }

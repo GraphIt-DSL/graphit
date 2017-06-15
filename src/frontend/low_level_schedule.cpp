@@ -156,6 +156,24 @@ namespace graphit {
                 return remove_label_visitor.removeLabel(fir_program_, label);
             }
 
+            void ProgramNode::insertFuncDecl(FuncDeclNode::Ptr func_decl_node) {
+
+            }
+
+            void ProgramNode::updateFuncReferences(std::string apply_expr_label,
+                                                   std::string old_func_name,
+                                                   std::string new_func_name) {
+
+            }
+
+            StmtBlockNode::Ptr ProgramNode::cloneFuncBody(std::string func_name) {
+                return graphit::fir::low_level_schedule::StmtBlockNode::Ptr();
+            }
+
+            FuncDeclNode::Ptr ProgramNode::cloneFuncDecl(std::string func_name) {
+                return graphit::fir::low_level_schedule::FuncDeclNode::Ptr();
+            }
+
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
                 auto fir_stmt = std::make_shared<fir::ForStmt>();
                 fir_stmt->stmt_label = label_;
@@ -189,6 +207,10 @@ namespace graphit {
 
                 fir_stmt_block_->stmts.insert(fir_stmt_block_->stmts.end(),
                                               other_stmt_blk.begin(), other_stmt_blk.end());
+            }
+
+            void FuncDeclNode::appendFuncDeclBody(StmtBlockNode::Ptr func_decl_body) {
+
             }
         }
     }
