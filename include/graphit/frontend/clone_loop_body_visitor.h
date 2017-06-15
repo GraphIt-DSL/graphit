@@ -15,6 +15,10 @@ namespace graphit {
         struct CloneLoopBodyVisitor : public fir::FIRVisitor {
             using fir::FIRVisitor::visit;
 
+            CloneLoopBodyVisitor(){
+                target_loop_body_ = nullptr;
+            }
+
             // the clone method that returns the loop body
             StmtBlock::Ptr CloneLoopBody(fir::Program::Ptr program, std::string label);
 
