@@ -14,52 +14,52 @@ namespace graphit {
              */
             struct InsertBeforeLabelVisitor : public FIRVisitor {
 
-                InsertBeforeLabelVisitor(){
+                InsertBeforeLabelVisitor() {
                     input_for_stmt_node_ = nullptr;
                     input_name_node_ = nullptr;
                 }
 
                 bool insertBeforeLabel(fir::Program::Ptr fir_program,
-                                       ForStmtNode::Ptr for_stmt_node, std::string label){
+                                       ForStmtNode::Ptr for_stmt_node, std::string label) {
                     // be default, we assume the input label is not found
                     success_flag_ = false;
                     target_label_ = label;
-                    input_for_stmt_node_= for_stmt_node;
+                    input_for_stmt_node_ = for_stmt_node;
                     fir_program->accept(this);
                     return success_flag_;
                 }
 
                 bool insertBeforeLabel(fir::Program::Ptr fir_program,
-                                       NameNode::Ptr name_node, std::string label){
+                                       NameNode::Ptr name_node, std::string label) {
                     // be default, we assume the input label is not found
                     success_flag_ = false;
                     target_label_ = label;
-                    input_name_node_= name_node;
+                    input_name_node_ = name_node;
                     fir_program->accept(this);
                     return success_flag_;
                 }
 
 
-                virtual void visit (fir::StmtBlock::Ptr stmt_block){
+                virtual void visit(fir::StmtBlock::Ptr stmt_block) {
                     int idx = 0;
                     auto blk_stmts = stmt_block->stmts;
-                    for (auto & stmt : blk_stmts) {
-                        if(stmt->stmt_label != "")
-                        if (label_scope_.tryScope(stmt->stmt_label) == target_label_){
-                            success_flag_ = true;
+                    for (auto &stmt : blk_stmts) {
+                        if (stmt->stmt_label != "")
+                            if (label_scope_.tryScope(stmt->stmt_label) == target_label_) {
+                                success_flag_ = true;
 
-                            if (input_for_stmt_node_ != nullptr){
-                                blk_stmts.insert(blk_stmts.begin() + idx,
-                                                 input_for_stmt_node_->emitFIRNode());
+                                if (input_for_stmt_node_ != nullptr) {
+                                    blk_stmts.insert(blk_stmts.begin() + idx,
+                                                     input_for_stmt_node_->emitFIRNode());
+                                }
+
+                                if (input_name_node_ != nullptr) {
+                                    blk_stmts.insert(blk_stmts.begin() + idx,
+                                                     input_name_node_->emitFIRNode());
+                                }
+
+                                break;
                             }
-
-                            if (input_name_node_ != nullptr){
-                                blk_stmts.insert(blk_stmts.begin() + idx,
-                                                 input_name_node_->emitFIRNode());
-                            }
-
-                            break;
-                        }
                         idx++;
                     }
 
@@ -79,11 +79,11 @@ namespace graphit {
             */
             struct RemoveLabelVisitor : public FIRVisitor {
 
-                RemoveLabelVisitor(){
+                RemoveLabelVisitor() {
 
                 }
 
-                bool removeLabel(fir::Program::Ptr fir_program, std::string label){
+                bool removeLabel(fir::Program::Ptr fir_program, std::string label) {
                     // be default, we assume the input label is not found
                     success_flag_ = false;
                     target_label_ = label;
@@ -92,12 +92,12 @@ namespace graphit {
                 }
 
 
-                virtual void visit (fir::StmtBlock::Ptr stmt_block){
+                virtual void visit(fir::StmtBlock::Ptr stmt_block) {
                     int idx = 0;
                     auto blk_stmts = stmt_block->stmts;
-                    for (auto & stmt : blk_stmts) {
-                        if(stmt->stmt_label != "")
-                            if (label_scope_.tryScope(stmt->stmt_label) == target_label_){
+                    for (auto &stmt : blk_stmts) {
+                        if (stmt->stmt_label != "")
+                            if (label_scope_.tryScope(stmt->stmt_label) == target_label_) {
                                 success_flag_ = true;
 
                                 blk_stmts.erase(blk_stmts.begin() + idx);
@@ -122,7 +122,7 @@ namespace graphit {
                 auto clone_loop_body_visitor = CloneLoopBodyVisitor();
                 fir::StmtBlock::Ptr fir_stmt_blk = clone_loop_body_visitor.CloneLoopBody(fir_program_, label);
 
-                if (fir_stmt_blk == nullptr){
+                if (fir_stmt_blk == nullptr) {
                     return nullptr;
                 }
 
@@ -157,7 +157,7 @@ namespace graphit {
             }
 
             void ProgramNode::insertFuncDecl(FuncDeclNode::Ptr func_decl_node) {
-
+                fir_program_->elems.insert(fir_program_->elems.begin(), func_decl_node->emitFIRNode());
             }
 
             void ProgramNode::updateFuncReferences(std::string apply_expr_label,
@@ -167,11 +167,33 @@ namespace graphit {
             }
 
             StmtBlockNode::Ptr ProgramNode::cloneFuncBody(std::string func_name) {
-                return graphit::fir::low_level_schedule::StmtBlockNode::Ptr();
+                StmtBlockNode::Ptr output_stmt_blk_node = nullptr;
+                for (auto &element : fir_program_->elems) {
+                    if (fir::isa<fir::FuncDecl>(element)) {
+                        auto fir_func_decl = fir::to<fir::FuncDecl>(element);
+                        if (fir_func_decl->name->ident == func_name) {
+                            auto fir_func_decl_clone = fir::to<fir::FuncDecl>(fir_func_decl->clone());
+                            auto output_func_decl = std::make_shared<FuncDeclNode>(fir_func_decl_clone);
+                            output_stmt_blk_node = output_func_decl->getBody();
+                            break;
+                        }
+                    }
+                }
+                return output_stmt_blk_node;
             }
 
             FuncDeclNode::Ptr ProgramNode::cloneFuncDecl(std::string func_name) {
-                return graphit::fir::low_level_schedule::FuncDeclNode::Ptr();
+                FuncDeclNode::Ptr output_func_decl = nullptr;
+                for (auto &element : fir_program_->elems) {
+                    if (fir::isa<fir::FuncDecl>(element)) {
+                        auto fir_func_decl = fir::to<fir::FuncDecl>(element);
+                        if (fir_func_decl->name->ident == func_name) {
+                            auto fir_func_decl_clone = fir::to<fir::FuncDecl>(fir_func_decl->clone());
+                            output_func_decl = std::make_shared<FuncDeclNode>(fir_func_decl_clone);                            break;
+                        }
+                    }
+                }
+                return output_func_decl;
             }
 
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
@@ -210,7 +232,11 @@ namespace graphit {
             }
 
             void FuncDeclNode::appendFuncDeclBody(StmtBlockNode::Ptr func_decl_body) {
-
+                auto other_stmt_blk = func_decl_body->emitFIRNode()->stmts;
+                auto fir_stmt_block_ = fir_func_decl_->body->stmts;
+                fir_stmt_block_.insert(fir_stmt_block_.end(),
+                                                   other_stmt_blk.begin(), other_stmt_blk.end());
+                fir_func_decl_->body->stmts = fir_stmt_block_;
             }
         }
     }

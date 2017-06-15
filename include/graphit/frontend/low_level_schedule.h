@@ -132,16 +132,29 @@ namespace graphit {
             struct FuncDeclNode : public LowLevelScheduleNode {
                 // constructs a scheduling func decl node by cloning a decl from func
                 FuncDeclNode(fir::FuncDecl::Ptr fir_func_decl) {
-
+                    fir_func_decl_ = fir_func_decl;
                 }
 
-                void setFunctionName(std::string){
-
+                void setFunctionName(std::string func_name){
+                    if (fir_func_decl_ != nullptr)
+                        fir_func_decl_->name->ident = func_name;
+                    else
+                        std::cout << "error in setting function name, nullptr" << std::endl;
                 }
 
                 std::string getFunctionName(){
-                    //TODO
-                    return "";
+                    if (fir_func_decl_ != nullptr)
+                        return fir_func_decl_->name->ident;
+                    else
+                        std::cout << "error in setting function name, nullptr" << std::endl;
+                        return "";
+                }
+
+                StmtBlockNode::Ptr getBody() {
+                    if (fir_func_decl_->body)
+                        return std::make_shared<StmtBlockNode>(StmtBlockNode(fir_func_decl_->body));
+                    else
+                        return nullptr;
                 }
 
                 typedef std::shared_ptr<FuncDeclNode> Ptr;

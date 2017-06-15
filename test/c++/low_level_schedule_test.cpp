@@ -502,10 +502,10 @@ TEST_F(LowLevelScheduleTest, SimpleLoopFusion) {
 }
 
 TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
-    istringstream is(        "func printAddOne (a : int) print a + 1; end\n"
-                             "func printAddTwo (a : int) print a + 2; end\n"
+    istringstream is(        "func paddone (a : int) print a + 1; end\n"
+                             "func paddtwo (a : int) print a + 2; end\n"
                              "func main() \n"
-                                "printAddOne(4, 5); \n"
+                                "paddone(4, 5); \n"
                              "end");
     fe_->parseStream(is, context_, errors_);
 
@@ -515,7 +515,9 @@ TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
 
     fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
             = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
-    fir::low_level_schedule::FuncDeclNode::Ptr fused_func = schedule_program_node->cloneFuncDecl("paddone");
+    fir::low_level_schedule::FuncDeclNode::Ptr fused_func
+            = schedule_program_node->cloneFuncDecl("paddone");
+    EXPECT_NE(nullptr, fused_func);
 
     fused_func->setFunctionName("fused_func");
     fused_func->appendFuncDeclBody(schedule_program_node->cloneFuncBody("paddtwo"));
@@ -524,8 +526,13 @@ TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
     // Expects that the program still compiles
     EXPECT_EQ (0,  basicCompileTestWithContext());
 
-    // Expects four function declarations now 
+    // Expects four function declarations now
     EXPECT_EQ (4,  context_->getProgram()->elems.size());
+
+    EXPECT_NE(nullptr, fused_func->getBody());
+
+    // Expects two stmts in the fused function
+    EXPECT_EQ(2, fused_func->getBody()->getNumStmts());
 
 
 }
