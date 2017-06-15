@@ -21,7 +21,6 @@ end
 
 func init(v : Vertex)
      IDs[v] = v;
-%     frontier.addVertex(v);
 end
 
 func main()
@@ -31,20 +30,9 @@ func main()
 
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
 
-    % this works too.
-    %var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    %for i in 1:n;
-       %frontier.addVertex(i);
-    %end
-
     vertices.apply(init);
 
     while (frontier.getVertexSetSize() != 0)
-     	for i in 1:n;
- 	    	print IDs[i];
-		end
-        print "number of active_vertices: ";
-        print frontier.getVertexSetSize();
         frontier = edges.from(frontier).apply(updateEdge);
     end
 

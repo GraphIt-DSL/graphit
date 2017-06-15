@@ -170,6 +170,18 @@ namespace graphit {
 
             };
 
+            //the low level scheduling language works with expr stmt apply expressions
+            struct ApplyNode : StmtNode {
+                typedef std::shared_ptr<ApplyNode> Ptr;
+                ApplyNode(fir::ExprStmt::Ptr apply_expr_stmt) : apply_expr_stmt_(apply_expr_stmt){};
+
+                void updateApplyFunc(std::string new_apply_func_name);
+                std::string getApplyFuncName();
+
+            private:
+                fir::ExprStmt::Ptr apply_expr_stmt_;
+            };
+
             struct ProgramNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<ProgramNode> Ptr;
 
@@ -183,12 +195,16 @@ namespace graphit {
                 // Inserts a ForStmt node before and after a label
                 bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);
 
-                bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
+                //may be we can just get around everything with insert before
+                // (insert before the node and remove the node is the same as insert after and remove)
+                //bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
 
                 // Inserts a name node before and after a label
                 bool insertBefore(NameNode::Ptr for_stmt, std::string label);
 
-                bool insertAfter(NameNode::Ptr for_stmt, std::string label);
+                //bool insertAfter(NameNode::Ptr for_stmt, std::string label);
+
+                bool insertBefore(ApplyNode::Ptr apply_node, std::string label);
 
                 // Removes a statement associated with the label
                 bool removeLabelNode(std::string label);

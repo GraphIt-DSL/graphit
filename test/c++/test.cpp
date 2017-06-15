@@ -28,6 +28,11 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleFunctionFusion";
+    //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
+    //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
+    //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
+
+    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
 
     return RUN_ALL_TESTS();

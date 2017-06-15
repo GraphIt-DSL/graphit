@@ -27,8 +27,6 @@ func main()
     frontier.addVertex(1);
 
     while (frontier.getVertexSetSize() != 0)
-        print "number of active_vertices: ";
-        print frontier.getVertexSetSize();
         frontier = edges.from(frontier).to(toFilter).apply(updateEdge);
     end
 

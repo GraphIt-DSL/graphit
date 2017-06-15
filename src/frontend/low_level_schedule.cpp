@@ -131,15 +131,15 @@ namespace graphit {
                 return stmt_blk_node;
             }
 
-            bool ProgramNode::insertAfter(ForStmtNode::Ptr for_stmt, std::string label) {
-                //TODO: not implemented yet
-                return true;
-            }
+//            bool ProgramNode::insertAfter(ForStmtNode::Ptr for_stmt, std::string label) {
+//                //TODO: not implemented yet
+//                return true;
+//            }
 
-            bool ProgramNode::insertAfter(NameNode::Ptr for_stmt, std::string label) {
-                //TODO: not implemented yet
-                return true;
-            }
+//            bool ProgramNode::insertAfter(NameNode::Ptr for_stmt, std::string label) {
+//                //TODO: not implemented yet
+//                return true;
+//            }
 
             bool ProgramNode::insertBefore(NameNode::Ptr name_node, std::string label) {
                 auto insert_before_visitor = InsertBeforeLabelVisitor();
@@ -196,6 +196,10 @@ namespace graphit {
                 return output_func_decl;
             }
 
+            bool ProgramNode::insertBefore(ApplyNode::Ptr apply_node, std::string label) {
+                return false;
+            }
+
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
                 auto fir_stmt = std::make_shared<fir::ForStmt>();
                 fir_stmt->stmt_label = label_;
@@ -237,6 +241,14 @@ namespace graphit {
                 fir_stmt_block_.insert(fir_stmt_block_.end(),
                                                    other_stmt_blk.begin(), other_stmt_blk.end());
                 fir_func_decl_->body->stmts = fir_stmt_block_;
+            }
+
+            void ApplyNode::updateApplyFunc(std::string new_apply_func_name) {
+
+            }
+
+            std::string ApplyNode::getApplyFuncName() {
+                return std::string();
             }
         }
     }
