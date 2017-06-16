@@ -29,11 +29,6 @@ func main()
 
     var rounds : int = 0;
     while (frontier.getVertexSetSize() != 0)
-     	for i in 1:n;
- 	    	print SP[i];
-		end
-        print "number of active_vertices: ";
-        print frontier.getVertexSetSize();
         frontier = edges.from(frontier).apply(updateEdge);
 	    rounds = rounds + 1;
     	if rounds == n

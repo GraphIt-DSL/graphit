@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "fir_context.h"
+#include "clone_apply_node_visitor.h"
 
 /**
  * This file contains the classes and API calss for the low level schedule language API
@@ -170,6 +171,19 @@ namespace graphit {
 
             };
 
+            //the low level scheduling language works with expr stmt apply expressions
+            struct ApplyNode : StmtNode {
+                typedef std::shared_ptr<ApplyNode> Ptr;
+                ApplyNode(fir::ExprStmt::Ptr apply_expr_stmt) : apply_expr_stmt_(apply_expr_stmt){};
+                //updates the label of the fir::ExprStmt node
+                void updateStmtLabel(std::string label);
+                void updateApplyFunc(std::string new_apply_func_name);
+                std::string getApplyFuncName();
+                fir::ExprStmt::Ptr emitFIRNode();
+            private:
+                fir::ExprStmt::Ptr apply_expr_stmt_;
+            };
+
             struct ProgramNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<ProgramNode> Ptr;
 
@@ -183,24 +197,25 @@ namespace graphit {
                 // Inserts a ForStmt node before and after a label
                 bool insertBefore(ForStmtNode::Ptr for_stmt, std::string label);
 
-                bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
+                //may be we can just get around everything with insert before
+                // (insert before the node and remove the node is the same as insert after and remove)
+                //bool insertAfter(ForStmtNode::Ptr for_stmt, std::string label);
 
                 // Inserts a name node before and after a label
                 bool insertBefore(NameNode::Ptr for_stmt, std::string label);
 
-                bool insertAfter(NameNode::Ptr for_stmt, std::string label);
+                //bool insertAfter(NameNode::Ptr for_stmt, std::string label);
+
+                bool insertBefore(ApplyNode::Ptr apply_node, std::string label);
 
                 // Removes a statement associated with the label
                 bool removeLabelNode(std::string label);
 
-                void insertFuncDecl(FuncDeclNode::Ptr func_decl_node);
-
-                void updateFuncReferences(std::string apply_expr_label,
-                                          std::string old_func_name,
-                                          std::string new_func_name);
+                void insertAfter(FuncDeclNode::Ptr func_decl_node, std::string function_name);
 
                 StmtBlockNode::Ptr cloneFuncBody(std::string func_name);
                 FuncDeclNode::Ptr cloneFuncDecl(std::string func_name);
+                ApplyNode::Ptr cloneApplyNode(std::string stmt_label);
 
             private:
                 fir::Program::Ptr fir_program_;

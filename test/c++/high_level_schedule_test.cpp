@@ -9,17 +9,18 @@
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
 #include <graphit/utils/exec_cmd.h>
+#include <graphit/frontend/high_level_schedule.h>
 
 using namespace std;
 using namespace graphit;
 
 class HighLevelScheduleTest : public ::testing::Test {
 protected:
-    virtual void SetUp(){
+    virtual void SetUp() {
         context_ = new graphit::FIRContext();
         errors_ = new std::vector<ParseError>();
         fe_ = new Frontend();
-        mir_context_  = new graphit::MIRContext();
+        mir_context_ = new graphit::MIRContext();
 
     }
 
@@ -34,36 +35,47 @@ protected:
 
     }
 
-    bool basicTest(std::istream & is){
+    bool basicTest(std::istream &is) {
         fe_->parseStream(is, context_, errors_);
-        graphit::Midend* me = new graphit::Midend(context_);
+        graphit::Midend *me = new graphit::Midend(context_);
 
         std::cout << "fir: " << std::endl;
         std::cout << *(context_->getProgram());
         std::cout << std::endl;
 
         me->emitMIR(mir_context_);
-        graphit::Backend* be = new graphit::Backend(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
+        return be->emitCPP();
+    }
+
+/**
+ * This test assumes that the fir_context is constructed in the specific test code
+ * @return
+ */
+    bool basicCompileTestWithContext() {
+        graphit::Midend *me = new graphit::Midend(context_);
+        me->emitMIR(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
         return be->emitCPP();
     }
 
 
-    bool basicTestWithSchedule(std::istream & is, Schedule* schedule){
+    bool basicTestWithSchedule(std::istream &is, Schedule *schedule) {
         fe_->parseStream(is, context_, errors_);
-        graphit::Midend* me = new graphit::Midend(context_, schedule);
+        graphit::Midend *me = new graphit::Midend(context_, schedule);
         std::cout << "fir: " << std::endl;
         std::cout << *(context_->getProgram());
         std::cout << std::endl;
 
         me->emitMIR(mir_context_);
-        graphit::Backend* be = new graphit::Backend(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
         return be->emitCPP();
     }
 
-    std::vector<ParseError> * errors_;
-    graphit::FIRContext* context_;
-    Frontend * fe_;
-    graphit::MIRContext* mir_context_;
+    std::vector<ParseError> *errors_;
+    graphit::FIRContext *context_;
+    Frontend *fe_;
+    graphit::MIRContext *mir_context_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructSchedule) {
@@ -71,7 +83,7 @@ TEST_F(HighLevelScheduleTest, SimpleStructSchedule) {
                              "const vector_a : vector{Vertex}(float) = 0.0;\n"
                              "const vector_b : vector{Vertex}(float) = 0.0;\n"
     );
-    Schedule * schedule = new Schedule();
+    Schedule *schedule = new Schedule();
     PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
     PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
     auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
@@ -79,7 +91,7 @@ TEST_F(HighLevelScheduleTest, SimpleStructSchedule) {
     (*physical_layouts)["vector_b"] = vector_b_layout;
 
     schedule->physical_data_layouts = physical_layouts;
-    EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
+    EXPECT_EQ (0, basicTestWithSchedule(is, schedule));
 
 }
 
@@ -91,7 +103,7 @@ TEST_F(HighLevelScheduleTest, AddoneWithNoSchedule) {
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
 
-    EXPECT_EQ (0,  basicTest(is));
+    EXPECT_EQ (0, basicTest(is));
 }
 
 TEST_F(HighLevelScheduleTest, AddoneWithArraySchedule) {
@@ -101,7 +113,7 @@ TEST_F(HighLevelScheduleTest, AddoneWithArraySchedule) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
-    Schedule * schedule = new Schedule();
+    Schedule *schedule = new Schedule();
     PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::ARRAY, ""};
     PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::ARRAY, ""};
     auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
@@ -109,7 +121,7 @@ TEST_F(HighLevelScheduleTest, AddoneWithArraySchedule) {
     (*physical_layouts)["vector_b"] = vector_b_layout;
 
     schedule->physical_data_layouts = physical_layouts;
-    EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
+    EXPECT_EQ (0, basicTestWithSchedule(is, schedule));
 }
 
 TEST_F(HighLevelScheduleTest, AddoneWithStructSchedule) {
@@ -121,7 +133,7 @@ TEST_F(HighLevelScheduleTest, AddoneWithStructSchedule) {
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
 
     // constructs a schedule object that fuses vector_a and vector_b into an array of struct
-    Schedule * schedule = new Schedule();
+    Schedule *schedule = new Schedule();
     PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
     PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
     auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
@@ -129,7 +141,7 @@ TEST_F(HighLevelScheduleTest, AddoneWithStructSchedule) {
     (*physical_layouts)["vector_b"] = vector_b_layout;
 
     schedule->physical_data_layouts = physical_layouts;
-    EXPECT_EQ (0,  basicTestWithSchedule(is, schedule));
+    EXPECT_EQ (0, basicTestWithSchedule(is, schedule));
 }
 
 
@@ -143,8 +155,8 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyPullSchedule) {
                              "edges.apply(updateEdge); \n"
                              "end\n"
     );
-    Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
+    Schedule *schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
     (*apply_schedules)["s1"] = s1_apply_schedule;
     schedule->apply_schedules = apply_schedules;
@@ -152,21 +164,20 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyPullSchedule) {
     fe_->parseStream(is, context_, errors_);
 
     //auto edges_apply_stmt = context_->getProgram()->elems[]
-    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
     fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(main_func_decl->body->stmts[0]);
     apply_stmt->stmt_label = "s1";
 
-    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    graphit::Midend *me = new graphit::Midend(context_, schedule);
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
     me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
+    graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0, be->emitCPP());
 
 }
 
@@ -181,8 +192,8 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyPushSchedule) {
                              "edges.apply(updateEdge); \n"
                              "end\n"
     );
-    Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    Schedule *schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PUSH};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
     (*apply_schedules)["s1"] = s1_apply_schedule;
     schedule->apply_schedules = apply_schedules;
@@ -190,21 +201,20 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyPushSchedule) {
     fe_->parseStream(is, context_, errors_);
 
     //auto edges_apply_stmt = context_->getProgram()->elems[]
-    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
     fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(main_func_decl->body->stmts[0]);
     apply_stmt->stmt_label = "s1";
 
-    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    graphit::Midend *me = new graphit::Midend(context_, schedule);
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
     me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
+    graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0, be->emitCPP());
 
 }
 
@@ -219,8 +229,8 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
                              "for i in 1:10 edges.apply(updateEdge); end\n"
                              "end\n"
     );
-    Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
+    Schedule *schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
@@ -230,7 +240,7 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
     fe_->parseStream(is, context_, errors_);
 
     //set the label of the edgeset apply expr stamt
-    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
     fir::ForStmt::Ptr for_stmt = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
     for_stmt->stmt_label = "l1";
 
@@ -238,17 +248,16 @@ TEST_F(HighLevelScheduleTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
     fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(for_stmt->body->stmts[0]);
     apply_stmt->stmt_label = "s1";
 
-    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    graphit::Midend *me = new graphit::Midend(context_, schedule);
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
     me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
+    graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0, be->emitCPP());
 
 }
 
@@ -262,8 +271,8 @@ TEST_F(HighLevelScheduleTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
                              "for i in 1:10 edges.apply(updateEdge); end\n"
                              "end\n"
     );
-    Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
+    Schedule *schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
@@ -273,29 +282,28 @@ TEST_F(HighLevelScheduleTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
     fe_->parseStream(is, context_, errors_);
 
     //set the label of the edgeset apply expr stamt
-    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[5]);
     fir::ForStmt::Ptr for_stmt = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
 
     //set the label of the for loop
     fir::ExprStmt::Ptr apply_stmt = fir::to<fir::ExprStmt>(for_stmt->body->stmts[0]);
     apply_stmt->stmt_label = "s1";
 
-    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    graphit::Midend *me = new graphit::Midend(context_, schedule);
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
     me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
+    graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-
-    EXPECT_EQ (0,  be->emitCPP());
+    EXPECT_EQ (0, be->emitCPP());
 
 }
 
 
-TEST_F(HighLevelScheduleTest, SimpleBFSPushSchedule){
+TEST_F(HighLevelScheduleTest, SimpleBFSPushSchedule) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
@@ -316,8 +324,8 @@ TEST_F(HighLevelScheduleTest, SimpleBFSPushSchedule){
                              "end\n"
                              "print \"finished running BFS\"; \n"
                              "end");
-    Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PUSH};
+    Schedule *schedule = new Schedule();
+    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PUSH};
     auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
@@ -327,27 +335,56 @@ TEST_F(HighLevelScheduleTest, SimpleBFSPushSchedule){
     fe_->parseStream(is, context_, errors_);
 
     //set the label of the edgeset apply expr stamt
-    fir::FuncDecl::Ptr main_func_decl  =  fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
     fir::WhileStmt::Ptr while_stmt = fir::to<fir::WhileStmt>(main_func_decl->body->stmts[2]);
 
     //set the label of the for loop
     fir::AssignStmt::Ptr assign_stmt = fir::to<fir::AssignStmt>(while_stmt->body->stmts[0]);
     assign_stmt->stmt_label = "s1";
 
-    graphit::Midend* me = new graphit::Midend(context_, schedule);
+    graphit::Midend *me = new graphit::Midend(context_, schedule);
     std::cout << "fir: " << std::endl;
     std::cout << *(context_->getProgram());
     std::cout << std::endl;
 
     me->emitMIR(mir_context_);
-    graphit::Backend* be = new graphit::Backend(mir_context_);
+    graphit::Backend *be = new graphit::Backend(mir_context_);
 
     ofstream test_file;
-    test_file.open ("../test.cpp");
+    test_file.open("../test.cpp");
     be->emitCPP(test_file);
     test_file.close();
     std::cout << exec_cmd("g++ -std=c++11 -I ../../src/runtime_lib/ ../test.cpp  -o test.o 2>&1");
     std::cout << exec_cmd("./test.o 2>&1");
 
-    EXPECT_EQ (0,  0);
+    EXPECT_EQ (0, 0);
+}
+
+
+/**
+ * A test case that tries to break the 10 iters loop into a 2 iters and a 8 iters loop
+ */
+TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplit) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    l1_loop->stmt_label = "l1";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->splitForLoop("l1", "l2", "l3", 2, 8);
+
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicCompileTestWithContext());
+
+    //expects two loops in the main function decl
+    EXPECT_EQ (2, main_func_decl->body->stmts.size());
+
 }

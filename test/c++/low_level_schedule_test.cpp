@@ -521,7 +521,7 @@ TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
 
     fused_func->setFunctionName("fused_func");
     fused_func->appendFuncDeclBody(schedule_program_node->cloneFuncBody("paddtwo"));
-    schedule_program_node->insertFuncDecl(fused_func);
+    schedule_program_node->insertAfter(fused_func, "paddtwo");
 
     // Expects that the program still compiles
     EXPECT_EQ (0,  basicCompileTestWithContext());
@@ -540,5 +540,62 @@ TEST_F(LowLevelScheduleTest, SimpleFunctionFusion) {
 
 TEST_F(LowLevelScheduleTest, SimpleApplyFunctionFusion) {
 
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "func srcAddOne(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 1; end\n"
+                             "func srcAddTwo(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 2; end\n"
+                             "func main() "
+                             "  edges.apply(srcAddOne); "
+                             "  edges.apply(srcAddTwo); "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+
+    //set up the labels
+    fir::FuncDecl::Ptr main_func = fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
+    fir::ExprStmt::Ptr first_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[0]);
+    fir::ExprStmt::Ptr second_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[1]);
+    first_apply->stmt_label = "l1";
+    second_apply->stmt_label = "l2";
+
+    //use the low level APIs to fuse the apply functions
+    fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+            = std::make_shared<fir::low_level_schedule::ProgramNode>(context_);
+    fir::low_level_schedule::ApplyNode::Ptr first_apply_node
+            = schedule_program_node->cloneApplyNode("l1");
+    fir::low_level_schedule::ApplyNode::Ptr second_apply_node
+            = schedule_program_node->cloneApplyNode("l2");
+    first_apply_node->updateStmtLabel("l3");
+
+    // create a fused function
+    fir::low_level_schedule::FuncDeclNode::Ptr first_apply_func_decl
+            = schedule_program_node->cloneFuncDecl(first_apply_node->getApplyFuncName());
+    fir::low_level_schedule::StmtBlockNode::Ptr second_apply_func_body
+            = schedule_program_node->cloneFuncBody(second_apply_node->getApplyFuncName());
+
+    first_apply_func_decl->appendFuncDeclBody(second_apply_func_body);
+    first_apply_func_decl->setFunctionName("fused_func");
+
+    schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
+
+    first_apply_node->updateApplyFunc("fused_func");
+
+    schedule_program_node->insertBefore(first_apply_node, "l2");
+    schedule_program_node->removeLabelNode("l1");
+    schedule_program_node->removeLabelNode("l2");
+
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    // Expects one more fused function declarations now
+    EXPECT_EQ (9,  context_->getProgram()->elems.size());
+
+    // Expects two stmts in the fused function
+    EXPECT_EQ(2, first_apply_func_decl->getBody()->getNumStmts());
 
 }
