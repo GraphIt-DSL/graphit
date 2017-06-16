@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "fir_context.h"
+#include "clone_apply_node_visitor.h"
 
 /**
  * This file contains the classes and API calss for the low level schedule language API
@@ -174,10 +175,11 @@ namespace graphit {
             struct ApplyNode : StmtNode {
                 typedef std::shared_ptr<ApplyNode> Ptr;
                 ApplyNode(fir::ExprStmt::Ptr apply_expr_stmt) : apply_expr_stmt_(apply_expr_stmt){};
-
+                //updates the label of the fir::ExprStmt node
+                void updateStmtLabel(std::string label);
                 void updateApplyFunc(std::string new_apply_func_name);
                 std::string getApplyFuncName();
-
+                fir::ExprStmt::Ptr emitFIRNode();
             private:
                 fir::ExprStmt::Ptr apply_expr_stmt_;
             };
@@ -209,14 +211,11 @@ namespace graphit {
                 // Removes a statement associated with the label
                 bool removeLabelNode(std::string label);
 
-                void insertFuncDecl(FuncDeclNode::Ptr func_decl_node);
-
-                void updateFuncReferences(std::string apply_expr_label,
-                                          std::string old_func_name,
-                                          std::string new_func_name);
+                void insertAfter(FuncDeclNode::Ptr func_decl_node, std::string function_name);
 
                 StmtBlockNode::Ptr cloneFuncBody(std::string func_name);
                 FuncDeclNode::Ptr cloneFuncDecl(std::string func_name);
+                ApplyNode::Ptr cloneApplyNode(std::string stmt_label);
 
             private:
                 fir::Program::Ptr fir_program_;
