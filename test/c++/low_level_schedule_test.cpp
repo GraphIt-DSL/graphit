@@ -595,4 +595,7 @@ TEST_F(LowLevelScheduleTest, SimpleApplyFunctionFusion) {
     // Expects one more fused function declarations now
     EXPECT_EQ (9,  context_->getProgram()->elems.size());
 
+    // Expects two stmts in the fused function
+    EXPECT_EQ(2, first_apply_func_decl->getBody()->getNumStmts());
+
 }
