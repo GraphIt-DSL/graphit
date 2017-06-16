@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplit";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplit";
 
     return RUN_ALL_TESTS();
 }
