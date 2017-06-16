@@ -368,6 +368,10 @@ namespace graphit {
 
         void FIRPrinter::visit(ForStmt::Ptr stmt) {
             printIndent();
+
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
             oss << "for ";
             stmt->loopVar->accept(this);
             oss << " in ";
@@ -406,6 +410,8 @@ namespace graphit {
 
         void FIRPrinter::visit(ExprStmt::Ptr stmt) {
             printIndent();
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             if (stmt->stmt_label != ""){
                 oss << stmt->stmt_label << ": ";
             }

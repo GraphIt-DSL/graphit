@@ -386,3 +386,11 @@ TEST_F(FrontendTest, SimpleBreak) {
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, SimpleAttachLabel) {
+    istringstream is("func main() "
+                             "# l1 # for i in 1:2; print 4; end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}

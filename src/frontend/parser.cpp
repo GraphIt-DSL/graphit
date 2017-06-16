@@ -339,6 +339,7 @@ namespace graphit {
 
 // stmt: var_decl | const_decl | if_stmt | while_stmt | do_while_stmt
 //     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt | break_stmt
+//    | # identifier # stmt
     fir::Stmt::Ptr Parser::parseStmt() {
         switch (peek().type) {
             case Token::Type::VAR:
@@ -356,10 +357,18 @@ namespace graphit {
             case Token::Type::PRINT:
             case Token::Type::PRINTLN:
                 return parsePrintStmt();
-            case Token::Type::APPLY:
-                return parseApplyStmt();
-            case Token::Type ::BREAK:
+//            case Token::Type::APPLY:
+//                return parseApplyStmt();
+            case Token::Type::BREAK:
                 return parseBreakStmt();
+            case Token::Type::NUMBER_SIGN:{
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Identifier::Ptr label = parseIdent();
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Stmt::Ptr stmt = parseStmt();
+                stmt->stmt_label = label->ident;
+                return  stmt;
+            }
             default:
                 return parseExprOrAssignStmt();
         }

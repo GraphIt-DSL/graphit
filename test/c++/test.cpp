@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleBreak";
+    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabel";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWeightedEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
