@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabel";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleNestedLabelParsing";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWeightedEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplit";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplitWithLabelParsing";
 
     return RUN_ALL_TESTS();
 }

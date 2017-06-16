@@ -389,4 +389,31 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplit) {
 
 }
 
+
+/**
+ * A test case that tries to break the 10 iters loop into a 2 iters and a 8 iters loop
+ */
+TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplitWithLabelParsing) {
+    istringstream is("func main() "
+                             "# l1 # for i in 1:10; print i; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach a label "l1" to the for stataement
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->splitForLoop("l1", "l2", "l3", 2, 8);
+
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicCompileTestWithContext());
+
+    //expects two loops in the main function decl
+    EXPECT_EQ (2, main_func_decl->body->stmts.size());
+
+}
+
 //TODO: add test cases for loop fusion and apply function fusion
