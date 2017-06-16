@@ -388,3 +388,5 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplit) {
     EXPECT_EQ (2, main_func_decl->body->stmts.size());
 
 }
+
+//TODO: add test cases for loop fusion and apply function fusion
