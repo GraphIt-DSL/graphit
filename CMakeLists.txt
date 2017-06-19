@@ -45,3 +45,5 @@ target_link_libraries(graphit_test graphitlib)
 set(PYTHON_SOURCE_FILES ./test/python/test.py)
 #add_executable(PYTHON_TEST ${PYTHON_SOURCE_FILES})
 #target_link_libraries(PYTHON_TEST ${PYTHON_LIBRARIES})
+
+configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
