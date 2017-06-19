@@ -47,3 +47,4 @@ set(PYTHON_SOURCE_FILES ./test/python/test.py)
 #target_link_libraries(PYTHON_TEST ${PYTHON_LIBRARIES})
 
 configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
+configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)

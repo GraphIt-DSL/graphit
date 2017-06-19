@@ -7,6 +7,7 @@
 #include <graphit/backend/backend.h>
 #include <graphit/frontend/error.h>
 #include <fstream>
+#include <graphit/frontend/high_level_schedule.h>
 
 using namespace graphit;
 
@@ -37,6 +38,11 @@ int main(int argc, char* argv[]) {
 
     //compile the input file
     fe->parseStream(buffer, context, errors);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context);
+    //insert schedule here
+
     graphit::Midend* me = new graphit::Midend(context);
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
