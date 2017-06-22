@@ -1,0 +1,58 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const Degrees : vector {Vertex}(int) = edges.getOutDegrees();
+const coreNumbers : vector {Vertex}(int) = 0;
+
+func updateDegrees(src : Vertex, dst : Vertex) -> output : bool
+     output = true;
+     if (Degrees[dst] > 0)
+     	Degrees[dst] = Degrees[dst] - 1;
+     end
+end
+
+
+func filter(v: Vertex) -> output : bool 
+     if (Degrees[v] < k)
+     	coreNumbers[v] = k-1;
+	Degrees[v] = 0;
+	output = true;
+     else
+	output = false;
+     end
+end
+
+func filter2(v: Vertex) -> output : bool output = (Degrees[v] >= k); end
+
+func main()
+
+    startTimer();
+    var n : int = edges.getVertices();
+    var largestCore : int = -1;
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+
+     for k in 1:n;
+        while(1) 
+		 toRemove = frontier.where(filter);
+		 frontier = frontier.where(filter2); %remaining vertices
+		 if (0 == toRemove.getVertexSetSize())
+		      break;	
+		 else
+			edges.from(toRemove).apply(updateDegrees);
+		 end
+	end
+	if (0 == frontier.getVertexSetSize())
+	   largestCore = k-1;
+	   break;
+	end
+    end
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end
