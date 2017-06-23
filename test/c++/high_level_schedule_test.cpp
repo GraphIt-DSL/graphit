@@ -95,6 +95,24 @@ TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
 
 }
 
+TEST_F(HighLevelScheduleTest, EdgeSetGetOutDegreesFuseStruct) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                             "const old_rank : vector{Vertex}(int) = 0;\n"
+                             "func main()  end");
+
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->fuseFields("out_degrees", "old_rank");
+
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 /**
  * A test case that tries to break the 10 iters loop into a 2 iters and a 8 iters loop
  */

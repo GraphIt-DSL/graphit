@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleIfElifElseStmt";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleSSSP";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
@@ -35,6 +35,9 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";
+
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.EdgeSetGetOutDegreesFuseStruct";
+
 
     return RUN_ALL_TESTS();
 }

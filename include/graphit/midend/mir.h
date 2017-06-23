@@ -61,6 +61,43 @@ namespace graphit {
             }
         };
 
+        struct StringLiteral : public Expr {
+            typedef std::shared_ptr<StringLiteral> Ptr;
+            std::string val;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<StringLiteral>());
+            }
+        };
+
+
+        struct IntLiteral : public Expr {
+            typedef std::shared_ptr<IntLiteral> Ptr;
+            int val = 0;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntLiteral>());
+            }
+        };
+
+        struct BoolLiteral : public Expr {
+            typedef std::shared_ptr<BoolLiteral> Ptr;
+            bool val = false;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<BoolLiteral>());
+            }
+        };
+
+        struct FloatLiteral : public Expr {
+            typedef std::shared_ptr<FloatLiteral> Ptr;
+            float val = 0;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<FloatLiteral>());
+            }
+        };
+
         struct Stmt : public MIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
             std::string stmt_label;
@@ -73,6 +110,24 @@ namespace graphit {
             std::vector<Stmt::Ptr>* stmts;
 
             typedef std::shared_ptr<StmtBlock> Ptr;
+
+//            StmtBlock(){}
+
+//            ~StmtBlock(){
+//                if(stmts != nullptr) delete stmts;
+//            }
+
+            void insertStmtEnd(mir::Stmt::Ptr stmt){
+                if (stmts == nullptr)
+                    stmts = new std::vector<mir::Stmt::Ptr>();
+                stmts->push_back(stmt);
+            }
+
+            void insertStmtFront(mir::Stmt::Ptr stmt){
+                if (stmts == nullptr)
+                    stmts = new std::vector<mir::Stmt::Ptr>();
+                stmts->insert(stmts->begin(), stmt);
+            }
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<StmtBlock>());
@@ -280,6 +335,23 @@ namespace graphit {
             Expr::Ptr index;
             Expr::Ptr target;
 
+            //convenience constructor for building a tensor read expr using code
+            TensorReadExpr(std::string input_target,
+                           std::string input_index,
+                           mir::Type::Ptr target_type,
+                           mir::Type::Ptr index_type) {
+                mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
+                mir::Var target_var = mir::Var(input_target, target_type);
+                target_expr->var = target_var;
+                target = target_expr;
+                mir::VarExpr::Ptr index_expr = std::make_shared<mir::VarExpr>();
+                mir::Var index_var = mir::Var(input_index, index_type);
+                index_expr->var = index_var;
+                index = index_expr;
+            }
+
+            TensorReadExpr(){}
+
             typedef std::shared_ptr<TensorReadExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorReadExpr>());
@@ -330,6 +402,7 @@ namespace graphit {
             Expr::Ptr target;
             std::string input_function_name;
             typedef std::shared_ptr<ApplyExpr> Ptr;
+
         };
 
 
@@ -337,6 +410,16 @@ namespace graphit {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());
+            }
+            VertexSetApplyExpr(){}
+            VertexSetApplyExpr(std::string target_name,
+                               mir::Type::Ptr target_type,
+                               std::string function_name){
+                mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
+                mir::Var target_var = mir::Var(target_name, target_type);
+                target_expr->var = target_var;
+                target = target_expr;
+                input_function_name = function_name;
             }
         };
 
@@ -397,42 +480,7 @@ namespace graphit {
             }
         };
 
-        struct StringLiteral : public Expr {
-            typedef std::shared_ptr<StringLiteral> Ptr;
-            std::string val;
 
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<StringLiteral>());
-            }
-        };
-
-
-        struct IntLiteral : public Expr {
-            typedef std::shared_ptr<IntLiteral> Ptr;
-            int val = 0;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<IntLiteral>());
-            }
-        };
-
-        struct BoolLiteral : public Expr {
-            typedef std::shared_ptr<BoolLiteral> Ptr;
-            bool val = false;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<BoolLiteral>());
-            }
-        };
-
-        struct FloatLiteral : public Expr {
-            typedef std::shared_ptr<FloatLiteral> Ptr;
-            float val = 0;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<FloatLiteral>());
-            }
-        };
 
         struct NewExpr : public Expr {
             typedef std::shared_ptr<NewExpr> Ptr;
