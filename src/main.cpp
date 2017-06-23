@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context);
     //insert schedule here
 
-    graphit::Midend* me = new graphit::Midend(context);
+    graphit::Midend* me = new graphit::Midend(context, program->getSchedule());
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
     be->emitCPP(output_file);

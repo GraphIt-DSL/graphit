@@ -57,16 +57,17 @@ class TestGraphitCompiler(unittest.TestCase):
 
         # actual test cases
 
-    def test_main(self):
+    def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
 
+    def test_pagerank_AoS(self):
+        self.basic_compile_test("simple_pagerank_with_AoS.gt")
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
-        # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_pagerank_AoS'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

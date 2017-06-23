@@ -44,6 +44,7 @@ namespace graphit {
     public:
         Schedule() {
             physical_data_layouts = new std::map<std::string, PhysicalDataLayout>();
+            apply_schedules = new std::map<std::string, ApplySchedule>();
         };
 
         ~Schedule(){
