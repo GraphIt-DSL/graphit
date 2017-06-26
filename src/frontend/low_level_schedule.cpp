@@ -232,6 +232,24 @@ namespace graphit {
                 return apply_node;
             }
 
+            ForStmtNode::Ptr ProgramNode::cloneForStmtNode(std::string stmt_label) {
+                auto clone_for_stmt_node_visitor = CloneForStmtNodeVisitor();
+                fir::ForStmt::Ptr for_stmt
+                        = clone_for_stmt_node_visitor.cloneForStmtNode(fir_program_, stmt_label);
+                if (for_stmt == nullptr)
+                    return nullptr;
+                auto d = for_stmt->domain;
+                auto for_stmt_node
+                        = std::make_shared<fir::low_level_schedule::ForStmtNode>(
+                                fir::low_level_schedule::RangeDomain(d->lower, d->upper->val),
+                                fir::low_level_schedule::StmtBlockNode(for_stmt->body),
+                                stmt_label,
+                                for_stmt->loopVar);
+
+                return for_stmt_node;
+            }
+
+
             fir::ForStmt::Ptr ForStmtNode::emitFIRNode() {
                 auto fir_stmt = std::make_shared<fir::ForStmt>();
                 fir_stmt->stmt_label = label_;
