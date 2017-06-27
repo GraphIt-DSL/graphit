@@ -12,6 +12,7 @@
 #include <unordered_set>
 #include "fir_context.h"
 #include "clone_apply_node_visitor.h"
+#include "clone_for_stmt_node_visitor.h"
 
 /**
  * This file contains the classes and API calss for the low level schedule language API
@@ -58,8 +59,13 @@ namespace graphit {
             // A for loop range domain with integer bounds
             struct RangeDomain {
 
-
                 typedef std::shared_ptr<RangeDomain> Ptr;
+
+                RangeDomain(fir::RangeDomain::Ptr fir_range_domain)
+                {
+                    lower_ = fir::to<fir::IntLiteral>(fir_range_domain->lower)->val;
+                    upper_ = fir::to<fir::IntLiteral>(fir_range_domain->upper)->val;
+                }
 
                 RangeDomain(int lower, int upper)
                         : lower_(lower), upper_(upper) {}
@@ -95,7 +101,30 @@ namespace graphit {
                         : range_domain_(range_domain),
                           label_(label),
                           body_(body),
+                          for_domain_(range_domain),
                           loop_var_(loop_var) {};
+
+                ForStmtNode(fir::ForStmt::Ptr for_stmt, std::string stmt_label)
+                {
+                    fir::RangeDomain::Ptr fir_domain_range;
+                    if (fir::isa<fir::RangeDomain>(for_stmt->domain))
+                        fir_domain_range = fir::to<fir::RangeDomain>(for_stmt->domain);
+                    else
+                        std::cout << "error in cloneForStmtNode, not range domain";
+
+                    fir::low_level_schedule::RangeDomain::Ptr schedule_domain_range =
+                            std::make_shared<fir::low_level_schedule::RangeDomain>(
+                                    fir::to<fir::IntLiteral>(fir_domain_range->lower)->val,
+                                    fir::to<fir::IntLiteral>(fir_domain_range->upper)->val);
+
+                    fir::low_level_schedule::StmtBlockNode::Ptr schedule_body_stmt =
+                            std::make_shared<fir::low_level_schedule::StmtBlockNode>(for_stmt->body);
+
+                    label_ = stmt_label;
+                    body_ = schedule_body_stmt;
+                    loop_var_ = for_stmt->loopVar->ident;
+                    for_domain_ = schedule_domain_range;
+                }
 
                 fir::ForStmt::Ptr emitFIRNode();
 
@@ -216,6 +245,7 @@ namespace graphit {
                 StmtBlockNode::Ptr cloneFuncBody(std::string func_name);
                 FuncDeclNode::Ptr cloneFuncDecl(std::string func_name);
                 ApplyNode::Ptr cloneApplyNode(std::string stmt_label);
+                ForStmtNode::Ptr cloneForStmtNode(std::string for_stmt_label);
 
             private:
                 fir::Program::Ptr fir_program_;

@@ -37,7 +37,11 @@ namespace graphit {
                                                       int split_loop1_range,
                                                       int split_loop2_range);
 
-                //TODO: add high level APIs for fuseForLoops and fuseApplyFunctions
+                ProgramScheduleNode::Ptr fuseForLoop(string original_loop_label1,
+                                                     string original_loop_label2,
+                                                     string fused_loop_label);
+
+                //TODO: add high level APIs for fuseApplyFunctions
                 //The APIs are documented here https://docs.google.com/document/d/1y-W8HkQKs3pZr5JX5FiI3pIYt8TPbNIX41V0ThZeVTY/edit?usp=sharing
                 //See test/c++/low_level_schedule_test.cpp for examples of implementing these functionalities
                 //using low level schedule APIs

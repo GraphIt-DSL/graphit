@@ -389,4 +389,43 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplit) {
 
 }
 
+TEST_F(HighLevelScheduleTest, SimpleHighLevelLoopFusion) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 1:10; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach the labels "l1" and "l2" to the for loop statements
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+
+    main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    //ony l3 loop statement left
+    EXPECT_EQ (1,  main_func_decl->body->stmts.size());
+
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_stmt =
+            std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop, "l3");
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, schedule_for_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+}
+
 //TODO: add test cases for loop fusion and apply function fusion

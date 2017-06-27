@@ -46,5 +46,50 @@ namespace graphit {
 
             return this->shared_from_this();
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::fuseForLoop(string original_loop_label1,
+                                                              string original_loop_label2,
+                                                              string fused_loop_label)
+        {
+                // use the low level scheduling API to make clone the body of the "l1" and "l2" loops
+                fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+                        = std::make_shared<fir::low_level_schedule::ProgramNode>(fir_context_);
+                fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk
+                        = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
+                fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk
+                        = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
+                fir::low_level_schedule::ForStmtNode::Ptr l1_for
+                                    = schedule_program_node->cloneForStmtNode(original_loop_label1);
+                fir::low_level_schedule::ForStmtNode::Ptr l2_for
+                                    = schedule_program_node->cloneForStmtNode(original_loop_label2);
+
+                fir::RangeDomain::Ptr l1_domain = l1_for->for_domain_->emitFIRRangeDomain();
+                fir::RangeDomain::Ptr l2_domain = l2_for->for_domain_->emitFIRRangeDomain();
+
+                assert(l1_body_blk->emitFIRNode() != nullptr);
+                assert(l2_body_blk->emitFIRNode() != nullptr);
+                assert(fir::to<fir::IntLiteral>(l1_domain->lower)->val == fir::to<fir::IntLiteral>(l2_domain->lower)->val);
+                assert(fir::to<fir::IntLiteral>(l1_domain->upper)->val == fir::to<fir::IntLiteral>(l2_domain->upper)->val);
+
+                //create and set bounds for l3_loop (the fused loop)
+                fir::low_level_schedule::RangeDomain::Ptr l3_range_domain =
+                                    std::make_shared<fir::low_level_schedule::RangeDomain>
+                                        (fir::to<fir::IntLiteral>(l1_domain->lower)->val,
+                                         fir::to<fir::IntLiteral>(l1_domain->upper)->val);
+
+                fir::low_level_schedule::ForStmtNode::Ptr l3_loop =
+                                    std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain,
+                                                                                           l1_body_blk,
+                                                                                           fused_loop_label,
+                                                                                           "i");
+
+                l3_loop->appendLoopBody(l2_body_blk);
+                schedule_program_node->insertBefore(l3_loop, original_loop_label1);
+                schedule_program_node->removeLabelNode(original_loop_label1);
+                schedule_program_node->removeLabelNode(original_loop_label2);
+
+                return this->shared_from_this();
+        }
     }
 }
