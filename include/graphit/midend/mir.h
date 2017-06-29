@@ -400,7 +400,8 @@ namespace graphit {
 
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
-            std::string input_function_name;
+            std::string input_function_name = "";
+            std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
         };

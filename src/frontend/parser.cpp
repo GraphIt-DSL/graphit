@@ -1104,7 +1104,7 @@ namespace graphit {
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
 // field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' ident ')'
-// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')'}
+// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')' ['.' modified '(' ident ')'],}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1154,6 +1154,15 @@ namespace graphit {
                 apply_expr->from_expr = from_expr;
 
                 consume(Token::Type::RP);
+
+                //potentially there is another 'modified' call that adds implicit tracking to a field
+                if (tryConsume(Token::Type::MODIFIED)){
+                    consume(Token::Type::LP);
+                    auto change_tracking_field = parseIdent();
+                    consume(Token::Type::RP);
+                    apply_expr->change_tracking_field = change_tracking_field;
+                }
+
                 expr = apply_expr;
 
             } else {

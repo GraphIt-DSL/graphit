@@ -57,6 +57,7 @@ namespace graphit {
         if (token == "from") return Token::Type::FROM;
         if (token == "break") return Token::Type::BREAK;
         if (token == "#") return Token::Type::NUMBER_SIGN;
+        if (token == "modified") return Token::Type::MODIFIED;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.

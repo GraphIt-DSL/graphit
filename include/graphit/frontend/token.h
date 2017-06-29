@@ -98,7 +98,8 @@ namespace graphit {
             LOAD,
             FROM,
             BREAK,
-            NUMBER_SIGN
+            NUMBER_SIGN,
+            MODIFIED
         };
 
         Type        type;

@@ -18,6 +18,10 @@ namespace graphit {
         // This pass lowers apply expression into concrete versions, including push, pull hybrid and more
         ApplyExprLower(mir_context, schedule).lower();
 
+        // The pass on lowering abstract data structures to
+        // concrete data structures with physical layout information
+        PhysicalDataLayoutLower(mir_context, schedule).lower();
+
         // This pass adds parallel labels to vertexset and edgeset operations
 
         // This pass fuses conditions and applies to prepare for later generating CAS operations
@@ -29,9 +33,7 @@ namespace graphit {
         
 
 
-        // The pass on lowering abstract data structures to
-        // concrete data structures with physical layout information
-        PhysicalDataLayoutLower(mir_context, schedule).lower();
+
     }
 }
 
