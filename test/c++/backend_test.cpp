@@ -420,5 +420,20 @@ TEST_F(BackendTest, SimpleBreak) {
 }
 
 
+TEST_F(BackendTest, SimpleModifiedReturnFrontier){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = "
+                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
 
 

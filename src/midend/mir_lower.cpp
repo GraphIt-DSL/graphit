@@ -6,6 +6,7 @@
 #include <graphit/midend/physical_data_layout_lower.h>
 #include <graphit/midend/apply_expr_lower.h>
 #include <graphit/midend/vector_op_lower.h>
+#include <graphit/midend/change_tracking_lower.h>
 
 namespace graphit {
     /**
@@ -30,7 +31,7 @@ namespace graphit {
         // This pass inserts atomic operations including CAS, writeMin, writeAdd
 
         // This pass generates return values for implicit tracking of changes to certain field
-        
+        ChangeTrackingLower(mir_context, schedule).lower();
 
 
 

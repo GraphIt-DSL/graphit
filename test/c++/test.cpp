@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleIfElifElseStmt";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
