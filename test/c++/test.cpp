@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleNestedLabelParsing";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyWithModifiedTracking";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWeightedEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";

@@ -11,7 +11,7 @@ namespace graphit {
 // here to denote zero or more instances of the enclosing term, while '[]' is
 // used to denote zero or one instance of the enclosing term.
 
-    Parser::Parser(std::vector<ParseError> * errors) : errors(errors) {}
+    Parser::Parser(std::vector<ParseError> *errors) : errors(errors) {}
 
     fir::Program::Ptr Parser::parse(const TokenStream &tokens) {
         this->tokens = tokens;
@@ -87,6 +87,7 @@ namespace graphit {
 
         return elemTypeDecl;
     }
+
 // field_decl_list: {field_decl}
     std::vector<fir::FieldDecl::Ptr> Parser::parseFieldDeclList() {
         std::vector<fir::FieldDecl::Ptr> fields;
@@ -361,13 +362,13 @@ namespace graphit {
 //                return parseApplyStmt();
             case Token::Type::BREAK:
                 return parseBreakStmt();
-            case Token::Type::NUMBER_SIGN:{
+            case Token::Type::NUMBER_SIGN: {
                 consume(Token::Type::NUMBER_SIGN);
                 fir::Identifier::Ptr label = parseIdent();
                 consume(Token::Type::NUMBER_SIGN);
                 fir::Stmt::Ptr stmt = parseStmt();
                 stmt->stmt_label = label->ident;
-                return  stmt;
+                return stmt;
             }
             default:
                 return parseExprOrAssignStmt();
@@ -780,7 +781,7 @@ namespace graphit {
 
 // expr: map_expr | new_expr | or_expr
     fir::Expr::Ptr Parser::parseExpr() {
-        switch(peek().type){
+        switch (peek().type) {
             case Token::Type::MAP:
                 return parseMapExpr();
             case Token::Type::NEW:
@@ -1112,7 +1113,7 @@ namespace graphit {
 
         while (tryConsume(Token::Type::PERIOD)) {
 
-            if (tryConsume(Token::Type::APPLY)){
+            if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
@@ -1126,7 +1127,7 @@ namespace graphit {
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
-            } else if (tryConsume(Token::Type::FROM)){
+            } else if (tryConsume(Token::Type::FROM)) {
                 //edgesets.from().apply() or edgesets.from().to().apply() pattern
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
 
@@ -1137,7 +1138,7 @@ namespace graphit {
                 consume(Token::Type::RP);
                 consume(Token::Type::PERIOD);
 
-                if (tryConsume(Token::Type::TO)){
+                if (tryConsume(Token::Type::TO)) {
                     //.from(expr).to(expr).apply(func)
                     consume(Token::Type::LP);
                     auto to_expr = std::make_shared<fir::ToExpr>();
@@ -1156,7 +1157,8 @@ namespace graphit {
                 consume(Token::Type::RP);
 
                 //potentially there is another 'modified' call that adds implicit tracking to a field
-                if (tryConsume(Token::Type::MODIFIED)){
+                if (tryConsume(Token::Type::PERIOD)) {
+                    consume(Token::Type::MODIFIED);
                     consume(Token::Type::LP);
                     auto change_tracking_field = parseIdent();
                     consume(Token::Type::RP);
@@ -2265,7 +2267,7 @@ namespace graphit {
         vertex_element_type_list.push_back(dst_vertex_element_type);
 
         // if a third type argument is supplied, we assume that it is a weight
-        if (tryConsume(Token::Type::COMMA)){
+        if (tryConsume(Token::Type::COMMA)) {
             const fir::ScalarType::Ptr weight_type = parseScalarType();
             edgeSetType->weight_type = weight_type;
         }
@@ -2291,7 +2293,7 @@ namespace graphit {
 
         fir::NewExpr::Ptr output_new_expr;
 
-        if (tryConsume(Token::Type::VERTEX_SET)){
+        if (tryConsume(Token::Type::VERTEX_SET)) {
             output_new_expr = std::make_shared<fir::VertexSetAllocExpr>();
 
             consume(Token::Type::LC);
@@ -2300,9 +2302,9 @@ namespace graphit {
             consume(Token::Type::RC);
 
             consume(Token::Type::LP);
-            if (tryConsume(Token::Type::RP)){
+            if (tryConsume(Token::Type::RP)) {
                 //no expression in the
-            }else {
+            } else {
                 const auto expr = parseExpr();
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
@@ -2356,9 +2358,9 @@ namespace graphit {
 
 
         // set up function call intrinsics
-        decls.insert("fabs",  IdentType::FUNCTION);
-        decls.insert("startTimer",  IdentType::FUNCTION);
-        decls.insert("stopTimer",  IdentType::FUNCTION);
+        decls.insert("fabs", IdentType::FUNCTION);
+        decls.insert("startTimer", IdentType::FUNCTION);
+        decls.insert("stopTimer", IdentType::FUNCTION);
 
     }
 
