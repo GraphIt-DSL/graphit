@@ -46,5 +46,24 @@ namespace graphit {
 
             return this->shared_from_this();
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::fuseFields(std::string first_field_name,
+                                                             std::string second_field_name) {
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+            string fused_struct_name = "struct_" + first_field_name + "_" + second_field_name;
+            
+            PhysicalDataLayout vector_a_layout = {first_field_name, DataLayoutType::STRUCT, fused_struct_name};
+            PhysicalDataLayout vector_b_layout = {second_field_name, DataLayoutType::STRUCT, fused_struct_name};
+            auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+            (*physical_layouts)[first_field_name] = vector_a_layout;
+            (*physical_layouts)[second_field_name] = vector_b_layout;
+
+            schedule_->physical_data_layouts = physical_layouts;
+
+            return this->shared_from_this();
+        }
     }
 }

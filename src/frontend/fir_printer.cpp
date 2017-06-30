@@ -306,6 +306,8 @@ namespace graphit {
 
         void FIRPrinter::visit(WhileStmt::Ptr stmt) {
             printIndent();
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             oss << "while ";
             stmt->cond->accept(this);
             oss << std::endl;
@@ -368,6 +370,10 @@ namespace graphit {
 
         void FIRPrinter::visit(ForStmt::Ptr stmt) {
             printIndent();
+
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
             oss << "for ";
             stmt->loopVar->accept(this);
             oss << " in ";
@@ -384,6 +390,10 @@ namespace graphit {
 
         void FIRPrinter::visit(PrintStmt::Ptr stmt) {
             printIndent();
+
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
             oss << (stmt->printNewline ? "println " : "print ");
 
             bool printDelimiter = false;
@@ -406,6 +416,8 @@ namespace graphit {
 
         void FIRPrinter::visit(ExprStmt::Ptr stmt) {
             printIndent();
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             if (stmt->stmt_label != ""){
                 oss << stmt->stmt_label << ": ";
             }
@@ -415,7 +427,8 @@ namespace graphit {
 
         void FIRPrinter::visit(AssignStmt::Ptr stmt) {
             printIndent();
-
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             bool printDelimiter = false;
             for (auto lhs : stmt->lhs) {
                 if (printDelimiter) {

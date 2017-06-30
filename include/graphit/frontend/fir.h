@@ -1573,6 +1573,7 @@ namespace graphit {
             Identifier::Ptr            input_function;
             FromExpr::Ptr              from_expr;
             ToExpr::Ptr                to_expr;
+            Identifier::Ptr            change_tracking_field;
 
             typedef std::shared_ptr<ApplyExpr> Ptr;
 

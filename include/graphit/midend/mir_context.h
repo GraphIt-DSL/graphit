@@ -126,6 +126,9 @@ namespace graphit {
 
             void addConstVertexSet(mir::VarDecl::Ptr vertexset){
                 const_vertex_sets_.push_back(vertexset);
+                // indicate theat this element type is a vertex element type
+                mir::VertexSetType::Ptr vertex_set_type = mir::to<mir::VertexSetType>(vertexset->type);
+                addVertexElementType(vertex_set_type->element->ident);
             }
 
             std::vector<mir::VarDecl::Ptr> getConstVertexSets(){
@@ -207,6 +210,51 @@ namespace graphit {
                 }
             }
 
+            std::string getUniqueNameCounterString(){
+                return std::to_string(unique_variable_name_counter_++);
+            }
+
+            void insertFuncDeclFront(mir::FuncDecl::Ptr func_decl){
+                functions_list_.insert(functions_list_.begin(), func_decl);
+                functions_map_[func_decl->name] = func_decl;
+            }
+
+            // Keeps track of element types that are vertex element types
+            void addVertexElementType(std::string element_type){
+                vertex_element_type_list_.push_back(element_type);
+            }
+
+            // Check if an element type is a vertex element type
+            // Useful for generating system vector lower operations
+            bool isVertexElementType(std::string element_type){
+                for (auto vertex_element_type : vertex_element_type_list_) {
+                    if (vertex_element_type == element_type) return  true;
+                }
+                return false;
+            }
+
+            void insertNewConstVectorDeclEnd(mir::VarDecl::Ptr mir_var_decl){
+                mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type);
+                if (type->element_type != nullptr) {
+                    // this is a field / system vector associated with an ElementType
+                    updateVectorItemType(mir_var_decl->name, type->vector_element_type);
+                    if (!updateElementProperties(type->element_type, mir_var_decl))
+                        std::cout << "error in adding constant" << std::endl;
+                }
+            }
+
+            mir::VarDecl::Ptr getGlobalConstVertexSet(){
+                return const_vertex_sets_[0];
+            }
+
+            mir::FuncDecl::Ptr getMainFuncDecl(){
+                for (auto & func_decl : functions_list_){
+                    if (func_decl->name == "main")
+                        return func_decl;
+                }
+                std::cout << "No main function declared" << std::endl;
+                return nullptr;
+            }
         //private:
 
             // maps element type to an input file that reads the set from
@@ -230,6 +278,9 @@ namespace graphit {
             //maps a edgeset name to its edgeset type
             std::map<std::string, mir::EdgeSetType::Ptr> edgeset_element_type_map_;
 
+            std::vector<std::string> vertex_element_type_list_;
+            std::vector<std::string> edge_element_type_list_;
+
 
             // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
@@ -244,6 +295,8 @@ namespace graphit {
 
             // symbol table
             util::ScopedMap<std::string, mir::Var> symbol_table_;
+
+            int unique_variable_name_counter_ = 0;
 
         };
 

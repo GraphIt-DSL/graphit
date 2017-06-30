@@ -375,7 +375,8 @@ namespace graphit {
             auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
             vertexset_apply_expr->target = target_expr;
             vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
-
+            if (apply_expr->change_tracking_field != nullptr)
+                vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
             retExpr = vertexset_apply_expr;
         }
 
@@ -388,6 +389,8 @@ namespace graphit {
                 //TODO: move the checking from expr is a function or vertexsubset logic here
                 edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
             }
+            if (apply_expr->change_tracking_field != nullptr)
+                edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
 
             retExpr = edgeset_apply_expr;
         }

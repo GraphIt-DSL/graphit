@@ -7,15 +7,15 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleBreak";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyWithModifiedTracking";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWeightedEdgeSetApply";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleIfElifElseStmt";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleSSSP";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
@@ -34,7 +34,10 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplit";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";
+
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.EdgeSetGetOutDegreesFuseStruct";
+
 
     return RUN_ALL_TESTS();
 }

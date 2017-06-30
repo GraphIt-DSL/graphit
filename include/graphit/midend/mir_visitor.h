@@ -6,6 +6,8 @@
 #define GRAPHIT_MIR_VISITOR_H
 
 #include <memory>
+#include <assert.h>
+#include <graphit/midend/label_scope.h>
 
 namespace graphit {
     namespace mir {
@@ -131,6 +133,10 @@ namespace graphit {
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+        protected:
+            std::shared_ptr<MIRNode> node;
+            LabelScope label_scope_;
 
         };
     }

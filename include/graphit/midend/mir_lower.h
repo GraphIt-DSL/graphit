@@ -6,8 +6,9 @@
 #define GRAPHIT_MIR_LOWER_H
 
 #include <graphit/midend/mir_context.h>
-#include <graphit/midend/physical_data_layout_lower.h>
-#include <graphit/midend/apply_expr_lower.h>
+#include <graphit/frontend/schedule.h>
+
+
 
 namespace graphit {
     class MIRLower {

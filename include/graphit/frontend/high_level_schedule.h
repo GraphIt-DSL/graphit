@@ -12,6 +12,7 @@
 #include <iostream>
 #include "fir.h"
 #include <graphit/frontend/low_level_schedule.h>
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
     namespace fir {
@@ -26,10 +27,20 @@ namespace graphit {
 
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
+                    schedule_ = nullptr;
+                }
 
+                ~ ProgramScheduleNode(){
+                    if (schedule_ != nullptr)
+                        delete(schedule_);
                 }
 
                 typedef std::shared_ptr<ProgramScheduleNode> Ptr;
+
+
+                // High level API for fusing together two fields / system vectors as ArrayOfStructs
+                ProgramScheduleNode::Ptr fuseFields(string first_field_name,
+                                                    string second_field_name);
 
                 ProgramScheduleNode::Ptr splitForLoop(string original_loop_label,
                                                       string split_loop1_label,
@@ -42,8 +53,14 @@ namespace graphit {
                 //See test/c++/low_level_schedule_test.cpp for examples of implementing these functionalities
                 //using low level schedule APIs
 
+
+                Schedule * getSchedule() {
+                    return  schedule_;
+                }
+
             private:
                 graphit::FIRContext * fir_context_;
+                Schedule * schedule_;
             };
 
 
