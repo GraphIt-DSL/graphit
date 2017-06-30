@@ -19,6 +19,9 @@ namespace graphit {
         // This pass lowers apply expression into concrete versions, including push, pull hybrid and more
         ApplyExprLower(mir_context, schedule).lower();
 
+        // Use program analysis to figure out the read/write/read and write local / shared properties of the fields
+
+
         // The pass on lowering abstract data structures to
         // concrete data structures with physical layout information
         PhysicalDataLayoutLower(mir_context, schedule).lower();
