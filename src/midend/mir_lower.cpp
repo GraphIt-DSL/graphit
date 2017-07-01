@@ -7,6 +7,7 @@
 #include <graphit/midend/apply_expr_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
+#include <graphit/midend/vector_field_properties_analyzer.h>
 
 namespace graphit {
     /**
@@ -20,7 +21,7 @@ namespace graphit {
         ApplyExprLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the read/write/read and write local / shared properties of the fields
-
+        VectorFieldPropertiesAnalyzer(mir_context,schedule).analyze();
 
         // The pass on lowering abstract data structures to
         // concrete data structures with physical layout information

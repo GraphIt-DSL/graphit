@@ -13,7 +13,8 @@
 #include <graphit/midend/mir_visitor.h>
 #include <graphit/midend/var.h>
 #include <assert.h>
-
+#include <graphit/midend/field_vector_property.h>
+#include <unordered_map>
 
 namespace graphit {
     namespace mir {
@@ -101,13 +102,14 @@ namespace graphit {
         struct Stmt : public MIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
             std::string stmt_label;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());
             }
         };
 
         struct StmtBlock : public Stmt {
-            std::vector<Stmt::Ptr>* stmts;
+            std::vector<Stmt::Ptr> *stmts;
 
             typedef std::shared_ptr<StmtBlock> Ptr;
 
@@ -117,13 +119,13 @@ namespace graphit {
 //                if(stmts != nullptr) delete stmts;
 //            }
 
-            void insertStmtEnd(mir::Stmt::Ptr stmt){
+            void insertStmtEnd(mir::Stmt::Ptr stmt) {
                 if (stmts == nullptr)
                     stmts = new std::vector<mir::Stmt::Ptr>();
                 stmts->push_back(stmt);
             }
 
-            void insertStmtFront(mir::Stmt::Ptr stmt){
+            void insertStmtFront(mir::Stmt::Ptr stmt) {
                 if (stmts == nullptr)
                     stmts = new std::vector<mir::Stmt::Ptr>();
                 stmts->insert(stmts->begin(), stmt);
@@ -154,6 +156,7 @@ namespace graphit {
         struct ElementType : public Type {
             std::string ident;
             typedef std::shared_ptr<ElementType> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ElementType>());
             }
@@ -177,6 +180,7 @@ namespace graphit {
             ElementType::Ptr element;
 
             typedef std::shared_ptr<VertexSetType> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetType>());
             }
@@ -186,9 +190,10 @@ namespace graphit {
         struct EdgeSetType : public Type {
             ElementType::Ptr element;
             ScalarType::Ptr weight_type;
-            std::vector<ElementType::Ptr>* vertex_element_type_list;
+            std::vector<ElementType::Ptr> *vertex_element_type_list;
 
             typedef std::shared_ptr<EdgeSetType> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetType>());
             }
@@ -278,7 +283,6 @@ namespace graphit {
         };
 
 
-
         struct VarDecl : public Stmt {
             std::string modifier;
             std::string name;
@@ -293,7 +297,7 @@ namespace graphit {
         };
 
         struct StructTypeDecl : public Type {
-            std::string             name;
+            std::string name;
             std::vector<VarDecl::Ptr> fields;
 
             typedef std::shared_ptr<StructTypeDecl> Ptr;
@@ -313,12 +317,11 @@ namespace graphit {
         };
 
 
-
-
         struct FuncDecl : public MIRNode {
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
+            std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
@@ -350,9 +353,22 @@ namespace graphit {
                 index = index_expr;
             }
 
-            TensorReadExpr(){}
+            std::string getTargetNameStr() {
+                auto target_expr = mir::to<mir::VarExpr>(target);
+                auto target_name = target_expr->var.getName();
+                return target_name;
+            }
+
+            std::string getIndexNameStr() {
+                auto index_expr = mir::to<mir::VarExpr>(index);
+                auto index_name = index_expr->var.getName();
+                return index_name;
+            }
+
+            TensorReadExpr() {}
 
             typedef std::shared_ptr<TensorReadExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorReadExpr>());
             }
@@ -364,6 +380,7 @@ namespace graphit {
             std::string array_of_struct_target;
 
             typedef std::shared_ptr<TensorStructReadExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorStructReadExpr>());
             }
@@ -372,6 +389,7 @@ namespace graphit {
         struct TensorArrayReadExpr : public TensorReadExpr {
 
             typedef std::shared_ptr<TensorArrayReadExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorArrayReadExpr>());
             }
@@ -393,6 +411,7 @@ namespace graphit {
         struct LoadExpr : public Expr {
             Expr::Ptr file_name;
             typedef std::shared_ptr<LoadExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<LoadExpr>());
             }
@@ -409,13 +428,16 @@ namespace graphit {
 
         struct VertexSetApplyExpr : public ApplyExpr {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());
             }
-            VertexSetApplyExpr(){}
+
+            VertexSetApplyExpr() {}
+
             VertexSetApplyExpr(std::string target_name,
                                mir::Type::Ptr target_type,
-                               std::string function_name){
+                               std::string function_name) {
                 mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
                 mir::Var target_var = mir::Var(target_name, target_type);
                 target_expr->var = target_var;
@@ -428,6 +450,7 @@ namespace graphit {
             std::string from_func = "";
             std::string to_func = "";
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetApplyExpr>());
             }
@@ -435,12 +458,14 @@ namespace graphit {
 
         struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
-            PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply){
+
+            PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
                 input_function_name = edgeset_apply->input_function_name;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
             }
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PushEdgeSetApplyExpr>());
             }
@@ -448,12 +473,14 @@ namespace graphit {
 
         struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
-            PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply){
+
+            PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
                 input_function_name = edgeset_apply->input_function_name;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
             }
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PullEdgeSetApplyExpr>());
             }
@@ -469,6 +496,7 @@ namespace graphit {
 
         struct VertexSetWhereExpr : public WhereExpr {
             typedef std::shared_ptr<VertexSetWhereExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetWhereExpr>());
             }
@@ -476,11 +504,11 @@ namespace graphit {
 
         struct EdgeSetWhereExpr : public WhereExpr {
             typedef std::shared_ptr<EdgeSetWhereExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetWhereExpr>());
             }
         };
-
 
 
         struct NewExpr : public Expr {
@@ -491,6 +519,7 @@ namespace graphit {
         struct VertexSetAllocExpr : public NewExpr {
             Expr::Ptr size_expr;
             typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetAllocExpr>());
             }
@@ -524,7 +553,9 @@ namespace graphit {
 
 
         struct EqExpr : public NaryExpr {
-            enum class Op {LT, LE, GT, GE, EQ, NE};
+            enum class Op {
+                LT, LE, GT, GE, EQ, NE
+            };
 
             std::vector<Op> ops;
 

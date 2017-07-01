@@ -56,9 +56,11 @@ namespace graphit {
 //            }
 //            func_decl->result->accept(this);
 
+            enclosing_func_decl_ = func_decl;
             if (func_decl->body->stmts) {
                 func_decl->body->accept(this);
             }
+            enclosing_func_decl_ = nullptr;
         }
 
         void MIRVisitor::visit(Call::Ptr expr) {
@@ -211,7 +213,7 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
-            expr->accept(this);
+            expr->operand->accept(this);
         }
 
     }

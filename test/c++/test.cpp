@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionDecl";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFS";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";

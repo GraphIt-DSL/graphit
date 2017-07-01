@@ -14,10 +14,12 @@ namespace graphit {
     namespace mir {
 
         struct MIRRewriter : public MIRVisitor {
-            virtual void visit(std::shared_ptr<Stmt> op) {node = op;};
+            virtual void visit(std::shared_ptr<Stmt> op) { node = op; };
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
             virtual void visit(std::shared_ptr<WhileStmt>);
+
             virtual void visit(std::shared_ptr<IfStmt>);
 
 
@@ -27,7 +29,7 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<PrintStmt>);
 
-            virtual void visit(std::shared_ptr<BreakStmt> stmt) {node = stmt;};
+            virtual void visit(std::shared_ptr<BreakStmt> stmt) { node = stmt; };
 
             virtual void visit(std::shared_ptr<ExprStmt>);
 
@@ -38,28 +40,36 @@ namespace graphit {
             virtual void visit(std::shared_ptr<Call>);
 
             virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<PushEdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<PullEdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
 
 
             virtual void visit(std::shared_ptr<TensorReadExpr>);
+
             virtual void visit(std::shared_ptr<TensorStructReadExpr>);
+
             virtual void visit(std::shared_ptr<TensorArrayReadExpr>);
 
-            virtual void visit(std::shared_ptr<BoolLiteral> op) {node = op;};
-            virtual void visit(std::shared_ptr<StringLiteral> op) {node = op;};
-            virtual void visit(std::shared_ptr<FloatLiteral> op) {node = op;};
-            virtual void visit(std::shared_ptr<IntLiteral> op) {node = op;} //leaf FIR nodes need no recursive calls
+            virtual void visit(std::shared_ptr<BoolLiteral> op) { node = op; };
+
+            virtual void visit(std::shared_ptr<StringLiteral> op) { node = op; };
+
+            virtual void visit(std::shared_ptr<FloatLiteral> op) { node = op; };
+
+            virtual void visit(std::shared_ptr<IntLiteral> op) { node = op; } //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
 
-            virtual void visit(std::shared_ptr<VarExpr> op) {node = op;};
+            virtual void visit(std::shared_ptr<VarExpr> op) { node = op; };
 
             virtual void visit(std::shared_ptr<NegExpr>);
-            virtual void visit(std::shared_ptr<EqExpr>);
 
+            virtual void visit(std::shared_ptr<EqExpr>);
 
 
             virtual void visit(std::shared_ptr<AddExpr>);
@@ -72,17 +82,17 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<Type>) {};
 
-            virtual void visit(std::shared_ptr<ScalarType> op) {node = op;};
+            virtual void visit(std::shared_ptr<ScalarType> op) { node = op; };
 
             virtual void visit(std::shared_ptr<StructTypeDecl>);
 
             virtual void visit(std::shared_ptr<VarDecl>);
 
-            virtual void visit(std::shared_ptr<IdentDecl> op) {node = op;};
+            virtual void visit(std::shared_ptr<IdentDecl> op) { node = op; };
 
             virtual void visit(std::shared_ptr<FuncDecl>);
 
-            virtual void visit(std::shared_ptr<ElementType> op) {node = op;};
+            virtual void visit(std::shared_ptr<ElementType> op) { node = op; };
 
             virtual void visit(std::shared_ptr<VertexSetType>);
 
@@ -91,7 +101,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VectorType>);
 
 
-            template <typename T = Program>
+            template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {
                 auto tmp = node;
 
@@ -104,11 +114,9 @@ namespace graphit {
             }
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
+
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
-        protected:
-            MIRNode::Ptr node;
-            LabelScope label_scope_;
         };
     }
 }

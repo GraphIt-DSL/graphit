@@ -137,6 +137,7 @@ namespace graphit {
         protected:
             std::shared_ptr<MIRNode> node;
             LabelScope label_scope_;
+            std::shared_ptr<FuncDecl> enclosing_func_decl_ = nullptr;
 
         };
     }
