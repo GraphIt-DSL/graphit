@@ -17,6 +17,23 @@ namespace graphit {
                 : schedule_(schedule), mir_context_(mir_context) {};
 
         void lower();
+
+        struct ApplyExprVisitor : public mir::MIRVisitor {
+
+            ApplyExprVisitor(MIRContext *mir_context, Schedule *schedule) :
+                    mir_context_(mir_context), schedule_(schedule) {}
+
+            virtual void visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
+
+        private:
+            Schedule *schedule_ = nullptr;
+            MIRContext *mir_context_ = nullptr;
+
+            void insertSerialReturnStmtForTrackingChange(mir::FuncDecl::Ptr apply_func_decl, std::string tracking_field);
+        };
+
     private:
         Schedule *schedule_ = nullptr;
         MIRContext *mir_context_ = nullptr;

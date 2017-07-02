@@ -464,6 +464,7 @@ namespace graphit {
                 input_function_name = edgeset_apply->input_function_name;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -479,6 +480,7 @@ namespace graphit {
                 input_function_name = edgeset_apply->input_function_name;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
             }
 
             virtual void accept(MIRVisitor *visitor) {

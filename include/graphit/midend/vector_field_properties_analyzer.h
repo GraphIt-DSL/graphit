@@ -24,6 +24,7 @@ namespace graphit {
         VectorFieldPropertiesAnalyzer(MIRContext *mir_context, Schedule *schedule)
                 : schedule_(schedule), mir_context_(mir_context) {};
 
+        // the main analyze method
         void analyze();
 
         struct PropertyAnalyzingVisitor : public mir::MIRVisitor {
