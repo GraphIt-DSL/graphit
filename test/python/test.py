@@ -180,7 +180,7 @@ if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
-
+    #
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
+    # suite.addTest(TestGraphitCompiler('test_simple_bfs'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
