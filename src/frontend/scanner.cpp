@@ -271,8 +271,7 @@ namespace graphit {
                                     }
                                 }
                                 break;
-                            case '}':
-                            {
+                            case '}': {
                                 programStream.get();
                                 if (state == ScanState::MLTEST) {
                                     state = ScanState::INITIAL;
@@ -282,8 +281,7 @@ namespace graphit {
                                 col += 2;
                                 break;
                             }
-                            default:
-                            {
+                            default: {
                                 std::string comment;
                                 while (programStream.peek() != '\n' &&
                                        programStream.peek() != EOF) {
@@ -296,8 +294,7 @@ namespace graphit {
                             }
                         }
                         break;
-                    case '"':
-                    {
+                    case '"': {
                         Token newToken;
                         newToken.type = Token::Type::STRING_LITERAL;
                         newToken.lineBegin = line;
@@ -400,10 +397,20 @@ namespace graphit {
                         programStream.get();
                         ++col;
                         break;
-                    case '+':
+                    case '+': {
                         programStream.get();
-                        tokens.addToken(Token::Type::PLUS, line, col++);
+
+                        if (programStream.peek() == '=') {
+                            // += token is plus reduce
+                            programStream.get();
+                            tokens.addToken(Token::Type::PLUS_REDUCE, line, col, 2);
+                        } else {
+                            tokens.addToken(Token::Type::PLUS, line, col++);
+                        }
+
                         break;
+                    }
+
                     case '-':
                         programStream.get();
                         if (programStream.peek() == '>') {
@@ -414,8 +421,7 @@ namespace graphit {
                             tokens.addToken(Token::Type::MINUS, line, col++);
                         }
                         break;
-                    default:
-                    {
+                    default: {
                         Token newToken;
                         newToken.type = Token::Type::INT_LITERAL;
                         newToken.lineBegin = line;
@@ -425,7 +431,7 @@ namespace graphit {
                             !std::isdigit(programStream.peek())) {
                             std::stringstream errMsg;
                             errMsg << "unexpected symbol '"
-                                   << (char)programStream.peek() << "'";
+                                   << (char) programStream.peek() << "'";
                             reportError(errMsg.str(), line, col);
 
                             while (programStream.peek() != EOF &&
@@ -450,7 +456,7 @@ namespace graphit {
                             if (!std::isdigit(programStream.peek())) {
                                 std::stringstream errMsg;
                                 errMsg << "unexpected symbol '"
-                                       << (char)programStream.peek() << "'";
+                                       << (char) programStream.peek() << "'";
                                 reportError(errMsg.str(), line, col);
 
                                 while (programStream.peek() != EOF &&
@@ -482,7 +488,7 @@ namespace graphit {
                             if (!std::isdigit(programStream.peek())) {
                                 std::stringstream errMsg;
                                 errMsg << "unexpected symbol '"
-                                       << (char)programStream.peek() << "'";
+                                       << (char) programStream.peek() << "'";
                                 reportError(errMsg.str(), line, col);
 
                                 while (programStream.peek() != EOF &&
@@ -524,8 +530,8 @@ namespace graphit {
         return tokens;
     }
 
-    void Scanner::printDebugInfo(const std::string & token_string, TokenStream & token_stream){
-        util::printDebugInfo(("current token string: "  + token_string));
+    void Scanner::printDebugInfo(const std::string &token_string, TokenStream &token_stream) {
+        util::printDebugInfo(("current token string: " + token_string));
         std::stringstream ss;
         ss << token_stream;
         util::printDebugInfo((ss.str() + "\n ----- \n"));

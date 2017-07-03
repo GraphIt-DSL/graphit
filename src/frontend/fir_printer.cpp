@@ -444,6 +444,35 @@ namespace graphit {
             oss << ";";
         }
 
+        void FIRPrinter::visit(ReduceStmt::Ptr stmt) {
+            printIndent();
+            if(stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+            bool printDelimiter = false;
+            for (auto lhs : stmt->lhs) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+
+                lhs->accept(this);
+                printDelimiter = true;
+            }
+
+            switch (stmt->reduction_op){
+                case ReduceStmt::ReductionOp::SUM:
+                    oss << " += ";
+                    break;
+                case ReduceStmt::ReductionOp::MAX:
+                    oss << " max= ";
+                    break;
+                case ReduceStmt::ReductionOp::MIN:
+                    oss << " min= ";
+                    break;
+            }
+            stmt->expr->accept(this);
+            oss << ";";
+        }
+
         void FIRPrinter::visit(Slice::Ptr slice) {
             oss << ":";
         }

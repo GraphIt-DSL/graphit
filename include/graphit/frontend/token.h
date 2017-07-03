@@ -99,7 +99,8 @@ namespace graphit {
             FROM,
             BREAK,
             NUMBER_SIGN,
-            MODIFIED
+            MODIFIED,
+            PLUS_REDUCE
         };
 
         Type        type;

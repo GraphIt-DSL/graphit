@@ -420,3 +420,9 @@ TEST_F(FrontendTest, SimpleApplyWithModifiedTracking){
                              "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo).modified(vectora); end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+
+TEST_F(FrontendTest, SimplePlusReduce) {
+    istringstream is("func add(a : int, b: int) a += b; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

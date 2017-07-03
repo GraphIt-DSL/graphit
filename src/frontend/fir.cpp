@@ -548,6 +548,20 @@ namespace graphit {
             return node;
         }
 
+        void ReduceStmt::copy(FIRNode::Ptr node) {
+            const auto reduce_stmt = to<ReduceStmt>(node);
+            ExprStmt::copy(reduce_stmt);
+            for (const auto &left : reduce_stmt->lhs) {
+                lhs.push_back(left->clone<Expr>());
+            }
+        }
+
+        FIRNode::Ptr ReduceStmt::cloneNode() {
+            const auto node = std::make_shared<ReduceStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         FIRNode::Ptr Slice::cloneNode() {
             const auto node = std::make_shared<Slice>();
             node->copy(shared_from_this());

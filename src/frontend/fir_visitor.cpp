@@ -217,6 +217,19 @@ namespace graphit {
             }
         }
 
+        void FIRVisitor::visit(ReduceStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            for (auto lhs : stmt->lhs) {
+                lhs->accept(this);
+            }
+            stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void FIRVisitor::visit(ExprParam::Ptr param) {
             param->expr->accept(this);
         }

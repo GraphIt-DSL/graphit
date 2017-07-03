@@ -109,6 +109,8 @@ namespace graphit {
         struct ToExpr;
         struct BreakStmt;
 
+        struct ReduceStmt;
+
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
 
@@ -191,6 +193,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ExprStmt>);
 
             virtual void visit(std::shared_ptr<AssignStmt>);
+
+            virtual void visit(std::shared_ptr<ReduceStmt>);
+
 
             virtual void visit(std::shared_ptr<Slice> op) {}
 

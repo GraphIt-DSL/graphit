@@ -758,6 +758,31 @@ namespace graphit {
                         stmt = assignStmt;
                         break;
                     }
+                    case Token::Type::PLUS_REDUCE: {
+                        auto reduce_stmt = std::make_shared<fir::ReduceStmt>();
+                        reduce_stmt->reduction_op = fir::ReduceStmt::ReductionOp::SUM;
+                        reduce_stmt->lhs.push_back(expr);
+                        while (tryConsume(Token::Type::COMMA)) {
+                            const fir::Expr::Ptr expr = parseExpr();
+                            reduce_stmt->lhs.push_back(expr);
+                        }
+
+                        consume(Token::Type::PLUS_REDUCE);
+                        reduce_stmt->expr = parseExpr();
+
+                        for (const auto lhs : reduce_stmt->lhs) {
+                            if (fir::isa<fir::VarExpr>(lhs)) {
+                                const std::string varName = fir::to<fir::VarExpr>(lhs)->ident;
+
+                                if (!decls.contains(varName)) {
+                                    decls.insert(varName, IdentType::OTHER);
+                                }
+                            }
+                        }
+
+                        stmt = reduce_stmt;
+                        break;
+                    }
                     default:
                         stmt = std::make_shared<fir::ExprStmt>();
                         stmt->expr = expr;
