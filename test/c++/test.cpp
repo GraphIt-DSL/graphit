@@ -7,15 +7,16 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyWithModifiedTracking";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabelNoSpace";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFS";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimplePlusReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";

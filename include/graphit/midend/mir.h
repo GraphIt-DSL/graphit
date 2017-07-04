@@ -259,6 +259,18 @@ namespace graphit {
             }
         };
 
+
+        struct ReduceStmt : public AssignStmt {
+            enum class ReductionOp {MIN, SUM, MAX};
+            ReductionOp reduce_op_;
+
+            typedef std::shared_ptr<ReduceStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ReduceStmt>());
+            }
+        };
+
         struct PrintStmt : public Stmt {
             Expr::Ptr expr;
             std::string format;

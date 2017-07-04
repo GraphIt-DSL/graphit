@@ -151,6 +151,39 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::ReduceStmt::Ptr reduce_stmt) {
+
+        if (mir::isa<mir::VertexSetWhereExpr>(reduce_stmt->expr) ||
+            mir::isa<mir::EdgeSetApplyExpr>(reduce_stmt->expr)) {
+            // declaring a new vertexset as output from where expression
+            printIndent();
+            reduce_stmt->expr->accept(this);
+            oss << std::endl;
+
+            printIndent();
+
+            reduce_stmt->lhs->accept(this);
+            oss << "  = ____graphit_tmp_out; " << std::endl;
+
+        } else {
+            printIndent();
+            reduce_stmt->lhs->accept(this);
+            switch (reduce_stmt->reduce_op_){
+                case  mir::ReduceStmt::ReductionOp::SUM:
+                    oss << " += ";
+                    break;
+                case  mir::ReduceStmt::ReductionOp::MIN:
+                    oss << " min= ";
+                    break;
+                case  mir::ReduceStmt::ReductionOp::MAX:
+                    oss << " max= ";
+                    break;
+            }
+            reduce_stmt->expr->accept(this);
+            oss << ";" << std::endl;
+        }
+    }
+
     void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt) {
         printIndent();
         oss << "std::cout << ";

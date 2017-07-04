@@ -27,6 +27,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<AssignStmt>);
 
+            virtual void visit(std::shared_ptr<ReduceStmt>);
+
+
             virtual void visit(std::shared_ptr<PrintStmt>);
 
             virtual void visit(std::shared_ptr<BreakStmt> stmt) { node = stmt; };

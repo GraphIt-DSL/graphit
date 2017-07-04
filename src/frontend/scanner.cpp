@@ -58,6 +58,8 @@ namespace graphit {
         if (token == "break") return Token::Type::BREAK;
         if (token == "#") return Token::Type::NUMBER_SIGN;
         if (token == "modified") return Token::Type::MODIFIED;
+        if (token == "min=") return Token::Type::MIN_REDUCE;
+        if (token == "max=") return Token::Type::MAX_REDUCE;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.
@@ -72,14 +74,26 @@ namespace graphit {
 
         //outer loop that goes from token to token
         while (programStream.peek() != EOF) {
+
+            //tokens made up of alphas
             //a_b is a token, can start with a alpha (alphabetical number)
             //# is also acceptable for a label
             if (programStream.peek() == '#' || programStream.peek() == '_' || std::isalpha(programStream.peek())) {
                 std::string tokenString(1, programStream.get());
 
-                while (programStream.peek() == '_' ||
-                       std::isalnum(programStream.peek())) {
-                    //a token can have _ or a number as content of the token
+                //if token string is #, then it is the sole token string (not a variable)
+                if (tokenString != "#"){
+
+                    while (programStream.peek() == '_' ||
+                           std::isalnum(programStream.peek())) {
+                        //a token can have _ or a number as content of the token
+                        tokenString += programStream.get();
+                    }
+
+                }
+
+                if ((tokenString == "min" && programStream.peek() == '=') ||
+                        (tokenString == "max" && programStream.peek() == '=')){
                     tokenString += programStream.get();
                 }
 
@@ -401,7 +415,7 @@ namespace graphit {
                         programStream.get();
 
                         if (programStream.peek() == '=') {
-                            // += token is plus reduce
+                            // += token is plusreduce
                             programStream.get();
                             tokens.addToken(Token::Type::PLUS_REDUCE, line, col, 2);
                         } else {

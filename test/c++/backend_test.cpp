@@ -434,6 +434,18 @@ TEST_F(BackendTest, SimpleModifiedReturnFrontier){
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(BackendTest, SimplePlusReduce) {
+    istringstream is("func add(a : int, b: int) a += b; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
 
 
+TEST_F(BackendTest, SimpleMinReduce) {
+    istringstream is("func add(a : int, b: int) a min= b; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
 
+TEST_F(BackendTest, SimpleMaxReduce) {
+    istringstream is("func add(a : int, b: int) a max= b; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

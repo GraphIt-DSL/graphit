@@ -395,6 +395,15 @@ TEST_F(FrontendTest, SimpleAttachLabel) {
 
 }
 
+
+TEST_F(FrontendTest, SimpleAttachLabelNoSpace) {
+    istringstream is("func main() "
+                             "#l1# for i in 1:2; print 4; end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
 TEST_F(FrontendTest, SimpleNestedLabelParsing) {
     istringstream is("func main() "
                              "# l1 # for i in 1:2; # s1 # print 4; end "

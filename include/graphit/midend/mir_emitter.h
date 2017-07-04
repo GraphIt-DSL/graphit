@@ -39,6 +39,10 @@ namespace graphit {
 
             virtual void visit(fir::ExprStmt::Ptr);
             virtual void visit(fir::AssignStmt::Ptr);
+            virtual void visit(fir::ReduceStmt::Ptr);
+
+
+
             virtual void visit(fir::PrintStmt::Ptr);
             virtual void visit(fir::BreakStmt::Ptr);
 
