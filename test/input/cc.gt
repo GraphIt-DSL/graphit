@@ -9,7 +9,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 % const parent : vector{Vertex}(Vertex) = -1;
 const IDs : vector{Vertex}(int) = 1;
 
-func updateEdge(src : Vertex, dst : Vertex) -> output : bool
+func updateEdge(src : Vertex, dst : Vertex)
     IDs[dst] min= IDs[src];
 end
 
