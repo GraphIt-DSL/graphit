@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 

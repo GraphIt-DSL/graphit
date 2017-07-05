@@ -166,21 +166,44 @@ namespace graphit {
             oss << "  = ____graphit_tmp_out; " << std::endl;
 
         } else {
-            printIndent();
-            reduce_stmt->lhs->accept(this);
             switch (reduce_stmt->reduce_op_){
                 case  mir::ReduceStmt::ReductionOp::SUM:
+                    printIndent();
+                    reduce_stmt->lhs->accept(this);
                     oss << " += ";
+                    reduce_stmt->expr->accept(this);
+                    oss << ";" << std::endl;
                     break;
                 case  mir::ReduceStmt::ReductionOp::MIN:
-                    oss << " min= ";
+                    printIndent();
+                    oss << "if ( ( ";
+                    reduce_stmt->lhs->accept(this);
+                    oss << ") > ( " ;
+                    reduce_stmt->expr->accept(this);
+                    oss << ") ) { " << std::endl;
+                    indent();
+                    printIndent();
+                    reduce_stmt->lhs->accept(this);
+                    oss << "= ";
+                    reduce_stmt->expr->accept(this);
+                    oss << "; " << std::endl;
+
+
+                    if (reduce_stmt->tracking_var_name_ != ""){
+                        // need to generate a tracking variable
+                        printIndent();
+                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                    }
+
+                    dedent();
+                    printIndent();
+                    oss << "} " << std::endl;
                     break;
                 case  mir::ReduceStmt::ReductionOp::MAX:
                     oss << " max= ";
                     break;
             }
-            reduce_stmt->expr->accept(this);
-            oss << ";" << std::endl;
+
         }
     }
 

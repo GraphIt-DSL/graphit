@@ -420,7 +420,7 @@ TEST_F(BackendTest, SimpleBreak) {
 }
 
 
-TEST_F(BackendTest, SimpleModifiedReturnFrontier){
+TEST_F(BackendTest, SimpleAssignReturnFrontier){
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
                              "const age : vector{Vertex}(int) = 0;\n"
@@ -435,17 +435,57 @@ TEST_F(BackendTest, SimpleModifiedReturnFrontier){
 }
 
 TEST_F(BackendTest, SimplePlusReduce) {
-    istringstream is("func add(a : int, b: int) a += b; end");
+    istringstream is("func reduce_test(a : int, b: int) a += b; end");
+
     EXPECT_EQ (0,  basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+
 }
 
 
 TEST_F(BackendTest, SimpleMinReduce) {
-    istringstream is("func add(a : int, b: int) a min= b; end");
+    istringstream is("func reduce_test(a : int, b: int) a min= b; end");
     EXPECT_EQ (0,  basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+
 }
 
 TEST_F(BackendTest, SimpleMaxReduce) {
-    istringstream is("func add(a : int, b: int) a max= b; end");
+    istringstream is("func reduce_test(a : int, b: int) a max= b; end");
     EXPECT_EQ (0,  basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+
+}
+
+
+TEST_F(BackendTest, SimpleMinReduceReturnFrontier){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (src: Vertex, dst: Vertex) age[dst] min= 1; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = "
+                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+    EXPECT_EQ (0,  basicTest(is));
+    EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
+}
+
+TEST_F(BackendTest, MinReduceReturnFrontier){
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (src: Vertex, dst: Vertex) age[dst] min= age[src]; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = "
+                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+    EXPECT_EQ (0,  basicTest(is));
+    EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
+    EXPECT_EQ (mir_context_->getFunction("update")->result.isInitialized(), true);
+
 }

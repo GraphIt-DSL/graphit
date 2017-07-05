@@ -18,11 +18,10 @@ namespace graphit {
         auto apply_func_decl_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         std::string tracking_field = apply_expr->tracking_field;
-        auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
-        apply_func_decl->accept(&tracking_var_gen_visitor);
         if (tracking_field != "") {
             //TODO: another check to see if it is parallel
-
+            auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
+            apply_func_decl->accept(&tracking_var_gen_visitor);
             insertSerialReturnStmtForTrackingChange(apply_func_decl,
                                                     tracking_field,
                                                     tracking_var_gen_visitor.getFieldTrackingVariableExpr(
@@ -30,20 +29,14 @@ namespace graphit {
         }
     }
 
-    /**
-         * Inserts return stmt for tracking fields
-         */
-    void insertSerialReturnStmtForTrackingChange(mir::FuncDecl apply_func_decl, std::string tracking_field);
-
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
         auto apply_func_decl_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         std::string tracking_field = apply_expr->tracking_field;
-        auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
-        apply_func_decl->accept(&tracking_var_gen_visitor);
         if (tracking_field != "") {
             //TODO: another check to see if it is parallel
-
+            auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
+            apply_func_decl->accept(&tracking_var_gen_visitor);
             insertSerialReturnStmtForTrackingChange(apply_func_decl,
                                                     tracking_field,
                                                     tracking_var_gen_visitor.getFieldTrackingVariableExpr(
@@ -62,8 +55,9 @@ namespace graphit {
 
         if (apply_func_decl->field_vector_properties_map_.find(tracking_field)
             != apply_func_decl->field_vector_properties_map_.end()) {
-            if (apply_func_decl->field_vector_properties_map_[tracking_field].read_write_type
-                == FieldVectorProperty::ReadWriteType::WRITE_ONLY) {
+            auto field_read_write_type = apply_func_decl->field_vector_properties_map_[tracking_field].read_write_type;
+            if (field_read_write_type == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
+                    field_read_write_type == FieldVectorProperty::ReadWriteType::READ_AND_WRITE) {
                 //if the tracking field has been updated, then add the return
                 auto bool_type = std::make_shared<mir::ScalarType>();
                 bool_type->type = mir::ScalarType::Type::BOOL;
@@ -75,8 +69,19 @@ namespace graphit {
                 lhs->var = mir::Var(output_var_name, bool_type);
                 assign_stmt->lhs = lhs;
                 assign_stmt->expr = tracking_var;
-
                 apply_func_decl->body->insertStmtEnd(assign_stmt);
+
+                //we also need to insert a default declaration (false) of tracking var at the beginning
+                // If it is not the "true" literal
+                if (mir::isa<mir::VarExpr>(tracking_var)){
+                    auto tracking_var_expr = mir::to<mir::VarExpr>(tracking_var);
+                    auto tracking_var_decl = std::make_shared<mir::VarDecl>();
+                    tracking_var_decl->type = bool_type;
+                    tracking_var_decl->name = tracking_var_expr->var.getName();
+                    auto false_literal = std::make_shared<mir::BoolLiteral>();
+                    tracking_var_decl->initVal = false_literal;
+                    apply_func_decl->body->insertStmtFront(tracking_var_decl);
+                }
             }
         }
     }
@@ -85,7 +90,7 @@ namespace graphit {
         //TODO: may be build another visitor for tensor read to figure out the field
         //For now, I am assuming that the left hand side of assign stmt is a tensor read expression
         //It can be a tensor struct read or a tensor array read, but I just need the field name
-        if (mir::isa<mir::TensorReadExpr>(assign_stmt->lhs)){
+        if (mir::isa<mir::TensorReadExpr>(assign_stmt->lhs)) {
             auto tensor_read_expr = mir::to<mir::TensorReadExpr>(assign_stmt->lhs);
             auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
             auto field_vector_name = field_vector_target_expr->var.getName();
@@ -98,16 +103,18 @@ namespace graphit {
         //TODO: may be build another visitor for tensor read to figure out the field
         //For now, I am assuming that the left hand side of assign stmt is a tensor read expression
         //It can be a tensor struct read or a tensor array read, but I just need the field name
-        auto tensor_read_expr = mir::to<mir::TensorReadExpr>(reduce_stmt->lhs);
-        auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
-        auto field_vector_name = field_vector_target_expr->var.getName();
+        if (mir::isa<mir::TensorReadExpr>(reduce_stmt->lhs)) {
+            auto tensor_read_expr = mir::to<mir::TensorReadExpr>(reduce_stmt->lhs);
+            auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
+            auto field_vector_name = field_vector_target_expr->var.getName();
 
-        auto field_vector_tracking_var_name = field_vector_name + mir_context_->getUniqueNameCounterString();
-        // field vector might not have changed
-        //assign the tracking variable name to the assign statement (used for storing the output of CAS)
-        addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
+            auto field_vector_tracking_var_name = field_vector_name + "_trackving_var_" + mir_context_->getUniqueNameCounterString();
+            // field vector might not have changed
+            addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
 
-
+            //assign the tracking variable name to the assign statement (used for storing the output of CAS)
+            reduce_stmt->tracking_var_name_ = field_vector_tracking_var_name;
+        }
     }
 
     void ChangeTrackingLower::TrackingVariableGenVisitor::addFieldTrackingVariable(std::string field_vector_name,

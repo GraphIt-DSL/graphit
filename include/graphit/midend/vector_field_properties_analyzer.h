@@ -29,7 +29,7 @@ namespace graphit {
 
         struct PropertyAnalyzingVisitor : public mir::MIRVisitor {
 
-            PropertyAnalyzingVisitor(std::string direction):direction_(direction) {
+            PropertyAnalyzingVisitor(std::string direction) : direction_(direction) {
                 in_write_phase = false;
                 in_read_phase = false;
                 in_read_write_phase = false;
@@ -57,8 +57,11 @@ namespace graphit {
 
             FieldVectorProperty buildSharedReadFieldProperty();
 
-            FieldVectorProperty
-    determineFieldVectorProperty(bool in_write_phase, bool in_read_phase, std::string index, std::string direction);
+            FieldVectorProperty determineFieldVectorProperty(std::string field_vector_name,
+                                                             bool in_write_phase,
+                                                             bool in_read_phase,
+                                                             std::string index,
+                                                             std::string direction);
 
             FieldVectorProperty buildLocalReadWriteFieldProperty();
 
@@ -68,7 +71,7 @@ namespace graphit {
         struct ApplyExprVisitor : public mir::MIRVisitor {
 
             ApplyExprVisitor(MIRContext *mir_context, Schedule *schedule) :
-                    mir_context_(mir_context), schedule_(schedule){}
+                    mir_context_(mir_context), schedule_(schedule) {}
 
             virtual void visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr);
 

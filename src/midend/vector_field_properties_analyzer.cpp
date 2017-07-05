@@ -9,13 +9,13 @@ namespace graphit {
     void VectorFieldPropertiesAnalyzer::analyze() {
         auto apply_expr_visitor = ApplyExprVisitor(mir_context_, schedule_);
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-        for (auto function : functions){
+        for (auto function : functions) {
             function->accept(&apply_expr_visitor);
         }
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
-        ::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
+    ::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
         auto property_visitor = PropertyAnalyzingVisitor("pull");
         auto apply_func_decl_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
@@ -24,7 +24,7 @@ namespace graphit {
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
-        ::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
+    ::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
         auto property_visitor = PropertyAnalyzingVisitor("push");
         auto apply_func_decl_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
@@ -51,22 +51,40 @@ namespace graphit {
 
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::TensorReadExpr::Ptr tensor_read) {
-            std::string target = tensor_read->getTargetNameStr();
-            std::string index = tensor_read->getIndexNameStr();
-            enclosing_func_decl_->field_vector_properties_map_[target] =
-                    determineFieldVectorProperty(in_write_phase, in_read_phase, index, direction_);
+        std::string target = tensor_read->getTargetNameStr();
+        std::string index = tensor_read->getIndexNameStr();
+
+
+        enclosing_func_decl_->field_vector_properties_map_[target] =
+                determineFieldVectorProperty(target, in_write_phase,
+                                             in_read_phase, index, direction_);
 
     }
 
     FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::determineFieldVectorProperty(
-                                                     bool in_write_phase,
-                                                     bool in_read_phase,
-                                                     std::string index,
-                                                     std::string direction) {
+            std::string field_vector_name,
+            bool in_write_phase,
+            bool in_read_phase,
+            std::string index,
+            std::string direction) {
 
         std::string src_var_name = enclosing_func_decl_->args[0].getName();
         std::string dst_var_name = enclosing_func_decl_->args[1].getName();
-        FieldVectorProperty output = FieldVectorProperty();
+        FieldVectorProperty output;
+
+        // if it is not a read property, just return the current property (only need to detect write or read_and_write)
+        if (enclosing_func_decl_->field_vector_properties_map_.find(field_vector_name)
+            != enclosing_func_decl_->field_vector_properties_map_.end()){
+            FieldVectorProperty::ReadWriteType existing_readwrite_access
+                    = enclosing_func_decl_->field_vector_properties_map_[field_vector_name].read_write_type;
+            if (existing_readwrite_access == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
+                    existing_readwrite_access == FieldVectorProperty::ReadWriteType::READ_AND_WRITE){
+                return enclosing_func_decl_->field_vector_properties_map_[field_vector_name];
+            }
+
+        }
+
+
 
         if (index == src_var_name) {
             // operating on src
@@ -75,9 +93,11 @@ namespace graphit {
                 if (in_write_phase) {
                     //write operation
                     output = buildSharedWriteFieldProperty();
-                } else {
+                } else if (in_read_phase) {
                     // read operation
                     output = buildSharedReadFieldProperty();
+                } else {
+                    output = buildSharedReadWriteFieldProperty();
                 }
             } else {
                 //direction is push
@@ -95,9 +115,12 @@ namespace graphit {
                 if (in_write_phase) {
                     // write
                     output = buildLocalWriteFieldProperty();
-                } else {
+                } else if (in_read_phase) {
                     // read
                     output = buildLocalReadFieldProperty();
+                } else {
+                    output = buildLocalReadWriteFieldProperty();
+
                 }
             } else {
                 if (in_write_phase) {
@@ -116,28 +139,28 @@ namespace graphit {
     }
 
     // factory method for building certain type of field vector property
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalWriteFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalWriteFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::LOCAL;
         property.read_write_type = FieldVectorProperty::ReadWriteType::WRITE_ONLY;
         return property;
     }
 
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedWriteFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedWriteFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::SHARED;
         property.read_write_type = FieldVectorProperty::ReadWriteType::WRITE_ONLY;
         return property;
     }
 
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalReadFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalReadFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::LOCAL;
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_ONLY;
         return property;
     }
 
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedReadFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedReadFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::SHARED;
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_ONLY;
@@ -145,14 +168,14 @@ namespace graphit {
     }
 
 
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalReadWriteFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalReadWriteFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::LOCAL;
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
         return property;
     }
 
-    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedReadWriteFieldProperty(){
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedReadWriteFieldProperty() {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::SHARED;
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
