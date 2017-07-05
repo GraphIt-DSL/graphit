@@ -40,6 +40,16 @@ namespace graphit {
         in_read_phase = false;
     }
 
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {
+        in_read_write_phase = true;
+        reduce_stmt->lhs->accept(this);
+        in_read_write_phase = false;
+        in_read_phase = true;
+        reduce_stmt->expr->accept(this);
+        in_read_phase = false;
+    }
+
+
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::TensorReadExpr::Ptr tensor_read) {
             std::string target = tensor_read->getTargetNameStr();
             std::string index = tensor_read->getIndexNameStr();
@@ -73,8 +83,10 @@ namespace graphit {
                 //direction is push
                 if (in_write_phase) {
                     output = buildLocalWriteFieldProperty();
-                } else {
+                } else if (in_read_phase) {
                     output = buildLocalReadFieldProperty();
+                } else {
+                    output = buildLocalReadWriteFieldProperty();
                 }
             }
         } else {
@@ -91,9 +103,11 @@ namespace graphit {
                 if (in_write_phase) {
                     // write
                     output = buildSharedWriteFieldProperty();
-                } else {
+                } else if (in_read_phase) {
                     // read
                     output = buildSharedReadFieldProperty();
+                } else {
+                    output = buildSharedReadWriteFieldProperty();
                 }
             }
         }
@@ -127,6 +141,21 @@ namespace graphit {
         auto property = FieldVectorProperty();
         property.access_type_ = FieldVectorProperty::AccessType::SHARED;
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_ONLY;
+        return property;
+    }
+
+
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildLocalReadWriteFieldProperty(){
+        auto property = FieldVectorProperty();
+        property.access_type_ = FieldVectorProperty::AccessType::LOCAL;
+        property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
+        return property;
+    }
+
+    FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::buildSharedReadWriteFieldProperty(){
+        auto property = FieldVectorProperty();
+        property.access_type_ = FieldVectorProperty::AccessType::SHARED;
+        property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
         return property;
     }
 

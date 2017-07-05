@@ -181,5 +181,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank_expect'))
+    # suite.addTest(TestGraphitCompiler('test_simple_bfs'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
