@@ -45,7 +45,7 @@ namespace graphit {
 
         void genVariableDecls();
 
-        void genStructDecl(const mir::VarDecl::Ptr var_decl, const PhysicalDataLayout data_layout);
+        void genStructDecl(const mir::VarDecl::Ptr var_decl, const FieldVectorPhysicalDataLayout data_layout);
 
         void genArrayDecl(const mir::VarDecl::Ptr var_decl);
     };

@@ -55,9 +55,15 @@ namespace graphit {
                 //using low level schedule APIs
 
 
-                // High lvel API for speicifying a push direction for apply
+                // High lvel API for speicifying scheduling options for apply
+                // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr
                 setApply(std::string apply_label, std::string apply_schedule);
+
+                // High lvel API for speicifying scheduling options for vertexset
+                // Scheduling Options include sparse, dense
+                high_level_schedule::ProgramScheduleNode::Ptr
+                setVertexSet(std::string vertexset_label, std::string vertexset_schedule_str);
 
                 Schedule * getSchedule() {
                     return  schedule_;

@@ -39,7 +39,7 @@ namespace  graphit {
 
                     if (physical_data_layout != schedule_->physical_data_layouts->end()){
                         //if physical layout schedule is being specified
-                        if (physical_data_layout->second.data_layout_type == DataLayoutType::STRUCT){
+                        if (physical_data_layout->second.data_layout_type == FieldVectorDataLayoutType::STRUCT){
                             genStructDecl(var_decl, physical_data_layout->second);
                             continue;
                         }
@@ -59,7 +59,7 @@ namespace  graphit {
     }
 
     void PhysicalDataLayoutLower::genStructDecl(const mir::VarDecl::Ptr var_decl,
-                                                const PhysicalDataLayout data_layout) {
+                                                const FieldVectorPhysicalDataLayout data_layout) {
         // check if the struct type has already been added
 
 
@@ -116,7 +116,7 @@ namespace  graphit {
             auto physical_data_layout = schedule_->physical_data_layouts->find(target_name);
 
             if (physical_data_layout != schedule_->physical_data_layouts->end()) {
-                if (physical_data_layout->second.data_layout_type == DataLayoutType::STRUCT){
+                if (physical_data_layout->second.data_layout_type == FieldVectorDataLayoutType::STRUCT){
                     //Generate TensorStructReadExpr
                     auto tensor_struct_read = std::make_shared<mir::TensorStructReadExpr>();
                     tensor_struct_read->index = rewrite<mir::Expr>(tensor_read->index);

@@ -87,9 +87,9 @@ TEST_F(LowLevelScheduleTest, SimpleStructSchedule) {
                              "const vector_b : vector{Vertex}(float) = 0.0;\n"
     );
     Schedule *schedule = new Schedule();
-    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
-    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
-    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+    FieldVectorPhysicalDataLayout vector_a_layout = {"vector_a", FieldVectorDataLayoutType::STRUCT, "struct_a_b"};
+    FieldVectorPhysicalDataLayout vector_b_layout = {"vector_b", FieldVectorDataLayoutType::STRUCT, "struct_a_b"};
+    auto physical_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
     (*physical_layouts)["vector_a"] = vector_a_layout;
     (*physical_layouts)["vector_b"] = vector_b_layout;
 
@@ -117,9 +117,9 @@ TEST_F(LowLevelScheduleTest, AddoneWithArraySchedule) {
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
                              "func main() vertices.apply(addone); print vector_a.sum(); end");
     Schedule *schedule = new Schedule();
-    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::ARRAY, ""};
-    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::ARRAY, ""};
-    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+    FieldVectorPhysicalDataLayout vector_a_layout = {"vector_a", FieldVectorDataLayoutType::ARRAY, ""};
+    FieldVectorPhysicalDataLayout vector_b_layout = {"vector_b", FieldVectorDataLayoutType::ARRAY, ""};
+    auto physical_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
     (*physical_layouts)["vector_a"] = vector_a_layout;
     (*physical_layouts)["vector_b"] = vector_b_layout;
 
@@ -137,9 +137,9 @@ TEST_F(LowLevelScheduleTest, AddoneWithStructSchedule) {
 
     // constructs a schedule object that fuses vector_a and vector_b into an array of struct
     Schedule *schedule = new Schedule();
-    PhysicalDataLayout vector_a_layout = {"vector_a", DataLayoutType::STRUCT, "struct_a_b"};
-    PhysicalDataLayout vector_b_layout = {"vector_b", DataLayoutType::STRUCT, "struct_a_b"};
-    auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
+    FieldVectorPhysicalDataLayout vector_a_layout = {"vector_a", FieldVectorDataLayoutType::STRUCT, "struct_a_b"};
+    FieldVectorPhysicalDataLayout vector_b_layout = {"vector_b", FieldVectorDataLayoutType::STRUCT, "struct_a_b"};
+    auto physical_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
     (*physical_layouts)["vector_a"] = vector_a_layout;
     (*physical_layouts)["vector_b"] = vector_b_layout;
 

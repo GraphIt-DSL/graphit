@@ -223,7 +223,7 @@ TEST_F(BackendTest, SimpleFixedIterPageRank) {
                              "const damp : float = 0.85;\n"
                              "const beta_score : float = (1.0 - damp) / vertices.size();\n"
                              "func updateEdge(src : Vertex, dst : Vertex)\n"
-                             "    new_rank[dst] = old_rank[src] / out_degrees[src];\n"
+                             "    new_rank[dst] += old_rank[src] / out_degrees[src];\n"
                              "end\n"
                              "func updateVertex(v : Vertex)\n"
                              "    new_rank[v] = beta_score + damp*(new_rank[v]);\n"

@@ -475,6 +475,7 @@ namespace graphit {
             loopVar = forStmt->loopVar->clone<Identifier>();
             domain = forStmt->domain->clone<ForDomain>();
             body = forStmt->body->clone<StmtBlock>();
+            stmt_label = forStmt->stmt_label;
         }
 
         FIRNode::Ptr ForStmt::cloneNode() {
@@ -526,6 +527,7 @@ namespace graphit {
             const auto exprStmt = to<ExprStmt>(node);
             Stmt::copy(exprStmt);
             expr = exprStmt->expr->clone<Expr>();
+            stmt_label = exprStmt->stmt_label;
         }
 
         FIRNode::Ptr ExprStmt::cloneNode() {
@@ -540,6 +542,7 @@ namespace graphit {
             for (const auto &left : assignStmt->lhs) {
                 lhs.push_back(left->clone<Expr>());
             }
+            stmt_label = assignStmt->stmt_label;
         }
 
         FIRNode::Ptr AssignStmt::cloneNode() {
@@ -554,6 +557,7 @@ namespace graphit {
             for (const auto &left : reduce_stmt->lhs) {
                 lhs.push_back(left->clone<Expr>());
             }
+            stmt_label = reduce_stmt->stmt_label;
         }
 
         FIRNode::Ptr ReduceStmt::cloneNode() {
