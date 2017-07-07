@@ -65,5 +65,38 @@ namespace graphit {
 
             return this->shared_from_this();
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label, std::string apply_schedule_str) {
+
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->apply_schedules == nullptr){
+                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
+            }
+
+            // If no schedule has been specified for the current label, create a new one
+            ApplySchedule apply_schedule;
+
+            if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()){
+                //Default schedule pull, serial
+                (*schedule_->apply_schedules)[apply_label]
+                        = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial};
+            }
+
+
+            if(apply_schedule_str == "push"){
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
+            } else if (apply_schedule_str == "pull"){
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
+            }
+
+
+            return this->shared_from_this();
+        }
     }
 }

@@ -33,8 +33,15 @@ namespace graphit {
             PULL,
             HYBRID
         };
+
+        enum class ParType {
+            Parallel,
+            Serial
+        };
+
         std::string scope_label_name;
         DirectionType direction_type;
+        ParType parallel_type;
     };
 
     /**

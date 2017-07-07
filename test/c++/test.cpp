@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSchedule";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.EdgeSetGetOutDegreesFuseStruct";
 

@@ -10,7 +10,7 @@
 #include <graphit/frontend/error.h>
 #include <graphit/utils/exec_cmd.h>
 #include <graphit/frontend/high_level_schedule.h>
-
+#include <graphit/midend/mir.h>
 using namespace std;
 using namespace graphit;
 
@@ -35,7 +35,7 @@ protected:
 
     }
 
-    bool basicTest(std::istream &is) {
+    int basicTest(std::istream &is) {
         fe_->parseStream(is, context_, errors_);
         graphit::Midend *me = new graphit::Midend(context_);
 
@@ -52,7 +52,7 @@ protected:
  * This test assumes that the fir_context is constructed in the specific test code
  * @return
  */
-    bool basicCompileTestWithContext() {
+    int basicCompileTestWithContext() {
         graphit::Midend *me = new graphit::Midend(context_);
         me->emitMIR(mir_context_);
         graphit::Backend *be = new graphit::Backend(mir_context_);
@@ -60,7 +60,7 @@ protected:
     }
 
 
-    bool basicTestWithSchedule(
+    int basicTestWithSchedule(
             fir::high_level_schedule::ProgramScheduleNode::Ptr program) {
 
         graphit::Midend *me = new graphit::Midend(context_, program->getSchedule());
@@ -169,3 +169,39 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplitWithLabelParsing) {
 }
 
 //TODO: add test cases for loop fusion and apply function fusion
+
+
+
+TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const parent : vector{Vertex}(int) = -1;\n"
+                             "func updateEdge(src : Vertex, dst : Vertex) -> output : bool "
+                             "  parent[dst] = src; "
+                             "  output = true; "
+                             "end\n"
+                             "func toFilter(v : Vertex) -> output : bool "
+                             "  output = parent[v] == -1; "
+                             "end\n"
+                             "func main() "
+                             "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                             "  frontier.addVertex(1); "
+                             "  while (frontier.getVertexSetSize() != 0) "
+                             "      #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge); "
+                             "  end\n"
+                             "  print \"finished running BFS\"; \n"
+                             "end");
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "push");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+}
