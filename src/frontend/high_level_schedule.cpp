@@ -97,7 +97,9 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
             } else if (apply_schedule_str == "pull"){
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
-            } else{
+            } else if (apply_schedule_str == "sparse_frontier"){
+                (*schedule_->apply_schedules)[apply_label].frontier_type = ApplySchedule::FrontierType::Sparse;
+            } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
             }
 

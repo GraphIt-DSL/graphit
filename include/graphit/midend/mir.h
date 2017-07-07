@@ -533,6 +533,11 @@ namespace graphit {
 
         struct VertexSetAllocExpr : public NewExpr {
             Expr::Ptr size_expr;
+            enum class Layout {
+                SPARSE,
+                DENSE
+            };
+            Layout layout;
             typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

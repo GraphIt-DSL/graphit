@@ -48,9 +48,15 @@ namespace graphit {
             Serial
         };
 
+        enum class FrontierType{
+            Sparse,
+            Dense
+        };
+
         std::string scope_label_name;
         DirectionType direction_type;
         ParType parallel_type;
+        FrontierType frontier_type;
     };
 
     /**
