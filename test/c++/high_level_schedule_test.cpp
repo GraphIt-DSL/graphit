@@ -295,3 +295,214 @@ TEST_F(HighLevelScheduleTest, BFSSerialPushSparseSchedule) {
     mir::VertexSetAllocExpr::Ptr alloc_expr = mir::to<mir::VertexSetAllocExpr>(frontier_decl->initVal);
     EXPECT_EQ(mir::VertexSetAllocExpr::Layout::SPARSE, alloc_expr->layout);
 }
+
+
+TEST_F(HighLevelScheduleTest, SimpleHighLevelLoopFusion) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 1:10; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach the labels "l1" and "l2" to the for loop statements
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+
+    main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    //ony l3 loop statement left
+    EXPECT_EQ (1,  main_func_decl->body->stmts.size());
+
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_stmt =
+            std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop, "l3");
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, schedule_for_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+}
+
+TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue1) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 3:7; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach the labels "l1" and "l2" to the for loop statements
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+
+    main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l3_loop_prologue = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    fir::ForStmt::Ptr l3_loop_epilogue = fir::to<fir::ForStmt>(main_func_decl->body->stmts[2]);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    //Check that 3 loops were generated: the prologue, the l3 loop (the main loop), and the epilogue loop
+    EXPECT_EQ (3,  main_func_decl->body->stmts.size());
+
+    // Check the correctness of the L3 loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_stmt =
+            std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop, "l3");
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, schedule_for_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+
+    // Check the correctness of the L3 prologue loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_prologue_stmt =
+                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop_prologue, "l3_prologue");
+
+    //the body of l3_prologue loop should consists of 1 statement
+    EXPECT_EQ(1, schedule_for_prologue_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_prologue_blk = schedule_for_prologue_stmt->getBody()->emitFIRNode();
+    //expects the statement of the l3 prologue loop body to be a print statement
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_prologue_blk->stmts[0]));
+
+    // Check the correctness of the L3 epilogue loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_epilogue_stmt =
+                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop_epilogue, "l3_epilogue");
+
+    //the body of l3_epilogue loop should consists of 1 statement
+    EXPECT_EQ(1, schedule_for_epilogue_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_epilogue_blk = schedule_for_epilogue_stmt->getBody()->emitFIRNode();
+    //expects the statement of the l3 epilogue loop body to be a print statement
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_epilogue_blk->stmts[0]));
+}
+
+
+TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue2) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 1:7; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach the labels "l1" and "l2" to the for loop statements
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+
+    main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+        fir::ForStmt::Ptr l3_loop_epilogue = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    //Check that 2 loops were generated: the l3 loop (the main loop), and the epilogue loop
+    EXPECT_EQ (2,  main_func_decl->body->stmts.size());
+
+    // Check the correctness of the L3 loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_stmt =
+            std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop, "l3");
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, schedule_for_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+
+    // Check the correctness of the L3 epilogue loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_epilogue_stmt =
+                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop_epilogue, "l3_epilogue");
+
+    //the body of l3_epilogue loop should consists of 1 statement
+    EXPECT_EQ(1, schedule_for_epilogue_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_epilogue_blk = schedule_for_epilogue_stmt->getBody()->emitFIRNode();
+    //expects the statement of the l3 epilogue loop body to be a print statement
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_epilogue_blk->stmts[0]));
+}
+
+TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
+    istringstream is("func main() "
+                             "for i in 1:10; print i; end "
+                             "for i in 3:10; print i+1; end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+    //attach the labels "l1" and "l2" to the for loop statements
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l2_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+    l1_loop->stmt_label = "l1";
+    l2_loop->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+
+    main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l3_loop_prologue = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[1]);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    //Check that 2 loops were generated: the prologue and the l3 loop (the main loop)
+    EXPECT_EQ (2,  main_func_decl->body->stmts.size());
+
+    // Check the correctness of the L3 loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_stmt =
+            std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop, "l3");
+
+    //the body of l3 loop should consists of 2 statements
+    EXPECT_EQ(2, schedule_for_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
+    //expects both statements of the l3 loop body to be print statements
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+
+    // Check the correctness of the L3 prologue loop generated.
+    fir::low_level_schedule::ForStmtNode::Ptr schedule_for_prologue_stmt =
+                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_loop_prologue, "l3_prologue");
+
+    //the body of l3_prologue loop should consists of 1 statement
+    EXPECT_EQ(1, schedule_for_prologue_stmt->getBody()->getNumStmts());
+
+    auto fir_stmt_prologue_blk = schedule_for_prologue_stmt->getBody()->emitFIRNode();
+    //expects the statement of the l3 prologue loop body to be a print statement
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_prologue_blk->stmts[0]));
+}
+
+

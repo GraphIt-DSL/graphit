@@ -187,5 +187,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_with_tracking'))
+    # suite.addTest(TestGraphitCompiler('test_cc_with_tracking'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
