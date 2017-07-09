@@ -19,12 +19,35 @@ namespace graphit {
 
 
         void MIRVisitor::visit(ExprStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRVisitor::visit(AssignStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->lhs->accept(this);
             stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
+        void MIRVisitor::visit(ReduceStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->lhs->accept(this);
+            stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
@@ -44,9 +67,11 @@ namespace graphit {
 //            }
 //            func_decl->result->accept(this);
 
+            enclosing_func_decl_ = func_decl;
             if (func_decl->body->stmts) {
                 func_decl->body->accept(this);
             }
+            enclosing_func_decl_ = nullptr;
         }
 
         void MIRVisitor::visit(Call::Ptr expr) {
@@ -134,9 +159,15 @@ namespace graphit {
             //expr->struct_target->accept(this);
         }
 
-        void MIRVisitor::visit(std::shared_ptr<ForStmt> for_stmt) {
-            for_stmt->domain->accept(this);
-            for_stmt->body->accept(this);
+        void MIRVisitor::visit(std::shared_ptr<ForStmt> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain->accept(this);
+            stmt->body->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRVisitor::visit(std::shared_ptr<ForDomain> for_domain) {
@@ -173,9 +204,15 @@ namespace graphit {
             }
         }
 
-        void MIRVisitor::visit(std::shared_ptr<WhileStmt> while_stmt) {
-            while_stmt->cond->accept(this);
-            while_stmt->body->accept(this);
+        void MIRVisitor::visit(std::shared_ptr<WhileStmt> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->cond->accept(this);
+            stmt->body->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRVisitor::visit(std::shared_ptr<IfStmt> stmt) {
@@ -187,7 +224,7 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
-            expr->accept(this);
+            expr->operand->accept(this);
         }
 
     }

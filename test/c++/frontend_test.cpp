@@ -386,3 +386,52 @@ TEST_F(FrontendTest, SimpleBreak) {
                              "end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, SimpleAttachLabel) {
+    istringstream is("func main() "
+                             "# l1 # for i in 1:2; print 4; end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
+
+TEST_F(FrontendTest, SimpleAttachLabelNoSpace) {
+    istringstream is("func main() "
+                             "#l1# for i in 1:2; print 4; end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
+TEST_F(FrontendTest, SimpleNestedLabelParsing) {
+    istringstream is("func main() "
+                             "# l1 # for i in 1:2; # s1 # print 4; end "
+                             "end");
+
+
+
+    EXPECT_EQ (0,  basicTest(is));
+
+    fir::FuncDecl::Ptr main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
+    fir::ForStmt::Ptr l1_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
+    fir::PrintStmt::Ptr s1_print = fir::to<fir::PrintStmt>(l1_loop->body->stmts[0]);
+
+    EXPECT_EQ("l1", l1_loop->stmt_label);
+    EXPECT_EQ("s1", s1_print->stmt_label);
+
+}
+
+TEST_F(FrontendTest, SimpleApplyWithModifiedTracking){
+    istringstream is("func update (v: Vertex) -> output :bool output = true; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo).modified(vectora); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimplePlusReduce) {
+    istringstream is("func add(a : int, b: int) a += b; end");
+    EXPECT_EQ (0,  basicTest(is));
+}

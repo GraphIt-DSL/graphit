@@ -12,11 +12,12 @@ namespace  graphit {
 
         //reset the tensor reads
         auto lower_tensor_read = LowerTensorRead(schedule_);
-
+        auto lower_vertexset_layout = LowerVertexsetDecl(schedule_);
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
 
         for (auto function : functions){
             lower_tensor_read.rewrite(function);
+            function->accept(&lower_vertexset_layout);
         }
 
 
@@ -39,7 +40,7 @@ namespace  graphit {
 
                     if (physical_data_layout != schedule_->physical_data_layouts->end()){
                         //if physical layout schedule is being specified
-                        if (physical_data_layout->second.data_layout_type == DataLayoutType::STRUCT){
+                        if (physical_data_layout->second.data_layout_type == FieldVectorDataLayoutType::STRUCT){
                             genStructDecl(var_decl, physical_data_layout->second);
                             continue;
                         }
@@ -59,7 +60,7 @@ namespace  graphit {
     }
 
     void PhysicalDataLayoutLower::genStructDecl(const mir::VarDecl::Ptr var_decl,
-                                                const PhysicalDataLayout data_layout) {
+                                                const FieldVectorPhysicalDataLayout data_layout) {
         // check if the struct type has already been added
 
 
@@ -116,7 +117,7 @@ namespace  graphit {
             auto physical_data_layout = schedule_->physical_data_layouts->find(target_name);
 
             if (physical_data_layout != schedule_->physical_data_layouts->end()) {
-                if (physical_data_layout->second.data_layout_type == DataLayoutType::STRUCT){
+                if (physical_data_layout->second.data_layout_type == FieldVectorDataLayoutType::STRUCT){
                     //Generate TensorStructReadExpr
                     auto tensor_struct_read = std::make_shared<mir::TensorStructReadExpr>();
                     tensor_struct_read->index = rewrite<mir::Expr>(tensor_read->index);
@@ -135,4 +136,26 @@ namespace  graphit {
         node = tensor_array_read;
     }
 
+    void PhysicalDataLayoutLower::LowerVertexsetDecl::visit(mir::VarDecl::Ptr var_decl) {
+        if(mir::isa<mir::VertexSetType>(var_decl->type)){
+            //attach scheduling labels to vertexset declarations
+            if (mir::isa<mir::VertexSetAllocExpr>(var_decl->initVal)){
+                //try to supply new arguments to vertexset constructor
+                auto vertexset_alloc_expr = mir::to<mir::VertexSetAllocExpr>(var_decl->initVal);
+                if (schedule_ != nullptr
+                    && schedule_->vertexset_data_layout.find(var_decl->name) != schedule_->vertexset_data_layout.end()){
+                    //TODO: involve label scope, right now, this vertexset assumes that it would be in the root scope
+                    switch (schedule_->vertexset_data_layout[var_decl->name].data_layout_type) {
+                        case VertexsetPhysicalLayout::DataLayout::SPARSE :
+                            vertexset_alloc_expr->layout = mir::VertexSetAllocExpr::Layout::SPARSE;
+                            break;
+                        case VertexsetPhysicalLayout::DataLayout::DENSE:
+                            vertexset_alloc_expr->layout = mir::VertexSetAllocExpr::Layout::DENSE;
+                            break;
+
+                    }
+                }
+            }
+        }
+    }
 }

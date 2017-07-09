@@ -11,7 +11,7 @@ namespace graphit {
 // here to denote zero or more instances of the enclosing term, while '[]' is
 // used to denote zero or one instance of the enclosing term.
 
-    Parser::Parser(std::vector<ParseError> * errors) : errors(errors) {}
+    Parser::Parser(std::vector<ParseError> *errors) : errors(errors) {}
 
     fir::Program::Ptr Parser::parse(const TokenStream &tokens) {
         this->tokens = tokens;
@@ -87,6 +87,7 @@ namespace graphit {
 
         return elemTypeDecl;
     }
+
 // field_decl_list: {field_decl}
     std::vector<fir::FieldDecl::Ptr> Parser::parseFieldDeclList() {
         std::vector<fir::FieldDecl::Ptr> fields;
@@ -339,6 +340,7 @@ namespace graphit {
 
 // stmt: var_decl | const_decl | if_stmt | while_stmt | do_while_stmt
 //     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt | break_stmt
+//    | # identifier # stmt
     fir::Stmt::Ptr Parser::parseStmt() {
         switch (peek().type) {
             case Token::Type::VAR:
@@ -356,10 +358,18 @@ namespace graphit {
             case Token::Type::PRINT:
             case Token::Type::PRINTLN:
                 return parsePrintStmt();
-            case Token::Type::APPLY:
-                return parseApplyStmt();
-            case Token::Type ::BREAK:
+//            case Token::Type::APPLY:
+//                return parseApplyStmt();
+            case Token::Type::BREAK:
                 return parseBreakStmt();
+            case Token::Type::NUMBER_SIGN: {
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Identifier::Ptr label = parseIdent();
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Stmt::Ptr stmt = parseStmt();
+                stmt->stmt_label = label->ident;
+                return stmt;
+            }
             default:
                 return parseExprOrAssignStmt();
         }
@@ -713,6 +723,32 @@ namespace graphit {
         }
     }
 
+    fir::ReduceStmt::Ptr Parser::parseReduceStmt(Token::Type token_type,
+                                                 fir::ReduceStmt::ReductionOp reduce_op,
+                                                 fir::Expr::Ptr expr){
+        auto reduce_stmt = std::make_shared<fir::ReduceStmt>();
+        reduce_stmt->reduction_op = reduce_op;
+        reduce_stmt->lhs.push_back(expr);
+        while (tryConsume(Token::Type::COMMA)) {
+            const fir::Expr::Ptr expr = parseExpr();
+            reduce_stmt->lhs.push_back(expr);
+        }
+
+        consume(token_type);
+        reduce_stmt->expr = parseExpr();
+
+        for (const auto lhs : reduce_stmt->lhs) {
+            if (fir::isa<fir::VarExpr>(lhs)) {
+                const std::string varName = fir::to<fir::VarExpr>(lhs)->ident;
+
+                if (!decls.contains(varName)) {
+                    decls.insert(varName, IdentType::OTHER);
+                }
+            }
+        }
+        return reduce_stmt;
+    }
+
 // expr_or_assign_stmt: [[expr {',' expr} '='] expr] ';'
     fir::ExprStmt::Ptr Parser::parseExprOrAssignStmt() {
         try {
@@ -748,6 +784,18 @@ namespace graphit {
                         stmt = assignStmt;
                         break;
                     }
+                    case Token::Type::PLUS_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::PLUS_REDUCE, fir::ReduceStmt::ReductionOp::SUM, expr);
+                        break;
+                    }
+                    case Token::Type::MIN_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MIN_REDUCE, fir::ReduceStmt::ReductionOp::MIN, expr);
+                        break;
+                    }
+                    case Token::Type::MAX_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MAX_REDUCE, fir::ReduceStmt::ReductionOp::MAX, expr);
+                        break;
+                    }
                     default:
                         stmt = std::make_shared<fir::ExprStmt>();
                         stmt->expr = expr;
@@ -771,7 +819,7 @@ namespace graphit {
 
 // expr: map_expr | new_expr | or_expr
     fir::Expr::Ptr Parser::parseExpr() {
-        switch(peek().type){
+        switch (peek().type) {
             case Token::Type::MAP:
                 return parseMapExpr();
             case Token::Type::NEW:
@@ -1095,7 +1143,7 @@ namespace graphit {
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
 // field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' ident ')'
-// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')'}
+// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')' ['.' modified '(' ident ')'],}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1103,7 +1151,7 @@ namespace graphit {
 
         while (tryConsume(Token::Type::PERIOD)) {
 
-            if (tryConsume(Token::Type::APPLY)){
+            if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
@@ -1117,7 +1165,7 @@ namespace graphit {
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
-            } else if (tryConsume(Token::Type::FROM)){
+            } else if (tryConsume(Token::Type::FROM)) {
                 //edgesets.from().apply() or edgesets.from().to().apply() pattern
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
 
@@ -1128,7 +1176,7 @@ namespace graphit {
                 consume(Token::Type::RP);
                 consume(Token::Type::PERIOD);
 
-                if (tryConsume(Token::Type::TO)){
+                if (tryConsume(Token::Type::TO)) {
                     //.from(expr).to(expr).apply(func)
                     consume(Token::Type::LP);
                     auto to_expr = std::make_shared<fir::ToExpr>();
@@ -1145,6 +1193,16 @@ namespace graphit {
                 apply_expr->from_expr = from_expr;
 
                 consume(Token::Type::RP);
+
+                //potentially there is another 'modified' call that adds implicit tracking to a field
+                if (tryConsume(Token::Type::PERIOD)) {
+                    consume(Token::Type::MODIFIED);
+                    consume(Token::Type::LP);
+                    auto change_tracking_field = parseIdent();
+                    consume(Token::Type::RP);
+                    apply_expr->change_tracking_field = change_tracking_field;
+                }
+
                 expr = apply_expr;
 
             } else {
@@ -2247,7 +2305,7 @@ namespace graphit {
         vertex_element_type_list.push_back(dst_vertex_element_type);
 
         // if a third type argument is supplied, we assume that it is a weight
-        if (tryConsume(Token::Type::COMMA)){
+        if (tryConsume(Token::Type::COMMA)) {
             const fir::ScalarType::Ptr weight_type = parseScalarType();
             edgeSetType->weight_type = weight_type;
         }
@@ -2273,7 +2331,7 @@ namespace graphit {
 
         fir::NewExpr::Ptr output_new_expr;
 
-        if (tryConsume(Token::Type::VERTEX_SET)){
+        if (tryConsume(Token::Type::VERTEX_SET)) {
             output_new_expr = std::make_shared<fir::VertexSetAllocExpr>();
 
             consume(Token::Type::LC);
@@ -2282,9 +2340,9 @@ namespace graphit {
             consume(Token::Type::RC);
 
             consume(Token::Type::LP);
-            if (tryConsume(Token::Type::RP)){
+            if (tryConsume(Token::Type::RP)) {
                 //no expression in the
-            }else {
+            } else {
                 const auto expr = parseExpr();
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
@@ -2338,9 +2396,9 @@ namespace graphit {
 
 
         // set up function call intrinsics
-        decls.insert("fabs",  IdentType::FUNCTION);
-        decls.insert("startTimer",  IdentType::FUNCTION);
-        decls.insert("stopTimer",  IdentType::FUNCTION);
+        decls.insert("fabs", IdentType::FUNCTION);
+        decls.insert("startTimer", IdentType::FUNCTION);
+        decls.insert("stopTimer", IdentType::FUNCTION);
 
     }
 

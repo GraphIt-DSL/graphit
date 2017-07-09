@@ -56,6 +56,10 @@ namespace graphit {
         if (token == "where") return Token::Type::WHERE;
         if (token == "from") return Token::Type::FROM;
         if (token == "break") return Token::Type::BREAK;
+        if (token == "#") return Token::Type::NUMBER_SIGN;
+        if (token == "modified") return Token::Type::MODIFIED;
+        if (token == "min=") return Token::Type::MIN_REDUCE;
+        if (token == "max=") return Token::Type::MAX_REDUCE;
 
 
         // If string does not correspond to a keyword, assume it is an identifier.
@@ -70,13 +74,26 @@ namespace graphit {
 
         //outer loop that goes from token to token
         while (programStream.peek() != EOF) {
+
+            //tokens made up of alphas
             //a_b is a token, can start with a alpha (alphabetical number)
-            if (programStream.peek() == '_' || std::isalpha(programStream.peek())) {
+            //# is also acceptable for a label
+            if (programStream.peek() == '#' || programStream.peek() == '_' || std::isalpha(programStream.peek())) {
                 std::string tokenString(1, programStream.get());
 
-                while (programStream.peek() == '_' ||
-                       std::isalnum(programStream.peek())) {
-                    //a token can have _ or a number as content of the token
+                //if token string is #, then it is the sole token string (not a variable)
+                if (tokenString != "#"){
+
+                    while (programStream.peek() == '_' ||
+                           std::isalnum(programStream.peek())) {
+                        //a token can have _ or a number as content of the token
+                        tokenString += programStream.get();
+                    }
+
+                }
+
+                if ((tokenString == "min" && programStream.peek() == '=') ||
+                        (tokenString == "max" && programStream.peek() == '=')){
                     tokenString += programStream.get();
                 }
 
@@ -268,8 +285,7 @@ namespace graphit {
                                     }
                                 }
                                 break;
-                            case '}':
-                            {
+                            case '}': {
                                 programStream.get();
                                 if (state == ScanState::MLTEST) {
                                     state = ScanState::INITIAL;
@@ -279,8 +295,7 @@ namespace graphit {
                                 col += 2;
                                 break;
                             }
-                            default:
-                            {
+                            default: {
                                 std::string comment;
                                 while (programStream.peek() != '\n' &&
                                        programStream.peek() != EOF) {
@@ -293,8 +308,7 @@ namespace graphit {
                             }
                         }
                         break;
-                    case '"':
-                    {
+                    case '"': {
                         Token newToken;
                         newToken.type = Token::Type::STRING_LITERAL;
                         newToken.lineBegin = line;
@@ -397,10 +411,20 @@ namespace graphit {
                         programStream.get();
                         ++col;
                         break;
-                    case '+':
+                    case '+': {
                         programStream.get();
-                        tokens.addToken(Token::Type::PLUS, line, col++);
+
+                        if (programStream.peek() == '=') {
+                            // += token is plusreduce
+                            programStream.get();
+                            tokens.addToken(Token::Type::PLUS_REDUCE, line, col, 2);
+                        } else {
+                            tokens.addToken(Token::Type::PLUS, line, col++);
+                        }
+
                         break;
+                    }
+
                     case '-':
                         programStream.get();
                         if (programStream.peek() == '>') {
@@ -411,8 +435,7 @@ namespace graphit {
                             tokens.addToken(Token::Type::MINUS, line, col++);
                         }
                         break;
-                    default:
-                    {
+                    default: {
                         Token newToken;
                         newToken.type = Token::Type::INT_LITERAL;
                         newToken.lineBegin = line;
@@ -422,7 +445,7 @@ namespace graphit {
                             !std::isdigit(programStream.peek())) {
                             std::stringstream errMsg;
                             errMsg << "unexpected symbol '"
-                                   << (char)programStream.peek() << "'";
+                                   << (char) programStream.peek() << "'";
                             reportError(errMsg.str(), line, col);
 
                             while (programStream.peek() != EOF &&
@@ -447,7 +470,7 @@ namespace graphit {
                             if (!std::isdigit(programStream.peek())) {
                                 std::stringstream errMsg;
                                 errMsg << "unexpected symbol '"
-                                       << (char)programStream.peek() << "'";
+                                       << (char) programStream.peek() << "'";
                                 reportError(errMsg.str(), line, col);
 
                                 while (programStream.peek() != EOF &&
@@ -479,7 +502,7 @@ namespace graphit {
                             if (!std::isdigit(programStream.peek())) {
                                 std::stringstream errMsg;
                                 errMsg << "unexpected symbol '"
-                                       << (char)programStream.peek() << "'";
+                                       << (char) programStream.peek() << "'";
                                 reportError(errMsg.str(), line, col);
 
                                 while (programStream.peek() != EOF &&
@@ -521,8 +544,8 @@ namespace graphit {
         return tokens;
     }
 
-    void Scanner::printDebugInfo(const std::string & token_string, TokenStream & token_stream){
-        util::printDebugInfo(("current token string: "  + token_string));
+    void Scanner::printDebugInfo(const std::string &token_string, TokenStream &token_stream) {
+        util::printDebugInfo(("current token string: " + token_string));
         std::stringstream ss;
         ss << token_stream;
         util::printDebugInfo((ss.str() + "\n ----- \n"));

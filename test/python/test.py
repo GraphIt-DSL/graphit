@@ -173,14 +173,19 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_cc(self):
         self.basic_compile_test("simple_cc.gt")
 
+    def test_cc_with_tracking(self):
+        self.basic_compile_test("cc.gt")
+
     def test_simple_sssp(self):
         self.basic_compile_test("simple_sssp.gt")
+
+    def test_sssp_with_tracking(self):
+        self.basic_compile_test("sssp.gt")
 
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
-
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
+    # suite.addTest(TestGraphitCompiler('test_cc_with_tracking'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

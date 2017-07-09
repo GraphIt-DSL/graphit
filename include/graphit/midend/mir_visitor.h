@@ -6,6 +6,8 @@
 #define GRAPHIT_MIR_VISITOR_H
 
 #include <memory>
+#include <assert.h>
+#include <graphit/midend/label_scope.h>
 
 namespace graphit {
     namespace mir {
@@ -24,6 +26,8 @@ namespace graphit {
         struct PrintStmt;
         struct BreakStmt;
         struct AssignStmt;
+        struct ReduceStmt;
+
         struct StmtBlock;
         struct Expr;
 
@@ -83,6 +87,9 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ForDomain>);
             virtual void visit(std::shared_ptr<AssignStmt>);
+            virtual void visit(std::shared_ptr<ReduceStmt>);
+
+
             virtual void visit(std::shared_ptr<PrintStmt>);
             virtual void visit(std::shared_ptr<BreakStmt>) {};
             virtual void visit(std::shared_ptr<ExprStmt>);
@@ -131,6 +138,11 @@ namespace graphit {
 
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+        protected:
+            std::shared_ptr<MIRNode> node;
+            LabelScope label_scope_;
+            std::shared_ptr<FuncDecl> enclosing_func_decl_ = nullptr;
 
         };
     }

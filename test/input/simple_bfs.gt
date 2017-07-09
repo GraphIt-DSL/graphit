@@ -10,9 +10,8 @@ const parent : vector{Vertex}(int) = -1;
 % const parent : vector{Vertex}(Vertex) = -1;
 
 
-func updateEdge(src : Vertex, dst : Vertex) -> output : bool
+func updateEdge(src : Vertex, dst : Vertex)
     parent[dst] = src;
-    output = true;
 end
 
 func toFilter(v : Vertex) -> output : bool
@@ -27,7 +26,7 @@ func main()
     frontier.addVertex(1);
 
     while (frontier.getVertexSetSize() != 0)
-        frontier = edges.from(frontier).to(toFilter).apply(updateEdge);
+        frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
     end
 
     var elapsed_time : float = stopTimer();

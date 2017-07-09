@@ -97,7 +97,12 @@ namespace graphit {
             WHERE,
             LOAD,
             FROM,
-            BREAK
+            BREAK,
+            NUMBER_SIGN,
+            MODIFIED,
+            PLUS_REDUCE,
+            MIN_REDUCE,
+            MAX_REDUCE
         };
 
         Type        type;
