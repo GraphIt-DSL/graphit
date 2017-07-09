@@ -67,25 +67,112 @@ namespace graphit {
                 fir::RangeDomain::Ptr l1_domain = l1_for->for_domain_->emitFIRRangeDomain();
                 fir::RangeDomain::Ptr l2_domain = l2_for->for_domain_->emitFIRRangeDomain();
 
+                int l0 = fir::to<fir::IntLiteral>(l1_domain->lower)->val;
+                int u0 = fir::to<fir::IntLiteral>(l1_domain->upper)->val;
+                int l1 = fir::to<fir::IntLiteral>(l2_domain->lower)->val;
+                int u1 = fir::to<fir::IntLiteral>(l2_domain->upper)->val;
+
                 assert(l1_body_blk->emitFIRNode() != nullptr);
                 assert(l2_body_blk->emitFIRNode() != nullptr);
-                assert(fir::to<fir::IntLiteral>(l1_domain->lower)->val == fir::to<fir::IntLiteral>(l2_domain->lower)->val);
-                assert(fir::to<fir::IntLiteral>(l1_domain->upper)->val == fir::to<fir::IntLiteral>(l2_domain->upper)->val);
+
+                assert((l1 <= u0) && (l0 <= u1) && "Loops cannot be fused because they are completely separate.");
+                assert((l0>=0) && (u0>=0) && (l1>=0) && (u1>=0) && "Loop bounds must be positive.");
+
+                int prologue_size = std::max(l0, l1) - std::min(l0,l1);
+
+                // Generate the prologue of the fused loops.
+                if (prologue_size != 0)
+                {
+                    //create and set bounds for the prologue loop
+                    fir::low_level_schedule::RangeDomain::Ptr l3_prologue_range_domain =
+                                        std::make_shared<fir::low_level_schedule::RangeDomain>
+                                            (std::min(l0,l1), std::max(l0, l1));
+
+                    std::string prologue_label = fused_loop_label + "_prologue";
+
+                    fir::low_level_schedule::ForStmtNode::Ptr l3_prologue_loop;
+
+                    if (l0<l1)
+                    {
+                        fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
+                                = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
+
+                        l3_prologue_loop =
+                                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_prologue_range_domain,
+                                                                                       l1_body_blk_copy,
+                                                                                       prologue_label,
+                                                                                       "i");
+                    }
+                    else
+                    {
+                        fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
+                                = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
+
+                        l3_prologue_loop =
+                                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_prologue_range_domain,
+                                                                                       l2_body_blk_copy,
+                                                                                       prologue_label,
+                                                                                       "i");
+                    }
+
+                    schedule_program_node->insertBefore(l3_prologue_loop, original_loop_label1);
+                }
 
                 //create and set bounds for l3_loop (the fused loop)
                 fir::low_level_schedule::RangeDomain::Ptr l3_range_domain =
                                     std::make_shared<fir::low_level_schedule::RangeDomain>
-                                        (fir::to<fir::IntLiteral>(l1_domain->lower)->val,
-                                         fir::to<fir::IntLiteral>(l1_domain->upper)->val);
+                                        (max(l0,l1), min(u0,u1));
 
                 fir::low_level_schedule::ForStmtNode::Ptr l3_loop =
                                     std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain,
                                                                                            l1_body_blk,
-                                                                                           fused_loop_label,
+                                                                                          fused_loop_label,
                                                                                            "i");
 
                 l3_loop->appendLoopBody(l2_body_blk);
                 schedule_program_node->insertBefore(l3_loop, original_loop_label1);
+
+
+                int epilogue_size = std::max(u0, u1) - std::min(u0,u1);
+
+                // Generate the epilogue loop.
+                if (epilogue_size != 0)
+                {
+                    //create and set bounds for the prologue loop
+                    fir::low_level_schedule::RangeDomain::Ptr l3_epilogue_range_domain =
+                                        std::make_shared<fir::low_level_schedule::RangeDomain>
+                                            (std::min(u0,u1), std::max(u0, u1));
+
+                    std::string epilogue_label = fused_loop_label + "_epilogue";
+
+                    fir::low_level_schedule::ForStmtNode::Ptr l3_epilogue_loop;
+
+                    if (u0<u1)
+                    {
+                        fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
+                                = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
+
+                        l3_epilogue_loop =
+                                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_epilogue_range_domain,
+                                                                                       l2_body_blk_copy,
+                                                                                       epilogue_label,
+                                                                                       "i");
+                    }
+                    else
+                    {
+                        fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
+                                = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
+
+                        l3_epilogue_loop =
+                                std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_epilogue_range_domain,
+                                                                                       l1_body_blk_copy,
+                                                                                       epilogue_label,
+                                                                                       "i");
+                    }
+
+                    schedule_program_node->insertBefore(l3_epilogue_loop, original_loop_label1);
+                }
+
                 schedule_program_node->removeLabelNode(original_loop_label1);
                 schedule_program_node->removeLabelNode(original_loop_label2);
 
