@@ -151,6 +151,62 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::ReduceStmt::Ptr reduce_stmt) {
+
+        if (mir::isa<mir::VertexSetWhereExpr>(reduce_stmt->expr) ||
+            mir::isa<mir::EdgeSetApplyExpr>(reduce_stmt->expr)) {
+            // declaring a new vertexset as output from where expression
+            printIndent();
+            reduce_stmt->expr->accept(this);
+            oss << std::endl;
+
+            printIndent();
+
+            reduce_stmt->lhs->accept(this);
+            oss << "  = ____graphit_tmp_out; " << std::endl;
+
+        } else {
+            switch (reduce_stmt->reduce_op_){
+                case  mir::ReduceStmt::ReductionOp::SUM:
+                    printIndent();
+                    reduce_stmt->lhs->accept(this);
+                    oss << " += ";
+                    reduce_stmt->expr->accept(this);
+                    oss << ";" << std::endl;
+                    break;
+                case  mir::ReduceStmt::ReductionOp::MIN:
+                    printIndent();
+                    oss << "if ( ( ";
+                    reduce_stmt->lhs->accept(this);
+                    oss << ") > ( " ;
+                    reduce_stmt->expr->accept(this);
+                    oss << ") ) { " << std::endl;
+                    indent();
+                    printIndent();
+                    reduce_stmt->lhs->accept(this);
+                    oss << "= ";
+                    reduce_stmt->expr->accept(this);
+                    oss << "; " << std::endl;
+
+
+                    if (reduce_stmt->tracking_var_name_ != ""){
+                        // need to generate a tracking variable
+                        printIndent();
+                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                    }
+
+                    dedent();
+                    printIndent();
+                    oss << "} " << std::endl;
+                    break;
+                case  mir::ReduceStmt::ReductionOp::MAX:
+                    oss << " max= ";
+                    break;
+            }
+
+        }
+    }
+
     void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt) {
         printIndent();
         oss << "std::cout << ";

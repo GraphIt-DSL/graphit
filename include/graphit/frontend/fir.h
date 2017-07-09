@@ -785,6 +785,28 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+
+        struct ReduceStmt : public ExprStmt {
+            std::vector<Expr::Ptr> lhs;
+            enum class ReductionOp {MIN, SUM, MAX};
+            ReductionOp reduction_op;
+
+            typedef std::shared_ptr<ReduceStmt> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ReduceStmt>());
+            }
+
+            virtual unsigned getLineBegin() { return lhs.front()->getLineBegin(); }
+            virtual unsigned getColBegin() { return lhs.front()->getColBegin(); }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
         struct ReadParam : public FIRNode {
             typedef std::shared_ptr<ReadParam> Ptr;
 

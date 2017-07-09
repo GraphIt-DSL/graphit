@@ -723,6 +723,32 @@ namespace graphit {
         }
     }
 
+    fir::ReduceStmt::Ptr Parser::parseReduceStmt(Token::Type token_type,
+                                                 fir::ReduceStmt::ReductionOp reduce_op,
+                                                 fir::Expr::Ptr expr){
+        auto reduce_stmt = std::make_shared<fir::ReduceStmt>();
+        reduce_stmt->reduction_op = reduce_op;
+        reduce_stmt->lhs.push_back(expr);
+        while (tryConsume(Token::Type::COMMA)) {
+            const fir::Expr::Ptr expr = parseExpr();
+            reduce_stmt->lhs.push_back(expr);
+        }
+
+        consume(token_type);
+        reduce_stmt->expr = parseExpr();
+
+        for (const auto lhs : reduce_stmt->lhs) {
+            if (fir::isa<fir::VarExpr>(lhs)) {
+                const std::string varName = fir::to<fir::VarExpr>(lhs)->ident;
+
+                if (!decls.contains(varName)) {
+                    decls.insert(varName, IdentType::OTHER);
+                }
+            }
+        }
+        return reduce_stmt;
+    }
+
 // expr_or_assign_stmt: [[expr {',' expr} '='] expr] ';'
     fir::ExprStmt::Ptr Parser::parseExprOrAssignStmt() {
         try {
@@ -756,6 +782,18 @@ namespace graphit {
                         }
 
                         stmt = assignStmt;
+                        break;
+                    }
+                    case Token::Type::PLUS_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::PLUS_REDUCE, fir::ReduceStmt::ReductionOp::SUM, expr);
+                        break;
+                    }
+                    case Token::Type::MIN_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MIN_REDUCE, fir::ReduceStmt::ReductionOp::MIN, expr);
+                        break;
+                    }
+                    case Token::Type::MAX_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MAX_REDUCE, fir::ReduceStmt::ReductionOp::MAX, expr);
                         break;
                     }
                     default:

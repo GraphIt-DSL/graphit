@@ -395,6 +395,15 @@ TEST_F(FrontendTest, SimpleAttachLabel) {
 
 }
 
+
+TEST_F(FrontendTest, SimpleAttachLabelNoSpace) {
+    istringstream is("func main() "
+                             "#l1# for i in 1:2; print 4; end "
+                             "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
 TEST_F(FrontendTest, SimpleNestedLabelParsing) {
     istringstream is("func main() "
                              "# l1 # for i in 1:2; # s1 # print 4; end "
@@ -418,5 +427,11 @@ TEST_F(FrontendTest, SimpleApplyWithModifiedTracking){
                              "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo).modified(vectora); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SimplePlusReduce) {
+    istringstream is("func add(a : int, b: int) a += b; end");
     EXPECT_EQ (0,  basicTest(is));
 }
