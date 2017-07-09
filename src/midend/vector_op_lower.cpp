@@ -91,9 +91,6 @@ namespace  graphit {
                             main_func_decl->body->insertStmtFront(apply_stmt);
                         }
 
-
-                        //insert the new apply function to the beginning of functions
-                        //insert a vertexset apply expression in the main function
                     }
 
                 }

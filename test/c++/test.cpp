@@ -7,17 +7,18 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyWithModifiedTracking";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleWeightedEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabelNoSpace";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleModifiedReturnFrontier";
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFunctionDecl";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBreak";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgesetApplyPushSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimplePlusReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
 
@@ -34,9 +35,9 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSSerialPushSparseSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.EdgeSetGetOutDegreesFuseStruct";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
 
 
     return RUN_ALL_TESTS();

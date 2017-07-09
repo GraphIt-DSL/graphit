@@ -39,13 +39,24 @@ namespace graphit {
             Schedule * schedule_;
         };
 
-    private:
+        struct LowerVertexsetDecl : public mir::MIRVisitor {
+            using mir::MIRVisitor::visit;
+            LowerVertexsetDecl(Schedule * schedule) : schedule_(schedule){
+
+            };
+
+            virtual void visit (mir::VarDecl::Ptr var_decl);
+
+            Schedule * schedule_;
+        };
+
+        private:
         Schedule *schedule_ = nullptr;
         MIRContext *mir_context_ = nullptr;
 
         void genVariableDecls();
 
-        void genStructDecl(const mir::VarDecl::Ptr var_decl, const PhysicalDataLayout data_layout);
+        void genStructDecl(const mir::VarDecl::Ptr var_decl, const FieldVectorPhysicalDataLayout data_layout);
 
         void genArrayDecl(const mir::VarDecl::Ptr var_decl);
     };

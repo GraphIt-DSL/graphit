@@ -53,15 +53,78 @@ namespace graphit {
             if (schedule_ == nullptr){
                 schedule_ = new Schedule();
             }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->physical_data_layouts == nullptr){
+                schedule_->physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
+            }
+
             string fused_struct_name = "struct_" + first_field_name + "_" + second_field_name;
             
-            PhysicalDataLayout vector_a_layout = {first_field_name, DataLayoutType::STRUCT, fused_struct_name};
-            PhysicalDataLayout vector_b_layout = {second_field_name, DataLayoutType::STRUCT, fused_struct_name};
-            auto physical_layouts = new std::map<std::string, PhysicalDataLayout>();
-            (*physical_layouts)[first_field_name] = vector_a_layout;
-            (*physical_layouts)[second_field_name] = vector_b_layout;
+            FieldVectorPhysicalDataLayout vector_a_layout = {first_field_name, FieldVectorDataLayoutType::STRUCT, fused_struct_name};
+            FieldVectorPhysicalDataLayout vector_b_layout = {second_field_name, FieldVectorDataLayoutType::STRUCT, fused_struct_name};
 
-            schedule_->physical_data_layouts = physical_layouts;
+            (*schedule_->physical_data_layouts)[first_field_name] = vector_a_layout;
+            (*schedule_->physical_data_layouts)[second_field_name] = vector_b_layout;
+
+            return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label, std::string apply_schedule_str) {
+
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->apply_schedules == nullptr){
+                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
+            }
+
+            // If no schedule has been specified for the current label, create a new one
+            ApplySchedule apply_schedule;
+
+            if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()){
+                //Default schedule pull, serial
+                (*schedule_->apply_schedules)[apply_label]
+                        = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial};
+            }
+
+
+            if(apply_schedule_str == "push"){
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
+            } else if (apply_schedule_str == "pull"){
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
+            } else if (apply_schedule_str == "sparse_frontier"){
+                (*schedule_->apply_schedules)[apply_label].frontier_type = ApplySchedule::FrontierType::Sparse;
+            } else {
+                std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
+            }
+
+
+            return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::setVertexSet(std::string vertexset_label,
+                                                               std::string vertexset_schedule_str) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+
+
+            if (vertexset_schedule_str == "sparse") {
+                schedule_->vertexset_data_layout[vertexset_label]
+                        = VertexsetPhysicalLayout{vertexset_label, VertexsetPhysicalLayout::DataLayout::SPARSE};
+            } else if (vertexset_schedule_str == "dense") {
+                schedule_->vertexset_data_layout[vertexset_label]
+                        = VertexsetPhysicalLayout{vertexset_label, VertexsetPhysicalLayout::DataLayout::DENSE};
+            } else {
+                std::cout << "unrecognized schedule for vertexset: " << vertexset_schedule_str << std::endl;
+            }
 
             return this->shared_from_this();
         }

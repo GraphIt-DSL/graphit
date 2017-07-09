@@ -7,9 +7,10 @@
 
 #include <graphit/midend/mir_context.h>
 #include <graphit/frontend/schedule.h>
-#include <graphit/midend/mir_rewriter.h>
+#include <graphit/midend/field_vector_property.h>
 
 namespace graphit {
+
 
     /**
      * Analyze the function declarations used in apply operators
@@ -21,14 +22,71 @@ namespace graphit {
     class VectorFieldPropertiesAnalyzer {
     public:
         VectorFieldPropertiesAnalyzer(MIRContext *mir_context, Schedule *schedule)
-        : schedule_(schedule), mir_context_(mir_context) {};
+                : schedule_(schedule), mir_context_(mir_context) {};
 
-    void analyze();
+        // the main analyze method
+        void analyze();
+
+        struct PropertyAnalyzingVisitor : public mir::MIRVisitor {
+
+            PropertyAnalyzingVisitor(std::string direction) : direction_(direction) {
+                in_write_phase = false;
+                in_read_phase = false;
+                in_read_write_phase = false;
+            };
+
+            virtual void visit(mir::AssignStmt::Ptr);
+
+            virtual void visit(mir::ReduceStmt::Ptr);
+
+            virtual void visit(mir::TensorReadExpr::Ptr);
+
+        private:
+            std::string direction_;
+
+        private:
+            bool in_write_phase;
+            bool in_read_phase;
+            bool in_read_write_phase;
+
+            FieldVectorProperty buildLocalWriteFieldProperty();
+
+            FieldVectorProperty buildSharedWriteFieldProperty();
+
+            FieldVectorProperty buildLocalReadFieldProperty();
+
+            FieldVectorProperty buildSharedReadFieldProperty();
+
+            FieldVectorProperty determineFieldVectorProperty(std::string field_vector_name,
+                                                             bool in_write_phase,
+                                                             bool in_read_phase,
+                                                             std::string index,
+                                                             std::string direction);
+
+            FieldVectorProperty buildLocalReadWriteFieldProperty();
+
+            FieldVectorProperty buildSharedReadWriteFieldProperty();
+        };
+
+        struct ApplyExprVisitor : public mir::MIRVisitor {
+
+            ApplyExprVisitor(MIRContext *mir_context, Schedule *schedule) :
+                    mir_context_(mir_context), schedule_(schedule) {}
+
+            virtual void visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
+
+        private:
+            Schedule *schedule_ = nullptr;
+            MIRContext *mir_context_ = nullptr;
+        };
 
     private:
         Schedule *schedule_ = nullptr;
         MIRContext *mir_context_ = nullptr;
     };
+
 
 }
 

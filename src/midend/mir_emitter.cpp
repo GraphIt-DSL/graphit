@@ -40,6 +40,30 @@ namespace graphit {
         retStmt = mir_assign_stmt;
     }
 
+
+    void MIREmitter::visit(fir::ReduceStmt::Ptr reduce_stmt) {
+        auto mir_reduce_stmt = std::make_shared<mir::ReduceStmt>();
+        //we only have one expression on the left hand size
+        assert(reduce_stmt->lhs.size() == 1);
+        mir_reduce_stmt->lhs = emitExpr(reduce_stmt->lhs.front());
+        mir_reduce_stmt->expr = emitExpr(reduce_stmt->expr);
+        mir_reduce_stmt->stmt_label = reduce_stmt->stmt_label;
+        switch (reduce_stmt->reduction_op) {
+            case fir::ReduceStmt::ReductionOp::SUM:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::SUM;
+                break;
+
+            case fir::ReduceStmt::ReductionOp::MIN:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
+                break;
+
+            case fir::ReduceStmt::ReductionOp::MAX:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
+                break;
+        }
+        retStmt = mir_reduce_stmt;
+    }
+
     void MIREmitter::visit(fir::PrintStmt::Ptr print_stmt) {
         auto mir_print_stmt = std::make_shared<mir::PrintStmt>();
         //we support printing only one argument first
@@ -376,7 +400,8 @@ namespace graphit {
             vertexset_apply_expr->target = target_expr;
             vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
             if (apply_expr->change_tracking_field != nullptr)
-                vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
+                vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
+                        apply_expr->change_tracking_field)->ident;
             retExpr = vertexset_apply_expr;
         }
 

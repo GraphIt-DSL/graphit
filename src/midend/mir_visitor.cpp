@@ -39,6 +39,17 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(ReduceStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->lhs->accept(this);
+            stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }
@@ -56,9 +67,11 @@ namespace graphit {
 //            }
 //            func_decl->result->accept(this);
 
+            enclosing_func_decl_ = func_decl;
             if (func_decl->body->stmts) {
                 func_decl->body->accept(this);
             }
+            enclosing_func_decl_ = nullptr;
         }
 
         void MIRVisitor::visit(Call::Ptr expr) {
@@ -211,7 +224,7 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
-            expr->accept(this);
+            expr->operand->accept(this);
         }
 
     }
