@@ -63,11 +63,14 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_AoS(self):
         self.basic_compile_test("simple_pagerank_with_AoS.gt")
 
+    def test_eigenvector_pagerank_fusion(self):
+        self.basic_compile_test("eigenvector_pr_fusion.gt")
+
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
 
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_pagerank_AoS'))
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
+    unittest.TextTestRunner(verbosity=2).run(suite)
