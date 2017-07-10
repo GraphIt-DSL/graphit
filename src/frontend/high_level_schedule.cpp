@@ -254,35 +254,49 @@ namespace graphit {
             return this->shared_from_this();
         }
 
+        /**
+         * Fuse two apply functions.
+         * @param original_apply_label1: label of the first apply function.
+         * @param original_apply_label2: label of the second apply function.
+         * @param fused_apply_label: label of the fused apply function.
+         * @param fused_apply_name: name of the fused apply function.
+         */
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::fuseApplyFunctions(string original_apply_label1,
                                                                      string original_apply_label2,
                                                                      string fused_apply_label,
                                                                      string fused_apply_name)
         {
-            //use the low level APIs to fuse the apply functions
+             //use the low level APIs to fuse the apply functions
              fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
                      = std::make_shared<fir::low_level_schedule::ProgramNode>(fir_context_);
+
+             // Get the nodes of the apply functions
              fir::low_level_schedule::ApplyNode::Ptr first_apply_node
                      = schedule_program_node->cloneApplyNode(original_apply_label1);
              fir::low_level_schedule::ApplyNode::Ptr second_apply_node
                      = schedule_program_node->cloneApplyNode(original_apply_label2);
-             first_apply_node->updateStmtLabel(fused_apply_label);
 
-             // create a fused function
+             // create the fused function declaration.  The function declaration of the first
+             // apply function will be used to create the declaration of the fused function,
+             // so we will rename it then add the body of the second apply function to it and
+             // finally we will replace its label.
              fir::low_level_schedule::FuncDeclNode::Ptr first_apply_func_decl
                      = schedule_program_node->cloneFuncDecl(first_apply_node->getApplyFuncName());
              fir::low_level_schedule::StmtBlockNode::Ptr second_apply_func_body
                      = schedule_program_node->cloneFuncBody(second_apply_node->getApplyFuncName());
-
              first_apply_func_decl->appendFuncDeclBody(second_apply_func_body);
              first_apply_func_decl->setFunctionName(fused_apply_name);
 
-             schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
-
+             // Update the code that calls the apply functions
+             first_apply_node->updateStmtLabel(fused_apply_label);
              first_apply_node->updateApplyFunc(fused_apply_name);
 
+             // Insert the declaration of the fused function and a call to it
+             schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
              schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
+
+             // Remove the original label nodes
              schedule_program_node->removeLabelNode(original_apply_label1);
              schedule_program_node->removeLabelNode(original_apply_label2);
 
