@@ -253,5 +253,40 @@ namespace graphit {
 
             return this->shared_from_this();
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::fuseApplyFunctions(string original_apply_label1,
+                                                                     string original_apply_label2,
+                                                                     string fused_apply_label,
+                                                                     string fused_apply_name)
+        {
+            //use the low level APIs to fuse the apply functions
+             fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
+                     = std::make_shared<fir::low_level_schedule::ProgramNode>(fir_context_);
+             fir::low_level_schedule::ApplyNode::Ptr first_apply_node
+                     = schedule_program_node->cloneApplyNode(original_apply_label1);
+             fir::low_level_schedule::ApplyNode::Ptr second_apply_node
+                     = schedule_program_node->cloneApplyNode(original_apply_label2);
+             first_apply_node->updateStmtLabel(fused_apply_label);
+
+             // create a fused function
+             fir::low_level_schedule::FuncDeclNode::Ptr first_apply_func_decl
+                     = schedule_program_node->cloneFuncDecl(first_apply_node->getApplyFuncName());
+             fir::low_level_schedule::StmtBlockNode::Ptr second_apply_func_body
+                     = schedule_program_node->cloneFuncBody(second_apply_node->getApplyFuncName());
+
+             first_apply_func_decl->appendFuncDeclBody(second_apply_func_body);
+             first_apply_func_decl->setFunctionName(fused_apply_name);
+
+             schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
+
+             first_apply_node->updateApplyFunc(fused_apply_name);
+
+             schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
+             schedule_program_node->removeLabelNode(original_apply_label1);
+             schedule_program_node->removeLabelNode(original_apply_label2);
+
+             return this->shared_from_this();
+        }
     }
 }
