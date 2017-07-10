@@ -218,9 +218,44 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplitWithLabelParsing) {
 
 }
 
-//TODO: add test cases for loop fusion and apply function fusion
+TEST_F(HighLevelScheduleTest, HighLevelApplyFunctionFusion) {
 
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "func srcAddOne(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 1; end\n"
+                             "func srcAddTwo(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 2; end\n"
+                             "func main() "
+                             "  edges.apply(srcAddOne); "
+                             "  edges.apply(srcAddTwo); "
+                             "end");
 
+    fe_->parseStream(is, context_, errors_);
+
+    //set up the labels
+    fir::FuncDecl::Ptr main_func = fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
+    fir::ExprStmt::Ptr first_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[0]);
+    fir::ExprStmt::Ptr second_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[1]);
+    first_apply->stmt_label = "l1";
+    second_apply->stmt_label = "l2";
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node = program_schedule_node->fuseApplyFunctions("l1", "l2", "l3", "fused_func");
+
+    main_func = fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
+    first_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[0]);
+
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+    // Expects one more fused function declarations now
+    EXPECT_EQ (9,  context_->getProgram()->elems.size());
+}
 
 TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);
