@@ -29,6 +29,11 @@ namespace graphit {
                 constant->accept(this);
             }
         }
+
+        //Generates function declarations for various edgeset apply operations with different schedules
+        auto gen_edge_apply_function_visitor = GenEdgeApplyFunctionVisitor(mir_context_);
+        gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
+
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         std::vector<mir::FuncDecl::Ptr> functions = mir_context->getFunctionList();
