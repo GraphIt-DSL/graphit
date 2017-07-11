@@ -125,18 +125,21 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
-        printIndent();
-        expr_stmt->expr->accept(this);
-        if (!std::dynamic_pointer_cast<mir::ApplyExpr>(expr_stmt->expr)) {
-            oss << ";";
+
+        if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
+            printIndent();
+            auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
+            genEdgesetApplyFunctionCall(edgeset_apply_expr);
+        } else {
+            printIndent();
+            expr_stmt->expr->accept(this);
+            oss << ";" << std::endl;
         }
-        oss << std::endl;
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
 
-        if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr) ||
-            mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+        if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)) {
             // declaring a new vertexset as output from where expression
             printIndent();
             assign_stmt->expr->accept(this);
@@ -146,6 +149,13 @@ namespace graphit {
 
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; " << std::endl;
+
+        } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+            printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << " = ";
+            auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
+            genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
         } else {
             printIndent();
@@ -171,19 +181,19 @@ namespace graphit {
             oss << "  = ____graphit_tmp_out; " << std::endl;
 
         } else {
-            switch (reduce_stmt->reduce_op_){
-                case  mir::ReduceStmt::ReductionOp::SUM:
+            switch (reduce_stmt->reduce_op_) {
+                case mir::ReduceStmt::ReductionOp::SUM:
                     printIndent();
                     reduce_stmt->lhs->accept(this);
                     oss << " += ";
                     reduce_stmt->expr->accept(this);
                     oss << ";" << std::endl;
                     break;
-                case  mir::ReduceStmt::ReductionOp::MIN:
+                case mir::ReduceStmt::ReductionOp::MIN:
                     printIndent();
                     oss << "if ( ( ";
                     reduce_stmt->lhs->accept(this);
-                    oss << ") > ( " ;
+                    oss << ") > ( ";
                     reduce_stmt->expr->accept(this);
                     oss << ") ) { " << std::endl;
                     indent();
@@ -194,7 +204,7 @@ namespace graphit {
                     oss << "; " << std::endl;
 
 
-                    if (reduce_stmt->tracking_var_name_ != ""){
+                    if (reduce_stmt->tracking_var_name_ != "") {
                         // need to generate a tracking variable
                         printIndent();
                         oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
@@ -204,7 +214,7 @@ namespace graphit {
                     printIndent();
                     oss << "} " << std::endl;
                     break;
-                case  mir::ReduceStmt::ReductionOp::MAX:
+                case mir::ReduceStmt::ReductionOp::MAX:
                     oss << " max= ";
                     break;
             }
@@ -226,8 +236,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
 
-        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal) ||
-            mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+        if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
             // declaring a new vertexset as output from where expression
             printIndent();
             var_decl->initVal->accept(this);
@@ -237,6 +246,12 @@ namespace graphit {
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
 
+        } else if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+            printIndent();
+            var_decl->type->accept(this);
+            oss << var_decl->name << " = ";
+            auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
+            genEdgesetApplyFunctionCall(edgeset_apply_expr);
         } else {
             printIndent();
             oss << var_decl->modifier << ' ';
@@ -586,8 +601,6 @@ namespace graphit {
     void CodeGenCPP::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 
         // get the name of the function declaration
-        auto func_name = edgeset_apply_func_gen_->genFunctionName(apply_expr);
-
         //edgeset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
         //generate code for pull edgeset apply
@@ -618,7 +631,7 @@ namespace graphit {
             vertices_range_expr->accept(this);
             oss << " , ";
             vertices_range_expr->accept(this);
-            oss << " );"  << std::endl;
+            oss << " );" << std::endl;
 
             printIndent();
             oss << "for (int v = 0; v < ";
@@ -642,7 +655,7 @@ namespace graphit {
         for (auto edgeset : mir_context_->getEdgeSets()) {
 
             auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
-            if (edge_set_type->weight_type != nullptr){
+            if (edge_set_type->weight_type != nullptr) {
                 //weighted edgeset
                 //unweighted edgeset
                 oss << "WGraph " << edgeset->name << " = builtin_loadWeightedEdgesFromFile ( ";
@@ -677,7 +690,7 @@ namespace graphit {
         auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
 
         bool is_weighted_edgeset = false;
-        if (edgeset_type->weight_type != nullptr){
+        if (edgeset_type->weight_type != nullptr) {
             is_weighted_edgeset = true;
         }
 
@@ -711,7 +724,7 @@ namespace graphit {
 
         printIndent();
 
-        if (! is_weighted_edgeset){
+        if (!is_weighted_edgeset) {
             oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
         } else {
             oss << "for (WNode s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
@@ -744,7 +757,7 @@ namespace graphit {
         }
 
         // generating the C++ code for the apply function call
-        if (is_weighted_edgeset){
+        if (is_weighted_edgeset) {
             oss << apply_expr->input_function_name << "( s.v , d, s.w )";
         } else {
             oss << apply_expr->input_function_name << "( s , d  )";
@@ -956,5 +969,40 @@ namespace graphit {
         neg_expr->operand->accept(this);
     }
 
+    void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
+        auto function_name = edgeset_apply_func_gen_->genFunctionName(apply);
+        auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
+        oss << edgeset_apply_func_name << "(";
+        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
+        std::vector<std::string> arguments = std::vector<std::string>();
+
+        if (apply->from_func != "") {
+            if (mir_context_->isFunction(apply->from_func)) {
+                // the schedule is an input from function
+                arguments.push_back(apply->from_func);
+            } else {
+                // the input is an input from vertexset
+                arguments.push_back(apply->from_func);
+            }
+        }
+
+        if (apply->to_func != "") {
+            if (mir_context_->isFunction(apply->to_func)) {
+                // the schedule is an input to function
+                arguments.push_back("TO_FUNC " + apply->to_func);
+            } else {
+                // the input is an input to vertexset
+                arguments.push_back(apply->to_func);
+            }
+        }
+
+        arguments.push_back(apply->input_function_name);
+
+        apply->target->accept(this);
+        for (auto &arg : arguments) {
+            oss << ", " << arg;
+        }
+        oss << "); " << std::endl;
+    }
 
 }

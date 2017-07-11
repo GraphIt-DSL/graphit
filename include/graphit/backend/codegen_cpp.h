@@ -106,6 +106,9 @@ namespace graphit {
         void genStructTypeDecls();
 
         void genEdgesetPushApply(mir::PushEdgeSetApplyExpr::Ptr shared_ptr);
+
+        // generate the call to the right edgeset apply function with all the arguments
+        void genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply);
     };
 }
 

@@ -64,6 +64,8 @@ namespace graphit {
         // Deduplicate: "deduplicated" or ""
         // From: "" (no from func specified) or "from_vertexset" or "from_filter_func"
         // To: "" or "to_vertexset" or "to_filter_func"
+        // Frontier: "" (no frontier tracking) or "with_frontier"
+        // Weighted: "" (unweighted) or "weighted"
 
         string output_name = "edgeset_apply";
 
@@ -108,6 +110,12 @@ namespace graphit {
             }
         }
 
+        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+
+        if (apply_func->result.isInitialized()){
+            //if frontier tracking is enabled (when apply function returns a boolean value)
+            output_name += "_with_frontier";
+        }
 
         return output_name;
     }
