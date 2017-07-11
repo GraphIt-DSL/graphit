@@ -462,6 +462,8 @@ namespace graphit {
         struct EdgeSetApplyExpr : public ApplyExpr {
             std::string from_func = "";
             std::string to_func = "";
+            bool is_parallel = false;
+            bool enable_deduplication = false;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

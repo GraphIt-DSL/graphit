@@ -10,18 +10,21 @@
 #include <graphit/midend/mir_context.h>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 namespace graphit {
 
     /**
      * Generates function declarations for various edgeset apply operations with different schedules
      */
-    struct GenEdgeApplyFunctionVisitor : mir::MIRVisitor {
+    struct EdgesetApplyFunctionDeclGenerator : mir::MIRVisitor {
 
         virtual void visit (mir::PushEdgeSetApplyExpr::Ptr push_apply);
         virtual void visit (mir::PullEdgeSetApplyExpr::Ptr pull_apply);
 
-        GenEdgeApplyFunctionVisitor(MIRContext* mir_context) : mir_context_(mir_context){
+        EdgesetApplyFunctionDeclGenerator(MIRContext* mir_context, std::ostream& oss)
+                : mir_context_(mir_context), oss_ (oss){
+
         }
 
 
@@ -35,10 +38,14 @@ namespace graphit {
             }
         }
 
+        // figure out the right function name for the particular edgeset apply function
         std::string genFunctionName(mir::EdgeSetApplyExpr::Ptr push_apply);
 
     private:
         MIRContext* mir_context_;
+        std::ostream &oss_;
+
+        void genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply);
     };
 }
 

@@ -33,10 +33,22 @@ namespace  graphit {
                     //Pull
                     node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
                     return;
-                } else {
+                } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID){
                     //Hybrid
                     //TODO: not yet supported
+                }
 
+
+                if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Parallel){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = true;
+                } else if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Serial){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = false;
+                }
+
+                if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
+                } else if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType ::Disable){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = false;
                 }
 
             } else {

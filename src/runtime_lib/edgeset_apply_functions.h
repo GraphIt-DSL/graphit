@@ -1,0 +1,10 @@
+//
+// Created by Yunming Zhang on 7/11/17.
+//
+
+#ifndef GRAPHIT_EDGESET_APPLY_FUNCTIONS_H
+#define GRAPHIT_EDGESET_APPLY_FUNCTIONS_H
+
+
+
+#endif //GRAPHIT_EDGESET_APPLY_FUNCTIONS_H

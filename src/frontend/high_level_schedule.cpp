@@ -214,7 +214,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial};
+                        = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial, ApplySchedule::DeduplicationType::Enable};
             }
 
 
@@ -223,7 +223,16 @@ namespace graphit {
             } else if (apply_schedule_str == "pull") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
             } else if (apply_schedule_str == "sparse_frontier") {
-                (*schedule_->apply_schedules)[apply_label].frontier_type = ApplySchedule::FrontierType::Sparse;
+                //TODO: I haven't decided on the design for this option
+                //(*schedule_->apply_schedules)[apply_label].frontier_type = ApplySchedule::FrontierType::Sparse;
+            } else if (apply_schedule_str == "serial") {
+                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Serial;
+            } else if (apply_schedule_str == "parallel") {
+                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Parallel;
+            } else if (apply_schedule_str == "enable_deduplication") {
+                (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType ::Enable;
+            } else if (apply_schedule_str == "disable_deduplication") {
+                (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType ::Disable;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
             }

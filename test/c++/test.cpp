@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimplePlusReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFromToApplyFilter";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";

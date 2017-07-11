@@ -5,8 +5,7 @@
 #include <graphit/backend/codegen_cpp.h>
 
 namespace graphit {
-    int CodeGenCPP::genCPP(MIRContext *mir_context) {
-        mir_context_ = mir_context;
+    int CodeGenCPP::genCPP() {
         genIncludeStmts();
         genEdgeSets();
         //genElementData();
@@ -14,7 +13,7 @@ namespace graphit {
 
 
         //Processing the constants
-        for (auto constant : mir_context->getLoweredConstants()) {
+        for (auto constant : mir_context_->getLoweredConstants()) {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
                 // if the constant decl is a field property of an element (system vector)
@@ -31,12 +30,13 @@ namespace graphit {
         }
 
         //Generates function declarations for various edgeset apply operations with different schedules
-        auto gen_edge_apply_function_visitor = GenEdgeApplyFunctionVisitor(mir_context_);
-        gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
+        // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
+        // gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
+        // gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
-        std::vector<mir::FuncDecl::Ptr> functions = mir_context->getFunctionList();
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
             it->get()->accept(this);
@@ -584,6 +584,10 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
+
+        // get the name of the function declaration
+        auto func_name = edgeset_apply_func_gen_->genFunctionName(apply_expr);
+
         //edgeset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
         //generate code for pull edgeset apply

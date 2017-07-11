@@ -15,11 +15,13 @@
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{
     public:
-        CodeGenCPP(std::ostream &oss) : oss(oss), indentLevel(0) {
-
+        CodeGenCPP(std::ostream &input_oss, MIRContext *mir_context) :
+                oss(input_oss), mir_context_(mir_context) {
+            indentLevel = 0;
+            edgeset_apply_func_gen_ = new EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
         }
 
-        int genCPP(MIRContext* mir_context);
+        int genCPP();
 
     protected:
 
@@ -93,6 +95,7 @@ namespace graphit {
         void genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr shared_ptr);
 
         MIRContext * mir_context_;
+        EdgesetApplyFunctionDeclGenerator* edgeset_apply_func_gen_;
 
         void genElementData();
 
