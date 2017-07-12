@@ -57,13 +57,25 @@ class Bitmap {
     std::swap(end_, other.end_);
   }
 
- private:
+    // a quick API to set all the elements to 1 in bitmap
+    void set_all(){
+      reset();
+      int num_words = sizeof(start_)/sizeof(uint64_t);
+      for (int i = 0; i< num_words; i++){
+        start_[i] = ~(start_[i]);
+      }
+    }
+
+
+private:
   uint64_t *start_;
   uint64_t *end_;
 
   static const uint64_t kBitsPerWord = 64;
   static uint64_t word_offset(size_t n) { return n / kBitsPerWord; }
   static uint64_t bit_offset(size_t n) { return n & (kBitsPerWord - 1); }
+
+
 };
 
 #endif  // BITMAP_H_

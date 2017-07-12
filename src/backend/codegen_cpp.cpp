@@ -955,7 +955,6 @@ namespace graphit {
                 oss << ";" << std::endl;
                 dedent();
             }
-
             oss << "} " << struct_type_decl->name << ";" << std::endl;
         }
     }
@@ -970,11 +969,15 @@ namespace graphit {
     }
 
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
+
+
+
         auto function_name = edgeset_apply_func_gen_->genFunctionName(apply);
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
         std::vector<std::string> arguments = std::vector<std::string>();
+
 
         if (apply->from_func != "") {
             if (mir_context_->isFunction(apply->from_func)) {
@@ -989,7 +992,7 @@ namespace graphit {
         if (apply->to_func != "") {
             if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
-                arguments.push_back("TO_FUNC " + apply->to_func);
+                arguments.push_back(apply->to_func);
             } else {
                 // the input is an input to vertexset
                 arguments.push_back(apply->to_func);

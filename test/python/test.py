@@ -183,9 +183,9 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("sssp.gt")
 
 if __name__ == '__main__':
-    # unittest.main()
+    unittest.main()
     # used for enabling a specific test
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to_return_frontier'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

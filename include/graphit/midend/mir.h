@@ -464,6 +464,7 @@ namespace graphit {
             std::string to_func = "";
             bool is_parallel = false;
             bool enable_deduplication = false;
+            bool is_weighted = false;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -480,6 +481,8 @@ namespace graphit {
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -496,6 +499,8 @@ namespace graphit {
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
             }
 
             virtual void accept(MIRVisitor *visitor) {

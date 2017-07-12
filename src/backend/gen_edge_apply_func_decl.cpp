@@ -61,6 +61,7 @@ namespace graphit {
         // A total of 48 schedules for the edgeset apply operator for now
         // Direction first: "push", "pull" or "hybrid"
         // Parallel: "parallel" or "serial"
+        // Weighted: "" or "weighted"
         // Deduplicate: "deduplicated" or ""
         // From: "" (no from func specified) or "from_vertexset" or "from_filter_func"
         // To: "" or "to_vertexset" or "to_filter_func"
@@ -83,6 +84,11 @@ namespace graphit {
             output_name += "_parallel";
         } else {
             output_name += "_serial";
+        }
+
+        //check if it is weighted
+        if (apply->is_weighted){
+            output_name += "_weighted";
         }
 
         // check for deduplication
