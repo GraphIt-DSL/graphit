@@ -6,6 +6,10 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 
 const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
 const new_rank : vector{Vertex}(float) = 0.0;
+
+const old_ec : vector{Vertex}(float) = 1.0/vertices.size();
+const new_ec : vector{Vertex}(float) = 0.0;
+
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
 const error : vector{Vertex}(float) = 0.0;
 
@@ -17,15 +21,20 @@ func updateEdge(src : Vertex, dst : Vertex)
 end
 
 func updateEdgeEigenVector(src : Vertex, dst : Vertex)
-    new_rank[dst] += old_rank[src];
+    new_ec[dst] += old_ec[src];
 end
 
-func updateVertex(v : Vertex)
+func updatePRVertex(v : Vertex)
     var old_score : float = old_rank[v];
     new_rank[v] = beta_score + damp*(new_rank[v]);
     error[v] = fabs(new_rank[v] - old_rank[v]);
     old_rank[v] = new_rank[v];
     new_rank[v] = 0.0;
+end
+
+func updateECVertex(v : Vertex)
+    old_ec[v] = new_ec[v];
+    new_ec[v] = 0.0;
 end
 
 
@@ -34,12 +43,12 @@ func main()
     startTimer();
 
     #l1# for i in 1:10
-        %#s1# edges.apply(updateEdge);
-        vertices.apply(updateVertex);
+        #s1# edges.apply(updateEdge);
+        vertices.apply(updatePRVertex);
     end
     #l2# for i in 1:10
-         %#s1# edges.apply(updateEdgeEigenVector);
-         vertices.apply(updateVertex);
+         #s1# edges.apply(updateEdgeEigenVector);
+         vertices.apply(updateECVertex);
     end
     print error.sum();
 
@@ -51,3 +60,4 @@ end
 
 schedule:
     program->fuseFields("old_rank", "out_degree")->fuseForLoop("l1", "l2", "l3");
+    //program->fuseApplyFunctions("l3:l2:s1", "l3:l2:s1", "s1", "fused_kernel");

@@ -2,7 +2,8 @@ element Vertex end
 element Edge end
 
 % const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
 
 const vertices : vertexset{Vertex} = edges.getVertices();
 
@@ -18,19 +19,24 @@ func toFilter(v : Vertex) -> output : bool
     output =  parent[v] == -1;
 end
 
+func printParent(v: Vertex)
+    print parent[v];
+end
 
 func main()
 
-    startTimer();
+%    startTimer();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(1);
+    frontier.addVertex(8);
 
     while (frontier.getVertexSetSize() != 0)
         frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
     end
 
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
+    vertices.apply(printParent);
+
+%    var elapsed_time : float = stopTimer();
+%    print "elapsed time: ";
+%    print elapsed_time;
 
 end

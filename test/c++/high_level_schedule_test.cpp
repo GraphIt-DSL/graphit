@@ -257,6 +257,40 @@ TEST_F(HighLevelScheduleTest, HighLevelApplyFunctionFusion) {
     EXPECT_EQ (9,  context_->getProgram()->elems.size());
 }
 
+
+//TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
+//
+//    istringstream is("element Vertex end\n"
+//                             "element Edge end\n"
+//                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+//                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+//                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+//                             "func srcAddOne(src : Vertex, dst : Vertex) "
+//                             "vector_a[src] = vector_a[src] + 1; end\n"
+//                             "func srcAddTwo(src : Vertex, dst : Vertex) "
+//                             "vector_a[src] = vector_a[src] + 2; end\n"
+//                             "func main() "
+//                             "  #l1# for i in 1:10 "
+//                             "      #s1# edges.apply(srcAddOne); "
+//                             "  end "
+//                             "  #l2# for i in 1:10 "
+//                             "      #s1# edges.apply(srcAddTwo); "
+//                             "  end "
+//                             "end");
+//
+//    fe_->parseStream(is, context_, errors_);
+//
+//    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+//            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+//
+//    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+//    program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "s1", "fused_func");
+//
+//    // Expects that the program still compiles
+//    EXPECT_EQ (0,  basicCompileTestWithContext());
+//
+//}
+
 TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program

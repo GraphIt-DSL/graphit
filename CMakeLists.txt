@@ -48,3 +48,5 @@ set(PYTHON_SOURCE_FILES ./test/python/test.py)
 
 configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
+
+add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)

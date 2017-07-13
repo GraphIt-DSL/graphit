@@ -8,12 +8,15 @@
 #include <cinttypes>
 #include <iostream>
 #include <type_traits>
+#include "infra_gapbs/sliding_queue.h"
+
 
 template <typename NodeID_>
 struct VertexSubset {
     int64_t vertices_range_, num_vertices_;
-    bool* boolean_index_vector_;
     bool is_dense;
+    SlidingQueue<NodeID> dense_vertex_set_ = SlidingQueue<NodeID>(0);
+    Bitmap bitmap_ ;
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -25,12 +28,11 @@ struct VertexSubset {
     VertexSubset(int64_t vertices_range, int64_t num_vertices)
             : num_vertices_(num_vertices),
               vertices_range_(vertices_range),
-              is_dense(0)
+              is_dense(0),
+              bitmap_(Bitmap(vertices_range))
     {
-        boolean_index_vector_ = new bool[vertices_range];
         if (num_vertices == vertices_range){
-            for (int i = 0; i < vertices_range; i++)
-                boolean_index_vector_[i] = true;
+            bitmap_.set_all();
         }
     }
 
@@ -43,17 +45,16 @@ struct VertexSubset {
 
     // delete the contents
      ~VertexSubset(){
-        if (boolean_index_vector_ != NULL) free(boolean_index_vector_);
     }
 
     bool contains(NodeID_ v){
-        return boolean_index_vector_[v];
+        return bitmap_.get_bit(v);
     }
 
     void addVertex(NodeID_ v){
         //only increment the count if the vertex is not already in the vertexset
-        if (boolean_index_vector_[v] == false){
-            boolean_index_vector_[v] = true;
+        if (!bitmap_.get_bit(v)){
+            bitmap_.set_bit(v);
             num_vertices_++;
         }
     }

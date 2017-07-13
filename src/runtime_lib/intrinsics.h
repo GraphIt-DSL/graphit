@@ -18,6 +18,7 @@
 #include <curses.h>
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
+#include "edgeset_apply_functions.h"
 
 #include "vertexsubset.h"
 

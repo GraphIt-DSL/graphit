@@ -67,10 +67,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
 if __name__ == '__main__':
-    # unittest.main()
+    unittest.main()
     # used for enabling a specific test
 
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

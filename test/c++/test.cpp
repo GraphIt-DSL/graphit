@@ -14,13 +14,13 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimplePlusReduce";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.AddoneWithStructSchedule";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleWeightedEdgeSetApply";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSSerialPushSparseSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopAndKernelFusion";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
 

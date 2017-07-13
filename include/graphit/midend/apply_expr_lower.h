@@ -28,7 +28,8 @@ namespace graphit {
         struct LowerApplyExpr : public mir::MIRRewriter {
             using mir::MIRRewriter::visit;
 
-            LowerApplyExpr(Schedule* schedule) : schedule_(schedule){
+            LowerApplyExpr(Schedule* schedule, MIRContext* mir_context)
+                    : schedule_(schedule), mir_context_(mir_context){
 
             };
 
@@ -36,6 +37,7 @@ namespace graphit {
             virtual void visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply_expr);
 
             Schedule * schedule_;
+            MIRContext* mir_context_;
         };
 
     private:
