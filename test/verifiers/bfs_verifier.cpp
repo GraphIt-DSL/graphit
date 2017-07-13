@@ -8,6 +8,7 @@
 
 
 #include "intrinsics.h"
+#include "verifier_utils.h"
 
 using namespace std;
 
@@ -71,6 +72,8 @@ int main(int argc, char* argv[]){
         return -1;
     Builder b(cli);
     Graph g = b.MakeGraph();
+    std::string verifier_input_filename = cli.verifier_input_results();
+    pvector<double>* verifier_input_vector = readFileIntoDoubleVector(verifier_input_filename);
 
 
 }

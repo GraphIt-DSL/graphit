@@ -76,6 +76,9 @@ namespace graphit {
 
                                 break;
                             }
+
+                            stmt->accept(this);
+
                         idx++;
                     }
 
@@ -125,6 +128,12 @@ namespace graphit {
                     }
 
                     stmt_block->stmts = blk_stmts;
+
+                    if (success_flag_ == false) {
+                        for (auto &stmt : blk_stmts) {
+                            stmt->accept(this);
+                        }
+                    }
                 }
 
             private:
