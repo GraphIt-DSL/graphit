@@ -558,6 +558,7 @@ namespace graphit {
                 lhs.push_back(left->clone<Expr>());
             }
             stmt_label = reduce_stmt->stmt_label;
+            reduction_op = reduce_stmt->reduction_op;
         }
 
         FIRNode::Ptr ReduceStmt::cloneNode() {

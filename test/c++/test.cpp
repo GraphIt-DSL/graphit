@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
 
-    //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleFunctionFusion";
+    //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleInsertNameNodeBefore";
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
@@ -37,7 +37,9 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopAndKernelFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleHighLevelLoopFusion";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.HighLevelLoopFusion*";
+
 
 
     return RUN_ALL_TESTS();

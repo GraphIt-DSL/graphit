@@ -54,12 +54,12 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(StmtBlock::Ptr stmt_block) {
-
             for (auto stmt : *(stmt_block->stmts)) {
                 stmt = rewrite<Stmt>(stmt);
             }
             node = stmt_block;
         }
+
 
         void MIRRewriter::visit(FuncDecl::Ptr func_decl) {
 
