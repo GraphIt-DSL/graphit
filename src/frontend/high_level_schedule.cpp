@@ -332,7 +332,7 @@ namespace graphit {
             // create the fused function declaration.  The function declaration of the first
             // apply function will be used to create the declaration of the fused function,
             // so we will rename it then add the body of the second apply function to it and
-            // finally we will replace its label.
+            // finally we will replace its label
             fir::low_level_schedule::FuncDeclNode::Ptr first_apply_func_decl
                     = schedule_program_node->cloneFuncDecl(first_apply_node->getApplyFuncName());
 
@@ -363,6 +363,7 @@ namespace graphit {
 //            std::cout << std::endl;
 
             //schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
+            // This is a change from the original design, here we actually replace the original label
             schedule_program_node->replaceLabel(first_apply_node, original_apply_label1);
 
 //            std::cout << "fir3: " << std::endl;

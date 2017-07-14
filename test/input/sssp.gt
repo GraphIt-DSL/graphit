@@ -11,12 +11,16 @@ func updateEdge(src : Vertex, dst : Vertex, weight : int)
      SP[dst] min= (SP[src] + weight);
 end
 
+func printSP(v : Vertex)
+    print SP[v];
+end
+
 func main()
 
     startTimer();
     var n : int = edges.getVertices();
-    print "number of vertices ";
-    print n;
+    % print "number of vertices ";
+    % print n;
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
     frontier.addVertex(1); %add source vertex
@@ -32,9 +36,11 @@ func main()
 	    end
     end
 
-    print rounds;
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
+    vertices.apply(printSP);
+
+    % print rounds;
+    % var elapsed_time : float = stopTimer();
+    % print "elapsed time: ";
+    % print elapsed_time;
 
 end

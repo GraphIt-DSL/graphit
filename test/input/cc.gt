@@ -1,7 +1,9 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
+
 const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
 
@@ -13,6 +15,10 @@ func init(v : Vertex)
      IDs[v] = v;
 end
 
+func printID(v : Vertex)
+    print IDs[v];
+end
+
 func main()
 
     startTimer();
@@ -22,9 +28,12 @@ func main()
     while (frontier.getVertexSetSize() != 0)
         frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
     end
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
+
+    vertices.apply(printID);
+
+    % var elapsed_time : float = stopTimer();
+    % print "elapsed time: ";
+    % print elapsed_time;
 
 end
 

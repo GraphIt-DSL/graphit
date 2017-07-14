@@ -73,7 +73,12 @@ int main(int argc, char* argv[]){
     Builder b(cli);
     Graph g = b.MakeGraph();
     std::string verifier_input_filename = cli.verifier_input_results();
-    pvector<double>* verifier_input_vector = readFileIntoDoubleVector(verifier_input_filename);
-
+    pvector<int>* verifier_input_vector = readFileIntoVector<int>(verifier_input_filename);
+    NodeID starting_node = cli.start_vertex();
+    bool verification_flag = BFSVerifier(g, starting_node, *verifier_input_vector);
+    if (verification_flag)
+        std::cout << "BFS verification SUCCESSFUL" << std::endl;
+    else
+        std::cout << "BFS verification FAILED" << std::endl;
 
 }

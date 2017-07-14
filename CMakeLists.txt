@@ -50,3 +50,5 @@ configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)
+add_executable(sssp_verifier ./test/verifiers/sssp_verifier.cpp)
+add_executable(cc_verifier ./test/verifiers/cc_verifier.cpp)
