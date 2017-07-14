@@ -5,8 +5,16 @@
 #ifndef GRAPHIT_VERIFIER_UTILS_H
 #define GRAPHIT_VERIFIER_UTILS_H
 
-pvector<double>* readFileIntoDoubleVector(std::string file_name){
-    return new pvector<double>();
+template <typename T>
+pvector<T>* readFileIntoVector(std::string file_name){
+
+    std::ifstream file(file_name);
+    pvector<T>* output = new pvector<T>();
+    T u;
+    while (file >> u) {
+        output->push_back(u);
+    }
+    return output;
 }
 
 #endif //GRAPHIT_VERIFIER_UTILS_H

@@ -183,6 +183,15 @@ class TestGraphitCompiler(unittest.TestCase):
         # for line in iter(proc.stdout.readline,''):
         #     print line.rstrip()
 
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+             if line.rstrip().find("SUCCESSFUL"):
+                 test_flag = True
+        self.assertEqual(test_flag, True)
+
+
     def test_simple_if_elif_else(self):
         self.basic_compile_exec_test("simple_if_elif_else.gt")
 

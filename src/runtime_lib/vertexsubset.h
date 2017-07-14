@@ -16,7 +16,7 @@ struct VertexSubset {
     int64_t vertices_range_, num_vertices_;
     bool is_dense;
     SlidingQueue<NodeID> dense_vertex_set_ = SlidingQueue<NodeID>(0);
-    Bitmap bitmap_ ;
+    Bitmap * bitmap_ ;
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -28,11 +28,12 @@ struct VertexSubset {
     VertexSubset(int64_t vertices_range, int64_t num_vertices)
             : num_vertices_(num_vertices),
               vertices_range_(vertices_range),
-              is_dense(0),
-              bitmap_(Bitmap(vertices_range))
+              is_dense(0)
     {
+        bitmap_ = new Bitmap(vertices_range);
+        bitmap_->reset();
         if (num_vertices == vertices_range){
-            bitmap_.set_all();
+            bitmap_->set_all();
         }
     }
 
@@ -48,13 +49,13 @@ struct VertexSubset {
     }
 
     bool contains(NodeID_ v){
-        return bitmap_.get_bit(v);
+        return bitmap_->get_bit(v);
     }
 
     void addVertex(NodeID_ v){
         //only increment the count if the vertex is not already in the vertexset
-        if (!bitmap_.get_bit(v)){
-            bitmap_.set_bit(v);
+        if (!bitmap_->get_bit(v)){
+            bitmap_->set_bit(v);
             num_vertices_++;
         }
     }

@@ -14,6 +14,7 @@
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
 
+
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_serial(Graph &g, APPLY_FUNC apply_func) {
 
@@ -49,6 +50,118 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_from_filter_func_to_filter_func
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
 };
 
+
+template<typename APPLY_FUNC, typename TO_FUNC>
+VertexSubset<NodeID> *edgeset_apply_pull_serial_from_vertexset_to_filter_func_with_frontier
+        (Graph &g, VertexSubset<NodeID> *from_vertexset, TO_FUNC to_func, APPLY_FUNC apply_func) {
+
+    //The original GAPBS implmentation from BFS
+
+    //    int64_t awake_count = 0;
+//    next.reset();
+//#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
+//    for (NodeID u=0; u < g.num_nodes(); u++) {
+//        if (parent[u] < 0) {
+//            for (NodeID v : g.in_neigh(u)) {
+//                if (front.get_bit(v)) {
+//                    parent[u] = v;
+//                    awake_count++;
+//                    next.set_bit(u);
+//                    break;
+//                }
+//            }
+//        }
+
+    Bitmap* next = new Bitmap(g.num_nodes());
+    Bitmap* current_frontier = from_vertexset->bitmap_;
+    int count = 0;
+
+    for (NodeID u = 0; u < g.num_nodes(); u++) {
+        if (to_func(u)) {
+            for (NodeID v : g.in_neigh(u)) {
+                if (current_frontier->get_bit(v)) {
+                    if (apply_func(v, u)){
+                        next->set_bit(u);
+                        count++;
+                    }
+                }
+            }
+        }
+    }
+
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
+    next_frontier->bitmap_ = next;
+
+    return next_frontier;
+};
+
+
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> *edgeset_apply_pull_serial_from_vertexset_with_frontier
+        (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+
+    //The original GAPBS implmentation from BFS
+
+    //    int64_t awake_count = 0;
+//    next.reset();
+//#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
+//    for (NodeID u=0; u < g.num_nodes(); u++) {
+//        if (parent[u] < 0) {
+//            for (NodeID v : g.in_neigh(u)) {
+//                if (front.get_bit(v)) {
+//                    parent[u] = v;
+//                    awake_count++;
+//                    next.set_bit(u);
+//                    break;
+//                }
+//            }
+//        }
+
+    Bitmap* next = new Bitmap(g.num_nodes());
+    Bitmap* current_frontier = from_vertexset->bitmap_;
+    int count = 0;
+    for (NodeID u = 0; u < g.num_nodes(); u++) {
+        for (NodeID v : g.in_neigh(u)) {
+            if (current_frontier->get_bit(v)) {
+                if( apply_func(v, u)){
+                    next->set_bit(u);
+                    count++;
+                }
+            }
+        }
+    }
+
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
+    next_frontier->bitmap_ = next;
+
+    return next_frontier;
+};
+
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted_from_vertexset_with_frontier
+        (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+
+    Bitmap* next = new Bitmap(g.num_nodes());
+    Bitmap* current_frontier = from_vertexset->bitmap_;
+    int count = 0;
+    for (NodeID u = 0; u < g.num_nodes(); u++) {
+        for (WNode s : g.in_neigh(u)) {
+            if (current_frontier->get_bit(s.v)) {
+                if( apply_func(s.v, u, s.w)){
+                    next->set_bit(u);
+                    count++;
+                }
+            }
+        }
+    }
+
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
+    next_frontier->bitmap_ = next;
+
+    return next_frontier;
+};
+
+
 template<typename APPLY_FUNC, typename FROM_FUNC, typename TO_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_serial_from_filter_func_to_filter_func_with_frontier
         (Graph &g, FROM_FUNC from_func, TO_FUNC to_func, APPLY_FUNC apply_func) {
@@ -79,6 +192,7 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_from_filter_func_to_filter_func_
 }
 
 
+
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_parallel(Graph &g, APPLY_FUNC apply_func) {
 
@@ -101,119 +215,15 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted(WGraph &g, APPLY_FUNC a
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
 }
 
-template<typename APPLY_FUNC, typename TO_FUNC>
-VertexSubset<NodeID> *edgeset_apply_pull_serial_from_vertexset_to_filter_func_with_frontier
-        (Graph &g, VertexSubset<NodeID> *from_vertexset, TO_FUNC to_func, APPLY_FUNC apply_func) {
-
-    //The original GAPBS implmentation from BFS
-
-    //    int64_t awake_count = 0;
-//    next.reset();
-//#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
-//    for (NodeID u=0; u < g.num_nodes(); u++) {
-//        if (parent[u] < 0) {
-//            for (NodeID v : g.in_neigh(u)) {
-//                if (front.get_bit(v)) {
-//                    parent[u] = v;
-//                    awake_count++;
-//                    next.set_bit(u);
-//                    break;
-//                }
-//            }
-//        }
-
-    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    Bitmap next = next_frontier->bitmap_;
-    Bitmap current_frontier = from_vertexset->bitmap_;
-    for (NodeID u = 0; u < g.num_nodes(); u++) {
-        if (to_func(u)) {
-            for (NodeID v : g.in_neigh(u)) {
-                if (current_frontier.get_bit(v)) {
-                    apply_func(v, u);
-                }
-            }
-        }
-    }
-
-    return next_frontier;
-};
 
 
 
-template<typename APPLY_FUNC>
-VertexSubset<NodeID> *edgeset_apply_pull_serial_from_vertexset_with_frontier
-        (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
-
-    //The original GAPBS implmentation from BFS
-
-    //    int64_t awake_count = 0;
-//    next.reset();
-//#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
-//    for (NodeID u=0; u < g.num_nodes(); u++) {
-//        if (parent[u] < 0) {
-//            for (NodeID v : g.in_neigh(u)) {
-//                if (front.get_bit(v)) {
-//                    parent[u] = v;
-//                    awake_count++;
-//                    next.set_bit(u);
-//                    break;
-//                }
-//            }
-//        }
-
-    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    Bitmap next = next_frontier->bitmap_;
-    Bitmap current_frontier = from_vertexset->bitmap_;
-    for (NodeID u = 0; u < g.num_nodes(); u++) {
-        for (NodeID v : g.in_neigh(u)) {
-            if (current_frontier.get_bit(v)) {
-                if( apply_func(v, u)){
-                    next.set_bit(u);
-                }
-            }
-        }
-    }
-
-    return next_frontier;
-};
 
 
-template<typename APPLY_FUNC>
-VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted_from_vertexset_with_frontier
-        (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
 
-    //The original GAPBS implmentation from BFS
 
-    //    int64_t awake_count = 0;
-//    next.reset();
-//#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
-//    for (NodeID u=0; u < g.num_nodes(); u++) {
-//        if (parent[u] < 0) {
-//            for (NodeID v : g.in_neigh(u)) {
-//                if (front.get_bit(v)) {
-//                    parent[u] = v;
-//                    awake_count++;
-//                    next.set_bit(u);
-//                    break;
-//                }
-//            }
-//        }
 
-    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    Bitmap next = next_frontier->bitmap_;
-    Bitmap current_frontier = from_vertexset->bitmap_;
-    for (NodeID u = 0; u < g.num_nodes(); u++) {
-        for (WNode s : g.in_neigh(u)) {
-            if (current_frontier.get_bit(s.v)) {
-                if (apply_func(s.v, u, s.w)) {
-                    next.set_bit(u);
-                }
-            }
-        }
-    }
 
-    return next_frontier;
-};
 
 
 //Code largely borrowed from TDStep for GAPBS
@@ -262,7 +272,6 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
     next_frontier->dense_vertex_set_ = queue;
     return next_frontier;
 }
-
 
 
 

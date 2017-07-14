@@ -28,6 +28,7 @@ func main()
 %    startTimer();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
     frontier.addVertex(8);
+    parent[8] = 8;
 
     while (frontier.getVertexSetSize() != 0)
         frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
