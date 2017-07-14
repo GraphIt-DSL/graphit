@@ -245,7 +245,8 @@ TEST_F(HighLevelScheduleTest, HighLevelApplyFunctionFusion) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node = program_schedule_node->fuseApplyFunctions("l1", "l2", "l3", "fused_func");
+    //program_schedule_node = program_schedule_node->fuseApplyFunctions("l1", "l2", "l3","fused_func");
+    program_schedule_node = program_schedule_node->fuseApplyFunctions("l1", "l2","fused_func");
 
     main_func = fir::to<fir::FuncDecl>(context_->getProgram()->elems[7]);
     first_apply = fir::to<fir::ExprStmt>(main_func->body->stmts[0]);
@@ -258,38 +259,38 @@ TEST_F(HighLevelScheduleTest, HighLevelApplyFunctionFusion) {
 }
 
 
-//TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
-//
-//    istringstream is("element Vertex end\n"
-//                             "element Edge end\n"
-//                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
-//                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-//                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
-//                             "func srcAddOne(src : Vertex, dst : Vertex) "
-//                             "vector_a[src] = vector_a[src] + 1; end\n"
-//                             "func srcAddTwo(src : Vertex, dst : Vertex) "
-//                             "vector_a[src] = vector_a[src] + 2; end\n"
-//                             "func main() "
-//                             "  #l1# for i in 1:10 "
-//                             "      #s1# edges.apply(srcAddOne); "
-//                             "  end "
-//                             "  #l2# for i in 1:10 "
-//                             "      #s1# edges.apply(srcAddTwo); "
-//                             "  end "
-//                             "end");
-//
-//    fe_->parseStream(is, context_, errors_);
-//
-//    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
-//            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-//
-//    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
-//    program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "s1", "fused_func");
-//
-//    // Expects that the program still compiles
-//    EXPECT_EQ (0,  basicCompileTestWithContext());
-//
-//}
+TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
+
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "func srcAddOne(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 1; end\n"
+                             "func srcAddTwo(src : Vertex, dst : Vertex) "
+                             "vector_a[src] = vector_a[src] + 2; end\n"
+                             "func main() "
+                             "  #l1# for i in 1:10 "
+                             "      #s1# edges.apply(srcAddOne); "
+                             "  end "
+                             "  #l2# for i in 1:10 "
+                             "      #s1# edges.apply(srcAddTwo); "
+                             "  end "
+                             "end");
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
+    program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_func");
+
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicCompileTestWithContext());
+
+}
 
 TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);
@@ -387,6 +388,10 @@ TEST_F(HighLevelScheduleTest, SimpleHighLevelLoopFusion) {
     main_func_decl = fir::to<fir::FuncDecl>(context_->getProgram()->elems[0]);
     fir::ForStmt::Ptr l3_loop = fir::to<fir::ForStmt>(main_func_decl->body->stmts[0]);
 
+    std::cout << "fir: " << std::endl;
+    std::cout << *(context_->getProgram());
+    std::cout << std::endl;
+
     //generate c++ code successfully
     EXPECT_EQ (0,  basicCompileTestWithContext());
 
@@ -401,8 +406,12 @@ TEST_F(HighLevelScheduleTest, SimpleHighLevelLoopFusion) {
 
     auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
     //expects both statements of the l3 loop body to be print statements
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[1]));
+
+    auto fir_name_node = fir::to<fir::NameNode>(fir_stmt_blk->stmts[0]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node->body->stmts[0]));
+
 }
 
 TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue1) {
@@ -443,8 +452,13 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue1) {
 
     auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
     //expects both statements of the l3 loop body to be print statements
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[1]));
+
+    auto fir_name_node = fir::to<fir::NameNode>(fir_stmt_blk->stmts[0]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node->body->stmts[0]));
+    auto fir_name_node2 = fir::to<fir::NameNode>(fir_stmt_blk->stmts[1]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node2->body->stmts[0]));
 
     // Check the correctness of the L3 prologue loop generated.
     fir::low_level_schedule::ForStmtNode::Ptr schedule_for_prologue_stmt =
@@ -455,7 +469,7 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue1) {
 
     auto fir_stmt_prologue_blk = schedule_for_prologue_stmt->getBody()->emitFIRNode();
     //expects the statement of the l3 prologue loop body to be a print statement
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_prologue_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_prologue_blk->stmts[0]));
 
     // Check the correctness of the L3 epilogue loop generated.
     fir::low_level_schedule::ForStmtNode::Ptr schedule_for_epilogue_stmt =
@@ -466,7 +480,9 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue1) {
 
     auto fir_stmt_epilogue_blk = schedule_for_epilogue_stmt->getBody()->emitFIRNode();
     //expects the statement of the l3 epilogue loop body to be a print statement
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_epilogue_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_epilogue_blk->stmts[0]));
+    EXPECT_EQ("l1", fir::to<fir::NameNode>(fir_stmt_epilogue_blk->stmts[0])->stmt_label);
+
 }
 
 
@@ -507,8 +523,15 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue2) {
 
     auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
     //expects both statements of the l3 loop body to be print statements
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[1]));
+    auto fir_name_node = fir::to<fir::NameNode>(fir_stmt_blk->stmts[0]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node->body->stmts[0]));
+    auto fir_name_node2 = fir::to<fir::NameNode>(fir_stmt_blk->stmts[1]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node2->body->stmts[0]));
+    EXPECT_EQ("l1", fir_name_node->stmt_label);
+    EXPECT_EQ("l2", fir_name_node2->stmt_label);
+
 
     // Check the correctness of the L3 epilogue loop generated.
     fir::low_level_schedule::ForStmtNode::Ptr schedule_for_epilogue_stmt =
@@ -519,7 +542,9 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue2) {
 
     auto fir_stmt_epilogue_blk = schedule_for_epilogue_stmt->getBody()->emitFIRNode();
     //expects the statement of the l3 epilogue loop body to be a print statement
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_epilogue_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_epilogue_blk->stmts[0]));
+    EXPECT_EQ("l1", fir::to<fir::NameNode>(fir_stmt_epilogue_blk->stmts[0])->stmt_label);
+
 }
 
 TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
@@ -559,8 +584,12 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
 
     auto fir_stmt_blk = schedule_for_stmt->getBody()->emitFIRNode();
     //expects both statements of the l3 loop body to be print statements
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[0]));
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_blk->stmts[1]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_blk->stmts[1]));
+    auto fir_name_node = fir::to<fir::NameNode>(fir_stmt_blk->stmts[0]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node->body->stmts[0]));
+    auto fir_name_node2 = fir::to<fir::NameNode>(fir_stmt_blk->stmts[1]);
+    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_name_node2->body->stmts[0]));
 
     // Check the correctness of the L3 prologue loop generated.
     fir::low_level_schedule::ForStmtNode::Ptr schedule_for_prologue_stmt =
@@ -571,7 +600,9 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
 
     auto fir_stmt_prologue_blk = schedule_for_prologue_stmt->getBody()->emitFIRNode();
     //expects the statement of the l3 prologue loop body to be a print statement
-    EXPECT_EQ(true, fir::isa<fir::PrintStmt>(fir_stmt_prologue_blk->stmts[0]));
+    EXPECT_EQ(true, fir::isa<fir::NameNode>(fir_stmt_prologue_blk->stmts[0]));
+    EXPECT_EQ("l1", fir::to<fir::NameNode>(fir_stmt_prologue_blk->stmts[0])->stmt_label);
+
 }
 
 

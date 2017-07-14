@@ -30,7 +30,6 @@ namespace graphit {
 
             struct StmtNode : public LowLevelScheduleNode {
                 typedef std::shared_ptr<StmtNode> Ptr;
-
             };
 
             struct StmtBlockNode : public StmtNode {
@@ -38,6 +37,10 @@ namespace graphit {
 
                 StmtBlockNode(fir::StmtBlock::Ptr fir_stmt_blk) :
                         fir_stmt_block_(fir_stmt_blk) {};
+
+                StmtBlockNode()  {
+                    fir_stmt_block_ = std::make_shared<fir::StmtBlock>();
+                };
 
                 int getNumStmts() {
                     if (fir_stmt_block_)
@@ -47,6 +50,7 @@ namespace graphit {
                 }
 
                 void appendStmtBlockNode(StmtBlockNode::Ptr stmt_block);
+                void appendFirStmt(fir::Stmt::Ptr fir_stmt);
 
                 fir::StmtBlock::Ptr emitFIRNode() {
                     return fir_stmt_block_;
@@ -236,6 +240,7 @@ namespace graphit {
                 //bool insertAfter(NameNode::Ptr for_stmt, std::string label);
 
                 bool insertBefore(ApplyNode::Ptr apply_node, std::string label);
+                bool replaceLabel(ApplyNode::Ptr apply_node, std::string label);
 
                 // Removes a statement associated with the label
                 bool removeLabelNode(std::string label);

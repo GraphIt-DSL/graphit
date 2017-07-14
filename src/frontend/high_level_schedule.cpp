@@ -63,6 +63,10 @@ namespace graphit {
             fir::low_level_schedule::ForStmtNode::Ptr l2_for
                     = schedule_program_node->cloneForStmtNode(original_loop_label2);
 
+
+
+
+
             fir::RangeDomain::Ptr l1_domain = l1_for->for_domain_->emitFIRRangeDomain();
             fir::RangeDomain::Ptr l2_domain = l2_for->for_domain_->emitFIRRangeDomain();
 
@@ -91,21 +95,32 @@ namespace graphit {
                 fir::low_level_schedule::ForStmtNode::Ptr l3_prologue_loop;
 
                 if (l0 < l1) {
+
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
+                    fir::low_level_schedule::NameNode::Ptr l1_name_node_copy
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy, original_loop_label1);
+                    fir::low_level_schedule::StmtBlockNode::Ptr l1_name_node_stmt_blk_node_copy
+                            = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+                    l1_name_node_stmt_blk_node_copy->appendFirStmt(l1_name_node_copy->emitFIRNode());
 
                     l3_prologue_loop =
                             std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_prologue_range_domain,
-                                                                                   l1_body_blk_copy,
+                                                                                   l1_name_node_stmt_blk_node_copy,
                                                                                    prologue_label,
                                                                                    "i");
                 } else {
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
+                    fir::low_level_schedule::NameNode::Ptr l2_name_node_copy
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy, original_loop_label2);
+                    fir::low_level_schedule::StmtBlockNode::Ptr l2_name_node_stmt_blk_node_copy
+                            = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+                    l2_name_node_stmt_blk_node_copy->appendFirStmt(l2_name_node_copy->emitFIRNode());
 
                     l3_prologue_loop =
                             std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_prologue_range_domain,
-                                                                                   l2_body_blk_copy,
+                                                                                   l2_name_node_stmt_blk_node_copy,
                                                                                    prologue_label,
                                                                                    "i");
                 }
@@ -118,13 +133,28 @@ namespace graphit {
                     std::make_shared<fir::low_level_schedule::RangeDomain>
                             (max(l0, l1), min(u0, u1));
 
+            // constructing a new stmtblocknode with namenode that contains l1_loop_body
+            fir::low_level_schedule::NameNode::Ptr l1_name_node
+                    = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk, original_loop_label1);
+            fir::low_level_schedule::StmtBlockNode::Ptr l1_name_node_stmt_blk_node_copy
+                    = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+            l1_name_node_stmt_blk_node_copy->appendFirStmt(l1_name_node->emitFIRNode());
+
+            // constructing a new stmtblocknode with namenode that contains l2_loop_body
+            fir::low_level_schedule::NameNode::Ptr l2_name_node
+                    = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk, original_loop_label2);
+            fir::low_level_schedule::StmtBlockNode::Ptr l2_name_node_stmt_blk_node_copy
+                    = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+            l2_name_node_stmt_blk_node_copy->appendFirStmt(l2_name_node->emitFIRNode());
+
             fir::low_level_schedule::ForStmtNode::Ptr l3_loop =
                     std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_range_domain,
-                                                                           l1_body_blk,
+                                                                           l1_name_node_stmt_blk_node_copy,
                                                                            fused_loop_label,
                                                                            "i");
 
-            l3_loop->appendLoopBody(l2_body_blk);
+            // appending the stmtblocknode containing l2_name_node
+            l3_loop->appendLoopBody(l2_name_node_stmt_blk_node_copy);
             schedule_program_node->insertBefore(l3_loop, original_loop_label1);
 
 
@@ -144,19 +174,30 @@ namespace graphit {
                 if (u0 < u1) {
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
+                    fir::low_level_schedule::NameNode::Ptr l2_name_node_copy
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy, original_loop_label2);
+                    fir::low_level_schedule::StmtBlockNode::Ptr l2_name_node_stmt_blk_node_copy
+                            = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+                    l2_name_node_stmt_blk_node_copy->appendFirStmt(l2_name_node_copy->emitFIRNode());
 
                     l3_epilogue_loop =
                             std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_epilogue_range_domain,
-                                                                                   l2_body_blk_copy,
+                                                                                   l2_name_node_stmt_blk_node_copy,
                                                                                    epilogue_label,
                                                                                    "i");
                 } else {
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
+                    fir::low_level_schedule::NameNode::Ptr l1_name_node_copy
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy, original_loop_label1);
+                    fir::low_level_schedule::StmtBlockNode::Ptr l1_name_node_stmt_blk_node_copy
+                            = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
+                    l1_name_node_stmt_blk_node_copy->appendFirStmt(l1_name_node_copy->emitFIRNode());
+
 
                     l3_epilogue_loop =
                             std::make_shared<fir::low_level_schedule::ForStmtNode>(l3_epilogue_range_domain,
-                                                                                   l1_body_blk_copy,
+                                                                                   l1_name_node_stmt_blk_node_copy,
                                                                                    epilogue_label,
                                                                                    "i");
                 }
@@ -274,7 +315,6 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::fuseApplyFunctions(string original_apply_label1,
                                                                      string original_apply_label2,
-                                                                     string fused_apply_label,
                                                                      string fused_apply_name) {
             //use the low level APIs to fuse the apply functions
             fir::low_level_schedule::ProgramNode::Ptr schedule_program_node
@@ -306,22 +346,42 @@ namespace graphit {
             first_apply_func_decl->setFunctionName(fused_apply_name);
 
             // Update the code that calls the apply functions
-            first_apply_node->updateStmtLabel(fused_apply_label);
+            //first_apply_node->updateStmtLabel(fused_apply_label);
             first_apply_node->updateApplyFunc(fused_apply_name);
 
-            // Remove the original label nodes
-            if (!schedule_program_node->removeLabelNode(original_apply_label1)) {
-                std::cout << "remove node: " << original_apply_label1 << " failed" << std::endl;
-            }
+
+
+
+            std::cout << "fir1: " << std::endl;
+            std::cout << *(fir_context_->getProgram());
+            std::cout << std::endl;
 
             // Insert the declaration of the fused function and a call to it
             schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
-            schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
 
+            std::cout << "fir2: " << std::endl;
+            std::cout << *(fir_context_->getProgram());
+            std::cout << std::endl;
+
+            //schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
+            schedule_program_node->replaceLabel(first_apply_node, original_apply_label1);
+
+            std::cout << "fir3: " << std::endl;
+            std::cout << *(fir_context_->getProgram());
+            std::cout << std::endl;
+
+//            // Remove the original label nodes
+//            if (!schedule_program_node->removeLabelNode(original_apply_label1)) {
+//                std::cout << "remove node: " << original_apply_label1 << " failed" << std::endl;
+//            }
 
             if (!schedule_program_node->removeLabelNode(original_apply_label2)) {
                 std::cout << "remove node: " << original_apply_label2 << " failed" << std::endl;
             }
+
+            std::cout << "fir4: " << std::endl;
+            std::cout << *(fir_context_->getProgram());
+            std::cout << std::endl;
 
             return this->shared_from_this();
         }

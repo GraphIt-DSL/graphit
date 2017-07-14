@@ -95,6 +95,73 @@ namespace graphit {
 
 
             /**
+            * Visitor used for inserting a loop body node or name node before a label
+             */
+            struct ReplaceLabelVisitor : public FIRVisitor {
+
+                ReplaceLabelVisitor() {
+                    input_for_stmt_node_ = nullptr;
+                    input_name_node_ = nullptr;
+                    input_apply_node_ = nullptr;
+
+                }
+
+
+                bool replaceLabel(fir::Program::Ptr fir_program,
+                                       ApplyNode::Ptr apply_node, std::string label) {
+                    // be default, we assume the input label is not found
+                    success_flag_ = false;
+                    target_label_ = label;
+                    input_apply_node_ = apply_node;
+                    fir_program->accept(this);
+                    return success_flag_;
+                }
+
+
+
+                virtual void visit(fir::StmtBlock::Ptr stmt_block) {
+                    int idx = 0;
+                    auto blk_stmts = stmt_block->stmts;
+                    for (auto &stmt : blk_stmts) {
+                        if (stmt->stmt_label != "")
+                            if (label_scope_.tryScope(stmt->stmt_label) == target_label_) {
+                                success_flag_ = true;
+
+//                                if (input_for_stmt_node_ != nullptr) {
+//                                    blk_stmts.insert(blk_stmts.begin() + idx,
+//                                                     input_for_stmt_node_->emitFIRNode());
+//                                }
+//
+//                                if (input_name_node_ != nullptr) {
+//                                    blk_stmts.insert(blk_stmts.begin() + idx,
+//                                                     input_name_node_->emitFIRNode());
+//                                }
+
+                                if (input_apply_node_ != nullptr) {
+                                    blk_stmts[idx] = input_apply_node_->emitFIRNode();
+                                }
+
+                                break;
+                            }
+
+                        stmt->accept(this);
+
+                        idx++;
+                    }
+
+                    stmt_block->stmts = blk_stmts;
+                }
+
+            private:
+                std::string target_label_;
+                ForStmtNode::Ptr input_for_stmt_node_;
+                NameNode::Ptr input_name_node_;
+                ApplyNode::Ptr input_apply_node_;
+                bool success_flag_;
+            };
+
+
+            /**
             * Visitor used for remove a node with a certain label
             */
             struct RemoveLabelVisitor : public FIRVisitor {
@@ -176,6 +243,12 @@ namespace graphit {
                 auto insert_before_visitor = InsertBeforeLabelVisitor();
                 return insert_before_visitor.insertBeforeLabel(fir_program_, for_stmt, label);
             }
+
+            bool ProgramNode::replaceLabel(ApplyNode::Ptr apply_node, std::string label){
+                auto replace_label_visitor = ReplaceLabelVisitor();
+                return replace_label_visitor.replaceLabel(fir_program_, apply_node, label);
+            }
+
 
             bool ProgramNode::removeLabelNode(std::string label) {
                 auto remove_label_visitor = RemoveLabelVisitor();
@@ -287,6 +360,11 @@ namespace graphit {
                 fir_stmt_block_->stmts.insert(fir_stmt_block_->stmts.end(),
                                               other_stmt_blk.begin(), other_stmt_blk.end());
             }
+
+            void StmtBlockNode::appendFirStmt(fir::Stmt::Ptr fir_stmt) {
+                fir_stmt_block_->stmts.push_back(fir_stmt);
+            }
+
 
             void FuncDeclNode::appendFuncDeclBody(StmtBlockNode::Ptr func_decl_body) {
                 auto other_stmt_blk = func_decl_body->emitFIRNode()->stmts;

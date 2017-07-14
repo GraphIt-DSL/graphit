@@ -55,7 +55,6 @@ namespace graphit {
 
                 high_level_schedule::ProgramScheduleNode::Ptr fuseApplyFunctions(string original_apply_label1,
                                                                                  string original_apply_label2,
-                                                                                 string fused_apply_label,
                                                                                  string fused_apply_name);
 
                 //TODO: add high level APIs for fuseApplyFunctions

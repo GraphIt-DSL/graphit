@@ -102,6 +102,7 @@ namespace graphit {
             virtual void visit(EdgeSetLoadExpr::Ptr);
             virtual void visit(StringLiteral::Ptr);
 
+            virtual void visit(NameNode::Ptr);
 
             void indent() { ++indentLevel; }
             void dedent() { --indentLevel; }

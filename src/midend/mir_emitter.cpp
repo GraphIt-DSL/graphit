@@ -218,11 +218,11 @@ namespace graphit {
         }
 
         auto output_stmt_block = std::make_shared<mir::StmtBlock>();
-        if (stmt_block->stmts.size() != 0) {
-            //output_stmt_block->stmts = ctx->getStatements();
-            output_stmt_block->stmts = stmts;
-        }
-
+//        if (stmt_block->stmts.size() != 0) {
+//            //output_stmt_block->stmts = ctx->getStatements();
+//            output_stmt_block->stmts = stmts;
+//        }
+        output_stmt_block->stmts = stmts;
 
         retStmt = output_stmt_block;
     }
