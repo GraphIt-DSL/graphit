@@ -64,9 +64,6 @@ namespace graphit {
                     = schedule_program_node->cloneForStmtNode(original_loop_label2);
 
 
-
-
-
             fir::RangeDomain::Ptr l1_domain = l1_for->for_domain_->emitFIRRangeDomain();
             fir::RangeDomain::Ptr l2_domain = l2_for->for_domain_->emitFIRRangeDomain();
 
@@ -99,7 +96,8 @@ namespace graphit {
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
                     fir::low_level_schedule::NameNode::Ptr l1_name_node_copy
-                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy, original_loop_label1);
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy,
+                                                                                  original_loop_label1);
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_name_node_stmt_blk_node_copy
                             = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
                     l1_name_node_stmt_blk_node_copy->appendFirStmt(l1_name_node_copy->emitFIRNode());
@@ -113,7 +111,8 @@ namespace graphit {
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
                     fir::low_level_schedule::NameNode::Ptr l2_name_node_copy
-                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy, original_loop_label2);
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy,
+                                                                                  original_loop_label2);
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_name_node_stmt_blk_node_copy
                             = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
                     l2_name_node_stmt_blk_node_copy->appendFirStmt(l2_name_node_copy->emitFIRNode());
@@ -175,7 +174,8 @@ namespace graphit {
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label2);
                     fir::low_level_schedule::NameNode::Ptr l2_name_node_copy
-                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy, original_loop_label2);
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l2_body_blk_copy,
+                                                                                  original_loop_label2);
                     fir::low_level_schedule::StmtBlockNode::Ptr l2_name_node_stmt_blk_node_copy
                             = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
                     l2_name_node_stmt_blk_node_copy->appendFirStmt(l2_name_node_copy->emitFIRNode());
@@ -189,7 +189,8 @@ namespace graphit {
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_body_blk_copy
                             = schedule_program_node->cloneLabelLoopBody(original_loop_label1);
                     fir::low_level_schedule::NameNode::Ptr l1_name_node_copy
-                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy, original_loop_label1);
+                            = std::make_shared<fir::low_level_schedule::NameNode>(l1_body_blk_copy,
+                                                                                  original_loop_label1);
                     fir::low_level_schedule::StmtBlockNode::Ptr l1_name_node_stmt_blk_node_copy
                             = std::make_shared<fir::low_level_schedule::StmtBlockNode>();
                     l1_name_node_stmt_blk_node_copy->appendFirStmt(l1_name_node_copy->emitFIRNode());
@@ -350,25 +351,23 @@ namespace graphit {
             first_apply_node->updateApplyFunc(fused_apply_name);
 
 
-
-
-            std::cout << "fir1: " << std::endl;
-            std::cout << *(fir_context_->getProgram());
-            std::cout << std::endl;
+//            std::cout << "fir1: " << std::endl;
+//            std::cout << *(fir_context_->getProgram());
+//            std::cout << std::endl;
 
             // Insert the declaration of the fused function and a call to it
             schedule_program_node->insertAfter(first_apply_func_decl, second_apply_node->getApplyFuncName());
 
-            std::cout << "fir2: " << std::endl;
-            std::cout << *(fir_context_->getProgram());
-            std::cout << std::endl;
+//            std::cout << "fir2: " << std::endl;
+//            std::cout << *(fir_context_->getProgram());
+//            std::cout << std::endl;
 
             //schedule_program_node->insertBefore(first_apply_node, original_apply_label2);
             schedule_program_node->replaceLabel(first_apply_node, original_apply_label1);
 
-            std::cout << "fir3: " << std::endl;
-            std::cout << *(fir_context_->getProgram());
-            std::cout << std::endl;
+//            std::cout << "fir3: " << std::endl;
+//            std::cout << *(fir_context_->getProgram());
+//            std::cout << std::endl;
 
 //            // Remove the original label nodes
 //            if (!schedule_program_node->removeLabelNode(original_apply_label1)) {
@@ -379,9 +378,10 @@ namespace graphit {
                 std::cout << "remove node: " << original_apply_label2 << " failed" << std::endl;
             }
 
-            std::cout << "fir4: " << std::endl;
-            std::cout << *(fir_context_->getProgram());
-            std::cout << std::endl;
+            // for debuggin, print out the FIR after the modifications
+//            std::cout << "fir4: " << std::endl;
+//            std::cout << *(fir_context_->getProgram());
+//            std::cout << std::endl;
 
             return this->shared_from_this();
         }
