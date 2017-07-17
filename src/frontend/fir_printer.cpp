@@ -156,9 +156,11 @@ namespace graphit {
 
             oss << "]";
 
-            oss << "{";
-            type->element->accept(this);
-            oss << "}";
+            if (type->element != nullptr){
+                oss << "{";
+                type->element->accept(this);
+                oss << "}";
+            }
 
             oss << "(";
             type->blockType->accept(this);

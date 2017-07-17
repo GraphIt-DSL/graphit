@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabelNoSpace";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";

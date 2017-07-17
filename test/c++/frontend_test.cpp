@@ -88,6 +88,12 @@ TEST_F(FrontendTest, MainFunctionWithPrint) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+
+TEST_F(FrontendTest, MainFunctionWithArgv) {
+    istringstream is("func main( argv : vector[1](string)  ) print 4; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 TEST_F(FrontendTest, MainFunctionWithCall) {
     istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
                              " func main() add(4, 5); end");
