@@ -272,6 +272,11 @@ namespace graphit {
             }
         };
 
+
+        struct CompareAndSwapStmt : public AssignStmt {
+
+        };
+
         struct PrintStmt : public Stmt {
             Expr::Ptr expr;
             std::string format;
@@ -350,6 +355,7 @@ namespace graphit {
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
             Expr::Ptr target;
+            FieldVectorProperty field_vector_prop_;
 
             //convenience constructor for building a tensor read expr using code
             TensorReadExpr(std::string input_target,

@@ -54,10 +54,10 @@ namespace graphit {
         std::string target = tensor_read->getTargetNameStr();
         std::string index = tensor_read->getIndexNameStr();
 
-
-        enclosing_func_decl_->field_vector_properties_map_[target] =
-                determineFieldVectorProperty(target, in_write_phase,
-                                             in_read_phase, index, direction_);
+        auto field_vector_prop = determineFieldVectorProperty(target, in_write_phase,
+                                                              in_read_phase, index, direction_);
+        enclosing_func_decl_->field_vector_properties_map_[target] = field_vector_prop;
+        tensor_read->field_vector_prop_ = field_vector_prop;
 
     }
 
