@@ -41,11 +41,9 @@ namespace  graphit {
 
                 if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PUSH) {
                     node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
-                    return;
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL){
                     //Pull
                     node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
-                    return;
                 } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID){
                     //Hybrid
                     //TODO: not yet supported

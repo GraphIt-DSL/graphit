@@ -606,3 +606,13 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
 }
 
 
+TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    fe_->parseStream(bfs_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
