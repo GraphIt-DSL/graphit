@@ -275,6 +275,7 @@ namespace graphit {
 
         struct CompareAndSwapStmt : public AssignStmt {
             Expr::Ptr compare_val_expr;
+            std::string tracking_var_;
 
             typedef std::shared_ptr<CompareAndSwapStmt> Ptr;
 

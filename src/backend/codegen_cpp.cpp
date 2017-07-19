@@ -166,6 +166,17 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
+        printIndent();
+        oss << cas_stmt->tracking_var_ << " = compare_and_swap ( ";
+        cas_stmt->lhs->accept(this);
+        oss << ", ";
+        cas_stmt->compare_val_expr->accept(this);
+        oss << ", ";
+        cas_stmt->expr->accept(this);
+        oss << ");" << std::endl;
+    }
+
     void CodeGenCPP::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 
         if (mir::isa<mir::VertexSetWhereExpr>(reduce_stmt->expr) ||
@@ -969,7 +980,6 @@ namespace graphit {
     }
 
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
-
 
 
         auto function_name = edgeset_apply_func_gen_->genFunctionName(apply);

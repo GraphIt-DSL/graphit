@@ -273,6 +273,26 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
     return next_frontier;
 }
 
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
+        (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
+    {
+        QueueBuffer<NodeID> lqueue(queue);
+        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
+            NodeID u = *q_iter;
+            for (NodeID v : g.out_neigh(u)) {
+                    if(apply_func(u, v)){
+                        lqueue.push_back(v);
+                    }            }
+        }
+        lqueue.flush();
+    }
+    //Here, we might be coping this too much
+    next_frontier->dense_vertex_set_ = queue;
+    return next_frontier;
+}
 
 
 #endif //GRAPHIT_EDGESET_APPLY_FUNCTIONS_H

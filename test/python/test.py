@@ -187,8 +187,9 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
-             if line.rstrip().find("SUCCESSFUL"):
+             if line.rstrip().find("SUCCESSFUL") != -1:
                  test_flag = True
+                 break;
         self.assertEqual(test_flag, True)
 
 
@@ -235,8 +236,9 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/test.wel -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
+                break
         self.assertEqual(test_flag, True)
 
 if __name__ == '__main__':

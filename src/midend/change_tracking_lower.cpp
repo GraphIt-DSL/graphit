@@ -112,7 +112,9 @@ namespace graphit {
             auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
             auto field_vector_name = field_vector_target_expr->var.getName();
             // it is always true for assign statement
-            addFieldTrackingVariable(field_vector_name, "true");
+            auto field_vector_tracking_var_name = field_vector_name + "_trackving_var_" + mir_context_->getUniqueNameCounterString();
+            addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
+            cas_stmt->tracking_var_ = field_vector_tracking_var_name;
         }
     }
 
