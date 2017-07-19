@@ -103,6 +103,19 @@ namespace graphit {
         }
     }
 
+    void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
+        //TODO: may be build another visitor for tensor read to figure out the field
+        //For now, I am assuming that the left hand side of assign stmt is a tensor read expression
+        //It can be a tensor struct read or a tensor array read, but I just need the field name
+        if (mir::isa<mir::TensorReadExpr>(cas_stmt->lhs)) {
+            auto tensor_read_expr = mir::to<mir::TensorReadExpr>(cas_stmt->lhs);
+            auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
+            auto field_vector_name = field_vector_target_expr->var.getName();
+            // it is always true for assign statement
+            addFieldTrackingVariable(field_vector_name, "true");
+        }
+    }
+
     void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {
         //TODO: may be build another visitor for tensor read to figure out the field
         //For now, I am assuming that the left hand side of assign stmt is a tensor read expression

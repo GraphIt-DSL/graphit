@@ -9,6 +9,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::PullEdgeSetA
     auto apply_func_decl_name = apply_expr->input_function_name;
     mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
     apply_func_decl->accept(&reduce_stmt_lower);
+    lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
 }
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
@@ -16,6 +17,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::PushEdgeSetA
     auto apply_func_decl_name = apply_expr->input_function_name;
     mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
     apply_func_decl->accept(&reduce_stmt_lower);
+    lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
 }
 
 void graphit::AtomicsOpLower::lower() {
@@ -26,9 +28,10 @@ void graphit::AtomicsOpLower::lower() {
     }
 }
 
-bool graphit::AtomicsOpLower::lowerCompareAndSwap(std::string to_func,
+bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string to_func,
                                                   std::string from_func,
-                                                  std::string apply_func) {
+                                                  std::string apply_func,
+                                                  mir::EdgeSetApplyExpr::Ptr apply_expr) {
     if (to_func != ""){
         //pattern 1:
         // condition 1: to function reads field[v] (v is dst) (the only stmt in to_func), field read is tensorArrayRead
@@ -47,7 +50,8 @@ bool graphit::AtomicsOpLower::lowerCompareAndSwap(std::string to_func,
             // we expect the to func to be of the format output = field[v] == val
             if (mir::isa<mir::AssignStmt>(only_stmt)){
                 mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(only_stmt);
-                if (mir::to<mir::VarExpr>(assign_stmt)->var.getName() != to_func_decl->result.getName()){
+                if (!mir::isa<mir::VarExpr>(assign_stmt->lhs)) return false;
+                if (mir::to<mir::VarExpr>(assign_stmt->lhs)->var.getName() != to_func_decl->result.getName()){
                     //if the assignment do not update the return bool val, then abort
                     return false;
                 }
@@ -89,7 +93,7 @@ bool graphit::AtomicsOpLower::lowerCompareAndSwap(std::string to_func,
             return false;
 
         auto apply_func_decl = mir_context_->getFunction(apply_func);
-        auto apply_func_body = to_func_decl->body;
+        auto apply_func_body = apply_func_decl->body;
 
         if (apply_func_body->stmts->size() == 1){
             //only one statement
@@ -105,7 +109,7 @@ bool graphit::AtomicsOpLower::lowerCompareAndSwap(std::string to_func,
 
                 std::string field_name = tensor_array_read_expr->getTargetNameStr();
                 //TODO: here we assume the destination is named "dst", later we might need to update this logic
-                std::string index = tensor_array_read_expr->getTargetNameStr();
+                std::string index = tensor_array_read_expr->getIndexNameStr();
                 FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
 
@@ -130,6 +134,8 @@ bool graphit::AtomicsOpLower::lowerCompareAndSwap(std::string to_func,
                             (*(apply_func_body->stmts)).pop_back();
                             (*(apply_func_body->stmts)).push_back(cas_stmt);
 
+                            //remove the to function given that now we use the CAS
+                            apply_expr->to_func="";
                             return true;
 
 

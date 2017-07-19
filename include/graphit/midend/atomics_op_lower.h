@@ -29,6 +29,10 @@ namespace graphit {
 
 
         private:
+
+            //does a pattern recognition and replace if condition and assignment in apply function with CAS in apply funciton
+            bool lowerCompareAndSwap(std::string to_func, std::string from_func, std::string apply_func, mir::EdgeSetApplyExpr::Ptr apply_expr);
+
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
         };
@@ -51,9 +55,7 @@ namespace graphit {
     private:
         MIRContext *mir_context_ = nullptr;
 
-        //does a pattern recognition and replace if condition and assignment in apply function with CAS in apply funciton
-        // returns true if the pattern matching is sucesseful
-        bool lowerCompareAndSwap(std::string to_func, std::string from_func, std::string apply_func);
+
 
     };
 }
