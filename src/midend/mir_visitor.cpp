@@ -50,6 +50,18 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(CompareAndSwapStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->lhs->accept(this);
+            stmt->expr->accept(this);
+            stmt->compare_val_expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }

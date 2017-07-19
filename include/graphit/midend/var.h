@@ -10,7 +10,6 @@
 namespace graphit {
     namespace mir {
 
-
         class Var {
             //TODO: figure out why can't I just use Type here???
             std::shared_ptr<Type> type_;

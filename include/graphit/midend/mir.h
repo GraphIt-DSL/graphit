@@ -274,7 +274,13 @@ namespace graphit {
 
 
         struct CompareAndSwapStmt : public AssignStmt {
+            Expr::Ptr compare_val_expr;
 
+            typedef std::shared_ptr<CompareAndSwapStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<CompareAndSwapStmt>());
+            }
         };
 
         struct PrintStmt : public Stmt {

@@ -14,15 +14,19 @@ namespace graphit {
     /**
      * Lowers the code in the apply functions to use atomic reduction or CAS
      */
-    class AtomicsOperationsLower {
+    class AtomicsOpLower {
+
+    public:
+        AtomicsOpLower(MIRContext *mir_context) : mir_context_(mir_context) {};
 
         struct ApplyExprVisitor : public mir::MIRVisitor {
-            ApplyExprVisitor(MIRContext *mir_context, Schedule *schedule) :
-                    mir_context_(mir_context), schedule_(schedule) {}
+            ApplyExprVisitor(MIRContext *mir_context) :
+                    mir_context_(mir_context){}
 
             virtual void visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr);
 
             virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
+
 
         private:
             Schedule *schedule_ = nullptr;
@@ -30,12 +34,26 @@ namespace graphit {
         };
 
         struct ReduceStmtLower : public mir::MIRVisitor {
+            ReduceStmtLower(MIRContext* mir_context) : mir_context_(mir_context){
+            }
+
+
+            virtual void visit(mir::ReduceStmt::Ptr reduce_stmt);
+
+        private:
+            MIRContext *mir_context_ = nullptr;
 
         };
 
-        struct CompareAndSwapStmtLower : public mir::MIRVisitor {
+        void lower();
 
-        };
+
+    private:
+        MIRContext *mir_context_ = nullptr;
+
+        //does a pattern recognition and replace if condition and assignment in apply function with CAS in apply funciton
+        // returns true if the pattern matching is sucesseful
+        bool lowerCompareAndSwap(std::string to_func, std::string from_func, std::string apply_func);
 
     };
 }
