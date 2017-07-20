@@ -1,7 +1,9 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/test.wel");
+% const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/test.wel");
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/4.wel");
+
 
 const vertices : vertexset{Vertex} = edges.getVertices();
 
@@ -23,8 +25,8 @@ func main()
     % print n;
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
-    frontier.addVertex(1); %add source vertex
-    SP[1] = 0;
+    frontier.addVertex(0); %add source vertex
+    SP[0] = 0;
 
     var rounds : int = 0;
     while (frontier.getVertexSetSize() != 0)
