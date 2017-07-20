@@ -15,7 +15,7 @@ template <typename NodeID_>
 struct VertexSubset {
     int64_t vertices_range_, num_vertices_;
     bool is_dense;
-    SlidingQueue<NodeID> dense_vertex_set_ = SlidingQueue<NodeID>(0);
+    SlidingQueue<NodeID>* dense_vertex_set_;
     Bitmap * bitmap_ ;
 
     // make a singleton vertex in range of n
@@ -35,6 +35,7 @@ struct VertexSubset {
         if (num_vertices == vertices_range){
             bitmap_->set_all();
         }
+        dense_vertex_set_ = new SlidingQueue<NodeID >(vertices_range);
     }
 
     // make vertexSubset from array of vertex indices
@@ -56,6 +57,7 @@ struct VertexSubset {
         //only increment the count if the vertex is not already in the vertexset
         if (!bitmap_->get_bit(v)){
             bitmap_->set_bit(v);
+            dense_vertex_set_->push_back(v);
             num_vertices_++;
         }
     }

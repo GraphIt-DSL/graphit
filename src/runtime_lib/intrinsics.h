@@ -20,6 +20,8 @@
 #include "infra_gapbs/sliding_queue.h"
 #include "edgeset_apply_functions.h"
 
+#include "infra_ligra/ligra/ligra.h"
+
 #include "vertexsubset.h"
 
 #include <time.h>

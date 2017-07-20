@@ -14,6 +14,8 @@
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
 
+#include "infra_ligra/ligra/ligra.h"
+
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_serial(Graph &g, APPLY_FUNC apply_func) {
@@ -186,7 +188,7 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_from_filter_func_to_filter_func_
         lqueue.flush();
     }
     //Here, we might be coping this too much
-    next_frontier->dense_vertex_set_ = queue;
+    //next_frontier->dense_vertex_set_ = queue;
     return next_frontier;
 
 }
@@ -255,42 +257,79 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
 //    }
 //
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
-    {
-        QueueBuffer<NodeID> lqueue(queue);
-        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
-            NodeID u = *q_iter;
-            for (NodeID v : g.out_neigh(u)) {
-                if (to_func(v)) {
-                    apply_func(u, v);
-                }
-            }
-        }
-        lqueue.flush();
-    }
-    //Here, we might be coping this too much
-    next_frontier->dense_vertex_set_ = queue;
+//    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
+//    {
+//        QueueBuffer<NodeID> lqueue(queue);
+//        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
+//            NodeID u = *q_iter;
+//            for (NodeID v : g.out_neigh(u)) {
+//                if (to_func(v)) {
+//                    apply_func(u, v);
+//                }
+//            }
+//        }
+//        lqueue.flush();
+//    }
+//    //Here, we might be coping this too much
+//    next_frontier->dense_vertex_set_ = queue;
     return next_frontier;
 }
 
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
+VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
-    {
-        QueueBuffer<NodeID> lqueue(queue);
-        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
-            NodeID u = *q_iter;
-            for (NodeID v : g.out_neigh(u)) {
-                    if(apply_func(u, v)){
-                        lqueue.push_back(v);
-                    }            }
-        }
-        lqueue.flush();
-    }
-    //Here, we might be coping this too much
-    next_frontier->dense_vertex_set_ = queue;
+
+//    std::cout << "dense_vertex_set size: " << from_vertexset->dense_vertex_set_.size() << std::endl;
+//
+//    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
+//    std::cout << "queue size: " << queue.size() << std::endl;
+//    {
+//        QueueBuffer<NodeID> lqueue(queue);
+//        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
+//            NodeID u = *q_iter;
+//            for (NodeID v : g.out_neigh(u)) {
+//                    if(apply_func(u, v)){
+//                        lqueue.push_back(v);
+//                    }
+//            }
+//        }
+//        lqueue.flush();
+//    }
+//    //Here, we might be coping this too much
+//    next_frontier->dense_vertex_set_ = queue;
+
+//    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+//    vertex *G = GA.V;
+//    long m = V.numNonzeros();
+//    if (numVertices != V.numRows()) {
+//        cout << "edgeMap: Sizes Don't match" << endl;
+//        abort();
+//    }
+//    // used to generate nonzero indices to get degrees
+//    uintT* degrees = newA(uintT, m);
+//    vertex* frontierVertices;
+//    V.toSparse();
+//    frontierVertices = newA(vertex,m);
+//    {parallel_for (long i=0; i < m; i++){
+//            vertex v = G[V.s[i]];
+//            degrees[i] = v.getOutDegree();
+//            frontierVertices[i] = v;
+//        }}
+//    uintT outDegrees = sequence::plusReduce(degrees, m);
+//    if (outDegrees == 0) return vertexSubset(numVertices);
+//
+//    pair<long,uintE*> R =
+//                      remDups ?
+//                      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f,
+//                                    numVertices, GA.flags) :
+//                      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f);
+//    //cout << "size (S) = " << R.first << endl;
+//    free(degrees);
+//    free(frontierVertices);
+//    return vertexSubset(numVertices, R.first, R.second);
+
+
     return next_frontier;
 }
 

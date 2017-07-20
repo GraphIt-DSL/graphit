@@ -156,6 +156,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_fixediter_pagerank(self):
         self.basic_compile_exec_test("simple_fixed_iter_pagerank.gt")
 
+    def test_pagerank(self):
+        self.basic_compile_exec_test("pagerank.gt")
+
     def test_simple_fixediter_pagerank_expect(self):
         self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.00289518)
 
@@ -246,5 +249,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_verified'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
