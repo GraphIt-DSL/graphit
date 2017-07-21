@@ -56,9 +56,12 @@ namespace  graphit {
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = false;
                 }
 
-                if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable){
-                    mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
-                } else if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType ::Disable){
+                if (edgeset_apply->tracking_field != ""){
+                    if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable){
+                        //only enable deduplication if there is needed for tracking
+                        mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
+                    }
+                } else {
                     mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = false;
                 }
 

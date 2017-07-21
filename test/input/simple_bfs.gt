@@ -31,6 +31,8 @@ func main()
     parent[8] = 8;
 
     while (frontier.getVertexSetSize() != 0)
+%        print "size";
+%        print frontier.getVertexSetSize();
         frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
     end
 

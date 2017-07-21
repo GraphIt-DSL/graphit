@@ -249,5 +249,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pagerank'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

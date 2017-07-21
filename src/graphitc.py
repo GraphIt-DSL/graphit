@@ -61,4 +61,4 @@ if __name__ == '__main__':
     subprocess.check_call("g++ -g -std=c++11 -I ../../include/ " + compile_file_name
                           + " -o compile.o ../lib/libgraphitlib.a", shell=True)
     subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name, shell=True)
-    subprocess.check_call("g++  -std=c++11 -I ../../src/runtime_lib/ " + output_file_name + " -o test.o", shell=True)
+    subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/ " + output_file_name + " -o test.o", shell=True)
