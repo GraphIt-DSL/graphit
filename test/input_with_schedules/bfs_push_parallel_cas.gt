@@ -33,7 +33,7 @@ func main()
     while (frontier.getVertexSetSize() != 0)
 %        print "size";
 %        print frontier.getVertexSetSize();
-        frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
+        #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
     end
 
     vertices.apply(printParent);
@@ -43,3 +43,6 @@ func main()
 %    print elapsed_time;
 
 end
+
+schedule:
+    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");

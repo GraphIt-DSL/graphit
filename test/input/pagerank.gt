@@ -1,7 +1,7 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
 const vertices : vertexset{Vertex} = edges.getVertices();
 
 const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
@@ -24,12 +24,15 @@ func updateVertex(v : Vertex)
     new_rank[v] = 0.0;
 end
 
+func printRank(v : Vertex)
+    print old_rank[v];
+end
 
 func main()
 
     startTimer();
 
-    for i in 1:10
+    for i in 1:11
         edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
@@ -39,4 +42,5 @@ func main()
     print "elapsed time: ";
     print elapsed_time;
 
+    vertices.apply(printRank);
 end

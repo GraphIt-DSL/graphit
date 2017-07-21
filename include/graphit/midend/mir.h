@@ -272,6 +272,18 @@ namespace graphit {
             }
         };
 
+
+        struct CompareAndSwapStmt : public AssignStmt {
+            Expr::Ptr compare_val_expr;
+            std::string tracking_var_;
+
+            typedef std::shared_ptr<CompareAndSwapStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<CompareAndSwapStmt>());
+            }
+        };
+
         struct PrintStmt : public Stmt {
             Expr::Ptr expr;
             std::string format;
@@ -350,6 +362,7 @@ namespace graphit {
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
             Expr::Ptr target;
+            FieldVectorProperty field_vector_prop_;
 
             //convenience constructor for building a tensor read expr using code
             TensorReadExpr(std::string input_target,

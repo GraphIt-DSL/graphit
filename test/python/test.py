@@ -156,6 +156,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_fixediter_pagerank(self):
         self.basic_compile_exec_test("simple_fixed_iter_pagerank.gt")
 
+    def test_pagerank(self):
+        self.basic_compile_exec_test("pagerank.gt")
+
     def test_simple_fixediter_pagerank_expect(self):
         self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.00289518)
 
@@ -187,8 +190,9 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
-             if line.rstrip().find("SUCCESSFUL"):
+             if line.rstrip().find("SUCCESSFUL") != -1:
                  test_flag = True
+                 break;
         self.assertEqual(test_flag, True)
 
 
@@ -219,7 +223,7 @@ class TestGraphitCompiler(unittest.TestCase):
         #     print line.rstrip()
 
         # invoke the SSSP verifier
-        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/test.wel -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
             if line.rstrip().find("SUCCESSFUL"):
@@ -232,11 +236,12 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("cc.gt")
         cmd = "./" + self.executable_file_name + " > verifier_input"
         subprocess.call(cmd, shell=True)
-        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/test.wel -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
+                break
         self.assertEqual(test_flag, True)
 
 if __name__ == '__main__':
@@ -244,5 +249,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_verified'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

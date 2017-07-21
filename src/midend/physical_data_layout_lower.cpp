@@ -123,6 +123,7 @@ namespace  graphit {
                     tensor_struct_read->index = rewrite<mir::Expr>(tensor_read->index);
                     tensor_struct_read->field_target = rewrite<mir::Expr>(tensor_read->target);
                     tensor_struct_read->array_of_struct_target = "array_of_" + physical_data_layout->second.fused_struct_name;
+                    tensor_struct_read->field_vector_prop_ = tensor_read->field_vector_prop_;
                     node = tensor_struct_read;
                     return;
                 }
@@ -133,6 +134,7 @@ namespace  graphit {
         auto tensor_array_read = std::make_shared<mir::TensorArrayReadExpr>();
         tensor_array_read->index = rewrite<mir::Expr>(tensor_read->index);
         tensor_array_read->target = rewrite<mir::Expr>(tensor_read->target);
+        tensor_array_read->field_vector_prop_ = tensor_read->field_vector_prop_;
         node = tensor_array_read;
     }
 

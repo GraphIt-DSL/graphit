@@ -41,11 +41,9 @@ namespace  graphit {
 
                 if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PUSH) {
                     node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
-                    return;
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL){
                     //Pull
                     node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
-                    return;
                 } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID){
                     //Hybrid
                     //TODO: not yet supported
@@ -58,9 +56,12 @@ namespace  graphit {
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = false;
                 }
 
-                if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable){
-                    mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
-                } else if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType ::Disable){
+                if (edgeset_apply->tracking_field != ""){
+                    if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable){
+                        //only enable deduplication if there is needed for tracking
+                        mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
+                    }
+                } else {
                     mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = false;
                 }
 

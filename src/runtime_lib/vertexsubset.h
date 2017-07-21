@@ -15,8 +15,10 @@ template <typename NodeID_>
 struct VertexSubset {
     int64_t vertices_range_, num_vertices_;
     bool is_dense;
-    SlidingQueue<NodeID> dense_vertex_set_ = SlidingQueue<NodeID>(0);
+    //SlidingQueue<NodeID>* dense_vertex_set_;
+    unsigned int* dense_vertex_set_;
     Bitmap * bitmap_ ;
+    std::vector<NodeID> tmp;
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -35,6 +37,7 @@ struct VertexSubset {
         if (num_vertices == vertices_range){
             bitmap_->set_all();
         }
+        dense_vertex_set_ = nullptr;
     }
 
     // make vertexSubset from array of vertex indices
@@ -56,7 +59,9 @@ struct VertexSubset {
         //only increment the count if the vertex is not already in the vertexset
         if (!bitmap_->get_bit(v)){
             bitmap_->set_bit(v);
+            //dense_vertex_set_->push_back(v);
             num_vertices_++;
+            tmp.push_back(v);
         }
     }
 
@@ -74,9 +79,28 @@ struct VertexSubset {
         is_dense = true;
     }
 
+    void printDenseSet(){
+        bool first = true;
+        std::cout << "dense set: ";
+        for (int i = 0; i < num_vertices_; i++){
+            if (first){
+                std::cout << dense_vertex_set_[i];
+                first = false;
+            } else {
+                std::cout << ", " << dense_vertex_set_[i];
+            }
+        }
+        std::cout << std::endl;
+    }
+
     // converts to sparse but keeps dense representation if there
     void toSparse() {
-
+        if (dense_vertex_set_ == nullptr && tmp.size() > 0){
+            dense_vertex_set_ = new unsigned int[num_vertices_];
+            for (int i = 0; i < num_vertices_; i++){
+                dense_vertex_set_[i] = tmp[i];
+            }
+        }
     }
 
 };

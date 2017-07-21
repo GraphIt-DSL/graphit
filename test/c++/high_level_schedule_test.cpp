@@ -606,3 +606,25 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
 }
 
 
+TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    fe_->parseStream(bfs_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+
+    //check that the apply expr is push and parallel
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+    mir::PushEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::PushEdgeSetApplyExpr>(assign_stmt->expr);
+    EXPECT_EQ(true, apply_expr->is_parallel);
+
+
+
+}
+
+

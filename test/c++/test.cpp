@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleAttachLabelNoSpace";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopAndKernelFusion";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithPushParallelCASSchedule";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleHighLevelLoopFusion";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.HighLevelLoopFusion*";

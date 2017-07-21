@@ -5,9 +5,12 @@
 #ifndef GRAPHIT_MIR_VISITOR_H
 #define GRAPHIT_MIR_VISITOR_H
 
+//make sure not to include mir.h here
+
 #include <memory>
 #include <assert.h>
 #include <graphit/midend/label_scope.h>
+
 
 namespace graphit {
     namespace mir {
@@ -27,6 +30,7 @@ namespace graphit {
         struct BreakStmt;
         struct AssignStmt;
         struct ReduceStmt;
+        struct CompareAndSwapStmt;
 
         struct StmtBlock;
         struct Expr;
@@ -88,6 +92,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ForDomain>);
             virtual void visit(std::shared_ptr<AssignStmt>);
             virtual void visit(std::shared_ptr<ReduceStmt>);
+            virtual void visit(std::shared_ptr<CompareAndSwapStmt>);
 
 
             virtual void visit(std::shared_ptr<PrintStmt>);

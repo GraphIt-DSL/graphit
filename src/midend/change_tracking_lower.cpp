@@ -47,6 +47,7 @@ namespace graphit {
 
     /**
      * Inserts return stmt for tracking fields
+     * This might just work as well for parallel version
      */
     void
     ChangeTrackingLower::ApplyExprVisitor::insertSerialReturnStmtForTrackingChange(mir::FuncDecl::Ptr apply_func_decl,
@@ -59,11 +60,14 @@ namespace graphit {
             if (field_read_write_type == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
                     field_read_write_type == FieldVectorProperty::ReadWriteType::READ_AND_WRITE) {
                 //if the tracking field has been updated, then add the return
+
+                // update the function declartion to return
                 auto bool_type = std::make_shared<mir::ScalarType>();
                 bool_type->type = mir::ScalarType::Type::BOOL;
                 auto output_var_name = "output" + mir_context_->getUniqueNameCounterString();
                 apply_func_decl->result = mir::Var(output_var_name, bool_type);
 
+                // create a return tracking var stmt by setting the boolean output variable
                 auto assign_stmt = std::make_shared<mir::AssignStmt>();
                 auto lhs = std::make_shared<mir::VarExpr>();
                 lhs->var = mir::Var(output_var_name, bool_type);
@@ -96,6 +100,21 @@ namespace graphit {
             auto field_vector_name = field_vector_target_expr->var.getName();
             // it is always true for assign statement
             addFieldTrackingVariable(field_vector_name, "true");
+        }
+    }
+
+    void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
+        //TODO: may be build another visitor for tensor read to figure out the field
+        //For now, I am assuming that the left hand side of assign stmt is a tensor read expression
+        //It can be a tensor struct read or a tensor array read, but I just need the field name
+        if (mir::isa<mir::TensorReadExpr>(cas_stmt->lhs)) {
+            auto tensor_read_expr = mir::to<mir::TensorReadExpr>(cas_stmt->lhs);
+            auto field_vector_target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
+            auto field_vector_name = field_vector_target_expr->var.getName();
+            // it is always true for assign statement
+            auto field_vector_tracking_var_name = field_vector_name + "_trackving_var_" + mir_context_->getUniqueNameCounterString();
+            addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
+            cas_stmt->tracking_var_ = field_vector_tracking_var_name;
         }
     }
 
