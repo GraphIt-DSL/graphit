@@ -169,6 +169,23 @@ TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
 
 }
 
+TEST_F(HighLevelScheduleTest, FuseMoreThanTwoFieldVectors) {
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "const vector_b : vector{Vertex}(float) = 0.0;\n"
+                             "const vector_c : vector{Vertex}(float) = 0.0;\n"
+    );
+
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->fuseFields({"vector_a", "vector_b", "vector_c"});
+
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+}
+
 TEST_F(HighLevelScheduleTest, EdgeSetGetOutDegreesFuseStruct) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
