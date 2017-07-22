@@ -261,9 +261,10 @@ namespace graphit {
 
 
         struct ReduceStmt : public AssignStmt {
-            enum class ReductionOp {MIN, SUM, MAX};
+            enum class ReductionOp {MIN, SUM, MAX, ATOMIC_MIN};
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";
+            bool is_atomic_ = false;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
 

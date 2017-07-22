@@ -181,15 +181,7 @@ namespace graphit {
 
         if (mir::isa<mir::VertexSetWhereExpr>(reduce_stmt->expr) ||
             mir::isa<mir::EdgeSetApplyExpr>(reduce_stmt->expr)) {
-            // declaring a new vertexset as output from where expression
-            printIndent();
-            reduce_stmt->expr->accept(this);
-            oss << std::endl;
 
-            printIndent();
-
-            reduce_stmt->lhs->accept(this);
-            oss << "  = ____graphit_tmp_out; " << std::endl;
 
         } else {
             switch (reduce_stmt->reduce_op_) {
@@ -226,8 +218,17 @@ namespace graphit {
                     oss << "} " << std::endl;
                     break;
                 case mir::ReduceStmt::ReductionOp::MAX:
+                    //TODO: not supported yet
                     oss << " max= ";
                     break;
+                case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
+                    printIndent();
+                    oss << reduce_stmt->tracking_var_name_ << " = ";
+                    oss << "writeMin( &";
+                    reduce_stmt->lhs->accept(this);
+                    oss << ", ";
+                    reduce_stmt->expr->accept(this);
+                    oss << " ); " << std::endl;
             }
 
         }

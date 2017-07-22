@@ -36,8 +36,13 @@ struct VertexSubset {
         bitmap_->reset();
         if (num_vertices == vertices_range){
             bitmap_->set_all();
+            dense_vertex_set_ = new unsigned int[vertices_range];
+            for (int i = 0; i< vertices_range; i++){
+                dense_vertex_set_[i] = i;
+            }
+        } else {
+            dense_vertex_set_ = nullptr;
         }
-        dense_vertex_set_ = nullptr;
     }
 
     // make vertexSubset from array of vertex indices

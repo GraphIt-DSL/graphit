@@ -69,6 +69,29 @@ protected:
                                        "    end\n"
                                        "end"
         );
+
+        sssp_is_ = istringstream ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX \n"
+                                 "func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool\n"
+                                 "    SP[dst] min= (SP[src] + weight);\n"
+                                 "end\n"
+                                 "func main() \n"
+                                 "    var n : int = edges.getVertices();\n"
+                                 "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                 "    frontier.addVertex(0); %add source vertex \n"
+                                 "    SP[0] = 0;\n"
+                                 "    var rounds : int = 0;\n"
+                                 "    while (frontier.getVertexSetSize() != 0)\n"
+                                          "         #s1# frontier = edges.from(frontier).apply(updateEdge).modified(SP);\n"
+                                 "         rounds = rounds + 1;\n"
+                                 "         if rounds == n\n"
+                                 "             print \"negative cycle\";\n"
+                                 "          end\n"
+                                 "     end\n"
+                                 "end");
     }
 
     virtual void TearDown() {
@@ -126,6 +149,7 @@ protected:
     graphit::MIRContext *mir_context_;
     istringstream bfs_is_;
     istringstream pr_is_;
+    istringstream sssp_is_;
 
 };
 
@@ -622,9 +646,15 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
     mir::PushEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::PushEdgeSetApplyExpr>(assign_stmt->expr);
     EXPECT_EQ(true, apply_expr->is_parallel);
-
-
-
 }
 
 
+TEST_F(HighLevelScheduleTest, SimpleSSSPwithPushSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
