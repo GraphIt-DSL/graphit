@@ -131,6 +131,25 @@ namespace graphit {
                 stmts->insert(stmts->begin(), stmt);
             }
 
+            void insertStmtBlockFront(mir::StmtBlock::Ptr stmt_block){
+
+                if (stmt_block->stmts == nullptr){
+                    return;
+                }
+
+                if (stmts == nullptr) {
+                    stmts = new std::vector<mir::Stmt::Ptr>();
+                }
+
+                if (stmts != nullptr && stmt_block->stmts != nullptr){
+                    int num_stmts = stmt_block->stmts->size();
+                    for (int i = 0; i <num_stmts; i++){
+                        insertStmtFront((*(stmt_block->stmts))[num_stmts-1-i]);
+                    }
+                }
+
+            }
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<StmtBlock>());
             }
@@ -441,6 +460,16 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<LoadExpr>());
+            }
+        };
+
+        struct EdgeSetLoadExpr : public Expr {
+            Expr::Ptr file_name;
+            bool is_weighted_ = false;
+            typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<EdgeSetLoadExpr>());
             }
         };
 

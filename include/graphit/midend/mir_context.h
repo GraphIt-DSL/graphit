@@ -298,6 +298,10 @@ namespace graphit {
 
             int unique_variable_name_counter_ = 0;
 
+            // these vectors are used in code gen for main functions (there's a condition in func_decl code gen)
+            std::vector<mir::Stmt::Ptr> edgeset_alloc_stmts;
+            std::vector<mir::Stmt::Ptr> field_vector_alloc_stmts;
+            std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
         };
 
 }

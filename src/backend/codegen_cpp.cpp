@@ -18,14 +18,22 @@ namespace graphit {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
                 // if the constant decl is a field property of an element (system vector)
                 if (type->element_type != nullptr) {
-                    genPropertyArrayImplementationWithInitialization(constant);
+                    //genPropertyArrayImplementationWithInitialization(constant);
+                    //NOTE: here we only generate the declaration, not the allocation and initialization
+                    // even through we have all the information.
+                    // This is because we want to do the allocation and initialization steps in the main function,
+                    // when we are using command line arguments and variables.
+                    // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
+                    // We first generate allocation, and then initialization for global variables.
+                    genPropertyArrayDecl(constant);
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                 // if the constant is a vertex set  decl
                 // currently, no code is generated
             } else {
                 // regular constant declaration
-                constant->accept(this);
+                //constant->accept(this);
+                genScalarDecl(constant);
             }
         }
 
@@ -266,7 +274,10 @@ namespace graphit {
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
         } else {
             printIndent();
-            oss << var_decl->modifier << ' ';
+
+            //we probably don't need the modifiers now
+            //oss << var_decl->modifier << ' ';
+
             var_decl->type->accept(this);
             oss << var_decl->name << " ";
             if (var_decl->initVal != nullptr) {
@@ -317,12 +328,51 @@ namespace graphit {
         oss << ") ";
 
 
+        oss << std::endl;
+        printBeginIndent();
+        indent();
+
+        if (func_decl->name == "main"){
+            //generate special initialization code for main function
+            //TODO: this is probably a hack that could be fixed for later
+
+            //First, allocate the edgesets (read them from outside files if needed)
+            for (auto stmt : mir_context_->edgeset_alloc_stmts){
+                stmt->accept(this);
+            }
+
+            //generate allocation statemetns for field vectors
+            for (auto constant : mir_context_->getLoweredConstants()) {
+                if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
+                    mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
+                    // if the constant decl is a field property of an element (system vector)
+                    if (type->element_type != nullptr) {
+                        //genPropertyArrayImplementationWithInitialization(constant);
+                        //genPropertyArrayDecl(constant);
+                        genPropertyArrayAlloc(constant);
+                    }
+                }else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+                    // if the constant is a vertex set  decl
+                    // currently, no code is generated
+                } else {
+                    // regular constant declaration
+                    //constant->accept(this);
+                    genScalarAlloc(constant);
+                }
+            }
+
+            // the stmts that initializes the field vectors
+            for (auto stmt : mir_context_->field_vector_init_stmts){
+                stmt->accept(this);
+            }
+
+        }
+
+
 
         //if the function has a body
         if (func_decl->body->stmts) {
-            oss << std::endl;
-            printBeginIndent();
-            indent();
+
 
             func_decl->body->accept(this);
 
@@ -332,9 +382,11 @@ namespace graphit {
                 oss << "return " << func_decl->result.getName() << ";" << std::endl;
             }
 
-            dedent();
-            printEndIndent();
+
         }
+
+        dedent();
+        printEndIndent();
         oss << ";";
         oss << std::endl;
 
@@ -535,6 +587,63 @@ namespace graphit {
 
     };
 
+    void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl){
+        var_decl->type->accept(this);
+        oss << var_decl->name << "; " << std::endl;
+    }
+
+
+    void CodeGenCPP::genScalarAlloc(mir::VarDecl::Ptr var_decl) {
+
+        printIndent();
+
+        oss << var_decl->name << " ";
+        if (var_decl->initVal != nullptr) {
+            oss << "= ";
+            var_decl->initVal->accept(this);
+        }
+        oss << ";" << std::endl;
+
+    }
+
+    void CodeGenCPP::genPropertyArrayDecl(mir::VarDecl::Ptr var_decl) {
+        // read the name of the array
+        const auto name = var_decl->name;
+
+        // read the type of the array
+        mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+        assert(vector_type != nullptr);
+        auto vector_element_type = vector_type->vector_element_type;
+        assert(vector_element_type != nullptr);
+
+        //generate std::vector implementation
+        oss << "std::vector< ";
+        vector_element_type->accept(this);
+        // pointer declaration
+        oss << " >  ";
+        oss << name;
+        oss << ";" << std::endl;
+    }
+
+
+    void CodeGenCPP::genPropertyArrayAlloc(mir::VarDecl::Ptr var_decl) {
+        const auto name = var_decl->name;
+        printIndent();
+        oss << name;
+        // read the size of the array
+        mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+        auto vector_element_type = vector_type->vector_element_type;
+
+        assert(size_expr != nullptr);
+        oss << " = std::vector< ";
+        vector_element_type->accept(this);
+        oss << " >  ";
+        oss << " ( ";
+        size_expr->accept(this);
+        oss << " ); " << std::endl;
+    }
+
     void CodeGenCPP::genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr var_decl) {
         // read the name of the array
         const auto name = var_decl->name;
@@ -670,15 +779,11 @@ namespace graphit {
             if (edge_set_type->weight_type != nullptr) {
                 //weighted edgeset
                 //unweighted edgeset
-                oss << "WGraph " << edgeset->name << " = builtin_loadWeightedEdgesFromFile ( ";
-                edgeset->initVal->accept(this);
-                oss << " ); " << std::endl;
+                oss << "WGraph " << edgeset->name << ";" << std::endl;
 
             } else {
                 //unweighted edgeset
-                oss << "Graph " << edgeset->name << " = builtin_loadEdgesFromFile ( ";
-                edgeset->initVal->accept(this);
-                oss << " ); " << std::endl;
+                oss << "Graph " << edgeset->name << "; " << std::endl;
             }
 
 
@@ -962,8 +1067,11 @@ namespace graphit {
                 indent();
                 printIndent();
                 var_decl->type->accept(this);
-                oss << var_decl->name << " = ";
-                var_decl->initVal->accept(this);
+                //we don't initialize in the struct declarations anymore
+                // the initializations are done in the main function
+                oss << var_decl->name;
+                // << " = ";
+                //var_decl->initVal->accept(this);
                 oss << ";" << std::endl;
                 dedent();
             }
@@ -1018,5 +1126,19 @@ namespace graphit {
         }
         oss << "); " << std::endl;
     }
+
+    void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
+        if (edgeset_load_expr->is_weighted_){
+            oss << "builtin_loadWeightedEdgesFromFile ( ";
+            edgeset_load_expr->file_name->accept(this);
+            oss << ") ";
+        } else {
+            oss << "builtin_loadEdgesFromFile ( ";
+            edgeset_load_expr->file_name->accept(this);
+            oss << ") ";
+        }
+    }
+
+
 
 }

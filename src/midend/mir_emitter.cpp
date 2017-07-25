@@ -236,7 +236,7 @@ namespace graphit {
     }
 
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
-        auto mir_load_expr = std::make_shared<mir::LoadExpr>();
+        auto mir_load_expr = std::make_shared<mir::EdgeSetLoadExpr>();
         mir_load_expr->file_name = emitExpr(load_expr->file_name);
         retExpr = mir_load_expr;
     }
@@ -624,12 +624,11 @@ namespace graphit {
             } else if (std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type) != nullptr) {
                 mir::EdgeSetType::Ptr type = std::dynamic_pointer_cast<mir::EdgeSetType>(mir_var_decl->type);
                 if (mir_var_decl->initVal != nullptr) {
-                    if (std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal)) {
-                        const auto init_val = std::dynamic_pointer_cast<mir::LoadExpr>(mir_var_decl->initVal);
-                        const auto mir_name_expr = init_val->file_name;
-                        //reset the initial value to the name NOT the load expresion
-                        mir_var_decl->initVal = mir_name_expr;
-                        ctx->updateElementInputFilename(type->element, mir_name_expr);
+                    // the right hand side for edgeset const declartion needs to be a edgeset load expression
+                    if (mir::isa<mir::EdgeSetLoadExpr>(mir_var_decl->initVal)) {
+                        const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
+                        mir_var_decl->initVal = init_val;
+                        ctx->updateElementInputFilename(type->element, init_val->file_name);
                         ctx->addEdgeSet(mir_var_decl);
                         ctx->addEdgesetType(mir_var_decl->name, type);
                     }

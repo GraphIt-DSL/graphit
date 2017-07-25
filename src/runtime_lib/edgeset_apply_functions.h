@@ -27,6 +27,16 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial(Graph &g, APPLY_FUNC apply_func)
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
 }
 
+//template<typename APPLY_FUNC>
+//VertexSubset<NodeID> *edgeset_apply_pull_parallel(Graph &g, APPLY_FUNC apply_func) {
+//
+//    parallel_for (NodeID u = 0; u < g.num_nodes(); u++) {
+//        for (NodeID v : g.in_neigh(u))
+//            apply_func(v, u);
+//    }
+//    return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
+//}
+
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_serial(Graph &g, APPLY_FUNC apply_func) {
 
@@ -420,7 +430,6 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     }
     // used to generate nonzero indices to get degrees
     uintT *degrees = newA(uintT, m);
-    NodeID *frontierVertices;
 
     // We probably need this when we get something that doesn't have a dense set, not sure
     // We can also write our own, the eixsting one doesn't quite work for bitvectors
@@ -428,12 +437,10 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
 
     //from_vertexset->printDenseSet();
 
-    frontierVertices = newA(NodeID, m);
     {
         for (long i = 0; i < m; i++) {
             NodeID v = from_vertexset->dense_vertex_set_[i];
             degrees[i] = g.out_degree(v);
-            frontierVertices[i] = v;
         }
     }
     uintT outDegrees = sequence::plusReduce(degrees, m);

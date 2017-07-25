@@ -373,16 +373,16 @@ TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-    // 1 for the conversion from AoS to SoA, 2 for the splitted for loops
-    EXPECT_EQ(3, main_func_decl->body->stmts->size());
+    // 2 for the splitted for loops
+    EXPECT_EQ(2, main_func_decl->body->stmts->size());
 
     // the first apply should be push
-    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[1]);
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
     mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(expr_stmt->expr));
 
     // the second apply should be pull
-    for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[2]);
+    for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[1]);
     expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
 

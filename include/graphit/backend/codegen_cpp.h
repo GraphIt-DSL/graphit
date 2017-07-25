@@ -58,6 +58,7 @@ namespace graphit {
         //virtual void visit(mir::EdgeSetWhereExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);
+        virtual void visit(mir::EdgeSetLoadExpr::Ptr);
 
         virtual void visit(mir::NegExpr::Ptr);
         virtual void visit(mir::EqExpr::Ptr);
@@ -110,6 +111,14 @@ namespace graphit {
 
         // generate the call to the right edgeset apply function with all the arguments
         void genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply);
+
+        void genPropertyArrayDecl(mir::VarDecl::Ptr shared_ptr);
+
+        void genPropertyArrayAlloc(mir::VarDecl::Ptr shared_ptr);
+
+        void genScalarDecl(mir::VarDecl::Ptr var_decl);
+
+        void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
     };
 }
 

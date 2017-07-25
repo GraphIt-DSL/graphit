@@ -9,6 +9,7 @@
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
 #include <graphit/midend/atomics_op_lower.h>
+#include <graphit/midend/vertex_edge_set_lower.h>
 
 namespace graphit {
     /**
@@ -18,6 +19,9 @@ namespace graphit {
      */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
         VectorOpLower(mir_context).lower();
+
+        VertexEdgeSetLower(mir_context).lower();
+
         // This pass lowers apply expression into concrete versions, including push, pull hybrid and more
         ApplyExprLower(mir_context, schedule).lower();
 

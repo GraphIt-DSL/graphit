@@ -196,6 +196,7 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                         break;
                     default:
                         std::cout << "not supported for atomics" << std::endl;
+                        break;
                 }
             }
         }
