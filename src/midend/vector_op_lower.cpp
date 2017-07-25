@@ -6,7 +6,7 @@
 
 namespace  graphit {
 
-    void VectorOpLower::lowerConstVectorVarDecl() {
+    void GlobalFieldVectorLower::lowerConstVectorVarDecl() {
 
         //a stmt block that contains the initilization of global field vectors (excluding the vertex and edge sets)
         //it would be inserted at the beginning of the main function later
@@ -200,7 +200,7 @@ namespace  graphit {
         }
     }
 
-    void VectorOpLower::lower() {
+    void GlobalFieldVectorLower::lower() {
         lowerConstVectorVarDecl();
         //TODO: lower other vector operations
     }

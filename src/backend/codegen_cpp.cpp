@@ -341,6 +341,8 @@ namespace graphit {
                 stmt->accept(this);
             }
 
+            // generates the code that allocates and initializes the global variables
+
             //generate allocation statemetns for field vectors
             for (auto constant : mir_context_->getLoweredConstants()) {
                 if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {

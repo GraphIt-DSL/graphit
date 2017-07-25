@@ -18,7 +18,7 @@ namespace graphit {
      * @param schedule
      */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
-        VectorOpLower(mir_context).lower();
+        GlobalFieldVectorLower(mir_context).lower();
 
         VertexEdgeSetLower(mir_context).lower();
 
