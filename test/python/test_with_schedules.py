@@ -97,10 +97,59 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def test_cc_push_parallel_cas(self):
+        self.basic_compile_exec_test("cc_push_parallel_cas.gt")
+
+
+    def test_cc_push_parallel_cas_verified(self):
+        self.basic_compile_test("cc_push_parallel_cas.gt")
+        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..");
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+    def test_sssp_push_parallel_cas(self):
+        self.basic_compile_exec_test("sssp_push_parallel_cas.gt")
+
+    def test_sssp_push_parallel_cas_verified(self):
+        self.basic_compile_test("sssp_push_parallel_cas.gt")
+        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..");
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+    def test_pagerank_parallel_pull_expect(self):
+        self.basic_compile_test("pagerank_parallel_pull.gt")
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), 0.00289518)
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_push_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

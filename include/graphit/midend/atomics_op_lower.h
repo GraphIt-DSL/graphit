@@ -7,7 +7,7 @@
 
 #include <graphit/midend/mir_context.h>
 #include <graphit/frontend/schedule.h>
-
+#include <graphit/midend/mir.h>
 
 namespace graphit {
 

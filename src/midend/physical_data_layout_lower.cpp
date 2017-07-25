@@ -15,6 +15,15 @@ namespace  graphit {
         auto lower_vertexset_layout = LowerVertexsetDecl(schedule_);
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
 
+        for (auto stmt : mir_context_->field_vector_init_stmts){
+            lower_tensor_read.rewrite(stmt);
+        }
+
+        for (auto stmt : mir_context_->edgeset_alloc_stmts){
+            lower_tensor_read.rewrite(stmt);
+        }
+
+
         for (auto function : functions){
             lower_tensor_read.rewrite(function);
             function->accept(&lower_vertexset_layout);

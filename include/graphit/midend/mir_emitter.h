@@ -24,6 +24,13 @@ namespace graphit {
             ~MIREmitter()  {}
 
             void emitIR(fir::Program::Ptr program) {
+
+                //add symbol argv for command line arguments
+                //the type is a bit hacky right now, since we don't really use it,
+                //the type should be a dynamic vector of string literal
+                mir::Var argv = mir::Var("argv", std::make_shared<mir::VectorType>());
+                ctx->addSymbol(argv);
+
                 program->accept(this);
             }
 

@@ -72,6 +72,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VarExpr> op) { node = op; };
 
+            virtual void visit(std::shared_ptr<EdgeSetLoadExpr> op);
+
             virtual void visit(std::shared_ptr<NegExpr>);
 
             virtual void visit(std::shared_ptr<EqExpr>);

@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
 
 
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetApply";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
+    //::testing::GTEST_FLAG(filter) = "BackendTest*";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.ReadCmdLineArgs";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithPushParallelCASSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleHighLevelLoopFusion";
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.HighLevelLoopFusion*";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSSSPwithPushSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.FuseMoreThanTwoFieldVectors";
 
 
 

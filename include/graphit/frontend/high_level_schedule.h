@@ -42,6 +42,9 @@ namespace graphit {
                 ProgramScheduleNode::Ptr fuseFields(string first_field_name,
                                                     string second_field_name);
 
+                // High level API for fusing together multiple fields / system vectors as ArrayOfStructs
+                ProgramScheduleNode::Ptr fuseFields(std::vector<std::string> fields);
+
                 // High level API for splitting one loop into two loops
                 ProgramScheduleNode::Ptr splitForLoop(string original_loop_label,
                                                       string split_loop1_label,

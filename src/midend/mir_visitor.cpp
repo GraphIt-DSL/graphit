@@ -239,5 +239,9 @@ namespace graphit {
             expr->operand->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {
+            load_expr->file_name->accept(this);
+        }
+
     }
 }

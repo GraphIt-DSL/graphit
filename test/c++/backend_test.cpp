@@ -467,8 +467,10 @@ TEST_F(BackendTest, SimpleMinReduceReturnFrontier){
                              "func update (src: Vertex, dst: Vertex) age[dst] min= 1; end\n"
                              "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
-                             "func main() var active_vertices : vertexset{Vertex} = "
-                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+                             "func main() "
+                             "  var active_vertices : vertexset{Vertex} = "
+                             "      edges.from(from_filter).to(to_filter).apply(update).modified(age); "
+                             "end");
     EXPECT_EQ (0,  basicTest(is));
     EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
 }
@@ -488,4 +490,14 @@ TEST_F(BackendTest, MinReduceReturnFrontier){
     EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
     EXPECT_EQ (mir_context_->getFunction("update")->result.isInitialized(), true);
 
+}
+
+TEST_F(BackendTest, ReadCmdLineArgs) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                             "func main() print out_degrees.sum(); end");
+    EXPECT_EQ (0,  basicTest(is));
 }

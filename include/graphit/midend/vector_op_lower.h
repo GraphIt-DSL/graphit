@@ -9,13 +9,13 @@
 
 namespace graphit {
     /**
-     * Lowers operations on vectors into apply operations
-     * Operations include, const / var decl with loaded values
-     * TODO: Element wise +, * ..
+     * Lowers field vector declartions into global variable declaration
+     * Main function declaration and main function vertex set apply expressions (for initialization)
+     * The vertexset apply expressions is good for transforming between arrays and structs (with tensor read lowering)
      */
-    class VectorOpLower {
+    class GlobalFieldVectorLower {
     public:
-        VectorOpLower(MIRContext *mir_context) : mir_context_(mir_context){
+        GlobalFieldVectorLower(MIRContext *mir_context) : mir_context_(mir_context){
 
         }
 

@@ -238,6 +238,37 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::fuseFields(std::vector<std::string> fields) {
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->physical_data_layouts == nullptr) {
+                schedule_->physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
+            }
+
+            string fused_struct_name = "struct_";
+            bool first = true;
+            for (std::string field_name : fields) {
+                if (first) {
+                    first = false;
+                } else {
+                    fused_struct_name += "_";
+
+                }
+                fused_struct_name += field_name;
+            }
+            for (std::string field_name : fields) {
+                FieldVectorPhysicalDataLayout vector_layout = {field_name, FieldVectorDataLayoutType::STRUCT,
+                                                                 fused_struct_name};
+                (*schedule_->physical_data_layouts)[field_name] = vector_layout;
+            }
+
+            return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label, std::string apply_schedule_str) {
 
             // If no schedule has been constructed, construct a new one
