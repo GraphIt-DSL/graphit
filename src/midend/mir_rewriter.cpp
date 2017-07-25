@@ -255,5 +255,10 @@ namespace graphit {
             node = stmt;
         }
 
+        void MIRRewriter::visit(EdgeSetLoadExpr::Ptr load_expr) {
+            load_expr->file_name = rewrite<Expr>(load_expr->file_name);
+            node = load_expr;
+        }
+
     }
 }

@@ -124,7 +124,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
-            virtual void visit(std::shared_ptr<EdgeSetLoadExpr>){};
+            virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
 
             virtual void visit(std::shared_ptr<NegExpr>);

@@ -315,16 +315,22 @@ namespace graphit {
         //generate the function name and left paren
         oss << func_decl->name << "(";
 
-        bool printDelimiter = false;
-        for (auto arg : func_decl->args) {
-            if (printDelimiter) {
-                oss << ", ";
-            }
+        if (func_decl->name == "main") {
+            oss << "int argc, char * argv[] ";
+        } else {
+            bool printDelimiter = false;
+            for (auto arg : func_decl->args) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
 
-            arg.getType()->accept(this);
-            oss << arg.getName();
-            printDelimiter = true;
+                arg.getType()->accept(this);
+                oss << arg.getName();
+                printDelimiter = true;
+            }
         }
+
+
         oss << ") ";
 
 

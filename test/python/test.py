@@ -162,6 +162,15 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_fixediter_pagerank_expect(self):
         self.expect_output_val("simple_fixed_iter_pagerank.gt", 0.00289518)
 
+    def test_pagerank_cmdline_arg_expect(self):
+        self.basic_compile_test("pagerank_with_filename_arg.gt")
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), 0.00289518)
+
+
     def test_simple_timer(self):
         self.basic_compile_exec_test("simple_timer.gt")
 
@@ -249,5 +258,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_fixediter_pagerank_expect'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_cmdline_arg_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

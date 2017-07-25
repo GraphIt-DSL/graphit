@@ -53,7 +53,7 @@ namespace graphit {
                 return functions_map_[name];
             }
 
-                void addSymbol(mir::Var var) {
+            void addSymbol(mir::Var var) {
                 symbol_table_.insert(var.getName(), var);
             }
 

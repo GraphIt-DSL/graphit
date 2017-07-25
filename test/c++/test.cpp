@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.ReadCmdLineArgs";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";

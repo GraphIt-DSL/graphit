@@ -491,3 +491,13 @@ TEST_F(BackendTest, MinReduceReturnFrontier){
     EXPECT_EQ (mir_context_->getFunction("update")->result.isInitialized(), true);
 
 }
+
+TEST_F(BackendTest, ReadCmdLineArgs) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                             "func main() print out_degrees.sum(); end");
+    EXPECT_EQ (0,  basicTest(is));
+}
