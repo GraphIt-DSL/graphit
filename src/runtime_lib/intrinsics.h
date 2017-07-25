@@ -5,6 +5,7 @@
 #ifndef GRAPHIT_INTRINSICS_H_H
 #define GRAPHIT_INTRINSICS_H_H
 
+
 #include <vector>
 
 #include "infra_gapbs/builder.h"
@@ -62,6 +63,14 @@ int builtin_getVertices(WGraph &edges){
 
 std::vector<int> builtin_getOutDegrees(Graph &edges){
     std::vector<int> out_degrees (edges.num_nodes(), 0);
+    for (NodeID n=0; n < edges.num_nodes(); n++){
+        out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
+pvector<int> builtin_getOutDegreesPvec(Graph &edges){
+    pvector<int> out_degrees (edges.num_nodes(), 0);
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
     }

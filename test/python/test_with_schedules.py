@@ -138,10 +138,18 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def test_pagerank_parallel_pull_expect(self):
+        self.basic_compile_test("pagerank_parallel_pull.gt")
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), 0.00289518)
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
