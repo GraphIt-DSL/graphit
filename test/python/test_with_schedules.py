@@ -139,7 +139,7 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
     def test_pagerank_parallel_pull_expect(self):
-        self.basic_compile_test("pagerank_parallel_pull.gt")
+        self.basic_compile_test("pagerank_benchmark.gt")
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
