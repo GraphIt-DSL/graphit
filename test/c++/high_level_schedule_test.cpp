@@ -96,7 +96,7 @@ protected:
                                                   "  end\n"
                                                   "  print \"finished running BFS\"; \n"
                                                   "end");
-    
+
     istringstream pr_is_ = istringstream("element Vertex end\n"
                                                  "element Edge end\n"
                                                  "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
