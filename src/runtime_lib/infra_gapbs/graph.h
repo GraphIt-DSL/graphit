@@ -109,19 +109,23 @@ class CSRGraph {
       if (in_neighbors_ != nullptr)
         delete[] in_neighbors_;
     }
+    if (flags_ != nullptr)
+      delete[] flags_;
   }
 
 
  public:
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
-    in_index_(nullptr), in_neighbors_(nullptr) {}
+  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr) {}
 
   CSRGraph(int64_t num_nodes, DestID_** index, DestID_* neighs) :
     directed_(false), num_nodes_(num_nodes),
     out_index_(index), out_neighbors_(neighs),
     in_index_(index), in_neighbors_(neighs) {
       num_edges_ = (out_index_[num_nodes_] - out_index_[0]) / 2;
+      //adding flags used for deduplication
+      flags_ = new int[num_nodes_];
     }
 
   CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
@@ -130,6 +134,7 @@ class CSRGraph {
     out_index_(out_index), out_neighbors_(out_neighs),
     in_index_(in_index), in_neighbors_(in_neighs) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
+      flags_ = new int[num_nodes_];
     }
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
@@ -142,6 +147,7 @@ class CSRGraph {
       other.out_neighbors_ = nullptr;
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
+      other.flags_ = nullptr;
   }
 
   ~CSRGraph() {
@@ -164,6 +170,7 @@ class CSRGraph {
       other.out_neighbors_ = nullptr;
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
+      other.flags_ = nullptr;
     }
     return *this;
   }
@@ -243,6 +250,9 @@ class CSRGraph {
   Range<NodeID_> vertices() const {
     return Range<NodeID_>(num_nodes());
   }
+
+  //useful for deduplication
+  int* flags_;
 
  private:
   bool directed_;
