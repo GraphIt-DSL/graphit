@@ -54,6 +54,7 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
+        subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp "  " -o test.o", shell=True)
 
     def basic_compile_exec_test(self, input_file_name):
         input_with_schedule_path = '../../test/input_with_schedules/'
@@ -61,6 +62,7 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
+        subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp "  " -o test.o", shell=True)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
