@@ -9,7 +9,7 @@
 #include <iostream>
 #include <type_traits>
 #include "infra_gapbs/sliding_queue.h"
-
+#include "infra_ligra/ligra/parallel.h"
 
 template <typename NodeID_>
 struct VertexSubset {
@@ -81,6 +81,21 @@ struct VertexSubset {
 //            {parallel_for(long i=0;i<n;i++) d[i] = 0;}
 //            {parallel_for(long i=0;i<m;i++) d[s[i]] = 1;}
 //        }
+
+        if (bitmap_ == nullptr){
+            //set only if bitvector is not yet created
+            //and temporary vector is created
+            if (tmp.size() != 0){
+                for (NodeID node : tmp){
+                    bitmap_->set_bit(node);
+                }
+            } else if (num_vertices_ > 0){
+                parallel_for (int i = 0; i < num_vertices_; i++){
+                    bitmap_->set_bit_atomic(dense_vertex_set_[i]);
+                }
+            }
+        }
+
         is_dense = true;
     }
 
@@ -105,7 +120,18 @@ struct VertexSubset {
             for (int i = 0; i < num_vertices_; i++){
                 dense_vertex_set_[i] = tmp[i];
             }
+        } else if (dense_vertex_set_ == nullptr && num_vertices_ > 0){
+            //vertices are stored as bitvector
+            dense_vertex_set_ = new unsigned int[num_vertices_];
+            int j = 0;
+            for (unsigned int i = 0; i < vertices_range_; i++){
+                if (bitmap_->get_bit(i)){
+                    dense_vertex_set_[j] = i;
+                    j++;
+                }
+            }
         }
+
     }
 
 };

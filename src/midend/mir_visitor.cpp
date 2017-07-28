@@ -143,6 +143,14 @@ namespace graphit {
             expr->target->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->target->accept(this);
             //expr->input_func->accept(this);

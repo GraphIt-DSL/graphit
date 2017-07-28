@@ -663,11 +663,11 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
 }
 
 
-TEST_F(HighLevelScheduleTest, SimpleSSSPwithPushSchedule) {
+TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    program_schedule_node->setApply("s1", "hybrid_dense_forward")->setApply("s1", "parallel");
     fe_->parseStream(sssp_is_, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));

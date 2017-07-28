@@ -44,11 +44,13 @@ namespace  graphit {
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL){
                     //Pull
                     node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
-                } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID){
-                    //Hybrid
-                    //TODO: not yet supported
+                } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD){
+                    //Hybrid dense forward (switching betweeen push and dense forward push)
+                    node = std::make_shared<mir::HybridDenseForwardEdgeSetApplyExpr>(edgeset_apply);
+                } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE){
+                    //Hybrid dense (switching betweeen push and pull)
+                    node = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
                 }
-
 
                 if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Parallel){
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = true;

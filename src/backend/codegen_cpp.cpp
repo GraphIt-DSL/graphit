@@ -1099,7 +1099,6 @@ namespace graphit {
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
 
 
-        auto function_name = edgeset_apply_func_gen_->genFunctionName(apply);
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);

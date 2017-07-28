@@ -40,7 +40,8 @@ namespace graphit {
         enum class DirectionType {
             PUSH,
             PULL,
-            HYBRID
+            HYBRID_DENSE,
+            HYBRID_DENSE_FORWARD
         };
 
         enum class ParType {

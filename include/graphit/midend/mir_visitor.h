@@ -48,6 +48,8 @@ namespace graphit {
 
         struct PushEdgeSetApplyExpr;
         struct PullEdgeSetApplyExpr;
+        struct HybridDenseEdgeSetApplyExpr;
+        struct HybridDenseForwardEdgeSetApplyExpr;
 
         struct TensorReadExpr;
         struct TensorArrayReadExpr;
@@ -106,8 +108,11 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VertexSetApplyExpr>);
             virtual void visit(std::shared_ptr<EdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<PushEdgeSetApplyExpr>);
             virtual void visit(std::shared_ptr<PullEdgeSetApplyExpr>);
+            virtual void visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr>);
+            virtual void visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr>);
 
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
