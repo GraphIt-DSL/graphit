@@ -37,4 +37,5 @@ func main()
 end
 
 schedule:
-    program->setApply("s1", "hybrid_denseforward")->setApply("s1", "parallel");
+    program->setApply("s1", "hybrid_dense_forward")->setApply("s1", "parallel");
+
