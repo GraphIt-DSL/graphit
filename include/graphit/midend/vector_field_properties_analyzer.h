@@ -77,9 +77,15 @@ namespace graphit {
 
             virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
 
+            virtual void visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
+
         private:
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
+
+            void analyzeSingleFunctionEdgesetApplyExpr(mir::EdgeSetApplyExpr::Ptr apply_expr, std::string direction);
         };
 
     private:

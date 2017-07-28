@@ -52,6 +52,10 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<PullEdgeSetApplyExpr>);
 
+            virtual void visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr>);
+
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
 
 

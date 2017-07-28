@@ -552,6 +552,48 @@ namespace graphit {
         };
 
 
+        struct HybridDenseForwardEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> Ptr;
+            std::string pull_function_;
+
+            HybridDenseForwardEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
+                target = edgeset_apply->target;
+                // for hybrid dense  forward, it is always using the push function (atomics on dst)
+                // it is ok with just one direction
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<HybridDenseForwardEdgeSetApplyExpr>());
+            }
+        };
+
+        struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
+
+            HybridDenseEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
+                target = edgeset_apply->target;
+                // for hybrid dense  forward, it is always using the push function (atomics on dst)
+                // it is ok with just one direction
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<HybridDenseEdgeSetApplyExpr>());
+            }
+        };
+
+
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;

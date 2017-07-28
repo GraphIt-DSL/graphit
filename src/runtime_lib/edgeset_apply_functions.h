@@ -436,7 +436,7 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_
     return next_frontier;
 }
 
-
+// This is a push only case
 //#define TIME
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier
@@ -458,7 +458,9 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     Timer out_d_timer;
     out_d_timer.Start();
 #endif
- 
+
+    from_vertexset->toSparse();
+
     if (g.flags_ == nullptr)
       g.flags_ = new int[numVertices];
       
@@ -552,5 +554,122 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
 }
 
 
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> * edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier
+        (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func){
 
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+    long m = from_vertexset->size();
+
+    if (numVertices != from_vertexset->getVerticesRange()) {
+
+        cout << "edgeMap: Sizes Don't match" << endl;
+        abort();
+    }
+    // used to generate nonzero indices to get degrees
+    uintT *degrees = newA(uintT, m);
+
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+    if (g.flags_ == nullptr)
+        g.flags_ = new int[numVertices];
+
+    parallel_for(int i = 0; i< numVertices; i++){
+        g.flags_[i] = 0;
+    }
+
+    // We probably need this when we get something that doesn't have a dense set, not sure
+    // We can also write our own, the eixsting one doesn't quite work for bitvectors
+    from_vertexset->toSparse();
+
+    //from_vertexset->printDenseSet();
+
+    {
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID v = from_vertexset->dense_vertex_set_[i];
+            degrees[i] = g.out_degree(v);
+        }
+    }
+    uintT outDegrees = sequence::plusReduce(degrees, m);
+    if (outDegrees == 0) return next_frontier;
+    if (m + outDegrees > numEdges/20) {
+
+        //ligra code
+        //        bool* next = newA(bool,numVertices);
+//        {parallel_for(long i=0;i<numVertices;i++) next[i] = 0;}
+//        {parallel_for (long i=0; i<numVertices; i++){
+//                if (vertexSubset[i]) {
+//                    G[i].decodeOutNgh(i, vertexSubset, f, next);
+//                }
+//            }}
+
+        from_vertexset->toDense();
+        free(degrees);
+        Bitmap * next = new Bitmap(g.num_nodes());
+        Bitmap * current = from_vertexset->bitmap_;
+        next->reset();
+
+        int64_t count = 0;
+        #pragma omp parallel for reduction(+ : count)  schedule (dynamic, 1024)
+         for (NodeID u = 0; u < numVertices; u++){
+            if (current->get_bit(u)){
+                for (WNode s : g.out_neigh(u)){
+                    if (apply_func(u, s.v, s.w)){
+                        next->set_bit_atomic(s.v);
+                        count++;
+                    }
+                }
+            }
+        }
+        VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
+        next_frontier->bitmap_ = next;
+        return next_frontier;
+    } else {
+        uintT* offsets = degrees;
+        long outEdgeCount = sequence::plusScan(offsets, degrees, m);
+        uintE * outEdges = newA(uintE,outEdgeCount);
+
+#ifdef TIME
+        Timer apply_timer;
+    apply_timer.Start();
+#endif
+        #pragma omp parallel for  schedule (dynamic, 1024)
+        for (long i = 0; i < m; i++) {
+            NodeID src = from_vertexset->dense_vertex_set_[i];
+            uintT offset = offsets[i];
+            //vertex vert = frontierVertices[i];
+            //vert.decodeOutNghSparse(v, o, f, outEdges);
+            int j = 0;
+            for (WNode dst : g.out_neigh(src)) {
+                if (apply_func(src, dst.v, dst.w)) {
+                    //using CAS for deduplication
+                    if (CAS(&(g.flags_[dst.v]), 0, 1)){
+                        outEdges[offset + j] = dst.v;
+                    }
+                } else{
+                    outEdges[offset + j] = UINT_E_MAX;
+                }
+                j++;
+            }
+        }
+#ifdef TIME
+        apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+        uintE * nextIndices = newA(uintE, outEdgeCount);
+        long nextM = sequence::filter(outEdges,nextIndices,outEdgeCount,nonMaxF());
+        free(outEdges);
+
+        free(degrees);
+
+        next_frontier->num_vertices_ = nextM;
+        next_frontier->dense_vertex_set_ = nextIndices;
+
+        return next_frontier;
+    }
+}
 #endif //GRAPHIT_EDGESET_APPLY_FUNCTIONS_H
