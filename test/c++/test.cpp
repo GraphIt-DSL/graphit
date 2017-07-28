@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 
-    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
+    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleInsertNameNodeBefore";
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";

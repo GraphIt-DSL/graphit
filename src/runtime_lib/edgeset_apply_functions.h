@@ -609,24 +609,32 @@ VertexSubset<NodeID> * edgeset_apply_hybrid_denseforward_parallel_weighted_dedup
 
         from_vertexset->toDense();
         free(degrees);
-        Bitmap * next = new Bitmap(g.num_nodes());
-        Bitmap * current = from_vertexset->bitmap_;
-        next->reset();
 
-        int64_t count = 0;
-        #pragma omp parallel for reduction(+ : count)  schedule (dynamic, 1024)
-         for (NodeID u = 0; u < numVertices; u++){
-            if (current->get_bit(u)){
+//        Deprecated, switch to use boolean arrays due to performance issues
+//        Bitmap * next = new Bitmap(g.num_nodes());
+//        Bitmap * current = from_vertexset->bitmap_;
+//        next->reset();
+
+        bool* next = newA(bool,numVertices);
+        bool* current = from_vertexset->bool_map_;
+
+        //int64_t count = 0;
+        //#pragma omp parallel for reduction(+ : count)  schedule (dynamic, 1024)
+         parallel_for (NodeID u = 0; u < numVertices; u++){
+            //if (current->get_bit(u)){
+             if(current[u]){
                 for (WNode s : g.out_neigh(u)){
                     if (apply_func(u, s.v, s.w)){
-                        next->set_bit_atomic(s.v);
-                        count++;
+                        //next->set_bit_atomic(s.v);
+                        //count++;
+                        next[s.v] = 1;
                     }
                 }
             }
         }
-        VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
-        next_frontier->bitmap_ = next;
+        next_frontier->num_vertices_ = sequence::sum(next,numVertices);
+        //next_frontier->bitmap_ = next;
+        next_frontier->bool_map_ = next;
         return next_frontier;
     } else {
         uintT* offsets = degrees;
