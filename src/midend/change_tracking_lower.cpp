@@ -28,8 +28,8 @@ namespace graphit {
 
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-        std::cout << "HybridDense not yet supported" << std::endl;
-        exit(1);
+        std::cout << "Hybrid Dense not yet supported" << std::endl;
+        //exit(1);
     }
 
     // Updates the function for Push, Pull, HybridDenseForward edge set apply (only one direction function)

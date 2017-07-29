@@ -36,6 +36,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseForwardSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithHyrbidDenseParallelCASSchedule";
+
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSSSPwithPushSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.FuseMoreThanTwoFieldVectors";

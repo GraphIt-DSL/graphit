@@ -53,10 +53,11 @@ namespace  graphit {
 
                     //clone the function delcaration for push, use the original func for pull
                     auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
-                    auto push_apply_func_decl = pull_apply_func_decl
+                    mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
+                    push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
 
                     //insert into MIR context
-
+                    mir_context_->addFunctionFront(push_apply_func_decl);
 
                     node = hybrid_dense_edgeset_apply;
                 }
