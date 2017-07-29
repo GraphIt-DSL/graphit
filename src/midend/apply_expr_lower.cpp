@@ -55,7 +55,7 @@ namespace  graphit {
                     auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
                     push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-
+                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
                     //insert into MIR context
                     mir_context_->addFunctionFront(push_apply_func_decl);
 

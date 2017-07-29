@@ -82,6 +82,276 @@ namespace graphit {
             return node;
         }
 
+        void LoadExpr::copy(MIRNode::Ptr node) {
+            Expr::copy(node);
+            auto expr = to<mir::LoadExpr>(node);
+            file_name = expr->file_name->clone<Expr>();
+        }
+
+
+        MIRNode::Ptr LoadExpr::cloneNode() {
+            const auto node = std::make_shared<LoadExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void EdgeSetLoadExpr::copy(MIRNode::Ptr node) {
+            Expr::copy(node);
+            auto expr = to<mir::EdgeSetLoadExpr>(node);
+            file_name = expr->file_name->clone<Expr>();
+            is_weighted_ = expr->is_weighted_;
+        }
+
+
+        MIRNode::Ptr EdgeSetLoadExpr::cloneNode() {
+            const auto node = std::make_shared<EdgeSetLoadExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
+        void ApplyExpr::copy(MIRNode::Ptr node) {
+            Expr::copy(node);
+            auto expr = to<mir::ApplyExpr>(node);
+            target = expr->target->clone<Expr>();
+            input_function_name = expr->input_function_name;
+            tracking_field = expr->tracking_field;
+        }
+
+
+        MIRNode::Ptr ApplyExpr::cloneNode() {
+            const auto node = std::make_shared<ApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void VertexSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = to<VertexSetApplyExpr>(node);
+            ApplyExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr VertexSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<VertexSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void EdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = to<EdgeSetApplyExpr>(node);
+            ApplyExpr::copy(expr);
+            from_func = expr->from_func;
+            to_func = expr->to_func;
+            is_parallel = expr->is_parallel;
+            enable_deduplication = expr->enable_deduplication;
+            is_weighted = expr->is_weighted;
+        }
+
+
+        MIRNode::Ptr EdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<EdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void PushEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<PushEdgeSetApplyExpr>(node);
+            EdgeSetApplyExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr PushEdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<PushEdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void PullEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<PullEdgeSetApplyExpr>(node);
+            EdgeSetApplyExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr PullEdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<PullEdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void HybridDenseEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<HybridDenseEdgeSetApplyExpr>(node);
+            EdgeSetApplyExpr::copy(expr);
+            push_function_ = expr->push_function_;
+        }
+
+
+        MIRNode::Ptr HybridDenseEdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<HybridDenseEdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
+        void HybridDenseForwardEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<HybridDenseForwardEdgeSetApplyExpr>(node);
+            EdgeSetApplyExpr::copy(node);
+        }
+
+
+        MIRNode::Ptr HybridDenseForwardEdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<HybridDenseForwardEdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
+        void WhereExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<WhereExpr>(node);
+            target = expr->target;
+            input_func = expr->input_func;
+            is_constant_set = expr->is_constant_set;
+        }
+
+
+        MIRNode::Ptr WhereExpr::cloneNode() {
+            const auto node = std::make_shared<WhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void VertexSetWhereExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<VertexSetWhereExpr>(node);
+            WhereExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr VertexSetWhereExpr::cloneNode() {
+            const auto node = std::make_shared<VertexSetWhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
+
+        void EdgeSetWhereExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<EdgeSetWhereExpr>(node);
+            WhereExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr EdgeSetWhereExpr::cloneNode() {
+            const auto node = std::make_shared<EdgeSetWhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void VertexSetAllocExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<VertexSetAllocExpr>(node);
+            size_expr = expr->size_expr->clone<Expr>();
+            layout = expr->layout;
+            element_type = expr->element_type;
+        }
+
+        MIRNode::Ptr VertexSetAllocExpr::cloneNode() {
+            const auto node = std::make_shared<VertexSetAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void NaryExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<NaryExpr>(node);
+            for (const auto & operand : expr->operands){
+                operands.push_back(operand);
+            }
+        }
+
+        MIRNode::Ptr NaryExpr::cloneNode() {
+            const auto node = std::make_shared<NaryExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void BinaryExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<BinaryExpr>(node);
+            lhs = expr->lhs->clone<Expr>();
+            rhs = expr->rhs->clone<Expr>();
+        }
+
+        MIRNode::Ptr BinaryExpr::cloneNode() {
+            const auto node = std::make_shared<BinaryExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void NegExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<NegExpr>(node);
+            operand = expr->operand->clone<Expr>();
+            negate = expr->negate;
+        }
+
+        MIRNode::Ptr NegExpr::cloneNode() {
+            const auto node = std::make_shared<NegExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void EqExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<EqExpr>(node);
+            NaryExpr::copy(expr);
+            for (const auto & op : expr->ops){
+                ops.push_back(op);
+            }
+        }
+
+        MIRNode::Ptr EqExpr::cloneNode() {
+            const auto node = std::make_shared<EqExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void AddExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<AddExpr>(node);
+            BinaryExpr::copy(expr);
+        }
+
+        MIRNode::Ptr AddExpr::cloneNode() {
+            const auto node = std::make_shared<AddExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void MulExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<MulExpr>(node);
+            BinaryExpr::copy(expr);
+        }
+
+        MIRNode::Ptr MulExpr::cloneNode() {
+            const auto node = std::make_shared<MulExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void DivExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<DivExpr>(node);
+            BinaryExpr::copy(expr);
+        }
+
+        MIRNode::Ptr DivExpr::cloneNode() {
+            const auto node = std::make_shared<DivExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void SubExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<SubExpr>(node);
+            BinaryExpr::copy(expr);
+        }
+
+        MIRNode::Ptr SubExpr::cloneNode() {
+            const auto node = std::make_shared<SubExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
 
         void StringLiteral::copy(MIRNode::Ptr node) {
             auto str_lit = to<mir::StringLiteral>(node);
@@ -132,6 +402,9 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+
+
+
 
 
         void Stmt::copy(MIRNode::Ptr node) {
@@ -326,6 +599,33 @@ namespace graphit {
 
         MIRNode::Ptr PrintStmt::cloneNode() {
             const auto node = std::make_shared<PrintStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void BreakStmt::copy(MIRNode::Ptr node) {
+            auto stmt = to<mir::BreakStmt>(node);
+        }
+
+
+        MIRNode::Ptr BreakStmt::cloneNode() {
+            const auto node = std::make_shared<BreakStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
+
+        void IfStmt::copy(MIRNode::Ptr node) {
+            auto stmt = to<mir::IfStmt>(node);
+            cond = stmt->cond->clone<Expr>();
+            ifBody = stmt->ifBody->clone<Stmt>();
+            elseBody = stmt->elseBody->clone<Stmt>();
+
+        }
+
+        MIRNode::Ptr IfStmt::cloneNode() {
+            const auto node = std::make_shared<IfStmt>();
             node->copy(shared_from_this());
             return node;
         }
