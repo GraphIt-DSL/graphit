@@ -49,7 +49,16 @@ namespace  graphit {
                     node = std::make_shared<mir::HybridDenseForwardEdgeSetApplyExpr>(edgeset_apply);
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE){
                     //Hybrid dense (switching betweeen push and pull)
-                    node = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
+                    auto hybrid_dense_edgeset_apply = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
+
+                    //clone the function delcaration for push, use the original func for pull
+                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+                    auto push_apply_func_decl = pull_apply_func_decl
+
+                    //insert into MIR context
+
+
+                    node = hybrid_dense_edgeset_apply;
                 }
 
                 if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Parallel){
