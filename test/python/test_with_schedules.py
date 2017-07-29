@@ -82,6 +82,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bfs_push_parallel_cas(self):
         self.basic_compile_exec_test("bfs_push_parallel_cas.gt")
 
+    def test_bfs_hybrid_dense_parallel_cas(self):
+        self.basic_compile_exec_test("bfs_hybrid_dense_parallel_cas.gt")
+
     def test_bfs_push_parallel_cas_verified(self):
         self.basic_compile_test("bfs_push_parallel_cas.gt")
         # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
@@ -166,9 +169,9 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(output.strip()), 0.00289518)
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_hybrid_denseforward_parallel_cas_verified'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_bfs_hybrid_dense_parallel_cas'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

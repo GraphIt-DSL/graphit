@@ -85,7 +85,7 @@ namespace graphit {
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
 
-            void analyzeSingleFunctionEdgesetApplyExpr(mir::EdgeSetApplyExpr::Ptr apply_expr, std::string direction);
+            void analyzeSingleFunctionEdgesetApplyExpr(std::string function_name, std::string direction);
         };
 
     private:

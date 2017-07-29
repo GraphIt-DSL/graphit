@@ -62,7 +62,8 @@ namespace graphit {
                                                                 std::string tracking_field,
                                                                 mir::Expr::Ptr tracking_var);
 
-            void processSingleFunctionApplyExpr(mir::EdgeSetApplyExpr::Ptr apply_expr);
+            void processSingleFunctionApplyExpr(std::string apply_func_decl_name,
+                                                            std::string tracking_field);
         };
 
     private:

@@ -17,7 +17,20 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseF
 }
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-    std::cout << "hybrid dense not implemented yet" << std::endl;
+    if (apply_expr->is_parallel){
+        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
+        auto pull_func_name = apply_expr->input_function_name;
+        mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
+        auto push_func_name = apply_expr->push_function_;
+        mir::FuncDecl::Ptr push_func_decl = mir_context_->getFunction(push_func_name);
+
+        pull_func_decl->accept(&reduce_stmt_lower);
+        push_func_decl->accept(&reduce_stmt_lower);
+
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->push_function_, apply_expr);
+
+    }
 }
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){

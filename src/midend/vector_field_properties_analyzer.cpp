@@ -16,32 +16,33 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr, "pull");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
     }
 
-    // Here, there is only push and pull (hybrid_dense_forwrad is still trated as push as dense forward is also push)
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
+    }
+
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::analyzeSingleFunctionEdgesetApplyExpr(
-            mir::EdgeSetApplyExpr::Ptr apply_expr, std::string direction) {
+            std::string function_name, std::string direction) {
         // The analysis only makes sense if it is a parallel apply expr
         auto property_visitor = PropertyAnalyzingVisitor(direction);
-        auto apply_func_decl_name = apply_expr->input_function_name;
+        auto apply_func_decl_name = function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&property_visitor);
     }
 
-    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-        std::cout << "hybrid dense not implemented yet" << std::endl;
-    }
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
         in_write_phase = true;

@@ -15,28 +15,28 @@ namespace graphit {
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr);
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr);
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr);
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
     }
 
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-        std::cout << "Hybrid Dense not yet supported" << std::endl;
-        //exit(1);
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->push_function_, apply_expr->tracking_field);
+
     }
 
     // Updates the function for Push, Pull, HybridDenseForward edge set apply (only one direction function)
-    void ChangeTrackingLower::ApplyExprVisitor::processSingleFunctionApplyExpr(mir::EdgeSetApplyExpr::Ptr apply_expr){
-        auto apply_func_decl_name = apply_expr->input_function_name;
+    void ChangeTrackingLower::ApplyExprVisitor::processSingleFunctionApplyExpr(std::string apply_func_decl_name,
+                                                                               std::string tracking_field) {
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        std::string tracking_field = apply_expr->tracking_field;
         if (tracking_field != "") {
             //TODO: another check to see if it is parallel
             auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
