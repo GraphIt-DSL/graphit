@@ -1126,11 +1126,16 @@ namespace graphit {
         }
 
         arguments.push_back(apply->input_function_name);
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            arguments.push_back(apply_expr->push_function_);
+        }
 
         apply->target->accept(this);
         for (auto &arg : arguments) {
             oss << ", " << arg;
         }
+
         oss << "); " << std::endl;
     }
 
