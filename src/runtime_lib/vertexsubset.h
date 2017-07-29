@@ -157,6 +157,7 @@ struct VertexSubset {
 
                 _seq<uintE> R = sequence::packIndex<uintE>(bool_map_,vertices_range_);
                 if (num_vertices_ != R.n) {
+		  cout << "num_vertices_: " << num_vertices_ << " R.n: " << R.n << endl;
                     cout << "bad stored value of m" << endl;
                     abort();
                 }

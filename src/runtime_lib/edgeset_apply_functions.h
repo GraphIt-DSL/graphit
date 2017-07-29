@@ -616,6 +616,7 @@ VertexSubset<NodeID> * edgeset_apply_hybrid_denseforward_parallel_weighted_dedup
 //        next->reset();
 
         bool* next = newA(bool,numVertices);
+	parallel_for(int i = 0; i< numVertices; i++)next[i] = 0;
         bool* current = from_vertexset->bool_map_;
 
         //int64_t count = 0;
@@ -645,8 +646,8 @@ VertexSubset<NodeID> * edgeset_apply_hybrid_denseforward_parallel_weighted_dedup
         Timer apply_timer;
     apply_timer.Start();
 #endif
-        #pragma omp parallel for  schedule (dynamic, 1024)
-        for (long i = 0; i < m; i++) {
+    //#pragma omp parallel for  schedule (dynamic, 1024)
+        parallel_for (long i = 0; i < m; i++) {
             NodeID src = from_vertexset->dense_vertex_set_[i];
             uintT offset = offsets[i];
             //vertex vert = frontierVertices[i];
