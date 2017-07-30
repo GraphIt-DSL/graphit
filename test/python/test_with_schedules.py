@@ -169,9 +169,9 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(output.strip()), 0.00289518)
 
 if __name__ == '__main__':
-    # unittest.main()
+    unittest.main()
     # used for enabling a specific test
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_bfs_hybrid_dense_parallel_cas'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_bfs_hybrid_dense_parallel_cas'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
