@@ -583,12 +583,12 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
     out_d_timer.Start();
 #endif
 
-    if (g.flags_ == nullptr)
-        g.flags_ = new int[numVertices];
+    /* if (g.flags_ == nullptr) */
+    /*     g.flags_ = new int[numVertices]; */
 
-    parallel_for (int i = 0; i < numVertices; i++) {
-        g.flags_[i] = 0;
-    }
+    /* parallel_for (int i = 0; i < numVertices; i++) { */
+    /*     g.flags_[i] = 0; */
+    /* } */
 
     // We probably need this when we get something that doesn't have a dense set, not sure
     // We can also write our own, the eixsting one doesn't quite work for bitvectors
@@ -623,7 +623,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
 
         int count = 0;
 
-        for (NodeID u = 0; u < g.num_nodes(); u++) {
+        parallel_for (NodeID u = 0; u < g.num_nodes(); u++) {
             if (to_func(u)) {
                 for (NodeID v : g.in_neigh(u)) {
                     //if (current_frontier->get_bit(v)) {
@@ -695,9 +695,6 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
         return next_frontier;
 
     }
-
-
-    return new VertexSubset<NodeID>(g.num_nodes(), 0);
 }
 
 template<typename APPLY_FUNC>
