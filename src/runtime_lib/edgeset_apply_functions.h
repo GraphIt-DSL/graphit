@@ -607,31 +607,49 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
 
     if (m + outDegrees > numEdges / 20) {
         //do dense pull
+        //std::cout << "edge apply dense" << std::endl;
 
+        //read boolean array
+        from_vertexset->toDense();
+        free(degrees);
 
-//        Bitmap *next = new Bitmap(g.num_nodes());
-//        Bitmap *current_frontier = from_vertexset->bitmap_;
-//        int count = 0;
-//
-//        for (NodeID u = 0; u < g.num_nodes(); u++) {
-//                for (NodeID v : g.in_neigh(u)) {
-//                    if (current_frontier->get_bit(v)) {
-//                        if (pull_func(v, u)) {
-//                            next->set_bit(u);
-//                            count++;
-//                            if (!to_func(u)) break;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
-//        next_frontier->bitmap_ = next;
+        //convert to bit vector
+        // this would be an add on optimization (first match Ligra's performance)
 
+        //Bitmap *next = new Bitmap(g.num_nodes());
+        //Bitmap *current_frontier = from_vertexset->bitmap_;
+        bool * next = newA(bool, g.num_nodes());
+        parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;
 
+        int count = 0;
+
+        for (NodeID u = 0; u < g.num_nodes(); u++) {
+            if (to_func(u)) {
+                for (NodeID v : g.in_neigh(u)) {
+                    //if (current_frontier->get_bit(v)) {
+                    if (from_vertexset->bool_map_[v]) {
+                        if (pull_func(v, u)) {
+                            //write to a boolena array instead of bit vector
+                            //next->set_bit(u);
+                            next[u] = 1;
+                            if (!to_func(u)) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // need to get a count out of the boolean array
+
+        next_frontier->num_vertices_ = sequence::sum(next, numVertices);
+        next_frontier->bool_map_ = next;
+        return next_frontier;
 
     } else {
+
+        //std::cout << "edge apply sparse" << std::endl;
+
+
         //do sparse push
         uintT *offsets = degrees;
         long outEdgeCount = sequence::plusScan(offsets, degrees, m);
