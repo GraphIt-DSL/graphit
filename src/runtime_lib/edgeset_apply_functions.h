@@ -557,6 +557,19 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_ve
     return next_frontier;
 }
 
+template<typename PULL_FUNC, typename PUSH_FUNC>
+VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier
+        (Graph &g,
+         VertexSubset<NodeID> *from_vertexset,
+         PULL_FUNC pull_func,
+         PUSH_FUNC push_func) {
+
+
+    return new VertexSubset<NodeID>(g.num_nodes(), 0);
+}
+
+
+
 // no deduplication
 template<typename TO_FUNC, typename PULL_FUNC, typename PUSH_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier
