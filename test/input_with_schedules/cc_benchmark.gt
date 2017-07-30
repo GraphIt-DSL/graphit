@@ -24,8 +24,6 @@ func main()
         #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
     end
 
-    vertices.apply(printID);
-
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";
     print elapsed_time;
