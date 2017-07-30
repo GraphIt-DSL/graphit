@@ -40,7 +40,7 @@ struct VertexSubset {
             bitmap_ = new Bitmap(vertices_range);
             bitmap_->set_all();
             bool_map_ = newA(bool, vertices_range);
-            parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 0;
+            parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
             dense_vertex_set_ = new unsigned int[vertices_range];
             parallel_for (int i = 0; i< vertices_range; i++){
                 dense_vertex_set_[i] = i;

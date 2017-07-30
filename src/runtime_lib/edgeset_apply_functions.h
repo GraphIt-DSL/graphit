@@ -564,8 +564,135 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
          PULL_FUNC pull_func,
          PUSH_FUNC push_func) {
 
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+    long m = from_vertexset->size();
 
-    return new VertexSubset<NodeID>(g.num_nodes(), 0);
+    if (numVertices != from_vertexset->getVerticesRange()) {
+
+        cout << "edgeMap: Sizes Don't match" << endl;
+        abort();
+    }
+    // used to generate nonzero indices to get degrees
+    uintT *degrees = newA(uintT, m);
+
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+
+
+    // We probably need this when we get something that doesn't have a dense set, not sure
+    // We can also write our own, the eixsting one doesn't quite work for bitvectors
+    from_vertexset->toSparse();
+
+    //from_vertexset->printDenseSet();
+
+    {
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID v = from_vertexset->dense_vertex_set_[i];
+            degrees[i] = g.out_degree(v);
+        }
+    }
+    uintT outDegrees = sequence::plusReduce(degrees, m);
+    if (outDegrees == 0) return next_frontier;
+
+    if (m + outDegrees > numEdges / 20) {
+        //do dense pull
+        //std::cout << "edge apply dense" << std::endl;
+
+        //read boolean array
+        from_vertexset->toDense();
+        free(degrees);
+
+        //convert to bit vector
+        // this would be an add on optimization (first match Ligra's performance)
+
+        //Bitmap *next = new Bitmap(g.num_nodes());
+        //Bitmap *current_frontier = from_vertexset->bitmap_;
+        bool * next = newA(bool, g.num_nodes());
+        parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;
+
+        parallel_for (NodeID u = 0; u < g.num_nodes(); u++) {
+            //if (to_func(u)) {
+                for (NodeID v : g.in_neigh(u)) {
+                    //if (current_frontier->get_bit(v)) {
+                    if (from_vertexset->bool_map_[v]) {
+                        if (pull_func(v, u)) {
+                            //write to a boolena array instead of bit vector
+                            //next->set_bit(u);
+                            next[u] = 1;
+                            //if (!to_func(u)) break;
+                        }
+                    }
+                }
+            //}
+        }
+
+        // need to get a count out of the boolean array
+
+        next_frontier->num_vertices_ = sequence::sum(next, numVertices);
+        next_frontier->bool_map_ = next;
+        return next_frontier;
+
+    } else {
+
+        if (g.flags_ == nullptr)
+            g.flags_ = new int[numVertices];
+
+        parallel_for (int i = 0; i < numVertices; i++) {
+            g.flags_[i] = 0;
+        }
+
+        //std::cout << "edge apply sparse" << std::endl;
+
+
+        //do sparse push
+        uintT *offsets = degrees;
+        long outEdgeCount = sequence::plusScan(offsets, degrees, m);
+        uintE *outEdges = newA(uintE, outEdgeCount);
+
+#ifdef TIME
+        Timer apply_timer;
+    apply_timer.Start();
+#endif
+        //#pragma omp parallel for  schedule (dynamic, 1024)
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID src = from_vertexset->dense_vertex_set_[i];
+            uintT offset = offsets[i];
+            //vertex vert = frontierVertices[i];
+            //vert.decodeOutNghSparse(v, o, f, outEdges);
+            int j = 0;
+            for (NodeID dst : g.out_neigh(src)) {
+                if (push_func(src, dst)) {
+                    //using CAS for deduplication, disabled for this library
+                    if (CAS(&(g.flags_[dst]), 0, 1)) {
+                        outEdges[offset + j] = dst;
+                    }
+                    //outEdges[offset + j] = dst;
+                } else {
+                    outEdges[offset + j] = UINT_E_MAX;
+                }
+                j++;
+            }
+        }
+#ifdef TIME
+        apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+        uintE *nextIndices = newA(uintE, outEdgeCount);
+        long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
+        free(outEdges);
+
+        free(degrees);
+
+        next_frontier->num_vertices_ = nextM;
+        next_frontier->dense_vertex_set_ = nextIndices;
+
+        return next_frontier;
+
+    }
 }
 
 
