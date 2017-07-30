@@ -1125,6 +1125,13 @@ namespace graphit {
             }
         }
 
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            if (apply_expr->push_to_function_ != ""){
+                arguments.push_back(apply->to_func);
+            }
+        }
+
         arguments.push_back(apply->input_function_name);
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);

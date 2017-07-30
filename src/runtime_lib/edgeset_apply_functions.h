@@ -558,10 +558,11 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_ve
 }
 
 // no deduplication
-template<typename PULL_FUNC, typename PUSH_FUNC>
-VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_with_frontier
+template<typename TO_FUNC, typename PULL_FUNC, typename PUSH_FUNC>
+VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier
         (Graph &g,
          VertexSubset<NodeID> *from_vertexset,
+         TO_FUNC to_func,
          PULL_FUNC pull_func,
          PUSH_FUNC push_func) {
 
@@ -606,6 +607,27 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_with_fr
 
     if (m + outDegrees > numEdges / 20) {
         //do dense pull
+
+
+//        Bitmap *next = new Bitmap(g.num_nodes());
+//        Bitmap *current_frontier = from_vertexset->bitmap_;
+//        int count = 0;
+//
+//        for (NodeID u = 0; u < g.num_nodes(); u++) {
+//                for (NodeID v : g.in_neigh(u)) {
+//                    if (current_frontier->get_bit(v)) {
+//                        if (pull_func(v, u)) {
+//                            next->set_bit(u);
+//                            count++;
+//                            if (!to_func(u)) break;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), count);
+//        next_frontier->bitmap_ = next;
 
 
 

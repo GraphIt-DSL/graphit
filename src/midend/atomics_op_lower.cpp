@@ -158,7 +158,14 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                             (*(apply_func_body->stmts)).push_back(cas_stmt);
 
                             //remove the to function given that now we use the CAS
-                            apply_expr->to_func="";
+
+                            if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply_expr)){
+                                //if this is hybrid, just remove the push_to, and keep the other to for pull
+                                //TODO: this is a bit hacky, think about how to do it better later
+                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                            } else {
+                                apply_expr->to_func = "";
+                            }
                             return true;
 
 

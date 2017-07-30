@@ -118,6 +118,19 @@ namespace graphit {
             }
         }
 
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            if (apply_expr->push_to_function_ != ""){
+                if (mir_context_->isFunction(apply->to_func)){
+                    // the schedule is an input to function
+                    output_name += "_push_to_filter_func";
+                } else {
+                    // the input is an input to vertexset
+                    output_name += "_push_to_vertexset";
+                }
+            }
+        }
+
         auto apply_func = mir_context_->getFunction(apply->input_function_name);
 
         if (apply_func->result.isInitialized()){
