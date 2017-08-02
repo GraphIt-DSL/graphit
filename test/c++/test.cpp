@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.ReadCmdLineArgs";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 
-    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.TimerTest";
+    //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleInsertNameNodeBefore";
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
@@ -35,9 +35,11 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithPushParallelCASSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseForwardSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithHyrbidDenseParallelCASSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSSSPwithPushSchedule";
+
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopAndKernelFusion";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.FuseMoreThanTwoFieldVectors";
 
 

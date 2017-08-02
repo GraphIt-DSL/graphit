@@ -324,9 +324,9 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 
     program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
     program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_func");
-
+    program_schedule_node->setApply("l3:l1:s1", "parallel");
     // Expects that the program still compiles
-    EXPECT_EQ (0,  basicCompileTestWithContext());
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
 }
 
@@ -662,12 +662,30 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
     EXPECT_EQ(true, apply_expr->is_parallel);
 }
 
+TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    fe_->parseStream(bfs_is_, context_, errors_);
 
-TEST_F(HighLevelScheduleTest, SimpleSSSPwithPushSchedule) {
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+
+    //check that the apply expr is push and parallel
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+    mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr);
+    EXPECT_EQ(true, apply_expr->is_parallel);
+}
+
+
+TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    program_schedule_node->setApply("s1", "hybrid_dense_forward")->setApply("s1", "parallel");
     fe_->parseStream(sssp_is_, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));

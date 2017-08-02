@@ -47,11 +47,25 @@ namespace graphit {
 
             friend std::ostream &operator<<(std::ostream &, MIRNode &);
 
+            template<typename T = MIRNode>
+            std::shared_ptr<T> clone() {
+                return to<T>(cloneNode());
+            }
+
         protected:
             template<typename T = MIRNode>
             std::shared_ptr<T> self() {
                 return to<T>(shared_from_this());
             }
+
+            virtual void copy(MIRNode::Ptr) {};
+
+            virtual MIRNode::Ptr cloneNode() {
+                //TODO: change this to an abstract method =0
+                // Right now, I just need to prevent everything blow up
+                // as I slowly add in support for copy functionalities
+                return nullptr;
+            };
         };
 
         struct Expr : public MIRNode {
@@ -60,6 +74,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Expr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct StringLiteral : public Expr {
@@ -69,6 +88,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<StringLiteral>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -79,6 +103,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<IntLiteral>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct BoolLiteral : public Expr {
@@ -88,6 +118,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BoolLiteral>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct FloatLiteral : public Expr {
@@ -97,6 +132,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<FloatLiteral>());
             }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct Stmt : public MIRNode {
@@ -106,6 +147,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Stmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct StmtBlock : public Stmt {
@@ -131,9 +178,9 @@ namespace graphit {
                 stmts->insert(stmts->begin(), stmt);
             }
 
-            void insertStmtBlockFront(mir::StmtBlock::Ptr stmt_block){
+            void insertStmtBlockFront(mir::StmtBlock::Ptr stmt_block) {
 
-                if (stmt_block->stmts == nullptr){
+                if (stmt_block->stmts == nullptr) {
                     return;
                 }
 
@@ -141,10 +188,10 @@ namespace graphit {
                     stmts = new std::vector<mir::Stmt::Ptr>();
                 }
 
-                if (stmts != nullptr && stmt_block->stmts != nullptr){
+                if (stmts != nullptr && stmt_block->stmts != nullptr) {
                     int num_stmts = stmt_block->stmts->size();
-                    for (int i = 0; i <num_stmts; i++){
-                        insertStmtFront((*(stmt_block->stmts))[num_stmts-1-i]);
+                    for (int i = 0; i < num_stmts; i++) {
+                        insertStmtFront((*(stmt_block->stmts))[num_stmts - 1 - i]);
                     }
                 }
 
@@ -153,6 +200,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<StmtBlock>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -170,6 +222,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ScalarType>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct ElementType : public Type {
@@ -179,6 +236,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ElementType>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -193,6 +255,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VectorType>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct VertexSetType : public Type {
@@ -203,6 +271,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetType>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -217,6 +290,11 @@ namespace graphit {
                 visitor->visit(self<EdgeSetType>());
             }
 
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct ForDomain : public MIRNode {
@@ -229,6 +307,26 @@ namespace graphit {
                 visitor->visit(self<ForDomain>());
             }
 
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+        struct NameNode : public Stmt {
+            StmtBlock::Ptr body;
+            typedef std::shared_ptr<NameNode> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<NameNode>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct ForStmt : public Stmt {
@@ -241,6 +339,13 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ForStmt>());
             }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
 
@@ -253,6 +358,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
 
@@ -264,6 +375,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ExprStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct AssignStmt : public ExprStmt {
@@ -276,11 +393,19 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<AssignStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
 
         struct ReduceStmt : public AssignStmt {
-            enum class ReductionOp {MIN, SUM, MAX, ATOMIC_MIN};
+            enum class ReductionOp {
+                MIN, SUM, MAX, ATOMIC_MIN
+            };
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";
             bool is_atomic_ = false;
@@ -290,6 +415,13 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ReduceStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
         };
 
 
@@ -302,6 +434,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<CompareAndSwapStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct PrintStmt : public Stmt {
@@ -313,6 +450,13 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PrintStmt>());
             }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct IdentDecl : public MIRNode {
@@ -324,6 +468,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<IdentDecl>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -339,6 +488,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VarDecl>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct StructTypeDecl : public Type {
@@ -350,6 +504,12 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<StructTypeDecl>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct VarExpr : public Expr {
@@ -359,6 +519,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VarExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -377,6 +542,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<FuncDecl>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct TensorReadExpr : public Expr {
@@ -419,6 +589,11 @@ namespace graphit {
                 visitor->visit(self<TensorReadExpr>());
             }
 
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct TensorStructReadExpr : TensorReadExpr {
@@ -430,6 +605,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorStructReadExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct TensorArrayReadExpr : public TensorReadExpr {
@@ -439,6 +619,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<TensorArrayReadExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -452,6 +637,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<Call>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct LoadExpr : public Expr {
@@ -461,6 +651,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<LoadExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct EdgeSetLoadExpr : public Expr {
@@ -471,6 +666,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetLoadExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct ApplyExpr : public Expr {
@@ -478,6 +678,11 @@ namespace graphit {
             std::string input_function_name = "";
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
 
         };
 
@@ -500,6 +705,12 @@ namespace graphit {
                 target = target_expr;
                 input_function_name = function_name;
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct EdgeSetApplyExpr : public ApplyExpr {
@@ -513,10 +724,17 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetApplyExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
+
+            PushEdgeSetApplyExpr(){}
 
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -531,10 +749,17 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PushEdgeSetApplyExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
+
+            PullEdgeSetApplyExpr(){}
 
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -549,6 +774,70 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PullEdgeSetApplyExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
+        struct HybridDenseForwardEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> Ptr;
+
+            HybridDenseForwardEdgeSetApplyExpr(){}
+
+
+            HybridDenseForwardEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
+                target = edgeset_apply->target;
+                // for hybrid dense  forward, it is always using the push function (atomics on dst)
+                // it is ok with just one direction
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<HybridDenseForwardEdgeSetApplyExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
+            std::string push_function_;
+            std::string push_to_function_;
+
+            HybridDenseEdgeSetApplyExpr(){}
+
+            HybridDenseEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
+                target = edgeset_apply->target;
+                // for hybrid dense  forward, it is always using the push function (atomics on dst)
+                // it is ok with just one direction
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+                push_to_function_ = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<HybridDenseEdgeSetApplyExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -557,6 +846,12 @@ namespace graphit {
             bool is_constant_set = false;
             std::string input_func;
             typedef std::shared_ptr<WhereExpr> Ptr;
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct VertexSetWhereExpr : public WhereExpr {
@@ -565,6 +860,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetWhereExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct EdgeSetWhereExpr : public WhereExpr {
@@ -573,6 +873,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetWhereExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -594,11 +899,21 @@ namespace graphit {
                 visitor->visit(self<VertexSetAllocExpr>());
             }
 
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
         };
 
         struct NaryExpr : public Expr {
             std::vector<Expr::Ptr> operands;
             typedef std::shared_ptr<NaryExpr> Ptr;
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct BinaryExpr : public Expr {
@@ -608,6 +923,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BinaryExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct NegExpr : public Expr {
@@ -619,6 +939,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<NegExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -634,6 +959,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EqExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct AddExpr : public BinaryExpr {
@@ -642,6 +972,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<AddExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct MulExpr : public BinaryExpr {
@@ -650,6 +985,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<MulExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct DivExpr : public BinaryExpr {
@@ -658,6 +998,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<DivExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct SubExpr : public BinaryExpr {
@@ -666,6 +1011,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<SubExpr>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
 
@@ -679,6 +1029,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<IfStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
         struct BreakStmt : public Stmt {
@@ -687,6 +1042,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<BreakStmt>());
             }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
     }

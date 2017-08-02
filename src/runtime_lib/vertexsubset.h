@@ -9,6 +9,8 @@
 #include <iostream>
 #include <type_traits>
 #include "infra_gapbs/sliding_queue.h"
+#include "infra_ligra/ligra/parallel.h"
+#include "infra_ligra/ligra/utils.h"
 
 
 template <typename NodeID_>
@@ -19,6 +21,7 @@ struct VertexSubset {
     unsigned int* dense_vertex_set_;
     Bitmap * bitmap_ ;
     std::vector<NodeID> tmp;
+    bool* bool_map_;
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -32,15 +35,19 @@ struct VertexSubset {
               vertices_range_(vertices_range),
               is_dense(0)
     {
-        bitmap_ = new Bitmap(vertices_range);
-        bitmap_->reset();
+
         if (num_vertices == vertices_range){
+            bitmap_ = new Bitmap(vertices_range);
             bitmap_->set_all();
+            bool_map_ = newA(bool, vertices_range);
+            parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
             dense_vertex_set_ = new unsigned int[vertices_range];
-            for (int i = 0; i< vertices_range; i++){
+            parallel_for (int i = 0; i< vertices_range; i++){
                 dense_vertex_set_[i] = i;
             }
         } else {
+            bool_map_ = nullptr;
+            bitmap_ = nullptr;
             dense_vertex_set_ = nullptr;
         }
     }
@@ -62,9 +69,20 @@ struct VertexSubset {
 
     void addVertex(NodeID_ v){
         //only increment the count if the vertex is not already in the vertexset
+        if (bitmap_ == nullptr){
+            bitmap_ = new Bitmap(vertices_range_);
+            bitmap_->reset();
+        }
+
+        if (bool_map_ == nullptr){
+            bool_map_ = newA(bool, vertices_range_);
+            parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
+        }
+
         if (!bitmap_->get_bit(v)){
             bitmap_->set_bit(v);
             //dense_vertex_set_->push_back(v);
+            bool_map_[v] = 1;
             num_vertices_++;
             tmp.push_back(v);
         }
@@ -81,6 +99,35 @@ struct VertexSubset {
 //            {parallel_for(long i=0;i<n;i++) d[i] = 0;}
 //            {parallel_for(long i=0;i<m;i++) d[s[i]] = 1;}
 //        }
+
+        if (bool_map_ == NULL) {
+            bool_map_ = newA(bool,vertices_range_);
+            {parallel_for(long i=0;i<vertices_range_;i++) bool_map_[i] = 0;}
+
+            if (tmp.size() != 0){
+                for (NodeID node : tmp){
+                    //bitmap_->set_bit(node);
+                    bool_map_[node] = 1;
+                }
+            } else if (num_vertices_ > 0){
+                {parallel_for(long i=0;i<num_vertices_;i++) bool_map_[dense_vertex_set_[i]] = 1;}
+            }
+        }
+
+//        if (bitmap_ == nullptr){
+//            //set only if bitvector is not yet created
+//            //and temporary vector is created
+//            if (tmp.size() != 0){
+//                for (NodeID node : tmp){
+//                    bitmap_->set_bit(node);
+//                }
+//            } else if (num_vertices_ > 0){
+//                parallel_for (int i = 0; i < num_vertices_; i++){
+//                    bitmap_->set_bit_atomic(dense_vertex_set_[i]);
+//                }
+//            }
+//        }
+
         is_dense = true;
     }
 
@@ -100,12 +147,36 @@ struct VertexSubset {
 
     // converts to sparse but keeps dense representation if there
     void toSparse() {
-        if (dense_vertex_set_ == nullptr && tmp.size() > 0){
+        if (dense_vertex_set_ == nullptr && tmp.size() > 0) {
             dense_vertex_set_ = new unsigned int[num_vertices_];
-            for (int i = 0; i < num_vertices_; i++){
+            for (int i = 0; i < num_vertices_; i++) {
                 dense_vertex_set_[i] = tmp[i];
             }
+
+        }else if (dense_vertex_set_ == nullptr && num_vertices_ > 0){
+
+                _seq<uintE> R = sequence::packIndex<uintE>(bool_map_,vertices_range_);
+                if (num_vertices_ != R.n) {
+		  cout << "num_vertices_: " << num_vertices_ << " R.n: " << R.n << endl;
+                    cout << "bad stored value of m" << endl;
+                    abort();
+                }
+                dense_vertex_set_ = R.A;
+
         }
+
+//        } else if (dense_vertex_set_ == nullptr && num_vertices_ > 0){
+//            //vertices are stored as bitvector
+//            dense_vertex_set_ = new unsigned int[num_vertices_];
+//            int j = 0;
+//            for (unsigned int i = 0; i < vertices_range_; i++){
+//                if (bitmap_->get_bit(i)){
+//                    dense_vertex_set_[j] = i;
+//                    j++;
+//                }
+//            }
+//        }
+
     }
 
 };

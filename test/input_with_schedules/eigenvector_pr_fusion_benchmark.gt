@@ -1,7 +1,7 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 
 const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
@@ -61,4 +61,3 @@ end
 schedule:
     program->fuseFields({"old_rank", "out_degree", "old_ec"})->fuseForLoop("l1", "l2", "l3");
     program->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_kernel");
-    program->setApply("l3:l1:s1", "parallel");

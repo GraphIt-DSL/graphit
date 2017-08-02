@@ -5,19 +5,42 @@
 #include <graphit/midend/atomics_op_lower.h>
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-    ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-    auto apply_func_decl_name = apply_expr->input_function_name;
-    mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-    apply_func_decl->accept(&reduce_stmt_lower);
-    lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+    singleFunctionEdgeSetApplyExprAtomicsLower(apply_expr);
 }
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-    ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-    auto apply_func_decl_name = apply_expr->input_function_name;
-    mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-    apply_func_decl->accept(&reduce_stmt_lower);
-    lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+    singleFunctionEdgeSetApplyExprAtomicsLower(apply_expr);
+}
+
+void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
+    singleFunctionEdgeSetApplyExprAtomicsLower(apply_expr);
+}
+
+void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
+    if (apply_expr->is_parallel){
+        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
+        auto pull_func_name = apply_expr->input_function_name;
+        mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
+        auto push_func_name = apply_expr->push_function_;
+        mir::FuncDecl::Ptr push_func_decl = mir_context_->getFunction(push_func_name);
+
+        pull_func_decl->accept(&reduce_stmt_lower);
+        push_func_decl->accept(&reduce_stmt_lower);
+
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->push_function_, apply_expr);
+
+    }
+}
+
+void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){
+    if (apply_expr->is_parallel){
+        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
+        auto apply_func_decl_name = apply_expr->input_function_name;
+        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
+        apply_func_decl->accept(&reduce_stmt_lower);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+    }
 }
 
 void graphit::AtomicsOpLower::lower() {
@@ -135,7 +158,14 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                             (*(apply_func_body->stmts)).push_back(cas_stmt);
 
                             //remove the to function given that now we use the CAS
-                            apply_expr->to_func="";
+
+                            if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply_expr)){
+                                //if this is hybrid, just remove the push_to, and keep the other to for pull
+                                //TODO: this is a bit hacky, think about how to do it better later
+                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                            } else {
+                                apply_expr->to_func = "";
+                            }
                             return true;
 
 

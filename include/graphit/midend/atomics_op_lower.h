@@ -27,6 +27,9 @@ namespace graphit {
 
             virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
 
+            virtual void visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
 
         private:
 
@@ -35,6 +38,9 @@ namespace graphit {
 
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
+
+            //generates atomics for push, pull, hybrid denseforward
+            void singleFunctionEdgeSetApplyExprAtomicsLower(mir::EdgeSetApplyExpr::Ptr apply_expr);
         };
 
         struct ReduceStmtLower : public mir::MIRVisitor {

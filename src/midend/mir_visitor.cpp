@@ -143,6 +143,14 @@ namespace graphit {
             expr->target->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> expr) {
+            expr->target->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<VertexSetWhereExpr> expr) {
             //expr->target->accept(this);
             //expr->input_func->accept(this);
@@ -176,6 +184,16 @@ namespace graphit {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->domain->accept(this);
+            stmt->body->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->body->accept(this);
             if(stmt->stmt_label != "") {
                 label_scope_.unscope();
@@ -242,6 +260,8 @@ namespace graphit {
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {
             load_expr->file_name->accept(this);
         }
+
+
 
     }
 }

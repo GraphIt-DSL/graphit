@@ -15,24 +15,28 @@ namespace graphit {
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        auto apply_func_decl_name = apply_expr->input_function_name;
-        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        std::string tracking_field = apply_expr->tracking_field;
-        if (tracking_field != "") {
-            //TODO: another check to see if it is parallel
-            auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
-            apply_func_decl->accept(&tracking_var_gen_visitor);
-            insertSerialReturnStmtForTrackingChange(apply_func_decl,
-                                                    tracking_field,
-                                                    tracking_var_gen_visitor.getFieldTrackingVariableExpr(
-                                                            tracking_field));
-        }
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        auto apply_func_decl_name = apply_expr->input_function_name;
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+    }
+
+    void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+    }
+
+
+    void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
+        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->push_function_, apply_expr->tracking_field);
+
+    }
+
+    // Updates the function for Push, Pull, HybridDenseForward edge set apply (only one direction function)
+    void ChangeTrackingLower::ApplyExprVisitor::processSingleFunctionApplyExpr(std::string apply_func_decl_name,
+                                                                               std::string tracking_field) {
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        std::string tracking_field = apply_expr->tracking_field;
         if (tracking_field != "") {
             //TODO: another check to see if it is parallel
             auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
@@ -42,7 +46,6 @@ namespace graphit {
                                                     tracking_var_gen_visitor.getFieldTrackingVariableExpr(
                                                             tracking_field));
         }
-
     }
 
     /**
@@ -89,6 +92,8 @@ namespace graphit {
             }
         }
     }
+
+
 
     void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
         //TODO: may be build another visitor for tensor read to figure out the field

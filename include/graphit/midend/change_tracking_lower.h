@@ -48,6 +48,11 @@ namespace graphit {
 
             virtual void visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr);
 
+            virtual void visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
+
+
         private:
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
@@ -56,6 +61,9 @@ namespace graphit {
             insertSerialReturnStmtForTrackingChange(mir::FuncDecl::Ptr apply_func_decl,
                                                                 std::string tracking_field,
                                                                 mir::Expr::Ptr tracking_var);
+
+            void processSingleFunctionApplyExpr(std::string apply_func_decl_name,
+                                                            std::string tracking_field);
         };
 
     private:

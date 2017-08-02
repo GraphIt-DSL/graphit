@@ -164,6 +164,14 @@ namespace graphit {
         retType = mir_vector_type;
     }
 
+    void MIREmitter::visit(fir::NameNode::Ptr name_node) {
+        ctx->scope();
+        auto mir_name_node = std::make_shared<mir::NameNode>();
+        mir_name_node->stmt_label = name_node->stmt_label;
+        mir_name_node->body = mir::to<mir::StmtBlock>(emitStmt(name_node->body));
+        ctx->unscope();
+        retStmt = mir_name_node;
+    }
 
     void MIREmitter::visit(fir::ForStmt::Ptr for_stmt) {
         ctx->scope();

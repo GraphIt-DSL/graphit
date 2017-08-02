@@ -16,6 +16,9 @@ namespace graphit {
         struct MIRRewriter : public MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt> op) { node = op; };
 
+            virtual void visit(std::shared_ptr<NameNode>);
+
+
             virtual void visit(std::shared_ptr<ForStmt>);
 
             virtual void visit(std::shared_ptr<WhileStmt>);
@@ -51,6 +54,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<PushEdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<PullEdgeSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<VertexSetWhereExpr>);
 

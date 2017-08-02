@@ -296,9 +296,10 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
             } else if (apply_schedule_str == "pull") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
-            } else if (apply_schedule_str == "sparse_frontier") {
-                //TODO: I haven't decided on the design for this option
-                //(*schedule_->apply_schedules)[apply_label].frontier_type = ApplySchedule::FrontierType::Sparse;
+            } else if (apply_schedule_str == "hybrid_dense_forward") {
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD;
+            } else if (apply_schedule_str == "hybrid_dense") {
+                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "serial") {
                 (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Serial;
             } else if (apply_schedule_str == "parallel") {

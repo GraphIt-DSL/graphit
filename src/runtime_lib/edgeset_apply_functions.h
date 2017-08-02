@@ -158,7 +158,9 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted_from_vertexset_with_fro
     Bitmap *current_frontier = from_vertexset->bitmap_;
     int count = 0;
     for (NodeID u = 0; u < g.num_nodes(); u++) {
+        //std::cout << "u : " << u << std::endl;
         for (WNode s : g.in_neigh(u)) {
+            //std::cout << "s.v: " << s.v << " s.w: " << s.w << std::endl;
             if (current_frontier->get_bit(s.v)) {
                 if (apply_func(s.v, u, s.w)) {
                     next->set_bit(u);
@@ -276,7 +278,7 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
 }
 
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
+VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
 
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
@@ -300,7 +302,7 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
 
     frontierVertices = newA(NodeID, m);
     {
-        for (long i = 0; i < m; i++) {
+        parallel_for (long i = 0; i < m; i++) {
             NodeID v = from_vertexset->dense_vertex_set_[i];
             degrees[i] = g.out_degree(v);
             frontierVertices[i] = v;
@@ -309,11 +311,12 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
     uintT outDegrees = sequence::plusReduce(degrees, m);
     if (outDegrees == 0) return next_frontier;
 
-    uintT* offsets = degrees;
+    uintT *offsets = degrees;
     long outEdgeCount = sequence::plusScan(offsets, degrees, m);
-    uintE * outEdges = newA(uintE,outEdgeCount);
+    uintE *outEdges = newA(uintE, outEdgeCount);
 
-    {parallel_for (long i = 0; i < m; i++) {
+    {
+        parallel_for (long i = 0; i < m; i++) {
             NodeID src = from_vertexset->dense_vertex_set_[i];
             uintT offset = offsets[i];
             //vertex vert = frontierVertices[i];
@@ -322,16 +325,17 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
             for (NodeID dst : g.out_neigh(src)) {
                 if (apply_func(src, dst)) {
                     outEdges[offset + j] = dst;
-                } else{
+                } else {
                     outEdges[offset + j] = UINT_E_MAX;
                 }
                 j++;
             }
 
-        }}
-    uintE * nextIndices = newA(uintE, outEdgeCount);
+        }
+    }
+    uintE *nextIndices = newA(uintE, outEdgeCount);
     // Filter out the empty slots (marked with -1)
-    long nextM = sequence::filter(outEdges,nextIndices,outEdgeCount,nonMaxF());
+    long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
     free(outEdges);
 
     free(degrees);
@@ -343,7 +347,7 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_from_vertexset_with_frontier
 }
 
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
+VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
 
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
@@ -376,11 +380,16 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_
     uintT outDegrees = sequence::plusReduce(degrees, m);
     if (outDegrees == 0) return next_frontier;
 
-    uintT* offsets = degrees;
+    uintT *offsets = degrees;
     long outEdgeCount = sequence::plusScan(offsets, degrees, m);
-    uintE * outEdges = newA(uintE,outEdgeCount);
+    uintE *outEdges = newA(uintE, outEdgeCount);
 
-    {parallel_for (long i = 0; i < m; i++) {
+#ifdef TIME
+    Timer edge_timer;
+    edge_timer.Start();
+#endif
+    {
+        parallel_for (long i = 0; i < m; i++) {
             NodeID src = from_vertexset->dense_vertex_set_[i];
             uintT offset = offsets[i];
             //vertex vert = frontierVertices[i];
@@ -389,22 +398,38 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_
             for (NodeID dst : g.out_neigh(src)) {
                 if (apply_func(src, dst)) {
                     outEdges[offset + j] = dst;
-                } else{
+                } else {
                     outEdges[offset + j] = UINT_E_MAX;
                 }
                 j++;
             }
 
-        }}
-    uintE * nextIndices = newA(uintE, outEdgeCount);
+        }
+    }
+#ifdef TIME
+    edge_timer.Stop();
+    PrintTime("Edge Apply Timer", edge_timer.Seconds());
+#endif
+    uintE *nextIndices = newA(uintE, outEdgeCount);
     //remove deuplications
-    //remDuplicates(outEdges,flags,outEdgeCount,remDups);
+    // remDuplicates(outEdges,flags,outEdgeCount,remDups);
 
     //using ligra's API for removing duplicates for now
-    remDuplicates(outEdges,NULL,outEdgeCount,g.num_nodes());
+
+#ifdef TIME
+    Timer duplicate_timer;
+    duplicate_timer.Start();
+#endif
+
+    remDuplicates(outEdges, NULL, outEdgeCount, g.num_nodes());
+
+#ifdef TIME
+    duplicate_timer.Stop();
+    PrintTime("Deduplicate Time", duplicate_timer.Seconds());
+#endif
 
     // Filter out the empty slots (marked with -1)
-    long nextM = sequence::filter(outEdges,nextIndices,outEdgeCount,nonMaxF());
+    long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
     free(outEdges);
 
     free(degrees);
@@ -415,8 +440,10 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_deduplicatied_from_vertexset_
     return next_frontier;
 }
 
+// This is a push only case
+//#define TIME
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier
+VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier
         (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
 
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
@@ -431,6 +458,20 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     // used to generate nonzero indices to get degrees
     uintT *degrees = newA(uintT, m);
 
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+    from_vertexset->toSparse();
+
+    if (g.flags_ == nullptr)
+        g.flags_ = new int[numVertices];
+
+    parallel_for (int i = 0; i < numVertices; i++) {
+        g.flags_[i] = 0;
+    }
+
     // We probably need this when we get something that doesn't have a dense set, not sure
     // We can also write our own, the eixsting one doesn't quite work for bitvectors
     from_vertexset->toSparse();
@@ -438,7 +479,7 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     //from_vertexset->printDenseSet();
 
     {
-        for (long i = 0; i < m; i++) {
+        parallel_for (long i = 0; i < m; i++) {
             NodeID v = from_vertexset->dense_vertex_set_[i];
             degrees[i] = g.out_degree(v);
         }
@@ -446,35 +487,66 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     uintT outDegrees = sequence::plusReduce(degrees, m);
     if (outDegrees == 0) return next_frontier;
 
-    uintT* offsets = degrees;
+#ifdef TIME
+    out_d_timer.Stop();
+    PrintTime("Outdegree Time", out_d_timer.Seconds());
+#endif
+
+    uintT *offsets = degrees;
     long outEdgeCount = sequence::plusScan(offsets, degrees, m);
-    uintE * outEdges = newA(uintE,outEdgeCount);
+    uintE *outEdges = newA(uintE, outEdgeCount);
 
-    {parallel_for (long i = 0; i < m; i++) {
-            NodeID src = from_vertexset->dense_vertex_set_[i];
-            uintT offset = offsets[i];
-            //vertex vert = frontierVertices[i];
-            //vert.decodeOutNghSparse(v, o, f, outEdges);
-            int j = 0;
-            for (WNode dst : g.out_neigh(src)) {
-                if (apply_func(src, dst.v, dst.w)) {
+
+#ifdef TIME
+    Timer apply_timer;
+    apply_timer.Start();
+#endif
+
+    //#pragma omp parallel for schedule (dynamic)
+    parallel_for (long i = 0; i < m; i++) {
+        NodeID src = from_vertexset->dense_vertex_set_[i];
+        uintT offset = offsets[i];
+        //vertex vert = frontierVertices[i];
+        //vert.decodeOutNghSparse(v, o, f, outEdges);
+        int j = 0;
+        for (WNode dst : g.out_neigh(src)) {
+            if (apply_func(src, dst.v, dst.w)) {
+                //using CAS for deduplication
+                if (CAS(&(g.flags_[dst.v]), 0, 1)) {
                     outEdges[offset + j] = dst.v;
-                } else{
-                    outEdges[offset + j] = UINT_E_MAX;
                 }
-                j++;
+            } else {
+                outEdges[offset + j] = UINT_E_MAX;
             }
+            j++;
+        }
 
-        }}
-    uintE * nextIndices = newA(uintE, outEdgeCount);
+    }
+
+#ifdef TIME
+    apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+
+    uintE *nextIndices = newA(uintE, outEdgeCount);
     //remove deuplications
     //remDuplicates(outEdges,flags,outEdgeCount,remDups);
 
     //using ligra's API for removing duplicates for now
-    remDuplicates(outEdges,NULL,outEdgeCount,g.num_nodes());
+#ifdef TIME
+    Timer d_timer;
+    d_timer.Start();
+#endif
+    //switch to use CAS version
+    //remDuplicates(outEdges,NULL,outEdgeCount,g.num_nodes());
+
+#ifdef TIME
+    d_timer.Stop();
+    PrintTime("Remove Duplicate Time", d_timer.Seconds());
+#endif
 
     // Filter out the empty slots (marked with -1)
-    long nextM = sequence::filter(outEdges,nextIndices,outEdgeCount,nonMaxF());
+    long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
     free(outEdges);
 
     free(degrees);
@@ -485,6 +557,412 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_weighted_deduplicatied_from_v
     return next_frontier;
 }
 
+template<typename PULL_FUNC, typename PUSH_FUNC>
+VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier
+        (Graph &g,
+         VertexSubset<NodeID> *from_vertexset,
+         PULL_FUNC pull_func,
+         PUSH_FUNC push_func) {
 
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+    long m = from_vertexset->size();
+
+    if (numVertices != from_vertexset->getVerticesRange()) {
+
+        cout << "edgeMap: Sizes Don't match" << endl;
+        abort();
+    }
+    // used to generate nonzero indices to get degrees
+    uintT *degrees = newA(uintT, m);
+
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+
+
+    // We probably need this when we get something that doesn't have a dense set, not sure
+    // We can also write our own, the eixsting one doesn't quite work for bitvectors
+    from_vertexset->toSparse();
+
+    //from_vertexset->printDenseSet();
+
+    {
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID v = from_vertexset->dense_vertex_set_[i];
+            degrees[i] = g.out_degree(v);
+        }
+    }
+    uintT outDegrees = sequence::plusReduce(degrees, m);
+    if (outDegrees == 0) return next_frontier;
+
+    if (m + outDegrees > numEdges / 20) {
+        //do dense pull
+        //std::cout << "edge apply dense" << std::endl;
+
+        //read boolean array
+        from_vertexset->toDense();
+        free(degrees);
+
+        //convert to bit vector
+        // this would be an add on optimization (first match Ligra's performance)
+
+        //Bitmap *next = new Bitmap(g.num_nodes());
+        //Bitmap *current_frontier = from_vertexset->bitmap_;
+        bool * next = newA(bool, g.num_nodes());
+        parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;
+
+        parallel_for (NodeID u = 0; u < g.num_nodes(); u++) {
+            //if (to_func(u)) {
+                for (NodeID v : g.in_neigh(u)) {
+                    //if (current_frontier->get_bit(v)) {
+                    if (from_vertexset->bool_map_[v]) {
+                        if (pull_func(v, u)) {
+                            //write to a boolena array instead of bit vector
+                            //next->set_bit(u);
+                            next[u] = 1;
+                            //if (!to_func(u)) break;
+                        }
+                    }
+                }
+            //}
+        }
+
+        // need to get a count out of the boolean array
+
+        next_frontier->num_vertices_ = sequence::sum(next, numVertices);
+        next_frontier->bool_map_ = next;
+        return next_frontier;
+
+    } else {
+
+        if (g.flags_ == nullptr)
+            g.flags_ = new int[numVertices];
+
+        parallel_for (int i = 0; i < numVertices; i++) {
+            g.flags_[i] = 0;
+        }
+
+        //std::cout << "edge apply sparse" << std::endl;
+
+
+        //do sparse push
+        uintT *offsets = degrees;
+        long outEdgeCount = sequence::plusScan(offsets, degrees, m);
+        uintE *outEdges = newA(uintE, outEdgeCount);
+
+#ifdef TIME
+        Timer apply_timer;
+    apply_timer.Start();
+#endif
+        //#pragma omp parallel for  schedule (dynamic, 1024)
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID src = from_vertexset->dense_vertex_set_[i];
+            uintT offset = offsets[i];
+            //vertex vert = frontierVertices[i];
+            //vert.decodeOutNghSparse(v, o, f, outEdges);
+            int j = 0;
+            for (NodeID dst : g.out_neigh(src)) {
+                if (push_func(src, dst)) {
+                    //using CAS for deduplication, disabled for this library
+                    if (CAS(&(g.flags_[dst]), 0, 1)) {
+                        outEdges[offset + j] = dst;
+                    }
+                    //outEdges[offset + j] = dst;
+                } else {
+                    outEdges[offset + j] = UINT_E_MAX;
+                }
+                j++;
+            }
+        }
+#ifdef TIME
+        apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+        uintE *nextIndices = newA(uintE, outEdgeCount);
+        long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
+        free(outEdges);
+
+        free(degrees);
+
+        next_frontier->num_vertices_ = nextM;
+        next_frontier->dense_vertex_set_ = nextIndices;
+
+        return next_frontier;
+
+    }
+}
+
+
+
+// no deduplication
+template<typename TO_FUNC, typename PULL_FUNC, typename PUSH_FUNC>
+VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier
+        (Graph &g,
+         VertexSubset<NodeID> *from_vertexset,
+         TO_FUNC to_func,
+         PULL_FUNC pull_func,
+         PUSH_FUNC push_func) {
+
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+    long m = from_vertexset->size();
+
+    if (numVertices != from_vertexset->getVerticesRange()) {
+
+        cout << "edgeMap: Sizes Don't match" << endl;
+        abort();
+    }
+    // used to generate nonzero indices to get degrees
+    uintT *degrees = newA(uintT, m);
+
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+    /* if (g.flags_ == nullptr) */
+    /*     g.flags_ = new int[numVertices]; */
+
+    /* parallel_for (int i = 0; i < numVertices; i++) { */
+    /*     g.flags_[i] = 0; */
+    /* } */
+
+    // We probably need this when we get something that doesn't have a dense set, not sure
+    // We can also write our own, the eixsting one doesn't quite work for bitvectors
+    from_vertexset->toSparse();
+
+    //from_vertexset->printDenseSet();
+
+    {
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID v = from_vertexset->dense_vertex_set_[i];
+            degrees[i] = g.out_degree(v);
+        }
+    }
+    uintT outDegrees = sequence::plusReduce(degrees, m);
+    if (outDegrees == 0) return next_frontier;
+
+    if (m + outDegrees > numEdges / 20) {
+        //do dense pull
+        //std::cout << "edge apply dense" << std::endl;
+
+        //read boolean array
+        from_vertexset->toDense();
+        free(degrees);
+
+        //convert to bit vector
+        // this would be an add on optimization (first match Ligra's performance)
+
+        //Bitmap *next = new Bitmap(g.num_nodes());
+        //Bitmap *current_frontier = from_vertexset->bitmap_;
+        bool * next = newA(bool, g.num_nodes());
+        parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;
+
+        int count = 0;
+
+        parallel_for (NodeID u = 0; u < g.num_nodes(); u++) {
+            if (to_func(u)) {
+                for (NodeID v : g.in_neigh(u)) {
+                    //if (current_frontier->get_bit(v)) {
+                    if (from_vertexset->bool_map_[v]) {
+                        if (pull_func(v, u)) {
+                            //write to a boolena array instead of bit vector
+                            //next->set_bit(u);
+                            next[u] = 1;
+                            if (!to_func(u)) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // need to get a count out of the boolean array
+
+        next_frontier->num_vertices_ = sequence::sum(next, numVertices);
+        next_frontier->bool_map_ = next;
+        return next_frontier;
+
+    } else {
+
+        //std::cout << "edge apply sparse" << std::endl;
+
+
+        //do sparse push
+        uintT *offsets = degrees;
+        long outEdgeCount = sequence::plusScan(offsets, degrees, m);
+        uintE *outEdges = newA(uintE, outEdgeCount);
+
+#ifdef TIME
+        Timer apply_timer;
+    apply_timer.Start();
+#endif
+        //#pragma omp parallel for  schedule (dynamic, 1024)
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID src = from_vertexset->dense_vertex_set_[i];
+            uintT offset = offsets[i];
+            //vertex vert = frontierVertices[i];
+            //vert.decodeOutNghSparse(v, o, f, outEdges);
+            int j = 0;
+            for (NodeID dst : g.out_neigh(src)) {
+                if (push_func(src, dst)) {
+                    //using CAS for deduplication, disabled for this library
+//                    if (CAS(&(g.flags_[dst]), 0, 1)) {
+//                        outEdges[offset + j] = dst;
+//                    }
+                    outEdges[offset + j] = dst;
+                } else {
+                    outEdges[offset + j] = UINT_E_MAX;
+                }
+                j++;
+            }
+        }
+#ifdef TIME
+        apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+        uintE *nextIndices = newA(uintE, outEdgeCount);
+        long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
+        free(outEdges);
+
+        free(degrees);
+
+        next_frontier->num_vertices_ = nextM;
+        next_frontier->dense_vertex_set_ = nextIndices;
+
+        return next_frontier;
+
+    }
+}
+
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier
+        (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    long numVertices = g.num_nodes(), numEdges = g.num_edges();
+    long m = from_vertexset->size();
+
+    if (numVertices != from_vertexset->getVerticesRange()) {
+
+        cout << "edgeMap: Sizes Don't match" << endl;
+        abort();
+    }
+    // used to generate nonzero indices to get degrees
+    uintT *degrees = newA(uintT, m);
+
+#ifdef TIME
+    Timer out_d_timer;
+    out_d_timer.Start();
+#endif
+
+    if (g.flags_ == nullptr)
+        g.flags_ = new int[numVertices];
+
+    parallel_for (int i = 0; i < numVertices; i++) {
+        g.flags_[i] = 0;
+    }
+
+    // We probably need this when we get something that doesn't have a dense set, not sure
+    // We can also write our own, the eixsting one doesn't quite work for bitvectors
+    from_vertexset->toSparse();
+
+    //from_vertexset->printDenseSet();
+
+    {
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID v = from_vertexset->dense_vertex_set_[i];
+            degrees[i] = g.out_degree(v);
+        }
+    }
+    uintT outDegrees = sequence::plusReduce(degrees, m);
+    if (outDegrees == 0) return next_frontier;
+    if (m + outDegrees > numEdges / 20) {
+
+        //ligra code
+        //        bool* next = newA(bool,numVertices);
+//        {parallel_for(long i=0;i<numVertices;i++) next[i] = 0;}
+//        {parallel_for (long i=0; i<numVertices; i++){
+//                if (vertexSubset[i]) {
+//                    G[i].decodeOutNgh(i, vertexSubset, f, next);
+//                }
+//            }}
+
+        from_vertexset->toDense();
+        free(degrees);
+
+//        Deprecated, switch to use boolean arrays due to performance issues
+//        Bitmap * next = new Bitmap(g.num_nodes());
+//        Bitmap * current = from_vertexset->bitmap_;
+//        next->reset();
+
+        bool *next = newA(bool, numVertices);
+        parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;
+        bool *current = from_vertexset->bool_map_;
+
+        //int64_t count = 0;
+        //#pragma omp parallel for reduction(+ : count)  schedule (dynamic, 1024)
+        parallel_for (NodeID u = 0; u < numVertices; u++) {
+            //if (current->get_bit(u)){
+            if (current[u]) {
+                for (WNode s : g.out_neigh(u)) {
+                    if (apply_func(u, s.v, s.w)) {
+                        //next->set_bit_atomic(s.v);
+                        //count++;
+                        next[s.v] = 1;
+                    }
+                }
+            }
+        }
+        next_frontier->num_vertices_ = sequence::sum(next, numVertices);
+        //next_frontier->bitmap_ = next;
+        next_frontier->bool_map_ = next;
+        return next_frontier;
+    } else {
+        uintT *offsets = degrees;
+        long outEdgeCount = sequence::plusScan(offsets, degrees, m);
+        uintE *outEdges = newA(uintE, outEdgeCount);
+
+#ifdef TIME
+        Timer apply_timer;
+    apply_timer.Start();
+#endif
+        //#pragma omp parallel for  schedule (dynamic, 1024)
+        parallel_for (long i = 0; i < m; i++) {
+            NodeID src = from_vertexset->dense_vertex_set_[i];
+            uintT offset = offsets[i];
+            //vertex vert = frontierVertices[i];
+            //vert.decodeOutNghSparse(v, o, f, outEdges);
+            int j = 0;
+            for (WNode dst : g.out_neigh(src)) {
+                if (apply_func(src, dst.v, dst.w)) {
+                    //using CAS for deduplication
+                    if (CAS(&(g.flags_[dst.v]), 0, 1)) {
+                        outEdges[offset + j] = dst.v;
+                    }
+                } else {
+                    outEdges[offset + j] = UINT_E_MAX;
+                }
+                j++;
+            }
+        }
+#ifdef TIME
+        apply_timer.Stop();
+    PrintTime("Apply Time", apply_timer.Seconds());
+#endif
+        uintE *nextIndices = newA(uintE, outEdgeCount);
+        long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());
+        free(outEdges);
+
+        free(degrees);
+
+        next_frontier->num_vertices_ = nextM;
+        next_frontier->dense_vertex_set_ = nextIndices;
+
+        return next_frontier;
+    }
+}
 
 #endif //GRAPHIT_EDGESET_APPLY_FUNCTIONS_H

@@ -16,20 +16,33 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        auto property_visitor = PropertyAnalyzingVisitor("pull");
-        auto apply_func_decl_name = apply_expr->input_function_name;
-        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        apply_func_decl->accept(&property_visitor);
-
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        auto property_visitor = PropertyAnalyzingVisitor("push");
-        auto apply_func_decl_name = apply_expr->input_function_name;
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
+    }
+
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
+    ::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
+    }
+
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
+    }
+
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::analyzeSingleFunctionEdgesetApplyExpr(
+            std::string function_name, std::string direction) {
+        // The analysis only makes sense if it is a parallel apply expr
+        auto property_visitor = PropertyAnalyzingVisitor(direction);
+        auto apply_func_decl_name = function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&property_visitor);
     }
+
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
         in_write_phase = true;
@@ -74,16 +87,15 @@ namespace graphit {
 
         // if it is not a read property, just return the current property (only need to detect write or read_and_write)
         if (enclosing_func_decl_->field_vector_properties_map_.find(field_vector_name)
-            != enclosing_func_decl_->field_vector_properties_map_.end()){
+            != enclosing_func_decl_->field_vector_properties_map_.end()) {
             FieldVectorProperty::ReadWriteType existing_readwrite_access
                     = enclosing_func_decl_->field_vector_properties_map_[field_vector_name].read_write_type;
             if (existing_readwrite_access == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
-                    existing_readwrite_access == FieldVectorProperty::ReadWriteType::READ_AND_WRITE){
+                existing_readwrite_access == FieldVectorProperty::ReadWriteType::READ_AND_WRITE) {
                 return enclosing_func_decl_->field_vector_properties_map_[field_vector_name];
             }
 
         }
-
 
 
         if (index == src_var_name) {

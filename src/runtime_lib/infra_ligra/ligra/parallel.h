@@ -103,6 +103,7 @@ static void setWorkers(int n) { }
 
 #include <limits.h>
 
+#define LONG
 #if defined(LONG)
 typedef long intT;
 typedef unsigned long uintT;

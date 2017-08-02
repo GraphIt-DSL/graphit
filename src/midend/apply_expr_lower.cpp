@@ -44,11 +44,23 @@ namespace  graphit {
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL){
                     //Pull
                     node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
-                } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID){
-                    //Hybrid
-                    //TODO: not yet supported
-                }
+                } else if  (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD){
+                    //Hybrid dense forward (switching betweeen push and dense forward push)
+                    node = std::make_shared<mir::HybridDenseForwardEdgeSetApplyExpr>(edgeset_apply);
+                } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE){
+                    //Hybrid dense (switching betweeen push and pull)
+                    auto hybrid_dense_edgeset_apply = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
 
+                    //clone the function delcaration for push, use the original func for pull
+                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+                    mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
+                    push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
+                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
+                    //insert into MIR context
+                    mir_context_->addFunctionFront(push_apply_func_decl);
+
+                    node = hybrid_dense_edgeset_apply;
+                }
 
                 if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Parallel){
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = true;

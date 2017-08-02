@@ -1,14 +1,11 @@
 element Vertex end
 element Edge end
-
 const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
-
 const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
 const new_rank : vector{Vertex}(float) = 0.0;
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
 const error : vector{Vertex}(float) = 0.0;
-
 const damp : float = 0.85;
 const beta_score : float = (1.0 - damp) / vertices.size();
 
@@ -29,9 +26,7 @@ func printRank(v : Vertex)
 end
 
 func main()
-
     startTimer();
-
     for i in 1:10
         #s1# edges.apply(updateEdge);
         vertices.apply(updateVertex);
@@ -41,7 +36,6 @@ func main()
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";
     print elapsed_time;
-
 end
 
 schedule:

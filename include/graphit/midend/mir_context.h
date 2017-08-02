@@ -42,7 +42,10 @@ namespace graphit {
                 functions_list_.push_back(f);
             }
 
-
+            void addFunctionFront(mir::FuncDecl::Ptr f) {
+                functions_map_[f->name] = f;
+                functions_list_.insert(functions_list_.begin(), f);
+            }
 
             bool isFunction(const std::string &name) const {
                 return functions_map_.find(name) != functions_map_.end();

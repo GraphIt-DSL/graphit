@@ -59,7 +59,7 @@ namespace graphit {
     //generates different function name for different schedules
     std::string EdgesetApplyFunctionDeclGenerator::genFunctionName(mir::EdgeSetApplyExpr::Ptr apply) {
         // A total of 48 schedules for the edgeset apply operator for now
-        // Direction first: "push", "pull" or "hybrid"
+        // Direction first: "push", "pull" or "hybrid_dense"
         // Parallel: "parallel" or "serial"
         // Weighted: "" or "weighted"
         // Deduplicate: "deduplicated" or ""
@@ -75,8 +75,10 @@ namespace graphit {
             output_name += "_push";
         } else if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)){
             output_name += "_pull";
-        } else {
-            output_name += "_hybrid";
+        } else if (mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(apply)){
+            output_name += "_hybrid_denseforward";
+        } else if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            output_name += "_hybrid_dense";
         }
 
         //check parallelism specification
@@ -113,6 +115,19 @@ namespace graphit {
             } else {
                 // the input is an input to vertexset
                 output_name += "_to_vertexset";
+            }
+        }
+
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            if (apply_expr->push_to_function_ != ""){
+                if (mir_context_->isFunction(apply->to_func)){
+                    // the schedule is an input to function
+                    output_name += "_push_to_filter_func";
+                } else {
+                    // the input is an input to vertexset
+                    output_name += "_push_to_vertexset";
+                }
             }
         }
 

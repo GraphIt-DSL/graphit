@@ -1,0 +1,35 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+const IDs : vector{Vertex}(int) = 1;
+
+func updateEdge(src : Vertex, dst : Vertex)
+    IDs[dst] min= IDs[src];
+end
+
+func init(v : Vertex)
+     IDs[v] = v;
+end
+
+func main()
+
+    startTimer();
+    var n : int = edges.getVertices();
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+    vertices.apply(init);
+    while (frontier.getVertexSetSize() != 0)
+        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
+    end
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end
+
+
+schedule:
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");

@@ -14,49 +14,49 @@ namespace graphit {
 
 
         void MIRRewriter::visit(ExprStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRRewriter::visit(AssignStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs = rewrite<Expr>(stmt->lhs);
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRRewriter::visit(CompareAndSwapStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs = rewrite<Expr>(stmt->lhs);
             stmt->expr = rewrite<Expr>(stmt->expr);
             stmt->compare_val_expr = rewrite<Expr>(stmt->expr);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRRewriter::visit(ReduceStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs = rewrite<Expr>(stmt->lhs);
             stmt->expr = rewrite<Expr>(stmt->expr);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
@@ -83,11 +83,12 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(Call::Ptr expr) {
-            for (auto arg : expr->args){
+            for (auto arg : expr->args) {
                 arg = rewrite<Expr>(arg);
             }
             node = expr;
         };
+
         void MIRRewriter::visit(MulExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -132,22 +133,26 @@ namespace graphit {
 
         void MIRRewriter::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
-            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
-            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
             node = expr;
         }
 
         void MIRRewriter::visit(std::shared_ptr<PushEdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
-            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
-            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
             node = expr;
         }
 
         void MIRRewriter::visit(std::shared_ptr<PullEdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
-            //if(expr->from_func) expr->from_func = rewrite<Expr>(expr->from_func);
-            //if(expr->to_func)   expr->to_func = rewrite<Expr>(expr->to_func);
+            node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
             node = expr;
         }
 
@@ -175,14 +180,25 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<NameNode> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            node = stmt;
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ForStmt> stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->domain = rewrite<ForDomain>(stmt->domain);
             stmt->body = rewrite<StmtBlock>(stmt->body);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
@@ -207,7 +223,7 @@ namespace graphit {
 
         void MIRRewriter::visit(std::shared_ptr<EdgeSetType> edgeset_type) {
             edgeset_type->element = rewrite<ElementType>(edgeset_type->element);
-            for (auto element_type : *edgeset_type->vertex_element_type_list){
+            for (auto element_type : *edgeset_type->vertex_element_type_list) {
                 element_type = rewrite<ElementType>(element_type);
             }
             node = edgeset_type;
@@ -220,8 +236,8 @@ namespace graphit {
         }
 
         void MIRRewriter::visitBinaryExpr(BinaryExpr::Ptr expr) {
-            expr->lhs = rewrite<Expr> (expr->lhs);
-            expr->rhs = rewrite<Expr> (expr->rhs);
+            expr->lhs = rewrite<Expr>(expr->lhs);
+            expr->rhs = rewrite<Expr>(expr->rhs);
             node = expr;
         }
 
@@ -234,13 +250,13 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<WhileStmt> stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->body = rewrite<StmtBlock>(stmt->body);
             stmt->cond = rewrite<Expr>(stmt->cond);
             node = stmt;
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }

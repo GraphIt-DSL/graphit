@@ -1099,7 +1099,6 @@ namespace graphit {
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
 
 
-        auto function_name = edgeset_apply_func_gen_->genFunctionName(apply);
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
@@ -1126,12 +1125,24 @@ namespace graphit {
             }
         }
 
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            if (apply_expr->push_to_function_ != ""){
+                arguments.push_back(apply->to_func);
+            }
+        }
+
         arguments.push_back(apply->input_function_name);
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            arguments.push_back(apply_expr->push_function_);
+        }
 
         apply->target->accept(this);
         for (auto &arg : arguments) {
             oss << ", " << arg;
         }
+
         oss << "); " << std::endl;
     }
 
