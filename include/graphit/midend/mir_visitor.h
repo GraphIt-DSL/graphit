@@ -25,6 +25,7 @@ namespace graphit {
         struct IfStmt;
 
         struct ForDomain;
+        struct NameNode;
         struct ExprStmt;
         struct PrintStmt;
         struct BreakStmt;
@@ -87,6 +88,7 @@ namespace graphit {
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
 
+            virtual void visit(std::shared_ptr<NameNode>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
             virtual void visit(std::shared_ptr<WhileStmt>);

@@ -16,6 +16,9 @@ namespace graphit {
         struct MIRRewriter : public MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt> op) { node = op; };
 
+            virtual void visit(std::shared_ptr<NameNode>);
+
+
             virtual void visit(std::shared_ptr<ForStmt>);
 
             virtual void visit(std::shared_ptr<WhileStmt>);

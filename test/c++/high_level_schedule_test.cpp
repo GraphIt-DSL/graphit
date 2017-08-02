@@ -324,9 +324,9 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 
     program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
     program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_func");
-
+    program_schedule_node->setApply("l3:l1:s1", "parallel");
     // Expects that the program still compiles
-    EXPECT_EQ (0,  basicCompileTestWithContext());
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
 }
 

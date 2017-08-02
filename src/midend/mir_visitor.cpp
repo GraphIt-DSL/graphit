@@ -190,6 +190,16 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->body->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(std::shared_ptr<ForDomain> for_domain) {
             for_domain->lower->accept(this);
             for_domain->upper->accept(this);
@@ -250,6 +260,8 @@ namespace graphit {
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {
             load_expr->file_name->accept(this);
         }
+
+
 
     }
 }

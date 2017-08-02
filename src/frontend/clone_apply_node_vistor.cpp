@@ -22,7 +22,7 @@ namespace  graphit {
             if (label_scope_.getCurrentScope() == target_label_) {
                 // check if the expr stmt contains an apply expression
                 if (fir::isa<fir::ApplyExpr>(stmt->expr)){
-                    target_expr_stmt_ = fir::to<fir::ExprStmt>(stmt->clone());
+                    target_expr_stmt_ = stmt->clone<fir::ExprStmt>();
                 }
             }
 

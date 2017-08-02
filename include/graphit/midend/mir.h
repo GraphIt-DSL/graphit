@@ -314,6 +314,21 @@ namespace graphit {
 
         };
 
+        struct NameNode : public Stmt {
+            StmtBlock::Ptr body;
+            typedef std::shared_ptr<NameNode> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<NameNode>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
         struct ForStmt : public Stmt {
             std::string loopVar;
             ForDomain::Ptr domain;

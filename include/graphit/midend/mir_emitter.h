@@ -38,6 +38,8 @@ namespace graphit {
             virtual void visit(fir::ConstDecl::Ptr);
             virtual void visit(fir::VarDecl::Ptr);
 
+            virtual void visit(fir::NameNode::Ptr);
+
             virtual void visit(fir::ForStmt::Ptr);
             virtual void visit(fir::RangeDomain::Ptr);
             virtual void visit(fir::WhileStmt::Ptr);
