@@ -22,6 +22,8 @@ struct VertexSubset {
     Bitmap * bitmap_ ;
     std::vector<NodeID> tmp;
     bool* bool_map_;
+    SlidingQueue<NodeID>* sliding_queue_;
+
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -42,13 +44,17 @@ struct VertexSubset {
             bool_map_ = newA(bool, vertices_range);
             parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
             dense_vertex_set_ = new unsigned int[vertices_range];
-            parallel_for (int i = 0; i< vertices_range; i++){
+            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
+            parallel_for (NodeID i = 0; i< vertices_range; i++){
                 dense_vertex_set_[i] = i;
+                //hopefully we will only need to use one of the two in the futuer (dense_set or sliding queue)
+                sliding_queue_->push_back(i);
             }
         } else {
             bool_map_ = nullptr;
             bitmap_ = nullptr;
             dense_vertex_set_ = nullptr;
+            sliding_queue_ = nullptr;
         }
     }
 
@@ -78,6 +84,13 @@ struct VertexSubset {
             bool_map_ = newA(bool, vertices_range_);
             parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
         }
+
+        if (sliding_queue_ == nullptr){
+            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range_);
+        }
+        // TODO: this is a hack for now, need to solve it later. Sliding window needs to be called before usage
+        sliding_queue_->push_back(v);
+        //sliding_queue_->slide_window();
 
         if (!bitmap_->get_bit(v)){
             bitmap_->set_bit(v);
