@@ -277,6 +277,46 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
     return next_frontier;
 }
 
+
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
+        (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
+    SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
+    next_frontier->sliding_queue_ = from_vertexset->sliding_queue_;
+    queue->slide_window();
+    //std::cout << "queue size: " << queue->size() << std::endl;
+
+
+#pragma omp parallel
+    {
+        QueueBuffer<NodeID> lqueue(*queue);
+#pragma omp for
+        for (auto q_iter = queue->begin(); q_iter < queue->end(); q_iter++) {
+            NodeID src = *q_iter;
+            for (NodeID dst : g.out_neigh(src)) {
+
+                if (apply_func(src, dst)) {
+                    lqueue.push_back(dst);
+//                NodeID curr_val = parent[v];
+//                if (curr_val < 0) {
+//                    if (compare_and_swap(parent[v], curr_val, u)) {
+//                        lqueue.push_back(v);
+//                    }
+//                }
+                }
+            }
+        }
+        lqueue.flush();
+    };
+
+    //std::cout << "queue size: " << queue->size() << std::endl;
+    next_frontier->num_vertices_ = queue->size();
+
+    return next_frontier;
+}
+
+/*
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
@@ -345,6 +385,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
 
     return next_frontier;
 }
+*/
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
