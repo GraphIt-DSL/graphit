@@ -87,6 +87,10 @@ namespace graphit {
         } else {
             output_name += "_serial";
         }
+        
+        if (apply->use_sliding_queue){
+            output_name += "_sliding_queue";   
+        }
 
         //check if it is weighted
         if (apply->is_weighted){

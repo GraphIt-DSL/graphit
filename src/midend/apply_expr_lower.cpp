@@ -39,6 +39,7 @@ namespace  graphit {
             if (apply_schedule != schedule_->apply_schedules->end()) {
                 // a schedule is found
 
+                //First figure out the direction, and allocate the relevant edgeset expression
                 if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PUSH) {
                     node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL){
@@ -62,10 +63,15 @@ namespace  graphit {
                     node = hybrid_dense_edgeset_apply;
                 }
 
+                //Check to see if it is parallel or serial
                 if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Parallel){
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = true;
                 } else if (apply_schedule->second.parallel_type == ApplySchedule::ParType::Serial){
                     mir::to<mir::EdgeSetApplyExpr>(node)->is_parallel = false;
+                }
+
+                if (apply_schedule->second.opt == ApplySchedule::OtherOpt::SLIDING_QUEUE){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->use_sliding_queue = true;
                 }
 
                 if (edgeset_apply->tracking_field != ""){

@@ -279,7 +279,7 @@ VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_wi
 
 
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
+VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
     SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
@@ -316,7 +316,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
     return next_frontier;
 }
 
-/*
+
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
@@ -385,7 +385,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
 
     return next_frontier;
 }
-*/
+
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier

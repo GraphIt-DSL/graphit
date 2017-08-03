@@ -288,7 +288,7 @@ namespace graphit {
                 //Default schedule pull, serial
                 (*schedule_->apply_schedules)[apply_label]
                         = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable};
+                           ApplySchedule::DeduplicationType::Enable, ApplySchedule::OtherOpt::QUEUE};
             }
 
 
@@ -308,7 +308,10 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Enable;
             } else if (apply_schedule_str == "disable_deduplication") {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Disable;
-            } else {
+            } else if (apply_schedule_str == "sliding_queue"){
+                (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
+            }
+            else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
             }
 

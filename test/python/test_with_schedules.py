@@ -136,6 +136,23 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def test_bfs_push_sliding_queue_parallel_cas_verified(self):
+        self.basic_compile_test("bfs_push_sliding_queue_parallel_cas.gt")
+        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..");
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
     def test_cc_hybrid_dense_parallel_cas(self):
         self.basic_compile_exec_test("cc_hybrid_dense_parallel_cas.gt")
 
@@ -227,5 +244,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_push_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_bfs_push_sliding_queue_parallel_cas_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

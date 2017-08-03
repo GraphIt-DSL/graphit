@@ -719,6 +719,7 @@ namespace graphit {
             bool is_parallel = false;
             bool enable_deduplication = false;
             bool is_weighted = false;
+            bool use_sliding_queue = false;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
