@@ -32,4 +32,6 @@ func main()
 end
 
 schedule:
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->setApply("s1", "sliding_queue");
+    //program->setApply("s1", "hybrid_dense");

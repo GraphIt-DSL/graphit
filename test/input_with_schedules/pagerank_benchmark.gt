@@ -31,7 +31,6 @@ func main()
         #s1# edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
-    print error.sum();
 
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";
