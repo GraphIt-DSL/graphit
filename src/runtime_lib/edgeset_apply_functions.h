@@ -551,11 +551,9 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_ve
         //vert.decodeOutNghSparse(v, o, f, outEdges);
         int j = 0;
         for (WNode dst : g.out_neigh(src)) {
-            if (apply_func(src, dst.v, dst.w)) {
                 //using CAS for deduplication
-                if (CAS(&(g.flags_[dst.v]), 0, 1)) {
+	  if (apply_func(src, dst.v, dst.w) && CAS(&(g.flags_[dst.v]), 0, 1)) {
                     outEdges[offset + j] = dst.v;
-                }
             } else {
                 outEdges[offset + j] = UINT_E_MAX;
             }
@@ -678,14 +676,14 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
         return next_frontier;
 
     } else {
-
+      //std::cout << "sparse" << std::endl;
+      
         if (g.flags_ == nullptr)
-            g.flags_ = new int[numVertices];
+	  g.flags_ = new int[numVertices]();
 
-        parallel_for (int i = 0; i < numVertices; i++) {
-            g.flags_[i] = 0;
-        }
-
+	parallel_for(long i = 0; i < m; i++){
+	  g.flags_[from_vertexset->dense_vertex_set_[i]] = 0;
+	}
         //std::cout << "edge apply sparse" << std::endl;
 
 
@@ -706,11 +704,9 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
             //vert.decodeOutNghSparse(v, o, f, outEdges);
             int j = 0;
             for (NodeID dst : g.out_neigh(src)) {
-                if (push_func(src, dst)) {
                     //using CAS for deduplication, disabled for this library
-                    if (CAS(&(g.flags_[dst]), 0, 1)) {
+	      if (push_func(src, dst) && CAS(&(g.flags_[dst]), 0, 1)) {
                         outEdges[offset + j] = dst;
-                    }
                     //outEdges[offset + j] = dst;
                 } else {
                     outEdges[offset + j] = UINT_E_MAX;
@@ -730,6 +726,18 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
 
         next_frontier->num_vertices_ = nextM;
         next_frontier->dense_vertex_set_ = nextIndices;
+
+	/*
+        parallel_for (int i = 0; i < nextM; i++) {
+	  //std::cout << "i: " << i << std::endl;
+	  //std::cout << "nextIndices[i]: " << nextIndices[i] << std::endl;
+	  g.flags_[nextIndices[i]] = 0;
+	  }*/
+
+	/*
+	parallel_for (int i = 0; i < numVertices; i++){
+	  g.flags_[i]=0;
+	  }*/
 
         return next_frontier;
 
@@ -899,12 +907,6 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
     out_d_timer.Start();
 #endif
 
-    if (g.flags_ == nullptr)
-        g.flags_ = new int[numVertices];
-
-    parallel_for (int i = 0; i < numVertices; i++) {
-        g.flags_[i] = 0;
-    }
 
     // We probably need this when we get something that doesn't have a dense set, not sure
     // We can also write our own, the eixsting one doesn't quite work for bitvectors
@@ -921,7 +923,8 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
     uintT outDegrees = sequence::plusReduce(degrees, m);
     if (outDegrees == 0) return next_frontier;
     if (m + outDegrees > numEdges / 20) {
-
+      //std::cout << "edgemap dense forward" << std::endl;
+      
         //ligra code
         //        bool* next = newA(bool,numVertices);
 //        {parallel_for(long i=0;i<numVertices;i++) next[i] = 0;}
@@ -948,7 +951,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
         parallel_for (NodeID u = 0; u < numVertices; u++) {
             //if (current->get_bit(u)){
             if (current[u]) {
-                for (WNode s : g.out_neigh(u)) {
+	      for (WNode s : g.out_neigh(u)) {
                     if (apply_func(u, s.v, s.w)) {
                         //next->set_bit_atomic(s.v);
                         //count++;
@@ -962,6 +965,12 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
         next_frontier->bool_map_ = next;
         return next_frontier;
     } else {
+
+
+      if (g.flags_ == nullptr){
+        g.flags_ = new int[numVertices]();
+      }
+      
         uintT *offsets = degrees;
         long outEdgeCount = sequence::plusScan(offsets, degrees, m);
         uintE *outEdges = newA(uintE, outEdgeCount);
@@ -977,12 +986,10 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
             //vertex vert = frontierVertices[i];
             //vert.decodeOutNghSparse(v, o, f, outEdges);
             int j = 0;
-            for (WNode dst : g.out_neigh(src)) {
-                if (apply_func(src, dst.v, dst.w)) {
-                    //using CAS for deduplication
-                    if (CAS(&(g.flags_[dst.v]), 0, 1)) {
+	    for (WNode dst : g.out_neigh(src)) {
+	      if (apply_func(src, dst.v, dst.w) && CAS(&(g.flags_[dst.v]), 0, 1)) {
                         outEdges[offset + j] = dst.v;
-                    }
+                    
                 } else {
                     outEdges[offset + j] = UINT_E_MAX;
                 }
@@ -1001,6 +1008,9 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
 
         next_frontier->num_vertices_ = nextM;
         next_frontier->dense_vertex_set_ = nextIndices;
+	for(int i = 0; i < nextM; i++){
+	  g.flags_[nextIndices[i]] = 0;
+	}
 
         return next_frontier;
     }
