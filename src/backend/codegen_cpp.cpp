@@ -798,6 +798,7 @@ namespace graphit {
         }
     }
 
+    //DEPRECATED, moved to gen_edge_apply_func_decl
     void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr apply_expr) {
         auto edgeset_name = var_expr->var.getName();
         bool apply_expr_gen_frontier = false;

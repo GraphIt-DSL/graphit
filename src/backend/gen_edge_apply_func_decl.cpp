@@ -24,8 +24,33 @@ namespace graphit {
 
         genEdgeApplyFunctionSignature(apply);
         oss_ << "{ " << endl; //the end of the function declaration
-
+        genEdgeApplyFunctionDeclBody(apply);
         oss_ << "} " << endl; //the end of the function declaration
+
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply){
+
+        indent();
+        printIndent();
+
+        if (apply->is_parallel)
+            oss_ << "parallel_for";
+        else
+            oss_ << "for";
+
+        std::string node_id_type = "NodeID";
+        if (apply->is_weighted) node_id_type = "WNode";
+
+        oss_ << " ( " << node_id_type << " d=0; d < g.num_nodes(); d++) {" << std::endl;
+        indent();
+        printIndent();
+
+        dedent();
+        oss_ << std::endl;
+
+        printIndent();
+        oss_ << "}" << std::endl;
 
     }
 

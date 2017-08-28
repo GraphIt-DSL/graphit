@@ -24,7 +24,7 @@ namespace graphit {
 
         EdgesetApplyFunctionDeclGenerator(MIRContext* mir_context, std::ostream& oss)
                 : mir_context_(mir_context), oss_ (oss){
-
+            indentLevel = 0;
         }
 
 
@@ -47,6 +47,14 @@ namespace graphit {
 
         void genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply);
         void genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply);
+        void genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
+
+        void indent() { ++indentLevel; }
+        void dedent() { --indentLevel; }
+        void printIndent() { oss_ << std::string(2 * indentLevel, ' '); }
+        void printBeginIndent() { oss_ << std::string(2 * indentLevel, ' ') << "{" << std::endl; }
+        void printEndIndent() { oss_ << std::string(2 * indentLevel, ' ') << "}"; }
+        unsigned      indentLevel;
     };
 }
 
