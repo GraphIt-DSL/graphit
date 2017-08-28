@@ -258,5 +258,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_cmdline_arg_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

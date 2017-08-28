@@ -46,6 +46,7 @@ namespace graphit {
         std::ostream &oss_;
 
         void genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply);
+        void genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply);
     };
 }
 

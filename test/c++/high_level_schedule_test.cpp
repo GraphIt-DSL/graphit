@@ -401,6 +401,26 @@ TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
 }
 
 
+TEST_F(HighLevelScheduleTest, PRPullParallel) {
+    fe_->parseStream(pr_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
 
 TEST_F(HighLevelScheduleTest, BFSSerialPushSparseSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);

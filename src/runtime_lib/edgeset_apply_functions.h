@@ -206,7 +206,7 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_from_filter_func_to_filter_func_
 
 }
 
-
+/** DEPRECATED, start to use code gen
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_parallel(Graph &g, APPLY_FUNC apply_func) {
 
@@ -217,6 +217,7 @@ VertexSubset<NodeID> *edgeset_apply_pull_parallel(Graph &g, APPLY_FUNC apply_fun
     }
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
 }
+ **/
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted(WGraph &g, APPLY_FUNC apply_func) {

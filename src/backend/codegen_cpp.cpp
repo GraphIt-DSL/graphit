@@ -39,8 +39,8 @@ namespace graphit {
 
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
-        // gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
-        // gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
+        auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
+        gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
@@ -1125,19 +1125,24 @@ namespace graphit {
             }
         }
 
+        // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(apply->to_func);
+                arguments.push_back(apply_expr->push_to_function_);
             }
         }
 
+        // the original apply function (pull direction in hybrid case)
         arguments.push_back(apply->input_function_name);
+
+        // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             arguments.push_back(apply_expr->push_function_);
         }
 
+        // the edgeset that is being applied over (target)
         apply->target->accept(this);
         for (auto &arg : arguments) {
             oss << ", " << arg;

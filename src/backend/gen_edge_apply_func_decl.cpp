@@ -7,31 +7,49 @@ namespace graphit {
     using namespace std;
 
     void EdgesetApplyFunctionDeclGenerator::visit(mir::PushEdgeSetApplyExpr::Ptr push_apply) {
-        genEdgeApplyFunctionSignature(push_apply);
-
-        oss_ << "} " << endl; //the end of the function declaration
+        genEdgeApplyFunctionDeclaration(push_apply);
     }
 
     void EdgesetApplyFunctionDeclGenerator::visit(mir::PullEdgeSetApplyExpr::Ptr pull_apply) {
-        genEdgeApplyFunctionSignature(pull_apply);
+        genEdgeApplyFunctionDeclaration(pull_apply);
+    }
+
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply){
+        auto func_name = genFunctionName(apply);
+        // currently, we are only generating for edgeset_apply_pull_parallel
+        if (func_name != "edgeset_apply_pull_parallel"){
+            return;
+        }
+
+        genEdgeApplyFunctionSignature(apply);
+        oss_ << "{ " << endl; //the end of the function declaration
 
         oss_ << "} " << endl; //the end of the function declaration
+
     }
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply){
         auto func_name = genFunctionName(apply);
+
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
         vector<string> templates = vector<string>();
         vector<string> arguments = vector<string>();
+
+        if (apply->is_weighted){
+            arguments.push_back("WGraph & g");
+        }else{
+            arguments.push_back("Graph & g");
+        }
 
         if (apply->from_func != ""){
             if (mir_context_->isFunction(apply->from_func)){
                 // the schedule is an input from function
                 templates.push_back("typename FROM_FUNC");
-                arguments.push_back("FROM_FUNC " + apply->from_func);
+                arguments.push_back("FROM_FUNC from_func");
             } else {
                 // the input is an input from vertexset
-                arguments.push_back("VertexSubset<NodeID>* " + apply->from_func);
+                arguments.push_back("VertexSubset<NodeID>* from_vertexset");
             }
         }
 
@@ -39,19 +57,56 @@ namespace graphit {
             if (mir_context_->isFunction(apply->to_func)){
                 // the schedule is an input to function
                 templates.push_back("typename TO_FUNC");
-                arguments.push_back("TO_FUNC " + apply->to_func);
+                arguments.push_back("TO_FUNC to_func");
             } else {
                 // the input is an input to vertexset
-                arguments.push_back("VertexSubset<NodeID>* " + apply->to_func);
+                arguments.push_back("VertexSubset<NodeID>* to_vertexset");
             }
         }
 
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+
+            if (apply_expr->push_to_function_ != ""){
+                templates.push_back("typename PUSH_TO_FUNC");
+                arguments.push_back("PUSH_TO_FUNC push_to_func");
+            }
+        }
+
+
         templates.push_back("typename APPLY_FUNC");
-        arguments.push_back("APPLY_FUNC " + apply->input_function_name);
+        arguments.push_back("APPLY_FUNC apply_func");
 
-        oss_ << "template <typename Function > ";
-        oss_ << "VertexSubset<NodeID>* " << func_name << "() { " << endl;
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+            templates.push_back("typename PUSH_APPLY_FUNC");
+            arguments.push_back("PUSH_APPLY_FUNC push_apply_func");
+        }
 
+        oss_ << "template <";
+
+        bool first = true;
+        for (auto  temp : templates){
+            if (first){
+                oss_ << temp << " ";
+                first = false;
+            }
+            else
+                oss_ << ", " << temp;
+        }
+        oss_ << "> ";
+        oss_ << "VertexSubset<NodeID>* " << func_name << "(";
+
+        first = true;
+        for (auto arg : arguments) {
+            if (first){
+                oss_ << arg << " ";
+                first = false;
+            }
+            else
+                oss_ << ", " << arg;        }
+
+        oss_ << ") " << endl;
 
 
     }
