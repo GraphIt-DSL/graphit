@@ -55,6 +55,8 @@ namespace graphit {
         void printBeginIndent() { oss_ << std::string(2 * indentLevel, ' ') << "{" << std::endl; }
         void printEndIndent() { oss_ << std::string(2 * indentLevel, ' ') << "}"; }
         unsigned      indentLevel;
+
+        void genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
     };
 }
 

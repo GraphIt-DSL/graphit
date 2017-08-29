@@ -29,28 +29,125 @@ namespace graphit {
 
     }
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply){
+    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
+        if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)){
+            genEdgePullApplyFunctionDeclBody(apply);
+        }
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply){
+
+        bool apply_expr_gen_frontier = false;
+        // Check if the apply function has a return value
+        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+
+
+        // If apply function has a return value, then we need to return a temporary vertexsubset
+        if (apply_func->result.isInitialized()) {
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
+//            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
+//            dst_vertices_range_expr->accept(this);
+//            oss << " , 0 );" << std::endl;
+
+        }
 
         indent();
         printIndent();
 
+        std::string for_type = "for";
         if (apply->is_parallel)
-            oss_ << "parallel_for";
-        else
-            oss_ << "for";
+            for_type = "parallel_for";
 
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
-        oss_ << " ( " << node_id_type << " d=0; d < g.num_nodes(); d++) {" << std::endl;
+        oss_ << for_type <<  " ( " << node_id_type << " d=0; d < g.num_nodes(); d++) {" << std::endl;
+        indent();
+
+        if (apply->to_func != "") {
+            printIndent();
+            oss_ << "if (" << apply->to_func << "( d ) ) { " << std::endl;
+            indent();
+        }
+
+        printIndent();
+
+        oss_ << "for (" << node_id_type << " s : g.in_neigh(d)) {";
+
+
+
+
+        // print the checks on filtering on sources s
+        if (apply->from_func != "") {
+            indent();
+            printIndent();
+
+            oss_ << "if ";
+            //TODO: move this logic in to MIR at some point
+            if (mir_context_->isFunction(apply->from_func)) {
+                //if the input expression is a function call
+                oss_ << " ( " << apply->from_func << " ( s )";
+
+            } else {
+                //the input expression is a vertex subset
+                oss_ << " ( " << apply->from_func << "->contains( s ) ";
+            }
+            oss_ << ") { " << std::endl;
+        }
+
         indent();
         printIndent();
+        if (apply_expr_gen_frontier) {
+            oss_ << "if ( ";
+        }
 
+        // generating the C++ code for the apply function call
+        if (apply->is_weighted) {
+            oss_ <<  " apply_func ( s.v , d, s.w )";
+        } else {
+            oss_ << " apply_func ( s , d  )";
+
+        }
+
+        if (!apply_expr_gen_frontier) {
+            // no need to generate a frontier
+            oss_ << ";" << std::endl;
+        } else {
+            //generate the code for adding destination to "next" frontier
+            //TODO: fix later
+            //oss_ << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
+        }
+
+        // generating code for early break
+        if (apply->to_func != "") {
+            printIndent();
+            oss_ << "if (!" << apply->to_func << "( d ) ) break; " << std::endl;
+        }
+
+        // end of from filtering
+        if (apply->from_func != "") {
+            dedent();
+            printIndent();
+            oss_ << "}" << std::endl;
+        }
+
+        //end of for loop on the neighbors
         dedent();
-        oss_ << std::endl;
-
         printIndent();
         oss_ << "}" << std::endl;
+
+        if (apply->to_func != "") {
+            dedent();
+            printIndent();
+            oss_ << "} " << std::endl;
+        }
+
+
+        dedent();
+        printIndent();
+        oss_ << "}" << std::endl;
+
 
     }
 

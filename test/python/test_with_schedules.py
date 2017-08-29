@@ -245,5 +245,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_push_parallel_cas'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
