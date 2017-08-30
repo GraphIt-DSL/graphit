@@ -148,6 +148,31 @@ protected:
                                                      "     end\n"
                                                      "end");
 
+
+    istringstream cc_is_ = istringstream("element Vertex end\n"
+                                                 "element Edge end\n"
+                                                 "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/4.el\");\n"
+                                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                 "const IDs : vector{Vertex}(int) = 1;\n"
+                                                 "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                 "    IDs[dst] min= IDs[src];\n"
+                                                 "end\n"
+                                                 "func init(v : Vertex)\n"
+                                                 "     IDs[v] = v;\n"
+                                                 "end\n"
+                                                 "func printID(v : Vertex)\n"
+                                                 "    print IDs[v];\n"
+                                                 "end\n"
+                                                 "func main()\n"
+                                                 "    var n : int = edges.getVertices();\n"
+                                                 "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                                 "    vertices.apply(init);\n"
+                                                 "    while (frontier.getVertexSetSize() != 0)\n"
+                                                 "        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);\n"
+                                                 "    end\n"
+                                                 "    vertices.apply(printID);\n"
+                                                 "end");
+
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -369,6 +394,21 @@ TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+TEST_F(HighLevelScheduleTest, CCPullSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
 }

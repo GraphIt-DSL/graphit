@@ -17,9 +17,10 @@ namespace graphit {
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply){
         auto func_name = genFunctionName(apply);
-        // currently, we are only generate code for the following schedules
+        // currently, we only generate code for the following schedules
         if (func_name != "edgeset_apply_pull_parallel"
                 && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
+                && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
                 ){
             return;
         }
