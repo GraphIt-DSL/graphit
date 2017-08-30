@@ -17,8 +17,10 @@ namespace graphit {
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply){
         auto func_name = genFunctionName(apply);
-        // currently, we are only generating for edgeset_apply_pull_parallel
-        if (func_name != "edgeset_apply_pull_parallel"){
+        // currently, we are only generate code for the following schedules
+        if (func_name != "edgeset_apply_pull_parallel"
+                && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
+                ){
             return;
         }
 
@@ -46,13 +48,24 @@ namespace graphit {
         if (apply_func->result.isInitialized()) {
             // build an empty vertex subset if apply function returns
             apply_expr_gen_frontier = true;
-//            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-//            dst_vertices_range_expr->accept(this);
-//            oss << " , 0 );" << std::endl;
-
+            oss_ <<
+            "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+            "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
+            "  long m = from_vertexset->size();\n"
+            "  bool * next = newA(bool, g.num_nodes());\n"
+            "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
         }
 
         indent();
+
+
+        if (apply->from_func != "") {
+            if (!mir_context_->isFunction(apply->from_func)) {
+                printIndent();
+                oss_ << "from_vertexset->toDense();" << std::endl;
+            }
+        }
+
         printIndent();
 
         std::string for_type = "for";
@@ -67,15 +80,13 @@ namespace graphit {
 
         if (apply->to_func != "") {
             printIndent();
-            oss_ << "if (" << apply->to_func << "( d ) ) { " << std::endl;
+            oss_ << "if (to_func(d)){ " << std::endl;
             indent();
         }
 
         printIndent();
 
-        oss_ << "for (" << node_id_type << " s : g.in_neigh(d)) {";
-
-
+        oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
 
 
         // print the checks on filtering on sources s
@@ -83,15 +94,15 @@ namespace graphit {
             indent();
             printIndent();
 
-            oss_ << "if ";
+            oss_ << "if";
             //TODO: move this logic in to MIR at some point
             if (mir_context_->isFunction(apply->from_func)) {
                 //if the input expression is a function call
-                oss_ << " ( " << apply->from_func << " ( s )";
+                oss_ << " (from_func(s)";
 
             } else {
                 //the input expression is a vertex subset
-                oss_ << " ( " << apply->from_func << "->contains( s ) ";
+                oss_ << " (from_vertexset->bool_map_[s] ";
             }
             oss_ << ") { " << std::endl;
         }
@@ -99,14 +110,14 @@ namespace graphit {
         indent();
         printIndent();
         if (apply_expr_gen_frontier) {
-            oss_ << "if ( ";
+            oss_ << "if( ";
         }
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ <<  " apply_func ( s.v , d, s.w )";
+            oss_ <<  "apply_func ( s.v , d, s.w )";
         } else {
-            oss_ << " apply_func ( s , d  )";
+            oss_ << "apply_func ( s , d  )";
 
         }
 
@@ -114,16 +125,23 @@ namespace graphit {
             // no need to generate a frontier
             oss_ << ";" << std::endl;
         } else {
+            indent();
             //generate the code for adding destination to "next" frontier
             //TODO: fix later
-            //oss_ << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
+            oss_ << " ) { "<< std::endl;
+            printIndent();
+            oss_ << "next[d] = 1; " << std::endl;
+            // generating code for early break
+            if (apply->to_func != "") {
+                printIndent();
+                oss_ << "if (!to_func(d)) break; " << std::endl;
+            }
+            dedent();
+            printIndent();
+            oss_ << "}" << std::endl;
         }
 
-        // generating code for early break
-        if (apply->to_func != "") {
-            printIndent();
-            oss_ << "if (!" << apply->to_func << "( d ) ) break; " << std::endl;
-        }
+
 
         // end of from filtering
         if (apply->from_func != "") {
@@ -148,6 +166,15 @@ namespace graphit {
         printIndent();
         oss_ << "}" << std::endl;
 
+        //return a new vertexset if no subset vertexset is returned
+        if (!apply_expr_gen_frontier){
+            printIndent();
+            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
+        } else {
+            oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
+                    "  next_frontier->bool_map_ = next;\n"
+                    "  return next_frontier;\n";
+        }
 
     }
 
