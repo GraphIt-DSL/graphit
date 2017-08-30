@@ -21,6 +21,7 @@ namespace graphit {
         if (func_name != "edgeset_apply_pull_parallel"
                 && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
                 && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
+                && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
                 ){
             return;
         }
@@ -76,7 +77,7 @@ namespace graphit {
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
-        oss_ << for_type <<  " ( " << node_id_type << " d=0; d < g.num_nodes(); d++) {" << std::endl;
+        oss_ << for_type <<  " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
         indent();
 
         if (apply->to_func != "") {
