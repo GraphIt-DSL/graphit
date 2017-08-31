@@ -70,6 +70,57 @@ class TestGraphitCompiler(unittest.TestCase):
 
         # actual test cases
 
+    def bfs_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        os.chdir("..");
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+
+    def cc_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..")
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+    def sssp_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..");
+        cmd = "./bin/test.o" + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
 
@@ -79,208 +130,38 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_eigenvector_pagerank_fusion(self):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
-    def test_bfs_push_parallel_cas(self):
-        self.basic_compile_exec_test("bfs_push_parallel_cas.gt")
-
     def test_bfs_push_parallel_cas_verified(self):
-        self.basic_compile_test("bfs_push_parallel_cas.gt")
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
-
-
-    def test_bfs_hybrid_dense_parallel_cas(self):
-        self.basic_compile_exec_test("bfs_hybrid_dense_parallel_cas.gt")
+        self.bfs_verified_test("bfs_push_parallel_cas.gt")
 
     def test_bfs_hybrid_dense_parallel_cas_verified(self):
-        self.basic_compile_test("bfs_hybrid_dense_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.bfs_verified_test("bfs_hybrid_dense_parallel_cas.gt")
 
     def test_bfs_push_parallel_cas_verified(self):
-        self.basic_compile_test("bfs_push_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.bfs_verified_test("bfs_push_parallel_cas.gt")
 
     def test_bfs_pull_parallel_verified(self):
-        self.basic_compile_test("bfs_pull_parallel.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
-
+        self.bfs_verified_test("bfs_pull_parallel.gt")
 
     def test_bfs_push_sliding_queue_parallel_cas_verified(self):
-        self.basic_compile_test("bfs_push_sliding_queue_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
-
-    def test_cc_hybrid_dense_parallel_cas(self):
-        self.basic_compile_exec_test("cc_hybrid_dense_parallel_cas.gt")
+        self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt")
 
     def test_cc_hybrid_dense_parallel_cas_verified(self):
-        self.basic_compile_test("cc_hybrid_dense_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..")
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
-
-    def test_cc_push_parallel_cas(self):
-        self.basic_compile_exec_test("cc_push_parallel_cas.gt")
-
+        self.cc_verified_test("cc_hybrid_dense_parallel_cas.gt")
 
     def test_cc_push_parallel_cas_verified(self):
-        self.basic_compile_test("cc_push_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..")
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.cc_verified_test("cc_push_parallel_cas.gt")
 
     def test_cc_pull_parallel_verified(self):
-        self.basic_compile_test("cc_pull_parallel.gt")
-        os.chdir("..")
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
-
-    def test_sssp_push_parallel_cas(self):
-        self.basic_compile_exec_test("sssp_push_parallel_cas.gt")
+        self.cc_verified_test("cc_pull_parallel.gt")
 
     def test_sssp_push_parallel_cas_verified(self):
-        self.basic_compile_test("sssp_push_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.sssp_verified_test("sssp_push_parallel_cas.gt")
 
     def test_sssp_hybrid_denseforward_parallel_cas_verified(self):
-        self.basic_compile_test("sssp_hybrid_denseforward_parallel_cas.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.sssp_verified_test("sssp_hybrid_denseforward_parallel_cas.gt")
 
     def test_sssp_pull_parallel_verified(self):
-        self.basic_compile_test("sssp_pull_parallel.gt")
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
-        os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
-        subprocess.call(cmd, shell=True)
-
-        # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
-        test_flag = False
-        for line in iter(proc.stdout.readline,''):
-            if line.rstrip().find("SUCCESSFUL") != -1:
-                test_flag = True
-                break;
-        self.assertEqual(test_flag, True)
-        os.chdir("bin")
+        self.sssp_verified_test("sssp_pull_parallel.gt")
 
     def test_pagerank_parallel_pull_expect(self):
         self.basic_compile_test("pagerank_pull_parallel.gt")
