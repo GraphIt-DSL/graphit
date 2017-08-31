@@ -389,6 +389,8 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
 }
 **/
 
+
+/** Deprecated, now using code generation for this schedule
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
@@ -482,6 +484,8 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_w
 
     return next_frontier;
 }
+
+ **/
 
 // This is a push only case
 //#define TIME

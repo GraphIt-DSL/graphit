@@ -25,6 +25,7 @@ namespace graphit {
             && func_name != "edgeset_apply_push_parallel"
             && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
             && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
+            && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
 
                 ) {
             return;
@@ -66,6 +67,12 @@ namespace graphit {
             oss_ << "    from_vertexset->toSparse();" << std::endl;
         }
 
+        //set up logic fo enabling deduplication with CAS on flags
+        if (apply->enable_deduplication){
+            oss_ << "    if (g.flags_ == nullptr){\n"
+                    "      g.flags_ = new int[numVertices]();\n"
+                    "    }\n";
+        }
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
         if (apply_func->result.isInitialized()) {
@@ -167,14 +174,22 @@ namespace graphit {
         }
 
         if (!apply_expr_gen_frontier) {
-            // no need to generate a frontier
             oss_ << ";" << std::endl;
+
         } else {
+
+            std::string dst_type = apply->is_weighted ? "d.v" : "d";
+
+            //need to return a frontier
+            if (apply->enable_deduplication){
+                oss_ << " && CAS(&(g.flags_[" << dst_type << "]), 0, 1) ";
+            }
+
             indent();
             //generate the code for adding destination to "next" frontier
             oss_ << " ) { " << std::endl;
             printIndent();
-            oss_ << "outEdges[offset + j] = d; " << std::endl;
+            oss_ << "outEdges[offset + j] = " << dst_type <<  "; " << std::endl;
             dedent();
             printIndent();
             oss_ << "} else { outEdges[offset + j] = UINT_E_MAX; }" << std::endl;
@@ -212,6 +227,7 @@ namespace graphit {
         printIndent();
         oss_ << "}" << std::endl;
 
+
         //return a new vertexset if no subset vertexset is returned
         if (!apply_expr_gen_frontier) {
             printIndent();
@@ -222,8 +238,15 @@ namespace graphit {
                     "  free(outEdges);\n"
                     "  free(degrees);\n"
                     "  next_frontier->num_vertices_ = nextM;\n"
-                    "  next_frontier->dense_vertex_set_ = nextIndices;\n"
-                    "  return next_frontier;\n";
+                    "  next_frontier->dense_vertex_set_ = nextIndices;\n";
+
+            if (apply->enable_deduplication){
+                oss_ << "  for(int i = 0; i < nextM; i++){\n"
+                        "     g.flags_[nextIndices[i]] = 0;\n"
+                        "  }\n";
+            }
+
+            oss_ << "  return next_frontier;\n";
         }
 
     }
