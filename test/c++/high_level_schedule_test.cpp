@@ -355,12 +355,27 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 
 }
 
-TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
+TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push");
+    program->setApply("s1", "push")->setApply("s1", "disable_deduplication");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
+    fe_->parseStream(bfs_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");

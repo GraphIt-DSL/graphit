@@ -44,8 +44,9 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
 
-    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPushParallel";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPushParallel";
 
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
 
     return RUN_ALL_TESTS();
 }

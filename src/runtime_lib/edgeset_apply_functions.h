@@ -317,6 +317,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_w
     return next_frontier;
 }
 
+/** Deprecated, using code gen now
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
@@ -386,7 +387,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_from_vertexset_with_frontier
 
     return next_frontier;
 }
-
+**/
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier

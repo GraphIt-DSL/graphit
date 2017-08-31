@@ -23,6 +23,9 @@ namespace graphit {
             && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_push_parallel"
+            && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
+            && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
+
                 ) {
             return;
         }
@@ -70,9 +73,8 @@ namespace graphit {
             apply_expr_gen_frontier = true;
             //set up code for outputing frontier for push based edgeset apply operations
             oss_ <<
-                 "   VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+                 "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                          "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
-                         "\n"
                          "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
                          "        abort();\n"
                          "    }\n"
@@ -81,7 +83,7 @@ namespace graphit {
                          "\n"
                          "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
                          "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
-                         "    from_vertexset->toSparse();\n"
+                         "    //from_vertexset->toSparse();\n"
                          "    {\n"
                          "        parallel_for (long i = 0; i < m; i++) {\n"
                          "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
@@ -92,13 +94,11 @@ namespace graphit {
                          "    if (outDegrees == 0) return next_frontier;\n"
                          "    uintT *offsets = degrees;\n"
                          "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n"
-                         "    uintE *outEdges = newA(uintE, outEdgeCount);";
+                         "    uintE *outEdges = newA(uintE, outEdgeCount);\n";
         }
 
 
         indent();
-
-
 
 
         printIndent();
@@ -123,7 +123,7 @@ namespace graphit {
                 "    uintT offset = offsets[i];\n"
                 "    int j = 0;\n";
 
-        if (apply->from_func != "") {
+        if (apply->from_func != "" && !from_vertexset_specified) {
             printIndent();
             oss_ << "if (from_func(s)){ " << std::endl;
             indent();
@@ -141,7 +141,7 @@ namespace graphit {
 
             oss_ << "if";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply->from_func)) {
+            if (mir_context_->isFunction(apply->to_func)) {
                 //if the input expression is a function call
                 oss_ << " (to_func(d)";
 
@@ -172,22 +172,25 @@ namespace graphit {
         } else {
             indent();
             //generate the code for adding destination to "next" frontier
-            //TODO: fix later
             oss_ << " ) { " << std::endl;
             printIndent();
-            oss_ << "outEdges[offset + j] = dst; " << std::endl;
+            oss_ << "outEdges[offset + j] = d; " << std::endl;
             dedent();
             printIndent();
             oss_ << "} else { outEdges[offset + j] = UINT_E_MAX; }" << std::endl;
-
             printIndent();
-            oss_ << "}" << std::endl;
+            oss_ << "j++;" << std::endl;
+
+
+//            dedent();
+//            printIndent();
+//            oss_ << "}" << std::endl;
         }
 
 
 
         // end of from filtering
-        if (apply->from_func != "") {
+        if (apply->from_func != "" && !from_vertexset_specified) {
             dedent();
             printIndent();
             oss_ << "}" << std::endl;
@@ -214,7 +217,13 @@ namespace graphit {
             printIndent();
             oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
         } else {
-
+            oss_ << "  uintE *nextIndices = newA(uintE, outEdgeCount);\n"
+                    "  long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());\n"
+                    "  free(outEdges);\n"
+                    "  free(degrees);\n"
+                    "  next_frontier->num_vertices_ = nextM;\n"
+                    "  next_frontier->dense_vertex_set_ = nextIndices;\n"
+                    "  return next_frontier;\n";
         }
 
     }
