@@ -121,6 +121,14 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def pr_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), 0.00289518)
+
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
 
@@ -164,12 +172,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.sssp_verified_test("sssp_pull_parallel.gt")
 
     def test_pagerank_parallel_pull_expect(self):
-        self.basic_compile_test("pagerank_pull_parallel.gt")
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
-        #check the value printed to stdout is as expected
-        output = proc.stdout.readline()
-        print "output: " + output.strip()
-        self.assertEqual(float(output.strip()), 0.00289518)
+        self.pr_verified_test("pagerank_pull_parallel.gt")
+
+    def test_pagerank_parallel_push_expect(self):
+        self.pr_verified_test("pagerank_push_parallel.gt")
 
 
 if __name__ == '__main__':
@@ -177,5 +183,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_pull_parallel_verified'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_push_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

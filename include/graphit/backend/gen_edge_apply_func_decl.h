@@ -57,6 +57,7 @@ namespace graphit {
         unsigned      indentLevel;
 
         void genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
+        void genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
     };
 }
 

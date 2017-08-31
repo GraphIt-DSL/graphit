@@ -15,14 +15,15 @@ namespace graphit {
     }
 
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply){
+    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
         // currently, we only generate code for the following schedules
         if (func_name != "edgeset_apply_pull_parallel"
-                && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
-                && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
-                && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-                ){
+            && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
+            && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
+            && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+            && func_name != "edgeset_apply_push_parallel"
+                ) {
             return;
         }
 
@@ -34,12 +35,192 @@ namespace graphit {
     }
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
-        if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
             genEdgePullApplyFunctionDeclBody(apply);
+        }
+
+        if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
+            genEdgePushApplyFunctionDeclBody(apply);
         }
     }
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply){
+    void EdgesetApplyFunctionDeclGenerator::genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
+        bool apply_expr_gen_frontier = false;
+        bool from_vertexset_specified = false;
+        // Check if the apply function has a return value
+        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+
+        // set up the flag for checking if a from_vertexset has been specified
+        if (apply->from_func != "")
+            if (!mir_context_->isFunction(apply->from_func))
+                from_vertexset_specified = true;
+
+        if (from_vertexset_specified) {
+            printIndent();
+            //for push, we use sparse vertexset
+            oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
+                        "    long m = from_vertexset->size();\n";
+            oss_ << "    from_vertexset->toSparse();" << std::endl;
+        }
+
+
+        // If apply function has a return value, then we need to return a temporary vertexsubset
+        if (apply_func->result.isInitialized()) {
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
+            //set up code for outputing frontier for push based edgeset apply operations
+            oss_ <<
+                 "   VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+                         "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
+                         "\n"
+                         "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
+                         "        abort();\n"
+                         "    }\n"
+                         "    // used to generate nonzero indices to get degrees\n"
+                         "    uintT *degrees = newA(uintT, m);\n"
+                         "\n"
+                         "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
+                         "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
+                         "    from_vertexset->toSparse();\n"
+                         "    {\n"
+                         "        parallel_for (long i = 0; i < m; i++) {\n"
+                         "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
+                         "            degrees[i] = g.out_degree(v);\n"
+                         "        }\n"
+                         "    }\n"
+                         "    uintT outDegrees = sequence::plusReduce(degrees, m);\n"
+                         "    if (outDegrees == 0) return next_frontier;\n"
+                         "    uintT *offsets = degrees;\n"
+                         "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n"
+                         "    uintE *outEdges = newA(uintE, outEdgeCount);";
+        }
+
+
+        indent();
+
+
+
+
+        printIndent();
+
+        std::string for_type = "for";
+        if (apply->is_parallel)
+            for_type = "parallel_for";
+
+        std::string node_id_type = "NodeID";
+        if (apply->is_weighted) node_id_type = "WNode";
+
+
+        if (from_vertexset_specified)
+            oss_ << for_type << " ( long i=0; i < m; i++) {" << std::endl;
+        else
+            oss_ << for_type << " ( NodeID s=0; s < g.num_nodes(); s++) {"<< std::endl;
+
+        indent();
+
+        if (from_vertexset_specified)
+            oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n"
+                "    uintT offset = offsets[i];\n"
+                "    int j = 0;\n";
+
+        if (apply->from_func != "") {
+            printIndent();
+            oss_ << "if (from_func(s)){ " << std::endl;
+            indent();
+        }
+
+        printIndent();
+
+        oss_ << "for(" << node_id_type << " d : g.out_neigh(s)){" << std::endl;
+
+
+        // print the checks on filtering on sources s
+        if (apply->to_func != "") {
+            indent();
+            printIndent();
+
+            oss_ << "if";
+            //TODO: move this logic in to MIR at some point
+            if (mir_context_->isFunction(apply->from_func)) {
+                //if the input expression is a function call
+                oss_ << " (to_func(d)";
+
+            } else {
+                //the input expression is a vertex subset
+                oss_ << " (to_vertexset->bool_map_[s] ";
+            }
+            oss_ << ") { " << std::endl;
+        }
+
+        indent();
+        printIndent();
+        if (apply_expr_gen_frontier) {
+            oss_ << "if( ";
+        }
+
+        // generating the C++ code for the apply function call
+        if (apply->is_weighted) {
+            oss_ << "apply_func ( s.v , d, s.w )";
+        } else {
+            oss_ << "apply_func ( s , d  )";
+
+        }
+
+        if (!apply_expr_gen_frontier) {
+            // no need to generate a frontier
+            oss_ << ";" << std::endl;
+        } else {
+            indent();
+            //generate the code for adding destination to "next" frontier
+            //TODO: fix later
+            oss_ << " ) { " << std::endl;
+            printIndent();
+            oss_ << "outEdges[offset + j] = dst; " << std::endl;
+            dedent();
+            printIndent();
+            oss_ << "} else { outEdges[offset + j] = UINT_E_MAX; }" << std::endl;
+
+            printIndent();
+            oss_ << "}" << std::endl;
+        }
+
+
+
+        // end of from filtering
+        if (apply->from_func != "") {
+            dedent();
+            printIndent();
+            oss_ << "}" << std::endl;
+        }
+
+        //end of for loop on the neighbors
+        dedent();
+        printIndent();
+        oss_ << "}" << std::endl;
+
+        if (apply->to_func != "") {
+            dedent();
+            printIndent();
+            oss_ << "} " << std::endl;
+        }
+
+
+        dedent();
+        printIndent();
+        oss_ << "}" << std::endl;
+
+        //return a new vertexset if no subset vertexset is returned
+        if (!apply_expr_gen_frontier) {
+            printIndent();
+            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
+        } else {
+
+        }
+
+    }
+
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
 
         bool apply_expr_gen_frontier = false;
         // Check if the apply function has a return value
@@ -51,11 +232,11 @@ namespace graphit {
             // build an empty vertex subset if apply function returns
             apply_expr_gen_frontier = true;
             oss_ <<
-            "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
-            "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
-            "  long m = from_vertexset->size();\n"
-            "  bool * next = newA(bool, g.num_nodes());\n"
-            "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
+                 "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+                         "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
+                         "  long m = from_vertexset->size();\n"
+                         "  bool * next = newA(bool, g.num_nodes());\n"
+                         "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
         }
 
         indent();
@@ -77,7 +258,7 @@ namespace graphit {
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
-        oss_ << for_type <<  " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
+        oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
         indent();
 
         if (apply->to_func != "") {
@@ -117,7 +298,7 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ <<  "apply_func ( s.v , d, s.w )";
+            oss_ << "apply_func ( s.v , d, s.w )";
         } else {
             oss_ << "apply_func ( s , d  )";
 
@@ -130,7 +311,7 @@ namespace graphit {
             indent();
             //generate the code for adding destination to "next" frontier
             //TODO: fix later
-            oss_ << " ) { "<< std::endl;
+            oss_ << " ) { " << std::endl;
             printIndent();
             oss_ << "next[d] = 1; " << std::endl;
             // generating code for early break
@@ -169,7 +350,7 @@ namespace graphit {
         oss_ << "}" << std::endl;
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier){
+        if (!apply_expr_gen_frontier) {
             printIndent();
             oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
         } else {
@@ -180,21 +361,21 @@ namespace graphit {
 
     }
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply){
+    void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
 
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
         vector<string> templates = vector<string>();
         vector<string> arguments = vector<string>();
 
-        if (apply->is_weighted){
+        if (apply->is_weighted) {
             arguments.push_back("WGraph & g");
-        }else{
+        } else {
             arguments.push_back("Graph & g");
         }
 
-        if (apply->from_func != ""){
-            if (mir_context_->isFunction(apply->from_func)){
+        if (apply->from_func != "") {
+            if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
                 templates.push_back("typename FROM_FUNC");
                 arguments.push_back("FROM_FUNC from_func");
@@ -204,8 +385,8 @@ namespace graphit {
             }
         }
 
-        if (apply->to_func != ""){
-            if (mir_context_->isFunction(apply->to_func)){
+        if (apply->to_func != "") {
+            if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
                 templates.push_back("typename TO_FUNC");
                 arguments.push_back("TO_FUNC to_func");
@@ -215,10 +396,10 @@ namespace graphit {
             }
         }
 
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != ""){
+            if (apply_expr->push_to_function_ != "") {
                 templates.push_back("typename PUSH_TO_FUNC");
                 arguments.push_back("PUSH_TO_FUNC push_to_func");
             }
@@ -228,7 +409,7 @@ namespace graphit {
         templates.push_back("typename APPLY_FUNC");
         arguments.push_back("APPLY_FUNC apply_func");
 
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             templates.push_back("typename PUSH_APPLY_FUNC");
             arguments.push_back("PUSH_APPLY_FUNC push_apply_func");
@@ -237,12 +418,11 @@ namespace graphit {
         oss_ << "template <";
 
         bool first = true;
-        for (auto  temp : templates){
-            if (first){
+        for (auto temp : templates) {
+            if (first) {
                 oss_ << temp << " ";
                 first = false;
-            }
-            else
+            } else
                 oss_ << ", " << temp;
         }
         oss_ << "> ";
@@ -250,12 +430,12 @@ namespace graphit {
 
         first = true;
         for (auto arg : arguments) {
-            if (first){
+            if (first) {
                 oss_ << arg << " ";
                 first = false;
-            }
-            else
-                oss_ << ", " << arg;        }
+            } else
+                oss_ << ", " << arg;
+        }
 
         oss_ << ") " << endl;
 
@@ -277,39 +457,39 @@ namespace graphit {
         string output_name = "edgeset_apply";
 
         //check direction
-        if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
             output_name += "_push";
-        } else if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)){
+        } else if (mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
             output_name += "_pull";
-        } else if (mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(apply)){
+        } else if (mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(apply)) {
             output_name += "_hybrid_denseforward";
-        } else if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        } else if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             output_name += "_hybrid_dense";
         }
 
         //check parallelism specification
-        if (apply->is_parallel){
+        if (apply->is_parallel) {
             output_name += "_parallel";
         } else {
             output_name += "_serial";
         }
-        
-        if (apply->use_sliding_queue){
-            output_name += "_sliding_queue";   
+
+        if (apply->use_sliding_queue) {
+            output_name += "_sliding_queue";
         }
 
         //check if it is weighted
-        if (apply->is_weighted){
+        if (apply->is_weighted) {
             output_name += "_weighted";
         }
 
         // check for deduplication
-        if (apply->enable_deduplication){
+        if (apply->enable_deduplication) {
             output_name += "_deduplicatied";
         }
 
-        if (apply->from_func != ""){
-            if (mir_context_->isFunction(apply->from_func)){
+        if (apply->from_func != "") {
+            if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
                 output_name += "_from_filter_func";
             } else {
@@ -318,8 +498,8 @@ namespace graphit {
             }
         }
 
-        if (apply->to_func != ""){
-            if (mir_context_->isFunction(apply->to_func)){
+        if (apply->to_func != "") {
+            if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
                 output_name += "_to_filter_func";
             } else {
@@ -328,10 +508,10 @@ namespace graphit {
             }
         }
 
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            if (apply_expr->push_to_function_ != ""){
-                if (mir_context_->isFunction(apply->to_func)){
+            if (apply_expr->push_to_function_ != "") {
+                if (mir_context_->isFunction(apply->to_func)) {
                     // the schedule is an input to function
                     output_name += "_push_to_filter_func";
                 } else {
@@ -343,7 +523,7 @@ namespace graphit {
 
         auto apply_func = mir_context_->getFunction(apply->input_function_name);
 
-        if (apply_func->result.isInitialized()){
+        if (apply_func->result.isInitialized()) {
             //if frontier tracking is enabled (when apply function returns a boolean value)
             output_name += "_with_frontier";
         }
