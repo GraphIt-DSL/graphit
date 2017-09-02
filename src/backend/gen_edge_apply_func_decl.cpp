@@ -26,6 +26,7 @@ namespace graphit {
             && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
             && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
+            && func_name != "edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
 
                 ) {
             return;
@@ -53,6 +54,8 @@ namespace graphit {
         bool from_vertexset_specified = false;
         // Check if the apply function has a return value
         auto apply_func = mir_context_->getFunction(apply->input_function_name);
+        std::string dst_type = apply->is_weighted ? "d.v" : "d";
+
 
         // set up the flag for checking if a from_vertexset has been specified
         if (apply->from_func != "")
@@ -150,7 +153,7 @@ namespace graphit {
             //TODO: move this logic in to MIR at some point
             if (mir_context_->isFunction(apply->to_func)) {
                 //if the input expression is a function call
-                oss_ << " (to_func(d)";
+                oss_ << " (to_func(" << dst_type << ")";
 
             } else {
                 //the input expression is a vertex subset
@@ -167,7 +170,7 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << "apply_func ( s.v , d, s.w )";
+            oss_ << "apply_func ( s , d.v, d.w )";
         } else {
             oss_ << "apply_func ( s , d  )";
 
@@ -178,7 +181,6 @@ namespace graphit {
 
         } else {
 
-            std::string dst_type = apply->is_weighted ? "d.v" : "d";
 
             //need to return a frontier
             if (apply->enable_deduplication){

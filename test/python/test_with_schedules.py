@@ -183,5 +183,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_push_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_cas_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

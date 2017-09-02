@@ -489,6 +489,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_deduplicatied_from_vertexset_w
 
 // This is a push only case
 //#define TIME
+/** Deprecated, use code gen now
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier
         (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
@@ -601,6 +602,8 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_ve
 
     return next_frontier;
 }
+
+ **/
 
 template<typename PULL_FUNC, typename PUSH_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier
