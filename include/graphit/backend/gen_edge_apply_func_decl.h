@@ -40,6 +40,10 @@ namespace graphit {
 
         // figure out the right function name for the particular edgeset apply function
         std::string genFunctionName(mir::EdgeSetApplyExpr::Ptr push_apply);
+        void setupFlags(mir::EdgeSetApplyExpr::Ptr apply,
+            bool & from_vertexset_specified,
+            bool & apply_expr_gen_frontier,
+            std::string & dst_type);
 
     private:
         MIRContext* mir_context_;

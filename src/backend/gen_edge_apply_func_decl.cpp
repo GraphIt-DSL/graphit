@@ -49,18 +49,33 @@ namespace graphit {
         }
     }
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
-        bool apply_expr_gen_frontier = false;
-        bool from_vertexset_specified = false;
-        // Check if the apply function has a return value
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
-        std::string dst_type = apply->is_weighted ? "d.v" : "d";
-
+    void EdgesetApplyFunctionDeclGenerator::setupFlags(mir::EdgeSetApplyExpr::Ptr apply,
+                                                       bool & from_vertexset_specified,
+                                                        bool & apply_expr_gen_frontier,
+                                                        std::string & dst_type){
 
         // set up the flag for checking if a from_vertexset has been specified
         if (apply->from_func != "")
             if (!mir_context_->isFunction(apply->from_func))
                 from_vertexset_specified = true;
+
+        // Check if the apply function has a return value
+        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+        dst_type = apply->is_weighted ? "d.v" : "d";
+
+        if (apply_func->result.isInitialized()) {
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
+        }
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
+        bool apply_expr_gen_frontier = false;
+        bool from_vertexset_specified = false;
+        string dst_type;
+
+        setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
+
 
         if (from_vertexset_specified) {
             printIndent();
@@ -78,9 +93,8 @@ namespace graphit {
         }
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_func->result.isInitialized()) {
+        if (apply_expr_gen_frontier) {
             // build an empty vertex subset if apply function returns
-            apply_expr_gen_frontier = true;
             //set up code for outputing frontier for push based edgeset apply operations
             oss_ <<
                  "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
