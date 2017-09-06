@@ -70,6 +70,11 @@ namespace graphit {
                                           bool from_vertexset_specified,
                                           bool apply_expr_gen_frontier,
                                           std::string dst_type);
+
+        void printPullEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
+                                                  bool from_vertexset_specified,
+                                                  bool apply_expr_gen_frontier,
+                                                  std::string dst_type);
     };
 }
 

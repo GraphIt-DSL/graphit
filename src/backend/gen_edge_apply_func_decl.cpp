@@ -75,28 +75,29 @@ namespace graphit {
                                                                 bool from_vertexset_specified){
         oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
 
-        if (apply_expr_gen_frontier){
-            if (from_vertexset_specified) {
-                printIndent();
-                // for push, we use sparse vertexset
-                oss_ << "    long m = from_vertexset->size();\n";
-                oss_ << "    from_vertexset->toSparse();" << std::endl;
-            } else {
-                oss_ << "    long m = numVertices; \n";
+        if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)){
+            if (apply_expr_gen_frontier){
+                if (from_vertexset_specified) {
+                    printIndent();
+                    // for push, we use sparse vertexset
+                    oss_ << "    long m = from_vertexset->size();\n";
+                    oss_ << "    from_vertexset->toSparse();" << std::endl;
+                } else {
+                    oss_ << "    long m = numVertices; \n";
+                }
+                oss_ <<"    // used to generate nonzero indices to get degrees\n"
+                        "    uintT *degrees = newA(uintT, m);\n"
+                        "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
+                        "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
+                        "    //from_vertexset->toSparse();\n"
+                        "    {\n"
+                        "        parallel_for (long i = 0; i < m; i++) {\n"
+                        "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
+                        "            degrees[i] = g.out_degree(v);\n"
+                        "        }\n"
+                        "    }\n"
+                        "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
             }
-
-            oss_ <<"    // used to generate nonzero indices to get degrees\n"
-                    "    uintT *degrees = newA(uintT, m);\n"
-                    "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
-                    "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
-                    "    //from_vertexset->toSparse();\n"
-                    "    {\n"
-                    "        parallel_for (long i = 0; i < m; i++) {\n"
-                    "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
-                    "            degrees[i] = g.out_degree(v);\n"
-                    "        }\n"
-                    "    }\n"
-                    "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
         }
     }
 
@@ -146,9 +147,9 @@ namespace graphit {
 
 
         if (from_vertexset_specified)
-            oss_ << for_type << " ( long i=0; i < m; i++) {" << std::endl;
+            oss_ << for_type << " (long i=0; i < m; i++) {" << std::endl;
         else
-            oss_ << for_type << " ( NodeID s=0; s < g.num_nodes(); s++) {"<< std::endl;
+            oss_ << for_type << " (NodeID s=0; s < g.num_nodes(); s++) {"<< std::endl;
 
         indent();
 
@@ -276,36 +277,25 @@ namespace graphit {
         }
     }
 
-    // Generate the code for pushed based program
-    void EdgesetApplyFunctionDeclGenerator::genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
-        bool apply_expr_gen_frontier = false;
-        bool from_vertexset_specified = false;
-        string dst_type;
-
-        setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
-        setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
-        printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
-
-    }
 
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
-
-        bool apply_expr_gen_frontier = false;
-        // Check if the apply function has a return value
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
-
-
+    // Print the code for traversing the edges in the push direction and return the new frontier
+    void EdgesetApplyFunctionDeclGenerator::printPullEdgeTraversalReturnFrontier(
+            mir::EdgeSetApplyExpr::Ptr apply,
+            bool from_vertexset_specified,
+            bool apply_expr_gen_frontier,
+            std::string dst_type){
         // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_func->result.isInitialized()) {
+        if (apply_expr_gen_frontier) {
             // build an empty vertex subset if apply function returns
             apply_expr_gen_frontier = true;
-            oss_ <<
-                 "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
-                         "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
-                         "  long m = from_vertexset->size();\n"
-                         "  bool * next = newA(bool, g.num_nodes());\n"
-                         "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
+
+            //        "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
+            //        "  long m = from_vertexset->size();\n"
+
+            oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+                    "  bool * next = newA(bool, g.num_nodes());\n"
+                    "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
         }
 
         indent();
@@ -427,6 +417,33 @@ namespace graphit {
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
         }
+
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
+
+        bool apply_expr_gen_frontier = false;
+        bool from_vertexset_specified = false;
+        string dst_type;
+
+        setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
+        setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
+        printPullEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
+
+
+    }
+
+
+
+    // Generate the code for pushed based program
+    void EdgesetApplyFunctionDeclGenerator::genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
+        bool apply_expr_gen_frontier = false;
+        bool from_vertexset_specified = false;
+        string dst_type;
+
+        setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
+        setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
+        printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
 
     }
 
