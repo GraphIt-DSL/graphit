@@ -14,6 +14,13 @@ namespace graphit {
         genEdgeApplyFunctionDeclaration(pull_apply);
     }
 
+    void EdgesetApplyFunctionDeclGenerator::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr hybrid_dense_apply){
+        genEdgeApplyFunctionDeclaration(hybrid_dense_apply);
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr hybrid_dense_forward_apply){
+        genEdgeApplyFunctionDeclaration(hybrid_dense_forward_apply);
+    }
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
@@ -27,7 +34,8 @@ namespace graphit {
             && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-
+            && func_name != "edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier"
+            && func_name != "edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier"
                 ) {
             return;
         }
@@ -35,7 +43,7 @@ namespace graphit {
         genEdgeApplyFunctionSignature(apply);
         oss_ << "{ " << endl; //the end of the function declaration
         genEdgeApplyFunctionDeclBody(apply);
-        oss_ << "} " << endl; //the end of the function declaration
+        oss_ << "} //end of edgeset apply function " << endl; //the end of the function declaration
 
     }
 
@@ -46,6 +54,10 @@ namespace graphit {
 
         if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
             genEdgePushApplyFunctionDeclBody(apply);
+        }
+
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+            genEdgeHybridDenseApplyFunctionDeclBody(apply);
         }
     }
 
@@ -102,11 +114,14 @@ namespace graphit {
     }
 
     // Print the code for traversing the edges in the push direction and return the new frontier
+    // the apply_func_name is used for hybrid schedule, when a special push_apply_func is used
+    // usually, the apply_func_name is fixed to "apply_func" (see the default argument)
     void EdgesetApplyFunctionDeclGenerator::printPushEdgeTraversalReturnFrontier(
             mir::EdgeSetApplyExpr::Ptr apply,
             bool from_vertexset_specified,
             bool apply_expr_gen_frontier,
-            std::string dst_type){
+            std::string dst_type,
+            std::string apply_func_name){
 
 
 
@@ -195,9 +210,9 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << "apply_func ( s , d.v, d.w )";
+            oss_ << apply_func_name <<  " ( s , d.v, d.w )";
         } else {
-            oss_ << "apply_func ( s , d  )";
+            oss_ << apply_func_name << " ( s , d  )";
 
         }
 
@@ -284,7 +299,8 @@ namespace graphit {
             mir::EdgeSetApplyExpr::Ptr apply,
             bool from_vertexset_specified,
             bool apply_expr_gen_frontier,
-            std::string dst_type){
+            std::string dst_type,
+            std::string apply_func_name){
         // If apply function has a return value, then we need to return a temporary vertexsubset
         if (apply_expr_gen_frontier) {
             // build an empty vertex subset if apply function returns
@@ -357,9 +373,9 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << "apply_func ( s.v , d, s.w )";
+            oss_ << apply_func_name << " ( s.v , d, s.w )";
         } else {
-            oss_ << "apply_func ( s , d  )";
+            oss_ << apply_func_name << " ( s , d  )";
 
         }
 
@@ -420,17 +436,35 @@ namespace graphit {
 
     }
 
-    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
 
+    // Print the code for traversing the edges in the push direction and return the new frontier
+    void EdgesetApplyFunctionDeclGenerator::printHybridDenseEdgeTraversalReturnFrontier(
+            mir::EdgeSetApplyExpr::Ptr apply,
+            bool from_vertexset_specified,
+            bool apply_expr_gen_frontier,
+            std::string dst_type){
+
+            oss_ << "    if (m + outDegrees > numEdges / 20) {\n";
+            indent();
+            //suppplies the pull based apply function
+            printPullEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
+            dedent();
+            oss_ << "} else {\n";
+            indent();
+            //uses a special "push_apply_func", which contains synchronizations for the push direction
+            printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type, "push_apply_func");
+            dedent();
+            oss_ << "} //end of else\n";
+
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
         bool apply_expr_gen_frontier = false;
         bool from_vertexset_specified = false;
         string dst_type;
-
         setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
         setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
         printPullEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
-
-
     }
 
 
@@ -440,11 +474,18 @@ namespace graphit {
         bool apply_expr_gen_frontier = false;
         bool from_vertexset_specified = false;
         string dst_type;
-
         setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
         setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
         printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
+    }
 
+    void EdgesetApplyFunctionDeclGenerator::genEdgeHybridDenseApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply){
+        bool apply_expr_gen_frontier = false;
+        bool from_vertexset_specified = false;
+        string dst_type;
+        setupFlags(apply, apply_expr_gen_frontier, from_vertexset_specified, dst_type);
+        setupGlobalVariables(apply, apply_expr_gen_frontier, from_vertexset_specified);
+        printHybridDenseEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
     }
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply) {
@@ -482,6 +523,10 @@ namespace graphit {
             }
         }
 
+
+        templates.push_back("typename APPLY_FUNC");
+        arguments.push_back("APPLY_FUNC apply_func");
+
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
@@ -492,8 +537,6 @@ namespace graphit {
         }
 
 
-        templates.push_back("typename APPLY_FUNC");
-        arguments.push_back("APPLY_FUNC apply_func");
 
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);

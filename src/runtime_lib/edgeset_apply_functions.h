@@ -605,6 +605,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_weighted_deduplicatied_from_ve
 
  **/
 
+/** DEPRECATED, we use code generation now
 template<typename PULL_FUNC, typename PUSH_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier
         (Graph &g,
@@ -736,25 +737,14 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
         next_frontier->num_vertices_ = nextM;
         next_frontier->dense_vertex_set_ = nextIndices;
 
-	/*
-        parallel_for (int i = 0; i < nextM; i++) {
-	  //std::cout << "i: " << i << std::endl;
-	  //std::cout << "nextIndices[i]: " << nextIndices[i] << std::endl;
-	  g.flags_[nextIndices[i]] = 0;
-	  }*/
-
-	/*
-	parallel_for (int i = 0; i < numVertices; i++){
-	  g.flags_[i]=0;
-	  }*/
 
         return next_frontier;
 
     }
 }
+*/
 
-
-
+/** Deprecated, now using code gen for this schedule
 // no deduplication
 template<typename TO_FUNC, typename PULL_FUNC, typename PUSH_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier
@@ -781,12 +771,6 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
     out_d_timer.Start();
 #endif
 
-    /* if (g.flags_ == nullptr) */
-    /*     g.flags_ = new int[numVertices]; */
-
-    /* parallel_for (int i = 0; i < numVertices; i++) { */
-    /*     g.flags_[i] = 0; */
-    /* } */
 
     // We probably need this when we get something that doesn't have a dense set, not sure
     // We can also write our own, the eixsting one doesn't quite work for bitvectors
@@ -894,6 +878,8 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
 
     }
 }
+
+*/
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier

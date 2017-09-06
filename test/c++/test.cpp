@@ -36,11 +36,11 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSlidingQueueSchedule";
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithHyrbidDenseParallelCASSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPullParallelSchedule";
-    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
 

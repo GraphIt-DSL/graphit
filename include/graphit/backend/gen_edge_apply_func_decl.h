@@ -21,6 +21,8 @@ namespace graphit {
 
         virtual void visit (mir::PushEdgeSetApplyExpr::Ptr push_apply);
         virtual void visit (mir::PullEdgeSetApplyExpr::Ptr pull_apply);
+        virtual void visit (mir::HybridDenseEdgeSetApplyExpr::Ptr hybrid_dense_apply);
+        virtual void visit (mir::HybridDenseForwardEdgeSetApplyExpr::Ptr hybrid_dense_forward_apply);
 
         EdgesetApplyFunctionDeclGenerator(MIRContext* mir_context, std::ostream& oss)
                 : mir_context_(mir_context), oss_ (oss){
@@ -59,6 +61,7 @@ namespace graphit {
 
         void genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
         void genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
+        void genEdgeHybridDenseApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
         void setupGlobalVariables(mir::EdgeSetApplyExpr::Ptr apply,
                                   bool apply_expr_gen_frontier,
                                   bool from_vertexset_specified);
@@ -69,12 +72,19 @@ namespace graphit {
         void printPushEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
                                           bool from_vertexset_specified,
                                           bool apply_expr_gen_frontier,
-                                          std::string dst_type);
+                                          std::string dst_type,
+                                          std::string apply_func_name = "apply_func");
 
         void printPullEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
                                                   bool from_vertexset_specified,
                                                   bool apply_expr_gen_frontier,
+                                                  std::string dst_type,
+                                                  std::string apply_func_name = "apply_func");
+        void printHybridDenseEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
+                                                  bool from_vertexset_specified,
+                                                  bool apply_expr_gen_frontier,
                                                   std::string dst_type);
+
     };
 }
 
