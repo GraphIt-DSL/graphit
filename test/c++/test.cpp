@@ -44,10 +44,12 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPushParallel";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullVertexsetParallel";
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSerialVertexSetApply";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleParallelVertexSetApply";
 
 
     return RUN_ALL_TESTS();

@@ -689,6 +689,8 @@ namespace graphit {
 
         struct VertexSetApplyExpr : public ApplyExpr {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
+            //default to parallel
+            bool is_parallel = true;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());

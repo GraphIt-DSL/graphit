@@ -119,7 +119,7 @@ protected:
                                                  "func main()\n"
                                                  "#l1# for i in 1:10\n"
                                                  "   #s1# edges.apply(updateEdge);\n"
-                                                 "        vertices.apply(updateVertex);\n"
+                                                 "   #s2# vertices.apply(updateVertex);\n"
                                                  "        print error.sum();"
                                                  "    end\n"
                                                  "end"
@@ -504,6 +504,28 @@ TEST_F(HighLevelScheduleTest, PRPullParallel) {
 }
 
 
+TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
+    fe_->parseStream(pr_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    program->setApply("l1:s2", "parallel");
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
 TEST_F(HighLevelScheduleTest, PRPushParallel) {
     fe_->parseStream(pr_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
@@ -869,3 +891,36 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSchedule) {
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
+
+
+TEST_F(HighLevelScheduleTest, SimpleParallelVertexSetApply){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() #s1# vertices.apply(addone); print vector_a.sum(); end");
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "parallel");
+    fe_->parseStream(is, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() #s1# vertices.apply(addone); print vector_a.sum(); end");
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "serial");
+    fe_->parseStream(is, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+

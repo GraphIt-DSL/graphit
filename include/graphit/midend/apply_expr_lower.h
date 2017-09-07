@@ -35,6 +35,7 @@ namespace graphit {
 
             //Lowers edgeset apply expressions
             virtual void visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply_expr);
+            virtual void visit(mir::VertexSetApplyExpr::Ptr vertexset_apply_expr);
 
             Schedule * schedule_;
             MIRContext* mir_context_;

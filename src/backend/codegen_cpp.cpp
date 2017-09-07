@@ -716,7 +716,8 @@ namespace graphit {
         assert(associated_element_type);
         auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
         assert(associated_element_type_size);
-        oss << "parallel_for (int i = 0; i < ";
+        std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
+        oss << for_type << " (int i = 0; i < ";
         associated_element_type_size->accept(this);
         oss << "; i++) {" << std::endl;
         indent();
