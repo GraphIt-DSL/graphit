@@ -50,6 +50,8 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSerialVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleParallelVertexSetApply";
+    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseSchedule";
+
 
 
     return RUN_ALL_TESTS();

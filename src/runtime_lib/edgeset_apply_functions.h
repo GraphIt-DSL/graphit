@@ -881,6 +881,8 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filt
 
 */
 
+
+/** DEPRECATED, use code gen now
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier
         (WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
@@ -1010,5 +1012,6 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
         return next_frontier;
     }
 }
+*/
 
 #endif //GRAPHIT_EDGESET_APPLY_FUNCTIONS_H

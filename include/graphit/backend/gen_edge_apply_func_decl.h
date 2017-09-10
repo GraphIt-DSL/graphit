@@ -62,6 +62,7 @@ namespace graphit {
         void genEdgePullApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
         void genEdgePushApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
         void genEdgeHybridDenseApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
+        void genEdgeHybridDenseForwardApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply);
         void setupGlobalVariables(mir::EdgeSetApplyExpr::Ptr apply,
                                   bool apply_expr_gen_frontier,
                                   bool from_vertexset_specified);
@@ -85,6 +86,15 @@ namespace graphit {
                                                   bool apply_expr_gen_frontier,
                                                   std::string dst_type);
 
+        void printHybridDenseForwardEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
+                                                         bool from_vertexset_specified,
+                                                         bool apply_expr_gen_frontier,
+                                                         std::string dst_type);
+
+        void printDenseForwardEdgeTraversalReturnFrontier(mir::EdgeSetApplyExpr::Ptr apply,
+                                                                bool from_vertexset_specified,
+                                                                bool apply_expr_gen_frontier,
+                                                                std::string dst_type);
     };
 }
 
