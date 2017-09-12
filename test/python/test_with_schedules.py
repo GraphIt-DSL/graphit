@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import os
 import shutil
+import sys
 
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
@@ -54,7 +55,12 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp "  " -o test.o", shell=True)
+        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o"
+
+        if len(sys.argv) == 2 and sys.argv[1] == "parallel":
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o"
+
+        subprocess.check_call(cpp_compile_cmd, shell=True)
 
     def basic_compile_exec_test(self, input_file_name):
         input_with_schedule_path = '../../test/input_with_schedules/'

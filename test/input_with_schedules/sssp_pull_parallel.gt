@@ -38,7 +38,7 @@ func main()
 	    end
     end
 
-    vertices.apply(printSP);
+    #s2# vertices.apply(printSP);
 
     % print rounds;
     % var elapsed_time : float = stopTimer();
@@ -49,3 +49,4 @@ end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->setApply("s2", "serial");
