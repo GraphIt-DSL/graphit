@@ -32,8 +32,9 @@ func main()
         #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
     end
 
-    vertices.apply(printParent);
+    #s2# vertices.apply(printParent);
 end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->setApply("s2", "serial");

@@ -6,6 +6,8 @@ import os
 import shutil
 import sys
 
+use_parallel = False
+
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
 
@@ -57,7 +59,8 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.check_call(compile_cmd, shell=True)
         cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o"
 
-        if len(sys.argv) == 2 and sys.argv[1] == "parallel":
+        if use_parallel:
+            print "using icpc for parallel compilation"
             cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
@@ -188,6 +191,11 @@ class TestGraphitCompiler(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2 and sys.argv[1] == "parallel":
+        use_parallel = True
+        print "using parallel"
+        del sys.argv[1]
+
     unittest.main()
     # used for enabling a specific test
 
