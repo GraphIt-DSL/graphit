@@ -39,16 +39,19 @@ struct VertexSubset {
     {
 
         if (num_vertices == vertices_range){
+
+            //try not to initialize unncessary data structures, this can be expensive for PageRank, which returns full set
             bitmap_ = new Bitmap(vertices_range);
             bitmap_->set_all();
             bool_map_ = newA(bool, vertices_range);
             parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
             dense_vertex_set_ = new unsigned int[vertices_range];
-            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
+// don't need this for now
+//            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
             parallel_for (NodeID i = 0; i< vertices_range; i++){
                 dense_vertex_set_[i] = i;
                 //hopefully we will only need to use one of the two in the futuer (dense_set or sliding queue)
-                sliding_queue_->push_back(i);
+                //sliding_queue_->push_back(i);
             }
         } else {
             bool_map_ = nullptr;
