@@ -138,6 +138,12 @@ namespace graphit {
             oss_ << "    if (g.flags_ == nullptr){\n"
                     "      g.flags_ = new int[numVertices]();\n"
                     "    }\n";
+
+            if (apply->enable_deduplication) {
+                oss_ << "  parallel_for(int i = 0; i < m; i++){\n"
+                        "     g.flags_[from_vertexset->dense_vertex_set_[i]] = 0;\n"
+                        "  }\n";
+            }
         }
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
@@ -301,11 +307,7 @@ namespace graphit {
                     "  next_frontier->num_vertices_ = nextM;\n"
                     "  next_frontier->dense_vertex_set_ = nextIndices;\n";
 
-            if (apply->enable_deduplication) {
-                oss_ << "  for(int i = 0; i < nextM; i++){\n"
-                        "     g.flags_[nextIndices[i]] = 0;\n"
-                        "  }\n";
-            }
+
 
             oss_ << "  return next_frontier;\n";
         }
