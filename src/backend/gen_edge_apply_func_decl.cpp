@@ -243,8 +243,7 @@ namespace graphit {
             dedent();
             printIndent();
             oss_ << "} else { outEdges[offset + j] = UINT_E_MAX; }" << std::endl;
-            printIndent();
-            oss_ << "j++;" << std::endl;
+
 
 
 //            dedent();
@@ -255,21 +254,33 @@ namespace graphit {
 
 
         // end of from filtering
-        if (apply->from_func != "" && !from_vertexset_specified) {
+        if (apply->to_func != "") {
             dedent();
             printIndent();
-            oss_ << "}" << std::endl;
+            oss_ << "} //end of to func" << std::endl;
+
+            if (apply_expr_gen_frontier){
+                printIndent();
+                oss_ << " else { outEdges[offset + j] = UINT_E_MAX;  }" << std::endl;
+            }
+
+        }
+
+        //increment the index for each source vertex
+        if (apply_expr_gen_frontier){
+            printIndent();
+            oss_ << "j++;" << std::endl;
         }
 
         //end of for loop on the neighbors
         dedent();
         printIndent();
-        oss_ << "}" << std::endl;
+        oss_ << "} //end of for loop on neighbors" << std::endl;
 
-        if (apply->to_func != "") {
+        if (apply->from_func != "" && !from_vertexset_specified) {
             dedent();
             printIndent();
-            oss_ << "} " << std::endl;
+            oss_ << "} //end of from func " << std::endl;
         }
 
 
