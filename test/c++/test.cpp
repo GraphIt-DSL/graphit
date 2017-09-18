@@ -10,17 +10,17 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
-    //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleIfElifElseStmt";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.VertexSetLibraryCalls";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleWeightedEdgeSetApply";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";

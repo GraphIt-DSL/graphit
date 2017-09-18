@@ -21,6 +21,11 @@ namespace  graphit {
             auto element_properties_copy = *element_type_entry.second;
             for (auto const &var_decl : element_properties_copy) {
 
+                //ignore global field vector with no initial values
+                if (!var_decl->initVal){
+                    continue;
+                }
+
                 // do the lowering if the right handside is a call stmt (may be add if the right hand side is part of a struct)
                 if (mir::isa<mir::Call>(var_decl->initVal)){
                     auto orig_init_val = var_decl->initVal;

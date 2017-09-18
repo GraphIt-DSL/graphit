@@ -12,7 +12,7 @@ namespace graphit {
         genStructTypeDecls();
 
 
-        //Processing the constants
+        //Processing the constants, generting declartions
         for (auto constant : mir_context_->getLoweredConstants()) {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
@@ -22,9 +22,10 @@ namespace graphit {
                     //NOTE: here we only generate the declaration, not the allocation and initialization
                     // even through we have all the information.
                     // This is because we want to do the allocation and initialization steps in the main function,
-                    // when we are using command line arguments and variables.
+                    // when we are using command line arguments and variables. This also allows flexibility of array of structs
+                    // and struct of arrays.
                     // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
-                    // We first generate allocation, and then initialization for global variables.
+                    // We first generate allocation, and then initialization (init_stmts) for global variables.
                     genPropertyArrayDecl(constant);
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {

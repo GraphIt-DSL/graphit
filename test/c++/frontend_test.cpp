@@ -441,3 +441,15 @@ TEST_F(FrontendTest, SimplePlusReduce) {
     istringstream is("func add(a : int, b: int) a += b; end");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, UninitializedVertexProperty) {
+    istringstream is("const out_degrees : vector{Vertex}(int);\n"
+                             "func main() print out_degrees.sum(); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(FrontendTest, VectorVertexProperty) {
+    istringstream is("const latent_vec : vector{Vertex}(vector[20](float));\n"
+                             "func main() print out_degrees.sum(); end");
+    EXPECT_EQ (0, basicTest(is));
+}
