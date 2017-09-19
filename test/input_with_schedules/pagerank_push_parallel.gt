@@ -33,7 +33,11 @@ func main()
     end
 
     var elapsed_time : float = stopTimer();
-    print error.sum();
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += error[i];
+    end
+    print sum;
 
     print "elapsed time: ";
     print elapsed_time;

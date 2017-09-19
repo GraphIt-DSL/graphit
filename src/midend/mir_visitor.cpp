@@ -223,7 +223,9 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<VectorType> vector_type) {
-            vector_type->element_type->accept(this);
+            // a vector type can be not associated with an element (regular vector, not a field vector)
+            if (vector_type->element_type)
+                vector_type->element_type->accept(this);
             vector_type->vector_element_type->accept(this);
         }
 

@@ -420,6 +420,12 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
+        //MIRVisitor::visit(vector_type);
+
+
+    }
+
     void CodeGenCPP::visit(mir::StructTypeDecl::Ptr struct_type) {
         oss << struct_type->name << " ";
     }
@@ -625,6 +631,7 @@ namespace graphit {
         auto vector_element_type = vector_type->vector_element_type;
         assert(vector_element_type != nullptr);
 
+        /**  Deprecated, now we generate an array declaration, not a vector one
         //generate std::vector implementation
         oss << "std::vector< ";
         vector_element_type->accept(this);
@@ -632,6 +639,19 @@ namespace graphit {
         oss << " >  ";
         oss << name;
         oss << ";" << std::endl;
+         **/
+
+//        if (mir::isa<mir::ScalarType>(vector_element_type)){
+            vector_element_type->accept(this);
+            oss << " * " << name << ";" << std::endl;
+//        } else if (mir::isa<mir::VectorType>(vector_element_type)) {
+//            //if each element is a vector
+//
+//            //auto vector_vector_element_type =
+//
+//        }
+
+
     }
 
 
@@ -645,12 +665,21 @@ namespace graphit {
         auto vector_element_type = vector_type->vector_element_type;
 
         assert(size_expr != nullptr);
+
+        /** Deprecated, now we uses a "new" allocation scheme for arrays
         oss << " = std::vector< ";
         vector_element_type->accept(this);
         oss << " >  ";
         oss << " ( ";
         size_expr->accept(this);
         oss << " ); " << std::endl;
+         **/
+
+        oss << " = new ";
+        vector_element_type->accept(this);
+        oss << "[ ";
+        size_expr -> accept(this);
+        oss << "];" << std::endl;
     }
 
     void CodeGenCPP::genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr var_decl) {
@@ -1165,6 +1194,7 @@ namespace graphit {
             oss << ") ";
         }
     }
+
 
 
 

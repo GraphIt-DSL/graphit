@@ -33,7 +33,12 @@ func main()
         edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
-    print error.sum();
+
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += error[i];
+    end
+    print sum;
 
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";

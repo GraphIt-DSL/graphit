@@ -155,9 +155,9 @@ namespace graphit {
             assert(mir_vector_type->element_type != nullptr);
         }
 
+        //element of a vector can be a non-scalar (vector type)
+        mir_vector_type->vector_element_type = emitType(ND_tensor_type->blockType);
 
-        mir_vector_type->vector_element_type = std::dynamic_pointer_cast<mir::ScalarType>(
-                emitType(ND_tensor_type->blockType));
         assert(mir_vector_type->vector_element_type != nullptr);
 
 

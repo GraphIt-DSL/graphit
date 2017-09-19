@@ -6,5 +6,11 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();
 
 func main()
-    print out_degrees.sum();
+    % print out_degrees.sum();
+
+    var sum : int = 0;
+    for i in 0:edges.getVertices()
+        sum += out_degrees[i];
+    end
+    print sum;
 end

@@ -50,7 +50,12 @@ func main()
          #s1# edges.apply(updateEdgeEigenVector);
          vertices.apply(updateECVertex);
     end
-    print error.sum();
+
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += error[i];
+    end
+    print sum;
 
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";

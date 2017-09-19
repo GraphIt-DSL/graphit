@@ -9,5 +9,9 @@ vector_a[src] = vector_a[src] + 1; end
 
 func main()
     edges.apply(srcAddOne);
-    print vector_a.sum();
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += vector_a[i];
+    end
+    print sum;
 end

@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPullParallelSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";

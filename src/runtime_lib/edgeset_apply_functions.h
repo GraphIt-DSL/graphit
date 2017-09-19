@@ -25,6 +25,7 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial(Graph &g, APPLY_FUNC apply_func)
             apply_func(v, u);
     }
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
+    //return nullptr;
 }
 
 //template<typename APPLY_FUNC>
