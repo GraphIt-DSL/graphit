@@ -173,6 +173,48 @@ protected:
                                                  "    vertices.apply(printID);\n"
                                                  "end");
 
+
+
+    istringstream cf_is_ = istringstream( "element Vertex end\n"
+                                                  "element Edge end\n"
+                                                  "const edges : edgeset{Edge}(Vertex,Vertex, float) = load (argv[1]);\n"
+                                                  "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                  "const latent_vec : vector{Vertex}(vector[20](float));\n"
+                                                  "const error_vec : vector{Vertex}(vector[20](float));\n"
+                                                  "const step : float = 0.00000035;\n"
+                                                  "const lambda : float = 0.001;\n"
+                                                  "const K : int = 20;\n"
+                                                  "func updateEdge (src : Vertex, dst : Vertex, rating : int)\n"
+                                                  "    var estimate : float = 0;\n"
+                                                  "    for i in 0:K\n"
+                                                  "        estimate  += latent_vec[src][i] * latent_vec[dst][i];\n"
+                                                  "    end\n"
+                                                  "    var err : float = estimate - rating;\n"
+                                                  "    for i in 0:K\n"
+                                                  "        error_vec[dst][i] += latent_vec[src][i]*err;\n"
+                                                  "    end\n"
+                                                  "end\n"
+                                                  "func updateVertex (v : Vertex)\n"
+                                                  "     for i in 0:K\n"
+                                                  "        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);\n"
+                                                  "        error_vec[v][i] = 0;\n"
+                                                  "     end\n"
+                                                  "end\n"
+                                                  "func initVertex (v : Vertex)\n"
+                                                  "    for i in 0:K\n"
+                                                  "        latent_vec[v][i] = 0.5;\n"
+                                                  "        error_vec[v][i] = 0;\n"
+                                                  "    end\n"
+                                                  "end\n"
+                                                  "func main()\n"
+                                                  "    vertices.apply(initVertex);\n"
+                                                  "    for i in 1:10\n"
+                                                  "        #s1# edges.apply(updateEdge);\n"
+                                                  "        vertices.apply(updateVertex);\n"
+                                                  "    end\n"
+                                                  "end"
+    );
+
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -948,3 +990,21 @@ TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
+TEST_F(HighLevelScheduleTest, CFPullParallel) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    //mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+//    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+//    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+//    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}

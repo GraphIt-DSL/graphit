@@ -519,3 +519,13 @@ TEST_F(BackendTest, VectorVertexProperty) {
                              "func main()  end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, VectorVertexPropertyAccess) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const latent_vec : vector{Vertex}(vector[20](float));\n"
+                             "func main() var f1 : float = latent_vec[0][0]; end");
+    EXPECT_EQ (0, basicTest(is));
+}

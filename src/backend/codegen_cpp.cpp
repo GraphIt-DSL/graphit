@@ -641,15 +641,30 @@ namespace graphit {
         oss << ";" << std::endl;
          **/
 
-//        if (mir::isa<mir::ScalarType>(vector_element_type)){
+        if (!mir::isa<mir::VectorType>(vector_element_type)){
             vector_element_type->accept(this);
             oss << " * " << name << ";" << std::endl;
-//        } else if (mir::isa<mir::VectorType>(vector_element_type)) {
-//            //if each element is a vector
-//
-//            //auto vector_vector_element_type =
-//
-//        }
+        } else if (mir::isa<mir::VectorType>(vector_element_type)) {
+            //if each element is a vector
+            auto vector_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
+            assert(vector_vector_element_type->range_indexset != 0);
+            int range = vector_vector_element_type->range_indexset;
+
+            //first generates a typedef for the vector type
+            oss << "typedef ";
+            vector_vector_element_type->vector_element_type->accept(this);
+            std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
+            oss << typedef_name <<  " ";
+            oss << "[ " << range << "]; " << std::endl;
+            vector_vector_element_type->typedef_name_ = typedef_name;
+
+            //use the typedef defined type to declare a new pointer
+            oss << typedef_name << " * " << name << ";" << std::endl;
+
+        } else {
+            std::cout << "unsupported type for property: " << var_decl->name << std::endl;
+            exit(0);
+        }
 
 
     }
@@ -676,7 +691,16 @@ namespace graphit {
          **/
 
         oss << " = new ";
-        vector_element_type->accept(this);
+
+        if (mir::isa<mir::VectorType>(vector_element_type)){
+            //for vector type, we use the name from typedef
+            auto vector_type_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
+            assert(vector_type_vector_element_type->typedef_name_ != "");
+            oss << vector_type_vector_element_type->typedef_name_ << " ";
+        } else {
+            vector_element_type->accept(this);
+        }
+
         oss << "[ ";
         size_expr -> accept(this);
         oss << "];" << std::endl;

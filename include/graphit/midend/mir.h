@@ -249,6 +249,8 @@ namespace graphit {
             ElementType::Ptr element_type;
             // scalar type for each element of the vector (not the global Elements)
             Type::Ptr vector_element_type;
+            int range_indexset = 0;
+            std::string typedef_name_ = "";
 
             typedef std::shared_ptr<VectorType> Ptr;
 
