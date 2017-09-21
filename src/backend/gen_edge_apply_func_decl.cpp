@@ -40,6 +40,8 @@ namespace graphit {
             && func_name !=
                "edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
             && func_name != "edgeset_apply_hybrid_dense_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+            && func_name != "edgeset_apply_pull_parallel_weighted"
+
                 ) {
             return;
         }
