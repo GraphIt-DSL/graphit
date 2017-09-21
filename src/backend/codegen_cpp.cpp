@@ -643,7 +643,7 @@ namespace graphit {
 
         if (!mir::isa<mir::VectorType>(vector_element_type)){
             vector_element_type->accept(this);
-            oss << " * " << name << ";" << std::endl;
+            oss << " * __restrict " << name << ";" << std::endl;
         } else if (mir::isa<mir::VectorType>(vector_element_type)) {
             //if each element is a vector
             auto vector_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
@@ -659,7 +659,7 @@ namespace graphit {
             vector_vector_element_type->typedef_name_ = typedef_name;
 
             //use the typedef defined type to declare a new pointer
-            oss << typedef_name << " * " << name << ";" << std::endl;
+            oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
 
         } else {
             std::cout << "unsupported type for property: " << var_decl->name << std::endl;

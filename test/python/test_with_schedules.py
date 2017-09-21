@@ -138,6 +138,15 @@ class TestGraphitCompiler(unittest.TestCase):
         print "output: " + output.strip()
         self.assertEqual(float(output.strip()), 0.00289518)
 
+
+    def cf_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        self.assertEqual(float(output.strip()), 7.49039)
+
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
 
@@ -189,8 +198,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_parallel_push_expect(self):
         self.pr_verified_test("pagerank_push_parallel.gt")
 
-    def test_cf_parallel(self):
-        self.basic_compile_exec_test("cf_pull_parallel.gt")
+    def test_cf_parallel_expect(self):
+        self.cf_verified_test("cf_pull_parallel.gt")
 
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
@@ -202,5 +211,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cf_parallel'))
+    # suite.addTest(TestGraphitCompiler('test_cf_parallel_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

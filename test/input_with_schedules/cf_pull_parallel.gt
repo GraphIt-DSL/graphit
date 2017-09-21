@@ -1,12 +1,12 @@
 element Vertex end
 element Edge end
-const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/4.wel");
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
-const latent_vec : vector{Vertex}(vector[20](float));
-const error_vec : vector{Vertex}(vector[20](float));
-const step : float = 0.00000035;
+const latent_vec : vector{Vertex}(vector[1](float));
+const error_vec : vector{Vertex}(vector[1](float));
+const step : float = 0.35; %for testing
 const lambda : float = 0.001;
-const K : int = 20;
+const K : int = 1;
 
 func updateEdge (src : Vertex, dst : Vertex, rating : int)
     var estimate : float = 0;
@@ -35,10 +35,20 @@ end
 
 func main()
     vertices.apply(initVertex);
-    for i in 0:10
+    for i in 0:5
         #s1# edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
+
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        for j in 0:K
+            sum += latent_vec[i][j];
+        end
+    end
+
+    print sum;
+
 end
 
 
