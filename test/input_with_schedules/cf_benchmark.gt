@@ -13,7 +13,7 @@ func updateEdge (src : Vertex, dst : Vertex, rating : int)
     for i in 0:K
         estimate  += latent_vec[src][i] * latent_vec[dst][i];
     end
-    var err : float = estimate - rating;
+    var err : float =  rating - estimate;
     for i in 0:K
         error_vec[dst][i] += latent_vec[src][i]*err;
     end
