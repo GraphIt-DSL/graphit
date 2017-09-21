@@ -44,3 +44,8 @@ func main()
     print "elapsed time: ";
     print elapsed_time;
 end
+
+
+schedule:
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->fuseFields("out_degree", "old_rank");
