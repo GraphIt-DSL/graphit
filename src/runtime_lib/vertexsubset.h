@@ -53,6 +53,8 @@ struct VertexSubset {
                 //hopefully we will only need to use one of the two in the futuer (dense_set or sliding queue)
                 //sliding_queue_->push_back(i);
             }
+            sliding_queue_ = nullptr;
+
         } else {
             bool_map_ = nullptr;
             bitmap_ = nullptr;

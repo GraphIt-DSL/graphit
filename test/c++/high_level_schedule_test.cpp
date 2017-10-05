@@ -1067,5 +1067,14 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
 
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
 
+TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->fuseFields("delta", "out_degree");
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }

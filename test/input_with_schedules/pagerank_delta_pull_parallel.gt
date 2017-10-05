@@ -6,10 +6,9 @@ const cur_rank : vector{Vertex}(float) = 1.0/vertices.size();
 const ngh_sum : vector{Vertex}(float) = 0.0;
 const delta : vector{Vertex}(float) = 1.0/vertices.size();
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
-const error : vector{Vertex}(float) = 0.0;
 const damp : float = 0.85;
 const beta_score : float = (1.0 - damp) / vertices.size();
-const epsilon2 : float = 0.01;
+const epsilon2 : float = 0.1;
 const epsilon : float = 0.0000001;
 
 func updateEdge(src : Vertex, dst : Vertex)
@@ -47,14 +46,18 @@ func main()
         else
             frontier = vertices.where(updateVertex);
         end
+
+        var sum : float = 0;
+        for i in 0:edges.getVertices()
+            sum += fabs(delta[i]);
+        end
+        print sum;
+        print "size of frontier";
+        print frontier.getVertexSetSize();
     end
 
     var elapsed_time : float = stopTimer();
-    var sum : float = 0;
-    for i in 0:edges.getVertices()
-        sum += error[i];
-    end
-    print sum;
+
 
     print "elapsed time: ";
     print elapsed_time;
@@ -62,4 +65,4 @@ end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
-    // program->fuseFields("delta", "out_degree");
+    program->fuseFields("delta", "out_degree");

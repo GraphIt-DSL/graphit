@@ -138,6 +138,15 @@ class TestGraphitCompiler(unittest.TestCase):
         print "output: " + output.strip()
         self.assertEqual(float(output.strip()), 0.00289518)
 
+    def pr_delta_verified_test(self, input_file_name):
+        self.basic_compile_test(input_file_name)
+        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        print proc.stdout.readlines()
+
+        output = proc.stdout.readline()
+        print "output: " + output.strip()
+        # self.assertEqual(float(output.strip()), 0.00289518)
 
     def cf_verified_test(self, input_file_name):
         self.basic_compile_test(input_file_name)
@@ -202,7 +211,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.cf_verified_test("cf_pull_parallel.gt")
 
     def test_prdelta_parallel_pull(self):
-        self.basic_compile_test("pagerank_delta_pull_parallel.gt")
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt")
 
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
@@ -214,5 +223,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
