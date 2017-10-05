@@ -814,7 +814,9 @@ namespace graphit {
                     mir_context_->getElementCount(vertex_type);
             vertices_range_expr->accept(this);
             oss << " , ";
-            vertices_range_expr->accept(this);
+            //vertices_range_expr->accept(this);
+            // the output vertexset is initially set to 0
+            oss << "0";
             oss << " );" << std::endl;
 
             printIndent();
