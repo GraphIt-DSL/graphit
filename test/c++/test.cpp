@@ -12,10 +12,12 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
     //::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
+    //::testing::GTEST_FLAG(filter) = "FrontendTest.VertexsetFiltering";
+
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexPropertyAccess";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.FabsWithVectorRead";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
@@ -44,8 +46,10 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPushParallel";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaPullParallel";
 
+
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPushParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSHybridDenseSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSerialVertexSetApply";

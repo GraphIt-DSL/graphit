@@ -201,15 +201,18 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt")
 
+    def test_prdelta_parallel_pull(self):
+        self.basic_compile_test("pagerank_delta_pull_parallel.gt")
+
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
         use_parallel = True
         print "using parallel"
         del sys.argv[1]
 
-    unittest.main()
+    # unittest.main()
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cf_parallel_expect'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

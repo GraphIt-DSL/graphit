@@ -215,6 +215,55 @@ protected:
                                                   "end"
     );
 
+    istringstream prd_is_ = istringstream ("element Vertex end\n"
+                                                   "element Edge end\n"
+                                                   "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                   "const cur_rank : vector{Vertex}(float) = 1.0/vertices.size();\n"
+                                                   "const ngh_sum : vector{Vertex}(float) = 0.0;\n"
+                                                   "const delta : vector{Vertex}(float) = 1.0/vertices.size();\n"
+                                                   "const out_degree : vector {Vertex}(int) = edges.getOutDegrees();\n"
+                                                   "const error : vector{Vertex}(float) = 0.0;\n"
+                                                   "const damp : float = 0.85;\n"
+                                                   "const beta_score : float = (1.0 - damp) / vertices.size();\n"
+                                                   "const epsilon2 : float = 0.01;\n"
+                                                   "const epsilon : float = 0.0000001;\n"
+                                                   "\n"
+                                                   "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                   "    ngh_sum[dst] += delta[src] /out_degree[src];\n"
+                                                   "end\n"
+                                                   "\n"
+                                                   "func updateVertexFirstRound(v : Vertex) -> output : bool\n"
+                                                   "    delta[v] = damp*(ngh_sum[v]) + beta_score;\n"
+                                                   "    cur_rank[v] += delta[v];\n"
+                                                   "    delta[v] = delta[v] - 1.0/vertices.size();\n"
+                                                   "    output = (fabs(delta[v]) > epsilon2*cur_rank[v]);\n"
+                                                   "    ngh_sum[v] = 0;"
+                                                   "end\n"
+                                                   "\n"
+                                                   "func updateVertex(v : Vertex) -> output : bool\n"
+                                                   "   delta[v] = ngh_sum[v]*damp;\n"
+                                                   "   cur_rank[v]+= delta[v];\n"
+                                                   "   output = fabs(delta[v]) > epsilon2*cur_rank[v];\n"
+                                                   "   ngh_sum[v] = 0; "
+                                                   "end\n"
+                                                   "\n"
+                                                   "func main()\n"
+                                                   "    startTimer();\n"
+                                                   "    var n : int = edges.getVertices();\n"
+                                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                                   "\n"
+                                                   "    for i in 1:10\n"
+                                                   "        #s1# edges.from(frontier).apply(updateEdge);\n"
+                                                   "        if i == 1\n"
+                                                   "            frontier = vertices.where(updateVertexFirstRound);\n"
+                                                   "        else\n"
+                                                   "            frontier = vertices.where(updateVertex);\n"
+                                                   "        end\n"
+                                                   "\n"
+                                                   "    end\n"
+                                                   "end");
+
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1006,5 +1055,17 @@ TEST_F(HighLevelScheduleTest, CFPullParallel) {
 //    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
 //    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
 //    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 
 }

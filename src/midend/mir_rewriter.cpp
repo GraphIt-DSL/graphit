@@ -83,7 +83,8 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(Call::Ptr expr) {
-            for (auto arg : expr->args) {
+            // need to use & to actually modify the argument (with reference), not a copy of it
+            for (auto &arg : expr->args) {
                 arg = rewrite<Expr>(arg);
             }
             node = expr;

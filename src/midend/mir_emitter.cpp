@@ -214,7 +214,7 @@ namespace graphit {
         auto mir_if_stmt = std::make_shared<mir::IfStmt>();
         mir_if_stmt->cond = emitExpr(if_stmt->cond);
         mir_if_stmt->ifBody = emitStmt(if_stmt->ifBody);
-        if (mir_if_stmt->elseBody != nullptr)
+        if (if_stmt->elseBody != nullptr)
             mir_if_stmt->elseBody = emitStmt(if_stmt->elseBody);
         retStmt = mir_if_stmt;
     }

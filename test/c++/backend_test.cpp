@@ -529,3 +529,14 @@ TEST_F(BackendTest, VectorVertexPropertyAccess) {
                              "func main() var f1 : float = latent_vec[0][0]; end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, FabsWithVectorRead) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const vec : vector{Vertex}(float);\n"
+                             "func updateVertex(v : Vertex) var a : float = fabs(vec[v]); end\n"
+                             "func main() vertices.apply(updateVertex); end");
+    EXPECT_EQ (0, basicTest(is));
+}

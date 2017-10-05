@@ -157,7 +157,7 @@ namespace graphit {
             printIndent();
 
             assign_stmt->lhs->accept(this);
-            oss << "  = ____graphit_tmp_out; " << std::endl;
+            oss << "  = ____graphit_tmp_out; "  << std::endl;
 
         } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();

@@ -453,3 +453,9 @@ TEST_F(FrontendTest, VectorVertexProperty) {
                              "func main() print out_degrees.sum(); end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+
+TEST_F(FrontendTest, VertexsetFiltering) {
+    istringstream is("func main() vertices.where(filter_func); end");
+    EXPECT_EQ (0, basicTest(is));
+}
