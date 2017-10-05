@@ -1063,8 +1063,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
     fe_->parseStream(prd_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    // The schedule does a array of SoA optimization, and split the loops
-    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 

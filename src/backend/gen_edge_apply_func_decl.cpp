@@ -73,8 +73,8 @@ namespace graphit {
     }
 
     void EdgesetApplyFunctionDeclGenerator::setupFlags(mir::EdgeSetApplyExpr::Ptr apply,
+                                                       bool & apply_expr_gen_frontier,
                                                        bool &from_vertexset_specified,
-                                                       bool &apply_expr_gen_frontier,
                                                        std::string &dst_type) {
 
         // set up the flag for checking if a from_vertexset has been specified

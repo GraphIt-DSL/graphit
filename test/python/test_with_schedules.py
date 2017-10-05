@@ -210,9 +210,9 @@ if __name__ == '__main__':
         print "using parallel"
         del sys.argv[1]
 
-    # unittest.main()
+    unittest.main()
     # used for enabling a specific test
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
