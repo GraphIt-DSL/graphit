@@ -237,5 +237,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_verified'))
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
