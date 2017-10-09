@@ -194,6 +194,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cc_hybrid_dense_parallel_cas_verified(self):
         self.cc_verified_test("cc_hybrid_dense_parallel_cas.gt")
 
+    def test_cc_hybrid_dense_parallel_bitvector_verified(self):
+        self.cc_verified_test("cc_hybrid_dense_parallel_bitvector.gt")
+
     def test_cc_push_parallel_cas_verified(self):
         self.cc_verified_test("cc_push_parallel_cas.gt")
 
@@ -234,5 +237,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull'))
+    # suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

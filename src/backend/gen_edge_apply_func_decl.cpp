@@ -142,7 +142,7 @@ namespace graphit {
                     "      g.flags_ = new int[numVertices]();\n"
                     "    }\n";
 
-            if (apply->enable_deduplication) {
+            if (from_vertexset_specified) {
                 oss_ << "  parallel_for(int i = 0; i < m; i++){\n"
                         "     g.flags_[from_vertexset->dense_vertex_set_[i]] = 0;\n"
                         "  }\n";
