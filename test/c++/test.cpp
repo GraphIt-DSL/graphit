@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
-
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaPullParallelFuseFields";
 
 
@@ -55,7 +54,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSerialVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleParallelVertexSetApply";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseSchedule";
-
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierSchedule";
 
 
     return RUN_ALL_TESTS();

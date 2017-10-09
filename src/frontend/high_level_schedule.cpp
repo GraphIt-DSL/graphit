@@ -310,8 +310,9 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Disable;
             } else if (apply_schedule_str == "sliding_queue"){
                 (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
-            }
-            else {
+            } else if (apply_schedule_str == "pull_bitvector_frontier"){
+                (*schedule_->apply_schedules)[apply_label].pull_frontier_type = ApplySchedule::PullFrontierType::BITVECTOR;
+            } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
             }
 

@@ -537,7 +537,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");

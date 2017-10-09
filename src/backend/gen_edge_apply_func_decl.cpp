@@ -347,6 +347,20 @@ namespace graphit {
             }
         }
 
+        //generate a bitvector from the dense vertexset (bool map)
+        if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
+            oss_ << "  Bitmap bitmap(numVertices);\n"
+                    "  bitmap.reset();\n"
+                    "  parallel_for(int i = 0; i < numVertices; i+=32){\n"
+                    "     int start = i;\n"
+                    "     int end = (((i + 32) < numVertices)? (i+32):numVertices);\n"
+                    "     for(int j = start; j < end; j++){\n"
+                    "        if (from_vertexset->bool_map_[j])\n"
+                    "          bitmap.set_bit(j);\n"
+                    "     }\n"
+                    "  }" << std::endl;
+        }
+
         printIndent();
 
         std::string for_type = "for";
@@ -385,8 +399,13 @@ namespace graphit {
                 oss_ << " (from_func(" << src_type << ")";
 
             } else {
+
                 //the input expression is a vertex subset
-                oss_ << " (from_vertexset->bool_map_[" << src_type <<  "] ";
+                if (! apply->use_pull_frontier_bitvector){
+                    oss_ << " (from_vertexset->bool_map_[" << src_type <<  "] ";
+                } else {
+                    oss_ << " (bitmap.get_bit(" << src_type << ")";
+                }
             }
             oss_ << ") { " << std::endl;
         }

@@ -97,6 +97,10 @@ namespace graphit {
                     mir::to<mir::EdgeSetApplyExpr>(node)->use_sliding_queue = true;
                 }
 
+                if (apply_schedule->second.pull_frontier_type == ApplySchedule::PullFrontierType ::BITVECTOR) {
+                    mir::to<mir::EdgeSetApplyExpr>(node)->use_pull_frontier_bitvector = true;
+                }
+
                 if (edgeset_apply->tracking_field != "") {
                     if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
                         //only enable deduplication if there is needed for tracking
