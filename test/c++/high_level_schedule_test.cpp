@@ -532,6 +532,20 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
 }
 
+TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
 TEST_F(HighLevelScheduleTest, CCPullSchedule) {
     fe_->parseStream(cc_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program

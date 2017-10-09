@@ -2,7 +2,7 @@ element Vertex end
 element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
-const cur_rank : vector{Vertex}(float) = 1.0/vertices.size();
+const cur_rank : vector{Vertex}(float) = 0;
 const ngh_sum : vector{Vertex}(float) = 0.0;
 const delta : vector{Vertex}(float) = 1.0/vertices.size();
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
@@ -26,8 +26,8 @@ end
 func updateVertex(v : Vertex) -> output : bool
    delta[v] = ngh_sum[v]*damp;
    cur_rank[v]+= delta[v];
-   output = fabs(delta[v]) > epsilon2*cur_rank[v];
    ngh_sum[v] = 0;
+   output = fabs(delta[v]) > epsilon2*cur_rank[v];
 end
 
 func printRank(v : Vertex)
@@ -35,17 +35,10 @@ func printRank(v : Vertex)
 end
 
 func main()
-    startTimer();
     var n : int = edges.getVertices();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
 
     for i in 1:10
-        #s1# frontier = edges.from(frontier).apply(updateEdge);
-        if i == 1
-            frontier = vertices.where(updateVertexFirstRound);
-        else
-            frontier = vertices.where(updateVertex);
-        end
 
         var sum : float = 0;
         for i in 0:edges.getVertices()
@@ -54,15 +47,19 @@ func main()
         print sum;
         print "size of frontier";
         print frontier.getVertexSetSize();
+
+        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(ngh_sum);
+        if i == 1
+            frontier = vertices.where(updateVertexFirstRound);
+        else
+            frontier = vertices.where(updateVertex);
+        end
     end
-
-    var elapsed_time : float = stopTimer();
-
-
-    print "elapsed time: ";
-    print elapsed_time;
 end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
     program->fuseFields("delta", "out_degree");
+    //program->splitLoops("l0", "l1", "l2", 2);
+    //program->setApply("l1", {"pull", "parallel"});
+    //program->setApply("l2", {"hybrid_dense", "parallel");

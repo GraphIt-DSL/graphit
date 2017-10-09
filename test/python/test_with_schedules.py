@@ -142,11 +142,22 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test(input_file_name)
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
-        print proc.stdout.readlines()
-
-        output = proc.stdout.readline()
-        print "output: " + output.strip()
-        # self.assertEqual(float(output.strip()), 0.00289518)
+        lines = proc.stdout.readlines()
+        print lines
+        self.assertEqual(float(lines[0].strip()), 1)
+        # first frontier has 5 vertices
+        self.assertEqual(float(lines[2].strip()), 5)
+        self.assertEqual(float(lines[3].strip()),  0.566667)
+        # 2nd frontier has 5 vertices too
+        self.assertEqual(float(lines[5].strip()), 5)
+        # 3rd frontier has 3 vertices
+        self.assertEqual(float(lines[8].strip()), 3)
+        # 4th frontier
+        self.assertEqual(float(lines[11].strip()), 2)
+        # sum of delta at 4th iter
+        self.assertEqual(float(lines[12].strip()), 0.0261003)
+        # 5th frontier
+        self.assertEqual(float(lines[14].strip()), 1)
 
     def cf_verified_test(self, input_file_name):
         self.basic_compile_test(input_file_name)
