@@ -316,69 +316,15 @@ namespace graphit {
         }
     }
 
-
-    // Print the code for traversing the edges in the push direction and return the new frontier
-    void EdgesetApplyFunctionDeclGenerator::printPullEdgeTraversalReturnFrontier(
+    void EdgesetApplyFunctionDeclGenerator::printPullEdgeTraversalInnerNeighborLoop(
             mir::EdgeSetApplyExpr::Ptr apply,
             bool from_vertexset_specified,
             bool apply_expr_gen_frontier,
             std::string dst_type,
             std::string apply_func_name) {
-        // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_expr_gen_frontier) {
-            // build an empty vertex subset if apply function returns
-            apply_expr_gen_frontier = true;
-
-            //        "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
-            //        "  long m = from_vertexset->size();\n"
-
-            oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
-                    "  bool * next = newA(bool, g.num_nodes());\n"
-                    "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
-        }
-
-        indent();
-
-
-        if (apply->from_func != "") {
-            if (!mir_context_->isFunction(apply->from_func)) {
-                printIndent();
-                oss_ << "from_vertexset->toDense();" << std::endl;
-            }
-        }
-
-        //generate a bitvector from the dense vertexset (bool map)
-        if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
-            oss_ << "  Bitmap bitmap(numVertices);\n"
-                    "  bitmap.reset();\n"
-                    "  parallel_for(int i = 0; i < numVertices; i+=32){\n"
-                    "     int start = i;\n"
-                    "     int end = (((i + 32) < numVertices)? (i+32):numVertices);\n"
-                    "     for(int j = start; j < end; j++){\n"
-                    "        if (from_vertexset->bool_map_[j])\n"
-                    "          bitmap.set_bit(j);\n"
-                    "     }\n"
-                    "  }" << std::endl;
-        }
-
-        printIndent();
-
-        std::string for_type = "for";
-        if (apply->is_parallel)
-            for_type = "parallel_for";
 
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
-
-        oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
-        indent();
-
-        if (apply->to_func != "") {
-            printIndent();
-            oss_ << "if (to_func(d)){ " << std::endl;
-            indent();
-        }
-
         printIndent();
 
         oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
@@ -463,8 +409,79 @@ namespace graphit {
             printIndent();
             oss_ << "} " << std::endl;
         }
+    }
+
+    // Print the code for traversing the edges in the push direction and return the new frontier
+    void EdgesetApplyFunctionDeclGenerator::printPullEdgeTraversalReturnFrontier(
+            mir::EdgeSetApplyExpr::Ptr apply,
+            bool from_vertexset_specified,
+            bool apply_expr_gen_frontier,
+            std::string dst_type,
+            std::string apply_func_name) {
+        // If apply function has a return value, then we need to return a temporary vertexsubset
+        if (apply_expr_gen_frontier) {
+            // build an empty vertex subset if apply function returns
+            apply_expr_gen_frontier = true;
+
+            //        "  long numVertices = g.num_nodes(), numEdges = g.num_edges();\n"
+            //        "  long m = from_vertexset->size();\n"
+
+            oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
+                    "  bool * next = newA(bool, g.num_nodes());\n"
+                    "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
+        }
+
+        indent();
 
 
+        if (apply->from_func != "") {
+            if (!mir_context_->isFunction(apply->from_func)) {
+                printIndent();
+                oss_ << "from_vertexset->toDense();" << std::endl;
+            }
+        }
+
+        //generate a bitvector from the dense vertexset (bool map)
+        if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
+            oss_ << "  Bitmap bitmap(numVertices);\n"
+                    "  bitmap.reset();\n"
+                    "  parallel_for(int i = 0; i < numVertices; i+=32){\n"
+                    "     int start = i;\n"
+                    "     int end = (((i + 32) < numVertices)? (i+32):numVertices);\n"
+                    "     for(int j = start; j < end; j++){\n"
+                    "        if (from_vertexset->bool_map_[j])\n"
+                    "          bitmap.set_bit(j);\n"
+                    "     }\n"
+                    "  }" << std::endl;
+        }
+
+        printIndent();
+
+        std::string for_type = "for";
+        if (apply->is_parallel)
+            for_type = "parallel_for";
+
+
+
+        oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
+        indent();
+
+        //filtering on destination
+        if (apply->to_func != "") {
+            printIndent();
+            oss_ << "if (to_func(d)){ " << std::endl;
+            indent();
+        }
+
+        //print the code for inner loop on in neighbors
+        printPullEdgeTraversalInnerNeighborLoop(apply, from_vertexset_specified, apply_expr_gen_frontier,
+            dst_type, apply_func_name);
+
+
+
+
+
+        //end of outer for loop
         dedent();
         printIndent();
         oss_ << "}" << std::endl;

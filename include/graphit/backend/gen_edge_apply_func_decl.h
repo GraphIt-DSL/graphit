@@ -95,6 +95,14 @@ namespace graphit {
                                                                 bool from_vertexset_specified,
                                                                 bool apply_expr_gen_frontier,
                                                                 std::string dst_type);
+
+        //prints the inner loop on in neighbors for pull based direction
+        void printPullEdgeTraversalInnerNeighborLoop(mir::EdgeSetApplyExpr::Ptr apply,
+                                                     bool from_vertexset_specified,
+                                                     bool apply_expr_gen_frontier,
+                                                     std::string dst_type,
+                                                     std::string apply_func_name);
+
     };
 }
 
