@@ -484,7 +484,11 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [apply_func, &g,  &recursive_lambda, edge_in_index]\n"
+                    "    [apply_func, &g,  &recursive_lambda, edge_in_index";
+            // capture bitmap and next frontier if needed
+            if (apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
+            if (apply_expr_gen_frontier) oss_ << ", &next ";
+            oss_ <<"  ]\n"
                     "    (NodeID start, NodeID end, int grain_size){\n"
                     "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
                     "  for (NodeID d = start; d < end; d++){\n";

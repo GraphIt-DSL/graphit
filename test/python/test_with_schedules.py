@@ -233,6 +233,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt")
 
+    def test_prdelta_parallel_load_balance_pull(self):
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt")
+
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
         use_parallel = True
@@ -243,5 +246,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_load_balance_expect'))
+    # suite.addTest(TestGraphitCompiler('test_cf_parallel_load_balance_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
