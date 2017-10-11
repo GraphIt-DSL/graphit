@@ -221,6 +221,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_parallel_push_expect(self):
         self.pr_verified_test("pagerank_push_parallel.gt")
 
+    def test_pagerank_parallel_pull_load_balance_expect(self):
+        self.pr_verified_test("pagerank_pull_parallel_load_balance.gt")
+
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt")
 
@@ -240,5 +243,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cf_parallel_load_balance_expect'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_load_balance_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
