@@ -323,6 +323,14 @@ namespace graphit {
             std::string dst_type,
             std::string apply_func_name) {
 
+
+        //filtering on destination
+        if (apply->to_func != "") {
+            printIndent();
+            oss_ << "if (to_func(d)){ " << std::endl;
+            indent();
+        }
+
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
@@ -402,12 +410,13 @@ namespace graphit {
         //end of for loop on the neighbors
         dedent();
         printIndent();
-        oss_ << "}" << std::endl;
+        oss_ << "} //end of loop on in neighbors" << std::endl;
 
+        // end of to filtering (filtering on the destination)
         if (apply->to_func != "") {
             dedent();
             printIndent();
-            oss_ << "} " << std::endl;
+            oss_ << "} //end of to filtering " << std::endl;
         }
     }
 
@@ -457,21 +466,34 @@ namespace graphit {
 
         printIndent();
 
-        std::string for_type = "for";
-        if (apply->is_parallel)
-            for_type = "parallel_for";
 
+        //genearte the outer for loop
+        if (! apply->use_pull_edge_based_load_balance) {
+            std::string for_type = "for";
+            if (apply->is_parallel)
+                for_type = "parallel_for";
 
-
-        oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
-        indent();
-
-        //filtering on destination
-        if (apply->to_func != "") {
-            printIndent();
-            oss_ << "if (to_func(d)){ " << std::endl;
+            oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
             indent();
+        } else {
+            // use edge based load balance
+            // recursive load balance scheme
+
+            //set up the edge index (in in edge array) for estimating number of edges
+            oss_ << "  if (g.offsets_ == nullptr) g.SetUpOffsets();\n"
+                    "  SGOffset * edge_in_index = g.offsets_;\n";
+
+            oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
+                    "    [apply_func, &g,  &recursive_lambda, edge_in_index]\n"
+                    "    (NodeID start, NodeID end, int grain_size){\n"
+                    "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
+                    "  for (NodeID d = start; d < end; d++){\n";
+            indent();
+
         }
+
+
+
 
         //print the code for inner loop on in neighbors
         printPullEdgeTraversalInnerNeighborLoop(apply, from_vertexset_specified, apply_expr_gen_frontier,
@@ -479,12 +501,24 @@ namespace graphit {
 
 
 
+        if (! apply->use_pull_edge_based_load_balance) {
+            //end of outer for loop
+            dedent();
+            printIndent();
+            oss_ << "} //end of outer for loop" << std::endl;
+        } else {
+            dedent();
+            printIndent();
+            oss_ << " } //end of outer for loop" << std::endl;
+            oss_ << "        } else { // end of if statement on grain size, recursive case next\n"
+                    "                 cilk_spawn recursive_lambda(start, start + ((end-start) >> 1), grain_size);\n"
+                    "                  recursive_lambda(start + ((end-start)>>1), end, grain_size);\n"
+                    "        } \n"
+                    "    }; //end of lambda function\n";
+            oss_ << "    recursive_lambda(0, numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
+                    "    cilk_sync; \n";
+        }
 
-
-        //end of outer for loop
-        dedent();
-        printIndent();
-        oss_ << "}" << std::endl;
 
         //return a new vertexset if no subset vertexset is returned
         if (!apply_expr_gen_frontier) {

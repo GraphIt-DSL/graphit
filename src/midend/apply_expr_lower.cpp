@@ -101,6 +101,14 @@ namespace graphit {
                     mir::to<mir::EdgeSetApplyExpr>(node)->use_pull_frontier_bitvector = true;
                 }
 
+                if (apply_schedule->second.pull_load_balance_type == ApplySchedule::PullLoadBalance::EDGE_BASED){
+                    mir::to<mir::EdgeSetApplyExpr>(node)->use_pull_edge_based_load_balance = true;
+                    if (apply_schedule->second.pull_load_balance_edge_grain_size > 0){
+                        mir::to<mir::EdgeSetApplyExpr>(node)->pull_edge_based_load_balance_grain_size
+                                = apply_schedule->second.pull_load_balance_edge_grain_size;
+                    }
+                }
+
                 if (edgeset_apply->tracking_field != "") {
                     if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
                         //only enable deduplication if there is needed for tracking

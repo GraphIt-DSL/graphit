@@ -269,6 +269,46 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label,
+                                                           std::string apply_schedule_str,
+                                                            int parameter) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->apply_schedules == nullptr) {
+                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
+            }
+
+            // If no schedule has been specified for the current label, create a new one
+            if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
+                //Default schedule pull, serial
+                (*schedule_->apply_schedules)[apply_label]
+                        = {apply_label, ApplySchedule::DirectionType::PULL,
+                           ApplySchedule::ParType::Serial,
+                           ApplySchedule::DeduplicationType::Enable,
+                           ApplySchedule::OtherOpt::QUEUE,
+                           ApplySchedule::PullFrontierType::BOOL_MAP,
+                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                            0};
+            }
+
+            if (apply_schedule_str == "pull_edge_based_load_balance" ) {
+                (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
+                        = ApplySchedule::PullLoadBalance::EDGE_BASED;
+                (*schedule_->apply_schedules)[apply_label].pull_load_balance_edge_grain_size = parameter;
+            } else {
+                std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
+                exit(0);
+            }
+
+            return this->shared_from_this();
+
+        }
+
+            high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label, std::string apply_schedule_str) {
 
             // If no schedule has been constructed, construct a new one
@@ -282,13 +322,18 @@ namespace graphit {
             }
 
             // If no schedule has been specified for the current label, create a new one
-            ApplySchedule apply_schedule;
 
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PULL, ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable, ApplySchedule::OtherOpt::QUEUE};
+                        = (*schedule_->apply_schedules)[apply_label]
+                        = {apply_label, ApplySchedule::DirectionType::PULL,
+                           ApplySchedule::ParType::Serial,
+                           ApplySchedule::DeduplicationType::Enable,
+                           ApplySchedule::OtherOpt::QUEUE,
+                           ApplySchedule::PullFrontierType::BOOL_MAP,
+                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                           0};
             }
 
 
@@ -312,14 +357,18 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
             } else if (apply_schedule_str == "pull_frontier_bitvector"){
                 (*schedule_->apply_schedules)[apply_label].pull_frontier_type = ApplySchedule::PullFrontierType::BITVECTOR;
+            } else if (apply_schedule_str == "pull_edge_based_load_balance" ) {
+                (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
+                        = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
+                exit(0);
             }
-
 
             return this->shared_from_this();
         }
 
+        //DEPRECATED
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::setVertexSet(std::string vertexset_label,
                                                                std::string vertexset_schedule_str) {

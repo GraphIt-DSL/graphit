@@ -725,6 +725,9 @@ namespace graphit {
             bool is_weighted = false;
             bool use_sliding_queue = false;
             bool use_pull_frontier_bitvector = false;
+            bool use_pull_edge_based_load_balance = false;
+            //hard coded default value for grain size
+            int pull_edge_based_load_balance_grain_size = 4096;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

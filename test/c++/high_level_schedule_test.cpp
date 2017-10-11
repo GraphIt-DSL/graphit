@@ -665,25 +665,6 @@ TEST_F(HighLevelScheduleTest, PRPushParallel) {
 }
 
 
-
-TEST_F(HighLevelScheduleTest, BFSSerialPushSparseSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
-    fir::high_level_schedule::ProgramScheduleNode::Ptr program
-            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
-    program->setApply("s1", "push");
-    program->setVertexSet("frontier", "sparse");
-    program->setApply("s1", "sparse_frontier");
-
-    //generate c++ code successfully
-    EXPECT_EQ (0, basicTestWithSchedule(program));
-    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-    mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[0]);
-    mir::VertexSetAllocExpr::Ptr alloc_expr = mir::to<mir::VertexSetAllocExpr>(frontier_decl->initVal);
-    EXPECT_EQ(mir::VertexSetAllocExpr::Layout::SPARSE, alloc_expr->layout);
-}
-
-
 TEST_F(HighLevelScheduleTest, SimpleHighLevelLoopFusion) {
     istringstream is("func main() "
                              "for i in 1:10; print i; end "
@@ -1062,14 +1043,30 @@ TEST_F(HighLevelScheduleTest, CFPullParallel) {
     program->setApply("s1", "pull")->setApply("s1", "parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
 
-    //mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
 
-    // the first apply should be push
-//    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
-//    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
-//    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalance) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
 
+
+TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalanceWithGrainSize) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance",8000);
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 
