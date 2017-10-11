@@ -480,7 +480,7 @@ namespace graphit {
             // recursive load balance scheme
 
             //set up the edge index (in in edge array) for estimating number of edges
-            oss_ << "  if (g.offsets_ == nullptr) g.SetUpOffsets();\n"
+            oss_ << "  if (g.offsets_ == nullptr) g.SetUpOffsets(true);\n"
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
