@@ -38,29 +38,26 @@ func main()
     var n : int = edges.getVertices();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
 
-    for i in 1:10
+    for trail in 0:5
+        startTimer();
 
-        var sum : float = 0;
-        for i in 0:edges.getVertices()
-            sum += fabs(delta[i]);
+        for i in 1:10
+            #s1# edges.from(frontier).apply(updateEdge);
+            if i == 1
+                frontier = vertices.where(updateVertexFirstRound);
+            else
+                frontier = vertices.where(updateVertex);
+            end
         end
-        print sum;
-        print "size of frontier";
-        print frontier.getVertexSetSize();
 
-        #s1# edges.from(frontier).apply(updateEdge);
-        if i == 1
-            frontier = vertices.where(updateVertexFirstRound);
-        else
-            frontier = vertices.where(updateVertex);
-        end
-    end
+         var elapsed_time : float = stopTimer();
+         print "elapsed time: ";
+         print elapsed_time;
+
+     end
 end
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
     program->setApply("s1", "pull_edge_based_load_balance");
     program->fuseFields("delta", "out_degree");
-    //program->splitLoops("l0", "l1", "l2", 2);
-    //program->setApply("l1", {"pull", "parallel"});
-    //program->setApply("l2", {"hybrid_dense", "parallel");

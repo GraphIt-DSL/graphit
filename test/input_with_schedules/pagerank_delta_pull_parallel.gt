@@ -48,7 +48,7 @@ func main()
         print "size of frontier";
         print frontier.getVertexSetSize();
 
-        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(ngh_sum);
+        #s1# edges.from(frontier).apply(updateEdge);
         if i == 1
             frontier = vertices.where(updateVertexFirstRound);
         else

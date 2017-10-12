@@ -58,9 +58,5 @@ func main()
 end
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
-    program->setApply("s1", "pull_edge_based_load_balance");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
     program->fuseFields("delta", "out_degree");
-    //program->splitLoops("l0", "l1", "l2", 2);
-    //program->setApply("l1", {"pull", "parallel"});
-    //program->setApply("l2", {"hybrid_dense", "parallel");

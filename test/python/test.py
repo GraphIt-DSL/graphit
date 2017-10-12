@@ -258,5 +258,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_expect'))
+    # suite.addTest(TestGraphitCompiler('test_simple_vertex_filter'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

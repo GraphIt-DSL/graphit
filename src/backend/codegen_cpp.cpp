@@ -822,21 +822,31 @@ namespace graphit {
             // the output vertexset is initially set to 0
             oss << "0";
             oss << " );" << std::endl;
-
+            std::string next_bool_map_name = "next" + mir_context_->getUniqueNameCounterString();
+            oss << "bool * " << next_bool_map_name << " = newA(bool, ";
+            vertices_range_expr->accept(this);
+            oss << ");\n";
             printIndent();
-            oss << "for (int v = 0; v < ";
+            oss << "parallel_for (int v = 0; v < ";
             associated_element_type_size->accept(this);
             oss << "; v++) {" << std::endl;
             indent();
             printIndent();
+            oss << next_bool_map_name << "[v] = 0;" << std::endl;
             oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
             indent();
             printIndent();
-            oss << "____graphit_tmp_out->addVertex(v);" << std::endl;
+            oss << next_bool_map_name << "[v] = 1;" << std::endl;
             dedent();
             dedent();
             printIndent();
-            oss << "}";
+            oss << "} //end of loop\n";
+            oss << "____graphit_tmp_out->num_vertices_ = sequence::sum( "
+                <<  next_bool_map_name << ", " ;
+            vertices_range_expr->accept(this);
+            oss << " );\n"
+                    "____graphit_tmp_out->bool_map_ = ";
+            oss << next_bool_map_name << ";\n";
         }
 
     }

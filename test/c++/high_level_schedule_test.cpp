@@ -1101,3 +1101,14 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBalance) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->fuseFields("delta", "out_degree");
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}

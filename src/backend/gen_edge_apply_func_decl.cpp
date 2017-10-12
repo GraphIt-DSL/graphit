@@ -26,26 +26,34 @@ namespace graphit {
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
         // currently, we only generate code for the following schedules
-        if (func_name != "edgeset_apply_pull_parallel"
-            && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
-            && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_push_parallel"
-            && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
-            && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier"
-            && func_name != "edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier"
-            && func_name !=
-               "edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_hybrid_dense_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-            && func_name != "edgeset_apply_pull_parallel_weighted"
-            && func_name != "edgeset_apply_pull_parallel_from_vertexset"
+//        if (func_name != "edgeset_apply_pull_parallel"
+//            && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
+//            && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_push_parallel"
+//            && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
+//            && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier"
+//            && func_name != "edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier"
+//            && func_name !=
+//               "edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_hybrid_dense_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
+//            && func_name != "edgeset_apply_pull_parallel_weighted"
+//            && func_name != "edgeset_apply_pull_parallel_from_vertexset"
+//
+//                ) {
+//            return;
+//        }
 
-                ) {
+        // these schedules are still supported by runtime libraries
+        if (func_name == "edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier"
+                || func_name ==  "edgeset_apply_pull_serial"
+                || func_name == "edgeset_apply_push_serial"){
             return;
         }
+
 
         genEdgeApplyFunctionSignature(apply);
         oss_ << "{ " << endl; //the end of the function declaration
@@ -99,12 +107,20 @@ namespace graphit {
         oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
 
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
-            if (apply_expr_gen_frontier) {
+//            if (from_vertexset_specified){
+//                printIndent();
+//                // for push, we use sparse vertexset
+//                oss_ << "    long m = from_vertexset->size();\n";
+//            }
+
+            //we need to calculate the outdegrees and m if it is hybrid_dense, hybrid_denseforward or push with output
+            if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)
+                || mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(apply)
+                    || (mir::isa<mir::PushEdgeSetApplyExpr>(apply) && apply_expr_gen_frontier)) {
                 if (from_vertexset_specified) {
-                    printIndent();
-                    // for push, we use sparse vertexset
-                    oss_ << "    long m = from_vertexset->size();\n";
                     oss_ << "    from_vertexset->toSparse();" << std::endl;
+                    oss_ << "    long m = from_vertexset->size();\n";
+
                 } else {
                     oss_ << "    long m = numVertices; \n";
                 }
@@ -136,8 +152,8 @@ namespace graphit {
 
 
 
-        //set up logic fo enabling deduplication with CAS on flags
-        if (apply->enable_deduplication) {
+        //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
+        if (apply->enable_deduplication && apply_expr_gen_frontier) {
             oss_ << "    if (g.flags_ == nullptr){\n"
                     "      g.flags_ = new int[numVertices]();\n"
                     "    }\n";
@@ -185,10 +201,14 @@ namespace graphit {
 
         indent();
 
-        if (from_vertexset_specified)
+        if (from_vertexset_specified){
             oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n"
-                    "    uintT offset = offsets[i];\n"
                     "    int j = 0;\n";
+            if (apply_expr_gen_frontier){
+                oss_ <<  "    uintT offset = offsets[i];\n";
+            }
+        }
+
 
         if (apply->from_func != "" && !from_vertexset_specified) {
             printIndent();
@@ -240,7 +260,7 @@ namespace graphit {
 
 
             //need to return a frontier
-            if (apply->enable_deduplication) {
+            if (apply->enable_deduplication && apply_expr_gen_frontier) {
                 oss_ << " && CAS(&(g.flags_[" << dst_type << "]), 0, 1) ";
             }
 
@@ -855,6 +875,7 @@ namespace graphit {
         // Weighted: "" (unweighted) or "weighted"
 
         string output_name = "edgeset_apply";
+        auto apply_func = mir_context_->getFunction(apply->input_function_name);
 
         //check direction
         if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
@@ -884,7 +905,7 @@ namespace graphit {
         }
 
         // check for deduplication
-        if (apply->enable_deduplication) {
+        if (apply->enable_deduplication && apply_func->result.isInitialized()) {
             output_name += "_deduplicatied";
         }
 
@@ -921,7 +942,6 @@ namespace graphit {
             }
         }
 
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
 
         if (apply_func->result.isInitialized()) {
             //if frontier tracking is enabled (when apply function returns a boolean value)
