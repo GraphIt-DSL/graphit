@@ -406,7 +406,7 @@ namespace graphit {
 
         struct ReduceStmt : public AssignStmt {
             enum class ReductionOp {
-                MIN, SUM, MAX, ATOMIC_MIN
+                MIN, SUM, MAX, ATOMIC_MIN, ATOMIC_SUM
             };
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";

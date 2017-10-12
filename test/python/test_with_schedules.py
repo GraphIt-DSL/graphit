@@ -249,5 +249,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_push_sliding_queue_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

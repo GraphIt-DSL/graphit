@@ -230,9 +230,12 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                     case mir::ReduceStmt::ReductionOp::MIN:
                         reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;
                         break;
+                    case mir::ReduceStmt::ReductionOp::SUM:
+                        reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_SUM;
+                        break;
                     default:
                         std::cout << "not supported for atomics" << std::endl;
-                        break;
+                        exit(0);
                 }
             }
         }

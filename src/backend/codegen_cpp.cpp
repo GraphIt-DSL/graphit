@@ -238,6 +238,17 @@ namespace graphit {
                     oss << ", ";
                     reduce_stmt->expr->accept(this);
                     oss << " ); " << std::endl;
+                    break;
+                case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
+                    printIndent();
+                    if (reduce_stmt->tracking_var_name_ != "")
+                        oss << reduce_stmt->tracking_var_name_ << " =  true;\n";
+                    oss << "writeAdd( &";
+                    reduce_stmt->lhs->accept(this);
+                    oss << ", ";
+                    reduce_stmt->expr->accept(this);
+                    oss << " ); " << std::endl;
+                    break;
             }
 
         }
