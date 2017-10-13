@@ -236,8 +236,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_load_balance_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt")
 
-    def test_prdelta_parallel_load_balance_hybrid_dense(self):
+    def test_prdelta_parallel_load_balance_hybrid_dense_with_bitvec(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_bitvector.gt")
+
+    def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt")
 
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
@@ -249,5 +252,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_verified'))
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

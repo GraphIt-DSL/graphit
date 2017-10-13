@@ -506,7 +506,10 @@ namespace graphit {
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
                     "    [apply_func, &g,  &recursive_lambda, edge_in_index";
             // capture bitmap and next frontier if needed
-            if (apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
+            if (from_vertexset_specified) {
+                if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
+                else oss_ << ", &from_vertexset";
+            }
             if (apply_expr_gen_frontier) oss_ << ", &next ";
             oss_ <<"  ]\n"
                     "    (NodeID start, NodeID end, int grain_size){\n"
