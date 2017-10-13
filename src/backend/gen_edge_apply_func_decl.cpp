@@ -866,6 +866,7 @@ namespace graphit {
     }
 
     //generates different function name for different schedules
+    // important for cases where we split the kernel iterations and assign different schedules to different iters
     std::string EdgesetApplyFunctionDeclGenerator::genFunctionName(mir::EdgeSetApplyExpr::Ptr apply) {
         // A total of 48 schedules for the edgeset apply operator for now
         // Direction first: "push", "pull" or "hybrid_dense"
@@ -949,6 +950,14 @@ namespace graphit {
         if (apply_func->result.isInitialized()) {
             //if frontier tracking is enabled (when apply function returns a boolean value)
             output_name += "_with_frontier";
+        }
+
+        if (apply->use_pull_frontier_bitvector){
+            output_name += "_pull_frontier_bitvector";
+        }
+
+        if (apply->use_pull_edge_based_load_balance){
+            output_name += "_pull_edge_based_load_balance";
         }
 
         return output_name;
