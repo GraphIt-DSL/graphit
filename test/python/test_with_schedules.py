@@ -200,6 +200,7 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cc_push_parallel_cas_verified(self):
         self.cc_verified_test("cc_push_parallel_cas.gt")
 
+
     def test_cc_pull_parallel_verified(self):
         self.cc_verified_test("cc_pull_parallel.gt")
 
@@ -214,6 +215,10 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_sssp_pull_parallel_verified(self):
         self.sssp_verified_test("sssp_pull_parallel.gt")
+
+
+    def test_sssp_push_parallel_sliding_queue_verified(self):
+        self.sssp_verified_test("sssp_push_parallel_sliding_queue.gt")
 
     def test_pagerank_parallel_pull_expect(self):
         self.pr_verified_test("pagerank_pull_parallel.gt")
@@ -252,5 +257,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_sliding_queue_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

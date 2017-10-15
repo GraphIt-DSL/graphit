@@ -45,6 +45,7 @@ struct VertexSubset {
             bitmap_->set_all();
             bool_map_ = newA(bool, vertices_range);
             parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
+
             dense_vertex_set_ = new unsigned int[vertices_range];
 // don't need this for now
 //            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
@@ -91,7 +92,9 @@ struct VertexSubset {
         }
 
         if (sliding_queue_ == nullptr){
-            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range_);
+            // initialized to two times of vertices range
+            // (one for the frontier to be read, the other for the frontier to be written to)
+            sliding_queue_ = new SlidingQueue<NodeID>(2*vertices_range_);
         }
         // TODO: this is a hack for now, need to solve it later. Sliding window needs to be called before usage
         sliding_queue_->push_back(v);

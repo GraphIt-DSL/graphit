@@ -6,7 +6,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const parent : vector{Vertex}(int) = -1;
 
 
-func updateEdge(src : Vertex, dst : Vertex, wt : int)
+func updateEdge(src : Vertex, dst : Vertex)
     parent[dst] = src;
 end
 

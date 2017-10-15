@@ -231,54 +231,44 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted(WGraph &g, APPLY_FUNC a
     return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());
 }
 
-
-//Code largely borrowed from TDStep for GAPBS
-template<typename APPLY_FUNC, typename TO_FUNC>
-VertexSubset<NodeID> *edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier
-        (Graph &g, VertexSubset<NodeID> *from_vertexset, TO_FUNC to_func, APPLY_FUNC apply_func) {
-
-
-    //The original GAPBS implmentation from BFS
-
-//    //need to get a SlidingQueue out of the vertexsubset
-//    SlidingQueue<NodeID> &queue;
-//
-//    {
-//        QueueBuffer<NodeID> lqueue(queue);
-//        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
-//            NodeID u = *q_iter;
-//            for (NodeID v : g.out_neigh(u)) {
-//                NodeID curr_val = parent[v];
-////              Test, test and set
-////                if (curr_val < 0) {
-////                    if (compare_and_swap(parent[v], curr_val, u)) {
-////                        lqueue.push_back(v);
-////                    }
-////                }
-//            }
-//        }
-//        lqueue.flush();
-//    }
-//
+template<typename APPLY_FUNC>
+VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_deduplicatied_from_vertexset_with_frontier (
+        Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-//    SlidingQueue<NodeID> &queue = from_vertexset->dense_vertex_set_;
-//    {
-//        QueueBuffer<NodeID> lqueue(queue);
-//        for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++) {
-//            NodeID u = *q_iter;
-//            for (NodeID v : g.out_neigh(u)) {
-//                if (to_func(v)) {
-//                    apply_func(u, v);
-//                }
-//            }
-//        }
-//        lqueue.flush();
-//    }
-//    //Here, we might be coping this too much
-//    next_frontier->dense_vertex_set_ = queue;
+    SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
+    queue->slide_window();
+
+    if (g.flags_ == nullptr){
+        g.flags_ = new int[g.num_nodes()]();
+    }
+
+#pragma omp parallel for
+    for (auto q_iter = queue->shared_out_start; q_iter < queue->shared_out_end; q_iter++){
+        NodeID node = * (queue->shared + (q_iter % queue->max_size));
+        g.flags_[node] = 0;
+    }
+
+
+#pragma omp parallel
+    {
+        QueueBuffer<NodeID> lqueue(*queue);
+#pragma omp for
+        for (auto q_iter = queue->shared_out_start; q_iter < queue->shared_out_end; q_iter++) {
+            //since we now have wrap around, try to get the NodeId with mod
+            NodeID src = * (queue->shared + (q_iter % queue->max_size));
+            for (NodeID dst : g.out_neigh(src)) {
+                if (CAS(&g.flags_[dst], 0, 1) && apply_func(src, dst)) {
+                    lqueue.push_back(dst);
+                }
+            }
+        }
+        lqueue.flush();
+    };
+
+    next_frontier->num_vertices_ = queue->size();
+
     return next_frontier;
 }
-
 
 template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier
@@ -290,6 +280,7 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_w
     //std::cout << "queue size: " << queue->size() << std::endl;
 
 
+
 #pragma omp parallel
     {
         QueueBuffer<NodeID> lqueue(*queue);
@@ -297,15 +288,8 @@ VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_w
         for (auto q_iter = queue->begin(); q_iter < queue->end(); q_iter++) {
             NodeID src = *q_iter;
             for (NodeID dst : g.out_neigh(src)) {
-
                 if (apply_func(src, dst)) {
                     lqueue.push_back(dst);
-//                NodeID curr_val = parent[v];
-//                if (curr_val < 0) {
-//                    if (compare_and_swap(parent[v], curr_val, u)) {
-//                        lqueue.push_back(v);
-//                    }
-//                }
                 }
             }
         }

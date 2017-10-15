@@ -25,32 +25,12 @@ namespace graphit {
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
-        // currently, we only generate code for the following schedules
-//        if (func_name != "edgeset_apply_pull_parallel"
-//            && func_name != "edgeset_apply_pull_parallel_from_vertexset_to_filter_func_with_frontier"
-//            && func_name != "edgeset_apply_pull_parallel_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_pull_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_push_parallel"
-//            && func_name != "edgeset_apply_push_serial_from_vertexset_to_filter_func_with_frontier"
-//            && func_name != "edgeset_apply_push_parallel_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_push_parallel_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_push_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_hybrid_dense_parallel_from_vertexset_to_filter_func_with_frontier"
-//            && func_name != "edgeset_apply_hybrid_dense_parallel_deduplicatied_from_vertexset_with_frontier"
-//            && func_name !=
-//               "edgeset_apply_hybrid_denseforward_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_hybrid_dense_parallel_weighted_deduplicatied_from_vertexset_with_frontier"
-//            && func_name != "edgeset_apply_pull_parallel_weighted"
-//            && func_name != "edgeset_apply_pull_parallel_from_vertexset"
-//
-//                ) {
-//            return;
-//        }
 
         // these schedules are still supported by runtime libraries
         if (func_name == "edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier"
                 || func_name ==  "edgeset_apply_pull_serial"
-                || func_name == "edgeset_apply_push_serial"){
+                || func_name == "edgeset_apply_push_serial"
+                || func_name == "edgeset_apply_push_parallel_sliding_queue_deduplicatied_from_vertexset_with_frontier"){
             return;
         }
 

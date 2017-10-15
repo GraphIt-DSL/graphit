@@ -25,16 +25,27 @@ class QueueBuffer;
 
 template <typename T>
 class SlidingQueue {
-  T *shared;
+
   size_t shared_in;
-  size_t shared_out_start;
-  size_t shared_out_end;
+
   friend class QueueBuffer<T>;
 
+
+
  public:
+    T *shared;
+    size_t shared_out_start;
+    size_t shared_out_end;
+
+    //initial queue max size
+    size_t max_size;
+
   explicit SlidingQueue(size_t shared_size) {
     shared = new T[shared_size];
     reset();
+
+    max_size = shared_size/2;
+
   }
 
   ~SlidingQueue() {
@@ -100,10 +111,34 @@ class QueueBuffer {
     local_queue[in++] = to_add;
   }
 
+//    void flush() {
+//      T *shared_queue = sq.shared;
+//      size_t copy_start = fetch_and_add(sq.shared_in, in);
+//      std::copy(local_queue, local_queue+in, shared_queue+copy_start);
+//      in = 0;
+//    }
+
+
+
   void flush() {
     T *shared_queue = sq.shared;
     size_t copy_start = fetch_and_add(sq.shared_in, in);
-    std::copy(local_queue, local_queue+in, shared_queue+copy_start);
+    size_t copy_end = copy_start + in;
+
+    if (copy_start/sq.max_size == copy_end/sq.max_size){
+      //if we don't need to wrap around the queue,
+      std::copy(local_queue, local_queue+in, shared_queue + (copy_start % sq.max_size));
+    } else {
+      //if we need to deal with wrap around the queue
+      // compute the portion that goes
+      size_t second_chunk_size = copy_end % sq.max_size;
+      size_t first_chunk_size = in - second_chunk_size;
+      //copy the first chunk to the back of the shared queue, all the way till the end
+      std::copy(local_queue, local_queue+first_chunk_size,
+                shared_queue +  (copy_start % sq.max_size));
+      //copy the second chunk (wrap around chunk) to the beginning of the shared queue
+      std::copy(local_queue+first_chunk_size, local_queue+in, shared_queue);
+    }
     in = 0;
   }
 };
