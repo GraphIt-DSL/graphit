@@ -216,7 +216,6 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_sssp_pull_parallel_verified(self):
         self.sssp_verified_test("sssp_pull_parallel.gt")
 
-
     def test_sssp_push_parallel_sliding_queue_verified(self):
         self.sssp_verified_test("sssp_push_parallel_sliding_queue.gt")
 
@@ -254,8 +253,10 @@ if __name__ == '__main__':
         del sys.argv[1]
 
     unittest.main()
-    # used for enabling a specific test
 
+    # used for enabling a specific test
+# test_sssp_push_parallel_cas_verified
+    # test_sssp_push_parallel_sliding_queue_verified
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_sliding_queue_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

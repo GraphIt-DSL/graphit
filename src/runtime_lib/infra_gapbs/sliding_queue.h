@@ -44,7 +44,7 @@ class SlidingQueue {
     shared = new T[shared_size];
     reset();
 
-    max_size = shared_size/2;
+    max_size = shared_size;
 
   }
 

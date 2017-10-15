@@ -533,19 +533,6 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
 }
 
 
-TEST_F(HighLevelScheduleTest, CCPushOnlySlidingQueueSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
-    fir::high_level_schedule::ProgramScheduleNode::Ptr program
-            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
-    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "sliding_queue");
-    //generate c++ code successfully
-    EXPECT_EQ (0, basicTestWithSchedule(program));
-    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
-    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
-    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
-}
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
     fe_->parseStream(cc_is_, context_, errors_);
@@ -1012,6 +999,17 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SSSPPushParallelSlidingQueueSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "sliding_queue");
     fe_->parseStream(sssp_is_, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));

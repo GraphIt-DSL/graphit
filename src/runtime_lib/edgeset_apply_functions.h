@@ -232,14 +232,19 @@ VertexSubset<NodeID> *edgeset_apply_pull_serial_weighted(WGraph &g, APPLY_FUNC a
 }
 
 template<typename APPLY_FUNC>
-VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_deduplicatied_from_vertexset_with_frontier (
-        Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
+VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_weighted_deduplicatied_from_vertexset_with_frontier (
+        WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
     SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
+    next_frontier->sliding_queue_ = from_vertexset->sliding_queue_;
     queue->slide_window();
 
     if (g.flags_ == nullptr){
         g.flags_ = new int[g.num_nodes()]();
+#pragma omp parallel for
+        for (NodeID i = 0; i < g.num_nodes(); i++){
+            g.flags_[i] = 0;
+        }
     }
 
 #pragma omp parallel for
@@ -256,9 +261,9 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_deduplicatied_f
         for (auto q_iter = queue->shared_out_start; q_iter < queue->shared_out_end; q_iter++) {
             //since we now have wrap around, try to get the NodeId with mod
             NodeID src = * (queue->shared + (q_iter % queue->max_size));
-            for (NodeID dst : g.out_neigh(src)) {
-                if (CAS(&g.flags_[dst], 0, 1) && apply_func(src, dst)) {
-                    lqueue.push_back(dst);
+            for (WNode dst : g.out_neigh(src)) {
+                if ( apply_func(src, dst.v, dst.w) && CAS(&g.flags_[dst.v], 0, 1)) {
+                    lqueue.push_back(dst.v);
                 }
             }
         }
