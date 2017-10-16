@@ -36,6 +36,8 @@ namespace graphit {
                 return "'int'";
             case Token::Type::FLOAT:
                 return "'float'";
+            case Token::Type::DOUBLE:
+                return "'double'";
             case Token::Type::BOOL:
                 return "'bool'";
             case Token::Type::COMPLEX:

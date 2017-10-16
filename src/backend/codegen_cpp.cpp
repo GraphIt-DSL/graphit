@@ -420,6 +420,9 @@ namespace graphit {
             case mir::ScalarType::Type::FLOAT:
                 oss << "float ";
                 break;
+            case mir::ScalarType::Type::DOUBLE:
+                oss << "double ";
+                break;
             case mir::ScalarType::Type::BOOL:
                 oss << "bool ";
                 break;
@@ -614,6 +617,7 @@ namespace graphit {
     };
 
     void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl){
+        //the declaration and the value are separate. The value is generated as a separate assign statement in the main function
         var_decl->type->accept(this);
         oss << var_decl->name << "; " << std::endl;
     }

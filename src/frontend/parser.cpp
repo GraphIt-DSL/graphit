@@ -1490,6 +1490,7 @@ namespace graphit {
                 type = (peek(2).type == Token::Type::COL) ?
                        parseNamedTupleType() : parseUnnamedTupleType();
                 break;
+            case Token::Type::DOUBLE:
             case Token::Type::INT:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
@@ -1677,6 +1678,7 @@ namespace graphit {
         switch (peek().type) {
             case Token::Type::INT:
             case Token::Type::FLOAT:
+            case Token::Type::DOUBLE:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:
             case Token::Type::STRING:
@@ -1810,6 +1812,10 @@ namespace graphit {
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);
                 scalarType->type = fir::ScalarType::Type::FLOAT;
+                break;
+            case Token::Type::DOUBLE:
+                consume(Token::Type::DOUBLE);
+                scalarType->type = fir::ScalarType::Type::DOUBLE;
                 break;
             case Token::Type::BOOL:
                 consume(Token::Type::BOOL);

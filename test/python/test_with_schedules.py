@@ -255,8 +255,6 @@ if __name__ == '__main__':
     unittest.main()
 
     # used for enabling a specific test
-# test_sssp_push_parallel_cas_verified
-    # test_sssp_push_parallel_sliding_queue_verified
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_sliding_queue_verified'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -126,6 +126,9 @@ namespace graphit {
                 case ScalarType::Type::FLOAT:
                     oss << "float";
                     break;
+                case ScalarType::Type::DOUBLE:
+                    oss << "double";
+                    break;
                 case ScalarType::Type::BOOL:
                     oss << "bool";
                     break;

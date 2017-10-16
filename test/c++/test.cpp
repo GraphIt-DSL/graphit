@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.FabsWithVectorRead";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMinReduceReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFloatVarDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";

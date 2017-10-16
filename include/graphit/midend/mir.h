@@ -214,7 +214,7 @@ namespace graphit {
 
         struct ScalarType : public Type {
             enum class Type {
-                INT, FLOAT, BOOL, COMPLEX, STRING
+                INT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
             };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
