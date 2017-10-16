@@ -7,6 +7,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='compiling graphit files')
     parser.add_argument('-f', dest = 'input_file_name')
     parser.add_argument('-o', dest = 'output_file_name')
+    parser.add_argument('-a', dest = 'input_algo_file_name')
     args = parser.parse_args()
     return vars(args)
 
@@ -15,15 +16,24 @@ if __name__ == '__main__':
     input_file_name = args['input_file_name']
     output_file_name = args['output_file_name']
     compile_template_file = "main.cpp"
-    algo_file_name = 'algo.gt'
+
+    #check if user supplied a separate algorithm file from the schedule file
+    supplied_separate_algo_file = False
+
+    if (args['input_algo_file_name']):
+        supplied_separate_algo_file = True
+        algo_file_name = args['input_algo_file_name']
+    else:
+        algo_file_name = 'algo.gt'
     compile_file_name = 'compile.cpp'
 
     # read the input file
     with open(input_file_name) as f:
         content = f.readlines()
 
-    # copy lines up to the point of 'schedule:' to 'algo.gt' file
-    algo_file = open(algo_file_name, 'w')
+    if not supplied_separate_algo_file:
+        # copy lines up to the point of 'schedule:' to 'algo.gt' file
+        algo_file = open(algo_file_name, 'w')
     schedule_cmd_list = []
     is_processing_schedule = False
 
@@ -33,9 +43,11 @@ if __name__ == '__main__':
         elif is_processing_schedule:
             schedule_cmd_list.append(line)
         else:
-            algo_file.write(line)
+            if not supplied_separate_algo_file:
+                algo_file.write(line)
 
-    algo_file.close();
+    if not supplied_separate_algo_file:
+        algo_file.close();
 
     # generate a file compile.cpp for compiling the algo.gt file
     with open(compile_template_file) as f:
