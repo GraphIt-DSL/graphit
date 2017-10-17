@@ -17,19 +17,16 @@ end
 func main()
 
     var n : int = edges.getVertices();
-
-    for trail in 0:5
-        startTimer();
-        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
-        vertices.apply(init);
-        while (frontier.getVertexSetSize() != 0)
-            #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
-        end
-
-        var elapsed_time : float = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
+    startTimer();
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+    vertices.apply(init);
+    while (frontier.getVertexSetSize() != 0)
+        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
     end
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
 end
 
 
