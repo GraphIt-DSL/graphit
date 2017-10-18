@@ -136,13 +136,8 @@ namespace graphit {
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
             oss_ << "    if (g.flags_ == nullptr){\n"
                     "      g.flags_ = new int[numVertices]();\n"
+                    "      parallel_for(int i = 0; i < numVertices; i++) g.flags_[i]=0;\n"
                     "    }\n";
-
-            if (from_vertexset_specified) {
-                oss_ << "  parallel_for(int i = 0; i < m; i++){\n"
-                        "     g.flags_[from_vertexset->dense_vertex_set_[i]] = 0;\n"
-                        "  }\n";
-            }
         }
 
         // If apply function has a return value, then we need to return a temporary vertexsubset
@@ -298,6 +293,8 @@ namespace graphit {
         oss_ << "}" << std::endl;
 
 
+
+
         //return a new vertexset if no subset vertexset is returned
         if (!apply_expr_gen_frontier) {
             printIndent();
@@ -310,8 +307,13 @@ namespace graphit {
                     "  next_frontier->num_vertices_ = nextM;\n"
                     "  next_frontier->dense_vertex_set_ = nextIndices;\n";
 
-
-
+            //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
+            if (apply->enable_deduplication && from_vertexset_specified) {
+                //clear up the indices that are set
+                    oss_ << "  parallel_for(int i = 0; i < nextM; i++){\n"
+                            "     g.flags_[nextIndices[i]] = 0;\n"
+                            "  }\n";
+            }
             oss_ << "  return next_frontier;\n";
         }
     }

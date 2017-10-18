@@ -26,7 +26,6 @@ class QueueBuffer;
 template <typename T>
 class SlidingQueue {
 
-  size_t shared_in;
 
   friend class QueueBuffer<T>;
 
@@ -36,6 +35,7 @@ class SlidingQueue {
     T *shared;
     size_t shared_out_start;
     size_t shared_out_end;
+    size_t shared_in;
 
     //initial queue max size
     size_t max_size;

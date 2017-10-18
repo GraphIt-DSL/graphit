@@ -247,11 +247,7 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_weighted_dedupl
         }
     }
 
-#pragma omp parallel for
-    for (auto q_iter = queue->shared_out_start; q_iter < queue->shared_out_end; q_iter++){
-        NodeID node = * (queue->shared + (q_iter % queue->max_size));
-        g.flags_[node] = 0;
-    }
+
 
 
 #pragma omp parallel
@@ -271,6 +267,14 @@ VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_weighted_dedupl
     };
 
     next_frontier->num_vertices_ = queue->size();
+
+    // reset the visited flags
+#pragma omp parallel for
+    for (auto q_iter = queue->shared_out_end; q_iter < queue->shared_in; q_iter++){
+        NodeID node = * (queue->shared + (q_iter % queue->max_size));
+        g.flags_[node] = 0;
+    }
+
 
     return next_frontier;
 }
