@@ -35,17 +35,15 @@ end
 
 func main()
 
-    for trail in 0:5
-        vertices.apply(initVertex);
-        startTimer();
-        for i in 0:5
-            #s1# edges.apply(updateEdge);
-            vertices.apply(updateVertex);
-        end
-        var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
+    vertices.apply(initVertex);
+    startTimer();
+    for i in 0:10
+        #s1# edges.apply(updateEdge);
+        vertices.apply(updateVertex);
     end
+    var elapsed_time : double = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
 end
 
 
