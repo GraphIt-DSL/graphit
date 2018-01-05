@@ -30,7 +30,7 @@ func main()
 
     var rounds : int = 0;
     while (frontier.getVertexSetSize() != 0)
-        frontier = edges.from(frontier).apply(updateEdge).modified(SP);
+        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(SP);
 	    rounds = rounds + 1;
     	if rounds == n
 	        print "negative cycle";
@@ -38,7 +38,7 @@ func main()
 	    end
     end
 
-    vertices.apply(printSP);
+    #s2# vertices.apply(printSP);
 
     % print rounds;
     % var elapsed_time : float = stopTimer();

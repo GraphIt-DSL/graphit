@@ -234,19 +234,19 @@ class TestGraphitCompiler(unittest.TestCase):
         self.cc_verified_test("cc_pull_parallel.gt")
 
     def test_sssp_push_parallel_cas_verified(self):
-        self.sssp_verified_test("sssp_push_parallel_cas.gt")
+        self.sssp_verified_test("sssp_push_parallel_cas.gt", True)
 
     def test_sssp_hybrid_denseforward_parallel_cas_verified(self):
-        self.sssp_verified_test("sssp_hybrid_denseforward_parallel_cas.gt")
+        self.sssp_verified_test("sssp_hybrid_denseforward_parallel_cas.gt", True)
 
     def test_sssp_hybrid_dense_parallel_cas_verified(self):
-        self.sssp_verified_test("sssp_hybrid_dense_parallel_cas.gt")
+        self.sssp_verified_test("sssp_hybrid_dense_parallel_cas.gt", True)
 
     def test_sssp_pull_parallel_verified(self):
-        self.sssp_verified_test("sssp_pull_parallel.gt")
+        self.sssp_verified_test("sssp_pull_parallel.gt", True)
 
     def test_sssp_push_parallel_sliding_queue_verified(self):
-        self.sssp_verified_test("sssp_push_parallel_sliding_queue.gt")
+        self.sssp_verified_test("sssp_push_parallel_sliding_queue.gt", True)
 
     def test_pagerank_parallel_pull_expect(self):
         self.pr_verified_test("pagerank_pull_parallel.gt", True)
@@ -285,5 +285,5 @@ if __name__ == '__main__':
 
     # used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_push_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_cas_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
