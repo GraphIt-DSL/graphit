@@ -118,9 +118,11 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
-    def cc_verified_test(self, input_file_name):
-        self.basic_compile_test(input_file_name)
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+    def cc_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if (use_separate_algo_file):
+            self.basic_compile_test_with_separate_algo_schedule_files("cc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         os.chdir("..")
         cmd = "./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
@@ -165,8 +167,11 @@ class TestGraphitCompiler(unittest.TestCase):
         print "output: " + output.strip()
         self.assertEqual(float(output.strip()), 0.00289518)
 
-    def pr_delta_verified_test(self, input_file_name):
-        self.basic_compile_test(input_file_name)
+    def pr_delta_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if (use_separate_algo_file):
+            self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
@@ -186,8 +191,11 @@ class TestGraphitCompiler(unittest.TestCase):
         # 5th frontier
         self.assertEqual(float(lines[14].strip()), 1)
 
-    def cf_verified_test(self, input_file_name):
-        self.basic_compile_test(input_file_name)
+    def cf_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if (use_separate_algo_file):
+            self.basic_compile_test_with_separate_algo_schedule_files("cf.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
@@ -221,17 +229,17 @@ class TestGraphitCompiler(unittest.TestCase):
         self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt", True)
 
     def test_cc_hybrid_dense_parallel_cas_verified(self):
-        self.cc_verified_test("cc_hybrid_dense_parallel_cas.gt")
+        self.cc_verified_test("cc_hybrid_dense_parallel_cas.gt", True)
 
     def test_cc_hybrid_dense_parallel_bitvector_verified(self):
-        self.cc_verified_test("cc_hybrid_dense_parallel_bitvector.gt")
+        self.cc_verified_test("cc_hybrid_dense_parallel_bitvector.gt", True)
 
     def test_cc_push_parallel_cas_verified(self):
-        self.cc_verified_test("cc_push_parallel_cas.gt")
+        self.cc_verified_test("cc_push_parallel_cas.gt", True)
 
 
     def test_cc_pull_parallel_verified(self):
-        self.cc_verified_test("cc_pull_parallel.gt")
+        self.cc_verified_test("cc_pull_parallel.gt", True)
 
     def test_sssp_push_parallel_cas_verified(self):
         self.sssp_verified_test("sssp_push_parallel_cas.gt", True)
@@ -258,22 +266,22 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_verified_test("pagerank_pull_parallel_load_balance.gt", True)
 
     def test_cf_parallel_expect(self):
-        self.cf_verified_test("cf_pull_parallel.gt")
+        self.cf_verified_test("cf_pull_parallel.gt", True)
 
     def test_cf_parallel_load_balance_expect(self):
-        self.cf_verified_test("cf_pull_parallel_load_balance.gt")
+        self.cf_verified_test("cf_pull_parallel_load_balance.gt", True)
 
     def test_prdelta_parallel_pull(self):
-        self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt")
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt", True)
 
     def test_prdelta_parallel_load_balance_pull(self):
-        self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt")
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt", True)
 
     def test_prdelta_parallel_load_balance_hybrid_dense_with_bitvec(self):
-        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_bitvector.gt")
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_bitvector.gt", True)
 
     def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
-        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt")
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
 if __name__ == '__main__':
     if len(sys.argv) == 2 and sys.argv[1] == "parallel":
@@ -285,5 +293,5 @@ if __name__ == '__main__':
 
     # used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_push_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_cf_parallel_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
