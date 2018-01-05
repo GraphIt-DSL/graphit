@@ -98,10 +98,13 @@ class TestGraphitCompiler(unittest.TestCase):
 
         # actual test cases
 
-    def bfs_verified_test(self, input_file_name):
-        self.basic_compile_test(input_file_name)
+    def bfs_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if (use_separate_algo_file):
+            self.basic_compile_test_with_separate_algo_schedule_files("bfs_with_filename_arg.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
+        cmd = "./bin/test.o ../test/graphs/4.el" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -132,9 +135,11 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def sssp_verified_test(self, input_file_name):
-        self.basic_compile_test(input_file_name)
-        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+    def sssp_verified_test(self, input_file_name, use_separate_algo_file=True):
+        if (use_separate_algo_file):
+            self.basic_compile_test_with_separate_algo_schedule_files("sssp.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
         os.chdir("..");
         cmd = "./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
@@ -201,19 +206,19 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
     def test_bfs_push_parallel_cas_verified(self):
-        self.bfs_verified_test("bfs_push_parallel_cas.gt")
+        self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
     def test_bfs_hybrid_dense_parallel_cas_verified(self):
-        self.bfs_verified_test("bfs_hybrid_dense_parallel_cas.gt")
+        self.bfs_verified_test("bfs_hybrid_dense_parallel_cas.gt", True)
 
     def test_bfs_push_parallel_cas_verified(self):
-        self.bfs_verified_test("bfs_push_parallel_cas.gt")
+        self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
     def test_bfs_pull_parallel_verified(self):
-        self.bfs_verified_test("bfs_pull_parallel.gt")
+        self.bfs_verified_test("bfs_pull_parallel.gt", True)
 
     def test_bfs_push_sliding_queue_parallel_cas_verified(self):
-        self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt")
+        self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt", True)
 
     def test_cc_hybrid_dense_parallel_cas_verified(self):
         self.cc_verified_test("cc_hybrid_dense_parallel_cas.gt")
@@ -250,7 +255,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_verified_test("pagerank_push_parallel.gt")
 
     def test_pagerank_parallel_pull_load_balance_expect(self):
-        self.pr_verified_test("pagerank_pull_parallel_load_balance.gt")
+        self.pr_verified_test("pagerank_pull_parallel_load_balance.gt", True)
 
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt")
@@ -280,6 +285,5 @@ if __name__ == '__main__':
 
     # used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pagerank_AoS'))
-    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_expect'))
+    # suite.addTest(TestGraphitCompiler('test_bfs_push_parallel_cas_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
