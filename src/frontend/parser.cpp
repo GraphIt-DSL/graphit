@@ -1210,6 +1210,8 @@ namespace graphit {
                     consume(Token::Type::COMMA);
                     auto change_tracking_field = parseIdent();
                     apply_expr->change_tracking_field = change_tracking_field;
+
+
                 } else {
                     consume(Token::Type::APPLY);
                     consume(Token::Type::LP);

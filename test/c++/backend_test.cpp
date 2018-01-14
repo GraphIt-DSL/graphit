@@ -476,7 +476,7 @@ TEST_F(BackendTest, SimpleMinReduceReturnFrontier) {
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() "
                              "  var active_vertices : vertexset{Vertex} = "
-                             "      edges.from(from_filter).to(to_filter).apply(update).modified(age); "
+                             "      edges.from(from_filter).to(to_filter).applyModified(update,age); "
                              "end");
     EXPECT_EQ (0, basicTest(is));
     EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
@@ -492,7 +492,7 @@ TEST_F(BackendTest, MinReduceReturnFrontier) {
                              "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() var active_vertices : vertexset{Vertex} = "
-                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+                             "edges.from(from_filter).to(to_filter).applyModified(update, age); end");
     EXPECT_EQ (0, basicTest(is));
     EXPECT_TRUE (mir_context_->getFunction("update")->result.getName() != "");
     EXPECT_EQ (mir_context_->getFunction("update")->result.isInitialized(), true);

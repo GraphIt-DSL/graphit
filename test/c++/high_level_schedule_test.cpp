@@ -92,7 +92,7 @@ protected:
                                                   "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
                                                   "  frontier.addVertex(1); "
                                                   "  while (frontier.getVertexSetSize() != 0) "
-                                                  "      #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent); "
+                                                  "      #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent); "
                                                   "  end\n"
                                                   "  print \"finished running BFS\"; \n"
                                                   "end");
@@ -140,7 +140,7 @@ protected:
                                                      "    SP[0] = 0;\n"
                                                      "    var rounds : int = 0;\n"
                                                      "    while (frontier.getVertexSetSize() != 0)\n"
-                                                     "         #s1# frontier = edges.from(frontier).apply(updateEdge).modified(SP);\n"
+                                                     "         #s1# frontier = edges.from(frontier).applyModified(updateEdge, SP);\n"
                                                      "         rounds = rounds + 1;\n"
                                                      "         if rounds == n\n"
                                                      "             print \"negative cycle\";\n"
@@ -168,7 +168,7 @@ protected:
                                                  "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
                                                  "    vertices.apply(init);\n"
                                                  "    while (frontier.getVertexSetSize() != 0)\n"
-                                                 "        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);\n"
+                                                 "        #s1# frontier = edges.from(frontier).applyModified(updateEdge, IDs);\n"
                                                  "    end\n"
                                                  "    vertices.apply(printID);\n"
                                                  "end");
@@ -516,6 +516,15 @@ TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+TEST_F(HighLevelScheduleTest, CCNoSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {

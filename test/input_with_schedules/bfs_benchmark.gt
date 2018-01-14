@@ -22,7 +22,7 @@ func main()
     parent[8] = 8;
 
     while (frontier.getVertexSetSize() != 0)
-        #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
+        #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent);
     end
 
     var elapsed_time : float = stopTimer();

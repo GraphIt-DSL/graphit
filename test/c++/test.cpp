@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleAssignReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleAssignReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFloatVarDecl";
     //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSlidingQueueSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 
 
