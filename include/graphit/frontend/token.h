@@ -41,6 +41,7 @@ namespace graphit {
             FUNC,
             INOUT,
             APPLY,
+            APPLYMODIFIED,
             MAP,
             TO,
             WITH,

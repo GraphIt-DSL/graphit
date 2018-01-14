@@ -437,7 +437,7 @@ TEST_F(BackendTest, SimpleAssignReturnFrontier) {
                              "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() var active_vertices : vertexset{Vertex} = "
-                             "edges.from(from_filter).to(to_filter).apply(update).modified(age); end");
+                             "edges.from(from_filter).to(to_filter).applyModified(update, age); end");
     EXPECT_EQ (0, basicTest(is));
 }
 

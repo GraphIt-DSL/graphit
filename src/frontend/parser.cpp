@@ -1163,6 +1163,16 @@ namespace graphit {
                 apply_expr->input_function = parseIdent();
                 consume(Token::Type::RP);
                 expr = apply_expr;
+            } else if (tryConsume(Token::Type::APPLYMODIFIED)) {
+                consume(Token::Type::LP);
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
+                consume(Token::Type::COMMA);
+                auto change_tracking_field = parseIdent();
+                apply_expr->change_tracking_field = change_tracking_field;
+                consume(Token::Type::RP);
+                expr = apply_expr;
             } else if (tryConsume(Token::Type::WHERE)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
@@ -1191,22 +1201,36 @@ namespace graphit {
                     consume(Token::Type::PERIOD);
                 }
 
-                consume(Token::Type::APPLY);
-                consume(Token::Type::LP);
-                apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
-                apply_expr->from_expr = from_expr;
+                // FROM and To has to end with either apply modified or apply for now
+                if (tryConsume(Token::Type::APPLYMODIFIED)) {
+                    consume(Token::Type::LP);
+                    apply_expr->target = expr;
+                    apply_expr->input_function = parseIdent();
+                    apply_expr->from_expr = from_expr;
+                    consume(Token::Type::COMMA);
+                    auto change_tracking_field = parseIdent();
+                    apply_expr->change_tracking_field = change_tracking_field;
+                } else {
+                    consume(Token::Type::APPLY);
+                    consume(Token::Type::LP);
+                    apply_expr->target = expr;
+                    apply_expr->input_function = parseIdent();
+                    apply_expr->from_expr = from_expr;
+                }
+
 
                 consume(Token::Type::RP);
 
-                //potentially there is another 'modified' call that adds implicit tracking to a field
-                if (tryConsume(Token::Type::PERIOD)) {
-                    consume(Token::Type::MODIFIED);
-                    consume(Token::Type::LP);
-                    auto change_tracking_field = parseIdent();
-                    consume(Token::Type::RP);
-                    apply_expr->change_tracking_field = change_tracking_field;
-                }
+
+                // DEPRECATED: now we use a new applyModified operator
+//                //potentially there is another 'modified' call that adds implicit tracking to a field
+//                if (tryConsume(Token::Type::PERIOD)) {
+//                    consume(Token::Type::MODIFIED);
+//                    consume(Token::Type::LP);
+//                    auto change_tracking_field = parseIdent();
+//                    consume(Token::Type::RP);
+//                    apply_expr->change_tracking_field = change_tracking_field;
+//                }
 
                 expr = apply_expr;
 

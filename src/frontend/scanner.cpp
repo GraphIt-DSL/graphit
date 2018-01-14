@@ -27,6 +27,7 @@ namespace graphit {
         if (token == "func") return Token::Type::FUNC;
         if (token == "inout") return Token::Type::INOUT;
         if (token == "apply") return Token::Type::APPLY;
+        if (token == "applyModified") return Token::Type::APPLYMODIFIED;
         if (token == "map") return Token::Type::MAP;
         if (token == "to") return Token::Type::TO;
         if (token == "with") return Token::Type::WITH;
