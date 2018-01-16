@@ -1180,18 +1180,19 @@ namespace graphit {
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
-            } else if (tryConsume(Token::Type::FROM)) {
+
+                // right now this is a bit of a hack, srcFilter and from act the same in the compiler
+            } else if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
                 //edgesets.from().apply() or edgesets.from().to().apply() pattern
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
-
-
                 consume(Token::Type::LP);
                 fir::FromExpr::Ptr from_expr = std::make_shared<fir::FromExpr>();
                 from_expr->input_func = parseIdent();
                 consume(Token::Type::RP);
                 consume(Token::Type::PERIOD);
 
-                if (tryConsume(Token::Type::TO)) {
+                // right now this is a bit of a hack, dstFilter and to act the same in the compiler
+                if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
                     //.from(expr).to(expr).apply(func)
                     consume(Token::Type::LP);
                     auto to_expr = std::make_shared<fir::ToExpr>();

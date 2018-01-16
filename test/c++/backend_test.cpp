@@ -325,6 +325,20 @@ TEST_F(BackendTest, SimpleApplyFromToFilterWithFromVertexsetExpression) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleApplyDstFilterWithFromVertexsetExpression) {
+    istringstream is("element Vertex end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func foo(src : Vertex, dst : Vertex) -> output : bool output = true; end\n"
+                             "func main() "
+                             "var frontier : vertexset{Vertex} = new vertexset{Vertex}(1);"
+                             "var active_vertices : vertexset{Vertex} = edges.from(frontier).dstFilter(to_filter).apply(foo); "
+                             "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleBFS) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -438,6 +452,21 @@ TEST_F(BackendTest, SimpleAssignReturnFrontier) {
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
                              "func main() var active_vertices : vertexset{Vertex} = "
                              "edges.from(from_filter).to(to_filter).applyModified(update, age); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, SrcFilterDstFilterApply) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = "
+                             "edges.srcFilter(from_filter).dstFilter(to_filter).applyModified(update, age); end");
     EXPECT_EQ (0, basicTest(is));
 }
 

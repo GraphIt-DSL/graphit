@@ -104,7 +104,9 @@ namespace graphit {
             MODIFIED,
             PLUS_REDUCE,
             MIN_REDUCE,
-            MAX_REDUCE
+            MAX_REDUCE,
+            DST_FILTER,
+            SRC_FILTER
         };
 
         Type        type;
