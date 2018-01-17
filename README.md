@@ -25,11 +25,11 @@ To run the Python end-to-end test suite:
 start at the top level graphit directory cloned from Github, NOT the build directory
 (All tests would pass, but some would generate error messages from the g++ compiler)
 Currently the project supports Python 2.x and not Python 3.x (the print syntax is different)
-
+```
     cd graphit/test/python
     python test.py
     python test_with_schedules.py
-
+```
 Try Graphit
 ===========
 GraphIt compiler currently generates a C++ output file from the .gt input GraphIt programs. 
