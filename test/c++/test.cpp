@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSlidingQueueSchedule";
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaPullParallelFuseFields";

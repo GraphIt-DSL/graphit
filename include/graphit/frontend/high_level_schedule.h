@@ -68,6 +68,42 @@ namespace graphit {
                 //using low level schedule APIs
 
 
+                // High lvel API for speicifying direction scheduling options for apply
+                // A wrapper around setApply for now.
+                // Scheduling Options include DensePush, DensePull, SparsePush, SparsePull, SparsePushDensePull, SparsePushDensePush
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyDirection(std::string apply_label, std::string apply_schedule){
+                    return setApply(apply_label, apply_schedule);
+                }
+
+
+                // High lvel API for speicifying parallelization scheduling options for apply
+                // A wrapper around setApply for now.
+                // Scheduling Options include VertexParallel, EdgeAwareVertexParallel
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyParallelization(std::string apply_label, std::string apply_schedule){
+                    return setApply(apply_label, apply_schedule);
+                }
+
+
+                // High lvel API for speicifying deduplication scheduling options for apply
+                // A wrapper around setApply for now.
+                // Scheduling Options include Enable and Disable deduplication
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyDeduplication(std::string apply_label, std::string apply_schedule){
+                    return setApply(apply_label, apply_schedule);
+                }
+
+
+                // High lvel API for speicifying Data Structure scheduling options for apply
+                // A wrapper around setApply for now.
+                // Scheduling Options include bitvector (from_vertexset)
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyDataStructure(std::string apply_label, std::string apply_schedule){
+                    return setApply(apply_label, apply_schedule);
+                }
+
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr
