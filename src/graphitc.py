@@ -21,9 +21,11 @@ if __name__ == '__main__':
     supplied_separate_algo_file = False
 
     if (args['input_algo_file_name']):
+        # use the separate algorithm file if supplied, and use the input_file only for the schedule
         supplied_separate_algo_file = True
         algo_file_name = args['input_algo_file_name']
     else:
+        # use the input_file for both the algorithm and schedule
         algo_file_name = 'algo.gt'
     compile_file_name = 'compile.cpp'
 

@@ -7,6 +7,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 
 const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 
+% this is a hack, manually returning boolean variables. should use applyModified
 func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool
      if SP[dst] > SP[src] + weight
           SP[dst] = SP[src] + weight;

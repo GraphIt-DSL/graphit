@@ -1,0 +1,52 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const latent_vec : vector{Vertex}(vector[1](float));
+const error_vec : vector{Vertex}(vector[1](float));
+const step : float = 0.35; %for testing
+const lambda : float = 0.001;
+const K : int = 1;
+
+func updateEdge (src : Vertex, dst : Vertex, rating : int)
+    var estimate : float = 0;
+    for i in 0:K
+        estimate  += latent_vec[src][i] * latent_vec[dst][i];
+    end
+    var err : float =  rating - estimate;
+    for i in 0:K
+        error_vec[dst][i] += latent_vec[src][i]*err;
+    end
+end
+
+func updateVertex (v : Vertex)
+     for i in 0:K
+        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);
+        error_vec[v][i] = 0;
+     end
+end
+
+func initVertex (v : Vertex)
+    for i in 0:K
+        latent_vec[v][i] = 0.5;
+        error_vec[v][i] = 0;
+    end
+end
+
+func main()
+    vertices.apply(initVertex);
+    for i in 0:5
+        #s1# edges.apply(updateEdge);
+        vertices.apply(updateVertex);
+    end
+
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        for j in 0:K
+            sum += latent_vec[i][j];
+        end
+    end
+
+    print sum;
+
+end

@@ -27,8 +27,10 @@ namespace graphit {
         if (token == "func") return Token::Type::FUNC;
         if (token == "inout") return Token::Type::INOUT;
         if (token == "apply") return Token::Type::APPLY;
+        if (token == "applyModified") return Token::Type::APPLYMODIFIED;
         if (token == "map") return Token::Type::MAP;
         if (token == "to") return Token::Type::TO;
+        if (token == "dstFilter") return Token::Type::DST_FILTER;
         if (token == "with") return Token::Type::WITH;
         if (token == "reduce") return Token::Type::REDUCE;
         if (token == "through") return Token::Type::THROUGH;
@@ -56,6 +58,7 @@ namespace graphit {
         if (token == "load") return Token::Type::LOAD;
         if (token == "where") return Token::Type::WHERE;
         if (token == "from") return Token::Type::FROM;
+        if (token == "srcFilter") return Token::Type::SRC_FILTER;
         if (token == "break") return Token::Type::BREAK;
         if (token == "#") return Token::Type::NUMBER_SIGN;
         if (token == "modified") return Token::Type::MODIFIED;

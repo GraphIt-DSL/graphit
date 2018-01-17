@@ -28,8 +28,6 @@ namespace graphit {
 
         // these schedules are still supported by runtime libraries
         if (func_name == "edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier"
-                || func_name ==  "edgeset_apply_pull_serial"
-                || func_name == "edgeset_apply_push_serial"
                 || func_name == "edgeset_apply_push_parallel_sliding_queue_weighted_deduplicatied_from_vertexset_with_frontier"){
             return;
         }

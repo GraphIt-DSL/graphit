@@ -432,7 +432,7 @@ TEST_F(FrontendTest, SimpleApplyWithModifiedTracking){
     istringstream is("func update (v: Vertex) -> output :bool output = true; end\n"
                              "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
                              "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
-                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).apply(foo).modified(vectora); end");
+                             "func main() var active_vertices : vertexset{Vertex} = edges.from(from_filter).to(to_filter).applyModified(foo, vectora); end");
     EXPECT_EQ (0,  basicTest(is));
 }
 

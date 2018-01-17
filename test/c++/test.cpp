@@ -17,9 +17,9 @@ int main(int argc, char **argv) {
 
 
     //::testing::GTEST_FLAG(filter) = "BackendTest*";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleFloatVarDecl";
-    //::testing::GTEST_FLAG(filter) = "BackendTest.MinReduceReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleAssignReturnFrontier";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleApplyDstFilterWithFromVertexsetExpression";
+    //::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
     //::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
     //::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
     //::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
@@ -37,12 +37,12 @@ int main(int argc, char **argv) {
 
     //::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSlidingQueueSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 
 
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSlidingQueueSchedule";
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallel";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaPullParallelFuseFields";
