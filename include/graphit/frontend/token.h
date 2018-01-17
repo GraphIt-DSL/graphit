@@ -92,6 +92,7 @@ namespace graphit {
             TRUE,
             FALSE,
 
+            DOUBLE,
             VERTEX_SET,
             EDGE_SET,
             WHERE,

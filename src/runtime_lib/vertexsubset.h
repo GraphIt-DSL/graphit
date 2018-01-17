@@ -22,6 +22,8 @@ struct VertexSubset {
     Bitmap * bitmap_ ;
     std::vector<NodeID> tmp;
     bool* bool_map_;
+    SlidingQueue<NodeID>* sliding_queue_;
+
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -37,18 +39,28 @@ struct VertexSubset {
     {
 
         if (num_vertices == vertices_range){
+
+            //try not to initialize unncessary data structures, this can be expensive for PageRank, which returns full set
             bitmap_ = new Bitmap(vertices_range);
             bitmap_->set_all();
             bool_map_ = newA(bool, vertices_range);
             parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
+
             dense_vertex_set_ = new unsigned int[vertices_range];
-            parallel_for (int i = 0; i< vertices_range; i++){
+// don't need this for now
+//            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
+            parallel_for (NodeID i = 0; i< vertices_range; i++){
                 dense_vertex_set_[i] = i;
+                //hopefully we will only need to use one of the two in the futuer (dense_set or sliding queue)
+                //sliding_queue_->push_back(i);
             }
+            sliding_queue_ = nullptr;
+
         } else {
             bool_map_ = nullptr;
             bitmap_ = nullptr;
             dense_vertex_set_ = nullptr;
+            sliding_queue_ = nullptr;
         }
     }
 
@@ -78,6 +90,15 @@ struct VertexSubset {
             bool_map_ = newA(bool, vertices_range_);
             parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
         }
+
+        if (sliding_queue_ == nullptr){
+            // initialized to two times of vertices range
+            // (one for the frontier to be read, the other for the frontier to be written to)
+            sliding_queue_ = new SlidingQueue<NodeID>(2*vertices_range_);
+        }
+        // TODO: this is a hack for now, need to solve it later. Sliding window needs to be called before usage
+        sliding_queue_->push_back(v);
+        //sliding_queue_->slide_window();
 
         if (!bitmap_->get_bit(v)){
             bitmap_->set_bit(v);

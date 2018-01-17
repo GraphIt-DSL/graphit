@@ -12,7 +12,7 @@ namespace graphit {
         genStructTypeDecls();
 
 
-        //Processing the constants
+        //Processing the constants, generting declartions
         for (auto constant : mir_context_->getLoweredConstants()) {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
@@ -22,9 +22,10 @@ namespace graphit {
                     //NOTE: here we only generate the declaration, not the allocation and initialization
                     // even through we have all the information.
                     // This is because we want to do the allocation and initialization steps in the main function,
-                    // when we are using command line arguments and variables.
+                    // when we are using command line arguments and variables. This also allows flexibility of array of structs
+                    // and struct of arrays.
                     // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
-                    // We first generate allocation, and then initialization for global variables.
+                    // We first generate allocation, and then initialization (init_stmts) for global variables.
                     genPropertyArrayDecl(constant);
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
@@ -39,8 +40,8 @@ namespace graphit {
 
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
-        // gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
-        // gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
+        auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
+        gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
@@ -156,7 +157,7 @@ namespace graphit {
             printIndent();
 
             assign_stmt->lhs->accept(this);
-            oss << "  = ____graphit_tmp_out; " << std::endl;
+            oss << "  = ____graphit_tmp_out; "  << std::endl;
 
         } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
@@ -237,6 +238,17 @@ namespace graphit {
                     oss << ", ";
                     reduce_stmt->expr->accept(this);
                     oss << " ); " << std::endl;
+                    break;
+                case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
+                    printIndent();
+                    if (reduce_stmt->tracking_var_name_ != "")
+                        oss << reduce_stmt->tracking_var_name_ << " =  true;\n";
+                    oss << "writeAdd( &";
+                    reduce_stmt->lhs->accept(this);
+                    oss << ", ";
+                    reduce_stmt->expr->accept(this);
+                    oss << " ); " << std::endl;
+                    break;
             }
 
         }
@@ -408,6 +420,9 @@ namespace graphit {
             case mir::ScalarType::Type::FLOAT:
                 oss << "float ";
                 break;
+            case mir::ScalarType::Type::DOUBLE:
+                oss << "double ";
+                break;
             case mir::ScalarType::Type::BOOL:
                 oss << "bool ";
                 break;
@@ -417,6 +432,12 @@ namespace graphit {
             default:
                 break;
         }
+    }
+
+    void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
+        //MIRVisitor::visit(vector_type);
+
+
     }
 
     void CodeGenCPP::visit(mir::StructTypeDecl::Ptr struct_type) {
@@ -596,6 +617,7 @@ namespace graphit {
     };
 
     void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl){
+        //the declaration and the value are separate. The value is generated as a separate assign statement in the main function
         var_decl->type->accept(this);
         oss << var_decl->name << "; " << std::endl;
     }
@@ -624,6 +646,7 @@ namespace graphit {
         auto vector_element_type = vector_type->vector_element_type;
         assert(vector_element_type != nullptr);
 
+        /**  Deprecated, now we generate an array declaration, not a vector one
         //generate std::vector implementation
         oss << "std::vector< ";
         vector_element_type->accept(this);
@@ -631,6 +654,34 @@ namespace graphit {
         oss << " >  ";
         oss << name;
         oss << ";" << std::endl;
+         **/
+
+        if (!mir::isa<mir::VectorType>(vector_element_type)){
+            vector_element_type->accept(this);
+            oss << " * __restrict " << name << ";" << std::endl;
+        } else if (mir::isa<mir::VectorType>(vector_element_type)) {
+            //if each element is a vector
+            auto vector_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
+            assert(vector_vector_element_type->range_indexset != 0);
+            int range = vector_vector_element_type->range_indexset;
+
+            //first generates a typedef for the vector type
+            oss << "typedef ";
+            vector_vector_element_type->vector_element_type->accept(this);
+            std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
+            oss << typedef_name <<  " ";
+            oss << "[ " << range << "]; " << std::endl;
+            vector_vector_element_type->typedef_name_ = typedef_name;
+
+            //use the typedef defined type to declare a new pointer
+            oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
+
+        } else {
+            std::cout << "unsupported type for property: " << var_decl->name << std::endl;
+            exit(0);
+        }
+
+
     }
 
 
@@ -644,12 +695,30 @@ namespace graphit {
         auto vector_element_type = vector_type->vector_element_type;
 
         assert(size_expr != nullptr);
+
+        /** Deprecated, now we uses a "new" allocation scheme for arrays
         oss << " = std::vector< ";
         vector_element_type->accept(this);
         oss << " >  ";
         oss << " ( ";
         size_expr->accept(this);
         oss << " ); " << std::endl;
+         **/
+
+        oss << " = new ";
+
+        if (mir::isa<mir::VectorType>(vector_element_type)){
+            //for vector type, we use the name from typedef
+            auto vector_type_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
+            assert(vector_type_vector_element_type->typedef_name_ != "");
+            oss << vector_type_vector_element_type->typedef_name_ << " ";
+        } else {
+            vector_element_type->accept(this);
+        }
+
+        oss << "[ ";
+        size_expr -> accept(this);
+        oss << "];" << std::endl;
     }
 
     void CodeGenCPP::genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr var_decl) {
@@ -716,7 +785,8 @@ namespace graphit {
         assert(associated_element_type);
         auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
         assert(associated_element_type_size);
-        oss << "parallel_for (int i = 0; i < ";
+        std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
+        oss << for_type << " (int i = 0; i < ";
         associated_element_type_size->accept(this);
         oss << "; i++) {" << std::endl;
         indent();
@@ -732,13 +802,17 @@ namespace graphit {
         // get the name of the function declaration
         //edgeset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
+        // DEPRECATED, we now do it at various statements (assign)
+        // TODO: fix using this visitor again, so we don't need to do it at statements
         //generate code for pull edgeset apply
-        genEdgeSetPullApply(mir_var, apply_expr);
+        //genEdgeSetPullApply(mir_var, apply_expr);
     }
 
     void CodeGenCPP::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
         // generate code for push edgeset apply
-        genEdgesetPushApply(apply_expr);
+        // DEPRECATED, we now do it at various statements (assign)
+        // TODO: fix using this visitor again, so we don't need to do it at statements
+        //genEdgesetPushApply(apply_expr);
     }
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
@@ -759,23 +833,35 @@ namespace graphit {
                     mir_context_->getElementCount(vertex_type);
             vertices_range_expr->accept(this);
             oss << " , ";
-            vertices_range_expr->accept(this);
+            //vertices_range_expr->accept(this);
+            // the output vertexset is initially set to 0
+            oss << "0";
             oss << " );" << std::endl;
-
+            std::string next_bool_map_name = "next" + mir_context_->getUniqueNameCounterString();
+            oss << "bool * " << next_bool_map_name << " = newA(bool, ";
+            vertices_range_expr->accept(this);
+            oss << ");\n";
             printIndent();
-            oss << "for (int v = 0; v < ";
+            oss << "parallel_for (int v = 0; v < ";
             associated_element_type_size->accept(this);
             oss << "; v++) {" << std::endl;
             indent();
             printIndent();
+            oss << next_bool_map_name << "[v] = 0;" << std::endl;
             oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
             indent();
             printIndent();
-            oss << "____graphit_tmp_out->addVertex(v);" << std::endl;
+            oss << next_bool_map_name << "[v] = 1;" << std::endl;
             dedent();
             dedent();
             printIndent();
-            oss << "}";
+            oss << "} //end of loop\n";
+            oss << "____graphit_tmp_out->num_vertices_ = sequence::sum( "
+                <<  next_bool_map_name << ", " ;
+            vertices_range_expr->accept(this);
+            oss << " );\n"
+                    "____graphit_tmp_out->bool_map_ = ";
+            oss << next_bool_map_name << ";\n";
         }
 
     }
@@ -798,269 +884,6 @@ namespace graphit {
         }
     }
 
-    void CodeGenCPP::genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr apply_expr) {
-        auto edgeset_name = var_expr->var.getName();
-        bool apply_expr_gen_frontier = false;
-
-        // Check if the apply function has a return value
-        auto apply_func = mir_context_->getFunction(apply_expr->input_function_name);
-
-        // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
-        // Need to get the Vertex end point type from the edgeset, probably through the Edge type
-        mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
-        mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
-        mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
-        assert(edgeset_type->vertex_element_type_list->size() == 2);
-        mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
-        auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
-
-        bool is_weighted_edgeset = false;
-        if (edgeset_type->weight_type != nullptr) {
-            is_weighted_edgeset = true;
-        }
-
-        // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_func->result.isInitialized()) {
-            // build an empty vertex subset if apply function returns
-            apply_expr_gen_frontier = true;
-            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-            dst_vertices_range_expr->accept(this);
-            oss << " , 0 );" << std::endl;
-
-        } else {
-            // If no return value is specified for the apply function, then it would return the entire set
-            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
-            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-            dst_vertices_range_expr->accept(this);
-            oss << " , ";
-            dst_vertices_range_expr->accept(this);
-            oss << " );" << std::endl;
-        }
-
-        printIndent();
-        oss << "for (NodeID d=0; d < " << edgeset_name << ".num_nodes(); d++) {" << std::endl;
-        indent();
-        printIndent();
-
-        if (apply_expr->to_func != "") {
-            oss << "if (" << apply_expr->to_func << "( d ) ) { " << std::endl;
-            indent();
-        }
-
-        printIndent();
-
-        if (!is_weighted_edgeset) {
-            oss << "for (NodeID s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
-        } else {
-            oss << "for (WNode s : " << edgeset_name << ".in_neigh(d)) {" << std::endl;
-        }
-
-        indent();
-        printIndent();
-
-        // print the checks on filtering on sources s
-        if (apply_expr->from_func != "") {
-            oss << "if ";
-            //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)) {
-                //if the input expression is a function call
-                oss << " ( " << apply_expr->from_func << " ( s )";
-
-            } else {
-                //the input expression is a vertex subset
-                oss << " ( " << apply_expr->from_func << "->contains( s ) ";
-            }
-
-
-            oss << ") { " << std::endl;
-        }
-
-        indent();
-        printIndent();
-        if (apply_expr_gen_frontier) {
-            oss << "if ( ";
-        }
-
-        // generating the C++ code for the apply function call
-        if (is_weighted_edgeset) {
-            oss << apply_expr->input_function_name << "( s.v , d, s.w )";
-        } else {
-            oss << apply_expr->input_function_name << "( s , d  )";
-
-        }
-
-        if (!apply_expr_gen_frontier) {
-            // no need to generate a frontier
-            oss << ";" << std::endl;
-        } else {
-            //generate the code for adding destination to "next" frontier
-            oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
-        }
-
-        // generating code for early break
-        if (apply_expr->to_func != "") {
-            printIndent();
-            oss << "if (!" << apply_expr->to_func << "( d ) ) break; " << std::endl;
-        }
-
-        // end of from filtering
-        if (apply_expr->from_func != "") {
-            dedent();
-            printIndent();
-            oss << "}" << std::endl;
-        }
-
-        //end of for loop on the neighbors
-        dedent();
-        printIndent();
-        oss << "}" << std::endl;
-
-        if (apply_expr->to_func != "") {
-            dedent();
-            printIndent();
-            oss << "} " << std::endl;
-        }
-
-
-        dedent();
-        printIndent();
-        oss << "}" << std::endl;
-    }
-
-
-    void CodeGenCPP::genEdgesetPushApply(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        auto edgeset_name = mir_var->var.getName();
-        bool apply_expr_gen_frontier = false;
-
-        // Check if the apply function has a return value
-        auto apply_func = mir_context_->getFunction(apply_expr->input_function_name);
-
-        // For now, the temporary vertexset would be set at the number of assoicated vertices of Vertex type
-        // Need to get the Vertex end point type from the edgeset, probably through the Edge type
-        mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(apply_expr->target);
-        mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_name);
-        mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_var_decl->type);
-        assert(edgeset_type->vertex_element_type_list->size() == 2);
-        mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
-        auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
-
-
-        // If apply function has a return value, then we need to return a temporary vertexsubset
-        if (apply_func->result.isInitialized()) {
-            // build an empty vertex subset if apply function returns
-            apply_expr_gen_frontier = true;
-            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-            dst_vertices_range_expr->accept(this);
-            oss << " );" << std::endl;
-
-        } else {
-            // If no return value is specified for the apply function, then it would return the entire set
-            auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
-            oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-            dst_vertices_range_expr->accept(this);
-            oss << " , true);" << std::endl;
-        }
-
-        printIndent();
-        oss << "for (NodeID s=0; s < " << edgeset_name << ".num_nodes(); s++) {" << std::endl;
-        indent();
-        printIndent();
-
-        if (apply_expr->from_func != "") {
-            oss << "if ";
-            //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)) {
-                //if the input expression is a function call
-                oss << " ( " << apply_expr->from_func << " ( s )";
-
-            } else {
-                //the input expression is a vertex subset
-                oss << " ( " << apply_expr->from_func << "->contains( s ) ";
-            }
-            oss << ") { " << std::endl;
-            indent();
-        }
-
-        printIndent();
-        oss << "for (NodeID d : " << edgeset_name << ".out_neigh(s)) {" << std::endl;
-        indent();
-        printIndent();
-
-        // print the checks on filtering on sources s
-        if (apply_expr->to_func != "") {
-            oss << "if ";
-            //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->to_func)) {
-                //if the input expression is a function call
-                oss << " ( " << apply_expr->to_func << " ( d )";
-
-            } else {
-                //the input expression is a vertex subset
-                oss << " ( " << apply_expr->to_func << "->contains( d ) ";
-            }
-
-
-            oss << ") { " << std::endl;
-        }
-
-        indent();
-        printIndent();
-        if (apply_expr_gen_frontier) {
-            oss << "if ( ";
-        }
-
-        // generating the C++ code for the apply function call
-
-        oss << apply_expr->input_function_name << "( s , d )";
-
-        if (!apply_expr_gen_frontier) {
-            // no need to generate a frontier
-            oss << ";" << std::endl;
-        } else {
-            //generate the code for adding destination to "next" frontier
-            oss << " ) { ____graphit_tmp_out->addVertex(d); }" << std::endl;
-        }
-
-        // generating code for early break if source changed
-        if (apply_expr->from_func != "") {
-            printIndent();
-            oss << "if ";
-            //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply_expr->from_func)) {
-                //if the input expression is a function call
-                oss << " ( " << apply_expr->from_func << " ( s )";
-
-            } else {
-                //the input expression is a vertex subset
-                oss << " ( " << apply_expr->from_func << "->contains( s ) ";
-            }
-            oss << ") break; " << std::endl;
-        }
-
-        // end of from filtering
-        if (apply_expr->from_func != "") {
-            dedent();
-            printIndent();
-            oss << "}" << std::endl;
-        }
-
-        //end of for loop on the neighbors
-        dedent();
-        printIndent();
-        oss << "}" << std::endl;
-
-        if (apply_expr->to_func != "") {
-            dedent();
-            printIndent();
-            oss << "} " << std::endl;
-        }
-
-
-        dedent();
-        printIndent();
-        oss << "}" << std::endl;
-    }
 
     /**
      * Generate the struct types before the arrays are generated
@@ -1125,19 +948,24 @@ namespace graphit {
             }
         }
 
+        // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(apply->to_func);
+                arguments.push_back(apply_expr->push_to_function_);
             }
         }
 
+        // the original apply function (pull direction in hybrid case)
         arguments.push_back(apply->input_function_name);
+
+        // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             arguments.push_back(apply_expr->push_function_);
         }
 
+        // the edgeset that is being applied over (target)
         apply->target->accept(this);
         for (auto &arg : arguments) {
             oss << ", " << arg;
@@ -1157,6 +985,7 @@ namespace graphit {
             oss << ") ";
         }
     }
+
 
 
 

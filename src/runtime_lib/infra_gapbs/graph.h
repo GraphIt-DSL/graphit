@@ -126,6 +126,8 @@ class CSRGraph {
       num_edges_ = (out_index_[num_nodes_] - out_index_[0]) / 2;
       //adding flags used for deduplication
       flags_ = new int[num_nodes_];
+    //adding offsets for load balacne scheme
+    SetUpOffsets(true);
     }
 
   CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
@@ -134,8 +136,11 @@ class CSRGraph {
     out_index_(out_index), out_neighbors_(out_neighs),
     in_index_(in_index), in_neighbors_(in_neighs) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
+
       flags_ = new int[num_nodes_];
-    }
+    SetUpOffsets(true);
+
+  }
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
@@ -148,6 +153,7 @@ class CSRGraph {
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
+    other.offsets_ = nullptr;
   }
 
   ~CSRGraph() {
@@ -171,6 +177,8 @@ class CSRGraph {
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
+      other.offsets_ = nullptr;
+
     }
     return *this;
   }
@@ -247,12 +255,22 @@ class CSRGraph {
     return offsets;
   }
 
+   void SetUpOffsets(bool in_graph = false)  {
+      offsets_ = new SGOffset[num_nodes_+1];
+      for (NodeID_ n=0; n < num_nodes_+1; n++)
+        if (in_graph)
+          offsets_[n] = in_index_[n] - in_index_[0];
+        else
+          offsets_[n] = out_index_[n] - out_index_[0];
+    }
+
   Range<NodeID_> vertices() const {
     return Range<NodeID_>(num_nodes());
   }
 
   //useful for deduplication
   int* flags_;
+    SGOffset * offsets_;
 
  private:
   bool directed_;

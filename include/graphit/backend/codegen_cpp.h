@@ -82,6 +82,7 @@ namespace graphit {
         virtual void visit(mir::VertexSetType::Ptr vertexset_type);
         virtual void visit(mir::StructTypeDecl::Ptr struct_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
+        virtual void visit(mir::VectorType::Ptr vector_type);
 
     private:
         void genIncludeStmts();
@@ -103,11 +104,7 @@ namespace graphit {
 
         void genEdgeSets();
 
-        void genEdgeSetPullApply(mir::VarExpr::Ptr var_expr, mir::EdgeSetApplyExpr::Ptr function_name);
-
         void genStructTypeDecls();
-
-        void genEdgesetPushApply(mir::PushEdgeSetApplyExpr::Ptr shared_ptr);
 
         // generate the call to the right edgeset apply function with all the arguments
         void genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply);

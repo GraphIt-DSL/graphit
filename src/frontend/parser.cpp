@@ -430,8 +430,12 @@ namespace graphit {
                 // Needed for dynamic sets and loaders.
                 constDecl->type = parseType();
             }
-            consume(Token::Type::ASSIGN);
-            constDecl->initVal = parseExpr();
+
+            //if an initial value is specified
+            if (tryConsume(Token::Type::ASSIGN)){
+                //consume(Token::Type::ASSIGN);
+                constDecl->initVal = parseExpr();
+            }
 
             const Token endToken = consume(Token::Type::SEMICOL);
             constDecl->setEndLoc(endToken);
@@ -439,6 +443,7 @@ namespace graphit {
             decls.insert(constDecl->name->ident, IdentType::OTHER);
 
             return constDecl;
+
         } catch (const SyntaxError &) {
             skipTo({Token::Type::SEMICOL});
             consume(Token::Type::SEMICOL);
@@ -1485,6 +1490,7 @@ namespace graphit {
                 type = (peek(2).type == Token::Type::COL) ?
                        parseNamedTupleType() : parseUnnamedTupleType();
                 break;
+            case Token::Type::DOUBLE:
             case Token::Type::INT:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
@@ -1672,6 +1678,7 @@ namespace graphit {
         switch (peek().type) {
             case Token::Type::INT:
             case Token::Type::FLOAT:
+            case Token::Type::DOUBLE:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:
             case Token::Type::STRING:
@@ -1805,6 +1812,10 @@ namespace graphit {
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);
                 scalarType->type = fir::ScalarType::Type::FLOAT;
+                break;
+            case Token::Type::DOUBLE:
+                consume(Token::Type::DOUBLE);
+                scalarType->type = fir::ScalarType::Type::DOUBLE;
                 break;
             case Token::Type::BOOL:
                 consume(Token::Type::BOOL);

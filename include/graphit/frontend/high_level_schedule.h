@@ -73,6 +73,12 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 setApply(std::string apply_label, std::string apply_schedule);
 
+
+                // High lvel API for speicifying scheduling options for apply
+                // Scheduling Options include load balance with edge grain size
+                high_level_schedule::ProgramScheduleNode::Ptr
+                setApply(std::string apply_label, std::string apply_schedule, int param);
+
                 // High lvel API for speicifying scheduling options for vertexset
                 // Scheduling Options include sparse, dense
                 high_level_schedule::ProgramScheduleNode::Ptr

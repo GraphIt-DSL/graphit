@@ -214,7 +214,7 @@ namespace graphit {
 
         struct ScalarType : public Type {
             enum class Type {
-                INT, FLOAT, BOOL, COMPLEX, STRING
+                INT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
             };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
@@ -249,6 +249,8 @@ namespace graphit {
             ElementType::Ptr element_type;
             // scalar type for each element of the vector (not the global Elements)
             Type::Ptr vector_element_type;
+            int range_indexset = 0;
+            std::string typedef_name_ = "";
 
             typedef std::shared_ptr<VectorType> Ptr;
 
@@ -404,7 +406,7 @@ namespace graphit {
 
         struct ReduceStmt : public AssignStmt {
             enum class ReductionOp {
-                MIN, SUM, MAX, ATOMIC_MIN
+                MIN, SUM, MAX, ATOMIC_MIN, ATOMIC_SUM
             };
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";
@@ -689,6 +691,8 @@ namespace graphit {
 
         struct VertexSetApplyExpr : public ApplyExpr {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
+            //default to parallel
+            bool is_parallel = true;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());
@@ -719,6 +723,11 @@ namespace graphit {
             bool is_parallel = false;
             bool enable_deduplication = false;
             bool is_weighted = false;
+            bool use_sliding_queue = false;
+            bool use_pull_frontier_bitvector = false;
+            bool use_pull_edge_based_load_balance = false;
+            //hard coded default value for grain size
+            int pull_edge_based_load_balance_grain_size = 4096;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

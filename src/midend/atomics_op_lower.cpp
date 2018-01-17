@@ -201,11 +201,17 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
 
 void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::Ptr reduce_stmt) {
    //if the lhs is a tensor array ready (tensor struct ready would not do)
-    if (! mir::isa<mir::TensorArrayReadExpr>(reduce_stmt->lhs)){
+    if (! mir::isa<mir::TensorArrayReadExpr>(reduce_stmt->lhs) ){
         return;
     }
+
     mir::TensorArrayReadExpr::Ptr tensor_array_read_expr =
             mir::to<mir::TensorArrayReadExpr>(reduce_stmt->lhs);
+
+    //if it is not a scalar tensor read, then we can't lower to atomic operations
+    if (! mir::isa<mir::VarExpr>(tensor_array_read_expr->target)){
+        return;
+    }
 
     std::string field_name = tensor_array_read_expr->getTargetNameStr();
     FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
@@ -224,9 +230,12 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                     case mir::ReduceStmt::ReductionOp::MIN:
                         reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;
                         break;
+                    case mir::ReduceStmt::ReductionOp::SUM:
+                        reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_SUM;
+                        break;
                     default:
                         std::cout << "not supported for atomics" << std::endl;
-                        break;
+                        exit(0);
                 }
             }
         }

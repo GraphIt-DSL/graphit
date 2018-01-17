@@ -16,8 +16,8 @@ end
 
 func main()
 
-    startTimer();
     var n : int = edges.getVertices();
+    startTimer();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
     vertices.apply(init);
     while (frontier.getVertexSetSize() != 0)
@@ -27,9 +27,8 @@ func main()
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";
     print elapsed_time;
-
 end
 
 
 schedule:
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");

@@ -119,7 +119,7 @@ protected:
                                                  "func main()\n"
                                                  "#l1# for i in 1:10\n"
                                                  "   #s1# edges.apply(updateEdge);\n"
-                                                 "        vertices.apply(updateVertex);\n"
+                                                 "   #s2# vertices.apply(updateVertex);\n"
                                                  "        print error.sum();"
                                                  "    end\n"
                                                  "end"
@@ -147,6 +147,122 @@ protected:
                                                      "          end\n"
                                                      "     end\n"
                                                      "end");
+
+
+    istringstream cc_is_ = istringstream("element Vertex end\n"
+                                                 "element Edge end\n"
+                                                 "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/4.el\");\n"
+                                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                 "const IDs : vector{Vertex}(int) = 1;\n"
+                                                 "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                 "    IDs[dst] min= IDs[src];\n"
+                                                 "end\n"
+                                                 "func init(v : Vertex)\n"
+                                                 "     IDs[v] = v;\n"
+                                                 "end\n"
+                                                 "func printID(v : Vertex)\n"
+                                                 "    print IDs[v];\n"
+                                                 "end\n"
+                                                 "func main()\n"
+                                                 "    var n : int = edges.getVertices();\n"
+                                                 "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                                 "    vertices.apply(init);\n"
+                                                 "    while (frontier.getVertexSetSize() != 0)\n"
+                                                 "        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);\n"
+                                                 "    end\n"
+                                                 "    vertices.apply(printID);\n"
+                                                 "end");
+
+
+
+    istringstream cf_is_ = istringstream( "element Vertex end\n"
+                                                  "element Edge end\n"
+                                                  "const edges : edgeset{Edge}(Vertex,Vertex, float) = load (argv[1]);\n"
+                                                  "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                  "const latent_vec : vector{Vertex}(vector[20](float));\n"
+                                                  "const error_vec : vector{Vertex}(vector[20](float));\n"
+                                                  "const step : float = 0.00000035;\n"
+                                                  "const lambda : float = 0.001;\n"
+                                                  "const K : int = 20;\n"
+                                                  "func updateEdge (src : Vertex, dst : Vertex, rating : int)\n"
+                                                  "    var estimate : float = 0;\n"
+                                                  "    for i in 0:K\n"
+                                                  "        estimate  += latent_vec[src][i] * latent_vec[dst][i];\n"
+                                                  "    end\n"
+                                                  "    var err : float = estimate - rating;\n"
+                                                  "    for i in 0:K\n"
+                                                  "        error_vec[dst][i] += latent_vec[src][i]*err;\n"
+                                                  "    end\n"
+                                                  "end\n"
+                                                  "func updateVertex (v : Vertex)\n"
+                                                  "     for i in 0:K\n"
+                                                  "        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);\n"
+                                                  "        error_vec[v][i] = 0;\n"
+                                                  "     end\n"
+                                                  "end\n"
+                                                  "func initVertex (v : Vertex)\n"
+                                                  "    for i in 0:K\n"
+                                                  "        latent_vec[v][i] = 0.5;\n"
+                                                  "        error_vec[v][i] = 0;\n"
+                                                  "    end\n"
+                                                  "end\n"
+                                                  "func main()\n"
+                                                  "    vertices.apply(initVertex);\n"
+                                                  "    for i in 1:10\n"
+                                                  "        #s1# edges.apply(updateEdge);\n"
+                                                  "        vertices.apply(updateVertex);\n"
+                                                  "    end\n"
+                                                  "end"
+    );
+
+    istringstream prd_is_ = istringstream ("element Vertex end\n"
+                                                   "element Edge end\n"
+                                                   "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                   "const cur_rank : vector{Vertex}(float) = 1.0/vertices.size();\n"
+                                                   "const ngh_sum : vector{Vertex}(float) = 0.0;\n"
+                                                   "const delta : vector{Vertex}(float) = 1.0/vertices.size();\n"
+                                                   "const out_degree : vector {Vertex}(int) = edges.getOutDegrees();\n"
+                                                   "const error : vector{Vertex}(float) = 0.0;\n"
+                                                   "const damp : float = 0.85;\n"
+                                                   "const beta_score : float = (1.0 - damp) / vertices.size();\n"
+                                                   "const epsilon2 : float = 0.01;\n"
+                                                   "const epsilon : float = 0.0000001;\n"
+                                                   "\n"
+                                                   "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                   "    ngh_sum[dst] += delta[src] /out_degree[src];\n"
+                                                   "end\n"
+                                                   "\n"
+                                                   "func updateVertexFirstRound(v : Vertex) -> output : bool\n"
+                                                   "    delta[v] = damp*(ngh_sum[v]) + beta_score;\n"
+                                                   "    cur_rank[v] += delta[v];\n"
+                                                   "    delta[v] = delta[v] - 1.0/vertices.size();\n"
+                                                   "    output = (fabs(delta[v]) > epsilon2*cur_rank[v]);\n"
+                                                   "    ngh_sum[v] = 0;"
+                                                   "end\n"
+                                                   "\n"
+                                                   "func updateVertex(v : Vertex) -> output : bool\n"
+                                                   "   delta[v] = ngh_sum[v]*damp;\n"
+                                                   "   cur_rank[v]+= delta[v];\n"
+                                                   "   output = fabs(delta[v]) > epsilon2*cur_rank[v];\n"
+                                                   "   ngh_sum[v] = 0; "
+                                                   "end\n"
+                                                   "\n"
+                                                   "func main()\n"
+                                                   "    startTimer();\n"
+                                                   "    var n : int = edges.getVertices();\n"
+                                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                                   "\n"
+                                                   "    for i in 1:10\n"
+                                                   "        #s1# edges.from(frontier).apply(updateEdge);\n"
+                                                   "        if i == 1\n"
+                                                   "            frontier = vertices.where(updateVertexFirstRound);\n"
+                                                   "        else\n"
+                                                   "            frontier = vertices.where(updateVertex);\n"
+                                                   "        end\n"
+                                                   "\n"
+                                                   "    end\n"
+                                                   "end");
 
 };
 
@@ -330,12 +446,42 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 
 }
 
-TEST_F(HighLevelScheduleTest, BFSPushSchedule) {
+TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     fe_->parseStream(bfs_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push");
+    program->setApply("s1", "push")->setApply("s1", "disable_deduplication");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
+    fe_->parseStream(bfs_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
+    fe_->parseStream(bfs_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "push")->setApply("s1", "sliding_queue")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -356,6 +502,79 @@ TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
+    fe_->parseStream(bfs_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+
+TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+TEST_F(HighLevelScheduleTest, CCPullSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
+
+TEST_F(HighLevelScheduleTest, CCPushSchedule) {
+    fe_->parseStream(cc_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "push")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
 }
 
 TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
@@ -386,22 +605,65 @@ TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
 }
 
 
-
-TEST_F(HighLevelScheduleTest, BFSSerialPushSparseSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+TEST_F(HighLevelScheduleTest, PRPullParallel) {
+    fe_->parseStream(pr_is_, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 
-    program->setApply("s1", "push");
-    program->setVertexSet("frontier", "sparse");
-    program->setApply("s1", "sparse_frontier");
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
+TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
+    fe_->parseStream(pr_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    program->setApply("l1:s2", "parallel");
 
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
+
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-    mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[0]);
-    mir::VertexSetAllocExpr::Ptr alloc_expr = mir::to<mir::VertexSetAllocExpr>(frontier_decl->initVal);
-    EXPECT_EQ(mir::VertexSetAllocExpr::Layout::SPARSE, alloc_expr->layout);
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
+TEST_F(HighLevelScheduleTest, PRPushParallel) {
+    fe_->parseStream(pr_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("l1:s1", "push")->setApply("l1:s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(expr_stmt->expr));
+
 }
 
 
@@ -680,6 +942,24 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
     EXPECT_EQ(true, apply_expr->is_parallel);
 }
 
+TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    fe_->parseStream(bfs_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+
+    //check that the apply expr is push and parallel
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
+    mir::PullEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::PullEdgeSetApplyExpr>(assign_stmt->expr);
+    EXPECT_EQ(true, apply_expr->is_parallel);
+}
+
 
 TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
 
@@ -689,4 +969,159 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
     fe_->parseStream(sssp_is_, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SSSPPullParallelSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+
+TEST_F(HighLevelScheduleTest, SSSPPushParallelSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SSSPPushParallelSlidingQueueSchedule) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "sliding_queue");
+    fe_->parseStream(sssp_is_, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SimpleParallelVertexSetApply){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() #s1# vertices.apply(addone); print vector_a.sum(); end");
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "parallel");
+    fe_->parseStream(is, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
+    istringstream is("element Vertex end\n"
+                             "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                             "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                             "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                             "func main() #s1# vertices.apply(addone); print vector_a.sum(); end");
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->setApply("s1", "serial");
+    fe_->parseStream(is, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+TEST_F(HighLevelScheduleTest, CFPullParallel) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalance) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalanceWithGrainSize) {
+    fe_->parseStream(cf_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // The schedule does a array of SoA optimization, and split the loops
+    // while supplying different schedules for the two splitted loops
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance",8000);
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->fuseFields("delta", "out_degree");
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->fuseFields("delta", "out_degree");
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBalance) {
+    fe_->parseStream(prd_is_, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->fuseFields("delta", "out_degree");
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }

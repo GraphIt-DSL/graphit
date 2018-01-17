@@ -28,14 +28,17 @@
 #include <time.h>
 #include <chrono>
 
-template <typename T>
-T builtin_sum(std::vector<T> input_vector){
-    T output_sum = 0;
-    for (T elem : input_vector){
-        output_sum += elem;
-    }
-    return output_sum;
-}
+
+// Deprecated, needed for
+//template <typename T>
+//T builtin_sum(T* input_vector){
+//    T output_sum = 0;
+//    int num_elem = sizeof(input_vector) / sizeof(input_vector[0]);
+//    for (int i = 0; i < num_elem; i++){
+//        output_sum += input_vector[i];
+//    }
+//    return output_sum;
+//}
 
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
@@ -61,8 +64,8 @@ int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
-std::vector<int> builtin_getOutDegrees(Graph &edges){
-    std::vector<int> out_degrees (edges.num_nodes(), 0);
+int * builtin_getOutDegrees(Graph &edges){
+    int * out_degrees  = new int [edges.num_nodes()];
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
     }

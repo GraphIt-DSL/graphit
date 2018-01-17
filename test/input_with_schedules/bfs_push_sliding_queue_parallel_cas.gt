@@ -1,0 +1,50 @@
+element Vertex end
+element Edge end
+
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/socLive.wel");
+% const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const parent : vector{Vertex}(int) = -1;
+% const parent : vector{Vertex}(Vertex) = -1;
+
+
+func updateEdge(src : Vertex, dst : Vertex)
+    parent[dst] = src;
+end
+
+func toFilter(v : Vertex) -> output : bool
+    output =  parent[v] == -1;
+end
+
+func printParent(v: Vertex)
+    print parent[v];
+end
+
+func main()
+
+%    startTimer();
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(8);
+    parent[8] = 8;
+
+    while (frontier.getVertexSetSize() != 0)
+%        print "size";
+%        print frontier.getVertexSetSize();
+        #s1# frontier = edges.from(frontier).to(toFilter).apply(updateEdge).modified(parent);
+    end
+
+    #s2# vertices.apply(printParent);
+
+%    var elapsed_time : float = stopTimer();
+%    print "elapsed time: ";
+%    print elapsed_time;
+
+end
+
+schedule:
+    program->setApply("s1", "push")->setApply("s1", "parallel")
+    ->setApply("s1", "disable_deduplication")->setApply("s1", "sliding_queue");
+    program->setApply("s2", "serial");

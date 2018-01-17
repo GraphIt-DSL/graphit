@@ -27,9 +27,10 @@ func main()
         #s1# frontier = edges.from(frontier).apply(updateEdge).modified(IDs);
     end
 
-    vertices.apply(printID);
+    #s2# vertices.apply(printID);
 end
 
 
 schedule:
     program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->setApply("s2", "serial");

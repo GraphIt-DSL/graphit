@@ -59,11 +59,33 @@ namespace graphit {
             Disable
         };
 
+        enum class OtherOpt {
+            QUEUE,
+            SLIDING_QUEUE
+        };
+
+        enum class PullFrontierType {
+            BOOL_MAP,
+            BITVECTOR
+        };
+
+        enum class PullLoadBalance {
+            VERTEX_BASED,
+            EDGE_BASED
+        };
+
         std::string scope_label_name;
         DirectionType direction_type;
         ParType parallel_type;
         //FrontierType frontier_type;
         DeduplicationType deduplication_type;
+        OtherOpt opt;
+        PullFrontierType pull_frontier_type;
+        PullLoadBalance pull_load_balance_type;
+
+        // the grain size for edge based load balance scheme
+        // with the default grain size set to 4096
+        int pull_load_balance_edge_grain_size;
     };
 
     /**

@@ -128,6 +128,10 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;
                 break;
+            case fir::ScalarType::Type::DOUBLE:
+                output->type = mir::ScalarType::Type::DOUBLE;
+                retType = output;
+                break;
             case fir::ScalarType::Type::BOOL:
                 output->type = mir::ScalarType::Type::BOOL;
                 retType = output;
@@ -155,9 +159,13 @@ namespace graphit {
             assert(mir_vector_type->element_type != nullptr);
         }
 
-
-        mir_vector_type->vector_element_type = std::dynamic_pointer_cast<mir::ScalarType>(
-                emitType(ND_tensor_type->blockType));
+        //element of a vector can be a non-scalar (vector type)
+        mir_vector_type->vector_element_type = emitType(ND_tensor_type->blockType);
+        if (ND_tensor_type->indexSets.size() == 1 &&
+                fir::isa<fir::RangeIndexSet>(ND_tensor_type->indexSets[0])){
+            auto range_index_set = fir::to<fir::RangeIndexSet>(ND_tensor_type->indexSets[0]);
+            mir_vector_type->range_indexset = range_index_set->range;
+        }
         assert(mir_vector_type->vector_element_type != nullptr);
 
 
@@ -210,7 +218,7 @@ namespace graphit {
         auto mir_if_stmt = std::make_shared<mir::IfStmt>();
         mir_if_stmt->cond = emitExpr(if_stmt->cond);
         mir_if_stmt->ifBody = emitStmt(if_stmt->ifBody);
-        if (mir_if_stmt->elseBody != nullptr)
+        if (if_stmt->elseBody != nullptr)
             mir_if_stmt->elseBody = emitStmt(if_stmt->elseBody);
         retStmt = mir_if_stmt;
     }
@@ -594,7 +602,8 @@ namespace graphit {
         //TODO: see if there is a cleaner way to do this, constructor may be???
         //construct a var decl variable
         const auto mir_var_decl = std::make_shared<mir::VarDecl>();
-        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+        if (var_decl->initVal)
+            mir_var_decl->initVal = emitExpr(var_decl->initVal);
         mir_var_decl->name = var_decl->name->ident;
         mir_var_decl->type = emitType(var_decl->type);
 

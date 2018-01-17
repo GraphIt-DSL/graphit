@@ -64,14 +64,14 @@ namespace graphit {
 
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::TensorReadExpr::Ptr tensor_read) {
-        std::string target = tensor_read->getTargetNameStr();
-        std::string index = tensor_read->getIndexNameStr();
-
-        auto field_vector_prop = determineFieldVectorProperty(target, in_write_phase,
-                                                              in_read_phase, index, direction_);
-        enclosing_func_decl_->field_vector_properties_map_[target] = field_vector_prop;
-        tensor_read->field_vector_prop_ = field_vector_prop;
-
+        if (mir::isa<mir::VarExpr>(tensor_read->target)){
+            std::string target = tensor_read->getTargetNameStr();
+            std::string index = tensor_read->getIndexNameStr();
+            auto field_vector_prop = determineFieldVectorProperty(target, in_write_phase,
+                                                                  in_read_phase, index, direction_);
+            enclosing_func_decl_->field_vector_properties_map_[target] = field_vector_prop;
+            tensor_read->field_vector_prop_ = field_vector_prop;
+        }
     }
 
     FieldVectorProperty VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::determineFieldVectorProperty(
