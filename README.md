@@ -41,7 +41,9 @@ To compile an input file with schedules in the same file (assuming the build dir
 
 To compile an input algorithm file and another separate schedule file (some of the test files have hardcoded paths to test inputs, be sure to modify that or change the directory you run the compiled files)
 
+```
    cd build/bin
    python graphitc.py -a ../../test/input/cc.gt -f ../../test/input_with_schedules/cc_pull_parallel.gt -o test.cpp
    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o test.o
    ./test.o 
+```
