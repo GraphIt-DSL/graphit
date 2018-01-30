@@ -73,7 +73,7 @@ protected:
 
 
 
-        const char * sssp_char =      ("element Vertex end\n"
+        const char * sssp_char =      "element Vertex end\n"
                                                          "element Edge end\n"
                                                          "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
                                                          "const vertices : vertexset{Vertex} = edges.getVertices();\n"
@@ -94,7 +94,7 @@ protected:
                                                          "             print \"negative cycle\";\n"
                                                          "          end\n"
                                                          "     end\n"
-                                                         "end");
+                                                         "end";
 
 
         const char* cc_char = ("element Vertex end\n"
@@ -263,28 +263,13 @@ protected:
 
 
 
-        string bfs_str (bfs_char);
-        bfs_is_ = istringstream(bfs_str);
-
-        string pr_str (pr_char);
-        pr_is_ = istringstream(pr_str);
-
-
-        string sssp_str (sssp_char);
-        sssp_is_ = istringstream(sssp_str);
-
-
-        string cf_str (cf_char);
-        cf_is_ = istringstream(cf_str);
-
-        string cc_str (cc_char);
-        cc_is_ = istringstream(cc_str);
-
-        string prd_str (prd_char);
-        prd_is_ = istringstream(prd_str);
-
-        string prd_double_str (prd_double_char);
-        prd_double_is_ = istringstream(prd_double_str);
+        bfs_str_ =  string (bfs_char);
+        pr_str_ = string(pr_char);
+        sssp_str_ = string  (sssp_char);
+        cf_str_ = string  (cf_char);
+        cc_str_ = string  (cc_char);
+        prd_str_ = string  (prd_char);
+        prd_double_str_ = string  (prd_double_char);
 
     }
 
@@ -341,13 +326,14 @@ protected:
     graphit::FIRContext *context_;
     Frontend *fe_;
     graphit::MIRContext *mir_context_;
-    istringstream bfs_is_;
-    istringstream pr_is_;
-    istringstream sssp_is_;
-    istringstream cf_is_;
-    istringstream cc_is_;
-    istringstream prd_is_;
-    istringstream prd_double_is_;
+
+    string bfs_str_;
+    string pr_str_;
+    string sssp_str_;
+    string cf_str_;
+    string cc_str_;
+    string prd_str_;
+    string prd_double_str_;
 
 
 
@@ -534,7 +520,8 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 }
 
 TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -549,7 +536,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
 
 
 TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -564,7 +552,8 @@ TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
 
 
 TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -578,7 +567,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -592,7 +582,8 @@ TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -606,7 +597,8 @@ TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, CCNoSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -615,7 +607,8 @@ TEST_F(HighLevelScheduleTest, CCNoSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -631,7 +624,8 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
 
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -645,7 +639,8 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -660,7 +655,8 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
 }
 
 TEST_F(HighLevelScheduleTest, CCPullSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -675,7 +671,8 @@ TEST_F(HighLevelScheduleTest, CCPullSchedule) {
 
 
 TEST_F(HighLevelScheduleTest, CCPushSchedule) {
-    fe_->parseStream(cc_is_, context_, errors_);
+    istringstream is (cc_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
@@ -689,7 +686,8 @@ TEST_F(HighLevelScheduleTest, CCPushSchedule) {
 }
 
 TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
-    fe_->parseStream(pr_is_, context_, errors_);
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -717,7 +715,8 @@ TEST_F(HighLevelScheduleTest, PRNestedSchedule) {
 
 
 TEST_F(HighLevelScheduleTest, PRPullParallel) {
-    fe_->parseStream(pr_is_, context_, errors_);
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -737,7 +736,8 @@ TEST_F(HighLevelScheduleTest, PRPullParallel) {
 
 
 TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
-    fe_->parseStream(pr_is_, context_, errors_);
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -759,7 +759,8 @@ TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
 
 
 TEST_F(HighLevelScheduleTest, PRPushParallel) {
-    fe_->parseStream(pr_is_, context_, errors_);
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -1021,7 +1022,8 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
@@ -1039,7 +1041,8 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
@@ -1057,7 +1060,8 @@ TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
-    fe_->parseStream(bfs_is_, context_, errors_);
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
@@ -1077,7 +1081,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "hybrid_dense_forward")->setApply("s1", "parallel");
-    fe_->parseStream(sssp_is_, context_, errors_);
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
@@ -1087,8 +1092,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleNewAPI) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->configApplyDirection("s1", "hybrid_dense_forward")->configApplyParallelization("s1", "parallel");
-    fe_->parseStream(sssp_is_, context_, errors_);
-
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
@@ -1097,8 +1102,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
-    fe_->parseStream(sssp_is_, context_, errors_);
-
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
@@ -1108,8 +1113,8 @@ TEST_F(HighLevelScheduleTest, SSSPPullParallelSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel");
-    fe_->parseStream(sssp_is_, context_, errors_);
-
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
@@ -1120,8 +1125,8 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
-    fe_->parseStream(sssp_is_, context_, errors_);
-
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
@@ -1131,8 +1136,8 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSlidingQueueSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "sliding_queue");
-    fe_->parseStream(sssp_is_, context_, errors_);
-
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
@@ -1169,7 +1174,8 @@ TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
 }
 
 TEST_F(HighLevelScheduleTest, CFPullParallel) {
-    fe_->parseStream(cf_is_, context_, errors_);
+    istringstream is (cf_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -1181,7 +1187,8 @@ TEST_F(HighLevelScheduleTest, CFPullParallel) {
 
 
 TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalance) {
-    fe_->parseStream(cf_is_, context_, errors_);
+    istringstream is (cf_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -1193,7 +1200,8 @@ TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalance) {
 
 
 TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalanceWithGrainSize) {
-    fe_->parseStream(cf_is_, context_, errors_);
+    istringstream is (cf_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
@@ -1205,7 +1213,8 @@ TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalanceWithGrainSize) {
 
 
 TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
-    fe_->parseStream(prd_is_, context_, errors_);
+    istringstream is (prd_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("s1", "pull")->setApply("s1", "parallel");
@@ -1215,7 +1224,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
 }
 
 TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
-    fe_->parseStream(prd_is_, context_, errors_);
+    istringstream is (prd_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("s1", "pull")->setApply("s1", "parallel");
@@ -1226,7 +1236,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
 
 
 TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
-    fe_->parseStream(prd_is_, context_, errors_);
+    istringstream is (prd_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("s1", "pull")->setApply("s1", "parallel");
@@ -1237,7 +1248,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
 }
 
 TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBalance) {
-    fe_->parseStream(prd_is_, context_, errors_);
+    istringstream is (prd_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
@@ -1249,7 +1261,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBala
 
 
 TEST_F(HighLevelScheduleTest, PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance) {
-    fe_->parseStream(prd_double_is_, context_, errors_);
+    istringstream is (prd_double_str_);
+    fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
