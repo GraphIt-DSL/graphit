@@ -223,7 +223,8 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
         if (mir::isa<mir::ScalarType>(field_type)){
             mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(field_type);
             if (scalar_type->type == mir::ScalarType::Type::INT
-                || scalar_type->type == mir::ScalarType::Type::FLOAT) {
+                || scalar_type->type == mir::ScalarType::Type::FLOAT
+                || scalar_type->type == mir::ScalarType::Type::DOUBLE) {
                 //update the type to atomic op
                 reduce_stmt->is_atomic_ = true;
                 switch (reduce_stmt->reduce_op_){
