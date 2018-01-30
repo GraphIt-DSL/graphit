@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSHybridDenseSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleSerialVertexSetApply";
-    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleParallelVertexSetApply";
+    //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSerialSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseSchedule";
     //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierSchedule";
 
