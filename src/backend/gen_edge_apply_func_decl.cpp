@@ -107,13 +107,24 @@ namespace graphit {
                         "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
                         "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
                         "    //from_vertexset->toSparse();\n"
-                        "    {\n"
-                        "        parallel_for (long i = 0; i < m; i++) {\n"
-                        "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
-                        "            degrees[i] = g.out_degree(v);\n"
-                        "        }\n"
-                        "    }\n"
-                        "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                        "    {\n";
+
+                if (from_vertexset_specified){
+                    oss_ <<  "        parallel_for (long i = 0; i < m; i++) {\n"
+                            "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
+                            "            degrees[i] = g.out_degree(v);\n"
+                            "        }\n"
+                            "    }\n"
+                            "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                } else {
+                    oss_ << "        parallel_for (long i = 0; i < numVertices; i++) {\n"
+                            "            degrees[i] = g.out_degree(i);\n"
+                            "        }\n"
+                            "    }\n"
+                            "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                }
+
+
             }
         }
     }

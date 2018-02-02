@@ -44,8 +44,9 @@ class GraphItPageRankTuner(MeasurementInterface):
         f1.write(new_schedule)
         f1.close()
         
-        compile_graphit_cmd = 'python ../src/graphitc.py -a apps/pagerank_benchmark.gt -f ' + new_schedule_file_name + ' -o test.cpp' 
-        compile_cpp_cmd = 'icpc -std=c++11 -I ../src/runtime_lib/ -O3 -DCILK test.cpp -o test'
+        #compile the schedule file along with the original algorithm file
+        compile_graphit_cmd = 'python graphitc.py -a ../apps/pagerank_benchmark.gt -f ' + new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
+        compile_cpp_cmd = 'g++ -std=c++11 -I ../src/runtime_lib/ -O3  test.cpp -o test'
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
         self.call_program(compile_graphit_cmd)
