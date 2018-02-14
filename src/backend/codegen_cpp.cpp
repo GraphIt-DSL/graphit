@@ -37,20 +37,26 @@ namespace graphit {
                 genScalarDecl(constant);
             }
         }
+        //Processing the functions
+        std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+        mir::FuncDecl *mainFunction = NULL;
+        for (auto it = functions.begin(); it != functions.end(); it++) {
+            if (it->get()->name == "main") {
+                mainFunction = it->get();
+                break;
+            }
+            it->get()->accept(this);
+        }
 
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
         auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
         gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
-        //Processing the functions
-        std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
-        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-
-        for (auto it = functions.begin(); it != functions.end(); it++) {
-            it->get()->accept(this);
-        }
-
+        // Generate the main function
+        assert(mainFunction);
+        mainFunction->accept(this);
 
         oss << std::endl;
         return 0;
@@ -302,6 +308,7 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
+        bool isVoid = false;
 
         //generate the return type
         if (func_decl->result.isInitialized()) {
@@ -320,16 +327,24 @@ namespace graphit {
         } else if (func_decl->name == "main") {
             oss << "int ";
         } else {
-            //default to void return type
-            oss << "void ";
+            // Since functions with the void return type may not be inlined by the compiler,
+            // use functors instead.
+            isVoid = true;
+            oss << "struct ";
         }
 
         //generate the function name and left paren
-        oss << func_decl->name << "(";
+        oss << func_decl->name << (isVoid ? "" : "(");
 
         if (func_decl->name == "main") {
             oss << "int argc, char * argv[] ";
         } else {
+            if (isVoid) {
+                oss << std::endl;
+                printBeginIndent();
+                indent();
+		oss << std::string(2 * indentLevel, ' ') << "void operator() (";
+            }
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -410,6 +425,10 @@ namespace graphit {
         oss << ";";
         oss << std::endl;
 
+        dedent();
+        printEndIndent();
+        oss << ";";
+        oss << std::endl;
     };
 
     void CodeGenCPP::visit(mir::ScalarType::Ptr scalar_type) {
@@ -453,6 +472,7 @@ namespace graphit {
             call_expr->generic_type->accept(this);
             oss << " > ";
         }
+
         oss << "(";
 
         bool printDelimiter = false;
@@ -791,7 +811,7 @@ namespace graphit {
         oss << "; i++) {" << std::endl;
         indent();
         printIndent();
-        oss << apply_expr->input_function_name << "(i);" << std::endl;
+        oss << apply_expr->input_function_name << "()(i);" << std::endl;
         dedent();
         printIndent();
         oss << "}";
@@ -968,7 +988,7 @@ namespace graphit {
         // the edgeset that is being applied over (target)
         apply->target->accept(this);
         for (auto &arg : arguments) {
-            oss << ", " << arg;
+            oss << ", " << arg << "()";
         }
 
         oss << "); " << std::endl;
