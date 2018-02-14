@@ -853,7 +853,7 @@ namespace graphit {
             indent();
             printIndent();
             oss << next_bool_map_name << "[v] = 0;" << std::endl;
-            oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
+            oss << "if ( " << vertexset_where_expr->input_func << "()( v ) )" << std::endl;
             indent();
             printIndent();
             oss << next_bool_map_name << "[v] = 1;" << std::endl;
