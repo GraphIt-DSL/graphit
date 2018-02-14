@@ -420,10 +420,12 @@ namespace graphit {
 
         }
 
-        dedent();
-        printEndIndent();
-        oss << ";";
-        oss << std::endl;
+	if (isVoid) {
+	  dedent();
+	  printEndIndent();
+	  oss << ";";
+	  oss << std::endl;
+	}
 
         dedent();
         printEndIndent();
