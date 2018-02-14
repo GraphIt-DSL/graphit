@@ -308,43 +308,36 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
-        bool isVoid = false;
+        bool isFunctor = true;
 
-        //generate the return type
-        if (func_decl->result.isInitialized()) {
-            func_decl->result.getType()->accept(this);
-
-            //insert an additional var_decl for returning result
-            const auto var_decl = std::make_shared<mir::VarDecl>();
-            var_decl->name = func_decl->result.getName();
-            var_decl->type = func_decl->result.getType();
-            if (func_decl->body->stmts == nullptr) {
-                func_decl->body->stmts = new std::vector<mir::Stmt::Ptr>();
-            }
-            auto it = func_decl->body->stmts->begin();
-            func_decl->body->stmts->insert(it, var_decl);
-
-        } else if (func_decl->name == "main") {
-            oss << "int ";
-        } else {
-            // Since functions with the void return type may not be inlined by the compiler,
-            // use functors instead.
-            isVoid = true;
-            oss << "struct ";
-        }
-
-        //generate the function name and left paren
-        oss << func_decl->name << (isVoid ? "" : "(");
-
+        // Generate function signature
         if (func_decl->name == "main") {
-            oss << "int argc, char * argv[] ";
+            isFunctor = false;
+            oss << "int " << func_decl->name << "(int argc, char * argv[])";
         } else {
-            if (isVoid) {
-                oss << std::endl;
-                printBeginIndent();
-                indent();
-		oss << std::string(2 * indentLevel, ' ') << "void operator() (";
+            // Use functors for better compiler inlining
+            oss << "struct " << func_decl->name << std::endl;
+            printBeginIndent();
+            indent();
+            oss << std::string(2 * indentLevel, ' ');
+
+            if (func_decl->result.isInitialized()) {
+                func_decl->result.getType()->accept(this);
+
+                //insert an additional var_decl for returning result
+                const auto var_decl = std::make_shared<mir::VarDecl>();
+                var_decl->name = func_decl->result.getName();
+                var_decl->type = func_decl->result.getType();
+                if (func_decl->body->stmts == nullptr) {
+                    func_decl->body->stmts = new std::vector<mir::Stmt::Ptr>();
+                }
+                auto it = func_decl->body->stmts->begin();
+                func_decl->body->stmts->insert(it, var_decl);
+            } else {
+                oss << "void ";
             }
+
+            oss << "operator() (";
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -355,11 +348,8 @@ namespace graphit {
                 oss << arg.getName();
                 printDelimiter = true;
             }
+            oss << ") ";
         }
-
-
-        oss << ") ";
-
 
         oss << std::endl;
         printBeginIndent();
@@ -420,7 +410,7 @@ namespace graphit {
 
         }
 
-	if (isVoid) {
+	if (isFunctor) {
 	  dedent();
 	  printEndIndent();
 	  oss << ";";
