@@ -37,26 +37,19 @@ namespace graphit {
                 genScalarDecl(constant);
             }
         }
-        //Processing the functions
-        std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
-        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-        mir::FuncDecl *mainFunction = NULL;
-        for (auto it = functions.begin(); it != functions.end(); it++) {
-            if (it->get()->name == "main") {
-                mainFunction = it->get();
-                break;
-            }
-            it->get()->accept(this);
-        }
 
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
         auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
         gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
-        // Generate the main function
-        assert(mainFunction);
-        mainFunction->accept(this);
+        //Processing the functions
+        std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+
+        for (auto it = functions.begin(); it != functions.end(); it++) {
+            it->get()->accept(this);
+        }
 
         oss << std::endl;
         return 0;
