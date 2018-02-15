@@ -495,7 +495,7 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [apply_func, &g,  &recursive_lambda, edge_in_index";
+                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index";
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
                 if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";

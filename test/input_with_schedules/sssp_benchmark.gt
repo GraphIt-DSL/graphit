@@ -20,7 +20,7 @@ func main()
 
     var rounds : int = 0;
     while (frontier.getVertexSetSize() != 0)
-        #s1# frontier = edges.from(frontier).apply(updateEdge).modified(SP);
+        #s1# frontier = edges.from(frontier).applyModified(updateEdge, SP);
 	    rounds = rounds + 1;
     	if rounds == n
 	        print "negative cycle";

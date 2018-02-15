@@ -534,6 +534,7 @@ namespace graphit {
             std::vector<mir::Var> args;
             mir::Var result;
             std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
+            bool isFunctor;
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
