@@ -301,14 +301,13 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
-        bool isFunctor = true;
-
         // Generate function signature
         if (func_decl->name == "main") {
-            isFunctor = false;
+            func_decl->isFunctor = false;
             oss << "int " << func_decl->name << "(int argc, char * argv[])";
         } else {
             // Use functors for better compiler inlining
+            func_decl->isFunctor = true;
             oss << "struct " << func_decl->name << std::endl;
             printBeginIndent();
             indent();
@@ -403,7 +402,7 @@ namespace graphit {
 
         }
 
-	if (isFunctor) {
+	if (func_decl->isFunctor) {
 	  dedent();
 	  printEndIndent();
 	  oss << ";";
@@ -456,6 +455,12 @@ namespace graphit {
             oss << " < ";
             call_expr->generic_type->accept(this);
             oss << " > ";
+        }
+
+	    if (mir_context_->isFunction(call_expr->name)) {
+            auto mir_func_decl = mir_context_->getFunction(call_expr->name);
+            if (mir_func_decl->isFunctor)
+                oss << "()";
         }
 
         oss << "(";
