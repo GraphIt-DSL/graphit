@@ -25,16 +25,25 @@ func printRank(v : Vertex)
     print old_rank[v];
 end
 
+func reset(v: Vertex)
+    old_rank[v] = 1.0/vertices.size();
+    new_rank[v] = 0.0;
+end
+
 func main()
-    startTimer();
-    for i in 0:10
-        #s1# edges.apply(updateEdge);
-        vertices.apply(updateVertex);
+    for trail in 0:10
+        vertices.apply(reset);
+        startTimer();
+        for i in 0:10
+            #s1# edges.apply(updateEdge);
+            vertices.apply(updateVertex);
+        end
+
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
     end
 
-    var elapsed_time : double = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
 end
 
 schedule:
