@@ -51,7 +51,6 @@ namespace graphit {
             it->get()->accept(this);
         }
 
-
         oss << std::endl;
         return 0;
     };
@@ -302,34 +301,35 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
-
-        //generate the return type
-        if (func_decl->result.isInitialized()) {
-            func_decl->result.getType()->accept(this);
-
-            //insert an additional var_decl for returning result
-            const auto var_decl = std::make_shared<mir::VarDecl>();
-            var_decl->name = func_decl->result.getName();
-            var_decl->type = func_decl->result.getType();
-            if (func_decl->body->stmts == nullptr) {
-                func_decl->body->stmts = new std::vector<mir::Stmt::Ptr>();
-            }
-            auto it = func_decl->body->stmts->begin();
-            func_decl->body->stmts->insert(it, var_decl);
-
-        } else if (func_decl->name == "main") {
-            oss << "int ";
-        } else {
-            //default to void return type
-            oss << "void ";
-        }
-
-        //generate the function name and left paren
-        oss << func_decl->name << "(";
-
+        // Generate function signature
         if (func_decl->name == "main") {
-            oss << "int argc, char * argv[] ";
+            func_decl->isFunctor = false;
+            oss << "int " << func_decl->name << "(int argc, char * argv[])";
         } else {
+            // Use functors for better compiler inlining
+            func_decl->isFunctor = true;
+            oss << "struct " << func_decl->name << std::endl;
+            printBeginIndent();
+            indent();
+            oss << std::string(2 * indentLevel, ' ');
+
+            if (func_decl->result.isInitialized()) {
+                func_decl->result.getType()->accept(this);
+
+                //insert an additional var_decl for returning result
+                const auto var_decl = std::make_shared<mir::VarDecl>();
+                var_decl->name = func_decl->result.getName();
+                var_decl->type = func_decl->result.getType();
+                if (func_decl->body->stmts == nullptr) {
+                    func_decl->body->stmts = new std::vector<mir::Stmt::Ptr>();
+                }
+                auto it = func_decl->body->stmts->begin();
+                func_decl->body->stmts->insert(it, var_decl);
+            } else {
+                oss << "void ";
+            }
+
+            oss << "operator() (";
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -340,11 +340,8 @@ namespace graphit {
                 oss << arg.getName();
                 printDelimiter = true;
             }
+            oss << ") ";
         }
-
-
-        oss << ") ";
-
 
         oss << std::endl;
         printBeginIndent();
@@ -405,11 +402,17 @@ namespace graphit {
 
         }
 
+	if (func_decl->isFunctor) {
+	  dedent();
+	  printEndIndent();
+	  oss << ";";
+	  oss << std::endl;
+	}
+
         dedent();
         printEndIndent();
         oss << ";";
         oss << std::endl;
-
     };
 
     void CodeGenCPP::visit(mir::ScalarType::Ptr scalar_type) {
@@ -453,6 +456,13 @@ namespace graphit {
             call_expr->generic_type->accept(this);
             oss << " > ";
         }
+
+	    if (mir_context_->isFunction(call_expr->name)) {
+            auto mir_func_decl = mir_context_->getFunction(call_expr->name);
+            if (mir_func_decl->isFunctor)
+                oss << "()";
+        }
+
         oss << "(";
 
         bool printDelimiter = false;
@@ -791,7 +801,7 @@ namespace graphit {
         oss << "; i++) {" << std::endl;
         indent();
         printIndent();
-        oss << apply_expr->input_function_name << "(i);" << std::endl;
+        oss << apply_expr->input_function_name << "()(i);" << std::endl;
         dedent();
         printIndent();
         oss << "}";
@@ -848,7 +858,7 @@ namespace graphit {
             indent();
             printIndent();
             oss << next_bool_map_name << "[v] = 0;" << std::endl;
-            oss << "if ( " << vertexset_where_expr->input_func << "( v ) )" << std::endl;
+            oss << "if ( " << vertexset_where_expr->input_func << "()( v ) )" << std::endl;
             indent();
             printIndent();
             oss << next_bool_map_name << "[v] = 1;" << std::endl;
@@ -931,7 +941,8 @@ namespace graphit {
         if (apply->from_func != "") {
             if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
-                arguments.push_back(apply->from_func);
+                // Create functor instance
+                arguments.push_back(apply->from_func + "()");
             } else {
                 // the input is an input from vertexset
                 arguments.push_back(apply->from_func);
@@ -941,7 +952,8 @@ namespace graphit {
         if (apply->to_func != "") {
             if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
-                arguments.push_back(apply->to_func);
+                // Create functor instance
+                arguments.push_back(apply->to_func + "()");
             } else {
                 // the input is an input to vertexset
                 arguments.push_back(apply->to_func);
@@ -952,17 +964,17 @@ namespace graphit {
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(apply_expr->push_to_function_);
+                arguments.push_back(apply_expr->push_to_function_ + "()");
             }
         }
 
         // the original apply function (pull direction in hybrid case)
-        arguments.push_back(apply->input_function_name);
+        arguments.push_back(apply->input_function_name + "()");
 
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(apply_expr->push_function_);
+            arguments.push_back(apply_expr->push_function_ + "()");
         }
 
         // the edgeset that is being applied over (target)
