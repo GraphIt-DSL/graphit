@@ -360,7 +360,8 @@ namespace graphit {
         bool cache = (apply->pull_num_segment > 1);
         if (cache) {
             oss_ << "for (int ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
-            oss_ << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
+            printIndent();
+            oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
         } else {
             oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
         }
@@ -501,6 +502,7 @@ namespace graphit {
             outer_end = "sg->numVertices";
             iter = "localId";
             oss_ << "  for (int i = 0; i < graphSegments->numSegments; i++) {\n";
+            printIndent();
             oss_ << "    auto sg = graphSegments->getSegmentedGraph(i);\n";
         }
 
@@ -509,10 +511,12 @@ namespace graphit {
             std::string for_type = "for";
             if (apply->is_parallel)
                 for_type = "parallel_for";
+            //printIndent();
             oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
-	    indent();
+            indent();
             if (cache) {
-                oss_ << "  NodeID d = sg->graphId[localId];" << std::endl;
+                printIndent();
+                oss_ << "NodeID d = sg->graphId[localId];" << std::endl;
             }
         } else {
             // use edge based load balance
@@ -566,9 +570,7 @@ namespace graphit {
         }
 
         if (apply->pull_num_segment > 1) {
-            dedent();
-            printEndIndent();
-            oss_ << " // end of segment for loop\n";
+            oss_ << "    } // end of segment for loop\n";
         }
 
         //return a new vertexset if no subset vertexset is returned
