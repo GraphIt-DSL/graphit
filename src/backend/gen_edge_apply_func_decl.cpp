@@ -84,6 +84,17 @@ namespace graphit {
                                                                  bool from_vertexset_specified) {
         oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
 
+        // TODO: step0 get graphsegment here
+        assert(apply->pull_num_segment > 0);
+        if (apply->pull_num_segment > 1) {
+            oss_ << "    int numSegment = " << apply->pull_num_segment << ";\n";
+            oss_ << "    int segmentRange = (numVertices + numSegments) / numSegments;\n";
+            oss_ << "    GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>* graphSegments";
+            oss_ << " = new GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>(numSegments);\n";
+            oss_ << "    BuildPullSegmentedGraphs" << (apply->is_weighted ? "Weighted" : "Unweighted");
+            oss_ << "(&edges, graphSegments, segmentRange);" << std::endl;
+        }
+
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
 //            if (from_vertexset_specified){
 //                printIndent();
@@ -346,7 +357,13 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
+        bool cache = (apply->pull_num_segment > 1);
+        if (cache) {
+            oss_ << "for (int ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
+            oss_ << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
+        } else {
+            oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
+        }
 
 
         // print the checks on filtering on sources s
@@ -477,15 +494,26 @@ namespace graphit {
 
         printIndent();
 
+        bool cache = (apply->pull_num_segment > 1);
+        std::string outer_end = "g.num_nodes()";
+        std::string iter = "d";
+        if (cache) {
+            outer_end = "sg->numVertices";
+            iter = "localId";
+            oss_ << "  for (int i = 0; i < graphSegments->numSegments; i++) {\n";
+            oss_ << "    auto sg = graphSegments->getSegmentedGraph(i);\n";
+        }
 
         //genearte the outer for loop
         if (! apply->use_pull_edge_based_load_balance) {
             std::string for_type = "for";
             if (apply->is_parallel)
                 for_type = "parallel_for";
-
-            oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
-            indent();
+            oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
+	    indent();
+            if (cache) {
+                oss_ << "  NodeID d = sg->graphId[localId];" << std::endl;
+            }
         } else {
             // use edge based load balance
             // recursive load balance scheme
@@ -537,6 +565,11 @@ namespace graphit {
                     "    cilk_sync; \n";
         }
 
+        if (apply->pull_num_segment > 1) {
+            dedent();
+            printEndIndent();
+            oss_ << " // end of segment for loop\n";
+        }
 
         //return a new vertexset if no subset vertexset is returned
         if (!apply_expr_gen_frontier) {

@@ -292,13 +292,15 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                            0};
+                           0, 1};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance" ) {
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_edge_grain_size = parameter;
+            } else if (apply_schedule_str == "pull" || apply_schedule_str == "hybrid_dense") {
+                (*schedule_->apply_schedules)[apply_label].pull_num_segment = parameter;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -333,7 +335,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0};
+                           0, 1};
             }
 
 
