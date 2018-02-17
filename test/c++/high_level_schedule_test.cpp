@@ -734,6 +734,23 @@ TEST_F(HighLevelScheduleTest, PRPullParallel) {
 
 }
 
+TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Set the pull parameter to 2 segments
+    program->setApply("l1:s1", "pull", 2)->setApply("l1:s1", "parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
 
 TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
     istringstream is (pr_str_);
