@@ -87,7 +87,7 @@ namespace graphit {
         // TODO: step0 get graphsegment here
         assert(apply->pull_num_segment > 0);
         if (apply->pull_num_segment > 1) {
-            oss_ << "    int numSegment = " << apply->pull_num_segment << ";\n";
+            oss_ << "    int numSegments = " << apply->pull_num_segment << ";\n";
             oss_ << "    int segmentRange = (numVertices + numSegments) / numSegments;\n";
             oss_ << "    GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>* graphSegments";
             oss_ << " = new GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>(numSegments);\n";

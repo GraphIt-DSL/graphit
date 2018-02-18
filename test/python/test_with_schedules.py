@@ -268,6 +268,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_parallel_pull_load_balance_expect(self):
         self.pr_verified_test("pagerank_pull_parallel_load_balance.gt", True)
 
+    def test_pagerank_parallel_pull_segment_expect(self):
+        self.pr_verified_test("pagerank_pull_parallel_segment.gt", True)
+
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt", True)
 
@@ -292,9 +295,9 @@ if __name__ == '__main__':
         print "using parallel"
         del sys.argv[1]
 
-    # unittest.main()
+    unittest.main()
 
     # used for enabling a specific test
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_pagerank_parallel_hybrid_dense_expect'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_pagerank_parallel_hybrid_dense_expect'))
+    #unittest.TextTestRunner(verbosity=2).run(suite)
