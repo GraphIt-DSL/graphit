@@ -359,6 +359,19 @@ namespace graphit {
 
             // generates the code that allocates and initializes the global variables
 
+            // Initialize graphSegments if necessary
+            // TODO: This need to be changed if there are more than one edge set.
+            if (mir_context_->pull_num_segment > 1) {
+                auto edgeset = mir_context_->getEdgeSets().at(0);
+                auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
+                bool is_weighted = (edge_set_type->weight_type != nullptr);
+                oss << "  int numSegments = " << mir_context_->pull_num_segment << ";\n";
+                oss << "  int segmentRange = (builtin_getVertices(" << edgeset->name <<")  + numSegments) / numSegments;\n";
+                oss << "  graphSegments = new GraphSegments<" << (is_weighted ? "WNode" : "NodeID") << ",int>(numSegments);\n";
+                oss << "  BuildPullSegmentedGraphs" << (is_weighted ? "Weighted" : "Unweighted");
+                oss << "(&" << edgeset->name << ", graphSegments, segmentRange);" << std::endl;
+            }
+
             //generate allocation statemetns for field vectors
             for (auto constant : mir_context_->getLoweredConstants()) {
                 if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
@@ -886,12 +899,18 @@ namespace graphit {
                 //unweighted edgeset
                 oss << "WGraph " << edgeset->name << ";" << std::endl;
 
+                // Hard code graphSegments declaration.
+                // TODO: This need to be changed if there are more than one edge set.
+                oss << "GraphSegments<WNode,int>* graphSegments;" << std::endl;
+
             } else {
                 //unweighted edgeset
                 oss << "Graph " << edgeset->name << "; " << std::endl;
+
+                // Hard code graphSegments declaration.
+                // TODO: This need to be changed if there are more than one edge set.
+                oss << "GraphSegments<NodeID,int>* graphSegments;" << std::endl;
             }
-
-
         }
     }
 

@@ -84,16 +84,6 @@ namespace graphit {
                                                                  bool from_vertexset_specified) {
         oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
 
-        // TODO: step0 get graphsegment here
-        assert(apply->pull_num_segment > 0);
-        if (apply->pull_num_segment > 1) {
-            oss_ << "    int numSegments = " << apply->pull_num_segment << ";\n";
-            oss_ << "    int segmentRange = (numVertices + numSegments) / numSegments;\n";
-            oss_ << "    GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>* graphSegments";
-            oss_ << " = new GraphSegments<" << (apply->is_weighted ? "WNode" : "NodeID") << ",int>(numSegments);\n";
-            oss_ << "    BuildPullSegmentedGraphs" << (apply->is_weighted ? "Weighted" : "Unweighted");
-            oss_ << "(&edges, graphSegments, segmentRange);" << std::endl;
-        }
 
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
 //            if (from_vertexset_specified){
@@ -357,7 +347,7 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        bool cache = (apply->pull_num_segment > 1);
+        bool cache = (mir_context_->pull_num_segment > 1);
         if (cache) {
             oss_ << "for (int ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
             printIndent();
@@ -495,7 +485,7 @@ namespace graphit {
 
         printIndent();
 
-        bool cache = (apply->pull_num_segment > 1);
+        bool cache = (mir_context_->pull_num_segment > 1);
         std::string outer_end = "g.num_nodes()";
         std::string iter = "d";
         if (cache) {
@@ -569,7 +559,7 @@ namespace graphit {
                     "    cilk_sync; \n";
         }
 
-        if (apply->pull_num_segment > 1) {
+        if (mir_context_->pull_num_segment > 1) {
             oss_ << "    } // end of segment for loop\n";
         }
 
