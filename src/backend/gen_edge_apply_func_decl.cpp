@@ -491,9 +491,9 @@ namespace graphit {
         if (cache) {
             outer_end = "sg->numVertices";
             iter = "localId";
-            oss_ << "  for (int i = 0; i < graphSegments->numSegments; i++) {\n";
+            oss_ << "  for (int i = 0; i < g.getNumSegments(); i++) {\n";
             printIndent();
-            oss_ << "    auto sg = graphSegments->getSegmentedGraph(i);\n";
+            oss_ << "    auto sg = g.getSegmentedGraph(i);\n";
         }
 
         //genearte the outer for loop

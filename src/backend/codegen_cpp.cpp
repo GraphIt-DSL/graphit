@@ -59,7 +59,6 @@ namespace graphit {
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
-        oss << "#include \"segmentgraph.h\"" << std::endl;
     }
 
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
@@ -366,10 +365,7 @@ namespace graphit {
                 auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
                 bool is_weighted = (edge_set_type->weight_type != nullptr);
                 oss << "  int numSegments = " << mir_context_->pull_num_segment << ";\n";
-                oss << "  int segmentRange = (builtin_getVertices(" << edgeset->name <<")  + numSegments) / numSegments;\n";
-                oss << "  graphSegments = new GraphSegments<" << (is_weighted ? "WNode" : "NodeID") << ",int>(numSegments);\n";
-                oss << "  BuildPullSegmentedGraphs" << (is_weighted ? "Weighted" : "Unweighted");
-                oss << "(&" << edgeset->name << ", graphSegments, segmentRange);" << std::endl;
+		oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(numSegments);" << std::endl;
             }
 
             //generate allocation statemetns for field vectors
@@ -898,18 +894,9 @@ namespace graphit {
                 //weighted edgeset
                 //unweighted edgeset
                 oss << "WGraph " << edgeset->name << ";" << std::endl;
-
-                // Hard code graphSegments declaration.
-                // TODO: This need to be changed if there are more than one edge set.
-                oss << "GraphSegments<WNode,int>* graphSegments;" << std::endl;
-
             } else {
                 //unweighted edgeset
                 oss << "Graph " << edgeset->name << "; " << std::endl;
-
-                // Hard code graphSegments declaration.
-                // TODO: This need to be changed if there are more than one edge set.
-                oss << "GraphSegments<NodeID,int>* graphSegments;" << std::endl;
             }
         }
     }

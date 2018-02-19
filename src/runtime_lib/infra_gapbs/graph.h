@@ -11,6 +11,8 @@
 #include "pvector.h"
 #include "util.h"
 
+#include "segmentgraph.h"
+
 
 /*
 GAP Benchmark Suite
@@ -25,7 +27,7 @@ Simple container for graph in CSR format
 
 
 // Used to hold node & weight, with another node it makes a weighted edge
-template <typename NodeID_, typename WeightT_>
+template <typename NodeID_=int32_t, typename WeightT_=int32_t>
 struct NodeWeight {
   NodeID_ v;
   WeightT_ w;
@@ -268,6 +270,50 @@ class CSRGraph {
     return Range<NodeID_>(num_nodes());
   }
 
+  SegmentedGraph<DestID_, NodeID_>* getSegmentedGraph(int id) const {
+    return graphSegments->getSegmentedGraph(id);
+      
+  }
+
+  int getNumSegments() const {
+    return graphSegments->numSegments;
+      
+  }
+
+  void buildPullSegmentedGraphs(int numSegments) {
+    graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments);
+    int segmentRange = (num_nodes() + numSegments) / numSegments;
+
+    //Go through the original graph and count the number of target vertices and edges for each segment
+    for (auto d : vertices()){
+      for (auto s : in_neigh(d)){
+	int segment_id;
+	if (std::is_same<DestID_, NodeWeight<>>::value)
+	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
+	else
+	  segment_id = s/segmentRange;
+	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);
+	      
+      }
+          
+    }
+
+    //Allocate each segment
+    graphSegments->allocate();
+
+    //Add the edges for each segment
+    for (auto d : vertices()){
+      for (auto s : in_neigh(d)){
+	int segment_id;
+	if (std::is_same<DestID_, NodeWeight<>>::value)
+	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
+	else
+	  segment_id = s/segmentRange;
+	graphSegments->getSegmentedGraph(segment_id)->addEdge(d, s);
+      }
+    }
+  }
+
   //useful for deduplication
   int* flags_;
     SGOffset * offsets_;
@@ -280,6 +326,7 @@ class CSRGraph {
   DestID_*  out_neighbors_;
   DestID_** in_index_;
   DestID_*  in_neighbors_;
+  GraphSegments<DestID_,NodeID_>* graphSegments;
 };
 
 #endif  // GRAPH_H_
