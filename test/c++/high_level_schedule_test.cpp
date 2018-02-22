@@ -259,8 +259,52 @@ protected:
                                                               "        end\n"
                                                               "\n"
                                                               "    end\n"
-                                                              "end");
+                                                              "end");	
+	
+        const char*  pr_cc_char = ("element Vertex end\n"
+                                             "element Edge end\n"
+                                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                             "const IDs : vector{Vertex}(int) = 1;\n"				   
+                                             "const old_rank : vector{Vertex}(float) = 1.0;\n"
+                                             "const new_rank : vector{Vertex}(float) = 0.0;\n"
+                                             "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
+                                             "const error : vector{Vertex}(float) = 0.0;\n"
+                                             "const damp : float = 0.85;\n"
+                                             "const beta_score : float = (1.0 - damp) / vertices.size();\n"
+                                             "func updateEdgeCC(src : Vertex, dst : Vertex)\n"
+                                             "    IDs[dst] min= IDs[src];\n"
+                                             "end\n"
+                                             "func init(v : Vertex)\n"
+                                             "     IDs[v] = v;\n"
+                                             "end\n"
+                                             "func printID(v : Vertex)\n"
+                                             "    print IDs[v];\n"
+                                             "end\n"
+                                             "func updateEdgePR(src : Vertex, dst : Vertex)\n"
+                                             "    new_rank[dst] += old_rank[src] / out_degrees[src];\n"
+                                             "end\n"
+                                             "func updateVertex(v : Vertex)\n"
+                                             "    new_rank[v] = beta_score + damp*(new_rank[v]);\n"
+                                             "    error[v]    = fabs ( new_rank[v] - old_rank[v]);\n"
+                                             "    old_rank[v] = new_rank[v];\n"
+                                             "    new_rank[v] = 0.0;\n"
+                                             "end\n"
+                                             "func main()\n"
+                                             "#l1# for i in 1:10\n"
+                                             "   #s1# edges.apply(updateEdgePR);\n"
+                                             "   #s2# vertices.apply(updateVertex);\n"
+                                             "        print error.sum();"
+				             "end\n"
 
+				             "    var n : int = edges.getVertices();\n"
+				             "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+				             "    vertices.apply(init);\n"
+				             "    while (frontier.getVertexSetSize() != 0)\n"
+				             "        #s1# frontier = edges.from(frontier).applyModified(updateEdgeCC, IDs);\n"
+				             "    end\n"
+				             "    vertices.apply(printID);\n"
+                                             "end");
 
 
         bfs_str_ =  string (bfs_char);
@@ -270,7 +314,7 @@ protected:
         cc_str_ = string  (cc_char);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
-
+        pr_cc_str_ = string(pr_cc_char);
     }
 
     virtual void TearDown() {
@@ -334,7 +378,7 @@ protected:
     string cc_str_;
     string prd_str_;
     string prd_double_str_;
-
+    string pr_cc_str_;
 
 
 };
@@ -627,7 +671,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseTwoSegments) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense", 2)->setApply("s1", "parallel");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->configApplyNumSegments("s1", 2);
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -753,7 +797,8 @@ TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
-    program->setApply("l1:s1", "pull", 2)->setApply("l1:s1", "parallel");
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    program->configApplyNumSegments("l1:s1", 2);
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -1302,3 +1347,20 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaDoubleHybridDenseParallelFuseFieldsLo
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, PRCCPullParallelDifferentSegments) {
+    istringstream is (pr_cc_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel")->configApplyNumSegments("l1:s1", 10);
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 20);
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+}

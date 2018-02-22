@@ -86,7 +86,7 @@ namespace graphit {
         // the grain size for edge based load balance scheme
         // with the default grain size set to 4096
         int pull_load_balance_edge_grain_size;
-        int pull_num_segment;
+        int num_segment;
     };
 
     /**

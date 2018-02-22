@@ -359,13 +359,15 @@ namespace graphit {
             // generates the code that allocates and initializes the global variables
 
             // Initialize graphSegments if necessary
-            // TODO: This need to be changed if there are more than one edge set.
-            if (mir_context_->pull_num_segment > 1) {
-                auto edgeset = mir_context_->getEdgeSets().at(0);
+            auto segment_map = mir_context_->edgeset_to_label_to_num_segment;
+            for (auto edge_iter = segment_map.begin(); edge_iter != segment_map.end(); edge_iter++) {
+                auto edgeset = mir_context_->getConstEdgeSetByName((*edge_iter).first);
                 auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
                 bool is_weighted = (edge_set_type->weight_type != nullptr);
-                oss << "  int numSegments = " << mir_context_->pull_num_segment << ";\n";
-		oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(numSegments);" << std::endl;
+                for (auto label_iter = (*edge_iter).second.begin(); label_iter != (*edge_iter).second.end(); label_iter++) {
+                    oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
+                        << "\", " << (*label_iter).second << ");" << std::endl;
+                }
             }
 
             //generate allocation statemetns for field vectors

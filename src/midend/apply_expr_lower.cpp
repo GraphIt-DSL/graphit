@@ -66,9 +66,7 @@ namespace graphit {
                     node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::PULL) {
                     //Pull
-                    auto pull_edgeset_apply = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
-		    mir_context_->pull_num_segment = apply_schedule->second.pull_num_segment;
-                    node = pull_edgeset_apply;
+                    node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
                 } else if (apply_schedule->second.direction_type ==
                            ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD) {
                     //Hybrid dense forward (switching betweeen push and dense forward push)
@@ -76,7 +74,6 @@ namespace graphit {
                 } else if (apply_schedule->second.direction_type == ApplySchedule::DirectionType::HYBRID_DENSE) {
                     //Hybrid dense (switching betweeen push and pull)
                     auto hybrid_dense_edgeset_apply = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
-		    mir_context_->pull_num_segment = apply_schedule->second.pull_num_segment;
                     //clone the function delcaration for push, use the original func for pull
                     auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
@@ -86,6 +83,13 @@ namespace graphit {
                     mir_context_->addFunctionFront(push_apply_func_decl);
 
                     node = hybrid_dense_edgeset_apply;
+                }
+
+                // Check for number of segment
+                if (apply_schedule->second.num_segment > 1) {
+                    mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = apply_schedule->second.scope_label_name;
+                    mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][apply_schedule->second.scope_label_name] =
+                            apply_schedule->second.num_segment;
                 }
 
                 //Check to see if it is parallel or serial

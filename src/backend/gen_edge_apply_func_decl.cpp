@@ -333,7 +333,8 @@ namespace graphit {
             bool from_vertexset_specified,
             bool apply_expr_gen_frontier,
             std::string dst_type,
-            std::string apply_func_name) {
+            std::string apply_func_name,
+            bool cache) {
 
 
         //filtering on destination
@@ -347,7 +348,6 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        bool cache = (mir_context_->pull_num_segment > 1);
         if (cache) {
             oss_ << "for (int ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
             printIndent();
@@ -485,15 +485,25 @@ namespace graphit {
 
         printIndent();
 
-        bool cache = (mir_context_->pull_num_segment > 1);
+        bool cache = false;
+        auto segment_map = mir_context_->edgeset_to_label_to_num_segment;
+        for (auto edge_iter = segment_map.begin(); edge_iter != segment_map.end(); edge_iter++) {
+            for (auto label_iter = (*edge_iter).second.begin();
+            label_iter != (*edge_iter).second.end();
+            label_iter++) {
+                if ((*label_iter).first == apply->scope_label_name)
+                    cache = true;
+            }
+        }
+
         std::string outer_end = "g.num_nodes()";
         std::string iter = "d";
         if (cache) {
             outer_end = "sg->numVertices";
             iter = "localId";
-            oss_ << "  for (int i = 0; i < g.getNumSegments(); i++) {\n";
+            oss_ << "  for (int i = 0; i < g.getNumSegments(\"" << apply->scope_label_name << "\"); i++) {\n";
             printIndent();
-            oss_ << "    auto sg = g.getSegmentedGraph(i);\n";
+            oss_ << "    auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), i);\n";
         }
 
         //genearte the outer for loop
@@ -517,7 +527,7 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index, sg";
+                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache ? ", sg" : "");
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
                 if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
@@ -525,21 +535,21 @@ namespace graphit {
             }
             if (apply_expr_gen_frontier) oss_ << ", &next ";
             oss_ <<"  ]\n"
-                    "    (NodeID start, NodeID end, int grain_size){\n"
-                    "         if ((start == end-1) || ((sg->vertexArray[end] - sg->vertexArray[start]) < grain_size)){\n"
-                    "  for (NodeID localId = start; localId < end; localId++){\n"
-                    "    NodeID d = sg->graphId[localId];\n";
+                    "    (NodeID start, NodeID end, int grain_size){\n";
+            if (cache)
+                oss_ << "         if ((start == end-1) || ((sg->vertexArray[end] - sg->vertexArray[start]) < grain_size)){\n"
+                        "  for (NodeID localId = start; localId < end; localId++){\n"
+                        "    NodeID d = sg->graphId[localId];\n";
+            else
+                oss_ << "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
+                        "  for (NodeID d = start; d < end; d++){\n";
             indent();
 
         }
 
-
-
-
         //print the code for inner loop on in neighbors
         printPullEdgeTraversalInnerNeighborLoop(apply, from_vertexset_specified, apply_expr_gen_frontier,
-            dst_type, apply_func_name);
-
+            dst_type, apply_func_name, cache);
 
 
         if (! apply->use_pull_edge_based_load_balance) {
@@ -556,11 +566,11 @@ namespace graphit {
                     "                  recursive_lambda(start + ((end-start)>>1), end, grain_size);\n"
                     "        } \n"
                     "    }; //end of lambda function\n";
-            oss_ << "    recursive_lambda(0, sg->numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
+            oss_ << "    recursive_lambda(0, " << (cache ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
                     "    cilk_sync; \n";
         }
 
-        if (mir_context_->pull_num_segment > 1) {
+        if (cache) {
             oss_ << "    } // end of segment for loop\n";
         }
 

@@ -33,4 +33,5 @@ end
 
 
 schedule:
-    program->setApply("s1", "hybrid_dense", 10)->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyNumSegments("s1", 10);

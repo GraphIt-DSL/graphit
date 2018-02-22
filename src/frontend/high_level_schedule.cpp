@@ -301,10 +301,10 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_edge_grain_size = parameter;
             } else if (apply_schedule_str == "pull") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
-                (*schedule_->apply_schedules)[apply_label].pull_num_segment = parameter;
             } else if (apply_schedule_str == "hybrid_dense") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
-                (*schedule_->apply_schedules)[apply_label].pull_num_segment = parameter;
+            } else if (apply_schedule_str == "num_segment") {
+                (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);

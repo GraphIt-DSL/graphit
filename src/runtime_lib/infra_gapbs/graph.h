@@ -7,6 +7,7 @@
 #include <cinttypes>
 #include <iostream>
 #include <type_traits>
+#include <map>
 
 #include "pvector.h"
 #include "util.h"
@@ -113,6 +114,9 @@ class CSRGraph {
     }
     if (flags_ != nullptr)
       delete[] flags_;
+    for (auto iter = label_to_segment.begin(); iter != label_to_segment.end(); iter++) {
+      delete ((*iter).second);
+    }
   }
 
 
@@ -270,18 +274,18 @@ class CSRGraph {
     return Range<NodeID_>(num_nodes());
   }
 
-  SegmentedGraph<DestID_, NodeID_>* getSegmentedGraph(int id) const {
-    return graphSegments->getSegmentedGraph(id);
+  SegmentedGraph<DestID_, NodeID_>* getSegmentedGraph(std::string label, int id) {
+    return label_to_segment[label]->getSegmentedGraph(id);
       
   }
 
-  int getNumSegments() const {
-    return graphSegments->numSegments;
-      
+  int getNumSegments(std::string label) {
+    return label_to_segment[label]->numSegments;      
   }
 
-  void buildPullSegmentedGraphs(int numSegments) {
-    graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments);
+  void buildPullSegmentedGraphs(std::string label, int numSegments) {
+    auto graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments);
+    label_to_segment[label] = graphSegments;
     int segmentRange = (num_nodes() + numSegments) / numSegments;
 
     //Go through the original graph and count the number of target vertices and edges for each segment
@@ -292,10 +296,8 @@ class CSRGraph {
 	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
 	else
 	  segment_id = s/segmentRange;
-	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);
-	      
+	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);	      
       }
-          
     }
 
     //Allocate each segment
@@ -326,7 +328,7 @@ class CSRGraph {
   DestID_*  out_neighbors_;
   DestID_** in_index_;
   DestID_*  in_neighbors_;
-  GraphSegments<DestID_,NodeID_>* graphSegments;
+  std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
 };
 
 #endif  // GRAPH_H_

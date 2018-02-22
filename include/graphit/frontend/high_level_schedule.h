@@ -104,6 +104,13 @@ namespace graphit {
                     return setApply(apply_label, apply_schedule);
                 }
 
+                // High level API for specifying the number of segments to partition the graph into.
+                // Used for cache and NUMA optimizations
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNumSegments(std::string apply_label, int num_segment) {
+                    return setApply(apply_label, "num_segment", num_segment);
+                }
+
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr

@@ -52,4 +52,5 @@ func main()
 end
 
 schedule:
-    program->setApply("s1", "pull", 10)->setApply("s1", "parallel");
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyNumSegments("s1", 10);

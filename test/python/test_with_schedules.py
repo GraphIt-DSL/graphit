@@ -213,6 +213,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_eigenvector_pagerank_fusion(self):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
+    def test_eigenvector_pagerank_segment(self):
+        self.basic_compile_test("eigenvector_pr_segment.gt")
+
     def test_bfs_push_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
@@ -297,7 +300,7 @@ if __name__ == '__main__':
 
     unittest.main()
 
-    # used for enabling a specific test
+    #used for enabling a specific test
     #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_pagerank_parallel_hybrid_dense_expect'))
+    #suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_segment'))
     #unittest.TextTestRunner(verbosity=2).run(suite)
