@@ -284,8 +284,8 @@ class CSRGraph {
     return label_to_segment[label]->numSegments;      
   }
   
-  void buildPullSegmentedGraphs(std::string label, int numSegments, std::string path="") {
-    auto graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments);
+  void buildPullSegmentedGraphs(std::string label, int numSegments, bool numa_aware=false, std::string path="") {
+    auto graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments, numa_aware);
     label_to_segment[label] = graphSegments;
 
 #ifdef LOADSEG
