@@ -82,7 +82,7 @@ namespace graphit {
     void EdgesetApplyFunctionDeclGenerator::setupGlobalVariables(mir::EdgeSetApplyExpr::Ptr apply,
                                                                  bool apply_expr_gen_frontier,
                                                                  bool from_vertexset_specified) {
-        oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
+        oss_ << "    int64_t numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
 
 
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
@@ -349,7 +349,7 @@ namespace graphit {
         printIndent();
 
         if (cache) {
-            oss_ << "for (int ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
+            oss_ << "for (int64_t ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
             printIndent();
             oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
         } else {

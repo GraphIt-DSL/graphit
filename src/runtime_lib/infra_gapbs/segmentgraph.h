@@ -9,15 +9,15 @@ struct SegmentedGraph
 {
   int *graphId;
   DataT *edgeArray;
-  int *vertexArray;
-  int numVertices;
-  int numEdges;
+  int64_t *vertexArray;
+  int64_t numVertices;
+  int64_t numEdges;
   bool allocated;
 
 private:
-  int lastLocalIndex;
+  int64_t lastLocalIndex;
   Vertex lastVertex;
-  Vertex lastEdgeIndex;
+  int64_t lastEdgeIndex;
 
 public:
   SegmentedGraph()
@@ -40,8 +40,7 @@ public:
 
   void allocate(int segment_id)
   {
-
-    vertexArray = new int[numVertices + 1]; // start,end of last              
+    vertexArray = new int64_t[numVertices + 1]; // start,end of last              
     vertexArray[numVertices] = numEdges;
     edgeArray = new DataT[numEdges];
     graphId = new int[numVertices];
