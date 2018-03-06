@@ -594,8 +594,8 @@ namespace graphit {
         if (mir_context_->numa_aware) {
 	  oss_ << "  }// end of per-socket parallel region\n";
             for (auto init_stmt : mir_context_->local_field_init_stmts) {
-                oss_ << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss_ << "    parallel_for (int n = 0; n < numVertices; n++) {\n";
+                oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
+                oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
                 oss_ << "      " << apply->merge_field << "[n] ";
                 switch (apply->reduce_op) {
                     case mir::ReduceStmt::ReductionOp::SUM:
