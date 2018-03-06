@@ -432,12 +432,12 @@ namespace graphit {
           oss << std::endl;
         }
 
-        if (mir_context_->numa_aware) {
+        if (func_decl->name == "main" && mir_context_->numa_aware) {
             for (auto init_stmt : mir_context_->local_field_init_stmts) {
                 oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
                 oss << "numa_free(local_" << init_stmt->merge_field << "[socketId], sizeof(double) * ";
                 mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field))->accept(this);
-                oss << ";\n}\n";
+                oss << ");\n}\n";
             }
         }
 

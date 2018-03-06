@@ -498,13 +498,13 @@ namespace graphit {
 
         if (mir_context_->numa_aware || cache) {
             if (mir_context_->numa_aware) {
-                std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\")";
+                std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
-                oss_ << "  int numSegments = " << num_segment_str << std::endl;
+                oss_ << "  int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
                 oss_ << "  int segmentsPerSocket = numSegments / numPlaces;\n";
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
                 oss_ << "    int socketId = omp_get_place_num();\n";
-                oss_ << "    for (int i = 0; i < segments_per_socket; i++) {\n";
+                oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
                 oss_ << "      int segmentId = socketId + i * numPlaces;\n";
             } else {
                 oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
@@ -584,16 +584,18 @@ namespace graphit {
                     "    cilk_sync; \n";
         }
 
+	if (mir_context_->numa_aware) {
+	  oss_ << "      } // end of per-socket parallel_for\n";
+	}
         if (cache) {
             oss_ << "    } // end of segment for loop\n";
         }
 
         if (mir_context_->numa_aware) {
+	  oss_ << "  }// end of per-socket parallel region\n";
             for (auto init_stmt : mir_context_->local_field_init_stmts) {
                 oss_ << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss_ << "    parallel_for (int n = 0; n < ";
-                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field))->accept(this);
-                oss_ << "; n++) {\n";
+                oss_ << "    parallel_for (int n = 0; n < numVertices; n++) {\n";
                 oss_ << "      " << apply->merge_field << "[n] ";
                 switch (apply->reduce_op) {
                     case mir::ReduceStmt::ReductionOp::SUM:
