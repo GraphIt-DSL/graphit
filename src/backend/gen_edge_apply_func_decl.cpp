@@ -306,10 +306,7 @@ namespace graphit {
 
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  uintE *nextIndices = newA(uintE, outEdgeCount);\n"
                     "  long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());\n"
                     "  free(outEdges);\n"
@@ -575,10 +572,7 @@ namespace graphit {
         }
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
@@ -741,10 +735,7 @@ namespace graphit {
         oss_ << "} //end of outer for loop" << std::endl;
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
@@ -876,7 +867,8 @@ namespace graphit {
                 oss_ << ", " << temp;
         }
         oss_ << "> ";
-        oss_ << "VertexSubset<NodeID>* " << func_name << "(";
+        oss_ << (mir_context_->getFunction(apply->input_function_name)->result.isInitialized() ?
+                 "VertexSubset<NodeID>* " : "void ")  << func_name << "(";
 
         first = true;
         for (auto arg : arguments) {
