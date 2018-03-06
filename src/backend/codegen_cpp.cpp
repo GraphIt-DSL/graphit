@@ -38,6 +38,14 @@ namespace graphit {
             }
         }
 
+        if (mir_context_->numa_aware) {
+            // Generate global declarations for socket-local buffers used by NUMA optimization
+            for (auto init_stmt : mir_context_->local_field_init_stmts) {
+                init_stmt->scalar_type->accept(this);
+                oss << " **local_" << init_stmt->merge_field << ";" << std::endl;
+            }
+        }
+
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
         auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
@@ -356,8 +364,6 @@ namespace graphit {
                 stmt->accept(this);
             }
 
-            // generates the code that allocates and initializes the global variables
-
             // Initialize graphSegments if necessary
             auto segment_map = mir_context_->edgeset_to_label_to_num_segment;
             for (auto edge_iter = segment_map.begin(); edge_iter != segment_map.end(); edge_iter++) {
@@ -395,6 +401,11 @@ namespace graphit {
                 stmt->accept(this);
             }
 
+            if (mir_context_->numa_aware) {
+                for (auto stmt : mir_context_->local_field_init_stmts) {
+                    stmt->accept(this);
+                }
+            }
         }
 
 
@@ -414,12 +425,21 @@ namespace graphit {
 
         }
 
-	if (func_decl->isFunctor) {
-	  dedent();
-	  printEndIndent();
-	  oss << ";";
-	  oss << std::endl;
-	}
+        if (func_decl->isFunctor) {
+          dedent();
+          printEndIndent();
+          oss << ";";
+          oss << std::endl;
+        }
+
+        if (mir_context_->numa_aware) {
+            for (auto init_stmt : mir_context_->local_field_init_stmts) {
+                oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                oss << "numa_free(local_" << init_stmt->merge_field << "[socketId], sizeof(double) * ";
+                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field))->accept(this);
+                oss << ";\n}\n";
+            }
+        }
 
         dedent();
         printEndIndent();
@@ -702,8 +722,6 @@ namespace graphit {
             std::cout << "unsupported type for property: " << var_decl->name << std::endl;
             exit(0);
         }
-
-
     }
 
 
@@ -936,6 +954,31 @@ namespace graphit {
     void CodeGenCPP::visit(mir::NegExpr::Ptr neg_expr) {
         if (neg_expr->negate) oss << " -";
         neg_expr->operand->accept(this);
+    }
+
+    void CodeGenCPP::visit(mir::LocalFieldInitStmt::Ptr init_stmt) {
+        std::string local_field = "local_" + init_stmt->merge_field;
+        oss << local_field << " = new ";
+        init_stmt->scalar_type->accept(this);
+        oss << "*[omp_get_num_places()];\n";
+
+        oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        oss << local_field << "[socketId] = (";
+        init_stmt->scalar_type->accept(this);
+        oss << "*)numa_alloc_onnode(sizeof(";
+        init_stmt->scalar_type->accept(this);
+        oss << ") * ";
+        auto count_expr = mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field));
+        count_expr->accept(this);
+        oss << ", socketId);\n";
+
+        oss << "parallel_for (int n = 0; n < ";
+        count_expr->accept(this);
+        oss << "; n++) {\n";
+        oss << local_field << "[socketId][n] = " << init_stmt->merge_field << "[n];\n";
+        oss << "}\n}\n";
+
+        oss << "omp_set_nested(1);" << std::endl;
     }
 
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {

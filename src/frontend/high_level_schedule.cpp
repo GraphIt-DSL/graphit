@@ -292,7 +292,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, 1};
+                           0, 1, false};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -339,7 +339,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, 1};
+                           0, 1, false};
             }
 
 
@@ -366,7 +366,10 @@ namespace graphit {
             } else if (apply_schedule_str == "pull_edge_based_load_balance" ) {
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
-            } else {
+            } else if (apply_schedule_str == "numa_aware") {
+                (*schedule_->apply_schedules)[apply_label].numa_aware = true;
+            }
+            else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
             }

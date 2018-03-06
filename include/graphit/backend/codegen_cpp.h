@@ -35,6 +35,8 @@ namespace graphit {
         virtual void visit(mir::ReduceStmt::Ptr);
         virtual void visit(mir::CompareAndSwapStmt::Ptr);
 
+        virtual void visit(mir::LocalFieldInitStmt::Ptr);
+
         virtual void visit(mir::PrintStmt::Ptr);
         virtual void visit(mir::BreakStmt::Ptr);
 

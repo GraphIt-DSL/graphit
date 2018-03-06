@@ -111,6 +111,12 @@ namespace graphit {
                     return setApply(apply_label, "num_segment", num_segment);
                 }
 
+                // High level API for enabling NUMA optimization
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNumaAware(std::string apply_label) {
+                    return setApply(apply_label, "numa_aware");
+                }
+
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr

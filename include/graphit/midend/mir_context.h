@@ -307,7 +307,11 @@ namespace graphit {
             std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
 
             // used by cache/numa optimization
-	    std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
+	        std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
+
+            // used by numa optimization
+            std::vector<mir::LocalFieldInitStmt::Ptr> local_field_init_stmts;
+            bool numa_aware = false;
         };
 
 }

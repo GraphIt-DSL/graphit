@@ -87,6 +87,7 @@ namespace graphit {
         // with the default grain size set to 4096
         int pull_load_balance_edge_grain_size;
         int num_segment;
+        bool numa_aware;
     };
 
     /**

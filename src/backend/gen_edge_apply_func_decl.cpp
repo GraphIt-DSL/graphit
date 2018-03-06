@@ -345,7 +345,7 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        if (cache) {
+        if (cache || mir_context_->numa_aware) {
             oss_ << "for (int64_t ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
             printIndent();
             oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
@@ -388,9 +388,9 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << apply_func_name << " ( s.v , d, s.w )";
+            oss_ << apply_func_name << " ( s.v , d, s.w " << (mir_context_->numa_aware ? ", socketId" : "") << ")";
         } else {
-            oss_ << apply_func_name << " ( s , d  )";
+            oss_ << apply_func_name << " ( s , d " << (mir_context_->numa_aware ? ", socketId" : "") << ")";
 
         }
 
@@ -495,19 +495,36 @@ namespace graphit {
 
         std::string outer_end = "g.num_nodes()";
         std::string iter = "d";
-        if (cache) {
+
+        if (mir_context_->numa_aware || cache) {
+            if (mir_context_->numa_aware) {
+                std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\")";
+                oss_ << "  int numPlaces = omp_get_num_places();\n";
+                oss_ << "  int numSegments = " << num_segment_str << std::endl;
+                oss_ << "  int segmentsPerSocket = numSegments / numPlaces;\n";
+                oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
+                oss_ << "    int socketId = omp_get_place_num();\n";
+                oss_ << "    for (int i = 0; i < segments_per_socket; i++) {\n";
+                oss_ << "      int segmentId = socketId + i * numPlaces;\n";
+            } else {
+                oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
+                     << "\"); segmentId++) {\n";
+            }
+            oss_ << "      auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), segmentId);\n";
             outer_end = "sg->numVertices";
             iter = "localId";
-            oss_ << "  for (int i = 0; i < g.getNumSegments(\"" << apply->scope_label_name << "\"); i++) {\n";
-            printIndent();
-            oss_ << "    auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), i);\n";
         }
 
         //genearte the outer for loop
         if (! apply->use_pull_edge_based_load_balance) {
             std::string for_type = "for";
-            if (apply->is_parallel)
+            if (mir_context_->numa_aware) {
+                oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
+                oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
+            } else if (apply->is_parallel) {
                 for_type = "parallel_for";
+            }
+
             //printIndent();
             oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
             indent();
@@ -569,6 +586,26 @@ namespace graphit {
 
         if (cache) {
             oss_ << "    } // end of segment for loop\n";
+        }
+
+        if (mir_context_->numa_aware) {
+            for (auto init_stmt : mir_context_->local_field_init_stmts) {
+                oss_ << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                oss_ << "    parallel_for (int n = 0; n < ";
+                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field))->accept(this);
+                oss_ << "; n++) {\n";
+                oss_ << "      " << apply->merge_field << "[n] ";
+                switch (apply->reduce_op) {
+                    case mir::ReduceStmt::ReductionOp::SUM:
+                        oss_ << "+= ";
+                        break;
+                    default:
+                        break;
+                }
+                oss_ << "local_" << apply->merge_field << "[socketId][n];\n";
+                oss_ << "local_" << apply->merge_field << "[socketId][n] = 0;\n";
+                oss_ << "}\n}" << std::endl;
+            }
         }
 
         //return a new vertexset if no subset vertexset is returned
