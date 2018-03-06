@@ -372,7 +372,7 @@ namespace graphit {
                 bool is_weighted = (edge_set_type->weight_type != nullptr);
                 for (auto label_iter = (*edge_iter).second.begin(); label_iter != (*edge_iter).second.end(); label_iter++) {
                     oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
-                        << "\", " << (*label_iter).second << ");" << std::endl;
+                        << "\", " << (*label_iter).second << (mir_context_->numa_aware ? ", true" : "") << ");" << std::endl;
                 }
             }
 
