@@ -500,8 +500,8 @@ namespace graphit {
             if (mir_context_->numa_aware) {
                 std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
-                oss_ << "  int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
-                oss_ << "  int segmentsPerSocket = numSegments / numPlaces;\n";
+                oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
+                oss_ << "    int segmentsPerSocket = numSegments / numPlaces;\n";
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
                 oss_ << "    int socketId = omp_get_place_num();\n";
                 oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
@@ -585,14 +585,14 @@ namespace graphit {
         }
 
         if (mir_context_->numa_aware) {
-          oss_ << "      } // end of per-socket parallel_for\n";
+          oss_ << "} // end of per-socket parallel_for\n";
         }
         if (cache) {
             oss_ << "    } // end of segment for loop\n";
         }
 
         if (mir_context_->numa_aware) {
-	        oss_ << "  }// end of per-socket parallel region\n";
+	        oss_ << "}// end of per-socket parallel region\n\n";
             for (auto merge_reduce : mir_context_->merge_reduce_fields) {
                 oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
                 oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
@@ -605,7 +605,7 @@ namespace graphit {
                         break;
                 }
                 oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
-                oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
+                oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
                 //apply->merge_reduce->initVal->accept(this);
                 auto init_val = apply->merge_reduce->initVal;
                 if (std::dynamic_pointer_cast<mir::IntLiteral>(init_val)) {
@@ -621,7 +621,7 @@ namespace graphit {
                     auto bool_expr = std::dynamic_pointer_cast<mir::BoolLiteral>(init_val);
                     oss_ << bool_expr->val;
                 }
-                oss_ << ";\n}\n}" << std::endl;
+                oss_ << ";\n    }\n  }" << std::endl;
             }
         }
 

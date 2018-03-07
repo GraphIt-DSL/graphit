@@ -405,12 +405,12 @@ namespace graphit {
                 //auto visitor = NumaInitGenerator(mir_context_, oss);
                 for (auto merge_reduce : mir_context_->merge_reduce_fields) {
                     std::string local_field = "local_" + merge_reduce->field_name;
-                    oss << local_field << " = new ";
+                    oss << "  " << local_field << " = new ";
                     merge_reduce->scalar_type->accept(this);
                     oss << "*[omp_get_num_places()];\n";
 
-                    oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                    oss << local_field << "[socketId] = (";
+                    oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                    oss << "    " << local_field << "[socketId] = (";
                     merge_reduce->scalar_type->accept(this);
                     oss << "*)numa_alloc_onnode(sizeof(";
                     merge_reduce->scalar_type->accept(this);
@@ -420,13 +420,13 @@ namespace graphit {
                     count_expr->accept(this);
                     oss << ", socketId);\n";
 
-                    oss << "parallel_for (int n = 0; n < ";
+                    oss << "    parallel_for (int n = 0; n < ";
                     count_expr->accept(this);
                     oss << "; n++) {\n";
-                    oss << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
-                    oss << "}\n}\n";
+                    oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
+                    oss << "    }\n  }\n";
 
-                    oss << "omp_set_nested(1);" << std::endl;
+                    oss << "  omp_set_nested(1);" << std::endl;
                     //visitor.genNumaInit(merge_reduce);
                 }
             }
@@ -456,12 +456,12 @@ namespace graphit {
 
         if (func_decl->name == "main" && mir_context_->numa_aware) {
             for (auto merge_reduce : mir_context_->merge_reduce_fields) {
-                oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss << "numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
+                oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
                 merge_reduce->scalar_type->accept(this);
                 oss << ") * ";
                 mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
-                oss << ");\n}\n";
+                oss << ");\n  }\n";
             }
         }
 
