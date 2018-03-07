@@ -310,7 +310,7 @@ namespace graphit {
 	        std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
 
             // used by numa optimization
-            std::vector<mir::LocalFieldInitStmt::Ptr> local_field_init_stmts;
+            std::vector<mir::MergeReduceField::Ptr> merge_reduce_fields;
             bool numa_aware = false;
         };
 

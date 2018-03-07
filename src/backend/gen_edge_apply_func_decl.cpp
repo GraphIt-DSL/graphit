@@ -584,29 +584,44 @@ namespace graphit {
                     "    cilk_sync; \n";
         }
 
-	if (mir_context_->numa_aware) {
-	  oss_ << "      } // end of per-socket parallel_for\n";
-	}
+        if (mir_context_->numa_aware) {
+          oss_ << "      } // end of per-socket parallel_for\n";
+        }
         if (cache) {
             oss_ << "    } // end of segment for loop\n";
         }
 
         if (mir_context_->numa_aware) {
-	  oss_ << "  }// end of per-socket parallel region\n";
-            for (auto init_stmt : mir_context_->local_field_init_stmts) {
+	        oss_ << "  }// end of per-socket parallel region\n";
+            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
                 oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
                 oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss_ << "      " << apply->merge_field << "[n] ";
-                switch (apply->reduce_op) {
+                oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
+                switch (apply->merge_reduce->reduce_op) {
                     case mir::ReduceStmt::ReductionOp::SUM:
                         oss_ << "+= ";
                         break;
                     default:
                         break;
                 }
-                oss_ << "local_" << apply->merge_field << "[socketId][n];\n";
-                oss_ << "local_" << apply->merge_field << "[socketId][n] = 0;\n";
-                oss_ << "}\n}" << std::endl;
+                oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+                oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
+                //apply->merge_reduce->initVal->accept(this);
+                auto init_val = apply->merge_reduce->initVal;
+                if (std::dynamic_pointer_cast<mir::IntLiteral>(init_val)) {
+                    auto int_expr = std::dynamic_pointer_cast<mir::IntLiteral>(init_val);
+                    oss_ << int_expr->val;
+                } else if (std::dynamic_pointer_cast<mir::FloatLiteral>(init_val)) {
+                    auto float_expr = std::dynamic_pointer_cast<mir::FloatLiteral>(init_val);
+                    oss_ << float_expr->val;
+                } else if (std::dynamic_pointer_cast<mir::StringLiteral>(init_val)) {
+                    auto string_expr = std::dynamic_pointer_cast<mir::StringLiteral>(init_val);
+                    oss_ << string_expr->val;
+                } else if (std::dynamic_pointer_cast<mir::BoolLiteral>(init_val)) {
+                    auto bool_expr = std::dynamic_pointer_cast<mir::BoolLiteral>(init_val);
+                    oss_ << bool_expr->val;
+                }
+                oss_ << ";\n}\n}" << std::endl;
             }
         }
 

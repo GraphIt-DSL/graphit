@@ -61,11 +61,7 @@ namespace graphit {
                 label_scope_.unscope();
             }
         }
-
-        void MIRVisitor::visit(LocalFieldInitStmt::Ptr stmt) {
-            stmt->accept(this);
-        }
-
+      
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }

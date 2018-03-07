@@ -33,8 +33,6 @@ namespace graphit {
         struct ReduceStmt;
         struct CompareAndSwapStmt;
 
-        struct LocalFieldInitStmt;
-
         struct StmtBlock;
         struct Expr;
 
@@ -101,8 +99,6 @@ namespace graphit {
             virtual void visit(std::shared_ptr<AssignStmt>);
             virtual void visit(std::shared_ptr<ReduceStmt>);
             virtual void visit(std::shared_ptr<CompareAndSwapStmt>);
-
-            virtual void visit(std::shared_ptr<LocalFieldInitStmt>);
 
             virtual void visit(std::shared_ptr<PrintStmt>);
             virtual void visit(std::shared_ptr<BreakStmt>) {};

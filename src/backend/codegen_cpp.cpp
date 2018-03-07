@@ -40,9 +40,9 @@ namespace graphit {
 
         if (mir_context_->numa_aware) {
             // Generate global declarations for socket-local buffers used by NUMA optimization
-            for (auto init_stmt : mir_context_->local_field_init_stmts) {
-                init_stmt->scalar_type->accept(this);
-                oss << " **local_" << init_stmt->merge_field << ";" << std::endl;
+            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
+                merge_reduce->scalar_type->accept(this);
+                oss << " **local_" << merge_reduce->field_name << ";" << std::endl;
             }
         }
 
@@ -402,13 +402,35 @@ namespace graphit {
             }
 
             if (mir_context_->numa_aware) {
-                for (auto stmt : mir_context_->local_field_init_stmts) {
-                    stmt->accept(this);
+                //auto visitor = NumaInitGenerator(mir_context_, oss);
+                for (auto merge_reduce : mir_context_->merge_reduce_fields) {
+                    std::string local_field = "local_" + merge_reduce->field_name;
+                    oss << local_field << " = new ";
+                    merge_reduce->scalar_type->accept(this);
+                    oss << "*[omp_get_num_places()];\n";
+
+                    oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                    oss << local_field << "[socketId] = (";
+                    merge_reduce->scalar_type->accept(this);
+                    oss << "*)numa_alloc_onnode(sizeof(";
+                    merge_reduce->scalar_type->accept(this);
+                    oss << ") * ";
+                    auto count_expr = mir_context_->getElementCount(
+                            mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name));
+                    count_expr->accept(this);
+                    oss << ", socketId);\n";
+
+                    oss << "parallel_for (int n = 0; n < ";
+                    count_expr->accept(this);
+                    oss << "; n++) {\n";
+                    oss << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
+                    oss << "}\n}\n";
+
+                    oss << "omp_set_nested(1);" << std::endl;
+                    //visitor.genNumaInit(merge_reduce);
                 }
             }
         }
-
-
 
         //if the function has a body
         if (func_decl->body->stmts) {
@@ -433,10 +455,12 @@ namespace graphit {
         }
 
         if (func_decl->name == "main" && mir_context_->numa_aware) {
-            for (auto init_stmt : mir_context_->local_field_init_stmts) {
+            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
                 oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss << "numa_free(local_" << init_stmt->merge_field << "[socketId], sizeof(double) * ";
-                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field))->accept(this);
+                oss << "numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
+                merge_reduce->scalar_type->accept(this);
+                oss << ") * ";
+                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
                 oss << ");\n}\n";
             }
         }
@@ -956,31 +980,6 @@ namespace graphit {
         neg_expr->operand->accept(this);
     }
 
-    void CodeGenCPP::visit(mir::LocalFieldInitStmt::Ptr init_stmt) {
-        std::string local_field = "local_" + init_stmt->merge_field;
-        oss << local_field << " = new ";
-        init_stmt->scalar_type->accept(this);
-        oss << "*[omp_get_num_places()];\n";
-
-        oss << "for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-        oss << local_field << "[socketId] = (";
-        init_stmt->scalar_type->accept(this);
-        oss << "*)numa_alloc_onnode(sizeof(";
-        init_stmt->scalar_type->accept(this);
-        oss << ") * ";
-        auto count_expr = mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(init_stmt->merge_field));
-        count_expr->accept(this);
-        oss << ", socketId);\n";
-
-        oss << "parallel_for (int n = 0; n < ";
-        count_expr->accept(this);
-        oss << "; n++) {\n";
-        oss << local_field << "[socketId][n] = " << init_stmt->merge_field << "[n];\n";
-        oss << "}\n}\n";
-
-        oss << "omp_set_nested(1);" << std::endl;
-    }
-
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
 
 
@@ -1049,8 +1048,4 @@ namespace graphit {
             oss << ") ";
         }
     }
-
-
-
-
 }

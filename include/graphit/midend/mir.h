@@ -461,17 +461,6 @@ namespace graphit {
 
         };
 
-        struct LocalFieldInitStmt : public Stmt {
-            std::string merge_field;
-            mir::ScalarType::Ptr scalar_type;
-
-            typedef std::shared_ptr<LocalFieldInitStmt> Ptr;
-
-            virtual void accept(MIRVisitor *visitor) {
-                visitor->visit(self<LocalFieldInitStmt>());
-            }
-        };
-
         struct IdentDecl : public MIRNode {
             std::string name;
             Type::Ptr type;
@@ -729,6 +718,15 @@ namespace graphit {
 
         };
 
+        struct MergeReduceField {
+            std::string field_name;
+            ScalarType::Ptr scalar_type;
+            ReduceStmt::ReductionOp reduce_op;
+            Expr::Ptr initVal;
+
+            typedef std::shared_ptr<MergeReduceField> Ptr;
+        };
+
         struct EdgeSetApplyExpr : public ApplyExpr {
             std::string from_func = "";
             std::string to_func = "";
@@ -741,8 +739,7 @@ namespace graphit {
             //hard coded default value for grain size
             int pull_edge_based_load_balance_grain_size = 4096;
             std::string scope_label_name;
-            std::string merge_field = "";
-            ReduceStmt::ReductionOp reduce_op;
+	        MergeReduceField::Ptr merge_reduce;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

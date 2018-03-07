@@ -10,6 +10,8 @@
 #include <graphit/midend/mir_rewriter.h>
 
 namespace graphit {
+
+
     class MergeReduceLower {
     public:
         MergeReduceLower(MIRContext *mir_context, Schedule *schedule)
@@ -23,8 +25,7 @@ namespace graphit {
 
             virtual void visit(mir::ReduceStmt::Ptr reduce_stmt);
 
-            std::string merge_field = "";
-            mir::ReduceStmt::ReductionOp reduce_op;
+            mir::MergeReduceField::Ptr merge_reduce = nullptr;
 
         private:
             MIRContext *mir_context_ = nullptr;
