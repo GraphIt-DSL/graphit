@@ -53,5 +53,5 @@ end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
-    program->configApplyNumSegments("s1", 10)->configApplyNumaAware("s1");
+    program->configApplyNumSegments("s1", 15)->configApplyNumaAware("s1");
 
