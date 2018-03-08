@@ -1,8 +1,8 @@
 #include <math.h>
 #include <vector>
 #include <assert.h>
-#include <omp.h>
 #ifdef NUMA
+#include <omp.h>
 #include <numa.h>
 #endif
 
