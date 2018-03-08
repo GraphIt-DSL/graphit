@@ -1,8 +1,10 @@
 #include <math.h>
 #include <vector>
 #include <assert.h>
-#include <numa.h>
 #include <omp.h>
+#ifdef NUMA
+#include <numa.h>
+#endif
 
 using namespace std;
 
@@ -35,31 +37,36 @@ public:
 
   ~SegmentedGraph()
   {
+#ifdef NUMA
     if (numa_aware) {
       numa_free(graphId, sizeof(int) * numVertices);
       numa_free(edgeArray, sizeof(int) * numEdges);
-      numa_free(vertexArray, sizeof(int64_t) * (numVertices + 1));      
-    } else {
-      delete[] graphId;
-      delete[] edgeArray;
-      delete[] vertexArray;
+      numa_free(vertexArray, sizeof(int64_t) * (numVertices + 1));
+      return;
     }
+#endif
+    delete[] graphId;
+    delete[] edgeArray;
+    delete[] vertexArray;
   }
 
 
   void allocate(int segment_id)
   {
+#ifdef NUMA
     if (numa_aware) {
       int place_id = segment_id % omp_get_num_places();
       vertexArray = (int64_t *)numa_alloc_onnode(sizeof(int64_t) * (numVertices + 1), place_id);
       edgeArray = (DataT *)numa_alloc_onnode(sizeof(int) * numEdges, place_id);
       graphId = (int *)numa_alloc_onnode(sizeof(int) * numVertices, place_id);
-    } else {
-      vertexArray = new int64_t[numVertices + 1]; // start,end of last              
-      edgeArray = new DataT[numEdges];
-      graphId = new int[numVertices];
+      vertexArray[numVertices] = numEdges;
+      allocated = true;
+      return;
     }
-
+#endif
+    vertexArray = new int64_t[numVertices + 1]; // start,end of last              
+    edgeArray = new DataT[numEdges];
+    graphId = new int[numVertices];
     vertexArray[numVertices] = numEdges;
     allocated = true;
   }
