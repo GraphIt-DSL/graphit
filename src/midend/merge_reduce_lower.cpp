@@ -51,6 +51,8 @@ namespace graphit {
     void MergeReduceLower::ReduceStmtVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {
         if (mir::isa<mir::TensorReadExpr>(reduce_stmt->lhs)) {
             auto tensor_read_expr = mir::to<mir::TensorReadExpr>(reduce_stmt->lhs);
+            if (!mir::isa<mir::VarExpr>(tensor_read_expr->target))
+                return;
             auto target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
             merge_reduce = std::make_shared<mir::MergeReduceField>();
             merge_reduce->field_name = target_expr->var.getName();
