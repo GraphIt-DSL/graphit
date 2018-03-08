@@ -7,7 +7,7 @@ import shutil
 import sys
 
 use_parallel = False
-numa_flags = ""
+use_numa = False
 
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
@@ -30,13 +30,18 @@ class TestGraphitCompiler(unittest.TestCase):
             os.chdir('./bin')
 
         cwd = os.getcwd()
-
         cls.root_test_input_dir = "../test/input/"
-        cls.cpp_compiler = "g++"
         cls.compile_flags = "-std=c++11"
         cls.include_path = "../src/runtime_lib"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
+
+        if use_numa:
+            cls.numa_flags = " -lnuma -DNUMA -qopenmp"
+            cls.cpp_compiler = "icc"
+        else:
+            cls.numa_flags = ""
+            cls.cpp_compiler = "g++"
 
 
     def setUp(self):
@@ -64,10 +69,10 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -a " + algo_file + " -f " + schedule_file + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o" + numa_flags
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o" + numa_flags
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     # compiles the input file with both the algorithm and schedule specification
@@ -77,11 +82,11 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o" + numa_flags
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
 
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o" + numa_flags
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
@@ -91,7 +96,7 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp "  " -o test.o" + numa_flags
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
@@ -277,7 +282,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_verified_test("pagerank_pull_parallel_segment.gt", True)
 
     def test_pagerank_parallel_pull_numa_expect(self):
-        if numa_flags:
+        if self.numa_flags:
             self.pr_verified_test("pagerank_pull_parallel_numa.gt", True)
 
     def test_cf_parallel_expect(self):
@@ -304,7 +309,7 @@ if __name__ == '__main__':
             use_parallel = True
             print "using parallel"
         if "numa" in sys.argv:
-            numa_flags = " -lnuma -DNUMA "
+            use_numa = True
             print "testing numa"
             suite = unittest.TestSuite()
             suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_numa_expect'))
