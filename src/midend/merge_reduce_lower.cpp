@@ -37,15 +37,20 @@ namespace graphit {
         }
 
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function_name);
+        auto edgeset_str = mir::to<mir::VarExpr>(apply_expr->target)->var.getName();
+        auto merge_reduce = std::make_shared<mir::MergeReduceField>();
+        mir_context_->edgeset_to_merge_reduce_fields[edgeset_str] = merge_reduce;
         if (apply_schedule->second.numa_aware) {
             auto int_type = std::make_shared<mir::ScalarType>();
             int_type->type = mir::ScalarType::Type::INT;
             apply_func_decl->args.push_back(mir::Var("socketId", int_type));
-            mir_context_->numa_aware = true;
+            merge_reduce->numa_aware = true;
         }
-        auto reduce_stmt_visitor = ReduceStmtVisitor(mir_context_);
+
+
+        auto reduce_stmt_visitor = ReduceStmtVisitor(mir_context_, merge_reduce);
         apply_func_decl->accept(&reduce_stmt_visitor);
-        apply_expr->merge_reduce = reduce_stmt_visitor.merge_reduce;
+        apply_expr->merge_reduce = merge_reduce;
     }
 
     void MergeReduceLower::ReduceStmtVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {
@@ -54,25 +59,22 @@ namespace graphit {
             if (!mir::isa<mir::VarExpr>(tensor_read_expr->target))
                 return;
             auto target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
-            merge_reduce = std::make_shared<mir::MergeReduceField>();
-            merge_reduce->field_name = target_expr->var.getName();
-            merge_reduce->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce->field_name));
-            merge_reduce->reduce_op = reduce_stmt->reduce_op_;
+            merge_reduce_->field_name = target_expr->var.getName();
+            merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
+            merge_reduce_->reduce_op = reduce_stmt->reduce_op_;
 
             for (auto const &element_type_entry : mir_context_->properties_map_) {
                 for (auto const &var_decl : *element_type_entry.second) {
-                    if (var_decl->name == merge_reduce->field_name) {
-                        merge_reduce->initVal = var_decl->initVal;
+                    if (var_decl->name == merge_reduce_->field_name) {
+                        merge_reduce_->initVal = var_decl->initVal;
                         break;
                     }
                 }
             }
 
-            if (mir_context_->numa_aware) {
-                target_expr->var = mir::Var("local_" + merge_reduce->field_name + "[socketId]", target_expr->var.getType());
+            if (merge_reduce_->numa_aware) {
+                target_expr->var = mir::Var("local_" + merge_reduce_->field_name + "[socketId]", target_expr->var.getType());
             }
-
-            mir_context_->merge_reduce_fields.push_back(merge_reduce);
         }
     }
 }

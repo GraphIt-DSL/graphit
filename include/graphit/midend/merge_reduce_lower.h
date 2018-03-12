@@ -20,15 +20,14 @@ namespace graphit {
         void lower();
 
         struct ReduceStmtVisitor : public mir::MIRVisitor {
-            ReduceStmtVisitor(MIRContext *mir_context)
-                    : mir_context_(mir_context){}
+            ReduceStmtVisitor(MIRContext *mir_context, mir::MergeReduceField::Ptr merge_reduce)
+                    : mir_context_(mir_context), merge_reduce_(merge_reduce) {}
 
             virtual void visit(mir::ReduceStmt::Ptr reduce_stmt);
 
-            mir::MergeReduceField::Ptr merge_reduce = nullptr;
-
         private:
             MIRContext *mir_context_ = nullptr;
+            mir::MergeReduceField::Ptr merge_reduce_ = nullptr;
         };
 
         struct ApplyExprVisitor : public mir::MIRVisitor {

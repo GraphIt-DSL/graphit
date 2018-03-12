@@ -723,6 +723,7 @@ namespace graphit {
             ScalarType::Ptr scalar_type;
             ReduceStmt::ReductionOp reduce_op;
             Expr::Ptr initVal;
+            bool numa_aware;
 
             typedef std::shared_ptr<MergeReduceField> Ptr;
         };

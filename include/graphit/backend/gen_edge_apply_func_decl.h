@@ -102,7 +102,8 @@ namespace graphit {
                                                      bool apply_expr_gen_frontier,
                                                      std::string dst_type,
                                                      std::string apply_func_name,
-                                                     bool cache);
+                                                     bool cache,
+                                                     bool numa_aware);
 
     };
 }

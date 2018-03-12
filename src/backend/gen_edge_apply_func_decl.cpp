@@ -331,7 +331,8 @@ namespace graphit {
             bool apply_expr_gen_frontier,
             std::string dst_type,
             std::string apply_func_name,
-            bool cache) {
+            bool cache,
+            bool numa_aware) {
 
 
         //filtering on destination
@@ -345,7 +346,7 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        if (cache || mir_context_->numa_aware) {
+        if (cache || numa_aware) {
             oss_ << "for (int64_t ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
             printIndent();
             oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
@@ -388,9 +389,9 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << apply_func_name << " ( s.v , d, s.w " << (mir_context_->numa_aware ? ", socketId" : "") << ")";
+            oss_ << apply_func_name << " ( s.v , d, s.w " << (numa_aware ? ", socketId" : "") << ")";
         } else {
-            oss_ << apply_func_name << " ( s , d " << (mir_context_->numa_aware ? ", socketId" : "") << ")";
+            oss_ << apply_func_name << " ( s , d " << (numa_aware ? ", socketId" : "") << ")";
 
         }
 
@@ -493,11 +494,18 @@ namespace graphit {
             }
         }
 
+        bool numa_aware = false;
+        for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
+            if (mir::to<mir::VarExpr>(apply->target)->var.getName() == iter.first
+                && iter.second->numa_aware)
+                numa_aware = true;
+        }
+
         std::string outer_end = "g.num_nodes()";
         std::string iter = "d";
 
-        if (mir_context_->numa_aware || cache) {
-            if (mir_context_->numa_aware) {
+        if (numa_aware || cache) {
+            if (numa_aware) {
                 std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
                 oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
@@ -518,7 +526,7 @@ namespace graphit {
         //genearte the outer for loop
         if (! apply->use_pull_edge_based_load_balance) {
             std::string for_type = "for";
-            if (mir_context_->numa_aware) {
+            if (numa_aware) {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
                 oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
             } else if (apply->is_parallel) {
@@ -563,7 +571,7 @@ namespace graphit {
 
         //print the code for inner loop on in neighbors
         printPullEdgeTraversalInnerNeighborLoop(apply, from_vertexset_specified, apply_expr_gen_frontier,
-            dst_type, apply_func_name, cache);
+            dst_type, apply_func_name, cache, numa_aware);
 
 
         if (! apply->use_pull_edge_based_load_balance) {
@@ -584,45 +592,44 @@ namespace graphit {
                     "    cilk_sync; \n";
         }
 
-        if (mir_context_->numa_aware) {
+        if (numa_aware) {
           oss_ << "} // end of per-socket parallel_for\n";
         }
         if (cache) {
             oss_ << "    } // end of segment for loop\n";
         }
 
-        if (mir_context_->numa_aware) {
+        if (numa_aware) {
 	        oss_ << "}// end of per-socket parallel region\n\n";
-            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
-                oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
-                oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
-                switch (apply->merge_reduce->reduce_op) {
-                    case mir::ReduceStmt::ReductionOp::SUM:
-                        oss_ << "+= ";
-                        break;
-                    default:
-                        break;
-                }
-                oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
-                oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
-                //apply->merge_reduce->initVal->accept(this);
-                auto init_val = apply->merge_reduce->initVal;
-                if (std::dynamic_pointer_cast<mir::IntLiteral>(init_val)) {
-                    auto int_expr = std::dynamic_pointer_cast<mir::IntLiteral>(init_val);
-                    oss_ << int_expr->val;
-                } else if (std::dynamic_pointer_cast<mir::FloatLiteral>(init_val)) {
-                    auto float_expr = std::dynamic_pointer_cast<mir::FloatLiteral>(init_val);
-                    oss_ << float_expr->val;
-                } else if (std::dynamic_pointer_cast<mir::StringLiteral>(init_val)) {
-                    auto string_expr = std::dynamic_pointer_cast<mir::StringLiteral>(init_val);
-                    oss_ << string_expr->val;
-                } else if (std::dynamic_pointer_cast<mir::BoolLiteral>(init_val)) {
-                    auto bool_expr = std::dynamic_pointer_cast<mir::BoolLiteral>(init_val);
-                    oss_ << bool_expr->val;
-                }
-                oss_ << ";\n    }\n  }" << std::endl;
+            auto merge_reduce = mir_context_->edgeset_to_merge_reduce_fields[mir::to<mir::VarExpr>(apply->target)->var.getName()];
+            oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
+            oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+            oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
+            switch (apply->merge_reduce->reduce_op) {
+                case mir::ReduceStmt::ReductionOp::SUM:
+                    oss_ << "+= ";
+                    break;
+                default:
+                    break;
             }
+            oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+            oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
+            //apply->merge_reduce->initVal->accept(this);
+            auto init_val = apply->merge_reduce->initVal;
+            if (std::dynamic_pointer_cast<mir::IntLiteral>(init_val)) {
+                auto int_expr = std::dynamic_pointer_cast<mir::IntLiteral>(init_val);
+                oss_ << int_expr->val;
+            } else if (std::dynamic_pointer_cast<mir::FloatLiteral>(init_val)) {
+                auto float_expr = std::dynamic_pointer_cast<mir::FloatLiteral>(init_val);
+                oss_ << float_expr->val;
+            } else if (std::dynamic_pointer_cast<mir::StringLiteral>(init_val)) {
+                auto string_expr = std::dynamic_pointer_cast<mir::StringLiteral>(init_val);
+                oss_ << string_expr->val;
+            } else if (std::dynamic_pointer_cast<mir::BoolLiteral>(init_val)) {
+                auto bool_expr = std::dynamic_pointer_cast<mir::BoolLiteral>(init_val);
+                oss_ << bool_expr->val;
+            }
+            oss_ << ";\n    }\n  }" << std::endl;
         }
 
         //return a new vertexset if no subset vertexset is returned

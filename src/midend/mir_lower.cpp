@@ -36,7 +36,7 @@ namespace graphit {
         ApplyExprLower(mir_context, schedule).lower();
 
         // This pass extracts the merge field and reduce operator. If numa_aware is set to true in
-        // the schedule, it also adds NUMA optimization
+        // the schedule for the corresponding label, it also adds NUMA optimization
         MergeReduceLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access

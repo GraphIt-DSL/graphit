@@ -38,11 +38,11 @@ namespace graphit {
             }
         }
 
-        if (mir_context_->numa_aware) {
-            // Generate global declarations for socket-local buffers used by NUMA optimization
-            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
-                merge_reduce->scalar_type->accept(this);
-                oss << " **local_" << merge_reduce->field_name << ";" << std::endl;
+        // Generate global declarations for socket-local buffers used by NUMA optimization
+        for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
+            if (iter.second->numa_aware) {
+                iter.second->scalar_type->accept(this);
+                oss << " **local_" << iter.second->field_name << ";" << std::endl;
             }
         }
 
@@ -355,12 +355,12 @@ namespace graphit {
         printBeginIndent();
         indent();
 
-        if (func_decl->name == "main"){
+        if (func_decl->name == "main") {
             //generate special initialization code for main function
             //TODO: this is probably a hack that could be fixed for later
 
             //First, allocate the edgesets (read them from outside files if needed)
-            for (auto stmt : mir_context_->edgeset_alloc_stmts){
+            for (auto stmt : mir_context_->edgeset_alloc_stmts) {
                 stmt->accept(this);
             }
 
@@ -370,9 +370,12 @@ namespace graphit {
                 auto edgeset = mir_context_->getConstEdgeSetByName((*edge_iter).first);
                 auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
                 bool is_weighted = (edge_set_type->weight_type != nullptr);
-                for (auto label_iter = (*edge_iter).second.begin(); label_iter != (*edge_iter).second.end(); label_iter++) {
+                for (auto label_iter = (*edge_iter).second.begin();
+                     label_iter != (*edge_iter).second.end(); label_iter++) {
                     oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
-                        << "\", " << (*label_iter).second << (mir_context_->numa_aware ? ", true" : "") << ");" << std::endl;
+                        << "\", " << (*label_iter).second
+                        << (mir_context_->edgeset_to_merge_reduce_fields[(*edge_iter).first]->numa_aware
+                            ? ", true" : "") << ");" << std::endl;
                 }
             }
 
@@ -386,7 +389,7 @@ namespace graphit {
                         //genPropertyArrayDecl(constant);
                         genPropertyArrayAlloc(constant);
                     }
-                }else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                     // if the constant is a vertex set  decl
                     // currently, no code is generated
                 } else {
@@ -397,13 +400,13 @@ namespace graphit {
             }
 
             // the stmts that initializes the field vectors
-            for (auto stmt : mir_context_->field_vector_init_stmts){
+            for (auto stmt : mir_context_->field_vector_init_stmts) {
                 stmt->accept(this);
             }
 
-            if (mir_context_->numa_aware) {
-                //auto visitor = NumaInitGenerator(mir_context_, oss);
-                for (auto merge_reduce : mir_context_->merge_reduce_fields) {
+            for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
+                if ((iter.second)->numa_aware) {
+                    auto merge_reduce = iter.second;
                     std::string local_field = "local_" + merge_reduce->field_name;
                     oss << "  " << local_field << " = new ";
                     merge_reduce->scalar_type->accept(this);
@@ -427,10 +430,10 @@ namespace graphit {
                     oss << "    }\n  }\n";
 
                     oss << "  omp_set_nested(1);" << std::endl;
-                    //visitor.genNumaInit(merge_reduce);
                 }
             }
         }
+
 
         //if the function has a body
         if (func_decl->body->stmts) {
@@ -454,14 +457,17 @@ namespace graphit {
           oss << std::endl;
         }
 
-        if (func_decl->name == "main" && mir_context_->numa_aware) {
-            for (auto merge_reduce : mir_context_->merge_reduce_fields) {
-                oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
-                merge_reduce->scalar_type->accept(this);
-                oss << ") * ";
-                mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
-                oss << ");\n  }\n";
+        if (func_decl->name == "main") {
+            for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
+                if (iter.second->numa_aware) {
+                    auto merge_reduce = iter.second;
+                    oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                    oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
+                    merge_reduce->scalar_type->accept(this);
+                    oss << ") * ";
+                    mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
+                    oss << ");\n  }\n";
+                }
             }
         }
 
