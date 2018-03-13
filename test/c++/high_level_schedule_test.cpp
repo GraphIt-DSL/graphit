@@ -1390,6 +1390,7 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelTwoEdgesetOneNuma) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel")->configApplyNumSegments("l1:s1", 10);
     program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 20);
+    program->configApplyNumaAware("l1:s1");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
