@@ -69,6 +69,7 @@ public:
     graphId = new int[numVertices];
     vertexArray[numVertices] = numEdges;
     allocated = true;
+    lastVertex = -1; // reset lastVertex which is used to point to the dst vertex of the last edge added
   }
 
   /**
