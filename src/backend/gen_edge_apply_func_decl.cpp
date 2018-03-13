@@ -495,10 +495,12 @@ namespace graphit {
         }
 
         bool numa_aware = false;
-        for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
-            if (mir::to<mir::VarExpr>(apply->target)->var.getName() == iter.first
-                && iter.second->numa_aware)
-                numa_aware = true;
+        for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+            for (auto inner_iter : iter.second) {
+                if (mir::to<mir::VarExpr>(apply->target)->var.getName() == iter.first
+                    && inner_iter.second->numa_aware)
+                    numa_aware = true;
+            }
         }
 
         std::string outer_end = "g.num_nodes()";
@@ -601,7 +603,8 @@ namespace graphit {
 
         if (numa_aware) {
 	        oss_ << "}// end of per-socket parallel region\n\n";
-            auto merge_reduce = mir_context_->edgeset_to_merge_reduce_fields[mir::to<mir::VarExpr>(apply->target)->var.getName()];
+            auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
+            auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
             oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
             oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
             oss_ << "      " << apply->merge_reduce->field_name << "[n] ";

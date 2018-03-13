@@ -39,7 +39,7 @@ namespace graphit {
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function_name);
         auto edgeset_str = mir::to<mir::VarExpr>(apply_expr->target)->var.getName();
         auto merge_reduce = std::make_shared<mir::MergeReduceField>();
-        mir_context_->edgeset_to_merge_reduce_fields[edgeset_str] = merge_reduce;
+        mir_context_->edgeset_to_label_to_merge_reduce[edgeset_str][apply_schedule->second.scope_label_name] = merge_reduce;
         if (apply_schedule->second.numa_aware) {
             auto int_type = std::make_shared<mir::ScalarType>();
             int_type->type = mir::ScalarType::Type::INT;

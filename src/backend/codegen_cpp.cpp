@@ -39,10 +39,12 @@ namespace graphit {
         }
 
         // Generate global declarations for socket-local buffers used by NUMA optimization
-        for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
-            if (iter.second->numa_aware) {
-                iter.second->scalar_type->accept(this);
-                oss << " **local_" << iter.second->field_name << ";" << std::endl;
+        for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+            for (auto inner_iter : iter.second) {
+                if (inner_iter.second->numa_aware) {
+                    inner_iter.second->scalar_type->accept(this);
+                    oss << " **local_" << inner_iter.second->field_name << ";" << std::endl;
+                }
             }
         }
 
@@ -374,7 +376,7 @@ namespace graphit {
                      label_iter != (*edge_iter).second.end(); label_iter++) {
                     oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
                         << "\", " << (*label_iter).second
-                        << (mir_context_->edgeset_to_merge_reduce_fields[(*edge_iter).first]->numa_aware
+                        << (mir_context_->edgeset_to_label_to_merge_reduce[(*edge_iter).first][(*label_iter).first]->numa_aware
                             ? ", true" : "") << ");" << std::endl;
                 }
             }
@@ -404,32 +406,35 @@ namespace graphit {
                 stmt->accept(this);
             }
 
-            for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
-                if ((iter.second)->numa_aware) {
-                    auto merge_reduce = iter.second;
-                    std::string local_field = "local_" + merge_reduce->field_name;
-                    oss << "  " << local_field << " = new ";
-                    merge_reduce->scalar_type->accept(this);
-                    oss << "*[omp_get_num_places()];\n";
+            for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+                for (auto inner_iter : iter.second) {
 
-                    oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                    oss << "    " << local_field << "[socketId] = (";
-                    merge_reduce->scalar_type->accept(this);
-                    oss << "*)numa_alloc_onnode(sizeof(";
-                    merge_reduce->scalar_type->accept(this);
-                    oss << ") * ";
-                    auto count_expr = mir_context_->getElementCount(
-                            mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name));
-                    count_expr->accept(this);
-                    oss << ", socketId);\n";
+                    if ((inner_iter.second)->numa_aware) {
+                        auto merge_reduce = inner_iter.second;
+                        std::string local_field = "local_" + merge_reduce->field_name;
+                        oss << "  " << local_field << " = new ";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << "*[omp_get_num_places()];\n";
 
-                    oss << "    parallel_for (int n = 0; n < ";
-                    count_expr->accept(this);
-                    oss << "; n++) {\n";
-                    oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
-                    oss << "    }\n  }\n";
+                        oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                        oss << "    " << local_field << "[socketId] = (";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << "*)numa_alloc_onnode(sizeof(";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << ") * ";
+                        auto count_expr = mir_context_->getElementCount(
+                                mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name));
+                        count_expr->accept(this);
+                        oss << ", socketId);\n";
 
-                    oss << "  omp_set_nested(1);" << std::endl;
+                        oss << "    parallel_for (int n = 0; n < ";
+                        count_expr->accept(this);
+                        oss << "; n++) {\n";
+                        oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
+                        oss << "    }\n  }\n";
+
+                        oss << "  omp_set_nested(1);" << std::endl;
+                    }
                 }
             }
         }
@@ -458,15 +463,17 @@ namespace graphit {
         }
 
         if (func_decl->name == "main") {
-            for (auto iter : mir_context_->edgeset_to_merge_reduce_fields) {
-                if (iter.second->numa_aware) {
-                    auto merge_reduce = iter.second;
-                    oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-                    oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
-                    merge_reduce->scalar_type->accept(this);
-                    oss << ") * ";
-                    mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
-                    oss << ");\n  }\n";
+            for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+                for (auto inner_iter : iter.second) {
+                    if (inner_iter.second->numa_aware) {
+                        auto merge_reduce = inner_iter.second;
+                        oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                        oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << ") * ";
+                        mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
+                        oss << ");\n  }\n";
+                    }
                 }
             }
         }

@@ -1382,3 +1382,21 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelDifferentSegments) {
     mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
 }
+
+TEST_F(HighLevelScheduleTest, PRCCPullParallelTwoEdgesetOneNuma) {
+    istringstream is (pr_cc_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel")->configApplyNumSegments("l1:s1", 10);
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 20);
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    // the first apply should be push
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+}
