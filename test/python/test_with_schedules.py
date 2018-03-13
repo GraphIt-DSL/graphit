@@ -111,7 +111,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "./bin/test.o ../test/graphs/4.el" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o ../test/graphs/4.el" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -131,7 +131,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         os.chdir("..")
-        cmd = "./bin/test.o" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -150,7 +150,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -168,7 +168,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("pagerank_with_filename_arg.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print "output: " + output.strip()
@@ -179,7 +179,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print lines
@@ -203,7 +203,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("cf.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print "output: " + output.strip()
@@ -294,6 +294,20 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt", True)
 
+    def test_prdelta_parallel_pull_segment_expect(self):
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel_segment.gt", True)
+
+    def test_prdelta_parallel_pull_numa_expect(self):
+        if self.numa_flags:
+            self.pr_delta_verified_test("pagerank_delta_pull_parallel_numa.gt", True)
+
+    def test_prdelta_parallel_hybrid_segment_expect(self):
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_segment.gt", True)
+
+    def test_prdelta_parallel_hybrid_numa_expect(self):
+        if self.numa_flags:
+            self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_numa.gt", True)
+
     def test_prdelta_parallel_load_balance_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt", True)
 
@@ -303,21 +317,21 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
+
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
+    while len(sys.argv) > 1:
         if "parallel" in sys.argv:
             use_parallel = True
             print "using parallel"
+            del sys.argv[sys.argv.index("parallel")]
         if "numa" in sys.argv:
             use_numa = True
-            print "testing numa"
-            suite = unittest.TestSuite()
-            suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_numa_expect'))
-            unittest.TextTestRunner(verbosity=2).run(suite)
-    else:
-        unittest.main()
+            print "using numa"
+            del sys.argv[sys.argv.index("numa")]
+    
+    unittest.main()
 
     #used for enabling a specific test
     #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_segment'))
+    #suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull_numa_expect'))
     #unittest.TextTestRunner(verbosity=2).run(suite)
