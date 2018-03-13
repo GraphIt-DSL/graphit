@@ -229,11 +229,17 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bfs_hybrid_dense_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_hybrid_dense_parallel_cas.gt", True)
 
+    def test_bfs_hybrid_dense_parallel_cas_segment_verified(self):
+        self.bfs_verified_test("bfs_hybrid_dense_parallel_cas_segment.gt", True)
+
     def test_bfs_push_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
     def test_bfs_pull_parallel_verified(self):
         self.bfs_verified_test("bfs_pull_parallel.gt", True)
+
+    def test_bfs_pull_parallel_segment_verified(self):
+        self.bfs_verified_test("bfs_pull_parallel_segment.gt", True)
 
     def test_bfs_push_sliding_queue_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt", True)
@@ -244,12 +250,17 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cc_hybrid_dense_parallel_bitvector_verified(self):
         self.cc_verified_test("cc_hybrid_dense_parallel_bitvector.gt", True)
 
+    def test_cc_hybrid_dense_parallel_bitvector_segment_verified(self):
+        self.cc_verified_test("cc_hybrid_dense_parallel_bitvector_segment.gt", True)
+
     def test_cc_push_parallel_cas_verified(self):
         self.cc_verified_test("cc_push_parallel_cas.gt", True)
 
-
     def test_cc_pull_parallel_verified(self):
         self.cc_verified_test("cc_pull_parallel.gt", True)
+
+    def test_cc_pull_parallel_segment_verified(self):
+        self.cc_verified_test("cc_pull_parallel_segment.gt", True)
 
     def test_sssp_push_parallel_cas_verified(self):
         self.sssp_verified_test("sssp_push_parallel_cas.gt", True)
@@ -288,8 +299,14 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt", True)
 
+    def test_cf_parallel_segment_expect(self):
+        self.cf_verified_test("cf_pull_parallel_segment.gt", True)
+
     def test_cf_parallel_load_balance_expect(self):
         self.cf_verified_test("cf_pull_parallel_load_balance.gt", True)
+
+    def test_cf_parallel_load_balance_segment_expect(self):
+        self.cf_verified_test("cf_pull_parallel_load_balance_segment.gt", True)
 
     def test_prdelta_parallel_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt", True)
@@ -333,5 +350,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull_numa_expect'))
+    #suite.addTest(TestGraphitCompiler('test_cf_parallel_load_balance_segment_expect'))
     #unittest.TextTestRunner(verbosity=2).run(suite)
