@@ -105,6 +105,8 @@ namespace graphit {
                                                      bool cache,
                                                      bool numa_aware);
 
+        void printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply);
+
     };
 }
 

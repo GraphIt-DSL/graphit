@@ -11,7 +11,9 @@
 
 namespace graphit {
 
-
+    /**
+     * Extracts the merge field, reduction operator, and numa-awareness into an intermediate data structure in mir context.
+     */
     class MergeReduceLower {
     public:
         MergeReduceLower(MIRContext *mir_context, Schedule *schedule)
