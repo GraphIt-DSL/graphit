@@ -305,6 +305,12 @@ namespace graphit {
             std::vector<mir::Stmt::Ptr> edgeset_alloc_stmts;
             std::vector<mir::Stmt::Ptr> field_vector_alloc_stmts;
             std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
+
+            // used by cache/numa optimization
+	        std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
+
+            // used by numa optimization
+            std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
         };
 
 }

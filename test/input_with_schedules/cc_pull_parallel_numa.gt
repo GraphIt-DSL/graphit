@@ -1,0 +1,7 @@
+
+
+schedule:
+    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyNumSegments("s1", 4);
+    program->configApplyNumaAware("s1");
+    program->setApply("s2", "serial");

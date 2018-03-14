@@ -101,7 +101,13 @@ namespace graphit {
                                                      bool from_vertexset_specified,
                                                      bool apply_expr_gen_frontier,
                                                      std::string dst_type,
-                                                     std::string apply_func_name);
+                                                     std::string apply_func_name,
+                                                     bool cache,
+                                                     bool numa_aware);
+
+        void printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply);
+
+        void printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply);
 
     };
 }

@@ -100,7 +100,6 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ReduceStmt>);
             virtual void visit(std::shared_ptr<CompareAndSwapStmt>);
 
-
             virtual void visit(std::shared_ptr<PrintStmt>);
             virtual void visit(std::shared_ptr<BreakStmt>) {};
             virtual void visit(std::shared_ptr<ExprStmt>);

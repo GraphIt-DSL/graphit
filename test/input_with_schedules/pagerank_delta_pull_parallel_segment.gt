@@ -1,0 +1,4 @@
+schedule:
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyNumSegments("s1", 3);
+    program->fuseFields("delta", "out_degree");
