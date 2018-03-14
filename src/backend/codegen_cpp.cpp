@@ -864,12 +864,12 @@ namespace graphit {
         auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
         assert(associated_element_type_size);
         std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-        oss << for_type << " (int i = 0; i < ";
+        oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
         associated_element_type_size->accept(this);
-        oss << "; i++) {" << std::endl;
+        oss << "; vertexsetapply_iter++) {" << std::endl;
         indent();
         printIndent();
-        oss << apply_expr->input_function_name << "()(i);" << std::endl;
+        oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
         dedent();
         printIndent();
         oss << "}";
