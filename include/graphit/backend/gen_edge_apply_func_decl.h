@@ -107,6 +107,8 @@ namespace graphit {
 
         void printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply);
 
+        void printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply);
+
     };
 }
 

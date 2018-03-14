@@ -63,15 +63,6 @@ namespace graphit {
             merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
             merge_reduce_->reduce_op = reduce_stmt->reduce_op_;
 
-            for (auto const &element_type_entry : mir_context_->properties_map_) {
-                for (auto const &var_decl : *element_type_entry.second) {
-                    if (var_decl->name == merge_reduce_->field_name) {
-                        merge_reduce_->initVal = var_decl->initVal;
-                        break;
-                    }
-                }
-            }
-
             if (merge_reduce_->numa_aware) {
                 target_expr->var = mir::Var("local_" + merge_reduce_->field_name + "[socketId]", target_expr->var.getType());
             }

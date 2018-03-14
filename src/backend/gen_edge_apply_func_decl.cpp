@@ -453,23 +453,15 @@ namespace graphit {
                 break;
         }
         oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
-        oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = ";
-        //apply->merge_reduce->initVal->accept(this);
-        auto init_val = apply->merge_reduce->initVal;
-        if (std::dynamic_pointer_cast<mir::IntLiteral>(init_val)) {
-            auto int_expr = std::dynamic_pointer_cast<mir::IntLiteral>(init_val);
-            oss_ << int_expr->val;
-        } else if (std::dynamic_pointer_cast<mir::FloatLiteral>(init_val)) {
-            auto float_expr = std::dynamic_pointer_cast<mir::FloatLiteral>(init_val);
-            oss_ << float_expr->val;
-        } else if (std::dynamic_pointer_cast<mir::StringLiteral>(init_val)) {
-            auto string_expr = std::dynamic_pointer_cast<mir::StringLiteral>(init_val);
-            oss_ << string_expr->val;
-        } else if (std::dynamic_pointer_cast<mir::BoolLiteral>(init_val)) {
-            auto bool_expr = std::dynamic_pointer_cast<mir::BoolLiteral>(init_val);
-            oss_ << bool_expr->val;
-        }
-        oss_ << ";\n    }\n  }" << std::endl;
+        oss_ << "    }\n  }" << std::endl;
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
+        oss_ << "parallel_for (int n = 0; n < numVertices; n++) {\n";
+        oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
+             << apply->merge_reduce->field_name << "[n];\n";
+        oss_ << "    }\n  }\n";
     }
 
     // Print the code for traversing the edges in the push direction and return the new frontier
@@ -538,6 +530,10 @@ namespace graphit {
                     && inner_iter.second->numa_aware)
                     numa_aware = true;
             }
+        }
+
+        if (numa_aware) {
+            printNumaScatter(apply);
         }
 
         std::string outer_end = "g.num_nodes()";
