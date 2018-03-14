@@ -446,13 +446,17 @@ namespace graphit {
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
         oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
         switch (apply->merge_reduce->reduce_op) {
-            case mir::ReduceStmt::ReductionOp::SUM:
-                oss_ << "+= ";
-                break;
-            default:
-                break;
+	case mir::ReduceStmt::ReductionOp::SUM:
+	  oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+	  break;
+	case mir::ReduceStmt::ReductionOp::MIN:
+	  oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
+	       << apply->merge_reduce->field_name  << "[socketId][n]);\n";
+	  break;
+	default:
+	  // TODO: fill in the missing operators when they are actually used
+	  abort();
         }
-        oss_ << "local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
         oss_ << "    }\n  }" << std::endl;
     }
 

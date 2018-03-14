@@ -253,6 +253,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cc_hybrid_dense_parallel_bitvector_segment_verified(self):
         self.cc_verified_test("cc_hybrid_dense_parallel_bitvector_segment.gt", True)
 
+    def test_cc_hybrid_dense_parallel_bitvector_numa_verified(self):
+        if self.numa_flags:
+            self.cc_verified_test("cc_hybrid_dense_parallel_bitvector_numa.gt", True)
+
     def test_cc_push_parallel_cas_verified(self):
         self.cc_verified_test("cc_push_parallel_cas.gt", True)
 
@@ -261,6 +265,10 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_cc_pull_parallel_segment_verified(self):
         self.cc_verified_test("cc_pull_parallel_segment.gt", True)
+
+    def test_cc_pull_parallel_numa_verified(self):
+        if self.numa_flags:
+            self.cc_verified_test("cc_pull_parallel_numa.gt", True)
 
     def test_sssp_push_parallel_cas_verified(self):
         self.sssp_verified_test("sssp_push_parallel_cas.gt", True)
@@ -346,9 +354,9 @@ if __name__ == '__main__':
             print "using numa"
             del sys.argv[sys.argv.index("numa")]
     
-    unittest.main()
+    #unittest.main()
 
     #used for enabling a specific test
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_cf_parallel_load_balance_segment_expect'))
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_numa_verified'))
+    unittest.TextTestRunner(verbosity=2).run(suite)
