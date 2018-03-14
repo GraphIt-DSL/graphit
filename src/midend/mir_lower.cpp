@@ -10,6 +10,7 @@
 #include <graphit/midend/vector_field_properties_analyzer.h>
 #include <graphit/midend/atomics_op_lower.h>
 #include <graphit/midend/vertex_edge_set_lower.h>
+#include <graphit/midend/merge_reduce_lower.h>
 
 namespace graphit {
     /**
@@ -52,8 +53,9 @@ namespace graphit {
         // It return values for implicit tracking of changes to certain field
         ChangeTrackingLower(mir_context, schedule).lower();
 
-
-
+        // This pass extracts the merge field and reduce operator. If numa_aware is set to true in
+        // the schedule for the corresponding label, it also adds NUMA optimization
+        MergeReduceLower(mir_context, schedule).lower();
     }
 }
 

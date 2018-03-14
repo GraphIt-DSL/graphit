@@ -15,7 +15,7 @@ func computeContrib(v : Vertex)
 end
 
 func updateEdge(src : Vertex, dst : Vertex)
-    new_rank[dst] = new_rank[dst] + contrib[src];
+    new_rank[dst] += contrib[src];
 end
 
 func updateVertex(v : Vertex)
@@ -30,18 +30,28 @@ func printRank(v : Vertex)
     print old_rank[v];
 end
 
-func main()
-    startTimer();
-    for i in 0:20
-    	vertices.apply(computeContrib);
-        #s1# edges.apply(updateEdge);
-        vertices.apply(updateVertex);
-    end
+func reset(v: Vertex)
+    old_rank[v] = 1.0/vertices.size();
+    new_rank[v] = 0.0;
+end
 
-    var elapsed_time : double = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
+func main()
+    for trail in 0:10
+        vertices.apply(reset);
+    	startTimer();
+    	for i in 0:20
+    	    vertices.apply(computeContrib);
+            #s1# edges.apply(updateEdge);
+            vertices.apply(updateVertex);
+    	end
+
+    	var elapsed_time : double = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
+    end
 end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyNumSegments("s1", 15)->configApplyNumaAware("s1");
+

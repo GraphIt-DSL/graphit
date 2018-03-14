@@ -7,9 +7,7 @@
 #include <iostream>
 #include <queue>
 #include <vector>
-
-
-
+#include "infra_gapbs/graph_verifier.h"
 #include "intrinsics.h"
 #include "verifier_utils.h"
 

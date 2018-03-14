@@ -41,8 +41,8 @@ func main()
     for i in 1:10
 
         var sum : float = 0;
-        for i in 0:edges.getVertices()
-            sum += fabs(delta[i]);
+        for vertex in 0:edges.getVertices()
+            sum += fabs(delta[vertex]);
         end
         print sum;
         print "size of frontier";
