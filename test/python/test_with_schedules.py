@@ -358,4 +358,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull_segment_expect'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
