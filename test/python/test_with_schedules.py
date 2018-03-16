@@ -7,6 +7,7 @@ import shutil
 import sys
 
 use_parallel = False
+use_numa = False
 
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
@@ -29,13 +30,18 @@ class TestGraphitCompiler(unittest.TestCase):
             os.chdir('./bin')
 
         cwd = os.getcwd()
-
         cls.root_test_input_dir = "../test/input/"
-        cls.cpp_compiler = "g++"
         cls.compile_flags = "-std=c++11"
         cls.include_path = "../src/runtime_lib"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
+
+        if use_numa:
+            cls.numa_flags = " -lnuma -DNUMA -qopenmp"
+            cls.cpp_compiler = "icc"
+        else:
+            cls.numa_flags = ""
+            cls.cpp_compiler = "g++"
 
 
     def setUp(self):
@@ -63,10 +69,10 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -a " + algo_file + " -f " + schedule_file + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     # compiles the input file with both the algorithm and schedule specification
@@ -76,11 +82,11 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
 
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
@@ -90,7 +96,8 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print compile_cmd
         subprocess.check_call(compile_cmd, shell=True)
-        subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  test.cpp "  " -o test.o", shell=True)
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
+        subprocess.check_call(cpp_compile_cmd, shell=True)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
@@ -104,7 +111,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "./bin/test.o ../test/graphs/4.el" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o ../test/graphs/4.el" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -124,7 +131,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         os.chdir("..")
-        cmd = "./bin/test.o" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -143,7 +150,7 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "./bin/test.o" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
@@ -161,7 +168,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("pagerank_with_filename_arg.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print "output: " + output.strip()
@@ -172,7 +179,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print lines
@@ -196,7 +203,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("cf.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print "output: " + output.strip()
@@ -213,17 +220,26 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_eigenvector_pagerank_fusion(self):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
+    def test_eigenvector_pagerank_segment(self):
+        self.basic_compile_test("eigenvector_pr_segment.gt")
+
     def test_bfs_push_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
     def test_bfs_hybrid_dense_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_hybrid_dense_parallel_cas.gt", True)
 
+    def test_bfs_hybrid_dense_parallel_cas_segment_verified(self):
+        self.bfs_verified_test("bfs_hybrid_dense_parallel_cas_segment.gt", True)
+
     def test_bfs_push_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_parallel_cas.gt", True)
 
     def test_bfs_pull_parallel_verified(self):
         self.bfs_verified_test("bfs_pull_parallel.gt", True)
+
+    def test_bfs_pull_parallel_segment_verified(self):
+        self.bfs_verified_test("bfs_pull_parallel_segment.gt", True)
 
     def test_bfs_push_sliding_queue_parallel_cas_verified(self):
         self.bfs_verified_test("bfs_push_sliding_queue_parallel_cas.gt", True)
@@ -234,12 +250,25 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_cc_hybrid_dense_parallel_bitvector_verified(self):
         self.cc_verified_test("cc_hybrid_dense_parallel_bitvector.gt", True)
 
+    def test_cc_hybrid_dense_parallel_bitvector_segment_verified(self):
+        self.cc_verified_test("cc_hybrid_dense_parallel_bitvector_segment.gt", True)
+
+    def test_cc_hybrid_dense_parallel_bitvector_numa_verified(self):
+        if self.numa_flags:
+            self.cc_verified_test("cc_hybrid_dense_parallel_bitvector_numa.gt", True)
+
     def test_cc_push_parallel_cas_verified(self):
         self.cc_verified_test("cc_push_parallel_cas.gt", True)
 
-
     def test_cc_pull_parallel_verified(self):
         self.cc_verified_test("cc_pull_parallel.gt", True)
+
+    def test_cc_pull_parallel_segment_verified(self):
+        self.cc_verified_test("cc_pull_parallel_segment.gt", True)
+
+    def test_cc_pull_parallel_numa_verified(self):
+        if self.numa_flags:
+            self.cc_verified_test("cc_pull_parallel_numa.gt", True)
 
     def test_sssp_push_parallel_cas_verified(self):
         self.sssp_verified_test("sssp_push_parallel_cas.gt", True)
@@ -268,14 +297,41 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_parallel_pull_load_balance_expect(self):
         self.pr_verified_test("pagerank_pull_parallel_load_balance.gt", True)
 
+    def test_pagerank_parallel_pull_segment_expect(self):
+        self.pr_verified_test("pagerank_pull_parallel_segment.gt", True)
+
+    def test_pagerank_parallel_pull_numa_expect(self):
+        if self.numa_flags:
+            self.pr_verified_test("pagerank_pull_parallel_numa.gt", True)
+
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt", True)
+
+    def test_cf_parallel_segment_expect(self):
+        self.cf_verified_test("cf_pull_parallel_segment.gt", True)
 
     def test_cf_parallel_load_balance_expect(self):
         self.cf_verified_test("cf_pull_parallel_load_balance.gt", True)
 
+    def test_cf_parallel_load_balance_segment_expect(self):
+        self.cf_verified_test("cf_pull_parallel_load_balance_segment.gt", True)
+
     def test_prdelta_parallel_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt", True)
+
+    def test_prdelta_parallel_pull_segment_expect(self):
+        self.pr_delta_verified_test("pagerank_delta_pull_parallel_segment.gt", True)
+
+    def test_prdelta_parallel_pull_numa_expect(self):
+        if self.numa_flags:
+            self.pr_delta_verified_test("pagerank_delta_pull_parallel_numa.gt", True)
+
+    def test_prdelta_parallel_hybrid_segment_expect(self):
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_segment.gt", True)
+
+    def test_prdelta_parallel_hybrid_numa_expect(self):
+        if self.numa_flags:
+            self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_numa.gt", True)
 
     def test_prdelta_parallel_load_balance_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel_load_balance.gt", True)
@@ -286,15 +342,21 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
+
 if __name__ == '__main__':
-    if len(sys.argv) == 2 and sys.argv[1] == "parallel":
-        use_parallel = True
-        print "using parallel"
-        del sys.argv[1]
+    while len(sys.argv) > 1:
+        if "parallel" in sys.argv:
+            use_parallel = True
+            print "using parallel"
+            del sys.argv[sys.argv.index("parallel")]
+        if "numa" in sys.argv:
+            use_numa = True
+            print "using numa"
+            del sys.argv[sys.argv.index("numa")]
+    
+    unittest.main()
 
-    # unittest.main()
-
-    # used for enabling a specific test
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_pagerank_parallel_hybrid_dense_expect'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    #used for enabling a specific test
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_pull_segment_expect'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

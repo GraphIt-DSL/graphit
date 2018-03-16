@@ -82,7 +82,8 @@ namespace graphit {
     void EdgesetApplyFunctionDeclGenerator::setupGlobalVariables(mir::EdgeSetApplyExpr::Ptr apply,
                                                                  bool apply_expr_gen_frontier,
                                                                  bool from_vertexset_specified) {
-        oss_ << "    long numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
+        oss_ << "    int64_t numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
+
 
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
 //            if (from_vertexset_specified){
@@ -305,10 +306,7 @@ namespace graphit {
 
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  uintE *nextIndices = newA(uintE, outEdgeCount);\n"
                     "  long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());\n"
                     "  free(outEdges);\n"
@@ -332,7 +330,9 @@ namespace graphit {
             bool from_vertexset_specified,
             bool apply_expr_gen_frontier,
             std::string dst_type,
-            std::string apply_func_name) {
+            std::string apply_func_name,
+            bool cache_aware,
+            bool numa_aware) {
 
 
         //filtering on destination
@@ -346,7 +346,13 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
         printIndent();
 
-        oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
+        if (cache_aware || numa_aware) {
+            oss_ << "for (int64_t ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
+            printIndent();
+            oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
+        } else {
+            oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
+        }
 
 
         // print the checks on filtering on sources s
@@ -383,9 +389,9 @@ namespace graphit {
 
         // generating the C++ code for the apply function call
         if (apply->is_weighted) {
-            oss_ << apply_func_name << " ( s.v , d, s.w )";
+            oss_ << apply_func_name << " ( s.v , d, s.w " << (numa_aware ? ", socketId" : "") << ")";
         } else {
-            oss_ << apply_func_name << " ( s , d  )";
+            oss_ << apply_func_name << " ( s , d " << (numa_aware ? ", socketId" : "") << ")";
 
         }
 
@@ -429,6 +435,37 @@ namespace graphit {
             printIndent();
             oss_ << "} //end of to filtering " << std::endl;
         }
+    }
+
+    // Iterate through per-socket local buffers and merge the result into the global buffer
+    void EdgesetApplyFunctionDeclGenerator::printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply) {
+        oss_ << "}// end of per-socket parallel region\n\n";
+        auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
+        auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
+        oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
+        oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
+        switch (apply->merge_reduce->reduce_op) {
+	case mir::ReduceStmt::ReductionOp::SUM:
+	  oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+	  break;
+	case mir::ReduceStmt::ReductionOp::MIN:
+	  oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
+	       << apply->merge_reduce->field_name  << "[socketId][n]);\n";
+	  break;
+	default:
+	  // TODO: fill in the missing operators when they are actually used
+	  abort();
+        }
+        oss_ << "    }\n  }" << std::endl;
+    }
+
+    void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
+        oss_ << "parallel_for (int n = 0; n < numVertices; n++) {\n";
+        oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
+             << apply->merge_reduce->field_name << "[n];\n";
+        oss_ << "    }\n  }\n";
     }
 
     // Print the code for traversing the edges in the push direction and return the new frontier
@@ -477,15 +514,71 @@ namespace graphit {
 
         printIndent();
 
+        // Setup flag for cache_awareness: use cache optimization if the data modified by this apply is segemented
+        bool cache_aware = false;
+        auto segment_map = mir_context_->edgeset_to_label_to_num_segment;
+        for (auto edge_iter = segment_map.begin(); edge_iter != segment_map.end(); edge_iter++) {
+            for (auto label_iter = (*edge_iter).second.begin();
+            label_iter != (*edge_iter).second.end();
+            label_iter++) {
+                if ((*label_iter).first == apply->scope_label_name)
+                    cache_aware = true;
+            }
+        }
+
+        // Setup flag for numa_awareness: use numa optimization if the numa flag is set in the merge_reduce data structure
+        bool numa_aware = false;
+        for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+            for (auto inner_iter : iter.second) {
+                if (mir::to<mir::VarExpr>(apply->target)->var.getName() == iter.first
+                    && inner_iter.second->numa_aware)
+                    numa_aware = true;
+            }
+        }
+
+        if (numa_aware) {
+            printNumaScatter(apply);
+        }
+
+        std::string outer_end = "g.num_nodes()";
+        std::string iter = "d";
+
+        if (numa_aware || cache_aware) {
+            if (numa_aware) {
+                std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
+                oss_ << "  int numPlaces = omp_get_num_places();\n";
+                oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
+                oss_ << "    int segmentsPerSocket = numSegments / numPlaces;\n";
+                oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
+                oss_ << "    int socketId = omp_get_place_num();\n";
+                oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
+                oss_ << "      int segmentId = socketId + i * numPlaces;\n";
+            } else {
+                oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
+                     << "\"); segmentId++) {\n";
+            }
+            oss_ << "      auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), segmentId);\n";
+            outer_end = "sg->numVertices";
+            iter = "localId";
+        }
 
         //genearte the outer for loop
         if (! apply->use_pull_edge_based_load_balance) {
             std::string for_type = "for";
-            if (apply->is_parallel)
+            if (numa_aware) {
+                oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
+                oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
+            } else if (apply->is_parallel) {
                 for_type = "parallel_for";
+            }
 
-            oss_ << for_type << " ( NodeID d=0; d < g.num_nodes(); d++) {" << std::endl;
+            //printIndent();
+            oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
             indent();
+            if (cache_aware) {
+                printIndent();
+                oss_ << "NodeID d = sg->graphId[localId];" << std::endl;
+            }
         } else {
             // use edge based load balance
             // recursive load balance scheme
@@ -495,7 +588,7 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index";
+                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
                 if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
@@ -503,20 +596,21 @@ namespace graphit {
             }
             if (apply_expr_gen_frontier) oss_ << ", &next ";
             oss_ <<"  ]\n"
-                    "    (NodeID start, NodeID end, int grain_size){\n"
-                    "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
-                    "  for (NodeID d = start; d < end; d++){\n";
+                    "    (NodeID start, NodeID end, int grain_size){\n";
+            if (cache_aware)
+                oss_ << "         if ((start == end-1) || ((sg->vertexArray[end] - sg->vertexArray[start]) < grain_size)){\n"
+                        "  for (NodeID localId = start; localId < end; localId++){\n"
+                        "    NodeID d = sg->graphId[localId];\n";
+            else
+                oss_ << "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
+                        "  for (NodeID d = start; d < end; d++){\n";
             indent();
 
         }
 
-
-
-
         //print the code for inner loop on in neighbors
         printPullEdgeTraversalInnerNeighborLoop(apply, from_vertexset_specified, apply_expr_gen_frontier,
-            dst_type, apply_func_name);
-
+            dst_type, apply_func_name, cache_aware, numa_aware);
 
 
         if (! apply->use_pull_edge_based_load_balance) {
@@ -533,16 +627,23 @@ namespace graphit {
                     "                  recursive_lambda(start + ((end-start)>>1), end, grain_size);\n"
                     "        } \n"
                     "    }; //end of lambda function\n";
-            oss_ << "    recursive_lambda(0, numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
+            oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
                     "    cilk_sync; \n";
         }
 
+        if (numa_aware) {
+          oss_ << "} // end of per-socket parallel_for\n";
+        }
+        if (cache_aware) {
+            oss_ << "    } // end of segment for loop\n";
+        }
+
+        if (numa_aware) {
+            printNumaMerge(apply);
+        }
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
@@ -705,10 +806,7 @@ namespace graphit {
         oss_ << "} //end of outer for loop" << std::endl;
 
         //return a new vertexset if no subset vertexset is returned
-        if (!apply_expr_gen_frontier) {
-            printIndent();
-            oss_ << "return new VertexSubset<NodeID>(g.num_nodes(), g.num_nodes());" << std::endl;
-        } else {
+        if (apply_expr_gen_frontier) {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
@@ -840,7 +938,8 @@ namespace graphit {
                 oss_ << ", " << temp;
         }
         oss_ << "> ";
-        oss_ << "VertexSubset<NodeID>* " << func_name << "(";
+        oss_ << (mir_context_->getFunction(apply->input_function_name)->result.isInitialized() ?
+                 "VertexSubset<NodeID>* " : "void ")  << func_name << "(";
 
         first = true;
         for (auto arg : arguments) {

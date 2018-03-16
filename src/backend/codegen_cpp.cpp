@@ -38,6 +38,16 @@ namespace graphit {
             }
         }
 
+        // Generate global declarations for socket-local buffers used by NUMA optimization
+        for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+            for (auto inner_iter : iter.second) {
+                if (inner_iter.second->numa_aware) {
+                    inner_iter.second->scalar_type->accept(this);
+                    oss << " **local_" << inner_iter.second->field_name << ";" << std::endl;
+                }
+            }
+        }
+
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
         auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
@@ -58,6 +68,7 @@ namespace graphit {
     void CodeGenCPP::genIncludeStmts() {
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
+	oss << "#include <algorithm>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
     }
 
@@ -347,16 +358,29 @@ namespace graphit {
         printBeginIndent();
         indent();
 
-        if (func_decl->name == "main"){
+        if (func_decl->name == "main") {
             //generate special initialization code for main function
             //TODO: this is probably a hack that could be fixed for later
 
             //First, allocate the edgesets (read them from outside files if needed)
-            for (auto stmt : mir_context_->edgeset_alloc_stmts){
+            for (auto stmt : mir_context_->edgeset_alloc_stmts) {
                 stmt->accept(this);
             }
 
-            // generates the code that allocates and initializes the global variables
+            // Initialize graphSegments if necessary
+            auto segment_map = mir_context_->edgeset_to_label_to_num_segment;
+            for (auto edge_iter = segment_map.begin(); edge_iter != segment_map.end(); edge_iter++) {
+                auto edgeset = mir_context_->getConstEdgeSetByName((*edge_iter).first);
+                auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
+                bool is_weighted = (edge_set_type->weight_type != nullptr);
+                for (auto label_iter = (*edge_iter).second.begin();
+                     label_iter != (*edge_iter).second.end(); label_iter++) {
+                    oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
+                        << "\", " << (*label_iter).second
+                        << (mir_context_->edgeset_to_label_to_merge_reduce[(*edge_iter).first][(*label_iter).first]->numa_aware
+                            ? ", true" : "") << ");" << std::endl;
+                }
+            }
 
             //generate allocation statemetns for field vectors
             for (auto constant : mir_context_->getLoweredConstants()) {
@@ -368,7 +392,7 @@ namespace graphit {
                         //genPropertyArrayDecl(constant);
                         genPropertyArrayAlloc(constant);
                     }
-                }else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                     // if the constant is a vertex set  decl
                     // currently, no code is generated
                 } else {
@@ -379,12 +403,42 @@ namespace graphit {
             }
 
             // the stmts that initializes the field vectors
-            for (auto stmt : mir_context_->field_vector_init_stmts){
+            for (auto stmt : mir_context_->field_vector_init_stmts) {
                 stmt->accept(this);
             }
 
-        }
+            for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+                for (auto inner_iter : iter.second) {
 
+                    if ((inner_iter.second)->numa_aware) {
+                        auto merge_reduce = inner_iter.second;
+                        std::string local_field = "local_" + merge_reduce->field_name;
+                        oss << "  " << local_field << " = new ";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << "*[omp_get_num_places()];\n";
+
+                        oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                        oss << "    " << local_field << "[socketId] = (";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << "*)numa_alloc_onnode(sizeof(";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << ") * ";
+                        auto count_expr = mir_context_->getElementCount(
+                                mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name));
+                        count_expr->accept(this);
+                        oss << ", socketId);\n";
+
+                        oss << "    parallel_for (int n = 0; n < ";
+                        count_expr->accept(this);
+                        oss << "; n++) {\n";
+                        oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
+                        oss << "    }\n  }\n";
+
+                        oss << "  omp_set_nested(1);" << std::endl;
+                    }
+                }
+            }
+        }
 
 
         //if the function has a body
@@ -402,12 +456,28 @@ namespace graphit {
 
         }
 
-	if (func_decl->isFunctor) {
-	  dedent();
-	  printEndIndent();
-	  oss << ";";
-	  oss << std::endl;
-	}
+        if (func_decl->isFunctor) {
+          dedent();
+          printEndIndent();
+          oss << ";";
+          oss << std::endl;
+        }
+
+        if (func_decl->name == "main") {
+            for (auto iter : mir_context_->edgeset_to_label_to_merge_reduce) {
+                for (auto inner_iter : iter.second) {
+                    if (inner_iter.second->numa_aware) {
+                        auto merge_reduce = inner_iter.second;
+                        oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                        oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
+                        merge_reduce->scalar_type->accept(this);
+                        oss << ") * ";
+                        mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
+                        oss << ");\n  }\n";
+                    }
+                }
+            }
+        }
 
         dedent();
         printEndIndent();
@@ -690,8 +760,6 @@ namespace graphit {
             std::cout << "unsupported type for property: " << var_decl->name << std::endl;
             exit(0);
         }
-
-
     }
 
 
@@ -796,12 +864,12 @@ namespace graphit {
         auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
         assert(associated_element_type_size);
         std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-        oss << for_type << " (int i = 0; i < ";
+        oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
         associated_element_type_size->accept(this);
-        oss << "; i++) {" << std::endl;
+        oss << "; vertexsetapply_iter++) {" << std::endl;
         indent();
         printIndent();
-        oss << apply_expr->input_function_name << "()(i);" << std::endl;
+        oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
         dedent();
         printIndent();
         oss << "}";
@@ -884,13 +952,10 @@ namespace graphit {
                 //weighted edgeset
                 //unweighted edgeset
                 oss << "WGraph " << edgeset->name << ";" << std::endl;
-
             } else {
                 //unweighted edgeset
                 oss << "Graph " << edgeset->name << "; " << std::endl;
             }
-
-
         }
     }
 
@@ -997,8 +1062,4 @@ namespace graphit {
             oss << ") ";
         }
     }
-
-
-
-
 }

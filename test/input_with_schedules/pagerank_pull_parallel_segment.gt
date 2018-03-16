@@ -1,0 +1,2 @@
+schedule:
+    program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 10);
