@@ -33,7 +33,7 @@ func main()
     startTimer();
 
     for i in 1:10
-        edges.apply(updateEdge);
+        #s1# edges.apply(updateEdge);
         vertices.apply(updateVertex);
     end
 
