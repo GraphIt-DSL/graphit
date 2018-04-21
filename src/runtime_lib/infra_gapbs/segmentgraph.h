@@ -61,6 +61,7 @@ public:
       graphId = (int *)numa_alloc_onnode(sizeof(int) * numVertices, place_id);
       vertexArray[numVertices] = numEdges;
       allocated = true;
+      lastVertex = -1; // reset lastVertex which is used to point to the dst vertex of the last edge added
       return;
     }
 #endif
@@ -109,7 +110,7 @@ public:
     assert(allocated == true);
     cout << "Segmented Graph numVertices: " << numVertices << " numEdges: " << numEdges  << endl;
     cout << "Vertex Array: " << endl;
-    for (int i = 0; i < numVertices; i++){
+    for (int i = 0; i < numVertices + 1; i++){
       cout << " " << vertexArray[i];
     }
     cout << endl;

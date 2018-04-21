@@ -548,7 +548,7 @@ namespace graphit {
                 std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
                 oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
-                oss_ << "    int segmentsPerSocket = numSegments / numPlaces;\n";
+		oss_ << "    int segmentsPerSocket = (numSegments + numPlaces - 1) / numPlaces;\n";
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
                 oss_ << "    int socketId = omp_get_place_num();\n";
                 oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
