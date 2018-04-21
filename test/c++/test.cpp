@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseTwoSegments";
 //      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelDifferentSegments";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelTwoEdgesetOneNuma";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 
 
     return RUN_ALL_TESTS();
