@@ -553,6 +553,7 @@ namespace graphit {
                 oss_ << "    int socketId = omp_get_place_num();\n";
                 oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
                 oss_ << "      int segmentId = socketId + i * numPlaces;\n";
+                oss_ << "      if (segmentId >= numSegments) break;\n";
             } else {
                 oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
                      << "\"); segmentId++) {\n";

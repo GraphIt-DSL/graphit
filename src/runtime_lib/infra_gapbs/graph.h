@@ -285,10 +285,6 @@ class CSRGraph {
   }
   
   void buildPullSegmentedGraphs(std::string label, int numSegments, bool numa_aware=false, std::string path="") {
-#ifdef NUMA
-    // round up the number of segments to the next multiple of number of sockets
-    numSegments = (numSegments + omp_get_num_places() - 1) / omp_get_num_places() * omp_get_num_places();
-#endif
     auto graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments, numa_aware);
     label_to_segment[label] = graphSegments;
 
