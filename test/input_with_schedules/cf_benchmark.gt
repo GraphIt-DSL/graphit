@@ -34,16 +34,17 @@ func initVertex (v : Vertex)
 end
 
 func main()
-
-    vertices.apply(initVertex);
-    startTimer();
-    for i in 0:10
-        #s1# edges.apply(updateEdge);
-        vertices.apply(updateVertex);
+    for trail in 0:10
+        vertices.apply(initVertex);
+        startTimer();
+        for i in 0:10
+            #s1# edges.apply(updateEdge);
+            vertices.apply(updateVertex);
+        end
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time
     end
-    var elapsed_time : double = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
 end
 
 

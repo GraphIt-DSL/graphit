@@ -5,12 +5,17 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const old_rank : vector{Vertex}(double) = 1.0/vertices.size();
 const new_rank : vector{Vertex}(double) = 0.0;
 const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+const contrib : vector{Vertex}(double) = 0.0;
 const error : vector{Vertex}(double) = 0.0;
 const damp : double = 0.85;
 const beta_score : double = (1.0 - damp) / vertices.size();
 
+func computeContrib(v : Vertex)
+    contrib[v] = old_rank[v] / out_degree[v];
+end
+
 func updateEdge(src : Vertex, dst : Vertex)
-    new_rank[dst] = new_rank[dst] + old_rank[src] / out_degree[src];
+    new_rank[dst] = new_rank[dst] + contrib[src];
 end
 
 func updateVertex(v : Vertex)
@@ -33,19 +38,18 @@ end
 func main()
     for trail in 0:10
         vertices.apply(reset);
-        startTimer();
-        for i in 0:10
+    	startTimer();
+    	for i in 0:20
+    	    vertices.apply(computeContrib);
             #s1# edges.apply(updateEdge);
             vertices.apply(updateVertex);
-        end
+    	end
 
-        var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
+    	var elapsed_time : double = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
     end
-
 end
 
 schedule:
     program->setApply("s1", "pull")->setApply("s1", "parallel");
-    program->fuseFields("out_degree", "old_rank");

@@ -9,29 +9,35 @@ func updateEdge(src : Vertex, dst : Vertex, weight : int)
      SP[dst] min= (SP[src] + weight);
 end
 
+func reset(v: Vertex)
+    SP[v] = 2147483647;
+end
 
 func main()
+    for trail in 0:10
+        vertices.apply(reset);
 
-    startTimer();
-    var n : int = edges.getVertices();
-    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(0); %add source vertex
-    SP[0] = 0;
+        startTimer();
+        var n : int = edges.getVertices();
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+        frontier.addVertex(14); %add source vertex
+        SP[14] = 14;
 
-    var rounds : int = 0;
-    while (frontier.getVertexSetSize() != 0)
-        #s1# frontier = edges.from(frontier).applyModified(updateEdge, SP);
-	    rounds = rounds + 1;
-    	if rounds == n
-	        print "negative cycle";
-	        break;
+        var rounds : int = 0;
+        while (frontier.getVertexSetSize() != 0)
+            #s1# frontier = edges.from(frontier).applyModified(updateEdge, SP);
+	        rounds = rounds + 1;
+    	    if rounds == n
+	            print "negative cycle";
+	            break;
 	    end
+        end
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+        print "rounds";
+        print rounds;
     end
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
-    print "rounds";
-    print rounds;
 end
 
 schedule:

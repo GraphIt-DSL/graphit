@@ -14,24 +14,28 @@ func toFilter(v : Vertex) -> output : bool
     output =  parent[v] == -1;
 end
 
+func reset(v: Vertex)
+    parent[v] = -1;
+end
+
 func main()
+    for trail in 0:10
+        vertices.apply(reset);
 
-    startTimer();
-    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(8);
-    parent[8] = 8;
+	startTimer();
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    	frontier.addVertex(14);
+    	parent[14] = 14;
 
-    while (frontier.getVertexSetSize() != 0)
-        #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent);
+    	while (frontier.getVertexSetSize() != 0)
+            #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent);
+    	end
+
+        var elapsed_time : float = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
     end
-
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
-
 end
 
 schedule:
-//    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
-//    program->setApply("s1", "sliding_queue");
      program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
