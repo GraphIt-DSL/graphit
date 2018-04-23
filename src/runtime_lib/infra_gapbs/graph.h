@@ -305,8 +305,7 @@ class CSRGraph {
     }
     return;
 #endif
-    int segmentRange = (num_nodes() + numSegments) / numSegments;
-
+    int segmentRange = (num_nodes() + numSegments - 1) / numSegments;
     //Go through the original graph and count the number of target vertices and edges for each segment
     for (auto d : vertices()){
       for (auto s : in_neigh(d)){
@@ -315,7 +314,7 @@ class CSRGraph {
 	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
 	else
 	  segment_id = s/segmentRange;
-	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);      
+	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);
       }
     }
 
