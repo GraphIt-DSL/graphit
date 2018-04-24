@@ -45,20 +45,20 @@ func main()
         var n : int = edges.getVertices();
     	var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
         vertices.apply(reset);
-        startTimer();
+	startTimer();
 
-        for i in 1:11
+    	for i in 1:11
             #s1# edges.from(frontier).apply(updateEdge);
             if i == 1
                 frontier = vertices.where(updateVertexFirstRound);
             else
-                frontier = vertices.where(updateVertex);
-            end
-        end
+		frontier = vertices.where(updateVertex);
+       	    end
+    	end
 
-         var elapsed_time : double = stopTimer();
-         print "elapsed time: ";
-         print elapsed_time;
+     	var elapsed_time : double = stopTimer();
+     	print "elapsed time: ";
+     	print elapsed_time;
     end
 end
 
@@ -66,3 +66,4 @@ schedule:
     program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")
     ->setApply("s1", "pull_frontier_bitvector");
     program->fuseFields("delta", "out_degree");
+    program->configApplyNumSegments("s1", 16)->configApplyNumaAware("s1");
