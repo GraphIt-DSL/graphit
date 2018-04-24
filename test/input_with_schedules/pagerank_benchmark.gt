@@ -15,7 +15,7 @@ func computeContrib(v : Vertex)
 end
 
 func updateEdge(src : Vertex, dst : Vertex)
-    new_rank[dst] = new_rank[dst] + contrib[src];
+    new_rank[dst] += contrib[src];
 end
 
 func updateVertex(v : Vertex)
