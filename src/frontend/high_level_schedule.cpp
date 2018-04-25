@@ -261,7 +261,7 @@ namespace graphit {
             }
             for (std::string field_name : fields) {
                 FieldVectorPhysicalDataLayout vector_layout = {field_name, FieldVectorDataLayoutType::STRUCT,
-                                                                 fused_struct_name};
+                                                               fused_struct_name};
                 (*schedule_->physical_data_layouts)[field_name] = vector_layout;
             }
 
@@ -271,7 +271,7 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label,
                                                            std::string apply_schedule_str,
-                                                            int parameter) {
+                                                           int parameter) {
             // If no schedule has been constructed, construct a new one
             if (schedule_ == nullptr) {
                 schedule_ = new Schedule();
@@ -314,7 +314,7 @@ namespace graphit {
 
         }
 
-            high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label, std::string apply_schedule_str) {
 
             // If no schedule has been constructed, construct a new one
@@ -359,17 +359,16 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Enable;
             } else if (apply_schedule_str == "disable_deduplication") {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Disable;
-            } else if (apply_schedule_str == "sliding_queue"){
+            } else if (apply_schedule_str == "sliding_queue") {
                 (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
-            } else if (apply_schedule_str == "pull_frontier_bitvector"){
+            } else if (apply_schedule_str == "pull_frontier_bitvector") {
                 (*schedule_->apply_schedules)[apply_label].pull_frontier_type = ApplySchedule::PullFrontierType::BITVECTOR;
-            } else if (apply_schedule_str == "pull_edge_based_load_balance" ) {
+            } else if (apply_schedule_str == "pull_edge_based_load_balance") {
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
                 (*schedule_->apply_schedules)[apply_label].numa_aware = true;
-            }
-            else {
+            } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
             }
@@ -480,5 +479,71 @@ namespace graphit {
 
             return this->shared_from_this();
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyDirection(std::string apply_label,
+                                                                       std::string apply_direction) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no apply schedule has been constructed, construct a new one
+            if (schedule_->apply_schedules == nullptr) {
+                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
+            }
+
+            // If no schedule has been specified for the current label, create a new one
+
+            //Default schedule pull, serial
+            auto gis_vec = new std::vector<GraphIterationSpace>();
+            if (apply_direction == "SparsePush-DensePull") {
+
+                //configure the first SparsePush graph iteration space
+                auto gis_first = GraphIterationSpace();
+                gis_first.direction = GraphIterationSpace::Direction::Push;
+                gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
+                gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+
+
+
+                //configure the second DensePull graph iteration space
+                auto gis_sec = GraphIterationSpace();
+                gis_sec.direction = GraphIterationSpace::Direction::Pull;
+                gis_sec.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
+                gis_sec.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+
+                gis_vec->push_back(gis_first);
+                gis_vec->push_back(gis_sec);
+
+
+            } else if (apply_direction == "DensePush-SparsePush") {
+                //configure the first graph iteration space DensePush
+                auto gis_first = GraphIterationSpace();
+                gis_first.direction = GraphIterationSpace::Direction::Push;
+                gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
+                gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+
+                //configure the first graph iteration space SparsePush
+                auto gis_sec = GraphIterationSpace();
+                gis_first.direction = GraphIterationSpace::Direction::Push;
+                gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
+                gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+            }
+
+
+            //direction overrides previous GIS
+            // direction should be the first scheduling command
+            (*schedule_->graph_iter_spaces)[apply_label] = gis_vec;
+
+
+            if (dirCompatibilityMap_.find(apply_direction) != dirCompatibilityMap_.end()) {
+                std::string old_dir_schedule = dirCompatibilityMap_[apply_direction];
+                return setApply(apply_label, old_dir_schedule);
+            } else {
+                return setApply(apply_label, apply_direction);
+            }
+
+        }
+        }
     }
-}

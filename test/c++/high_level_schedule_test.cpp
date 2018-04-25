@@ -568,8 +568,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
-    program->setApply("s1", "push")->setApply("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush");
+    program->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -601,7 +601,9 @@ TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push")->setApply("s1", "sliding_queue")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    //program->setApply("s1", "push")
+    program->configApplyDirection("s1", "SparsePush");
+    program->setApply("s1", "sliding_queue")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");

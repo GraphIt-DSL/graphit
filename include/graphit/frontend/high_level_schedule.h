@@ -13,6 +13,7 @@
 #include "fir.h"
 #include <graphit/frontend/low_level_schedule.h>
 #include <graphit/frontend/schedule.h>
+#include <map>
 
 namespace graphit {
     namespace fir {
@@ -28,6 +29,12 @@ namespace graphit {
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
                     schedule_ = nullptr;
+                    dirCompatibilityMap_ = {
+                            {"SparsePush", "push"},
+                            {"DensePull", "pull"},
+                            {"SparsePush-DensePull", "hybrid"},
+                            {"DensePush-SparsePush", "hybrid_dense"}
+                    };
                 }
 
                 ~ ProgramScheduleNode(){
@@ -72,9 +79,7 @@ namespace graphit {
                 // A wrapper around setApply for now.
                 // Scheduling Options include DensePush, DensePull, SparsePush, SparsePull, SparsePushDensePull, SparsePushDensePush
                 high_level_schedule::ProgramScheduleNode::Ptr
-                configApplyDirection(std::string apply_label, std::string apply_schedule){
-                    return setApply(apply_label, apply_schedule);
-                }
+                configApplyDirection(std::string apply_label, std::string apply_direction);
 
 
                 // High lvel API for speicifying parallelization scheduling options for apply
@@ -140,6 +145,10 @@ namespace graphit {
             private:
                 graphit::FIRContext * fir_context_;
                 Schedule * schedule_;
+                // Maps the new direction to the old directions for backward compatibility for now.
+                // For example, "SparsePush" would be mapped to "push"
+                // This eventually will be deprecated, just keeping it to keep the unit tests working
+                std::map<string, string> dirCompatibilityMap_;
             };
 
 

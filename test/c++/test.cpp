@@ -37,10 +37,14 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";R
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 //
-//
+
+
+
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSerialSchedule";
+
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSlidingQueueSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
