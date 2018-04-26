@@ -591,24 +591,24 @@ namespace graphit {
                 schedule_ = new Schedule();
             }
 
-            if ((*schedule_->graph_iter_spaces).find(apply_label) == (*schedule_->graph_iter_spaces).end()){
+            if ((*schedule_->graph_iter_spaces).find(apply_label) == (*schedule_->graph_iter_spaces).end()) {
                 //if there's no graph iteration space associated with the label
                 auto gis_vec = new std::vector<GraphIterationSpace>();
                 (*schedule_->graph_iter_spaces)[apply_label] = gis_vec;
                 gis_vec->push_back(GraphIterationSpace());
             }
 
-            auto gis_vec =  (*schedule_->graph_iter_spaces)[apply_label];
+            auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
 
-            for (auto gis : *gis_vec){
+            for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
                     //configure only the GIS identified by the directin. By default "all" configures all the directions
-                    if (apply_parallel == "dynamic-vertex-parallel"){
+                    if (apply_parallel == "dynamic-vertex-parallel") {
                         gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::WorkStealingPar);
                     } else if (apply_parallel == "static-vertex-parallel") {
-                        gis.setPRTag(GraphIterationSpace::Dimension::BSG,Tags::PR_Tag::StaticPar);
-                    } else if (apply_parallel == "serial"){
-                        gis.setPRTag(GraphIterationSpace::Dimension::BSG,Tags::PR_Tag::Serial);
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::StaticPar);
+                    } else if (apply_parallel == "serial") {
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::Serial);
                     } else if (apply_parallel == "edge-aware-dynamic-vertex-parallel") {
                         gis.setPTTag(GraphIterationSpace::Dimension::BSG, Tags::PT_Tag::EdgeAwareVertexCount);
                         gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::WorkStealingPar);
@@ -616,7 +616,7 @@ namespace graphit {
                         std::cout << "unsupported parallelization strategy: " << apply_parallel << std::endl;
                     }
 
-                    if (grain_size != 1024){
+                    if (grain_size != 1024) {
                         //if the grain size is not the default size
                         gis.BSG_grain_size = grain_size;
                     }
@@ -627,7 +627,7 @@ namespace graphit {
             //for now, we still use the old API, it will slowly be deprecated
             if (parallelCompatibilityMap_.find(apply_parallel) != parallelCompatibilityMap_.end()) {
                 std::string old_par_schedule = parallelCompatibilityMap_[apply_parallel];
-                if (apply_parallel == "edge-aware-dynamic-vertex-parallel"){
+                if (apply_parallel == "edge-aware-dynamic-vertex-parallel") {
                     //need a separate specification in the old API
                     setApply(apply_label, "pull_edge_based_load_balance");
                     return setApply(apply_label, old_par_schedule);
@@ -643,10 +643,49 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configApplyDenseVertexSet(std::string label, std::string config,
                                                                             std::string vertexset,
                                                                             std::string direction) {
-            //TODO: wrap up the implementation
 
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
 
-            if (config == "bitvector"){
+            if ((*schedule_->graph_iter_spaces).find(label) == (*schedule_->graph_iter_spaces).end()) {
+                //if there's no graph iteration space associated with the label
+                auto gis_vec = new std::vector<GraphIterationSpace>();
+                (*schedule_->graph_iter_spaces)[label] = gis_vec;
+                gis_vec->push_back(GraphIterationSpace());
+            }
+
+            auto gis_vec = (*schedule_->graph_iter_spaces)[label];
+
+            //right now, we only support configuring the source vertexset in the pull direction
+            for (auto &gis : *gis_vec) {
+                if (gis.scheduling_api_direction == direction || direction == "all") {
+                    if (gis.direction == GraphIterationSpace::Direction::Push) {
+                        //TODO: we don't
+                        if (vertexset == "src-vertexset") {
+                            std::cout << "unsupported dense configuration for vertexset: " << vertexset
+                                      << " direction: " << direction << std::endl;
+                        } else {
+                            std::cout << "unsupported dense configuration for vertexset: " << vertexset
+                                      << " direction: " << direction << std::endl;
+                        }
+                    } else {
+                        if (vertexset == "src-vertexset") {
+                            if (config == "bitvector"){
+                                gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BitVector);
+                            }
+                        } else {
+                            //TODO: we don't yet support configuring densePull dst-vertexset
+                            std::cout << "unsupported dense configuration for vertexset: " << vertexset
+                                      << " direction: " << direction << std::endl;
+                        }
+                    }
+
+                }
+            }
+
+            // to use the old API, will slowly be deprecated
+            if (config == "bitvector") {
                 return setApply(label, "pull_frontier_bitvector");
             }
 

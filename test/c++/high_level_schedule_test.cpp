@@ -704,7 +704,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")
-            ->configApplyDataStructure("s1", "pull_frontier_bitvector");
+            ->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
