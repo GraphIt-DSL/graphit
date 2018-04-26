@@ -50,7 +50,7 @@ namespace graphit {
             // partitioning the graph with a fixed number of vertices
                     FixedVertexCount,
             //partitioning the graph with a flexible number of vertices, but similar number of edges
-                    EdgeAwareVertexVCount
+                    EdgeAwareVertexCount
         };
         enum class FT_Tag {
             //Dense Bitvector
@@ -66,7 +66,6 @@ namespace graphit {
         PR_Tag pr_tag = {PR_Tag::Serial};
         PT_Tag pt_tag = {PT_Tag::FixedVertexCount};
         FT_Tag ft_tag = {FT_Tag::BoolArray};
-        // push or pull
 
     };
 
@@ -99,6 +98,9 @@ namespace graphit {
         // 4) InnerIter, Inner Loop Iterator, can be source or destination vertices
         std::map<Dimension, Tags *> tags_dimension_map_;
         Direction direction;
+        // a convienience field used for identifying a graph iteration space vector
+        // for subsequent configuration APIs
+        std::string scheduling_api_direction;
 
     private:
         void initialzieTags(Dimension dimension) {

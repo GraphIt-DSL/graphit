@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushSerialSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSlidingQueueSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";

@@ -488,10 +488,6 @@ namespace graphit {
                 schedule_ = new Schedule();
             }
 
-            // If no apply schedule has been constructed, construct a new one
-            if (schedule_->apply_schedules == nullptr) {
-                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
-            }
 
             // If no schedule has been specified for the current label, create a new one
 
@@ -504,7 +500,7 @@ namespace graphit {
                 gis_first.direction = GraphIterationSpace::Direction::Push;
                 gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
                 gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
-
+                gis_first.scheduling_api_direction = "SparsePush";
 
 
                 //configure the second DensePull graph iteration space
@@ -512,6 +508,7 @@ namespace graphit {
                 gis_sec.direction = GraphIterationSpace::Direction::Pull;
                 gis_sec.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
                 gis_sec.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis_sec.scheduling_api_direction = "DensePull";
 
                 gis_vec->push_back(gis_first);
                 gis_vec->push_back(gis_sec);
@@ -523,12 +520,49 @@ namespace graphit {
                 gis_first.direction = GraphIterationSpace::Direction::Push;
                 gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
                 gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis_first.scheduling_api_direction = "DensePush";
+
 
                 //configure the first graph iteration space SparsePush
                 auto gis_sec = GraphIterationSpace();
-                gis_first.direction = GraphIterationSpace::Direction::Push;
-                gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
-                gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis_sec.direction = GraphIterationSpace::Direction::Push;
+                gis_sec.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
+                gis_sec.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis_sec.scheduling_api_direction = "SparsePush";
+
+                gis_vec->push_back(gis_first);
+                gis_vec->push_back(gis_sec);
+
+            } else if (apply_direction == "SparsePush") {
+
+                auto gis = GraphIterationSpace();
+                gis.direction = GraphIterationSpace::Direction::Push;
+                gis.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::SparseArray);
+                gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis.scheduling_api_direction = "SparsePush";
+                gis_vec->push_back(gis);
+
+
+            } else if (apply_direction == "DensePull") {
+                auto gis = GraphIterationSpace();
+                gis.direction = GraphIterationSpace::Direction::Pull;
+                gis.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
+                gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis.scheduling_api_direction = "DensePull";
+                gis_vec->push_back(gis);
+
+            } else if (apply_direction == "DensePush") {
+
+                auto gis = GraphIterationSpace();
+                gis.direction = GraphIterationSpace::Direction::Push;
+                gis.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
+                gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
+                gis.scheduling_api_direction = "DensePush";
+                gis_vec->push_back(gis);
+
+
+            } else {
+                std::cout << "unsupported direction: " << apply_direction << std::endl;
             }
 
 
@@ -537,6 +571,7 @@ namespace graphit {
             (*schedule_->graph_iter_spaces)[apply_label] = gis_vec;
 
 
+            //for now we still uses the old API, will slowly deprecated
             if (dirCompatibilityMap_.find(apply_direction) != dirCompatibilityMap_.end()) {
                 std::string old_dir_schedule = dirCompatibilityMap_[apply_direction];
                 return setApply(apply_label, old_dir_schedule);
@@ -545,5 +580,78 @@ namespace graphit {
             }
 
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyParallelization(std::string apply_label,
+                                                                             std::string apply_parallel, int grain_size,
+                                                                             std::string direction) {
+
+
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            if ((*schedule_->graph_iter_spaces).find(apply_label) == (*schedule_->graph_iter_spaces).end()){
+                //if there's no graph iteration space associated with the label
+                auto gis_vec = new std::vector<GraphIterationSpace>();
+                (*schedule_->graph_iter_spaces)[apply_label] = gis_vec;
+                gis_vec->push_back(GraphIterationSpace());
+            }
+
+            auto gis_vec =  (*schedule_->graph_iter_spaces)[apply_label];
+
+            for (auto gis : *gis_vec){
+                if (gis.scheduling_api_direction == direction || direction == "all") {
+                    //configure only the GIS identified by the directin. By default "all" configures all the directions
+                    if (apply_parallel == "dynamic-vertex-parallel"){
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::WorkStealingPar);
+                    } else if (apply_parallel == "static-vertex-parallel") {
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG,Tags::PR_Tag::StaticPar);
+                    } else if (apply_parallel == "serial"){
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG,Tags::PR_Tag::Serial);
+                    } else if (apply_parallel == "edge-aware-dynamic-vertex-parallel") {
+                        gis.setPTTag(GraphIterationSpace::Dimension::BSG, Tags::PT_Tag::EdgeAwareVertexCount);
+                        gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::WorkStealingPar);
+                    } else {
+                        std::cout << "unsupported parallelization strategy: " << apply_parallel << std::endl;
+                    }
+
+                    if (grain_size != 1024){
+                        //if the grain size is not the default size
+                        gis.BSG_grain_size = grain_size;
+                    }
+                }
+            }
+
+
+            //for now, we still use the old API, it will slowly be deprecated
+            if (parallelCompatibilityMap_.find(apply_parallel) != parallelCompatibilityMap_.end()) {
+                std::string old_par_schedule = parallelCompatibilityMap_[apply_parallel];
+                if (apply_parallel == "edge-aware-dynamic-vertex-parallel"){
+                    //need a separate specification in the old API
+                    setApply(apply_label, "pull_edge_based_load_balance");
+                    return setApply(apply_label, old_par_schedule);
+                } else {
+                    return setApply(apply_label, old_par_schedule);
+                }
+            } else {
+                return setApply(apply_label, apply_parallel);
+            }
         }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyDenseVertexSet(std::string label, std::string config,
+                                                                            std::string vertexset,
+                                                                            std::string direction) {
+            //TODO: wrap up the implementation
+
+
+            if (config == "bitvector"){
+                return setApply(label, "pull_frontier_bitvector");
+            }
+
+        }
+
+
     }
+}

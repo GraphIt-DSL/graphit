@@ -32,9 +32,16 @@ namespace graphit {
                     dirCompatibilityMap_ = {
                             {"SparsePush", "push"},
                             {"DensePull", "pull"},
-                            {"SparsePush-DensePull", "hybrid"},
-                            {"DensePush-SparsePush", "hybrid_dense"}
+                            {"SparsePush-DensePull", "hybrid_dense"},
+                            {"DensePush-SparsePush", "hybrid_dense_forward"}
                     };
+
+                    parallelCompatibilityMap_ = {
+                            {"dynamic-vertex-parallel", "parallel"},
+                            {"static-vertex-parallel", "parallel"},
+                            {"edge-aware-dynamic-vertex-parallel", "parallel"}
+                    };
+
                 }
 
                 ~ ProgramScheduleNode(){
@@ -86,10 +93,7 @@ namespace graphit {
                 // A wrapper around setApply for now.
                 // Scheduling Options include VertexParallel, EdgeAwareVertexParallel
                 high_level_schedule::ProgramScheduleNode::Ptr
-                configApplyParallelization(std::string apply_label, std::string apply_schedule){
-                    return setApply(apply_label, apply_schedule);
-                }
-
+                configApplyParallelization(std::string apply_label, std::string apply_schedule, int grain_size=1024, std::string direction = "all");
 
                 // High lvel API for speicifying deduplication scheduling options for apply
                 // A wrapper around setApply for now.
@@ -108,6 +112,11 @@ namespace graphit {
                 configApplyDataStructure(std::string apply_label, std::string apply_schedule){
                     return setApply(apply_label, apply_schedule);
                 }
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyDenseVertexSet(std::string label, std::string config, std::string vertexset = "src-vertexset", std::string direction = "all");
+
+
 
                 // High level API for specifying the number of segments to partition the graph into.
                 // Used for cache and NUMA optimizations
@@ -149,6 +158,8 @@ namespace graphit {
                 // For example, "SparsePush" would be mapped to "push"
                 // This eventually will be deprecated, just keeping it to keep the unit tests working
                 std::map<string, string> dirCompatibilityMap_;
+                std::map<string, string> parallelCompatibilityMap_;
+
             };
 
 
