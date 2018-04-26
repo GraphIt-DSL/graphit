@@ -563,6 +563,8 @@ namespace graphit {
 
             } else {
                 std::cout << "unsupported direction: " << apply_direction << std::endl;
+                throw "Unsupported Schedule!";
+
             }
 
 
@@ -614,6 +616,8 @@ namespace graphit {
                         gis.setPRTag(GraphIterationSpace::Dimension::BSG, Tags::PR_Tag::WorkStealingPar);
                     } else {
                         std::cout << "unsupported parallelization strategy: " << apply_parallel << std::endl;
+                        throw "Unsupported Schedule!";
+
                     }
 
                     if (grain_size != 1024) {
@@ -665,9 +669,11 @@ namespace graphit {
                         if (vertexset == "src-vertexset") {
                             std::cout << "unsupported dense configuration for vertexset: " << vertexset
                                       << " direction: " << direction << std::endl;
+                            throw "Unsupported Schedule!";
                         } else {
                             std::cout << "unsupported dense configuration for vertexset: " << vertexset
                                       << " direction: " << direction << std::endl;
+                            throw "Unsupported Schedule!";
                         }
                     } else {
                         if (vertexset == "src-vertexset") {
@@ -678,6 +684,8 @@ namespace graphit {
                             //TODO: we don't yet support configuring densePull dst-vertexset
                             std::cout << "unsupported dense configuration for vertexset: " << vertexset
                                       << " direction: " << direction << std::endl;
+                            throw "Unsupported Schedule!";
+
                         }
                     }
 

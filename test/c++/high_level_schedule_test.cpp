@@ -1186,7 +1186,7 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleNewAPI) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->configApplyDirection("s1", "hybrid_dense_forward")->configApplyParallelization("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));

@@ -107,12 +107,13 @@ namespace graphit {
                 // High lvel API for speicifying Data Structure scheduling options for apply
                 // A wrapper around setApply for now.
                 // Scheduling Options include bitvector (from_vertexset)
-
+                // Deprecated, to be replaced with configApplyDenseVertexSet
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyDataStructure(std::string apply_label, std::string apply_schedule){
                     return setApply(apply_label, apply_schedule);
                 }
 
+                // Configures the physical data layout of vertexset
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyDenseVertexSet(std::string label, std::string config, std::string vertexset = "src-vertexset", std::string direction = "all");
 
