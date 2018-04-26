@@ -589,16 +589,8 @@ namespace graphit {
                                                                              std::string direction) {
 
 
-            if (schedule_ == nullptr) {
-                schedule_ = new Schedule();
-            }
+            initGraphIterationSpaceIfNeeded(apply_label);
 
-            if ((*schedule_->graph_iter_spaces).find(apply_label) == (*schedule_->graph_iter_spaces).end()) {
-                //if there's no graph iteration space associated with the label
-                auto gis_vec = new std::vector<GraphIterationSpace>();
-                (*schedule_->graph_iter_spaces)[apply_label] = gis_vec;
-                gis_vec->push_back(GraphIterationSpace());
-            }
 
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
 
@@ -648,17 +640,7 @@ namespace graphit {
                                                                             std::string vertexset,
                                                                             std::string direction) {
 
-            if (schedule_ == nullptr) {
-                schedule_ = new Schedule();
-            }
-
-            if ((*schedule_->graph_iter_spaces).find(label) == (*schedule_->graph_iter_spaces).end()) {
-                //if there's no graph iteration space associated with the label
-                auto gis_vec = new std::vector<GraphIterationSpace>();
-                (*schedule_->graph_iter_spaces)[label] = gis_vec;
-                gis_vec->push_back(GraphIterationSpace());
-            }
-
+            initGraphIterationSpaceIfNeeded(label);
             auto gis_vec = (*schedule_->graph_iter_spaces)[label];
 
             //right now, we only support configuring the source vertexset in the pull direction
@@ -685,20 +667,82 @@ namespace graphit {
                             std::cout << "unsupported dense configuration for vertexset: " << vertexset
                                       << " direction: " << direction << std::endl;
                             throw "Unsupported Schedule!";
-
                         }
                     }
-
                 }
             }
 
             // to use the old API, will slowly be deprecated
             if (config == "bitvector") {
                 return setApply(label, "pull_frontier_bitvector");
+            } else {
+                return this->shared_from_this();
             }
 
         }
 
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
+                                                                    int num_segment, std::string direction) {
+
+
+            initGraphIterationSpaceIfNeeded(apply_label);
+            auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
+
+            for (auto &gis : *gis_vec) {
+                if (gis.scheduling_api_direction == direction || direction == "all") {
+                    if (config == "fixed-vertex-count"){
+                        gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::FixedVertexCount);
+                    } else if (config == "edge-aware-vertex-count"){
+                        gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::EdgeAwareVertexCount);
+                    } else {
+                        throw "Unsupported Schedule!";
+                    }
+                    gis.num_ssg = num_segment;
+                }
+            }
+
+            return setApply(apply_label, "num_segment", num_segment);
+        }
+
+        void high_level_schedule::ProgramScheduleNode::initGraphIterationSpaceIfNeeded(std::string label) {
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            if ((*schedule_->graph_iter_spaces).find(label) == (*schedule_->graph_iter_spaces).end()) {
+                //if there's no graph iteration space associated with the label
+                auto gis_vec = new std::vector<GraphIterationSpace>();
+                (*schedule_->graph_iter_spaces)[label] = gis_vec;
+                gis_vec->push_back(GraphIterationSpace());
+            }
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyNuma(std::string apply_label, std::string config,
+                                                                  std::string direction) {
+
+            initGraphIterationSpaceIfNeeded(apply_label);
+            auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
+            for (auto &gis : *gis_vec) {
+                if (gis.scheduling_api_direction == direction || direction == "all") {
+                    if (config == "serial"){
+                        gis.setPRTag(GraphIterationSpace::Dimension::SSG, Tags::PR_Tag::Serial);
+                    } else if (config == "static-parallel"){
+                        gis.setPRTag(GraphIterationSpace::Dimension::SSG, Tags::PR_Tag::StaticPar);
+                    } else if (config == "dynamic-parallel"){
+                        gis.setPRTag(GraphIterationSpace::Dimension::SSG, Tags::PR_Tag::WorkStealingPar);
+                    } else {
+                        throw "Unsupported Schedule!";
+                    }
+                }
+            }
+            // this is using the old API, will be deprecated soon
+            if (config == "static-parallel")
+                return setApply(apply_label, "numa_aware");
+            else
+                return this->shared_from_this();
+        }
 
     }
 }

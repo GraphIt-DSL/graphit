@@ -121,16 +121,26 @@ namespace graphit {
 
                 // High level API for specifying the number of segments to partition the graph into.
                 // Used for cache and NUMA optimizations
+                // Will soon be DEPRECATED, will be replaced with configApplyNumSSGs.
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNumSegments(std::string apply_label, int num_segment) {
                     return setApply(apply_label, "num_segment", num_segment);
                 }
 
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNumSSG(std::string apply_label, std::string config, int num_segment, std::string direction="all");
+
+
                 // High level API for enabling NUMA optimization
+                // Deprecated, to be replaced with configApplyNUMA
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNumaAware(std::string apply_label) {
                     return setApply(apply_label, "numa_aware");
                 }
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNuma(std::string apply_label, std::string config, std::string direction="all");
 
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
@@ -160,6 +170,8 @@ namespace graphit {
                 // This eventually will be deprecated, just keeping it to keep the unit tests working
                 std::map<string, string> dirCompatibilityMap_;
                 std::map<string, string> parallelCompatibilityMap_;
+
+                void initGraphIterationSpaceIfNeeded(string label);
 
             };
 

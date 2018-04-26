@@ -212,6 +212,7 @@ namespace graphit {
             //will be slowly replaced with graph iteration space
             std::map<std::string, ApplySchedule> *apply_schedules;
 
+            // this is a vector of graph iteration spaces because we can have up to two graph iteration spaces (for hybrid directions)
             std::map<std::string, std::vector<GraphIterationSpace> *> *graph_iter_spaces;
             std::map<std::string, VertexsetPhysicalLayout> vertexset_data_layout;
 
