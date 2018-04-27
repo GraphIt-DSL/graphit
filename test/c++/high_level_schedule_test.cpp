@@ -707,8 +707,8 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
     program->configApplyDirection("s1", "SparsePush-DensePull")
             ->configApplyParallelization("s1", "dynamic-vertex-parallel")
             ->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull")
-            ->configApplyNumSSG("s1", "fixed-vertex-count", 4,"DensePull")
-            ->configApplyNuma("s1", "serial", "DensePull");
+            ->configApplyNumSSG("s1", "fixed-vertex-count", 4, "DensePull")
+            ->configApplyNUMA("s1", "serial", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -824,7 +824,7 @@ TEST_F(HighLevelScheduleTest, PRPullParallelNumaAware) {
     // Set the pull parameter to 2 segments
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
     program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
-    program->configApplyNuma("l1:s1", "static-parallel");
+    program->configApplyNUMA("l1:s1", "static-parallel");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -1269,7 +1269,7 @@ TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "serial");
+    program_schedule_node->configApplyParallelization("s1","serial");
     fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1399,7 +1399,7 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelTwoEdgesetOneNuma) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10);
     program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  20);
-    program->configApplyNuma("l1:s1", "static-parallel");
+    program->configApplyNUMA("l1:s1", "static-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 

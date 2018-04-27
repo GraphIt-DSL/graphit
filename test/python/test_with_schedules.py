@@ -354,9 +354,9 @@ if __name__ == '__main__':
             print "using numa"
             del sys.argv[sys.argv.index("numa")]
     
-    unittest.main()
+    # unittest.main()
 
     #used for enabling a specific test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bfs_hybrid_dense_parallel_cas_segment_verified'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_bitvector_numa_verified'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

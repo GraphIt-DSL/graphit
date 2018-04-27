@@ -719,7 +719,7 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
-        high_level_schedule::ProgramScheduleNode::configApplyNuma(std::string apply_label, std::string config,
+        high_level_schedule::ProgramScheduleNode::configApplyNUMA(std::string apply_label, std::string config,
                                                                   std::string direction) {
 
             initGraphIterationSpaceIfNeeded(apply_label);
