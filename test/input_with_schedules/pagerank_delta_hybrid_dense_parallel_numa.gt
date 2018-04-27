@@ -1,5 +1,5 @@
 schedule:
-    program->configApplyDirection("s1", "SparsePush-DensePull")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel")->setApply("s1", "pull_frontier_bitvector");
     program->configApplyNumSegments("s1", 2);
     program->configApplyNumaAware("s1");
     program->fuseFields("delta", "out_degree");

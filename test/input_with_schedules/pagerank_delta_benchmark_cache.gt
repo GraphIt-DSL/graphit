@@ -63,7 +63,7 @@ func main()
 end
 
 schedule:
-    program->configApplyDirection("s1", "SparsePush-DensePull")->setApply("s1", "parallel")
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel")
     ->setApply("s1", "pull_frontier_bitvector");
     program->fuseFields("delta", "out_degree");
     program->configApplyNumSegments("s1", 10);

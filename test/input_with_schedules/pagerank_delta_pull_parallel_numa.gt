@@ -1,5 +1,5 @@
 schedule:
-    program->configApplyDirection("s1", "DensePull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
     program->configApplyNumSegments("s1", 2);
     program->configApplyNumaAware("s1");
 
