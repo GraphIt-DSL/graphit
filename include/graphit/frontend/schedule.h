@@ -98,10 +98,11 @@ namespace graphit {
         // 3) OuterIter, Outer Loop Iterator, can be source or destination vertices
         // 4) InnerIter, Inner Loop Iterator, can be source or destination vertices
         std::map<Dimension, Tags *> tags_dimension_map_;
-        Direction direction;
+        Direction direction = Direction::Pull;
         // a convienience field used for identifying a graph iteration space vector
         // for subsequent configuration APIs
-        std::string scheduling_api_direction;
+        //default direction to DensePull
+        std::string scheduling_api_direction = "DensePull";
 
     private:
         void initialzieTags(Dimension dimension) {

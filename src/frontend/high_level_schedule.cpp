@@ -695,7 +695,7 @@ namespace graphit {
                         if (gis.scheduling_api_direction != "DensePull"){
                             //currently, we don't support any direction other than DensePull for graph partitioning
                             // push based partitioning is coming
-                            std::cout << "unsupported direction for partition SSGs: "  << direction << std::endl;
+                            std::cout << "unsupported direction for partition SSGs: "  << gis.scheduling_api_direction << std::endl;
                             throw "Unsupported Schedule!";
                         }
                         gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::FixedVertexCount);
@@ -736,7 +736,7 @@ namespace graphit {
                     if (gis.scheduling_api_direction != "DensePull"){
                         //currently, we don't support any direction other than DensePull for graph partitioning
                         // push based partitioning is coming
-                        std::cout << "unsupported direction for NUMA optimizations: "  << direction << std::endl;
+                        std::cout << "unsupported direction for NUMA optimizations: "  << gis.scheduling_api_direction << std::endl;
                         throw "Unsupported Schedule!";
                     }
 
