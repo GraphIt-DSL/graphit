@@ -13,6 +13,7 @@
 #include "fir.h"
 #include <graphit/frontend/low_level_schedule.h>
 #include <graphit/frontend/schedule.h>
+#include <map>
 
 namespace graphit {
     namespace fir {
@@ -28,6 +29,19 @@ namespace graphit {
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
                     schedule_ = nullptr;
+                    dirCompatibilityMap_ = {
+                            {"SparsePush", "push"},
+                            {"DensePull", "pull"},
+                            {"SparsePush-DensePull", "hybrid_dense"},
+                            {"DensePush-SparsePush", "hybrid_dense_forward"}
+                    };
+
+                    parallelCompatibilityMap_ = {
+                            {"dynamic-vertex-parallel", "parallel"},
+                            {"static-vertex-parallel", "parallel"},
+                            {"edge-aware-dynamic-vertex-parallel", "parallel"}
+                    };
+
                 }
 
                 ~ ProgramScheduleNode(){
@@ -72,19 +86,14 @@ namespace graphit {
                 // A wrapper around setApply for now.
                 // Scheduling Options include DensePush, DensePull, SparsePush, SparsePull, SparsePushDensePull, SparsePushDensePush
                 high_level_schedule::ProgramScheduleNode::Ptr
-                configApplyDirection(std::string apply_label, std::string apply_schedule){
-                    return setApply(apply_label, apply_schedule);
-                }
+                configApplyDirection(std::string apply_label, std::string apply_direction);
 
 
                 // High lvel API for speicifying parallelization scheduling options for apply
                 // A wrapper around setApply for now.
                 // Scheduling Options include VertexParallel, EdgeAwareVertexParallel
                 high_level_schedule::ProgramScheduleNode::Ptr
-                configApplyParallelization(std::string apply_label, std::string apply_schedule){
-                    return setApply(apply_label, apply_schedule);
-                }
-
+                configApplyParallelization(std::string apply_label, std::string apply_schedule, int grain_size=1024, std::string direction = "all");
 
                 // High lvel API for speicifying deduplication scheduling options for apply
                 // A wrapper around setApply for now.
@@ -98,24 +107,40 @@ namespace graphit {
                 // High lvel API for speicifying Data Structure scheduling options for apply
                 // A wrapper around setApply for now.
                 // Scheduling Options include bitvector (from_vertexset)
-
+                // Deprecated, to be replaced with configApplyDenseVertexSet
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyDataStructure(std::string apply_label, std::string apply_schedule){
                     return setApply(apply_label, apply_schedule);
                 }
 
+                // Configures the physical data layout of vertexset
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyDenseVertexSet(std::string label, std::string config, std::string vertexset = "src-vertexset", std::string direction = "all");
+
+
+
                 // High level API for specifying the number of segments to partition the graph into.
                 // Used for cache and NUMA optimizations
+                // Will soon be DEPRECATED, will be replaced with configApplyNumSSGs.
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNumSegments(std::string apply_label, int num_segment) {
                     return setApply(apply_label, "num_segment", num_segment);
                 }
 
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNumSSG(std::string apply_label, std::string config, int num_segment, std::string direction="all");
+
+
                 // High level API for enabling NUMA optimization
+                // Deprecated, to be replaced with configApplyNUMA
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNumaAware(std::string apply_label) {
                     return setApply(apply_label, "numa_aware");
                 }
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNUMA(std::string apply_label, std::string config, std::string direction = "all");
 
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
@@ -140,6 +165,14 @@ namespace graphit {
             private:
                 graphit::FIRContext * fir_context_;
                 Schedule * schedule_;
+                // Maps the new direction to the old directions for backward compatibility for now.
+                // For example, "SparsePush" would be mapped to "push"
+                // This eventually will be deprecated, just keeping it to keep the unit tests working
+                std::map<string, string> dirCompatibilityMap_;
+                std::map<string, string> parallelCompatibilityMap_;
+
+                void initGraphIterationSpaceIfNeeded(string label);
+
             };
 
 

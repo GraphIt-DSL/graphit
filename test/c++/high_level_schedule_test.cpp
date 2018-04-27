@@ -557,7 +557,7 @@ TEST_F(HighLevelScheduleTest, SimpleLoopAndKernelFusion) {
 
     program_schedule_node = program_schedule_node->fuseForLoop("l1", "l2", "l3");
     program_schedule_node = program_schedule_node->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_func");
-    program_schedule_node->setApply("l3:l1:s1", "parallel");
+    program_schedule_node->configApplyParallelization("l3:l1:s1", "dynamic-vertex-parallel");
     // Expects that the program still compiles
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 
@@ -568,8 +568,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
-    program->setApply("s1", "push")->setApply("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush");
+    program->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -585,7 +585,9 @@ TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel")
+            ->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -601,7 +603,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push")->setApply("s1", "sliding_queue")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush");
+    program->setApply("s1", "sliding_queue")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -616,7 +619,7 @@ TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "pull");
+    program->configApplyDirection("s1", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -631,7 +634,7 @@ TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -656,7 +659,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -671,7 +674,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseTwoSegments) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->configApplyNumSegments("s1", 2);
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  2, "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -686,7 +689,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -701,8 +704,11 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->configApplyDirection("s1", "hybrid_dense")->configApplyParallelization("s1", "parallel")
-            ->configApplyDataStructure("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel")
+            ->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull")
+            ->configApplyNumSSG("s1", "fixed-vertex-count", 4, "DensePull")
+            ->configApplyNUMA("s1", "serial", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -717,7 +723,7 @@ TEST_F(HighLevelScheduleTest, CCPullSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -733,7 +739,7 @@ TEST_F(HighLevelScheduleTest, CCPushSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->setApply("s1", "push")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -778,7 +784,8 @@ TEST_F(HighLevelScheduleTest, PRPullParallel) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
+    program->configApplyDirection("l1:s1", "DensePull")
+            ->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
@@ -797,8 +804,8 @@ TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
-    program->configApplyNumSegments("l1:s1", 2);
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -815,9 +822,9 @@ TEST_F(HighLevelScheduleTest, PRPullParallelNumaAware) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
-    program->configApplyNumSegments("l1:s1", 2);
-    program->configApplyNumaAware("l1:s1");
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2, "DensePull");
+    program->configApplyNUMA("l1:s1", "static-parallel", "DensePull");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -835,8 +842,8 @@ TEST_F(HighLevelScheduleTest, PRPullVertexsetParallel) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel");
-    program->setApply("l1:s2", "parallel");
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+    program->configApplyParallelization("l1:s2", "dynamic-vertex-parallel");
 
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -858,7 +865,7 @@ TEST_F(HighLevelScheduleTest, PRPushParallel) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("l1:s1", "push")->setApply("l1:s1", "parallel");
+    program->configApplyDirection("l1:s1", "SparsePush")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
@@ -1114,7 +1121,7 @@ TEST_F(HighLevelScheduleTest, HighLevelLoopFusionPrologueEpilogue3) {
 TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program_schedule_node->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
 
@@ -1133,7 +1140,7 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
 TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program_schedule_node->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
 
@@ -1152,7 +1159,7 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
 TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+    program_schedule_node->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
 
@@ -1173,7 +1180,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "hybrid_dense_forward")->setApply("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
 
@@ -1184,7 +1192,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleNewAPI) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->configApplyDirection("s1", "hybrid_dense_forward")->configApplyParallelization("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1194,7 +1203,7 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1205,7 +1214,7 @@ TEST_F(HighLevelScheduleTest, SSSPPullParallelSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "pull")->setApply("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1217,7 +1226,7 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel");
+    program_schedule_node->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1228,7 +1237,7 @@ TEST_F(HighLevelScheduleTest, SSSPPushParallelSlidingQueueSchedule) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "push")->setApply("s1", "parallel")->setApply("s1", "sliding_queue");
+    program_schedule_node->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "sliding_queue");
     istringstream is (sssp_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1244,7 +1253,7 @@ TEST_F(HighLevelScheduleTest, SimpleParallelVertexSetApply){
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "parallel");
+    program_schedule_node->configApplyParallelization("s1", "dynamic-vertex-parallel");
     fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1260,7 +1269,7 @@ TEST_F(HighLevelScheduleTest, SimpleSerialVertexSetApply){
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program_schedule_node->setApply("s1", "serial");
+    program_schedule_node->configApplyParallelization("s1","serial");
     fe_->parseStream(is, context_, errors_);
 
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
@@ -1273,7 +1282,7 @@ TEST_F(HighLevelScheduleTest, CFPullParallel) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
@@ -1286,7 +1295,7 @@ TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalance) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "pull_edge_based_load_balance");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
@@ -1299,7 +1308,7 @@ TEST_F(HighLevelScheduleTest, CFPullParallelLoadBalanceWithGrainSize) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // The schedule does a array of SoA optimization, and split the loops
     // while supplying different schedules for the two splitted loops
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance",8000);
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "pull_edge_based_load_balance",8000);
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
@@ -1310,7 +1319,7 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
 
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1321,7 +1330,7 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1333,8 +1342,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1345,8 +1354,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBala
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1358,8 +1367,8 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaDoubleHybridDenseParallelFuseFieldsLo
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1370,8 +1379,8 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelDifferentSegments) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel")->configApplyNumSegments("l1:s1", 10);
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 20);
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10, "DensePull");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  20, "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
@@ -1388,9 +1397,9 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelTwoEdgesetOneNuma) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->setApply("l1:s1", "pull")->setApply("l1:s1", "parallel")->configApplyNumSegments("l1:s1", 10);
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->configApplyNumSegments("s1", 20);
-    program->configApplyNumaAware("l1:s1");
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10, "DensePull");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  20, "DensePull");
+    program->configApplyNUMA("l1:s1", "static-parallel", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 

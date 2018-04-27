@@ -1,4 +1,4 @@
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
     program->fuseFields("out_degree", "old_rank");

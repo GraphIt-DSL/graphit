@@ -52,5 +52,5 @@ func main()
 end
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
-    program->configApplyNumSegments("s1", 15);
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyNumSSG("s1", "fixed-vertex-count",  15);
