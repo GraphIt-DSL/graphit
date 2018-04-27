@@ -689,7 +689,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -1343,7 +1343,7 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFieldsLoadBalance) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1355,7 +1355,7 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaHybridDenseParallelFuseFieldsLoadBala
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -1368,7 +1368,7 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaDoubleHybridDenseParallelFuseFieldsLo
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
-    program->setApply("s1", "pull_edge_based_load_balance")->setApply("s1", "pull_frontier_bitvector");
+    program->setApply("s1", "pull_edge_based_load_balance")->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->fuseFields("delta", "out_degree");
     // generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
