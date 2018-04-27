@@ -43,9 +43,9 @@ int main(int argc, char **argv) {
 
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseForwardScheduleNewAPI";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPullSchedule";
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPPushParallelSlidingQueueSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSPwithHybridDenseForwardSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";

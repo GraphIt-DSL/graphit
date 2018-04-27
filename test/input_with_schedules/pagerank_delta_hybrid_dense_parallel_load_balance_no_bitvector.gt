@@ -1,5 +1,5 @@
 
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance");
+    program->configApplyDirection("s1", "DensePull")->setApply("s1", "parallel")->setApply("s1", "pull_edge_based_load_balance");
     program->fuseFields("delta", "out_degree");

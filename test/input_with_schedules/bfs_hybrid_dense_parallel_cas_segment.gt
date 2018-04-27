@@ -1,4 +1,4 @@
 schedule:
-    program->configApplyDirection("s1", "hybrid_dense")->setApply("s1", "parallel")->configApplyDeduplication("s1", "disable_deduplication");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->setApply("s1", "parallel")->configApplyDeduplication("s1", "disable_deduplication");
     program->configApplyNumSegments("s1", 7);
     program->configApplyParallelization("s2", "serial");

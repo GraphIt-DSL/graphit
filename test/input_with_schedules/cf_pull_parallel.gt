@@ -2,4 +2,4 @@
 
 
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->setApply("s1", "parallel");

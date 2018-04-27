@@ -58,6 +58,6 @@ end
 
 schedule:
     program->splitForLoop("l1", "l2", "l3", 7, 4);
-    program->setApply("l2:s1", "pull")->setApply("l2:s1", "parallel");
-    program->setApply("l3:s1", "hybrid_dense")->setApply("l3:s1", "parallel");
+    program->configApplyDirection("l2:s1", "DensePull")->setApply("l2:s1", "parallel");
+    program->configApplyDirection("l2:s1", "SparsePush-DensePull")->setApply("l3:s1", "parallel");
     program->fuseFields("delta", "out_degree");

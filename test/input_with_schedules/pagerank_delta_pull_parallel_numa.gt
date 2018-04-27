@@ -1,5 +1,5 @@
 schedule:
-    program->setApply("s1", "pull")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "DensePull")->setApply("s1", "parallel");
     program->configApplyNumSegments("s1", 2);
     program->configApplyNumaAware("s1");
 

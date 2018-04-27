@@ -1,5 +1,5 @@
 
 
 schedule:
-    program->setApply("s1", "push")->setApply("s1", "parallel");
+    program->configApplyDirection("s1", "SparsePush")->setApply("s1", "parallel");
     program->setApply("s2", "serial");

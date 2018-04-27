@@ -38,4 +38,4 @@ func main()
 end
 
 schedule:
-     program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");
+     program->configApplyDirection("s1", "SparsePush-DensePull")->setApply("s1", "parallel")->setApply("s1", "disable_deduplication");

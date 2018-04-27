@@ -1,5 +1,5 @@
 
 
 schedule:
-    program->setApply("s1", "hybrid_dense")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->setApply("s1", "parallel")->setApply("s1", "pull_frontier_bitvector");
     program->fuseFields("delta", "out_degree");
