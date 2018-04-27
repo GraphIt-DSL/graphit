@@ -692,9 +692,16 @@ namespace graphit {
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
                     if (config == "fixed-vertex-count"){
+                        if (direction != "DensePull"){
+                            //currently, we don't support any direction other than DensePull for graph partitioning
+                            // push based partitioning is coming
+                            std::cout << "unsupported direction for partition SSGs: "  << direction << std::endl;
+                            throw "Unsupported Schedule!";
+                        }
                         gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::FixedVertexCount);
                     } else if (config == "edge-aware-vertex-count"){
                         gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::EdgeAwareVertexCount);
+                        throw "Unsupported Schedule!";
                     } else {
                         throw "Unsupported Schedule!";
                     }
@@ -726,6 +733,13 @@ namespace graphit {
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
+                    if (direction != "DensePull"){
+                        //currently, we don't support any direction other than DensePull for graph partitioning
+                        // push based partitioning is coming
+                        std::cout << "unsupported direction for NUMA optimizations: "  << direction << std::endl;
+                        throw "Unsupported Schedule!";
+                    }
+
                     if (config == "serial"){
                         gis.setPRTag(GraphIterationSpace::Dimension::SSG, Tags::PR_Tag::Serial);
                     } else if (config == "static-parallel"){
