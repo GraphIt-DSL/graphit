@@ -692,7 +692,7 @@ namespace graphit {
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
                     if (config == "fixed-vertex-count"){
-                        if (direction != "DensePull"){
+                        if (gis.scheduling_api_direction != "DensePull"){
                             //currently, we don't support any direction other than DensePull for graph partitioning
                             // push based partitioning is coming
                             std::cout << "unsupported direction for partition SSGs: "  << direction << std::endl;
@@ -733,7 +733,7 @@ namespace graphit {
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
-                    if (direction != "DensePull"){
+                    if (gis.scheduling_api_direction != "DensePull"){
                         //currently, we don't support any direction other than DensePull for graph partitioning
                         // push based partitioning is coming
                         std::cout << "unsupported direction for NUMA optimizations: "  << direction << std::endl;

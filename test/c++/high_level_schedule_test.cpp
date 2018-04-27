@@ -805,7 +805,7 @@ TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
-    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2, "DensePull");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
