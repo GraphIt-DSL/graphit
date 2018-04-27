@@ -65,5 +65,5 @@ end
 
 schedule:
     program->fuseFields({"old_rank", "out_degree", "old_ec"});
-    program->configApplyNumSegments("l1:s1", 10)->setApply("l1:s1", "parallel")->configApplyDirection("l1:s1", "DensePull");
-    program->configApplyNumSegments("l2:s1", 20)->setApply("l2:s1", "serial")->configApplyDirection("l2:s1", "DensePull");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10)->setApply("l1:s1", "parallel")->configApplyDirection("l1:s1", "DensePull");
+    program->configApplyNumSSG("l2:s1", "fixed-vertex-count",  20)->configApplyParallelization("l2:s1", "serial")->configApplyDirection("l2:s1", "DensePull");

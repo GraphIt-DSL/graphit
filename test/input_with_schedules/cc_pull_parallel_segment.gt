@@ -2,5 +2,5 @@
 
 schedule:
     program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
-    program->configApplyNumSegments("s1", 3);
+    program->configApplyNumSSG("s1", "fixed-vertex-count",  3);
     program->setApply("s2", "serial");

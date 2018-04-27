@@ -674,7 +674,7 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseTwoSegments) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSegments("s1", 2);
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  2);
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -805,7 +805,7 @@ TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
-    program->configApplyNumSegments("l1:s1", 2);
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -823,8 +823,8 @@ TEST_F(HighLevelScheduleTest, PRPullParallelNumaAware) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     // Set the pull parameter to 2 segments
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
-    program->configApplyNumSegments("l1:s1", 2);
-    program->configApplyNumaAware("l1:s1");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
+    program->configApplyNuma("l1:s1", "static-parallel");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -1379,8 +1379,8 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelDifferentSegments) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSegments("l1:s1", 10);
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSegments("s1", 20);
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10);
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  20);
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
@@ -1397,9 +1397,9 @@ TEST_F(HighLevelScheduleTest, PRCCPullParallelTwoEdgesetOneNuma) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSegments("l1:s1", 10);
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSegments("s1", 20);
-    program->configApplyNumaAware("l1:s1");
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")->configApplyNumSSG("l1:s1", "fixed-vertex-count",  10);
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyNumSSG("s1", "fixed-vertex-count",  20);
+    program->configApplyNuma("l1:s1", "static-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 

@@ -53,4 +53,4 @@ end
 
 schedule:
     program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
-    program->configApplyNumSegments("s1", 15);
+    program->configApplyNumSSG("s1", "fixed-vertex-count",  15);
