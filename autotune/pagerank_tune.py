@@ -23,7 +23,7 @@ class GraphItPageRankTuner(MeasurementInterface):
         manipulator = ConfigurationManipulator()
         manipulator.add_parameter(
             EnumParameter('direction', 
-                          ['push','pull','hybrid_dense']))
+                          ['SparsePush','DensePull']))
 
         return manipulator
 
@@ -45,7 +45,7 @@ class GraphItPageRankTuner(MeasurementInterface):
         f1.close()
         
         #compile the schedule file along with the original algorithm file
-        compile_graphit_cmd = 'python graphitc.py -a ../apps/pagerank_benchmark.gt -f ' + new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
+        compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
         compile_cpp_cmd = 'g++ -std=c++11 -I ../src/runtime_lib/ -O3  test.cpp -o test'
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
@@ -57,6 +57,15 @@ class GraphItPageRankTuner(MeasurementInterface):
         """                                                                          
         Run a compile_result from compile() sequentially and return performance      
         """
+        assert compile_result['returncode'] == 0
+        try:    
+            #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg')
+            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg')
+            assert run_result['returncode'] == 0
+        finally:
+            self.call_program('rm test')
+
+        return Result(time=run_result['time'])
 
     def compile_and_run(self, desired_result, input, limit):
         """                                                                          
@@ -66,6 +75,9 @@ class GraphItPageRankTuner(MeasurementInterface):
         cfg = desired_result.configuration.data
         compile_result = self.compile(cfg, 0)
         return self.run_precompiled(desired_result, input, limit, compile_result, 0)
+
+
+#implement save_final_config()
 
 if __name__ == '__main__':
     argparser = opentuner.default_argparser()
