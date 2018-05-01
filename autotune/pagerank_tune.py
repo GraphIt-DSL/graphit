@@ -15,6 +15,8 @@ from opentuner import Result
 
 
 class GraphItPageRankTuner(MeasurementInterface):
+    new_schedule_file_name = ""
+
     def manipulator(self):
         """                                                                          
         Define the search space by creating a                                        
@@ -24,28 +26,28 @@ class GraphItPageRankTuner(MeasurementInterface):
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull']))
-
+        #manipulator.add_parameter(IntegerParameter('numSSG', 0, 10))
         return manipulator
 
-    def compile(self, cfg, id):
-        """                                                                          
-        Compile a given configuration in parallel                                    
-        """
-        
+    def write_cfg_to_schedule(self, cfg):
         #write into a schedule file the configuration
         f = open('schedules/default_schedule.gt','r')
         default_schedule_str = f.read()
         f.close()
         new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
         print (new_schedule)
-        new_schedule_file_name = 'schedule_' + str(id) 
-        print (new_schedule_file_name)
-        f1 = open (new_schedule_file_name, 'w')
+        self.new_schedule_file_name = 'schedule_' + str(id) 
+        print (self.new_schedule_file_name)
+        f1 = open (self.new_schedule_file_name, 'w')
         f1.write(new_schedule)
         f1.close()
-        
+
+    def compile(self, cfg, id):
+        """                                                                          
+        Compile a given configuration in parallel                                    
+        """
         #compile the schedule file along with the original algorithm file
-        compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
+        compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + self.new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
         compile_cpp_cmd = 'g++ -std=c++11 -I ../src/runtime_lib/ -O3  test.cpp -o test'
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
@@ -78,8 +80,8 @@ class GraphItPageRankTuner(MeasurementInterface):
         """
         assert compile_result['returncode'] == 0
         try:    
-            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
-            #run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
+            #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
+            run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
@@ -95,7 +97,10 @@ class GraphItPageRankTuner(MeasurementInterface):
         return performance                                                           
         """
         cfg = desired_result.configuration.data
-        
+
+        # converts the configuration into a schedule
+        self.write_cfg_to_schedule(cfg)
+
         # this pases in the id 0 for the configuration
         compile_result = self.compile(cfg, 0)
         return self.run_precompiled(desired_result, input, limit, compile_result, 0)
