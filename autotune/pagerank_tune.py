@@ -23,7 +23,7 @@ class GraphItPageRankTuner(MeasurementInterface):
         manipulator = ConfigurationManipulator()
         manipulator.add_parameter(
             EnumParameter('direction', 
-                          ['SparsePush','DensePull']))
+                          ['SparsePush','DensePull', 'SparsePush-DensePull']))
 
         return manipulator
 
@@ -51,21 +51,43 @@ class GraphItPageRankTuner(MeasurementInterface):
         print(compile_cpp_cmd)
         self.call_program(compile_graphit_cmd)
         return self.call_program(compile_cpp_cmd)
-        
-    
+
+    def parse_running_time(self, log_file_name='test.out'):
+        """Returns the elapsed time only, from the HPL output file"""
+
+        min_time = 10000
+
+        with open(log_file_name) as f:
+            content = f.readlines()
+        content = [x.strip() for x in content]
+        i = 0;
+        for line in content:
+            if line.find("elapsed time") != -1:
+                next_line = content[i+1]
+                time_str = next_line.strip()
+                time = float(time_str)
+                if time < min_time:
+                    min_time = time
+            i = i+1;
+
+        return time
+
     def run_precompiled(self, desired_result, input, limit, compile_result, id):
         """                                                                          
         Run a compile_result from compile() sequentially and return performance      
         """
         assert compile_result['returncode'] == 0
         try:    
-            #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg')
-            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg')
+            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
+            #run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
 
-        return Result(time=run_result['time'])
+        val = self.parse_running_time();
+        print val
+        return opentuner.resultsdb.models.Result(time=val)
+        #return Result(time=run_result['time'])
 
     def compile_and_run(self, desired_result, input, limit):
         """                                                                          
@@ -73,11 +95,18 @@ class GraphItPageRankTuner(MeasurementInterface):
         return performance                                                           
         """
         cfg = desired_result.configuration.data
+        
+        # this pases in the id 0 for the configuration
         compile_result = self.compile(cfg, 0)
         return self.run_precompiled(desired_result, input, limit, compile_result, 0)
 
 
-#implement save_final_config()
+    def save_final_config(self, configuration):
+        """called at the end of tuning"""
+        print 'Final Configuration:', configuration.data
+        self.manipulator().save_to_file(configuration.data,'final_config.json')
+
+
 
 if __name__ == '__main__':
     argparser = opentuner.default_argparser()
