@@ -1,0 +1,14 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/test.wel");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const wt_sum : vector{Vertex}(int) = 0;
+
+func sumEdgeWt(src : Vertex, dst : Vertex, weight : int)
+    print weight;
+    wt_sum[dst] = wt_sum[dst] + weight;
+end
+
+func main()
+    edges.apply(sumEdgeWt);
+end

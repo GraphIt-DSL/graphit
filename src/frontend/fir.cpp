@@ -475,10 +475,23 @@ namespace graphit {
             loopVar = forStmt->loopVar->clone<Identifier>();
             domain = forStmt->domain->clone<ForDomain>();
             body = forStmt->body->clone<StmtBlock>();
+            stmt_label = forStmt->stmt_label;
         }
 
         FIRNode::Ptr ForStmt::cloneNode() {
             const auto node = std::make_shared<ForStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void NameNode::copy(FIRNode::Ptr node) {
+            const auto name_node = to<NameNode>(node);
+            Stmt::copy(name_node);
+            body = name_node->body->clone<StmtBlock>();
+        }
+
+        FIRNode::Ptr NameNode::cloneNode() {
+            const auto node = std::make_shared<NameNode>();
             node->copy(shared_from_this());
             return node;
         }
@@ -498,10 +511,23 @@ namespace graphit {
             return node;
         }
 
+
+        void BreakStmt::copy(FIRNode::Ptr node) {
+            const auto printStmt = to<BreakStmt>(node);
+            Stmt::copy(printStmt);
+        }
+
+        FIRNode::Ptr BreakStmt::cloneNode() {
+            const auto node = std::make_shared<BreakStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void ExprStmt::copy(FIRNode::Ptr node) {
             const auto exprStmt = to<ExprStmt>(node);
             Stmt::copy(exprStmt);
             expr = exprStmt->expr->clone<Expr>();
+            stmt_label = exprStmt->stmt_label;
         }
 
         FIRNode::Ptr ExprStmt::cloneNode() {
@@ -516,10 +542,27 @@ namespace graphit {
             for (const auto &left : assignStmt->lhs) {
                 lhs.push_back(left->clone<Expr>());
             }
+            stmt_label = assignStmt->stmt_label;
         }
 
         FIRNode::Ptr AssignStmt::cloneNode() {
             const auto node = std::make_shared<AssignStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ReduceStmt::copy(FIRNode::Ptr node) {
+            const auto reduce_stmt = to<ReduceStmt>(node);
+            ExprStmt::copy(reduce_stmt);
+            for (const auto &left : reduce_stmt->lhs) {
+                lhs.push_back(left->clone<Expr>());
+            }
+            stmt_label = reduce_stmt->stmt_label;
+            reduction_op = reduce_stmt->reduction_op;
+        }
+
+        FIRNode::Ptr ReduceStmt::cloneNode() {
+            const auto node = std::make_shared<ReduceStmt>();
             node->copy(shared_from_this());
             return node;
         }
@@ -1016,10 +1059,53 @@ namespace graphit {
             Expr::copy(apply_expr);
             target = apply_expr->target->clone<Expr>();
             input_function = apply_expr->input_function->clone<Identifier>();
+            if (apply_expr->from_expr){
+                from_expr = apply_expr->from_expr->clone<FromExpr>();
+            }
+            if (apply_expr->to_expr){
+                to_expr = apply_expr->to_expr->clone<ToExpr>();
+            }
         }
 
         FIRNode::Ptr ApplyExpr::cloneNode() {
             const auto node = std::make_shared<ApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void WhereExpr::copy(FIRNode::Ptr node) {
+            const auto where_expr = to<WhereExpr>(node);
+            Expr::copy(where_expr);
+            target = where_expr->target->clone<Expr>();
+            input_func = where_expr->input_func->clone<Identifier>();
+        }
+
+        FIRNode::Ptr WhereExpr::cloneNode() {
+            const auto node = std::make_shared<WhereExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void FromExpr::copy(FIRNode::Ptr node) {
+            const auto from_expr = to<FromExpr>(node);
+            Expr::copy(from_expr);
+            input_func = from_expr->input_func->clone<Identifier>();
+       }
+
+        FIRNode::Ptr FromExpr::cloneNode() {
+            const auto node = std::make_shared<FromExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ToExpr::copy(FIRNode::Ptr node) {
+            const auto from_expr = to<ToExpr>(node);
+            Expr::copy(from_expr);
+            input_func = from_expr->input_func->clone<Identifier>();
+        }
+
+        FIRNode::Ptr ToExpr::cloneNode() {
+            const auto node = std::make_shared<ToExpr>();
             node->copy(shared_from_this());
             return node;
         }

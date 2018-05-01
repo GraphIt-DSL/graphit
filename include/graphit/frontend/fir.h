@@ -31,7 +31,7 @@ namespace graphit {
         template <typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<FIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
-            //iassert((bool)ret);
+            assert(ret != nullptr);
             return ret;
         }
 
@@ -91,6 +91,7 @@ namespace graphit {
 
         struct Stmt : public FIRNode {
             typedef std::shared_ptr<Stmt> Ptr;
+            std::string stmt_label = "";
         };
 
         struct StmtBlock : public Stmt {
@@ -380,7 +381,7 @@ namespace graphit {
         };
 
         struct ScalarType : public TensorType {
-            enum class Type {INT, FLOAT, BOOL, COMPLEX, STRING};
+            enum class Type {INT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING};
 
             Type type;
 
@@ -702,6 +703,22 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+
+        struct NameNode : public Stmt {
+            StmtBlock::Ptr  body;
+
+            typedef std::shared_ptr<NameNode> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<NameNode>());
+            }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
         struct PrintStmt : public Stmt {
             std::vector<Expr::Ptr> args;
             bool                   printNewline = false;
@@ -710,6 +727,20 @@ namespace graphit {
 
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<PrintStmt>());
+            }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+        struct BreakStmt : public Stmt {
+
+            typedef std::shared_ptr<BreakStmt> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<BreakStmt>());
             }
 
         protected:
@@ -753,6 +784,28 @@ namespace graphit {
 
             virtual FIRNode::Ptr cloneNode();
         };
+
+
+        struct ReduceStmt : public ExprStmt {
+            std::vector<Expr::Ptr> lhs;
+            enum class ReductionOp {MIN, SUM, MAX};
+            ReductionOp reduction_op;
+
+            typedef std::shared_ptr<ReduceStmt> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ReduceStmt>());
+            }
+
+            virtual unsigned getLineBegin() { return lhs.front()->getLineBegin(); }
+            virtual unsigned getColBegin() { return lhs.front()->getColBegin(); }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
 
         struct ReadParam : public FIRNode {
             typedef std::shared_ptr<ReadParam> Ptr;
@@ -1407,7 +1460,7 @@ namespace graphit {
         struct EdgeSetType : public Type {
             ElementType::Ptr edge_element_type;
             std::vector<ElementType::Ptr> vertex_element_type_list;
-
+            ScalarType::Ptr weight_type;
             typedef std::shared_ptr<EdgeSetType> Ptr;
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetType>());
@@ -1450,6 +1503,7 @@ namespace graphit {
         // Allocator expression for VertexSet
         struct EdgeSetLoadExpr : public LoadExpr {
             typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+            bool is_weighted = false;
 
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetLoadExpr>());
@@ -1481,9 +1535,67 @@ namespace graphit {
         };
 
 
+
+
+
+        struct WhereExpr : public Expr {
+            Expr::Ptr            target;
+            Identifier::Ptr            input_func;
+
+            typedef std::shared_ptr<WhereExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<WhereExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
+        struct FromExpr : public Expr {
+            Identifier::Ptr            input_func;
+
+            typedef std::shared_ptr<FromExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<FromExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
+        struct ToExpr : public Expr {
+            Identifier::Ptr            input_func;
+
+            typedef std::shared_ptr<ToExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ToExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+
         struct ApplyExpr : public Expr {
             Expr::Ptr                  target;
             Identifier::Ptr            input_function;
+            FromExpr::Ptr              from_expr;
+            ToExpr::Ptr                to_expr;
+            Identifier::Ptr            change_tracking_field;
 
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
@@ -1497,6 +1609,7 @@ namespace graphit {
 
             virtual FIRNode::Ptr cloneNode();
         };
+
 
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;

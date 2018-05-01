@@ -11,14 +11,16 @@ namespace graphit {
 // here to denote zero or more instances of the enclosing term, while '[]' is
 // used to denote zero or one instance of the enclosing term.
 
-    Parser::Parser(std::vector<ParseError> * errors) : errors(errors) {}
+    Parser::Parser(std::vector<ParseError> *errors) : errors(errors) {}
 
     fir::Program::Ptr Parser::parse(const TokenStream &tokens) {
         this->tokens = tokens;
 
         decls = SymbolTable();
-        intrinsics_.push_back("sum");
-        intrinsics_.push_back("getVertices");
+
+        initIntrinsics();
+
+
 
 //        for (const auto kv : intrinsics) {
 //            decls.insert(kv->name->ident, IdentType::FUNCTION);
@@ -85,6 +87,7 @@ namespace graphit {
 
         return elemTypeDecl;
     }
+
 // field_decl_list: {field_decl}
     std::vector<fir::FieldDecl::Ptr> Parser::parseFieldDeclList() {
         std::vector<fir::FieldDecl::Ptr> fields;
@@ -336,7 +339,8 @@ namespace graphit {
     }
 
 // stmt: var_decl | const_decl | if_stmt | while_stmt | do_while_stmt
-//     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt
+//     | for_stmt | print_stmt | apply_stmt | expr_or_assign_stmt | break_stmt
+//    | # identifier # stmt
     fir::Stmt::Ptr Parser::parseStmt() {
         switch (peek().type) {
             case Token::Type::VAR:
@@ -354,14 +358,27 @@ namespace graphit {
             case Token::Type::PRINT:
             case Token::Type::PRINTLN:
                 return parsePrintStmt();
-            case Token::Type::APPLY:
-                return parseApplyStmt();
+//            case Token::Type::APPLY:
+//                return parseApplyStmt();
+            case Token::Type::BREAK:
+                return parseBreakStmt();
+            case Token::Type::NUMBER_SIGN: {
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Identifier::Ptr label = parseIdent();
+                consume(Token::Type::NUMBER_SIGN);
+                fir::Stmt::Ptr stmt = parseStmt();
+                stmt->stmt_label = label->ident;
+                return stmt;
+            }
             default:
                 return parseExprOrAssignStmt();
         }
     }
 
-// var_decl: 'var' ident (('=' expr) | (':' tensor_type ['=' expr])) ';'
+// DEPRECATED SIMIT grammar var_decl: 'var' ident (('=' expr) | (':' tensor_type ['=' expr])) ';'
+// var_decl: 'var' ident (('=' expr) | (':' type ['=' expr])) ';'
+// Similar to Const Declaration, we extend the grammar to support more than just tensor types
+
     fir::VarDecl::Ptr Parser::parseVarDecl() {
         try {
             auto varDecl = std::make_shared<fir::VarDecl>();
@@ -371,7 +388,9 @@ namespace graphit {
 
             varDecl->name = parseIdent();
             if (tryConsume(Token::Type::COL)) {
-                varDecl->type = parseTensorType();
+                // Extend the grammar to support more than just tensor types
+                //varDecl->type = parseTensorType();
+                varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
                     varDecl->initVal = parseExpr();
                 }
@@ -394,7 +413,9 @@ namespace graphit {
         }
     }
 
-// const_decl: 'const' ident [':' tensor_type] '=' expr ';'
+// DEPRECATED SIMIT Grammar: const_decl: 'const' ident [':' tensor_type | ] '=' expr ';
+// const_decl: 'const' ident [':' type | ] '=' expr ';' GraphIt grammar to support more than tensor type
+
     fir::ConstDecl::Ptr Parser::parseConstDecl() {
         try {
             auto constDecl = std::make_shared<fir::ConstDecl>();
@@ -409,8 +430,12 @@ namespace graphit {
                 // Needed for dynamic sets and loaders.
                 constDecl->type = parseType();
             }
-            consume(Token::Type::ASSIGN);
-            constDecl->initVal = parseExpr();
+
+            //if an initial value is specified
+            if (tryConsume(Token::Type::ASSIGN)){
+                //consume(Token::Type::ASSIGN);
+                constDecl->initVal = parseExpr();
+            }
 
             const Token endToken = consume(Token::Type::SEMICOL);
             constDecl->setEndLoc(endToken);
@@ -418,6 +443,7 @@ namespace graphit {
             decls.insert(constDecl->name->ident, IdentType::OTHER);
 
             return constDecl;
+
         } catch (const SyntaxError &) {
             skipTo({Token::Type::SEMICOL});
             consume(Token::Type::SEMICOL);
@@ -611,14 +637,16 @@ namespace graphit {
         }
     }
 
-// for_domain: set_index_set | (expr ':' expr)
+// DEPRECATED: for_domain: set_index_set | (expr ':' expr)
+    // for_domain: (expr ':' expr)
     fir::ForDomain::Ptr Parser::parseForDomain() {
-        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
-            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
-            indexSetDomain->set = parseSetIndexSet();
-
-            return indexSetDomain;
-        }
+//        GraphIt currently do not support for loop over set_index_set
+//        if (peek().type == Token::Type::IDENT && peek(1).type != Token::Type::COL) {
+//            auto indexSetDomain = std::make_shared<fir::IndexSetDomain>();
+//            indexSetDomain->set = parseSetIndexSet();
+//
+//            return indexSetDomain;
+//        }
 
         auto rangeDomain = std::make_shared<fir::RangeDomain>();
 
@@ -700,6 +728,32 @@ namespace graphit {
         }
     }
 
+    fir::ReduceStmt::Ptr Parser::parseReduceStmt(Token::Type token_type,
+                                                 fir::ReduceStmt::ReductionOp reduce_op,
+                                                 fir::Expr::Ptr expr){
+        auto reduce_stmt = std::make_shared<fir::ReduceStmt>();
+        reduce_stmt->reduction_op = reduce_op;
+        reduce_stmt->lhs.push_back(expr);
+        while (tryConsume(Token::Type::COMMA)) {
+            const fir::Expr::Ptr expr = parseExpr();
+            reduce_stmt->lhs.push_back(expr);
+        }
+
+        consume(token_type);
+        reduce_stmt->expr = parseExpr();
+
+        for (const auto lhs : reduce_stmt->lhs) {
+            if (fir::isa<fir::VarExpr>(lhs)) {
+                const std::string varName = fir::to<fir::VarExpr>(lhs)->ident;
+
+                if (!decls.contains(varName)) {
+                    decls.insert(varName, IdentType::OTHER);
+                }
+            }
+        }
+        return reduce_stmt;
+    }
+
 // expr_or_assign_stmt: [[expr {',' expr} '='] expr] ';'
     fir::ExprStmt::Ptr Parser::parseExprOrAssignStmt() {
         try {
@@ -735,6 +789,18 @@ namespace graphit {
                         stmt = assignStmt;
                         break;
                     }
+                    case Token::Type::PLUS_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::PLUS_REDUCE, fir::ReduceStmt::ReductionOp::SUM, expr);
+                        break;
+                    }
+                    case Token::Type::MIN_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MIN_REDUCE, fir::ReduceStmt::ReductionOp::MIN, expr);
+                        break;
+                    }
+                    case Token::Type::MAX_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::MAX_REDUCE, fir::ReduceStmt::ReductionOp::MAX, expr);
+                        break;
+                    }
                     default:
                         stmt = std::make_shared<fir::ExprStmt>();
                         stmt->expr = expr;
@@ -758,7 +824,7 @@ namespace graphit {
 
 // expr: map_expr | new_expr | or_expr
     fir::Expr::Ptr Parser::parseExpr() {
-        switch(peek().type){
+        switch (peek().type) {
             case Token::Type::MAP:
                 return parseMapExpr();
             case Token::Type::NEW:
@@ -1081,7 +1147,8 @@ namespace graphit {
     }
 
 // DEPRECATED SIMIT GRAMMR: field_read_expr: set_read_expr ['.' ident]
-    // field_read_expr: sed_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' }
+// field_read_expr: set_read_expr {'.' (ident( [ expr_params ] )) | apply '(' ident ')' | where '(' ident ')'
+// | from '(' expr ')' '.' to '(' expr ')''.' apply '(' ident ')' ['.' modified '(' ident ')'],}
     fir::Expr::Ptr Parser::parseFieldReadExpr() {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
@@ -1089,13 +1156,87 @@ namespace graphit {
 
         while (tryConsume(Token::Type::PERIOD)) {
 
-            if (tryConsume(Token::Type::APPLY)){
+            if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
                 apply_expr->input_function = parseIdent();
                 consume(Token::Type::RP);
                 expr = apply_expr;
+            } else if (tryConsume(Token::Type::APPLYMODIFIED)) {
+                consume(Token::Type::LP);
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
+                consume(Token::Type::COMMA);
+                auto change_tracking_field = parseIdent();
+                apply_expr->change_tracking_field = change_tracking_field;
+                consume(Token::Type::RP);
+                expr = apply_expr;
+            } else if (tryConsume(Token::Type::WHERE)) {
+                consume(Token::Type::LP);
+                auto where_expr = std::make_shared<fir::WhereExpr>();
+                where_expr->input_func = parseIdent();
+                where_expr->target = expr;
+                consume(Token::Type::RP);
+                expr = where_expr;
+
+                // right now this is a bit of a hack, srcFilter and from act the same in the compiler
+            } else if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
+                //edgesets.from().apply() or edgesets.from().to().apply() pattern
+                auto apply_expr = std::make_shared<fir::ApplyExpr>();
+                consume(Token::Type::LP);
+                fir::FromExpr::Ptr from_expr = std::make_shared<fir::FromExpr>();
+                from_expr->input_func = parseIdent();
+                consume(Token::Type::RP);
+                consume(Token::Type::PERIOD);
+
+                // right now this is a bit of a hack, dstFilter and to act the same in the compiler
+                if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
+                    //.from(expr).to(expr).apply(func)
+                    consume(Token::Type::LP);
+                    auto to_expr = std::make_shared<fir::ToExpr>();
+                    to_expr->input_func = parseIdent();
+                    apply_expr->to_expr = to_expr;
+                    consume(Token::Type::RP);
+                    consume(Token::Type::PERIOD);
+                }
+
+                // FROM and To has to end with either apply modified or apply for now
+                if (tryConsume(Token::Type::APPLYMODIFIED)) {
+                    consume(Token::Type::LP);
+                    apply_expr->target = expr;
+                    apply_expr->input_function = parseIdent();
+                    apply_expr->from_expr = from_expr;
+                    consume(Token::Type::COMMA);
+                    auto change_tracking_field = parseIdent();
+                    apply_expr->change_tracking_field = change_tracking_field;
+
+
+                } else {
+                    consume(Token::Type::APPLY);
+                    consume(Token::Type::LP);
+                    apply_expr->target = expr;
+                    apply_expr->input_function = parseIdent();
+                    apply_expr->from_expr = from_expr;
+                }
+
+
+                consume(Token::Type::RP);
+
+
+                // DEPRECATED: now we use a new applyModified operator
+//                //potentially there is another 'modified' call that adds implicit tracking to a field
+//                if (tryConsume(Token::Type::PERIOD)) {
+//                    consume(Token::Type::MODIFIED);
+//                    consume(Token::Type::LP);
+//                    auto change_tracking_field = parseIdent();
+//                    consume(Token::Type::RP);
+//                    apply_expr->change_tracking_field = change_tracking_field;
+//                }
+
+                expr = apply_expr;
+
             } else {
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
@@ -1376,6 +1517,7 @@ namespace graphit {
                 type = (peek(2).type == Token::Type::COL) ?
                        parseNamedTupleType() : parseUnnamedTupleType();
                 break;
+            case Token::Type::DOUBLE:
             case Token::Type::INT:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
@@ -1563,6 +1705,7 @@ namespace graphit {
         switch (peek().type) {
             case Token::Type::INT:
             case Token::Type::FLOAT:
+            case Token::Type::DOUBLE:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:
             case Token::Type::STRING:
@@ -1696,6 +1839,10 @@ namespace graphit {
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);
                 scalarType->type = fir::ScalarType::Type::FLOAT;
+                break;
+            case Token::Type::DOUBLE:
+                consume(Token::Type::DOUBLE);
+                scalarType->type = fir::ScalarType::Type::DOUBLE;
                 break;
             case Token::Type::BOOL:
                 consume(Token::Type::BOOL);
@@ -2175,6 +2322,9 @@ namespace graphit {
     }
 
     fir::Type::Ptr Parser::parseEdgeSetType() {
+
+        auto edgeSetType = std::make_shared<fir::EdgeSetType>();
+
         const Token setToken = consume(Token::Type::EDGE_SET);
         consume(Token::Type::LC);
         const fir::ElementType::Ptr element = parseElementType();
@@ -2182,19 +2332,32 @@ namespace graphit {
 
         consume(Token::Type::LP);
         std::vector<fir::ElementType::Ptr> vertex_element_type_list;
-        do {
-            const fir::ElementType::Ptr vertex_element_type = parseElementType();
-            vertex_element_type_list.push_back(vertex_element_type);
-        } while (tryConsume(Token::Type::COMMA));
+        //do {
+
+        // parse src element type
+        const fir::ElementType::Ptr src_vertex_element_type = parseElementType();
+        vertex_element_type_list.push_back(src_vertex_element_type);
+        consume(Token::Type::COMMA);
+        // parse dst element type
+        const fir::ElementType::Ptr dst_vertex_element_type = parseElementType();
+        vertex_element_type_list.push_back(dst_vertex_element_type);
+
+        // if a third type argument is supplied, we assume that it is a weight
+        if (tryConsume(Token::Type::COMMA)) {
+            const fir::ScalarType::Ptr weight_type = parseScalarType();
+            edgeSetType->weight_type = weight_type;
+        }
+
+
+        //} while (tryConsume(Token::Type::COMMA));
 
         const Token rightP = consume(Token::Type::RP);
 
 
-        auto edgeSetType = std::make_shared<fir::EdgeSetType>();
         edgeSetType->setBeginLoc(setToken);
         edgeSetType->edge_element_type = element;
         edgeSetType->setEndLoc(rightCurlyToken);
-
+        edgeSetType->vertex_element_type_list = vertex_element_type_list;
         return edgeSetType;
     }
 
@@ -2206,7 +2369,7 @@ namespace graphit {
 
         fir::NewExpr::Ptr output_new_expr;
 
-        if (tryConsume(Token::Type::VERTEX_SET)){
+        if (tryConsume(Token::Type::VERTEX_SET)) {
             output_new_expr = std::make_shared<fir::VertexSetAllocExpr>();
 
             consume(Token::Type::LC);
@@ -2215,9 +2378,9 @@ namespace graphit {
             consume(Token::Type::RC);
 
             consume(Token::Type::LP);
-            if (tryConsume(Token::Type::RP)){
+            if (tryConsume(Token::Type::RP)) {
                 //no expression in the
-            }else {
+            } else {
                 const auto expr = parseExpr();
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
@@ -2258,6 +2421,29 @@ namespace graphit {
         consume(Token::Type::RP);
         load_expr->file_name = file_name;
         return load_expr;
+    }
+
+    void Parser::initIntrinsics() {
+        // set up method call intrinsics
+        intrinsics_.push_back("sum");
+        intrinsics_.push_back("getVertices");
+        intrinsics_.push_back("getOutDegrees");
+        intrinsics_.push_back("getVertexSetSize");
+        intrinsics_.push_back("addVertex");
+
+
+
+        // set up function call intrinsics
+        decls.insert("fabs", IdentType::FUNCTION);
+        decls.insert("startTimer", IdentType::FUNCTION);
+        decls.insert("stopTimer", IdentType::FUNCTION);
+
+    }
+
+    fir::BreakStmt::Ptr Parser::parseBreakStmt() {
+        consume(Token::Type::BREAK);
+        consume(Token::Type::SEMICOL);
+        return std::make_shared<fir::BreakStmt>();
     }
 
 

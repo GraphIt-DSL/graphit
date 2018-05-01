@@ -1,15 +1,19 @@
-// Copyright (c) 2015, The Regents of the University of California (Regents)
+// copyright (c) 2015, The Regents of the University of California (Regents)
 // See LICENSE.txt for license details
 
 #ifndef GRAPH_H_
 #define GRAPH_H_
 
+#include <stdio.h>
 #include <cinttypes>
 #include <iostream>
 #include <type_traits>
+#include <map>
 
 #include "pvector.h"
 #include "util.h"
+
+#include "segmentgraph.h"
 
 
 /*
@@ -25,7 +29,7 @@ Simple container for graph in CSR format
 
 
 // Used to hold node & weight, with another node it makes a weighted edge
-template <typename NodeID_, typename WeightT_>
+template <typename NodeID_=int32_t, typename WeightT_=int32_t>
 struct NodeWeight {
   NodeID_ v;
   WeightT_ w;
@@ -109,19 +113,28 @@ class CSRGraph {
       if (in_neighbors_ != nullptr)
         delete[] in_neighbors_;
     }
+    if (flags_ != nullptr)
+      delete[] flags_;
+    for (auto iter = label_to_segment.begin(); iter != label_to_segment.end(); iter++) {
+      delete ((*iter).second);
+    }
   }
 
 
  public:
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
-    in_index_(nullptr), in_neighbors_(nullptr) {}
+  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr) {}
 
   CSRGraph(int64_t num_nodes, DestID_** index, DestID_* neighs) :
     directed_(false), num_nodes_(num_nodes),
     out_index_(index), out_neighbors_(neighs),
     in_index_(index), in_neighbors_(neighs) {
       num_edges_ = (out_index_[num_nodes_] - out_index_[0]) / 2;
+      //adding flags used for deduplication
+      flags_ = new int[num_nodes_];
+    //adding offsets for load balacne scheme
+    SetUpOffsets(true);
     }
 
   CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
@@ -130,7 +143,11 @@ class CSRGraph {
     out_index_(out_index), out_neighbors_(out_neighs),
     in_index_(in_index), in_neighbors_(in_neighs) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
-    }
+
+      flags_ = new int[num_nodes_];
+    SetUpOffsets(true);
+
+  }
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
@@ -142,6 +159,8 @@ class CSRGraph {
       other.out_neighbors_ = nullptr;
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
+      other.flags_ = nullptr;
+    other.offsets_ = nullptr;
   }
 
   ~CSRGraph() {
@@ -164,6 +183,9 @@ class CSRGraph {
       other.out_neighbors_ = nullptr;
       other.in_index_ = nullptr;
       other.in_neighbors_ = nullptr;
+      other.flags_ = nullptr;
+      other.offsets_ = nullptr;
+
     }
     return *this;
   }
@@ -240,9 +262,96 @@ class CSRGraph {
     return offsets;
   }
 
+  void SetUpOffsets(bool in_graph = false)  {
+      offsets_ = new SGOffset[num_nodes_+1];
+      for (NodeID_ n=0; n < num_nodes_+1; n++)
+        if (in_graph)
+          offsets_[n] = in_index_[n] - in_index_[0];
+        else
+          offsets_[n] = out_index_[n] - out_index_[0];
+    }
+
   Range<NodeID_> vertices() const {
     return Range<NodeID_>(num_nodes());
   }
+
+  SegmentedGraph<DestID_, NodeID_>* getSegmentedGraph(std::string label, int id) {
+    return label_to_segment[label]->getSegmentedGraph(id);
+      
+  }
+
+  int getNumSegments(std::string label) {
+    return label_to_segment[label]->numSegments;      
+  }
+  
+  void buildPullSegmentedGraphs(std::string label, int numSegments, bool numa_aware=false, std::string path="") {
+    auto graphSegments = new GraphSegments<DestID_,NodeID_>(numSegments, numa_aware);
+    label_to_segment[label] = graphSegments;
+
+#ifdef LOADSEG
+    cout << "loading segmented graph from " << path << endl;
+#pragma omp parallel for num_threads(numSegments)
+    for (int i = 0; i < numSegments; i++) {
+      FILE *in;
+      in = fopen((path + "/" + std::to_string(i)).c_str(), "r");
+      auto sg = graphSegments->getSegmentedGraph(i);
+      fread((void *) &sg->numVertices, sizeof(sg->numVertices), 1, in);
+      fread((void *) &sg->numEdges, sizeof(sg->numEdges), 1, in);
+      sg->allocate(i);
+      fread((void *) sg->graphId, sizeof(*sg->graphId), sg->numVertices, in);
+      fread((void *) sg->edgeArray, sizeof(*sg->edgeArray), sg->numEdges, in);
+      fread((void *) sg->vertexArray, sizeof(*sg->vertexArray), sg->numVertices + 1, in);
+      fclose(in);
+    }
+    return;
+#endif
+    int segmentRange = (num_nodes() + numSegments - 1) / numSegments;
+    //Go through the original graph and count the number of target vertices and edges for each segment
+    for (auto d : vertices()){
+      for (auto s : in_neigh(d)){
+	int segment_id;
+	if (std::is_same<DestID_, NodeWeight<>>::value)
+	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
+	else
+	  segment_id = s/segmentRange;
+	graphSegments->getSegmentedGraph(segment_id)->countEdge(d);
+      }
+    }
+
+    //Allocate each segment
+    graphSegments->allocate();
+
+    //Add the edges for each segment
+    for (auto d : vertices()){
+      for (auto s : in_neigh(d)){
+	int segment_id;
+	if (std::is_same<DestID_, NodeWeight<>>::value)
+	  segment_id = static_cast<NodeWeight<>>(s).v/segmentRange;
+	else
+	  segment_id = s/segmentRange;
+	graphSegments->getSegmentedGraph(segment_id)->addEdge(d, s);
+      }
+    }
+
+#ifdef STORESEG
+    cout << "output serialized graph segments to " << path << endl;
+#pragma omp parallel for num_threads(numSegments)
+    for(int i = 0; i < numSegments; i++) {
+      FILE *out = fopen((path + "/" + std::to_string(i)).c_str(), "w");
+      auto sg = graphSegments->getSegmentedGraph(i);
+      fwrite((void *) &sg->numVertices, sizeof(sg->numVertices), 1, out);
+      fwrite((void *) &sg->numEdges, sizeof(sg->numEdges), 1, out);
+      fwrite((void *) sg->graphId, sizeof(*sg->graphId), sg->numVertices, out);
+      fwrite((void *) sg->edgeArray, sizeof(*sg->edgeArray), sg->numEdges, out);
+      fwrite((void *) sg->vertexArray, sizeof(*sg->vertexArray), sg->numVertices + 1, out);
+      fclose(out);
+    }
+#endif
+  }
+ 
+  //useful for deduplication
+  int* flags_;
+    SGOffset * offsets_;
 
  private:
   bool directed_;
@@ -252,6 +361,7 @@ class CSRGraph {
   DestID_*  out_neighbors_;
   DestID_** in_index_;
   DestID_*  in_neighbors_;
+  std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
 };
 
 #endif  // GRAPH_H_

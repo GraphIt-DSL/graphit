@@ -110,7 +110,26 @@ class CLBase {
   bool uniform() const { return uniform_; }
 };
 
+class CLAppVerifier : public CLBase {
+    int64_t start_vertex_ = -1;
+    std::string verifier_input_results_;
+public:
+    CLAppVerifier(int argc, char** argv, std::string name) : CLBase(argc, argv, name) {
+        get_args_ += "t:r:";
+        AddHelpLine('r', "node", "start from node r", "rand");
+    }
 
+    void HandleArg(signed char opt, char* opt_arg) override {
+        switch (opt) {
+            case 'r': start_vertex_ = atol(opt_arg);          break;
+            case 't': verifier_input_results_ = opt_arg;          break;
+            default: CLBase::HandleArg(opt, opt_arg);
+        }
+    }
+
+    int64_t start_vertex() const { return start_vertex_; }
+    std::string verifier_input_results() const {return verifier_input_results_;};
+};
 
 class CLApp : public CLBase {
   bool do_analysis_ = false;

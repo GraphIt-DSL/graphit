@@ -134,8 +134,17 @@ namespace graphit {
         }
 
         void FIRVisitor::visit(WhileStmt::Ptr stmt) {
+
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+
             stmt->cond->accept(this);
             stmt->body->accept(this);
+
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void FIRVisitor::visit(DoWhileStmt::Ptr stmt) {
@@ -160,9 +169,28 @@ namespace graphit {
         }
 
         void FIRVisitor::visit(ForStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+
             stmt->loopVar->accept(this);
             stmt->domain->accept(this);
             stmt->body->accept(this);
+
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+
+        }
+
+        void FIRVisitor::visit(NameNode::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->body->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void FIRVisitor::visit(PrintStmt::Ptr stmt) {
@@ -171,15 +199,41 @@ namespace graphit {
             }
         }
 
+
         void FIRVisitor::visit(ExprStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void FIRVisitor::visit(AssignStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
             for (auto lhs : stmt->lhs) {
                 lhs->accept(this);
             }
             stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
+        void FIRVisitor::visit(ReduceStmt::Ptr stmt) {
+            if(stmt->stmt_label != ""){
+                label_scope_.scope(stmt->stmt_label);
+            }
+            for (auto lhs : stmt->lhs) {
+                lhs->accept(this);
+            }
+            stmt->expr->accept(this);
+            if(stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void FIRVisitor::visit(ExprParam::Ptr param) {
@@ -373,6 +427,18 @@ namespace graphit {
 
         }
 
+        void FIRVisitor::visit(std::shared_ptr<WhereExpr> expr) {
+            expr->input_func->accept(this);
+            expr->target->accept(this);
 
+        }
+
+        void FIRVisitor::visit(std::shared_ptr<FromExpr> expr) {
+            expr->input_func->accept(this);
+        }
+
+        void FIRVisitor::visit(std::shared_ptr<ToExpr> expr) {
+            expr->input_func->accept(this);
+        }
     }
 }

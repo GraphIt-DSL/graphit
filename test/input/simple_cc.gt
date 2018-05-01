@@ -1,0 +1,44 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+%const parent : vector{Vertex}(int) = -1;
+% const parent : vector{Vertex}(Vertex) = -1;
+const IDs : vector{Vertex}(int) = 1;
+
+% this is a hack, manually returning boolean variables. should use applyModified
+func updateEdge(src : Vertex, dst : Vertex) -> output : bool
+    % IDs[dst] = min(IDs[src], IDs[dst]);
+     if IDs[src] < IDs[dst]
+          IDs[dst] = IDs[src];
+	  output = true;
+    else
+        output = false;
+    end
+end
+
+func init(v : Vertex)
+     IDs[v] = v;
+end
+
+func main()
+
+    startTimer();
+    var n : int = edges.getVertices();
+
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+
+    vertices.apply(init);
+
+    while (frontier.getVertexSetSize() != 0)
+        frontier = edges.from(frontier).apply(updateEdge);
+    end
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end

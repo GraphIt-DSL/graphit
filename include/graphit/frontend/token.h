@@ -41,6 +41,7 @@ namespace graphit {
             FUNC,
             INOUT,
             APPLY,
+            APPLYMODIFIED,
             MAP,
             TO,
             WITH,
@@ -92,10 +93,20 @@ namespace graphit {
             TRUE,
             FALSE,
 
+            DOUBLE,
             VERTEX_SET,
             EDGE_SET,
-
-            LOAD
+            WHERE,
+            LOAD,
+            FROM,
+            BREAK,
+            NUMBER_SIGN,
+            MODIFIED,
+            PLUS_REDUCE,
+            MIN_REDUCE,
+            MAX_REDUCE,
+            DST_FILTER,
+            SRC_FILTER
         };
 
         Type        type;

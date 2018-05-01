@@ -4,7 +4,11 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load("../test/graphs/test.el");
 const vertices : vertexset{Vertex} = edges.getVertices();
 const vector_a : vector{Vertex}(float) = 1.0;
+
 func main()
-    var sum : int = vector_a.sum();
+    var sum : int = 0;
+    for i in 0:edges.getVertices()
+        sum += vector_a[i];
+    end
     print sum;
 end

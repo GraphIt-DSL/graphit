@@ -126,6 +126,9 @@ namespace graphit {
                 case ScalarType::Type::FLOAT:
                     oss << "float";
                     break;
+                case ScalarType::Type::DOUBLE:
+                    oss << "double";
+                    break;
                 case ScalarType::Type::BOOL:
                     oss << "bool";
                     break;
@@ -156,9 +159,11 @@ namespace graphit {
 
             oss << "]";
 
-            oss << "{";
-            type->element->accept(this);
-            oss << "}";
+            if (type->element != nullptr){
+                oss << "{";
+                type->element->accept(this);
+                oss << "}";
+            }
 
             oss << "(";
             type->blockType->accept(this);
@@ -306,6 +311,8 @@ namespace graphit {
 
         void FIRPrinter::visit(WhileStmt::Ptr stmt) {
             printIndent();
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             oss << "while ";
             stmt->cond->accept(this);
             oss << std::endl;
@@ -368,6 +375,10 @@ namespace graphit {
 
         void FIRPrinter::visit(ForStmt::Ptr stmt) {
             printIndent();
+
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
             oss << "for ";
             stmt->loopVar->accept(this);
             oss << " in ";
@@ -384,6 +395,10 @@ namespace graphit {
 
         void FIRPrinter::visit(PrintStmt::Ptr stmt) {
             printIndent();
+
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
             oss << (stmt->printNewline ? "println " : "print ");
 
             bool printDelimiter = false;
@@ -399,15 +414,26 @@ namespace graphit {
             oss << ";";
         }
 
+        void FIRPrinter::visit(BreakStmt::Ptr stmt) {
+            printIndent();
+            oss << " break;";
+        }
+
         void FIRPrinter::visit(ExprStmt::Ptr stmt) {
             printIndent();
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+            if (stmt->stmt_label != "") {
+                oss << stmt->stmt_label << ": ";
+            }
             stmt->expr->accept(this);
             oss << ";";
         }
 
         void FIRPrinter::visit(AssignStmt::Ptr stmt) {
             printIndent();
-
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
             bool printDelimiter = false;
             for (auto lhs : stmt->lhs) {
                 if (printDelimiter) {
@@ -419,6 +445,35 @@ namespace graphit {
             }
 
             oss << " = ";
+            stmt->expr->accept(this);
+            oss << ";";
+        }
+
+        void FIRPrinter::visit(ReduceStmt::Ptr stmt) {
+            printIndent();
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+            bool printDelimiter = false;
+            for (auto lhs : stmt->lhs) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+
+                lhs->accept(this);
+                printDelimiter = true;
+            }
+
+            switch (stmt->reduction_op) {
+                case ReduceStmt::ReductionOp::SUM:
+                    oss << " += ";
+                    break;
+                case ReduceStmt::ReductionOp::MAX:
+                    oss << " max= ";
+                    break;
+                case ReduceStmt::ReductionOp::MIN:
+                    oss << " min= ";
+                    break;
+            }
             stmt->expr->accept(this);
             oss << ";";
         }
@@ -622,6 +677,7 @@ namespace graphit {
         void FIRPrinter::visit(IntLiteral::Ptr lit) {
             oss << lit->val;
         }
+
         void FIRPrinter::visit(StringLiteral::Ptr lit) {
             oss << lit->val;
         }
@@ -825,7 +881,7 @@ namespace graphit {
             oss << "alloc vertexset {";
             expr->elementType->accept(this);
             oss << "}(";
-            if (expr->numElements != nullptr){
+            if (expr->numElements != nullptr) {
                 expr->numElements->accept(this);
             }
             oss << ")";
@@ -835,7 +891,7 @@ namespace graphit {
             expr->target->accept(this);
             oss << ".";
             expr->method_name->accept(this);
-            oss  << "(";
+            oss << "(";
             bool printDelimiter = false;
             for (auto arg : expr->args) {
                 if (printDelimiter) {
@@ -849,16 +905,49 @@ namespace graphit {
 
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
-            oss << ".apply(";
+
+            oss << ".APPLY(";
             expr->input_function->accept(this);
-            oss <<")";
+            oss << ")";
+
+            if (expr->from_expr) {
+                oss << " FROM: ";
+                expr->from_expr->accept(this);
+                oss << " ";
+            }
+
+            if (expr->to_expr) {
+                oss << " TO: ";
+                expr->to_expr->accept(this);
+                oss << " ";
+            }
+
+        }
+
+        void FIRPrinter::visit(WhereExpr::Ptr expr) {
+            expr->target->accept(this);
+            oss << ".WHERE(";
+            expr->input_func->accept(this);
+            oss << ")";
 
         }
 
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
             oss << "edgeset_load (";
             expr->file_name->accept(this);
-            oss << ") " << std::endl;
+            oss << ") ";
+        }
+
+        void FIRPrinter::visit(NameNode::Ptr name_node) {
+            printIndent();
+
+            if (name_node->stmt_label != "")
+                oss << " # " << name_node->stmt_label << " # { " << std::endl;
+            indent();
+            name_node->body->accept(this);
+            dedent();
+            printIndent();
+            oss << "} " << std::endl;
         }
 
 

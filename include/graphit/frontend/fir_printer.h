@@ -51,8 +51,14 @@ namespace graphit {
             virtual void visit(RangeDomain::Ptr);
             virtual void visit(ForStmt::Ptr);
             virtual void visit(PrintStmt::Ptr);
+
+            virtual void visit(BreakStmt::Ptr);
+
             virtual void visit(ExprStmt::Ptr);
             virtual void visit(AssignStmt::Ptr);
+            virtual void visit(ReduceStmt::Ptr);
+
+
             virtual void visit(Slice::Ptr);
             virtual void visit(ExprParam::Ptr);
             virtual void visit(MapExpr::Ptr);
@@ -91,10 +97,12 @@ namespace graphit {
             virtual void visit(VertexSetAllocExpr::Ptr);
             virtual void visit(MethodCallExpr::Ptr);
             virtual void visit(ApplyExpr::Ptr);
+            virtual void visit(WhereExpr::Ptr);
 
             virtual void visit(EdgeSetLoadExpr::Ptr);
             virtual void visit(StringLiteral::Ptr);
 
+            virtual void visit(NameNode::Ptr);
 
             void indent() { ++indentLevel; }
             void dedent() { --indentLevel; }

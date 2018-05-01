@@ -24,6 +24,13 @@ namespace graphit {
             ~MIREmitter()  {}
 
             void emitIR(fir::Program::Ptr program) {
+
+                //add symbol argv for command line arguments
+                //the type is a bit hacky right now, since we don't really use it,
+                //the type should be a dynamic vector of string literal
+                mir::Var argv = mir::Var("argv", std::make_shared<mir::VectorType>());
+                ctx->addSymbol(argv);
+
                 program->accept(this);
             }
 
@@ -31,9 +38,22 @@ namespace graphit {
             virtual void visit(fir::ConstDecl::Ptr);
             virtual void visit(fir::VarDecl::Ptr);
 
+            virtual void visit(fir::NameNode::Ptr);
+
+            virtual void visit(fir::ForStmt::Ptr);
+            virtual void visit(fir::RangeDomain::Ptr);
+            virtual void visit(fir::WhileStmt::Ptr);
+            virtual void visit(fir::IfStmt::Ptr);
+
+
             virtual void visit(fir::ExprStmt::Ptr);
             virtual void visit(fir::AssignStmt::Ptr);
+            virtual void visit(fir::ReduceStmt::Ptr);
+
+
+
             virtual void visit(fir::PrintStmt::Ptr);
+            virtual void visit(fir::BreakStmt::Ptr);
 
             virtual void visit(fir::StmtBlock::Ptr);
             virtual void visit(fir::IdentDecl::Ptr);
@@ -46,13 +66,26 @@ namespace graphit {
 
             virtual void visit(fir::CallExpr::Ptr);
             virtual void visit(fir::MethodCallExpr::Ptr);
+
             virtual void visit(fir::ApplyExpr::Ptr);
+            //virtual void visit(fir::FromExpr::Ptr);
+            //virtual void visit(fir::ToExpr::Ptr);
+
+            virtual void visit(fir::WhereExpr::Ptr);
 
             virtual void visit(fir::EdgeSetLoadExpr::Ptr);
             virtual void visit(fir::VarExpr::Ptr);
+
+            virtual void visit(fir::NegExpr::Ptr);
+            virtual void visit(fir::EqExpr::Ptr);
+
+
+            virtual void visit(fir::MulExpr::Ptr);
+            virtual void visit(fir::DivExpr::Ptr);
             virtual void visit(fir::AddExpr::Ptr);
             virtual void visit(fir::SubExpr::Ptr);
 
+            virtual void visit(fir::BoolLiteral::Ptr);
             virtual void visit(fir::StringLiteral::Ptr);
             virtual void visit(fir::FloatLiteral::Ptr);
             virtual void visit(fir::IntLiteral::Ptr);
@@ -70,6 +103,7 @@ namespace graphit {
             mir::Stmt::Ptr retStmt;
             mir::Type::Ptr retType;
             mir::Var  retVar;
+            mir::ForDomain::Ptr retForDomain;
 
         private:
             //helper methods for the visitor pattern to return MIR nodes
@@ -77,9 +111,11 @@ namespace graphit {
             mir::Stmt::Ptr     emitStmt(fir::Stmt::Ptr);
             mir::Type::Ptr     emitType(fir::Type::Ptr);
             mir::Var           emitVar (fir::IdentDecl::Ptr);
+            mir::ForDomain::Ptr     emitDomain(fir::ForDomain::Ptr ptr);
 
             void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
             void addElementType(mir::ElementType::Ptr);
+
         };
 
 }

@@ -7,6 +7,7 @@
 
 
 #include <memory>
+#include <graphit/midend/label_scope.h>
 
 // Visitor pattern abstract class
 namespace graphit {
@@ -49,6 +50,8 @@ namespace graphit {
         struct RangeDomain;
         struct ForStmt;
         struct PrintStmt;
+        struct NameNode;
+
         struct ExprStmt;
         struct AssignStmt;
         struct Slice;
@@ -101,6 +104,12 @@ namespace graphit {
 
         struct MethodCallExpr;
         struct ApplyExpr;
+        struct WhereExpr;
+        struct FromExpr;
+        struct ToExpr;
+        struct BreakStmt;
+
+        struct ReduceStmt;
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -173,11 +182,20 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ForStmt>);
 
+            virtual void visit(std::shared_ptr<NameNode>);
+
+
             virtual void visit(std::shared_ptr<PrintStmt>);
+
+            virtual void visit(std::shared_ptr<BreakStmt>) {}
+
 
             virtual void visit(std::shared_ptr<ExprStmt>);
 
             virtual void visit(std::shared_ptr<AssignStmt>);
+
+            virtual void visit(std::shared_ptr<ReduceStmt>);
+
 
             virtual void visit(std::shared_ptr<Slice> op) {}
 
@@ -265,6 +283,12 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<MethodCallExpr>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
+            virtual void visit(std::shared_ptr<WhereExpr>);
+            virtual void visit(std::shared_ptr<FromExpr>);
+            virtual void visit(std::shared_ptr<ToExpr>);
+
+        protected:
+            LabelScope label_scope_;
 
 
         private:
@@ -273,6 +297,9 @@ namespace graphit {
             void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
 
             void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+
+
         };
 
     }

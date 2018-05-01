@@ -30,15 +30,11 @@ namespace graphit {
             }
 
             void scope() {
-                //symbol_table.scope();
-                statements_.push_front(std::vector<mir::Stmt::Ptr>());
-                //builder.setInsertionPoint(&statements.front());
+                symbol_table_.scope();
             }
 
             void unscope() {
-                //symbol_table.unscope();
-                statements_.pop_front();
-                //builder.setInsertionPoint(statements.size() > 0 ? &statements.front() : nullptr);
+                symbol_table_.unscope();
             }
 
             void addFunction(mir::FuncDecl::Ptr f) {
@@ -46,18 +42,21 @@ namespace graphit {
                 functions_list_.push_back(f);
             }
 
+            void addFunctionFront(mir::FuncDecl::Ptr f) {
+                functions_map_[f->name] = f;
+                functions_list_.insert(functions_list_.begin(), f);
+            }
 
-
-            bool containsFunction(const std::string &name) const {
+            bool isFunction(const std::string &name) const {
                 return functions_map_.find(name) != functions_map_.end();
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
-                assert(containsFunction(name));
+                assert(isFunction(name));
                 return functions_map_[name];
             }
 
-                void addSymbol(mir::Var var) {
+            void addSymbol(mir::Var var) {
                 symbol_table_.insert(var.getName(), var);
             }
 
@@ -78,7 +77,6 @@ namespace graphit {
             }
 
 
-            //void setProgram(mir::Stmt::Ptr program){this->mir_program = program};
             void addConstant(mir::VarDecl::Ptr var_decl){
                 constants_.push_back(var_decl);
             }
@@ -87,12 +85,12 @@ namespace graphit {
                 return constants_;
             }
 
-            void addStatement(mir::Stmt::Ptr stmt) {
-                statements_.front().push_back(stmt);
+            void addLoweredConstant(mir::VarDecl::Ptr var_decl){
+                lowered_constants_.push_back(var_decl);
             }
 
-            std::vector<mir::Stmt::Ptr> * getStatements() {
-                return &statements_.front();
+            std::vector<mir::VarDecl::Ptr> getLoweredConstants(){
+                return lowered_constants_;
             }
 
 
@@ -106,41 +104,61 @@ namespace graphit {
             }
 
             void addEdgeSet(mir::VarDecl::Ptr edgeset){
-                edge_sets_.push_back(edgeset);
+                const_edge_sets_.push_back(edgeset);
             }
 
             std::vector<mir::VarDecl::Ptr> getEdgeSets(){
-                return edge_sets_;
+                return const_edge_sets_;
             }
 
-            bool isVertexSet(std::string var_name){
-                for (auto vertexset : vertex_sets_) {
+            mir::VarDecl::Ptr getConstEdgeSetByName(std::string var_name){
+
+                for (auto edgeset : const_edge_sets_) {
+                    if (edgeset->name == var_name)
+                        return  edgeset;
+                }
+                return nullptr;
+            }
+
+            bool isConstVertexSet(std::string var_name){
+                for (auto vertexset : const_vertex_sets_) {
                     if (vertexset->name == var_name) return  true;
                 }
                 return false;
             }
 
-            void addVertexSet(mir::VarDecl::Ptr vertexset){
-                vertex_sets_.push_back(vertexset);
+            void addConstVertexSet(mir::VarDecl::Ptr vertexset){
+                const_vertex_sets_.push_back(vertexset);
+                // indicate theat this element type is a vertex element type
+                mir::VertexSetType::Ptr vertex_set_type = mir::to<mir::VertexSetType>(vertexset->type);
+                addVertexElementType(vertex_set_type->element->ident);
             }
 
-            std::vector<mir::VarDecl::Ptr> getVertexSets(){
-                return vertex_sets_;
+            std::vector<mir::VarDecl::Ptr> getConstVertexSets(){
+                return const_vertex_sets_;
             }
 
             bool isEdgeSet(std::string var_name){
-                for (auto edgeset : edge_sets_) {
+                for (auto edgeset : const_edge_sets_) {
                     if (edgeset->name == var_name) return  true;
                 }
                 return false;
             }
 
-            void updateVectorItemType(std::string vector_name, mir::ScalarType::Ptr item_type){
+            void updateVectorItemType(std::string vector_name, mir::Type::Ptr item_type){
                 vector_item_type_map_[vector_name] = item_type;
             }
 
-            mir::ScalarType::Ptr getVectorItemType(std::string vector_name){
+            mir::Type::Ptr getVectorItemType(std::string vector_name){
                 return vector_item_type_map_[vector_name];
+            }
+
+            void addEdgesetType(std::string edgeset_name, mir::EdgeSetType::Ptr edgeset_type){
+                edgeset_element_type_map_[edgeset_name] = edgeset_type;
+            }
+
+            mir::EdgeSetType::Ptr getEdgesetType(std::string edgeset_name){
+                return edgeset_element_type_map_[edgeset_name];
             }
 
             bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
@@ -195,31 +213,104 @@ namespace graphit {
                 }
             }
 
+            std::string getUniqueNameCounterString(){
+                return std::to_string(unique_variable_name_counter_++);
+            }
+
+            void insertFuncDeclFront(mir::FuncDecl::Ptr func_decl){
+                functions_list_.insert(functions_list_.begin(), func_decl);
+                functions_map_[func_decl->name] = func_decl;
+            }
+
+            // Keeps track of element types that are vertex element types
+            void addVertexElementType(std::string element_type){
+                vertex_element_type_list_.push_back(element_type);
+            }
+
+            // Check if an element type is a vertex element type
+            // Useful for generating system vector lower operations
+            bool isVertexElementType(std::string element_type){
+                for (auto vertex_element_type : vertex_element_type_list_) {
+                    if (vertex_element_type == element_type) return  true;
+                }
+                return false;
+            }
+
+            void insertNewConstVectorDeclEnd(mir::VarDecl::Ptr mir_var_decl){
+                mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(mir_var_decl->type);
+                if (type->element_type != nullptr) {
+                    // this is a field / system vector associated with an ElementType
+                    updateVectorItemType(mir_var_decl->name, type->vector_element_type);
+                    if (!updateElementProperties(type->element_type, mir_var_decl))
+                        std::cout << "error in adding constant" << std::endl;
+                }
+            }
+
+            mir::VarDecl::Ptr getGlobalConstVertexSet(){
+                return const_vertex_sets_[0];
+            }
+
+            mir::FuncDecl::Ptr getMainFuncDecl(){
+                for (auto & func_decl : functions_list_){
+                    if (func_decl->name == "main")
+                        return func_decl;
+                }
+                std::cout << "No main function declared" << std::endl;
+                return nullptr;
+            }
         //private:
 
-            //mir::Program::Ptr mir_program;
-
-            //maps a vector reference to its physical layout in the current scope
-            util::ScopedMap<std::string, std::string> layout_map_;
-            std::vector<mir::VarDecl::Ptr> vertex_sets_;
-            std::vector<mir::VarDecl::Ptr> edge_sets_;
-            //maps a vector to the Element it is associated with;
-            std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
-            // maps a vector reference to item type
-            std::map<std::string, mir::ScalarType::Ptr> vector_item_type_map_;
             // maps element type to an input file that reads the set from
+            // for example, reading an edge set
             std::map<std::string, mir::Expr::Ptr> input_filename_map_;
             // maps element type to the number of elements (initially)
             std::map<std::string, mir::Expr::Ptr> num_elements_map_;
             // maps element type to the fields associated with the type
             std::map<std::string, std::vector<mir::VarDecl::Ptr>*> properties_map_;
+
+            // const vertex_sets and edge_sets
+            // These are global sets that are loaded from outside sources and cannot be modified
+            std::vector<mir::VarDecl::Ptr> const_vertex_sets_;
+            std::vector<mir::VarDecl::Ptr> const_edge_sets_;
+
+            //maps a vector to the Element it is associated with;
+            std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
+            // maps a vector reference to item type
+            std::map<std::string, mir::Type::Ptr> vector_item_type_map_;
+
+            //maps a edgeset name to its edgeset type
+            std::map<std::string, mir::EdgeSetType::Ptr> edgeset_element_type_map_;
+
+            std::vector<std::string> vertex_element_type_list_;
+            std::vector<std::string> edge_element_type_list_;
+
+
+            // constants declared in the FIR, before lowering
             std::vector<mir::VarDecl::Ptr> constants_;
-            std::list<std::vector<mir::Stmt::Ptr>> statements_;
+            // struct declarations
+            std::map<std::string, mir::StructTypeDecl::Ptr> struct_type_decls;
+            // constants after the physical data layout lower pass
+            std::vector<mir::VarDecl::Ptr> lowered_constants_;
+
             std::map<std::string, mir::FuncDecl::Ptr>  functions_map_;
             //need to store the ordering of function declarations
             std::vector<mir::FuncDecl::Ptr> functions_list_;
+
+            // symbol table
             util::ScopedMap<std::string, mir::Var> symbol_table_;
 
+            int unique_variable_name_counter_ = 0;
+
+            // these vectors are used in code gen for main functions (there's a condition in func_decl code gen)
+            std::vector<mir::Stmt::Ptr> edgeset_alloc_stmts;
+            std::vector<mir::Stmt::Ptr> field_vector_alloc_stmts;
+            std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
+
+            // used by cache/numa optimization
+	        std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
+
+            // used by numa optimization
+            std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
         };
 
 }

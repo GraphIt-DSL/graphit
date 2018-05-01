@@ -8,5 +8,9 @@ end
 
 func main()
     vertices.apply(addone);
-    print vector_a.sum();
+    var sum : float = 0;
+    for i in 0:5
+        sum += vector_a[i];
+    end
+    print sum;
 end

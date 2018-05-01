@@ -1,0 +1,7 @@
+/Debug/
+.DS_Store
+.cproject
+.project
+.settings/
+.idea/
+build/
