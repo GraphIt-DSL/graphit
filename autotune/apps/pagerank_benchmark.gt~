@@ -10,7 +10,7 @@ const damp : double = 0.85;
 const beta_score : double = (1.0 - damp) / vertices.size();
 
 func updateEdge(src : Vertex, dst : Vertex)
-    new_rank[dst] = new_rank[dst] + old_rank[src] / out_degree[src];
+    new_rank[dst] +=  old_rank[src] / out_degree[src];
 end
 
 func updateVertex(v : Vertex)

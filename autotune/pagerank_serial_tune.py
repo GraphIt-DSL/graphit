@@ -10,7 +10,7 @@ from opentuner import EnumParameter
 from opentuner import IntegerParameter
 from opentuner import MeasurementInterface
 from opentuner import Result
-
+from sys import exit
 
 
 
@@ -26,17 +26,24 @@ class GraphItPageRankTuner(MeasurementInterface):
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull']))
-        #manipulator.add_parameter(IntegerParameter('numSSG', 0, 10))
+        manipulator.add_parameter(IntegerParameter('numSSG', 1, 15))
         return manipulator
 
     def write_cfg_to_schedule(self, cfg):
         #write into a schedule file the configuration
+        direction = cfg['direction']
+        numSSG = cfg['numSSG']
+
         f = open('schedules/default_schedule.gt','r')
         default_schedule_str = f.read()
         f.close()
+
         new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
+        if direction == "DensePull" or direction == "SparsePush-DensePull":
+            new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
         print (new_schedule)
-        self.new_schedule_file_name = 'schedule_' + str(id) 
+
+        self.new_schedule_file_name = 'schedule_0' 
         print (self.new_schedule_file_name)
         f1 = open (self.new_schedule_file_name, 'w')
         f1.write(new_schedule)
@@ -51,7 +58,11 @@ class GraphItPageRankTuner(MeasurementInterface):
         compile_cpp_cmd = 'g++ -std=c++11 -I ../src/runtime_lib/ -O3  test.cpp -o test'
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
-        self.call_program(compile_graphit_cmd)
+        try:
+            self.call_program(compile_graphit_cmd)
+        except:
+            print "fail to compile .gt file"
+            exit()
         return self.call_program(compile_cpp_cmd)
 
     def parse_running_time(self, log_file_name='test.out'):
@@ -80,11 +91,12 @@ class GraphItPageRankTuner(MeasurementInterface):
         """
         assert compile_result['returncode'] == 0
         try:    
-            #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
-            run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
+            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
+            #run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
+            self.call_program('rm test.cpp')
 
         val = self.parse_running_time();
         print val
@@ -100,9 +112,10 @@ class GraphItPageRankTuner(MeasurementInterface):
 
         # converts the configuration into a schedule
         self.write_cfg_to_schedule(cfg)
-
+        
         # this pases in the id 0 for the configuration
         compile_result = self.compile(cfg, 0)
+        print "compile_result: " + str(compile_result)
         return self.run_precompiled(desired_result, input, limit, compile_result, 0)
 
 
