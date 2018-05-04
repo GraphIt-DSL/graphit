@@ -36,7 +36,7 @@ func reset(v: Vertex)
 end
 
 func main()
-    for trail in 0:10
+    for trail in 0:5
         vertices.apply(reset);
     	startTimer();
     	for i in 0:20
