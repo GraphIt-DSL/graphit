@@ -83,7 +83,7 @@ class GraphItPageRankTuner(MeasurementInterface):
                     min_time = time
             i = i+1;
 
-        return time
+        return min_time
 
     def run_precompiled(self, desired_result, input, limit, compile_result, id):
         """                                                                          

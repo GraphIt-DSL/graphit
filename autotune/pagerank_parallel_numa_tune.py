@@ -25,10 +25,38 @@ class GraphItPageRankTuner(MeasurementInterface):
         manipulator = ConfigurationManipulator()
         manipulator.add_parameter(
             EnumParameter('direction', 
-                          ['SparsePush','DensePull', 'SparsePush-DensePull']))
+                          ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
         manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
         manipulator.add_parameter(IntegerParameter('numSSG', 1, 15))
         return manipulator
+
+    #configures parallelization commands
+    def write_par_schedule(self, use_evp, new_schedule, direction):
+        if use_evp == False:
+            new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
+        else:
+            #use_evp is True
+            if direction == "DensePull": 
+                # edge-aware-dynamic-vertex-parallel is only supported for the DensePull direction
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"edge-aware-dynamic-vertex-parallel\",1024, \"DensePull\");"
+
+            elif direction == "SparsePush-DensePull":
+                # For now, only the DensePull direction uses edge-aware-vertex-parallel
+                # the SparsePush should still just use the vertex-parallel methodx
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"edge-aware-dynamic-vertex-parallel\",1024,  \"DensePull\");"
+
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\",1024,  \"SparsePush\");"
+
+            else:
+                #use_evp for SparsePush, DensePush-SparsePush should not make a difference
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
+        return new_schedule
+
+    def write_numSSG_schedule(self, numSSG, new_schedule, direction):
+        # configuring cahce optimization
+        if direction == "DensePull" or direction == "SparsePush-DensePull":
+            new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
+        return new_schedule
 
     def write_cfg_to_schedule(self, cfg):
         #write into a schedule file the configuration
@@ -44,16 +72,9 @@ class GraphItPageRankTuner(MeasurementInterface):
 
         new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
 
-        if use_evp == False:
-            new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"edge-aware-dynamic-vertex-parallel\", " +  ", \"DensePull\");"
-
-
-        if direction == "DensePull" or direction == "SparsePush-DensePull":
-            # currently cache optimization is only supported for the DensePull direction
-            new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
-            # edge-aware-dynamic-vertex-parallel is only supported for the DensePull direction
-            if use_evp:
-                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"edge-aware-dynamic-vertex-parallel\", " +  ", \"DensePull\");"
+        new_schedule = self.write_par_schedule(use_evp, new_schedule, direction)
+        new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
+        print (cfg)
         print (new_schedule)
 
         self.new_schedule_file_name = 'schedule_0' 
@@ -68,7 +89,8 @@ class GraphItPageRankTuner(MeasurementInterface):
         """
         #compile the schedule file along with the original algorithm file
         compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + self.new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
-        compile_cpp_cmd = 'g++ -std=c++11 -I ../src/runtime_lib/ -O3  test.cpp -o test'
+        #compile_cpp_cmd = 'g++ -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+        compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
         try:
@@ -96,7 +118,7 @@ class GraphItPageRankTuner(MeasurementInterface):
                     min_time = time
             i = i+1;
 
-        return time
+        return min_time
 
     def run_precompiled(self, desired_result, input, limit, compile_result, id):
         """                                                                          
@@ -104,15 +126,17 @@ class GraphItPageRankTuner(MeasurementInterface):
         """
         assert compile_result['returncode'] == 0
         try:    
-            run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
-            #run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
+            #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
+            # run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
+            run_result = self.call_program('./test /data/scratch/baghdadi/data3/twitter/twitter_gapbs.sg  > test.out')
+            print "run result: " + str(run_result)
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
-
         val = self.parse_running_time();
-        print val
+        self.call_program('rm test.out')
+        print "running time: " + str(val)
         return opentuner.resultsdb.models.Result(time=val)
         #return Result(time=run_result['time'])
 
