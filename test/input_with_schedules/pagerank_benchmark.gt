@@ -37,8 +37,8 @@ end
 
 func main()
     for trail in 0:10
-        vertices.apply(reset);
     	startTimer();
+        vertices.apply(reset);
     	for i in 0:20
     	    vertices.apply(computeContrib);
             #s1# edges.apply(updateEdge);

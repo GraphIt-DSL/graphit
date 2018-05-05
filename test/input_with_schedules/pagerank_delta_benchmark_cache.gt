@@ -41,11 +41,11 @@ func reset(v: Vertex)
 end
 
 func main()
+    var n : int = edges.getVertices();
     for trail in 0:10
-        var n : int = edges.getVertices();
+	startTimer();
     	var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
         vertices.apply(reset);
-	startTimer();
 
     	for i in 1:11
             #s1# edges.from(frontier).apply(updateEdge);
