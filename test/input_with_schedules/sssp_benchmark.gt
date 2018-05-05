@@ -15,9 +15,8 @@ end
 
 func main()
     for trail in 0:10
-        vertices.apply(reset);
-
         startTimer();
+        vertices.apply(reset);
         var n : int = edges.getVertices();
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
         frontier.addVertex(14); %add source vertex
