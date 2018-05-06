@@ -16,6 +16,7 @@ import argparse
 
 class GraphItPageRankTuner(MeasurementInterface):
     new_schedule_file_name = ""
+    use_NUMA = False
 
     def manipulator(self):
         """                                                                          
@@ -28,14 +29,16 @@ class GraphItPageRankTuner(MeasurementInterface):
                           ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
         manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
         manipulator.add_parameter(IntegerParameter('numSSG', 1, 15))
-        manipulator.add_parameter(EnumParameter('NUMA',['serial','tatic-parallel']))
+        manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
         return manipulator
 
     #configures parallelization commands
     def write_par_schedule(self, use_evp, new_schedule, direction):
-        if use_evp == False:
+        if use_evp == False or self.use_NUMA == True:
+            # if don't use edge-aware parallel (vertex-parallel)
+            # edge-parallel don't work with NUMA (use vertex-parallel when NUMA is enabled) 
             new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
-        else:   
+        elif use_evp == True and self.use_NUMA == False:   
             #use_evp is True
             if direction == "DensePull": 
                 # edge-aware-dynamic-vertex-parallel is only supported for the DensePull direction
@@ -51,6 +54,9 @@ class GraphItPageRankTuner(MeasurementInterface):
             else:
                 #use_evp for SparsePush, DensePush-SparsePush should not make a difference
                 new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
+        else:
+            print "Error in writing parallel schedule"
+            exit()
         return new_schedule
 
     def write_numSSG_schedule(self, numSSG, new_schedule, direction):
@@ -62,9 +68,9 @@ class GraphItPageRankTuner(MeasurementInterface):
             new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
         return new_schedule
 
-    def write_NUMA_schedule(self, use_numa, new_schedule, direction):
+    def write_NUMA_schedule(self,  new_schedule, direction):
         # configuring NUMA optimization for DensePull direction
-        if use_numa:
+        if self.use_NUMA:
             if direction == "DensePull" or direction == "SparsePush-DensePull":
                 new_schedule = new_schedule + "\n    program->configApplyNUMA(\"s1\", \"static-parallel\" , \"DensePull\");"
         return new_schedule
@@ -74,12 +80,9 @@ class GraphItPageRankTuner(MeasurementInterface):
         direction = cfg['direction']
         numSSG = cfg['numSSG']
         use_evp = False;
-        use_numa = False;
-
+        
         if cfg['parallelization'] == 'edge-aware-dynamic-vertex-parallel':
             use_evp = True;
-        if cfg['NUMA'] == 'static-parallel':
-            use_numa = True
 
         f = open('schedules/default_schedule.gt','r')
         default_schedule_str = f.read()
@@ -89,7 +92,7 @@ class GraphItPageRankTuner(MeasurementInterface):
 
         new_schedule = self.write_par_schedule(use_evp, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
-        new_schedule = self.write_NUMA_schedule(use_numa, new_schedule, direction)
+        new_schedule = self.write_NUMA_schedule(new_schedule, direction)
         print (cfg)
         print (new_schedule)
 
@@ -99,20 +102,16 @@ class GraphItPageRankTuner(MeasurementInterface):
         f1.write(new_schedule)
         f1.close()
 
-    def compile(self, cfg, id):
+    def compile(self, cfg,  id):
         """                                                                          
         Compile a given configuration in parallel                                    
         """
-
-        use_NUMA = False;
-        if cfg['NUMA'] == 'static-parallel':
-            use_NUMA = True
 
 
         #compile the schedule file along with the original algorithm file
         compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + self.new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
 
-        if not use_NUMA:
+        if not self.use_NUMA:
             #compile_cpp_cmd = 'g++ -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
             compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
@@ -152,15 +151,15 @@ class GraphItPageRankTuner(MeasurementInterface):
         """
 
         cfg = desired_result.configuration.data
-        use_NUMA = False;
-        if cfg['NUMA'] == 'static-parallel':
-            use_NUMA = True
+        
+        if compile_result['returncode'] != 0:
+            print str(compile_result)
 
         assert compile_result['returncode'] == 0
         try:    
             #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
             # run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
-            if not use_NUMA:
+            if not self.use_NUMA:
                 run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
             else:
                 run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')
@@ -184,12 +183,17 @@ class GraphItPageRankTuner(MeasurementInterface):
 
         cfg = desired_result.configuration.data
 
+        self.use_NUMA = False;
+        if cfg['NUMA'] == 'static-parallel':
+            if cfg['direction'] == 'DensePull' or cfg['direction'] == 'SparsePush-DensePull':
+                self.use_NUMA = True;
+
         # converts the configuration into a schedule
         self.write_cfg_to_schedule(cfg)
         
         # this pases in the id 0 for the configuration
         compile_result = self.compile(cfg, 0)
-        print "compile_result: " + str(compile_result)
+        # print "compile_result: " + str(compile_result)
         return self.run_precompiled(desired_result, input, limit, compile_result, 0)
 
 
