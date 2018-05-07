@@ -64,6 +64,7 @@ class GraphItPageRankTuner(MeasurementInterface):
             if cfg['parallelization'] == 'serial': 
                 new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"serial\");"
             else:
+                # if NUMA is used, then we only use dynamic-vertex-parallel as edge-aware-vertex-parallel do not support NUMA yet
                 new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
         elif use_evp == True and self.use_NUMA == False:   
             #use_evp is True
@@ -224,7 +225,8 @@ class GraphItPageRankTuner(MeasurementInterface):
         # only use NUMA when we are tuning parallel and NUMA schedules
         if self.enable_NUMA_tuning and self.enable_parallel_tuning and cfg['NUMA'] == 'static-parallel':
             if cfg['direction'] == 'DensePull' or cfg['direction'] == 'SparsePush-DensePull':
-                self.use_NUMA = True;
+                if int(cfg['numSSG']) > 1:
+                    self.use_NUMA = True;
 
         # converts the configuration into a schedule
         self.write_cfg_to_schedule(cfg)
