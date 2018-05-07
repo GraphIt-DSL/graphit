@@ -16,28 +16,55 @@ import argparse
 
 class GraphItPageRankTuner(MeasurementInterface):
     new_schedule_file_name = ""
+    # a flag for testing if NUMA-aware schedule is specified
     use_NUMA = False
+    
+    # this flag is for testing on machine without NUMA library support
+    # this would simply not tune NUMA-aware schedules
+    enable_NUMA_tuning = True
+    
+    # this would simply not tune parallelization related schedules 
+    # for machines without CILK or openmp support 
+    enable_parallel_tuning = True
 
     def manipulator(self):
         """                                                                          
         Define the search space by creating a                                        
         ConfigurationManipulator                                                     
         """
+  
+        if not self.args.enable_NUMA_tuning == 1:
+            self.enable_NUMA_tuning = False
+        if not self.args.enable_parallel_tuning == 1:
+            self.enable_parallel_tuning = False
+            
         manipulator = ConfigurationManipulator()
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
-        manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
+        if self.enable_parallel_tuning:
+            manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
+        else:
+            manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
+
         manipulator.add_parameter(IntegerParameter('numSSG', 1, 15))
-        manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
+        if self.enable_NUMA_tuning:
+            manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
         return manipulator
 
     #configures parallelization commands
-    def write_par_schedule(self, use_evp, new_schedule, direction):
+    def write_par_schedule(self, cfg, new_schedule, direction):
+        use_evp = False;
+        if cfg['parallelization'] == 'edge-aware-dynamic-vertex-parallel':
+            use_evp = True;
+
         if use_evp == False or self.use_NUMA == True:
             # if don't use edge-aware parallel (vertex-parallel)
             # edge-parallel don't work with NUMA (use vertex-parallel when NUMA is enabled) 
-            new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
+            if cfg['parallelization'] == 'serial': 
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"serial\");"
+            else:
+                new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
         elif use_evp == True and self.use_NUMA == False:   
             #use_evp is True
             if direction == "DensePull": 
@@ -79,10 +106,7 @@ class GraphItPageRankTuner(MeasurementInterface):
         #write into a schedule file the configuration
         direction = cfg['direction']
         numSSG = cfg['numSSG']
-        use_evp = False;
         
-        if cfg['parallelization'] == 'edge-aware-dynamic-vertex-parallel':
-            use_evp = True;
 
         f = open('schedules/default_schedule.gt','r')
         default_schedule_str = f.read()
@@ -90,7 +114,8 @@ class GraphItPageRankTuner(MeasurementInterface):
 
         new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
 
-        new_schedule = self.write_par_schedule(use_evp, new_schedule, direction)
+        
+        new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
         new_schedule = self.write_NUMA_schedule(new_schedule, direction)
         print (cfg)
@@ -112,11 +137,16 @@ class GraphItPageRankTuner(MeasurementInterface):
         compile_graphit_cmd = 'python graphitc.py -a apps/pagerank_benchmark.gt -f ' + self.new_schedule_file_name + ' -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp' 
 
         if not self.use_NUMA:
-            #compile_cpp_cmd = 'g++ -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
-            compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            if not self.enable_parallel_tuning:
+                # if parallel icpc compiler is not needed (only tuning serial schedules)
+                compile_cpp_cmd = 'g++ -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            else:
+                # if parallel icpc compiler is supported and needed
+                compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
             compile_cpp_cmd = 'icpc -std=c++11 -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
         try:
@@ -160,7 +190,12 @@ class GraphItPageRankTuner(MeasurementInterface):
             #run_result = self.call_program('./test ../test/graphs/socLive_gapbs.sg > test.out')
             # run_result = self.call_program('./test ../test/graphs/4.sg > test.out')
             if not self.use_NUMA:
-                run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
+                if not self.enable_parallel_tuning:
+                    # don't use numactl when running serial
+                    run_result = self.call_program('./test ' + self.args.graph +  '  > test.out')
+                else:
+                    # use numactl when running parallel
+                    run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
             else:
                 run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')
             print "run result: " + str(run_result)
@@ -184,7 +219,8 @@ class GraphItPageRankTuner(MeasurementInterface):
         cfg = desired_result.configuration.data
 
         self.use_NUMA = False;
-        if cfg['NUMA'] == 'static-parallel':
+        # only use NUMA when we are tuning parallel and NUMA schedules
+        if self.enable_NUMA_tuning and self.enable_parallel_tuning and cfg['NUMA'] == 'static-parallel':
             if cfg['direction'] == 'DensePull' or cfg['direction'] == 'SparsePush-DensePull':
                 self.use_NUMA = True;
 
@@ -208,5 +244,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(parents=opentuner.argparsers())
     parser.add_argument('--graph', type=str, default="../test/graphs/4.sg",
                     help='the graph to tune on')
+    parser.add_argument('--enable_NUMA_tuning', type=int, default=1, help='enable tuning NUMA-aware schedules. 1 for enable (default), 0 for disable')
+    parser.add_argument('--enable_parallel_tuning', type=int, default=1, help='enable tuning paralleliation schedules. 1 for enable (default), 0 for disable')
     args = parser.parse_args()
     GraphItPageRankTuner.main(args)
