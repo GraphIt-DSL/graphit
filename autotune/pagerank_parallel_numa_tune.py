@@ -47,7 +47,7 @@ class GraphItPageRankTuner(MeasurementInterface):
         else:
             manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
 
-        manipulator.add_parameter(IntegerParameter('numSSG', 1, 15))
+        manipulator.add_parameter(IntegerParameter('numSSG', 1, 20))
         if self.enable_NUMA_tuning:
             manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
         return manipulator
@@ -146,7 +146,7 @@ class GraphItPageRankTuner(MeasurementInterface):
                 compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
-            compile_cpp_cmd = 'icpc -std=c++11 -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            compile_cpp_cmd = 'icpc -std=c++11 -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
 
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
