@@ -162,17 +162,19 @@ class GraphItPageRankTuner(MeasurementInterface):
             if not self.use_NUMA:
                 run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
             else:
-                run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')
-            print "run result: " + str(run_result)
+                run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')            
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
+
         val = self.parse_running_time();
         self.call_program('rm test.out')
+        print "run result: " + str(run_result)
         print "running time: " + str(val)
         return opentuner.resultsdb.models.Result(time=val)
-        #return Result(time=run_result['time'])
+        
+
 
     def compile_and_run(self, desired_result, input, limit):
         """                                                                          
