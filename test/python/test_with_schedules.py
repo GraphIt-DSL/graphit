@@ -39,9 +39,11 @@ class TestGraphitCompiler(unittest.TestCase):
         if use_numa:
             cls.numa_flags = " -lnuma -DNUMA -qopenmp"
             cls.cpp_compiler = "icc"
+            cls.parallel_framework = "-DOPENMP"
         else:
             cls.numa_flags = ""
             cls.cpp_compiler = "g++"
+            cls.parallel_framework = "-DCILK"
 
 
     def setUp(self):
@@ -72,7 +74,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     # compiles the input file with both the algorithm and schedule specification
@@ -86,7 +88,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         if use_parallel:
             print "using icpc for parallel compilation"
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ -DCILK " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
@@ -304,6 +306,10 @@ class TestGraphitCompiler(unittest.TestCase):
         if self.numa_flags:
             self.pr_verified_test("pagerank_pull_parallel_numa.gt", True)
 
+    def test_pagerank_parallel_pull_numa_expect(self):
+        if self.numa_flags:
+            self.pr_verified_test("pagerank_pull_parallel_numa_one_seg.gt", True)
+
     def test_cf_parallel_expect(self):
         self.cf_verified_test("cf_pull_parallel.gt", True)
 
@@ -358,5 +364,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_segment'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_numa_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

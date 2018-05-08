@@ -292,7 +292,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, 1, false};
+                           0, -1, false};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -339,7 +339,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, 1, false};
+                           0, -1, false};
             }
 
 

@@ -86,7 +86,7 @@ namespace graphit {
                 }
 
                 // Check for number of segment
-                if (apply_schedule->second.num_segment > 1) {
+                if (apply_schedule->second.num_segment > 0) {
                     mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = apply_schedule->second.scope_label_name;
                     mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][apply_schedule->second.scope_label_name] =
                             apply_schedule->second.num_segment;
