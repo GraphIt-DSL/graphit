@@ -27,30 +27,41 @@ class GraphItTuner(MeasurementInterface):
     # for machines without CILK or openmp support 
     enable_parallel_tuning = True
     
+    enable_denseVertexSet_tuning = True
 
     def manipulator(self):
         """                                                                          
         Define the search space by creating a                                        
         ConfigurationManipulator                                                     
         """
-  
-        if not self.args.enable_NUMA_tuning == 1:
+
+        # set the global flags needed for printing schedules
+        if self.args.enable_NUMA_tuning == 0:
             self.enable_NUMA_tuning = False
-        if not self.args.enable_parallel_tuning == 1:
+        if self.args.enable_parallel_tuning == 0:
             self.enable_parallel_tuning = False
-            
+        if self.args.enable_denseVertexSet_tuning == 0:
+            self.enable_denseVertexSet_tuning = False
+
+
         manipulator = ConfigurationManipulator()
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
+        
         if self.enable_parallel_tuning:
             manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
         else:
             manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
 
         manipulator.add_parameter(IntegerParameter('numSSG', 1, 20))
+        
         if self.enable_NUMA_tuning:
             manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
+
+        if self.enable_denseVertexSet_tuning:
+            manipulator.add_parameter(EnumParameter('DenseVertexSet', ['boolean-array', 'bitvector']))
+
         return manipulator
 
     #configures parallelization commands
@@ -104,6 +115,13 @@ class GraphItTuner(MeasurementInterface):
                 new_schedule = new_schedule + "\n    program->configApplyNUMA(\"s1\", \"static-parallel\" , \"DensePull\");"
         return new_schedule
 
+    def write_denseVertexSet_schedule(self, enable_pull_bitvector, new_schedule, direction):
+        # for now, we only use this for the src vertexset in the DensePull direciton
+        if direction == "DensePull" or direction == "SparsePush-DensePull":
+            if enable_pull_bitvector:
+                new_schedule = new_schedule + "\n    program->configApplyDenseVertexSet(\"s1\",\"bitvector\", \"src-vertexset\", \"DensePull\");"
+        return new_schedule
+
     def write_cfg_to_schedule(self, cfg):
         #write into a schedule file the configuration
         direction = cfg['direction']
@@ -116,10 +134,16 @@ class GraphItTuner(MeasurementInterface):
 
         new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
 
-        
         new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
         new_schedule = self.write_NUMA_schedule(new_schedule, direction)
+
+        use_bitvector = False
+        if cfg['DenseVertexSet'] == 'bitvector':
+            use_bitvector = True
+        new_schedule = self.write_denseVertexSet_schedule(use_bitvector, new_schedule, direction)
+
+
         print (cfg)
         print (new_schedule)
 
@@ -251,6 +275,7 @@ if __name__ == '__main__':
                     help='the graph to tune on')
     parser.add_argument('--enable_NUMA_tuning', type=int, default=1, help='enable tuning NUMA-aware schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--enable_parallel_tuning', type=int, default=1, help='enable tuning paralleliation schedules. 1 for enable (default), 0 for disable')
+    parser.add_argument('--enable_denseVertexSet_tuning', type=int, default=1, help='enable tuning denseVertexSet schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--algo_file', type=str, required=True, help='input algorithm file')
     parser.add_argument('--default_schedule_file', type=str, required=True, help='default schedule file')
     args = parser.parse_args()
