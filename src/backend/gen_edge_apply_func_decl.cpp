@@ -124,8 +124,17 @@ namespace graphit {
                             "    }\n"
                             "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
                 }
+            } 
+            else if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)){
+                //we still need to convert the from_vertexset to sparse, and compute m for SparsePush
+                // even when it does not return a frontier
+                if (from_vertexset_specified) {
+                    oss_ << "    from_vertexset->toSparse();" << std::endl;
+                    oss_ << "    long m = from_vertexset->size();\n";
 
-
+                } else {
+                    oss_ << "    long m = numVertices; \n";
+                }
             }
         }
     }
