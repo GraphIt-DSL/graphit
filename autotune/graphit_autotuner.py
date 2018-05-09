@@ -218,18 +218,25 @@ class GraphItTuner(MeasurementInterface):
             if not self.use_NUMA:
                 if not self.enable_parallel_tuning:
                     # don't use numactl when running serial
-                    run_result = self.call_program('./test ' + self.args.graph +  '  > test.out')
+                    run_cmd = './test ' + self.args.graph +  '  > test.out'
+
                 else:
                     # use numactl when running parallel
-                    run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
+                    run_cmd = 'numactl -i all ./test ' + self.args.graph +  '  > test.out'
             else:
-                run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')            
+                run_cmd = 'OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out'
+
+            print "run_cmd: " + run_cmd
+            run_result = self.call_program(run_cmd, limit=self.args.runtime_limit)          
             assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
 
-        val = self.parse_running_time();
+        if run_result['timeout'] == True:
+            val = self.args.runtime_limit
+        else:
+            val = self.parse_running_time();
         self.call_program('rm test.out')
         print "run result: " + str(run_result)
         print "running time: " + str(val)
@@ -278,5 +285,9 @@ if __name__ == '__main__':
     parser.add_argument('--enable_denseVertexSet_tuning', type=int, default=1, help='enable tuning denseVertexSet schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--algo_file', type=str, required=True, help='input algorithm file')
     parser.add_argument('--default_schedule_file', type=str, required=True, help='default schedule file')
+    parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
+    
     args = parser.parse_args()
+    # pass the argumetns into the tuner
     GraphItTuner.main(args)
+    
