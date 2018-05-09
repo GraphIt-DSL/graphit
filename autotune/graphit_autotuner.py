@@ -95,7 +95,7 @@ class GraphItTuner(MeasurementInterface):
                 #use_evp for SparsePush, DensePush-SparsePush should not make a difference
                 new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
         else:
-            print "Error in writing parallel schedule"
+            print ("Error in writing parallel schedule")
             exit()
         return new_schedule
 
@@ -178,7 +178,7 @@ class GraphItTuner(MeasurementInterface):
         try:
             self.call_program(compile_graphit_cmd)
         except:
-            print "fail to compile .gt file"
+            print ("fail to compile .gt file")
         return self.call_program(compile_cpp_cmd)
 
     def parse_running_time(self, log_file_name='test.out'):
@@ -209,7 +209,7 @@ class GraphItTuner(MeasurementInterface):
         cfg = desired_result.configuration.data
         
         if compile_result['returncode'] != 0:
-            print str(compile_result)
+            print (str(compile_result))
 
         assert compile_result['returncode'] == 0
         try:    
@@ -226,9 +226,9 @@ class GraphItTuner(MeasurementInterface):
             else:
                 run_cmd = 'OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out'
 
-            print "run_cmd: " + run_cmd
+            print ("run_cmd: " + run_cmd)
             run_result = self.call_program(run_cmd, limit=self.args.runtime_limit)          
-            assert run_result['returncode'] == 0
+            #assert run_result['returncode'] == 0
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
@@ -237,10 +237,20 @@ class GraphItTuner(MeasurementInterface):
             val = self.args.runtime_limit
         else:
             val = self.parse_running_time();
+        
         self.call_program('rm test.out')
-        print "run result: " + str(run_result)
-        print "running time: " + str(val)
-        return opentuner.resultsdb.models.Result(time=val)
+        print ("run result: " + str(run_result))
+        print ("running time: " + str(val))
+
+        if run_result['timeout'] == True:
+            print ("Timed out after " + str(self.args.runtime_limit) + " seconds")
+            return opentuner.resultsdb.models.Result(time=val)
+        elif run_result['returncode'] != 0:
+            print (str(run_result))
+            exit()
+        else:
+            return opentuner.resultsdb.models.Result(time=val)
+            
         
 
 
@@ -271,7 +281,7 @@ class GraphItTuner(MeasurementInterface):
 
     def save_final_config(self, configuration):
         """called at the end of tuning"""
-        print 'Final Configuration:', configuration.data
+        print ('Final Configuration:', configuration.data)
         self.manipulator().save_to_file(configuration.data,'final_config.json')
 
 
