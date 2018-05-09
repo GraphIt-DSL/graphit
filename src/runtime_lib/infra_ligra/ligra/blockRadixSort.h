@@ -108,7 +108,7 @@ namespace intSort {
     bint* oA = (bint*) (BK+blocks);
     bint* oB = (bint*) (BK+2*blocks);
 
-    parallel_for_1 (long i=0; i < blocks; i++) {
+    parallel_for (long i=0; i < blocks; i++) {
       bint od = i*nn;
       long nni = min(max<long>(n-od,0),nn);
       radixBlock(A+od, B, Tmp+od, cnts + m*i, oB + m*i, od, nni, m, extract);
