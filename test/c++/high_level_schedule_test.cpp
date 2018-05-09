@@ -1325,6 +1325,18 @@ TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallel) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+
+TEST_F(HighLevelScheduleTest, PageRankDeltaSparsePushParallel) {
+    istringstream is (prd_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+
+    // generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, PageRankDeltaPullParallelFuseFields) {
     istringstream is (prd_str_);
     fe_->parseStream(is, context_, errors_);

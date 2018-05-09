@@ -319,6 +319,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_pull(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel.gt", True)
 
+    def test_prdelta_parallel_sparse_push(self):
+        self.pr_delta_verified_test("pagerank_delta_sparse_push_parallel.gt", True)
+
     def test_prdelta_parallel_pull_segment_expect(self):
         self.pr_delta_verified_test("pagerank_delta_pull_parallel_segment.gt", True)
 
@@ -358,5 +361,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_segment'))
+    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_sparse_push'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
