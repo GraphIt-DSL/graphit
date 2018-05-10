@@ -227,8 +227,14 @@ class GraphItTuner(MeasurementInterface):
                 run_cmd = 'OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out'
 
             print ("run_cmd: " + run_cmd)
-            run_result = self.call_program(run_cmd, limit=self.args.runtime_limit)          
-            #assert run_result['returncode'] == 0
+
+            # default value -1 for memory_limit translates into None (no memory upper limit)
+            # setting memory limit does not quite work yet
+            process_memory_limit = None
+            if self.args.memory_limit != -1:
+                process_memory_limit = self.args.memory_limit
+            # print ("memory limit: " + str(process_memory_limit))
+            run_result = self.call_program(run_cmd, limit=self.args.runtime_limit, memory_limit=process_memory_limit)  
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
@@ -297,7 +303,7 @@ if __name__ == '__main__':
     parser.add_argument('--default_schedule_file', type=str, required=True, help='default schedule file')
     parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
     parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
-    
+    parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
     args = parser.parse_args()
     # pass the argumetns into the tuner
     GraphItTuner.main(args)
