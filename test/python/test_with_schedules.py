@@ -240,6 +240,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bfs_pull_parallel_verified(self):
         self.bfs_verified_test("bfs_pull_parallel.gt", True)
 
+    def test_bfs_pull_edge_aware_parallel_verified(self):
+        self.bfs_verified_test("bfs_pull_edge_aware_parallel.gt", True)
+
     def test_bfs_pull_parallel_segment_verified(self):
         self.bfs_verified_test("bfs_pull_parallel_segment.gt", True)
 
@@ -367,6 +370,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_parallel_sparse_push'))
-    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_numa_expect'))
+    # suite.addTest(TestGraphitCompiler('test_bfs_pull_edge_aware_parallel_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

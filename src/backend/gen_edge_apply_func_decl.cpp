@@ -124,7 +124,7 @@ namespace graphit {
                             "    }\n"
                             "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
                 }
-            } 
+            }
             else if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)){
                 //we still need to convert the from_vertexset to sparse, and compute m for SparsePush
                 // even when it does not return a frontier
@@ -598,7 +598,8 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.offsets_;\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
+                    "    [" << (apply->to_func != "" ?  "&to_func, " : "")
+                 << "&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
                 if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";

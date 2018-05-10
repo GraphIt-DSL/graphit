@@ -628,6 +628,26 @@ TEST_F(HighLevelScheduleTest, BFSPullSchedule) {
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
 }
 
+
+TEST_F(HighLevelScheduleTest, BFSPullEdgeAwareParallelSchedule) {
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->configApplyDirection("s1", "DensePull");
+    program->setApply("s1", "disable_deduplication");
+    program->configApplyParallelization("s1", "edge-aware-dynamic-vertex-parallel",1024, "DensePull");
+
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
+}
+
 TEST_F(HighLevelScheduleTest, BFSHybridDenseSchedule) {
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
