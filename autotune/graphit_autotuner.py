@@ -29,6 +29,7 @@ class GraphItTuner(MeasurementInterface):
     
     enable_denseVertexSet_tuning = True
 
+
     def manipulator(self):
         """                                                                          
         Define the search space by creating a                                        
@@ -252,8 +253,12 @@ class GraphItTuner(MeasurementInterface):
             print ("Timed out after " + str(self.args.runtime_limit) + " seconds")
             return opentuner.resultsdb.models.Result(time=val)
         elif run_result['returncode'] != 0:
-            print (str(run_result))
-            exit()
+            if self.args.killed_process_report_runtime_limit == 1 and run_result['stderr'] == 'Killed\n':
+                print ("process killed " + str(run_result))
+                return opentuner.resultsdb.models.Result(time=self.args.runtime_limit)
+            else:
+                print (str(run_result))
+                exit()
         else:
             return opentuner.resultsdb.models.Result(time=val)
             
@@ -304,6 +309,7 @@ if __name__ == '__main__':
     parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
     parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
     parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
+    parser.add_argument('--killed_process_report_runtime_limit', type=int, default=0, help='reports runtime_limit when a process is killed by the shell. 0 for disable (default), 1 for enable')
     args = parser.parse_args()
     # pass the argumetns into the tuner
     GraphItTuner.main(args)
