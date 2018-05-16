@@ -57,7 +57,7 @@ public:
     if (numa_aware) {
       int place_id = segment_id % omp_get_num_places();
       vertexArray = (int64_t *)numa_alloc_onnode(sizeof(int64_t) * (numVertices + 1), place_id);
-      edgeArray = (DataT *)numa_alloc_onnode(sizeof(int) * numEdges, place_id);
+      edgeArray = (DataT *)numa_alloc_onnode(sizeof(DataT) * numEdges, place_id);
       graphId = (int *)numa_alloc_onnode(sizeof(int) * numVertices, place_id);
       vertexArray[numVertices] = numEdges;
       allocated = true;
