@@ -473,6 +473,12 @@ namespace graphit {
                 case ReduceStmt::ReductionOp::MIN:
                     oss << " min= ";
                     break;
+                case ReduceStmt::ReductionOp::ASYNC_MAX:
+                    oss << " asyncMax= ";
+                    break;
+                case ReduceStmt::ReductionOp::ASYNC_MIN:
+                    oss << " asyncMin= ";
+                    break;
             }
             stmt->expr->accept(this);
             oss << ";";

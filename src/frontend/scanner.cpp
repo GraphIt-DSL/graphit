@@ -64,7 +64,8 @@ namespace graphit {
         if (token == "modified") return Token::Type::MODIFIED;
         if (token == "min=") return Token::Type::MIN_REDUCE;
         if (token == "max=") return Token::Type::MAX_REDUCE;
-
+        if (token == "asyncMax=") return Token::Type::ASYNC_MAX_REDUCE;
+        if (token == "asyncMin=") return Token::Type::ASYNC_MIN_REDUCE;
 
         // If string does not correspond to a keyword, assume it is an identifier.
         return Token::Type::IDENT;
@@ -95,9 +96,12 @@ namespace graphit {
                     }
 
                 }
-
-                if ((tokenString == "min" && programStream.peek() == '=') ||
-                        (tokenString == "max" && programStream.peek() == '=')){
+                // recognize reduce operator as one operator (do not treat the equals sign as a different operator)
+                if ((tokenString == "min" ||
+                        tokenString == "max" ||
+                        tokenString == "asyncMax" ||
+                        tokenString == "asyncMin")
+                    && programStream.peek() == '=') {
                     tokenString += programStream.get();
                 }
 

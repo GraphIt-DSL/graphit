@@ -486,6 +486,14 @@ TEST_F(BackendTest, SimpleMinReduce) {
 
 }
 
+
+TEST_F(BackendTest, SimpleAsyncMinReduce) {
+    istringstream is("func reduce_test(a : int, b: int) a asyncMin= b; end");
+    EXPECT_EQ (0, basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+
+}
+
 TEST_F(BackendTest, SimpleMaxReduce) {
     istringstream is("func reduce_test(a : int, b: int) a max= b; end");
     EXPECT_EQ (0, basicTest(is));
@@ -493,6 +501,12 @@ TEST_F(BackendTest, SimpleMaxReduce) {
 
 }
 
+
+TEST_F(BackendTest, SimpleAsyncMaxReduce) {
+    istringstream is("func reduce_test(a : int, b: int) a asyncMax= b; end");
+    EXPECT_EQ (0, basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+}
 
 TEST_F(BackendTest, SimpleMinReduceReturnFrontier) {
     istringstream is("element Vertex end\n"

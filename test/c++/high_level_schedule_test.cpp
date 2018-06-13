@@ -96,6 +96,29 @@ protected:
                                                          "     end\n"
                                                          "end";
 
+        const char * sssp_async_char =      "element Vertex end\n"
+                "element Edge end\n"
+                "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+                "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                "const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX \n"
+                "func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool\n"
+                "    SP[dst] asyncMin= (SP[src] + weight);\n"
+                "end\n"
+                "func main() \n"
+                "    var n : int = edges.getVertices();\n"
+                "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                "    frontier.addVertex(0); %add source vertex \n"
+                "    SP[0] = 0;\n"
+                "    var rounds : int = 0;\n"
+                "    while (frontier.getVertexSetSize() != 0)\n"
+                "         #s1# frontier = edges.from(frontier).applyModified(updateEdge, SP);\n"
+                "         rounds = rounds + 1;\n"
+                "         if rounds == n\n"
+                "             print \"negative cycle\";\n"
+                "          end\n"
+                "     end\n"
+                "end";
+
 
         const char* cc_char = ("element Vertex end\n"
                                                      "element Edge end\n"
@@ -310,6 +333,7 @@ protected:
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
+        sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
         prd_str_ = string  (prd_char);
@@ -374,6 +398,7 @@ protected:
     string bfs_str_;
     string pr_str_;
     string sssp_str_;
+    string sssp_async_str_;
     string cf_str_;
     string cc_str_;
     string prd_str_;
@@ -1208,6 +1233,8 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardSchedule) {
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }
 
+
+
 TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleNewAPI) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
@@ -1215,6 +1242,18 @@ TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleNewAPI) {
     program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")
             ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+}
+
+
+TEST_F(HighLevelScheduleTest, SSSPwithHybridDenseForwardScheduleAsyncMinAPI) {
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    istringstream is (sssp_async_str_);
     fe_->parseStream(is, context_, errors_);
     EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
 }

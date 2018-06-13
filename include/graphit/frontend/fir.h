@@ -788,7 +788,7 @@ namespace graphit {
 
         struct ReduceStmt : public ExprStmt {
             std::vector<Expr::Ptr> lhs;
-            enum class ReductionOp {MIN, SUM, MAX};
+            enum class ReductionOp {MIN, SUM, MAX, ASYNC_MAX, ASYNC_MIN};
             ReductionOp reduction_op;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;

@@ -57,9 +57,20 @@ namespace graphit {
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
                 break;
 
+            //for now in the midend, MAX and ASYNC_MAX are the same.
             case fir::ReduceStmt::ReductionOp::MAX:
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
                 break;
+
+
+            case fir::ReduceStmt::ReductionOp::ASYNC_MAX:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
+                break;
+
+            case fir::ReduceStmt::ReductionOp::ASYNC_MIN:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
+                break;
+
         }
         retStmt = mir_reduce_stmt;
     }

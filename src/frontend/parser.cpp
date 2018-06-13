@@ -759,6 +759,7 @@ namespace graphit {
         try {
             fir::ExprStmt::Ptr stmt;
 
+            auto peek_type = peek().type;
             if (peek().type != Token::Type::SEMICOL) {
                 const fir::Expr::Ptr expr = parseExpr();
 
@@ -801,6 +802,17 @@ namespace graphit {
                         stmt = parseReduceStmt(Token::Type::MAX_REDUCE, fir::ReduceStmt::ReductionOp::MAX, expr);
                         break;
                     }
+
+                    case Token::Type::ASYNC_MAX_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MAX_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MAX, expr);
+                        break;
+                    }
+
+                    case Token::Type::ASYNC_MIN_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MIN_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MIN, expr);
+                        break;
+                    }
+
                     default:
                         stmt = std::make_shared<fir::ExprStmt>();
                         stmt->expr = expr;
