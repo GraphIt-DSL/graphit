@@ -1,0 +1,5 @@
+
+
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1", "edge-aware-dynamic-vertex-parallel");
+    program->configApplyParallelization("s2","serial");

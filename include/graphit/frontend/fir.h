@@ -788,7 +788,7 @@ namespace graphit {
 
         struct ReduceStmt : public ExprStmt {
             std::vector<Expr::Ptr> lhs;
-            enum class ReductionOp {MIN, SUM, MAX};
+            enum class ReductionOp {MIN, SUM, MAX, ASYNC_MAX, ASYNC_MIN};
             ReductionOp reduction_op;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
@@ -1596,6 +1596,7 @@ namespace graphit {
             FromExpr::Ptr              from_expr;
             ToExpr::Ptr                to_expr;
             Identifier::Ptr            change_tracking_field;
+            bool disable_deduplication = false;
 
             typedef std::shared_ptr<ApplyExpr> Ptr;
 

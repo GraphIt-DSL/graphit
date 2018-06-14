@@ -759,6 +759,7 @@ namespace graphit {
         try {
             fir::ExprStmt::Ptr stmt;
 
+            auto peek_type = peek().type;
             if (peek().type != Token::Type::SEMICOL) {
                 const fir::Expr::Ptr expr = parseExpr();
 
@@ -801,6 +802,17 @@ namespace graphit {
                         stmt = parseReduceStmt(Token::Type::MAX_REDUCE, fir::ReduceStmt::ReductionOp::MAX, expr);
                         break;
                     }
+
+                    case Token::Type::ASYNC_MAX_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MAX_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MAX, expr);
+                        break;
+                    }
+
+                    case Token::Type::ASYNC_MIN_REDUCE: {
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MIN_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MIN, expr);
+                        break;
+                    }
+
                     default:
                         stmt = std::make_shared<fir::ExprStmt>();
                         stmt->expr = expr;
@@ -1211,7 +1223,18 @@ namespace graphit {
                     consume(Token::Type::COMMA);
                     auto change_tracking_field = parseIdent();
                     apply_expr->change_tracking_field = change_tracking_field;
-
+                    //check for the optional boolean variable
+                    if(tryConsume(Token::Type::COMMA)){
+                        if (tryConsume(Token::Type::FALSE)) {
+                            //set the deduplication field
+                            apply_expr->disable_deduplication = false;
+                        } else if (tryConsume(Token::Type::TRUE)) {
+                            apply_expr->disable_deduplication = true;
+                        } else {
+                            reportError(peek(), "applyModified with unrecognized argument for deduplication");
+                            throw SyntaxError();
+                        }
+                    }
 
                 } else {
                     consume(Token::Type::APPLY);

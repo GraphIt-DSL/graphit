@@ -29,6 +29,7 @@ class GraphItTuner(MeasurementInterface):
     
     enable_denseVertexSet_tuning = True
 
+
     def manipulator(self):
         """                                                                          
         Define the search space by creating a                                        
@@ -54,7 +55,7 @@ class GraphItTuner(MeasurementInterface):
         else:
             manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
 
-        manipulator.add_parameter(IntegerParameter('numSSG', 1, 20))
+        manipulator.add_parameter(IntegerParameter('numSSG', 1, self.args.max_num_segments))
         
         if self.enable_NUMA_tuning:
             manipulator.add_parameter(EnumParameter('NUMA',['serial','static-parallel']))
@@ -95,7 +96,7 @@ class GraphItTuner(MeasurementInterface):
                 #use_evp for SparsePush, DensePush-SparsePush should not make a difference
                 new_schedule = new_schedule + "\n    program->configApplyParallelization(\"s1\", \"dynamic-vertex-parallel\");"
         else:
-            print "Error in writing parallel schedule"
+            print ("Error in writing parallel schedule")
             exit()
         return new_schedule
 
@@ -178,7 +179,7 @@ class GraphItTuner(MeasurementInterface):
         try:
             self.call_program(compile_graphit_cmd)
         except:
-            print "fail to compile .gt file"
+            print ("fail to compile .gt file")
         return self.call_program(compile_cpp_cmd)
 
     def parse_running_time(self, log_file_name='test.out'):
@@ -209,7 +210,7 @@ class GraphItTuner(MeasurementInterface):
         cfg = desired_result.configuration.data
         
         if compile_result['returncode'] != 0:
-            print str(compile_result)
+            print (str(compile_result))
 
         assert compile_result['returncode'] == 0
         try:    
@@ -218,22 +219,49 @@ class GraphItTuner(MeasurementInterface):
             if not self.use_NUMA:
                 if not self.enable_parallel_tuning:
                     # don't use numactl when running serial
-                    run_result = self.call_program('./test ' + self.args.graph +  '  > test.out')
+                    run_cmd = './test ' + self.args.graph +  '  > test.out'
+
                 else:
                     # use numactl when running parallel
-                    run_result = self.call_program('numactl -i all ./test ' + self.args.graph +  '  > test.out')
+                    run_cmd = 'numactl -i all ./test ' + self.args.graph +  '  > test.out'
             else:
-                run_result = self.call_program('OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out')            
-            assert run_result['returncode'] == 0
+                run_cmd = 'OMP_PLACES=sockets ./test ' + self.args.graph + '  > test.out'
+
+            print ("run_cmd: " + run_cmd)
+
+            # default value -1 for memory_limit translates into None (no memory upper limit)
+            # setting memory limit does not quite work yet
+            process_memory_limit = None
+            if self.args.memory_limit != -1:
+                process_memory_limit = self.args.memory_limit
+            # print ("memory limit: " + str(process_memory_limit))
+            run_result = self.call_program(run_cmd, limit=self.args.runtime_limit, memory_limit=process_memory_limit)  
         finally:
             self.call_program('rm test')
             self.call_program('rm test.cpp')
 
-        val = self.parse_running_time();
+        if run_result['timeout'] == True:
+            val = self.args.runtime_limit
+        else:
+            val = self.parse_running_time();
+        
         self.call_program('rm test.out')
-        print "run result: " + str(run_result)
-        print "running time: " + str(val)
-        return opentuner.resultsdb.models.Result(time=val)
+        print ("run result: " + str(run_result))
+        print ("running time: " + str(val))
+
+        if run_result['timeout'] == True:
+            print ("Timed out after " + str(self.args.runtime_limit) + " seconds")
+            return opentuner.resultsdb.models.Result(time=val)
+        elif run_result['returncode'] != 0:
+            if self.args.killed_process_report_runtime_limit == 1 and run_result['stderr'] == 'Killed\n':
+                print ("process killed " + str(run_result))
+                return opentuner.resultsdb.models.Result(time=self.args.runtime_limit)
+            else:
+                print (str(run_result))
+                exit()
+        else:
+            return opentuner.resultsdb.models.Result(time=val)
+            
         
 
 
@@ -264,7 +292,7 @@ class GraphItTuner(MeasurementInterface):
 
     def save_final_config(self, configuration):
         """called at the end of tuning"""
-        print 'Final Configuration:', configuration.data
+        print ('Final Configuration:', configuration.data)
         self.manipulator().save_to_file(configuration.data,'final_config.json')
 
 
@@ -278,5 +306,11 @@ if __name__ == '__main__':
     parser.add_argument('--enable_denseVertexSet_tuning', type=int, default=1, help='enable tuning denseVertexSet schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--algo_file', type=str, required=True, help='input algorithm file')
     parser.add_argument('--default_schedule_file', type=str, required=True, help='default schedule file')
+    parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
+    parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
+    parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
+    parser.add_argument('--killed_process_report_runtime_limit', type=int, default=0, help='reports runtime_limit when a process is killed by the shell. 0 for disable (default), 1 for enable')
     args = parser.parse_args()
+    # pass the argumetns into the tuner
     GraphItTuner.main(args)
+    

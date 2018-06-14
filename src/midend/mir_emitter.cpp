@@ -57,9 +57,20 @@ namespace graphit {
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
                 break;
 
+            //for now in the midend, MAX and ASYNC_MAX are the same.
             case fir::ReduceStmt::ReductionOp::MAX:
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
                 break;
+
+
+            case fir::ReduceStmt::ReductionOp::ASYNC_MAX:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
+                break;
+
+            case fir::ReduceStmt::ReductionOp::ASYNC_MIN:
+                mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
+                break;
+
         }
         retStmt = mir_reduce_stmt;
     }
@@ -432,7 +443,8 @@ namespace graphit {
             }
             if (apply_expr->change_tracking_field != nullptr)
                 edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
-
+            if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
+            else edgeset_apply_expr->enable_deduplication = true;
             retExpr = edgeset_apply_expr;
         }
 
@@ -620,7 +632,7 @@ namespace graphit {
                     // this is a field / system vector associated with an ElementType
                     ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
-                        std::cout << "error in adding constant" << std::endl;
+                        std::cout << "error in adding constant: " << mir_var_decl->name << std::endl;
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr) {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);

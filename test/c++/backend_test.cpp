@@ -456,6 +456,21 @@ TEST_F(BackendTest, SimpleAssignReturnFrontier) {
 }
 
 
+TEST_F(BackendTest, SimpleAssignReturnFrontierNewAPI) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const age : vector{Vertex}(int) = 0;\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "func update (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                             "func to_filter (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                             "func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                             "func main() var active_vertices : vertexset{Vertex} = "
+                             "edges.from(from_filter).to(to_filter).applyModified(update, age, false); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, SrcFilterDstFilterApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -486,6 +501,14 @@ TEST_F(BackendTest, SimpleMinReduce) {
 
 }
 
+
+TEST_F(BackendTest, SimpleAsyncMinReduce) {
+    istringstream is("func reduce_test(a : int, b: int) a asyncMin= b; end");
+    EXPECT_EQ (0, basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+
+}
+
 TEST_F(BackendTest, SimpleMaxReduce) {
     istringstream is("func reduce_test(a : int, b: int) a max= b; end");
     EXPECT_EQ (0, basicTest(is));
@@ -493,6 +516,12 @@ TEST_F(BackendTest, SimpleMaxReduce) {
 
 }
 
+
+TEST_F(BackendTest, SimpleAsyncMaxReduce) {
+    istringstream is("func reduce_test(a : int, b: int) a asyncMax= b; end");
+    EXPECT_EQ (0, basicTest(is));
+    EXPECT_EQ (mir_context_->getFunction("reduce_test")->result.isInitialized(), false);
+}
 
 TEST_F(BackendTest, SimpleMinReduceReturnFrontier) {
     istringstream is("element Vertex end\n"

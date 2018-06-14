@@ -106,7 +106,9 @@ namespace graphit {
             MIN_REDUCE,
             MAX_REDUCE,
             DST_FILTER,
-            SRC_FILTER
+            SRC_FILTER,
+            ASYNC_MAX_REDUCE,
+            ASYNC_MIN_REDUCE
         };
 
         Type        type;
