@@ -443,7 +443,8 @@ namespace graphit {
             }
             if (apply_expr->change_tracking_field != nullptr)
                 edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
-
+            if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
+            else edgeset_apply_expr->enable_deduplication = true;
             retExpr = edgeset_apply_expr;
         }
 

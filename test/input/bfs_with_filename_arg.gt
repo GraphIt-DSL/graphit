@@ -28,7 +28,7 @@ func main()
     parent[8] = 8;
 
     while (frontier.getVertexSetSize() != 0)
-         #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent);
+         #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true);
     end
 
      #s2# vertices.apply(printParent);

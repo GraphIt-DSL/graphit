@@ -1596,6 +1596,7 @@ namespace graphit {
             FromExpr::Ptr              from_expr;
             ToExpr::Ptr                to_expr;
             Identifier::Ptr            change_tracking_field;
+            bool disable_deduplication = false;
 
             typedef std::shared_ptr<ApplyExpr> Ptr;
 

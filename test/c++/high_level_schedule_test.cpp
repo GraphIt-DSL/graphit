@@ -38,7 +38,7 @@ protected:
                                 "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
                                 "  frontier.addVertex(1); "
                                 "  while (frontier.getVertexSetSize() != 0) "
-                                "      #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent); "
+                                "      #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true); "
                                 "  end\n"
                                 "  print \"finished running BFS\"; \n"
                                 "end");
