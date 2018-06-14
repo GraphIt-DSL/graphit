@@ -27,7 +27,7 @@ func main()
     	parent[14] = 14;
 
     	while (frontier.getVertexSetSize() != 0)
-            #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent);
+            #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
     	end
 
         var elapsed_time : float = stopTimer();
@@ -37,4 +37,4 @@ func main()
 end
 
 schedule:
-     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
+     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
