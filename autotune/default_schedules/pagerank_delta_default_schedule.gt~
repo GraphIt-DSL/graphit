@@ -1,3 +1,0 @@
-schedule:
-    program->configApplyDirection("s1", "$direction");
-    program->fuseFields("out_degree", "old_rank");
