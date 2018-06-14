@@ -129,11 +129,17 @@ class GraphItTuner(MeasurementInterface):
         numSSG = cfg['numSSG']
         
 
-        f = open(self.args.default_schedule_file,'r')
-        default_schedule_str = f.read()
-        f.close()
-
-        new_schedule = default_schedule_str.replace('$direction', cfg['direction'])
+        new_schedule = ""
+        direction_schedule_str = "\n    program->configApplyDirection(\"s1\", \"$direction\");" 
+        if self.args.default_schedule_file != "":
+            f = open(self.args.default_schedule_file,'r')
+            default_schedule_str = f.read()
+            f.close()
+        else:
+            default_schedule_str = "schedule: "
+        
+        new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', cfg['direction'])
+        
 
         new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
@@ -305,7 +311,7 @@ if __name__ == '__main__':
     parser.add_argument('--enable_parallel_tuning', type=int, default=1, help='enable tuning paralleliation schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--enable_denseVertexSet_tuning', type=int, default=1, help='enable tuning denseVertexSet schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--algo_file', type=str, required=True, help='input algorithm file')
-    parser.add_argument('--default_schedule_file', type=str, required=True, help='default schedule file')
+    parser.add_argument('--default_schedule_file', type=str, required=False, default="", help='default schedule file')
     parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
     parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
     parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
