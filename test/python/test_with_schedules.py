@@ -370,5 +370,5 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_hybrid_dense_parallel_cas_verified'))
+    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -632,7 +632,7 @@ namespace graphit {
                     // this is a field / system vector associated with an ElementType
                     ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
-                        std::cout << "error in adding constant" << std::endl;
+                        std::cout << "error in adding constant: " << mir_var_decl->name << std::endl;
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr) {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
