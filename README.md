@@ -65,19 +65,19 @@ Compile and Run Generated C++ Programs
 To compile a serial version, you can use reguar g++ with support of c++11 standard to compile the generated C++ file (assuming it is named test.cpp).
  
 ```
-	# assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-	g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test.o
-	./test.o
+    # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
+    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test.o
+    ./test.o
 ```
 
 To compile a parallel version of the c++ program, you will need both CILK and OPENMP. OPENMP is required for programs using NUMA optimized schedule (configApplyNUMA enabled) and static parallel optimizations (static-vertex-parallel option in configApplyParallelization). All other programs can be compiled with CILK. 
 
 ```
-	# assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-	
-	# compile and run with CILK
-	icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -O3 -o  test.o
-	numactl -i all ./test.o
+    # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
+
+    # compile and run with CILK
+    icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -O3 -o  test.o
+    numactl -i all ./test.o
     
     # compile and run with OPENMP
     icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 -o test.o
