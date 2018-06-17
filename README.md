@@ -1,8 +1,17 @@
  # graphit
 GraphIt DSL compiler.
 
+Dependencies
+===========
+
+To build Simit you need to install
+[CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implemenations. 
+
+To compile the generated C++ implementations with support for parallleism, you need CILK and OPENMP. One easy way to set up both CILK and OPENMP is to use intel parallel compiler (icpc). The compiler is free for [students] (https://software.intel.com/en-us/qualify-for-free-software/student). There are also open source CILK ([Tapir](http://cilk.mit.edu/tapir/)), and [OPENMP] (https://www.openmp.org/resources/openmp-compilers-tools/) implementations. 
+
 Build Graphit
 ===========
+
 To perform an out-of-tree build of Graphit do:
 
 After you have cloned the directory:
