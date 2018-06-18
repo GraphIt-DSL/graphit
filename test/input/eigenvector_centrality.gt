@@ -1,0 +1,35 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const old_ec : vector{Vertex}(float) = 1.0/vertices.size();
+const new_ec : vector{Vertex}(float) = 0.0;
+
+const error : vector{Vertex}(float) = 0.0;
+
+func updateEdgeEigenVector(src: Vertex, dst : Vertex)
+	new_ec[dst] += old_ec[src];
+end
+
+func updateECVertex(v : Vertex)
+    error[v] = fabs(new_ec[v] - old_ec[v]);
+    old_ec[v] = new_ec[v];
+    new_ec[v] = 0.0;
+end
+
+func main()
+
+    for i in 1:10
+         #s1# edges.apply(updateEdgeEigenVector);
+         vertices.apply(updateECVertex);
+    end
+
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+	sum += error[i];
+    end
+    
+    print sum; 
+
+end
