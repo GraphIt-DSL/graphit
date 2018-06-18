@@ -211,11 +211,7 @@ class TestGraphitCompiler(unittest.TestCase):
         print "output: " + output.strip()
         self.assertEqual(float(output.strip()), 7.49039)
 
-
-
-
-
-    def centrality_verified_test(self, input_file_name, use_separate_algo_file=False):
+    def eigenvector_centrality_verified_test(self, input_file_name, use_separate_algo_file=False):
 	if (use_separate_algo_file):
             self.basic_compile_test_with_separate_algo_schedule_files("eigenvector_centrality.gt", input_file_name)
         else:
@@ -225,9 +221,6 @@ class TestGraphitCompiler(unittest.TestCase):
         lines = proc.stdout.readlines()
         print lines
         self.assertEqual(float(lines[0].strip()), 3.2)
-        # first frontier has 5 vertices
-
-
 
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
@@ -371,8 +364,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
-    def test_centrality(self):
-	self.centrality_verified_test("eigenvector_centrality.gt", True)
+    def test_eigenvector_centrality(self):
+	self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
 
 
 if __name__ == '__main__':
@@ -393,5 +386,3 @@ if __name__ == '__main__':
     # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
-  
-  
