@@ -45,7 +45,7 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
 Compile GraphIt Programs
 ===========
 GraphIt compiler currently generates a C++ output file from the .gt input GraphIt programs. 
-To compile an input GraphIt file with schedules in the same file (assuming the build directory is in the root project directory). 
+To compile an input GraphIt file with schedules in the same file (assuming the build directory is in the root project directory). For now, graphitc.py ONLY works in the build/bin directory.
 
 ```
     cd build/bin
