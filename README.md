@@ -83,7 +83,32 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     # compile and run with OPENMP
     icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 -o test.o
     numactl -i all ./test.o
+    
+    # to run with NUMA optimizations
+    OMP_PLACES=sockets ./test.o 
+    
 ```
+
+
+Evaluate GraphIt's Performance
+===========
+
+The algorithms we used for benchmarking, such as PageRank, PageRankDelta, BFS, Connected Components, Single Source Shortest Paths and Collaborative Filtering are in the **apps** directory.
+These files include ONLY the algorithm and NO schedules. You need to use the appropriate schedules for the specific algorithm and input graph to get the best performance. 
+
+In the [arxiv paper](https://arxiv.org/abs/1805.00923) (Table 8), we described the schedules used for each algorithm on each graph on a dual socket system with Intel Xeon E5-2695 v3 CPUs with 12 cores
+each for a total of 24 cores and 48 hyper-threads. The system has 128GB of DDR3-1600 memory
+and 30 MB last level cache on each socket, and runs with Transparent Huge Pages (THP) enabled. The best schedule for a different machine can be different. You might need to try a few different set of schedules for the best performance. Autotuning is in the works, we will update the instructions with autotuner later. 
+
+In the schedules shown in Table 8, the keyword ’Program’ and the continuation symbol ’->’ are omitted. ’ca’ is the abbreviation for ’configApply’. Note that configApplyNumSSG uses an integer parameter (X) which is dependent on the graph size and the cache size of a system. For example, the complete schedule used for CC on Twitter graph is the following (X is tuned to the cache size)
+
+```
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyNumSSG("s1", "fixed-vertex-count",  X, "DensePull");
+```
+
+The **test/input** and **test/input\_with\_schedules** directories contain many examples of the algorithm and schedule files. Use them as references when writing your own schedule.
 
 Input Graph Formats
 ===========
@@ -91,7 +116,4 @@ Input Graph Formats
 GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
 
 We have provided sample input graph files in the graphit/test/graphs/ directory. The python tests use the sample input files. 
-
-Evaluate GraphIt's Performance
-===========
 
