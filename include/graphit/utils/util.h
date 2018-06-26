@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <functional>
 
 namespace graphit {
     namespace util {
