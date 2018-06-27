@@ -53,16 +53,16 @@ To compile an input GraphIt file with schedules in the same file (assuming the b
 
 ```
     cd build/bin
-    python graphitc.py -f ../../test/input/simple_vector_sum.gt -o test.cpp
+    python graphitc.py -f ../../test/input_with_schedules/pagerank_benchmark_cache.gt -o test.cpp
     
 ```
 To compile an input algorithm file and another separate schedule file (some of the test files have hardcoded paths to test inputs, be sure to modify that or change the directory you run the compiled files)
 
-The example below compiles the algorithm file (../../test/input/cc.gt), with a separate schedule file (../../test/input_with_schedules/cc_pull_parallel.gt)
+The example below compiles the algorithm file (../../test/input/pagerank.gt), with a separate schedule file (../../test/input_with_schedules/pagerank_pull_parallel.gt)
 
 ```
    cd build/bin
-   python graphitc.py -a ../../test/input/cc.gt -f ../../test/input_with_schedules/cc_pull_parallel.gt -o test.cpp
+   python graphitc.py -a ../../test/input/pagerank_with_filename_arg.gt -f ../../test/input_with_schedules/pagerank_pull_parallel.gt -o test.cpp
 ```
 
 Compile and Run Generated C++ Programs
@@ -71,8 +71,8 @@ To compile a serial version, you can use reguar g++ with support of c++11 standa
  
 ```
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test
-    ./test
+    g++ -std=c++11 -I ../../src/runtime_lib/ -O3 test.cpp  -o test
+    ./test ../../test/graphs/4.el
 ```
 
 To compile a parallel version of the c++ program, you will need both CILK and OPENMP. OPENMP is required for programs using NUMA optimized schedule (configApplyNUMA enabled) and static parallel optimizations (static-vertex-parallel option in configApplyParallelization). All other programs can be compiled with CILK. For analyzing large graphs (e.g., twitter, friendster, webgraph) on NUMA machines, numacl -i all improves the parallel performance. For smaller graphs, such as LiveJournal and Road graphs, not using numactl can be faster. 
@@ -85,26 +85,28 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
     # g++ (gcc) with cilk support
     g++ -std=c++11 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
-    # run the compiled binary
-    numactl -i all ./test
+    # run the compiled binary on a small test graph 4.el
+    numactl -i all ./test ../../test/graphs/4.el
     
     # compile and run with OPENMP
     # icpc
     icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
     # g++ (gcc) with openmp support
     g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
-    # run the compiled binary
-    numactl -i all ./test
+    # run the compiled binary on a small test graph 4.el
+    numactl -i all ./test ../../test/graphs/4.el
     
     # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma). Sometimes -lnuma have to come after test.cpp file
     # icpc
     icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
     # g++ (gcc)
     g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
-    # run with NUMA enabled
-    OMP_PLACES=sockets ./test
+    # run with NUMA enabled on a small test graph 4.el
+    OMP_PLACES=sockets ./test ../../test/graphs/4.el
     
 ```
+
+You should see some running times printed. The pagerank example files require a commandline argument for the input graph file. If you see a segfault, then it probably means you did not specify an input graph. 
 
 
 Evaluate GraphIt's Performance
