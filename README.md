@@ -4,9 +4,11 @@ Dependencies
 ===========
 
 To build GraphIt you need to install
-[CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implemenations. 
+[CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implemenations. Currently, we use Python 2.7 for the end-to-end tests. 
 
 To compile the generated C++ implementations with support for parallleism, you need CILK and OPENMP. One easy way to set up both CILK and OPENMP is to use intel parallel compiler (icpc). The compiler is free for [students](https://software.intel.com/en-us/qualify-for-free-software/student). There are also open source CILK (g++ >= 5.3.0 with support for Cilk Plus), and [OPENMP](https://www.openmp.org/resources/openmp-compilers-tools/) implementations. 
+
+To use NUMA optimizations on multi-socket machines, libnuma needs to be installed (on Ubuntu, sudo apt-get install libnuma-dev). We do note, a good number of optimized implementations do not require enabling NUMA optimizations. You can give GraphIt a try even if you do not have libnuma installed.  
 
 Build Graphit
 ===========
@@ -22,7 +24,7 @@ After you have cloned the directory:
     cmake ..
     make
 ```
-
+Currently, we do require you to name the build directory `build` for the unit tests to work. 
 To run the C++ test suite do (all tests should pass):
 
 ```
@@ -41,6 +43,8 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
     python test.py
     python test_with_schedules.py
 ```
+
+When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. Examples are given in the comments of the main function in `test_with_schedules.py`. 
 
 Compile GraphIt Programs
 ===========
@@ -67,8 +71,8 @@ To compile a serial version, you can use reguar g++ with support of c++11 standa
  
 ```
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test.o
-    ./test.o
+    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test
+    ./test
 ```
 
 To compile a parallel version of the c++ program, you will need both CILK and OPENMP. OPENMP is required for programs using NUMA optimized schedule (configApplyNUMA enabled) and static parallel optimizations (static-vertex-parallel option in configApplyParallelization). All other programs can be compiled with CILK. For analyzing large graphs (e.g., twitter, friendster, webgraph) on NUMA machines, numacl -i all improves the parallel performance. For smaller graphs, such as LiveJournal and Road graphs, not using numactl can be faster. 
@@ -77,15 +81,28 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
 
     # compile and run with CILK
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK test.cpp -O3 -o  test.o
-    numactl -i all ./test.o
+    # icpc
+    icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
+    # g++ (gcc) with cilk support
+    g++ -std=c++11 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
+    # run the compiled binary
+    numactl -i all ./test
     
     # compile and run with OPENMP
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 -o test.o
-    numactl -i all ./test.o
+    # icpc
+    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
+    # g++ (gcc) with openmp support
+    g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
+    # run the compiled binary
+    numactl -i all ./test
     
-    # to run with NUMA optimizations
-    OMP_PLACES=sockets ./test.o 
+    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma)
+    # icpc
+    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp -lnuma -O3 test.cpp -o test
+    # g++ (gcc)
+    g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -lnuma -O3 test.cpp -o test
+    # run with NUMA enabled
+    OMP_PLACES=sockets ./test
     
 ```
 
