@@ -96,11 +96,11 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     # run the compiled binary
     numactl -i all ./test
     
-    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma)
+    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma). Sometimes -lnuma have to come after test.cpp file
     # icpc
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp -lnuma -O3 test.cpp -o test
+    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
     # g++ (gcc)
-    g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -lnuma -O3 test.cpp -o test
+    g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
     # run with NUMA enabled
     OMP_PLACES=sockets ./test
     
