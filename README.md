@@ -42,7 +42,7 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
     python test_with_schedules.py
 ```
 
-When running test_with_schedules, commands used for compiling GraphIt files, compiling the generated C++ files and running the generated C++ files are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the suite commands (examples are given in the comments of the Python file). 
+When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. Examples are given in the comments of the main function in `test_with_schedules.py`. 
 
 Compile GraphIt Programs
 ===========
