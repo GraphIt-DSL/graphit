@@ -1,0 +1,2 @@
+This directory contain the scripts to compile graphit/apps/pagerankdelta.gt with different schedules.
+It demonstrates how the algorithm and scheduling language works, following the example in Fig.6. of the [arxiv paper](https://arxiv.org/pdf/1805.00923.pdf)
