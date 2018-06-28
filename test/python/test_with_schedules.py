@@ -366,6 +366,9 @@ class TestGraphitCompiler(unittest.TestCase):
         if self.numa_flags:
             self.pr_delta_verified_test("pagerank_delta_pull_parallel_numa.gt", True)
 
+    def test_prdelta_hybrid_alternate_direction_specification(self):
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_bitvector_altdir.gt", True)
+
     def test_prdelta_parallel_hybrid_segment_expect(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_segment.gt", True)
 
@@ -401,6 +404,6 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
+    # suite.addTest(TestGraphitCompiler('test_prdelta_hybrid_alternate_direction_specification'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 

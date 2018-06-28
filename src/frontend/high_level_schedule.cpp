@@ -493,7 +493,7 @@ namespace graphit {
 
             //Default schedule pull, serial
             auto gis_vec = new std::vector<GraphIterationSpace>();
-            if (apply_direction == "SparsePush-DensePull") {
+            if (apply_direction == "SparsePush-DensePull" || apply_direction == "DensePull-SparsePush") {
 
                 //configure the first SparsePush graph iteration space
                 auto gis_first = GraphIterationSpace();
@@ -514,7 +514,7 @@ namespace graphit {
                 gis_vec->push_back(gis_sec);
 
 
-            } else if (apply_direction == "DensePush-SparsePush") {
+            } else if (apply_direction == "DensePush-SparsePush" || apply_direction == "SparsePush-DensePush") {
                 //configure the first graph iteration space DensePush
                 auto gis_first = GraphIterationSpace();
                 gis_first.direction = GraphIterationSpace::Direction::Push;
