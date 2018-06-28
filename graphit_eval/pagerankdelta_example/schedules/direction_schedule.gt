@@ -1,0 +1,2 @@
+schedule:
+	program->configApplyDirection("s1", "DensePull-SparsePush");	
