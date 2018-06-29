@@ -32,7 +32,7 @@ func bfs(src : Vertex)
 			frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
 		
 	end
-	var notConnected : vertexset{Vertex} = vertices.filter(toFilter);
+	var notConnected : vertexset{Vertex} = vertices.where(toFilter);
 	var amountNotConnected = notConnected.getVertexSetSize();
 	sumOfDist[src] = checked.sum() + amountNotConnected;
 	vertices.apply(revertToUnChecked);
