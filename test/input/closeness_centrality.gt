@@ -5,53 +5,53 @@ const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test/el");
 
 const vertices : vertexset{Vertex} = edges.getVertices();
 
-const sumOfDist : vector{Vertex}(float) = 0.0;
+const sumOfDist : vector{Vertex}(int) = 0;
 
 const checked : vector{Vertex}(int) = -1;
 
-func bfs(src : Vertex, dst : Vertex) -> count : float
-	var count : int = 0;
-	checked[src] = 0;
-	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-	frontier.addVertex(src);
-	
-	while (frontier.getVertexSetSize() != 0)
-		var atEnd : vertexset{Vertex} = edges.from(frontier).to(dst).applyModified(updateEdge, checked);
-		if atEnd.getVertexSetSize() == 0
-			count += 1;
-			print "size";
-			print frontier.getVertexSetSize();
-			frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
-		else
-			frontier = new vertexset{Vertex}(0);
-		end	
-	end
-end
-
-func addDistance(src : Vertex, dst : Vertex)
-	var shortestPathLength =  bfs(src, dst);
-        sumOfDist[src] += shortestPathLength;
-        sumOfDist[dst] += shortestPathLength;
+func updateEdge(src : Vertex, dst : Vertex)
+	checked[dst] = checked[src] + 1;
 end
 
 func toFilter(v : Vertex) -> output : bool
 	output = checked[v] == -1; 
 end
 
-func updateEdge(src : Vertex, dst : Vertex)
-	checked[dst] = 0;
+
+func revertToUnchecked(v : Vertex)
+	checked[v] = -1;
+end
+
+func bfs(src : Vertex)
+	checked[src] = 0;
+	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+	frontier.addVertex(src);	
+	while (frontier.getVertexSetSize() != 0)
+			print "size";
+			print frontier.getVertexSetSize();
+			frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+		
+	end
+	var notConnected : vertexset{Vertex} = vertices.filter(toFilter);
+	var amountNotConnected = notConnected.getVertexSetSize();
+	sumOfDist[src] = checked.sum() + amountNotConnected;
+	vertices.apply(revertToUnChecked);
+end
+
+func printSum(v : Vertex)
+	print sumOfDist[v];
 end
 
 func main()
         startTimer();
-        edges.apply(addDistance);
+        vertices.apply(bfs);
+	vertices.apply(printSum);
 
+	 
         var elapsed_time : float = stopTimer();
         print "elapsed time: ";
         print elapsed_time;
 
-        for i in 0:vertices
-                print sumOfDist[i];
-	end
+        
 
 end
