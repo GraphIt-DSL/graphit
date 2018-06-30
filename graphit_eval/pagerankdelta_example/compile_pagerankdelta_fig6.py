@@ -47,7 +47,7 @@ def compile_and_myprint(input_schedule_file,  message, cpp_filename):
 
 
 def eval_schedules():
-    myprint("Reproducing Fig.6: Generating different PageRankDelta C++ implemenataion with different schedules. Schedules are stores in the ./schedules directory. The algorithm file (pagerankdelta.gt) is in graphit/apps directiory. ")
+    myprint("Reproducing Fig.6: Generating different PageRankDelta C++ implemenataion with different schedules. Schedules are stored in the ./schedules directory. The algorithm file (pagerankdelta.gt) is in graphit/apps directiory. ")
 
     # Fig 6(a) The default schedule
     compile_and_myprint("empty_schedule.gt", "the default schedule Fig 6(a)", pagerank_delta_demo_dir + "pagerankdelta_default_schedule.cpp")

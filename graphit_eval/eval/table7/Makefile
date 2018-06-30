@@ -31,7 +31,7 @@ bfs = bfs_hybrid_dense bfs_hybrid_dense_bitvec bfs_push_slq
 prd = pagerankdelta_hybrid_dense pagerankdelta_hybrid_dense_bitvec_segment pagerankdelta_sparse_push
 cf = cf_pull_load_balance_segment 
 
-all: $(cf) $(prd) $(bfs) $(cc) $(sssp) $(pr) openmp
+all:  $(prd) $(bfs) $(cc) $(sssp) $(pr) openmp
 
 openmp:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp

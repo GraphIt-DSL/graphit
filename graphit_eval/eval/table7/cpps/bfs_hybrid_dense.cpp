@@ -42,7 +42,6 @@ template <typename TO_FUNC , typename APPLY_FUNC, typename PUSH_APPLY_FUNC> Vert
       } //end of outer for loop
 
       next_frontier->num_vertices_ = sequence::sum(next, numVertices);
-      free(from_vertexset->bool_map_);
       next_frontier->bool_map_ = next;
       free(degrees);
       return next_frontier;
