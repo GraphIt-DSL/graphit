@@ -26,7 +26,6 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     @inner_cnt: number of runs that an application performs internally
     @time_key_own_line: if the time_key is one its own line
     """
-
     with open(log_file_name) as f:
         content = f.readlines()
     content = [x.strip() for x in content]
@@ -47,7 +46,10 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
                 time_str = line.split(delimiter)[index]
             if strip_end:
                 time_str = time_str[:strip_end] # strip the (s) at the end
-            time = float(time_str) / divider
+            if time_str.strip() == '':
+                time = min_time
+            else:
+                time = float(time_str) / divider 
             if time < min_time:
                 min_time = time
             inner_cnt -= 1
@@ -98,7 +100,7 @@ def main():
                         default=["testGraph"],
                         help="graphs to parse. Defaults to testGraph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "prd", "cf"], 
+                        default=["bfs", "sssp", "pr", "cc", "prd"], 
                         help="applications to parse. Defaults to all six applications.")
     args = parser.parse_args()
 
