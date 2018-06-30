@@ -1,0 +1,251 @@
+
+------------------------------------------------
+30/06/2018-17:36:31
+elapsed time: 
+2.95504
+elapsed time: 
+2.92013
+elapsed time: 
+2.92495
+elapsed time: 
+2.98987
+elapsed time: 
+2.97824
+elapsed time: 
+3.01527
+elapsed time: 
+2.9626
+elapsed time: 
+3.03466
+elapsed time: 
+2.96274
+elapsed time: 
+2.98128
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:37:03
+elapsed time: 
+2.9097
+elapsed time: 
+2.94428
+elapsed time: 
+2.92129
+elapsed time: 
+2.97767
+elapsed time: 
+2.96426
+elapsed time: 
+2.9689
+elapsed time: 
+2.92584
+elapsed time: 
+2.95916
+elapsed time: 
+2.91774
+elapsed time: 
+2.95874
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:37:35
+elapsed time: 
+2.94343
+elapsed time: 
+2.91138
+elapsed time: 
+2.95625
+elapsed time: 
+2.92053
+elapsed time: 
+2.9991
+elapsed time: 
+2.99781
+elapsed time: 
+2.95119
+elapsed time: 
+2.91327
+elapsed time: 
+2.94553
+elapsed time: 
+2.93812
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:38:08
+elapsed time: 
+2.96514
+elapsed time: 
+2.94537
+elapsed time: 
+2.92792
+elapsed time: 
+2.94968
+elapsed time: 
+2.95819
+elapsed time: 
+2.92428
+elapsed time: 
+2.94279
+elapsed time: 
+2.9574
+elapsed time: 
+2.97498
+elapsed time: 
+2.94088
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:38:40
+elapsed time: 
+2.95053
+elapsed time: 
+2.9353
+elapsed time: 
+2.92431
+elapsed time: 
+2.93257
+elapsed time: 
+2.92811
+elapsed time: 
+2.95053
+elapsed time: 
+3.01758
+elapsed time: 
+2.9281
+elapsed time: 
+2.94856
+elapsed time: 
+2.99162
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:39:12
+elapsed time: 
+2.97432
+elapsed time: 
+2.96141
+elapsed time: 
+2.95222
+elapsed time: 
+2.95275
+elapsed time: 
+2.95665
+elapsed time: 
+3.00145
+elapsed time: 
+2.97066
+elapsed time: 
+2.95074
+elapsed time: 
+2.9384
+elapsed time: 
+2.95428
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:39:45
+elapsed time: 
+2.95297
+elapsed time: 
+2.99223
+elapsed time: 
+2.95252
+elapsed time: 
+2.94507
+elapsed time: 
+2.98519
+elapsed time: 
+2.96321
+elapsed time: 
+3.0047
+elapsed time: 
+2.93352
+elapsed time: 
+2.94779
+elapsed time: 
+2.96063
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:40:17
+elapsed time: 
+2.94078
+elapsed time: 
+2.95538
+elapsed time: 
+3.04392
+elapsed time: 
+3.10542
+elapsed time: 
+3.03542
+elapsed time: 
+2.96077
+elapsed time: 
+2.94249
+elapsed time: 
+2.95986
+elapsed time: 
+2.93844
+elapsed time: 
+2.94522
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:40:50
+elapsed time: 
+2.94001
+elapsed time: 
+2.97423
+elapsed time: 
+2.92908
+elapsed time: 
+3.16062
+elapsed time: 
+2.96973
+elapsed time: 
+2.9485
+elapsed time: 
+2.95734
+elapsed time: 
+2.9555
+elapsed time: 
+2.94743
+elapsed time: 
+2.99223
+
+------------------------------------------------
+
+------------------------------------------------
+30/06/2018-17:41:22
+elapsed time: 
+2.99048
+elapsed time: 
+3.00937
+elapsed time: 
+3.03016
+elapsed time: 
+2.93574
+elapsed time: 
+2.97943
+elapsed time: 
+2.96503
+elapsed time: 
+2.94755
+elapsed time: 
+2.94237
+elapsed time: 
+2.97075
+elapsed time: 
+2.9723
+
+------------------------------------------------
+successes=10

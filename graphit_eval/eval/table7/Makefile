@@ -34,7 +34,7 @@ cf = cf_pull_load_balance_segment
 all: $(cf) $(prd) $(bfs) $(cc) $(sssp) $(pr) openmp
 
 openmp:
-	$(PCC) $(OPENMP_FLAGS) -o bfs_push_slq cpps/bfs_push_slq.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp
 
 % : cpps/%.cpp
 	$(PCC) $(CILK_FLAGS) -o bin/$@ $<

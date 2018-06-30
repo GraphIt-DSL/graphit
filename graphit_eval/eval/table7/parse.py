@@ -14,7 +14,7 @@ import time
 #    (1) set the frameworks list to include either "graphit, ligra or greenmarl"
 #    (2) set the applications, all of the applications are following graphit apps (mapped into other framewroks)
 
-LOG_PATH = "/data/scratch/baghdadi/data3/outputs/"
+LOG_PATH = "./outputs/"
 
 def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
     """
@@ -32,7 +32,7 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     content = [x.strip() for x in content]
 
     initial_inner_cnt = inner_cnt
-    min_time = 10000
+    min_time = 10000000
     sum_time = 0
     successes = 1
     for i in range(len(content)):
@@ -92,14 +92,14 @@ def print_absolute_execution(frameworks, apps, graphs, results_dict):
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--frameworks', nargs='+',
-                        default=["galois", "ligra", "graphit", "greenmarl", "gemini", "polymer"], # "netflix" only used for cf
+                        default=["graphit"], # "netflix" only used for cf
                         help="frameworks to parse")
     parser.add_argument('-g', '--graphs', nargs='+',
-                        default=["socLive", "road-usad", "twitter", "webGraph", "friendster"],
-                        help="graphs to parse. Defaults to all five graphs.")
+                        default=["testGraph"],
+                        help="graphs to parse. Defaults to testGraph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc"], # "prd" and "cf" only exists in ligra and graphit
-                        help="applications to parse. Defaults to all four applications.")
+                        default=["bfs", "sssp", "pr", "cc", "prd", "cf"], 
+                        help="applications to parse. Defaults to all six applications.")
     args = parser.parse_args()
 
     # time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line

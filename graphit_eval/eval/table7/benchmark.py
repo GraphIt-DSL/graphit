@@ -119,7 +119,7 @@ def main():
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["testGraph"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc"], 
+                        default=["bfs", "sssp", "pr", "cc", "prd", "cf"], 
                         help="applications to benchmark. Defaults to all four applications.")
     parser.add_argument('--use_NUMACTL', type=int, default=1, help='use numactl when running. 1 for enable (default), 0 for disable')
     args = parser.parse_args()

@@ -1,0 +1,26 @@
+
+------------------------------------------------
+30/06/2018-17:42:39
+elapsed time: 
+7.42769
+elapsed time: 
+7.47544
+elapsed time: 
+7.37992
+elapsed time: 
+7.43728
+elapsed time: 
+7.4749
+elapsed time: 
+7.42432
+elapsed time: 
+7.35076
+elapsed time: 
+7.36065
+elapsed time: 
+7.31017
+elapsed time: 
+7.53095
+
+------------------------------------------------
+successes=1
