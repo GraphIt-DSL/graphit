@@ -1,7 +1,28 @@
-GraphIt Domain Specific Langauge and Compiler.
+Overview for OOPSLA 2018 Artifact Evaluation
 
-Dependencies
-===========
+**GraphIt - A High-Performance Graph DSL**
+
+The following overview consists of two parts: a Getting Started Guide that contains setup instructions and Step by Step Instructions explaining how to reproduce the paper experiments. 
+
+# Getting Started Guide
+
+The GraphIt Compiler is available as an open source project under the MIT license at [github](https://github.com/yunmingzhang17/graphit) with documentation available at [graphit-lang.org](http://http://graphit-lang.org/). It currently supports Linux and MacOS, but not Windows.
+
+## Set up the virtual machine
+
+For convenience, we provide a Linux VirtualBox VM image with taco pre-installed, as well as the benchmarks we used to evaluate taco in the paper.
+
+Instructions for downloading, installing, and using VirtualBox can be found at [virtualbox.org](http://virtualbox.org). 
+
+Then import the VM using the `Machine -> Add` menu in the VirtualBox application.  When the VM boots, log in with the `graphit` username. The password is `OOPSLA2018`. 
+
+Once you have logged in you will see a directory under the home directory ~/graphit. This directory contains a prebuilt version of GraphIt. 
+
+## Manually download, build, and test taco (optional) 
+
+To evaluate GraphIt on your own machine, simply clone the directory from [the github repoistory](https://github.com/yunmingzhang17/graphit).
+
+###Dependencies
 
 To build GraphIt you need to install
 [CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implemenations. Currently, we use Python 2.7 for the end-to-end tests. 
@@ -10,8 +31,7 @@ To compile the generated C++ implementations with support for parallleism, you n
 
 To use NUMA optimizations on multi-socket machines, libnuma needs to be installed (on Ubuntu, sudo apt-get install libnuma-dev). We do note, a good number of optimized implementations do not require enabling NUMA optimizations. You can give GraphIt a try even if you do not have libnuma installed.  
 
-Build Graphit
-===========
+###Build Graphit
 
 To perform an out-of-tree build of Graphit do:
 
@@ -25,6 +45,14 @@ After you have cloned the directory:
     make
 ```
 Currently, we do require you to name the build directory `build` for the unit tests to work. 
+
+## Basic Evaluation of GraphIt
+
+###Run Test Programs
+
+
+Once you have GraphIt set up (through the VM or manually installed), You can run the following test to verify the basic functionalities of GraphIt. 
+
 To run the C++ test suite do (all tests should pass):
 
 ```
@@ -48,8 +76,8 @@ When running `test_with_schedules.py`, commands used for compiling GraphIt files
 
 Note when running `test.py`, some error message may be printed during the run that are expected. We have expected to fail tests that print certain error messages. Please check the final output. `test_with_schedules.py` might take a few minutes to run. 
 
-Compile GraphIt Programs
-===========
+###Compile GraphIt Programs
+
 GraphIt compiler currently generates a C++ output file from the .gt input GraphIt programs. 
 To compile an input GraphIt file with schedules in the same file (assuming the build directory is in the root project directory). For now, graphitc.py ONLY works in the build/bin directory.
 
@@ -67,8 +95,8 @@ The example below compiles the algorithm file (../../test/input/pagerank.gt), wi
    python graphitc.py -a ../../test/input/pagerank_with_filename_arg.gt -f ../../test/input_with_schedules/pagerank_pull_parallel.gt -o test.cpp
 ```
 
-Compile and Run Generated C++ Programs
-===========
+### Compile and Run Generated C++ Programs
+
 To compile a serial version, you can use reguar g++ with support of c++11 standard to compile the generated C++ file (assuming it is named test.cpp).
  
 ```
@@ -97,44 +125,11 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
     # run the compiled binary on a small test graph 4.el
     numactl -i all ./test ../../test/graphs/4.el
-    
-    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma). Sometimes -lnuma have to come after test.cpp file
-    # icpc
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
-    # g++ (gcc)
-    g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
-    # run with NUMA enabled on a small test graph 4.el
-    OMP_PLACES=sockets ./test ../../test/graphs/4.el
-    
+
 ```
 
 You should see some running times printed. The pagerank example files require a commandline argument for the input graph file. If you see a segfault, then it probably means you did not specify an input graph. 
 
 
-Evaluate GraphIt's Performance
-===========
-
-The algorithms we used for benchmarking, such as PageRank, PageRankDelta, BFS, Connected Components, Single Source Shortest Paths and Collaborative Filtering are in the **apps** directory.
-These files include ONLY the algorithm and NO schedules. You need to use the appropriate schedules for the specific algorithm and input graph to get the best performance. 
-
-In the [arxiv paper](https://arxiv.org/abs/1805.00923) (Table 8), we described the schedules used for each algorithm on each graph on a dual socket system with Intel Xeon E5-2695 v3 CPUs with 12 cores
-each for a total of 24 cores and 48 hyper-threads. The system has 128GB of DDR3-1600 memory
-and 30 MB last level cache on each socket, and runs with Transparent Huge Pages (THP) enabled. The best schedule for a different machine can be different. You might need to try a few different set of schedules for the best performance. Autotuning is in the works, we will update the instructions with autotuner later. 
-
-In the schedules shown in Table 8, the keyword ’Program’ and the continuation symbol ’->’ are omitted. ’ca’ is the abbreviation for ’configApply’. Note that configApplyNumSSG uses an integer parameter (X) which is dependent on the graph size and the cache size of a system. For example, the complete schedule used for CC on Twitter graph is the following (X is tuned to the cache size)
-
-```
-schedule:
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
-    program->configApplyNumSSG("s1", "fixed-vertex-count",  X, "DensePull");
-```
-
-The **test/input** and **test/input\_with\_schedules** directories contain many examples of the algorithm and schedule files. Use them as references when writing your own schedule.
-
-Input Graph Formats
-===========
-
-GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
-
-We have provided sample input graph files in the graphit/test/graphs/ directory. The python tests use the sample input files. 
+# Step By Step Instructions
 
