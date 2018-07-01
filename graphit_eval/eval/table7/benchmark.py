@@ -42,7 +42,7 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                                      "sssp" : "sssp_hybrid_denseforward",
                                      "cc" : "cc_hybrid_dense",
                                      "bfs" :"bfs_push_slq",
-                                     "prd" : "pagerankdelta_hybrid_dense_split"},
+                                     "prd" : "pagerankdelta_sparse_push"},
                       "netflix"   : {"cf" : "cf_pull_load_balance_segment"},
                       "netflix_2x"   : {"cf" : "cf_pull_load_balance_segment"}
                       }
