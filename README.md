@@ -46,6 +46,8 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
 
 When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. We provide examples of enabling a subset of Python tests in the comments of the main function in `test_with_schedules.py`. 
 
+Note when running `test.py`, some error message may be printed during the run that are expected. We have expected to fail tests that print certain error messages. Please check the final output. `test_with_schedules.py` might take a few minutes to run. 
+
 Compile GraphIt Programs
 ===========
 GraphIt compiler currently generates a C++ output file from the .gt input GraphIt programs. 
@@ -134,5 +136,5 @@ Input Graph Formats
 
 GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
 
-We have provided sample input graph files in the graphit/test/graphs/ directory. The python tests use the sample input files. 
+We have provided sample input graph files in the `graphit/test/graphs/` directory. The python tests use the sample input files. 
 

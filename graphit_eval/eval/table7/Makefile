@@ -27,7 +27,7 @@ endif
 pr = pagerank_pull pagerank_pull_segment 
 sssp = sssp_hybrid_denseforward 
 cc = cc_hybrid_dense cc_hybrid_dense_bitvec_segment
-bfs = bfs_hybrid_dense bfs_hybrid_dense_bitvec bfs_push_slq
+bfs = bfs_hybrid_dense bfs_hybrid_dense_bitvec 
 prd = pagerankdelta_hybrid_dense pagerankdelta_hybrid_dense_bitvec_segment pagerankdelta_sparse_push
 cf = cf_pull_load_balance_segment 
 
@@ -35,7 +35,7 @@ all:  $(prd) $(bfs) $(cc) $(sssp) $(pr) openmp
 
 openmp:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp
-
+	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
 % : cpps/%.cpp
 	$(PCC) $(CILK_FLAGS) -o bin/$@ $<
 

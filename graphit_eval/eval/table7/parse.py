@@ -26,6 +26,7 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     @inner_cnt: number of runs that an application performs internally
     @time_key_own_line: if the time_key is one its own line
     """
+    print ("processing log file: " + log_file_name)
     with open(log_file_name) as f:
         content = f.readlines()
     content = [x.strip() for x in content]
