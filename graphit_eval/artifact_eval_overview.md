@@ -278,11 +278,11 @@ In the [arxiv paper](https://arxiv.org/abs/1805.00923) (Table 8), we described t
 each for a total of 24 cores and 48 hyper-threads. The system has 128GB of DDR3-1600 memory
 and 30 MB last level cache on each socket, and runs with Transparent Huge Pages (THP) enabled. The best schedule for a different machine can be different. You might need to try a few different set of schedules for the best performance.
 
-In the schedules shown in Table 8, the keyword ’Program’ and the continuation symbol ’->’ are omitted. ’ca’ is the abbreviation for ’configApply’. Note that configApplyNumSSG uses an integer parameter (X) which is dependent on the graph size and the cache size of a system. For example, the complete schedule used for CC on Twitter graph is the following (X is tuned to the cache size)
+In the schedules shown in Table 8, the keyword ’Program’ and the continuation symbol ’->’ are omitted. ’ca’ is the abbreviation for ’configApply’. Note that configApplyNumSSG uses an integer parameter (X) which is dependent on the graph size and the cache size of a system. For example, the complete schedule used for CC on Twitter graph is the following (X is tuned based on the cache size)
 
 ```
 schedule:
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
     program->configApplyNumSSG("s1", "fixed-vertex-count",  X, "DensePull");
 ```
 
