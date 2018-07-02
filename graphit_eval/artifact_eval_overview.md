@@ -8,31 +8,32 @@ The following overview consists of two parts: a Getting Started Guide that conta
 
 The GraphIt compiler is available as an open source project under the MIT license at [github](https://github.com/yunmingzhang17/graphit) with documentation of the language available at [graphit-lang.org](http://graphit-lang.org/). It currently supports Linux and MacOS, but not Windows.
 
-To start, please uncomress the `oopsla_artifact.tar.gz` file. The `oopsla18_artifact` directory contains a VM with GraphIt installled, a compressed version of the master branch of GraphIt Github repository and two GraphIt graph files (socLive.sg and socLive.wsg for the live journal file). The GraphIt github repo and graph files are not required to complete the artifact evaluation. They can be used by reviewers who are interested in setting up GraphIt on a more powerful machine. In addition to `oopsla_artifact.tar.gz`, we have also included an `additional_graphit_graphs` folder that contains more and larger test graphs.
+To start, please download and uncompress the `oopsla_artifact.tar.gz` file. The `oopsla18_artifact` directory contains a VM with GraphIt installed, a compressed version of the master branch of GraphIt Github repository and two GraphIt graph files (socLive.sg and socLive.wsg for the Live Journal file). There is also an uncompressed version `oopsla_artifact` in the Dropbox directory in case there is some issue with decompression. We have included a md5 hash of the compressed file in the directory.
+
+The GraphIt github repo and graph files in `oopsla18_artifact` are **not required** to complete the artifact evaluation. They can be used by reviewers who are interested in setting up GraphIt on a more powerful machine to replicate performance numbers from the paper. In addition to `oopsla_artifact.tar.gz`, we have also included an `additional_graphit_graphs` folder that contains larger test graphs. The `additional_graphit_graphs` is also **not necessary for the artifact evaluation** and is very large (30GB).
 
 ## Set up the virtual machine
 
 For convenience, we provide a Linux VirtualBox VM image (OOPSLA2018) with GraphIt pre-installed, as well as the benchmarks we used to evaluate GraphIt in the paper. Instructions for downloading, installing, and using VirtualBox can be found at [virtualbox.org](http://virtualbox.org). The virtual machine currently ask for 4GB of memory.
 
-Import the VM using the `Machine -> Add` menu in the VirtualBox application.  When the VM boots, log in with the `graphit` username. The password is `oopsla2018`. Once you have logged in you will see a directory under the home directory `~/OOPSLA_Artifact/graphit`. This directory contains a prebuilt version of GraphIt.
+Import the VM using the `Machine -> Add` menu in the VirtualBox application.  When the VM boots, log in with the `graphit` username. The **password is oopsla2018** (lower case). Once you have logged in you will see a directory under the home directory `~/OOPSLA_Artifact/graphit`. This directory contains a prebuilt version of GraphIt.
 
 ## Manually download, build, and test GraphIt (optional)
 
-To evaluate GraphIt on your own machine, simply clone the directory from [the github repoistory](https://github.com/yunmingzhang17/graphit).
-Or, in the artifact evaluation folder we have included `graphit-master.zip`, which is a snapshot of the repository.
+If you choose not to use the GraphIt version already installed in the VM, you can install GraphIt on your own. Simply clone the directory from [the github repository](https://github.com/yunmingzhang17/graphit), or use `graphit-master.zip` (a snapshot of the repository) in the artifact evaluation folder.
 
 ### Dependencies
 
 To build GraphIt you need to install
-[CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implemenations. Currently, we use Python 2.7 for the end-to-end tests.
+[CMake 3.5.0 or greater](http://www.cmake.org/cmake/resources/software.html). This dependency alone will allow you to build GraphIt and generate high-performance C++ implementations. Currently, we use Python 2.7 for the end-to-end tests.
 
-To compile the generated C++ implementations with support for parallleism, you need Cilk and OpenMP. One easy way to set up both Cilk and OpenMP is to use intel parallel compiler (icpc). The compiler is free for [students](https://software.intel.com/en-us/qualify-for-free-software/student). There are also open source Cilk (g++ >= 5.3.0 with support for Cilk Plus), and [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/) implementations.
+To compile the generated C++ implementations with support for parallelism, you need Cilk and OpenMP. One easy way to set up both Cilk and OpenMP is to use intel parallel compiler (icpc). The compiler is free for [students](https://software.intel.com/en-us/qualify-for-free-software/student). There are also open source Cilk (g++ >= 5.3.0 with support for Cilk Plus), and [OpenMP](https://www.openmp.org/resources/openmp-compilers-tools/) implementations.
 
 To use NUMA optimizations on multi-socket machines, libnuma needs to be installed (on Ubuntu, sudo apt-get install libnuma-dev). We do note, a good number of optimized implementations do not require enabling NUMA optimizations. You can give GraphIt a try even if you do not have libnuma installed.
 
-### Build Graphit
+### Build GraphIt
 
-To perform an out-of-tree build of Graphit do:
+To perform an out-of-tree build of GraphIt do:
 
 After you have cloned the directory:
 
@@ -96,7 +97,7 @@ The example below compiles the algorithm file (../../test/input/pagerank.gt), wi
 
 ### Compile and Run Generated C++ Programs
 
-To compile a serial version, you can use reguar g++ with support of c++11 standard to compile the generated C++ file (assuming it is named test.cpp).
+To compile a serial version, you can use g++ with support of c++11 standard to compile the generated C++ file (assuming it is named test.cpp).
 
 ```
     #assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
@@ -127,7 +128,7 @@ To compile a parallel version of the C++ program, you will need both Cilk and Op
 
 ```
 
-You should see some running times printed. The pagerank example files require a commandline argument for the input graph file. If you see a segfault, then it probably means you did not specify an input graph.
+You should see some running times printed. The pagerank example files require a command-line argument for the input graph file. If you see a segfault, then it probably means you did not specify an input graph.
 
 
 # Step By Step Instructions
@@ -144,10 +145,10 @@ Figure 6 in the paper shows the different C++ code generated by applying differe
   python compile_pagerankdelta_fig6.py
 ```
 
-The program should output the information on each schedule, print the generated C++ file to stdout, save the generated file in .cpp files in the directory. The schedules we used are stored in `pagerankdelta_example/schedules`. We added a cache optimzied schedule that was not included in the paper due to space constraints. This experiment demonstrates GraphIt's ability to compose together cache, direction, parallelization and data structure optimizations.
+The program should output the information on each schedule, print the generated C++ file to stdout, save the generated file in .cpp files in the directory. The schedules we used are stored in `pagerankdelta_example/schedules`. We added a cache optimized schedule that was not included in the paper due to space constraints. This experiment demonstrates GraphIt's ability to compose together cache, direction, parallelization and data structure optimizations.
 
 ## Reproducing Table 7 for GraphIt
-Table 7 in the paper shows the performance numbers of GraphIt and other frameworks on 6 applications. Here we provide a script that can produce GraphIt's performance for PageRank, PageRankDelta, Breadth-First Search, Single Source Shortest Paths, and Conncted Components. Collaborative Filtering is not included in the script as we do not have the right to distribute the Netflix dataset, but we leave instructions for reviewers to compile collabroative filtering in case Netflix dataset is available. Reviewers can download the other frameworks from their github repositories to replicate the performance of the other frameworks.
+Table 7 in the paper shows the performance numbers of GraphIt and other frameworks on 6 applications. Here we provide a script that can produce GraphIt's performance for PageRank, PageRankDelta, Breadth-First Search, Single Source Shortest Paths, and Connected Components. Collaborative Filtering is not included in the script as we do not have the right to distribute the Netflix dataset, but we leave instructions for reviewers to compile collaborative filtering in case Netflix dataset is available. Reviewers can download the other frameworks from their github repositories to replicate the performance of the other frameworks.
 
 ### Running GraphIt generated programs
 
@@ -186,7 +187,7 @@ The performance in the VM does not reflect the actual performance because the VM
 
 ### Running on additional graphs (optional)
 
-We have provided a few slightly larger graphs for testing. In the folder we have socLive.sg (unweighted binary live journal graph), socLive.wsg (weighted binary live journal graph). Outside of the compressed file, we have road graph and Twitter graph. The VM has **insufficient memory** to run socLive graph. We recommend running these graphs on a machine with at least 8 GB memory. Running on Twitter graph can potentially take a significant amount of time if your machine does not have a 100 GB memory and many cores. Running these other graphs with serial C++ implementations can also be potentially very slow. Try to use a parallel implementation if possible.
+We have provided a few slightly larger graphs for testing. In the folder we have socLive.sg (unweighted binary Live Journal graph), socLive.wsg (weighted binary Live Journal graph). Outside of the compressed file, we have road graph and Twitter graph. The VM has **insufficient memory** to run socLive graph. We recommend running these graphs on a machine with at least 8 GB memory. Running on Twitter graph can potentially take a significant amount of time if your machine does not have a 100 GB memory and many cores. Running these other graphs with serial C++ implementations can also be potentially very slow. Try to use a parallel implementation if possible.
 
 Below we first show the instructions for running socLive graph.
 
@@ -213,7 +214,7 @@ The road graph and Twitter graph need to be named as `road-usad` and `twitter`. 
 
 ```
 #copy the files to the data directories.
-#The directory names have to be socLive, road-usad, twitter as we used hard-coded names in the scritps.
+#The directory names have to be socLive, road-usad, twitter as we used hard-coded names in the scripts.
 
 mkdir graphit/graphit_eval/eval/data/road-usad
 cp road-usad.sg graphit/graphit_eval/eval/data/road-usad
@@ -255,7 +256,7 @@ make GCC_PAR=1
 python table7_graphit.py --graph socLive
 ```
 
-As we mentioned earlier, the VM is not a good place to replicate the performance numbers we reported in the paper. To replicate the performance, you will need to 1) use the parallel veresions of the generated C++ programs 2) run them on a machine with similar configurations as ours. We used Intel Xeon E5-2695 v3 CPUs with 12 cores
+As we mentioned earlier, the VM is not a good place to replicate the performance numbers we reported in the paper. To replicate the performance, you will need to 1) use the parallel versions of the generated C++ programs 2) run them on a machine with similar configurations as ours. We used Intel Xeon E5-2695 v3 CPUs with 12 cores
 each for a total of 24 cores and 48 hyper-threads. The system has 128GB of DDR3-1600 memory
 and 30 MB last level cache on each socket, and runs with Transparent Huge Pages (THP) enabled. The generated C++ files are also not optimized for single-socket or 4-socket machines.
 
