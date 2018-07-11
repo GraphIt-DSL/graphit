@@ -1,0 +1,66 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex, int) = load ("../../test/graphs/test_closeness_sssp.wel");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const distance : vector{Vertex}(int) = -1;
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool
+	if distance[dst] == -1
+		distance[dst] = distance[src] + weight;
+	elif distance[dst] > distance[src] + weight
+		distance[dst] = distance[src] + weight;
+      	end
+end
+
+func toFilter(v : Vertex) -> output : bool
+     output = checked[v] == -1;
+end
+
+func main()
+        startTimer();   
+ 	
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+        frontier.addVertex(1);
+	distance[1] = 0;
+
+	var n : int = edges.getVertices();
+	print "number of vertices ";
+	print n;
+
+	var rounds : int = 0;
+        while (frontier.getVertexSetSize() != 0)
+
+              print "size of frontier at round: ";
+	      print rounds;
+              print frontier.getVertexSetSize();
+
+              frontier = edges.from(frontier).applyModified(updateEdge, distance);
+	      rounds = rounds + 1;
+	      if  rounds == n
+			print "negative cycle";
+			break;
+	      end
+        end
+
+        var notConnected : vertexset{Vertex} = vertices.where(toFilter);
+        var amountNotConnected : int = notConnected.getVertexSetSize();
+      
+        var sum: int = 0;
+        var numVerts : int = vertices.size();
+
+        for i in 0 : numVerts
+             sum += distance[i];
+        end
+
+        sum = sum + amountNotConnected;
+	
+	print "sum: ";
+	print sum;
+
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+
+end

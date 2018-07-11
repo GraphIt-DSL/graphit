@@ -1,0 +1,69 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const sumOfDist : vector{Vertex}(int) = 0;
+const checked : vector{Vertex}(int) = -1;
+
+func updateEdge(src : Vertex, dst : Vertex)
+     checked[dst] = checked[src] + 1;
+end
+
+func toFilter(v : Vertex) -> output : bool
+     output = checked[v] == -1;
+end
+
+func revertToUnchecked(v : Vertex)
+     checked[v] = -1;
+end
+
+func printSum(v : Vertex)
+     print sumOfDist[v];
+end
+
+func main()
+        startTimer();
+       
+	checked[4] = 0;
+
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+
+        frontier.addVertex(4);
+
+
+
+        while (frontier.getVertexSetSize() != 0)
+
+              print "size";
+
+              print frontier.getVertexSetSize();
+
+              frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+
+        end
+
+        var notConnected : vertexset{Vertex} = vertices.where(toFilter);
+
+        var amountNotConnected : int = notConnected.getVertexSetSize();
+
+      
+        var sum: int = 0;
+
+        var numVerts : int = vertices.size();
+
+
+        for i in 0 : numVerts
+             sum += checked[i];
+        end
+
+        sum = sum + amountNotConnected;
+	
+	print "sum: ";
+	print sum;
+
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+
+end
