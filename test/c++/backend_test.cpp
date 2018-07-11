@@ -208,6 +208,13 @@ TEST_F(BackendTest, SimpleIntegerList) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleIntegerListPop) {
+    istringstream is("func main() var int_list : list{int} = new list{int}(); "
+                             "         int_list.append(1); "
+                             "         var one : int = int_list.pop();"
+                             "end");
+    EXPECT_EQ (0, basicTest(is));
+}
 
 TEST_F(BackendTest, SimpleVertexSetList) {
     istringstream is("element Vertex end\n"
@@ -215,6 +222,19 @@ TEST_F(BackendTest, SimpleVertexSetList) {
                              "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
                              "  var vertexset_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}(); "
                              "  vertexset_list.append(frontier);"
+                             " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
+TEST_F(BackendTest, SimpleVertexSetListPop) {
+    istringstream is("element Vertex end\n"
+                             "func main() "
+                             "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                             "  var vertexset_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}(); "
+                             "  vertexset_list.append(frontier);"
+                             "  var pop_frontier : vertexset{Vertex} = vertexset_list.pop(); "
                              " end");
     EXPECT_EQ (0, basicTest(is));
 }

@@ -132,6 +132,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertexset_apply(self):
         self.basic_compile_exec_test("simple_vertexset_apply.gt")
 
+    def test_simple_int_list(self):
+        self.basic_compile_exec_test("simple_int_list.gt")
+
+    def test_simple_vertexset_list(self):
+        self.basic_compile_exec_test("simple_vertexset_list.gt")
+
     def test_simple_vertexset_apply_expect(self):
         self.expect_output_val("simple_vertexset_apply.gt", 10)
 
@@ -258,5 +264,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
+    # suite.addTest(TestGraphitCompiler('test_simple_vertexset_list'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -2528,12 +2528,17 @@ namespace graphit {
         intrinsics_.push_back("sum");
 
 
+        //library functions for edgeset
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+
+        // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");
         intrinsics_.push_back("addVertex");
-        intrinsics_.push_back("append");
 
+        //library functions for list
+        intrinsics_.push_back("append");
+        intrinsics_.push_back("pop");
 
         // set up function call intrinsics
         decls.insert("fabs", IdentType::FUNCTION);

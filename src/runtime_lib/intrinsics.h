@@ -92,6 +92,12 @@ template <typename T> void builtin_append (std::vector<T>* vec, T element){
     vec->push_back(element);
 }
 
+template <typename T> T builtin_pop (std::vector<T>* vec){
+    T last_element = vec->back();
+    vec->pop_back();
+    return last_element;
+}
+
 //float getTime(){
 //    using namespace std::chrono;
 //    auto t = high_resolution_clock::now();
