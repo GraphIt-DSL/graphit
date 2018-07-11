@@ -127,6 +127,13 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<ListAllocExpr> expr) {
+            if (expr->size_expr != nullptr)
+                expr->size_expr = rewrite<Expr>(expr->size_expr);
+            expr->element_type = rewrite<Type>(expr->element_type);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<VertexSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             node = expr;
@@ -220,6 +227,11 @@ namespace graphit {
         void MIRRewriter::visit(std::shared_ptr<VertexSetType> vertexset_type) {
             vertexset_type->element = rewrite<ElementType>(vertexset_type->element);
             node = vertexset_type;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<ListType> list_type) {
+            list_type->element_type = rewrite<Type>(list_type->element_type);
+            node = list_type;
         }
 
         void MIRRewriter::visit(std::shared_ptr<EdgeSetType> edgeset_type) {

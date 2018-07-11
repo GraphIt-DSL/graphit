@@ -66,6 +66,7 @@ namespace graphit {
         if (token == "max=") return Token::Type::MAX_REDUCE;
         if (token == "asyncMax=") return Token::Type::ASYNC_MAX_REDUCE;
         if (token == "asyncMin=") return Token::Type::ASYNC_MIN_REDUCE;
+        if (token == "list") return Token::Type::LIST;
 
         // If string does not correspond to a keyword, assume it is an identifier.
         return Token::Type::IDENT;

@@ -990,6 +990,18 @@ namespace graphit {
             return node;
         }
 
+
+        void ListType::copy(FIRNode::Ptr node) {
+            const auto listType = to<ListType>(node);
+            Type::copy(listType);
+            list_element_type = listType->list_element_type->clone<Type>();
+        }
+        FIRNode::Ptr ListType::cloneNode() {
+            const auto node = std::make_shared<ListType>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void EdgeSetType::copy(FIRNode::Ptr node) {
             const auto edgeSetType = to<EdgeSetType>(node);
             Type::copy(edgeSetType);
@@ -1023,6 +1035,18 @@ namespace graphit {
             Expr::copy(edge_set_load_expr);
             //element_type = edge_set_load_expr->element_type->clone<ElementType>();
             file_name = edge_set_load_expr->file_name->clone<Expr>();
+        }
+
+        FIRNode::Ptr ListAllocExpr::cloneNode() {
+            const auto node = std::make_shared<ListAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ListAllocExpr::copy(FIRNode::Ptr node) {
+            const auto list_alloc_expr = to<ListAllocExpr>(node);
+            Expr::copy(list_alloc_expr);
+            general_element_type = list_alloc_expr->general_element_type->clone<Type>();
         }
 
         FIRNode::Ptr EdgeSetLoadExpr::cloneNode() {

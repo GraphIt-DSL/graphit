@@ -1261,6 +1261,8 @@ namespace graphit {
                 expr = apply_expr;
 
             } else {
+
+                // transforming into builtin intrinsics (runtime libraries)
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
                     //make a  method call expression
@@ -1532,7 +1534,9 @@ namespace graphit {
             case Token::Type::VERTEX_SET:
                 type = parseVertexSetType();
                 break;
-
+            case Token::Type::LIST:
+                type = parseListType();
+                break;
             case Token::Type::GRID:
                 type = parseGridSetType();
                 break;
@@ -1787,6 +1791,45 @@ namespace graphit {
 
         return tensorType;
     }
+
+
+    // vector_block_type: 'vector' ['[' index_set ']' | '{' element_type '}' ]
+//                    '(' (vector_block_type | tensor_component_type) ')'
+//    fir::ListType::Ptr Parser::parseVectorBlockType() {
+//        auto tensorType = std::make_shared<fir::NDTensorType>();
+//        tensorType->transposed = false;
+//
+//        const Token tensorToken = consume(Token::Type::VECTOR);
+//        tensorType->setBeginLoc(tensorToken);
+//
+//        if (tryConsume(Token::Type::LB)) {
+//            const fir::IndexSet::Ptr indexSet = parseIndexSet();
+//            tensorType->indexSets.push_back(indexSet);
+//            consume(Token::Type::RB);
+//        }
+//
+//        // added to support specifying the Element Type.
+//        // The vector is essentially a field of the Element
+//        if (tryConsume(Token::Type::LC)) {
+//            const fir::ElementType::Ptr element = parseElementType();
+//            tensorType->element = element;
+//            consume(Token::Type::RC);
+//        }
+//
+//        consume(Token::Type::LP);
+//        if (peek().type == Token::Type::VECTOR) {
+//            tensorType->blockType = parseVectorBlockType();
+//        } else {
+//            tensorType->blockType = parseScalarType();
+//        }
+//
+//        const Token rightParenToken = consume(Token::Type::RP);
+//        tensorType->setEndLoc(rightParenToken);
+//
+//        return tensorType;
+//    }
+
+
 
 // matrix_block_type: 'matrix' ['[' index_set ',' index_set ']']
 //                    '(' (matrix_block_type | tensor_component_type) ')'
@@ -2330,6 +2373,7 @@ namespace graphit {
         return token;
     }
 
+    //parse the vertexset type vertexset{ElementType}
     fir::VertexSetType::Ptr Parser::parseVertexSetType() {
         const Token setToken = consume(Token::Type::VERTEX_SET);
         consume(Token::Type::LC);
@@ -2342,6 +2386,21 @@ namespace graphit {
         vertexSetType->setEndLoc(rightCurlyToken);
 
         return vertexSetType;
+    }
+
+    // parses the list type list{Type}
+    fir::ListType::Ptr Parser::parseListType(){
+        const Token listToken = consume(Token::Type::LIST);
+        consume(Token::Type::LC);
+        const fir::Type::Ptr list_element_type = parseType();
+        const Token rightCurlyToken = consume(Token::Type::RC);
+
+        auto listType = std::make_shared<fir::ListType>();
+        listType->setBeginLoc(listToken);
+        listType->list_element_type = list_element_type;
+        listType->setEndLoc(rightCurlyToken);
+
+        return listType;
     }
 
     fir::Type::Ptr Parser::parseEdgeSetType() {
@@ -2385,7 +2444,7 @@ namespace graphit {
     }
 
     // added for parsing the allocation expression for GraphIt
-    // new_expr: 'new' 'VertexSet' '{' element_type '}' '(' [expr] ')'
+    // new_expr: 'new' ('VertexSet'| 'list')  '{' element_type '}' '(' [expr] ')'
     fir::NewExpr::Ptr Parser::parseNewExpr() {
 
         const Token newToken = consume(Token::Type::NEW);
@@ -2402,7 +2461,23 @@ namespace graphit {
 
             consume(Token::Type::LP);
             if (tryConsume(Token::Type::RP)) {
-                //no expression in the
+                //no expression in the "( )"
+            } else {
+                const auto expr = parseExpr();
+                output_new_expr->numElements = expr;
+                consume(Token::Type::RP);
+            }
+        } else if (tryConsume(Token::Type::LIST)){
+            //allocating a new List
+            output_new_expr = std::make_shared<fir::ListAllocExpr>();
+            consume(Token::Type::LC);
+            const auto list_element_type = parseType();
+            output_new_expr->general_element_type = list_element_type;
+            consume(Token::Type::RC);
+
+            consume(Token::Type::LP);
+            if (tryConsume(Token::Type::RP)) {
+                //no expression in the "( )"
             } else {
                 const auto expr = parseExpr();
                 output_new_expr->numElements = expr;
@@ -2448,12 +2523,16 @@ namespace graphit {
 
     void Parser::initIntrinsics() {
         // set up method call intrinsics
+
+        //TODO: this one might need to be removed
         intrinsics_.push_back("sum");
+
+
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
         intrinsics_.push_back("getVertexSetSize");
         intrinsics_.push_back("addVertex");
-
+        intrinsics_.push_back("append");
 
 
         // set up function call intrinsics

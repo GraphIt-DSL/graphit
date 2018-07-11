@@ -98,9 +98,15 @@ namespace graphit {
 
         struct VertexSetType;
         struct EdgeSetType;
+        struct ListType;
 
         struct EdgeSetLoadExpr;
+
+        // Expression that allocates a new vertexset (new vertexset(node_id));
         struct VertexSetAllocExpr;
+
+        // Experession that allocates the new list
+        struct ListAllocExpr;
 
         struct MethodCallExpr;
         struct ApplyExpr;
@@ -110,6 +116,7 @@ namespace graphit {
         struct BreakStmt;
 
         struct ReduceStmt;
+
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -145,6 +152,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ScalarType> op) {}
 
             virtual void visit(std::shared_ptr<NDTensorType>);
+
+            virtual void visit(std::shared_ptr<ListType>);
+
 
             virtual void visit(std::shared_ptr<OpaqueType>) {}
 
@@ -279,6 +289,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VertexSetType>){};
             virtual void visit(std::shared_ptr<EdgeSetType>){};
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+
+            virtual void visit(std::shared_ptr<ListAllocExpr>);
+
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
             virtual void visit(std::shared_ptr<MethodCallExpr>);

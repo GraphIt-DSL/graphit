@@ -47,7 +47,7 @@ namespace graphit {
         virtual void visit(mir::TensorArrayReadExpr::Ptr);
 
         virtual void visit(mir::VertexSetAllocExpr::Ptr);
-
+        virtual void visit(mir::ListAllocExpr::Ptr);
 
         //functional operators
         virtual void visit(mir::VertexSetApplyExpr::Ptr);
@@ -80,6 +80,8 @@ namespace graphit {
         virtual void visit(mir::ElementType::Ptr element_type);
 
         virtual void visit(mir::VertexSetType::Ptr vertexset_type);
+        virtual void visit(mir::ListType::Ptr list_type);
+
         virtual void visit(mir::StructTypeDecl::Ptr struct_type);
         virtual void visit(mir::ScalarType::Ptr scalar_type);
         virtual void visit(mir::VectorType::Ptr vector_type);

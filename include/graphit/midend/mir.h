@@ -281,6 +281,22 @@ namespace graphit {
 
         };
 
+        struct ListType : public Type {
+            Type::Ptr element_type;
+
+            typedef std::shared_ptr<ListType> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ListType>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
         struct EdgeSetType : public Type {
             ElementType::Ptr element;
             ScalarType::Ptr weight_type;
@@ -918,6 +934,23 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetAllocExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+
+        struct ListAllocExpr : public NewExpr {
+            Expr::Ptr size_expr;
+            Type::Ptr element_type;
+            typedef std::shared_ptr<ListAllocExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ListAllocExpr>());
             }
 
         protected:

@@ -201,6 +201,28 @@ TEST_F(BackendTest, SimpleForLoops) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+
+TEST_F(BackendTest, SimpleIntegerList) {
+    istringstream is("func main() var int_list : list{int} = new list{int}(); int_list.append(1); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, SimpleVertexSetList) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const size : int = vertices.size();\n"
+                             "func main() "
+                             "  var vertexset_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}(); "
+                             "  vertexset_list.append(vertices);"
+                             " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, VertexSetGetSize) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"

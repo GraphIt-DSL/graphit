@@ -125,6 +125,12 @@ namespace graphit {
             expr->size_expr->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ListAllocExpr> expr) {
+            expr->element_type->accept(this);
+            if (expr->size_expr != nullptr)
+                expr->size_expr->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<VertexSetApplyExpr> expr) {
             expr->target->accept(this);
         }
@@ -213,6 +219,10 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<VertexSetType> vertexset_type) {
             vertexset_type->element->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<ListType> list_type) {
+            list_type->element_type->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetType> edgeset_type) {

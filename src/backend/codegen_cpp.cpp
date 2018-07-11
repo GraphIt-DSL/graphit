@@ -856,6 +856,21 @@ namespace graphit {
         oss << ")";
     }
 
+    void CodeGenCPP::visit(mir::ListAllocExpr::Ptr alloc_expr) {
+        oss << "new std::vector< ";
+        alloc_expr->element_type->accept(this);
+        oss << " > ( ";
+        // currently we don't support initializing a vector with size
+        //This is the current number of elements, but we need the range
+        //alloc_expr->size_expr->accept(this);
+        //const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
+        //size_expr->accept(this);
+        //oss << " , ";
+        //alloc_expr->size_expr->accept(this);
+        oss << ")";
+    }
+
+
     void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
         //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
@@ -987,6 +1002,12 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
         oss << "VertexSubset<int> *  ";
+    }
+
+    void CodeGenCPP::visit(mir::ListType::Ptr list_type) {
+        oss << "std::vector< ";
+        list_type->element_type->accept(this);
+        oss << " > *  ";
     }
 
     void CodeGenCPP::visit(mir::NegExpr::Ptr neg_expr) {

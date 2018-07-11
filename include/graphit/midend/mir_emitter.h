@@ -62,6 +62,9 @@ namespace graphit {
 
             virtual void visit(fir::VertexSetAllocExpr::Ptr);
 
+            virtual void visit(fir::ListAllocExpr::Ptr);
+
+
             virtual void visit(fir::TensorReadExpr::Ptr);
 
             virtual void visit(fir::CallExpr::Ptr);
@@ -93,6 +96,7 @@ namespace graphit {
             virtual void visit(fir::ScalarType::Ptr);
             virtual void visit(fir::ElementType::Ptr);
             virtual void visit(fir::VertexSetType::Ptr);
+            virtual void visit(fir::ListType::Ptr);
             virtual void visit(fir::EdgeSetType::Ptr);
             virtual void visit(fir::NDTensorType::Ptr);
 

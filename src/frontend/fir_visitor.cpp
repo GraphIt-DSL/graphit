@@ -75,6 +75,10 @@ namespace graphit {
             type->blockType->accept(this);
         }
 
+        void FIRVisitor::visit(ListType::Ptr type) {
+            type->list_element_type->accept(this);
+        }
+
         void FIRVisitor::visit(IdentDecl::Ptr decl) {
             decl->name->accept(this);
             decl->type->accept(this);
@@ -405,7 +409,14 @@ namespace graphit {
 
         void FIRVisitor::visit(std::shared_ptr<VertexSetAllocExpr> expr){
             expr->elementType->accept(this);
-            expr->numElements->accept(this);
+            if (expr->numElements != nullptr)
+                expr->numElements->accept(this);
+        }
+
+        void FIRVisitor::visit(std::shared_ptr<ListAllocExpr> expr){
+            expr->general_element_type->accept(this);
+            if (expr->numElements != nullptr)
+                expr->numElements->accept(this);
         }
 
         void FIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> expr) {
