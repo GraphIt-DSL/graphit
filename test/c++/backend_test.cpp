@@ -211,13 +211,10 @@ TEST_F(BackendTest, SimpleIntegerList) {
 
 TEST_F(BackendTest, SimpleVertexSetList) {
     istringstream is("element Vertex end\n"
-                             "element Edge end\n"
-                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
-                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-                             "const size : int = vertices.size();\n"
                              "func main() "
+                             "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
                              "  var vertexset_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}(); "
-                             "  vertexset_list.append(vertices);"
+                             "  vertexset_list.append(frontier);"
                              " end");
     EXPECT_EQ (0, basicTest(is));
 }

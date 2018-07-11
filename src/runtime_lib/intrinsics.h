@@ -88,6 +88,9 @@ void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
 
+template <typename T> void builtin_append (std::vector<T>* vec, T element){
+    vec->push_back(element);
+}
 
 //float getTime(){
 //    using namespace std::chrono;
