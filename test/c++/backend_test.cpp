@@ -196,6 +196,22 @@ TEST_F(BackendTest, SimpleEdgeSetApply) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+
+TEST_F(BackendTest, SimpleEdgeSetTranspose) {
+    istringstream is("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                             "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                             "func srcAddOne(src : Vertex, dst : Vertex) "
+                             "      vector_a[src] = vector_a[src] + 1; end\n"
+                             "func main() "
+                             "      var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose(); \n"
+                             "      transposed_edges.apply(srcAddOne); \n"
+                             " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleForLoops) {
     istringstream is("func main() for i in 1:10; print i; end end");
     EXPECT_EQ (0, basicTest(is));

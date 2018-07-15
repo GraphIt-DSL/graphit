@@ -120,6 +120,10 @@ float stopTimer(){
 
 }
 
+Graph builtin_transpose(Graph &graph){
+    return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
+}
+
 
 
 #endif //GRAPHIT_INTRINSICS_H_H

@@ -1,0 +1,13 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vector_a : vector{Vertex}(float) = 0.0;
+
+func srcAddOne(src : Vertex, dst : Vertex)
+     vector_a[src] = vector_a[src] + 1;
+end
+
+func main()
+     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
+     transposed_edges.apply(srcAddOne);
+end

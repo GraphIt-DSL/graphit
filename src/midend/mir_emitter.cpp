@@ -476,7 +476,9 @@ namespace graphit {
             retExpr = vertexset_apply_expr;
         }
 
-        if (ctx->isEdgeSet(mir_var->var.getName())) {
+        //if (ctx->isEdgeSet(mir_var->var.getName())) {
+        if(mir::isa<mir::EdgeSetType>(mir_var->var.getType())){
+
             auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
             edgeset_apply_expr->target = target_expr;
             edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;

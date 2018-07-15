@@ -226,6 +226,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_sssp(self):
         self.basic_compile_exec_test("simple_sssp.gt")
 
+    def test_simple_edgeset_transpose(self):
+        self.basic_compile_exec_test("simple_edgeset_transpose.gt")
+
     def test_sssp_with_tracking(self):
         self.basic_compile_exec_test("sssp.gt")
 
@@ -264,5 +267,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_vertexset_list'))
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_transpose'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

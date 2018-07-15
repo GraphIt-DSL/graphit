@@ -1083,4 +1083,8 @@ namespace graphit {
             oss << ") ";
         }
     }
+
+    void CodeGenCPP::visit(mir::EdgeSetType::Ptr edgeset_type) {
+        oss << " Graph ";
+    }
 }

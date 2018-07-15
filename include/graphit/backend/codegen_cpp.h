@@ -86,6 +86,8 @@ namespace graphit {
         virtual void visit(mir::ScalarType::Ptr scalar_type);
         virtual void visit(mir::VectorType::Ptr vector_type);
 
+        virtual void visit(mir::EdgeSetType::Ptr edgeset_type);
+
     private:
         void genIncludeStmts();
 
