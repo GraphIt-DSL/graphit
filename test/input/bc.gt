@@ -1,0 +1,78 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const num_paths : vector{Vertex}(int) = 0;
+const dependences : vector{Vertex}(double) = 0;
+const visited : vector{Vertex}(bool) = false;
+
+func forward_update(src : Vertex, dst : Vertex)
+    num_paths[dst] +=  num_paths[src];
+end
+
+func visited_vertex_filter(v : Vertex) -> output : bool
+    output = (visited[v] == false);
+end
+
+func mark_visited(v : Vertex)
+    visited[v] = true;
+end
+
+func mark_unvisited(v : Vertex)
+    visited[v] = false;
+end
+
+func backward_vertex_f(v : Vertex)
+    visited[v] = true;
+    dependences[v] += 1 / num_paths[v];
+end
+
+func backward_update(src : Vertex, dst : Vertex)
+    dependences[dst] += dependences[src];
+end
+
+func final_vertex_f(v : Vertex)
+    dependences[v] = (dependences[v] - 1 / num_paths[v]) * num_paths[v];
+end
+
+
+func main()
+
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(8);
+    num_paths[8] = 1;
+    visited[8] = true;
+    var round : int = 0;
+    var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
+
+    % foward pass to propagate num_paths
+
+    while (frontier.getVertexSetSize() != 0)
+        round = round + 1;
+        var frontier : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);
+        frontier.apply(mark_visited);
+        frontier_list.append(frontier);
+    end
+
+    % transposing the edges
+    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
+
+    % resetting the visited information for the backward pass
+
+    vertices.apply(mark_unvisited);
+    frontier.apply(backward_vertex_f);
+    frontier_list.pop();
+
+    % backward pass to accumulate the dependencies
+
+    while (round > 1)
+        transposed_edges.from(frontier).apply(backward_update);
+        frontier = frontier_list.pop();
+        frontier.apply(backward_vertex_f);
+    end
+
+    vertices.apply(final_vertex_f);
+
+end
