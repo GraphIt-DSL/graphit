@@ -210,6 +210,13 @@ namespace graphit {
                     oss << " += ";
                     reduce_stmt->expr->accept(this);
                     oss << ";" << std::endl;
+
+                    if (reduce_stmt->tracking_var_name_ != "") {
+                        // need to set the tracking variable
+                        printIndent();
+                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                    }
+
                     break;
                 case mir::ReduceStmt::ReductionOp::MIN:
                     printIndent();
@@ -238,6 +245,7 @@ namespace graphit {
                     break;
                 case mir::ReduceStmt::ReductionOp::MAX:
                     //TODO: not supported yet
+
                     oss << " max= ";
                     break;
                 case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
