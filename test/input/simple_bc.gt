@@ -20,6 +20,7 @@ func mark_visited(v : Vertex)
     visited[v] = true;
 end
 
+
 func mark_unvisited(v : Vertex)
     visited[v] = false;
 end
@@ -43,9 +44,9 @@ end
 func main()
 
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(8);
-    num_paths[8] = 1;
-    visited[8] = true;
+    frontier.addVertex(0);
+    num_paths[0] = 1;
+    visited[0] = true;
     var round : int = 0;
     var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
 
@@ -53,7 +54,12 @@ func main()
 
     while (frontier.getVertexSetSize() != 0)
         round = round + 1;
-        var output : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);
+        print "round";
+        print round;
+
+        print "size ";
+        print frontier.getVertexSetSize();
+        var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);
         output.apply(mark_visited);
         frontier_list.append(output);
         frontier = output;
