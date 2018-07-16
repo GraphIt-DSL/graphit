@@ -44,11 +44,12 @@ end
 func main()
 
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(0);
-    num_paths[0] = 1;
-    visited[0] = true;
+    frontier.addVertex(2);
+    num_paths[2] = 1;
+    visited[2] = true;
     var round : int = 0;
     var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
+    frontier_list.append(frontier);
 
     % foward pass to propagate num_paths
 
@@ -69,18 +70,26 @@ func main()
     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
 
     % resetting the visited information for the backward pass
-
     vertices.apply(mark_unvisited);
-    frontier.apply(backward_vertex_f);
+
+    % pop off the empty frontier
     frontier_list.pop();
+
+    % start from the last frontier
+    frontier = frontier_list.pop();
+    frontier.apply(backward_vertex_f);
+    round = round - 1;
 
     % backward pass to accumulate the dependencies
 
-    while (round > 1)
-        round = round - 1;
+    while (round > 0)
+        print "size ";
+        print frontier.getVertexSetSize();
         transposed_edges.from(frontier).apply(backward_update);
         frontier = frontier_list.pop();
         frontier.apply(backward_vertex_f);
+        round = round - 1;
+
     end
 
     vertices.apply(final_vertex_f);
