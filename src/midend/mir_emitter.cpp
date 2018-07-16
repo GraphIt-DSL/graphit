@@ -464,8 +464,8 @@ namespace graphit {
             return;
         }
 
-        if (ctx->isConstVertexSet(mir_var->var.getName())) {
-
+        //if (ctx->isConstVertexSet(mir_var->var.getName())) {
+        if (mir::isa<mir::VertexSetType>(mir_var->var.getType())){
             //dense vertexset apply
             auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
             vertexset_apply_expr->target = target_expr;
@@ -477,6 +477,7 @@ namespace graphit {
         }
 
         //if (ctx->isEdgeSet(mir_var->var.getName())) {
+        //replace the isEdgeSet metadata, which was incomplete
         if(mir::isa<mir::EdgeSetType>(mir_var->var.getType())){
 
             auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();

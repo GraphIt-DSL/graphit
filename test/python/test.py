@@ -192,6 +192,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_bfs(self):
         self.basic_compile_exec_test("simple_bfs.gt")
 
+    def test_simple_bc(self):
+        self.basic_compile_exec_test("simple_bc.gt")
+
     def test_bfs_verified(self):
         self.basic_compile_test("simple_bfs.gt")
         # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
@@ -267,5 +270,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_transpose'))
+    # suite.addTest(TestGraphitCompiler('test_simple_bc'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";R
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ClosenessCentralityWeightedDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 //
 

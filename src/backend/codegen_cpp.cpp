@@ -874,20 +874,32 @@ namespace graphit {
     void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
         //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
-        assert(associated_element_type);
-        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-        assert(associated_element_type_size);
-        std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-        oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
-        associated_element_type_size->accept(this);
-        oss << "; vertexsetapply_iter++) {" << std::endl;
-        indent();
-        printIndent();
-        oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
-        dedent();
-        printIndent();
-        oss << "}";
+
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())){
+            //if the verstexset is a const / global vertexset, then we can get size easily
+            auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+            assert(associated_element_type);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            assert(associated_element_type_size);
+            std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
+            oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
+            associated_element_type_size->accept(this);
+            oss << "; vertexsetapply_iter++) {" << std::endl;
+            indent();
+            printIndent();
+            oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            dedent();
+            printIndent();
+            oss << "}";
+        } else {
+            // if this is a dynamically created vertexset
+            oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
+            oss << apply_expr->input_function_name << "() ); " << std::endl;
+
+
+        }
+
+
     }
 
     void CodeGenCPP::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
