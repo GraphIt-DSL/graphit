@@ -18,7 +18,7 @@ namespace graphit {
         mir_var_decl->name = var_decl->name->ident;
         mir_var_decl->initVal = emitExpr(var_decl->initVal);
         mir_var_decl->type = emitType(var_decl->type);
-
+        mir_var_decl->stmt_label = var_decl->stmt_label;
 
         retStmt = mir_var_decl;
     };
