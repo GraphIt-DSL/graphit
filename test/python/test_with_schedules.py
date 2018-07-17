@@ -188,6 +188,13 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
+    def bc_basic_compile_tets(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+
     def pr_delta_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
@@ -386,8 +393,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
     def test_eigenvector_centrality(self):
-	self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
+	    self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
 
+    def test_bc_SparsePushDensePull_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePushDensePull.gt", True);
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -404,6 +413,6 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_hybrid_alternate_direction_specification'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_basic'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 

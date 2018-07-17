@@ -1036,7 +1036,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
-
+        // the arguments order here has to be consistent with genEdgeApplyFunctionSignature in gen_edge_apply_func_decl.cpp
 
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
@@ -1066,6 +1066,9 @@ namespace graphit {
             }
         }
 
+        // the original apply function (pull direction in hybrid case)
+        arguments.push_back(apply->input_function_name + "()");
+
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
@@ -1073,9 +1076,6 @@ namespace graphit {
                 arguments.push_back(apply_expr->push_to_function_ + "()");
             }
         }
-
-        // the original apply function (pull direction in hybrid case)
-        arguments.push_back(apply->input_function_name + "()");
 
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){

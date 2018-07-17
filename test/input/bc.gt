@@ -54,7 +54,7 @@ func main()
     % foward pass to propagate num_paths
     while (frontier.getVertexSetSize() != 0)
         round = round + 1;
-        var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);
+        #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);
         output.apply(mark_visited);
         frontier_list.append(output);
         frontier = output;
@@ -76,11 +76,10 @@ func main()
 
     % backward pass to accumulate the dependencies
     while (round > 0)
-        transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+        #s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
         frontier = frontier_list.pop();
         frontier.apply(backward_vertex_f);
         round = round - 1;
-
     end
 
     vertices.apply(final_vertex_f);
