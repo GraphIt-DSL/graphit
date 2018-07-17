@@ -20,7 +20,7 @@ end
 
 func main()
 
-    startTimer();
+
     var n : int = edges.getVertices();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
     vertices.apply(init);
