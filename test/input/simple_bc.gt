@@ -4,7 +4,7 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
 const vertices : vertexset{Vertex} = edges.getVertices();
 
-const num_paths : vector{Vertex}(int) = 0;
+const num_paths : vector{Vertex}(double) = 0;
 const dependences : vector{Vertex}(double) = 0;
 const visited : vector{Vertex}(bool) = false;
 
@@ -26,20 +26,36 @@ func mark_unvisited(v : Vertex)
 end
 
 func backward_vertex_f(v : Vertex)
+    % print "backward_vertex v: ";
+    % print v;
     visited[v] = true;
     dependences[v] += 1 / num_paths[v];
 end
 
 func backward_update(src : Vertex, dst : Vertex)
+    %print "backward_vertex_update src: ";
+    %print src;
+
+    %print "backward_vertex_update dst: ";
+    %print dst;
     dependences[dst] += dependences[src];
 end
 
 func final_vertex_f(v : Vertex)
     if num_paths[v] != 0
         dependences[v] = (dependences[v] - 1 / num_paths[v]) * num_paths[v];
+    else
+        dependences[v] = -1;
     end
 end
 
+func print_num_paths(v : Vertex)
+    print num_paths[v];
+end
+
+func print_dependences(v : Vertex)
+    print dependences[v];
+end
 
 func main()
 
@@ -66,6 +82,9 @@ func main()
         frontier = output;
     end
 
+    % print "-------num_paths-------";
+    % vertices.apply(print_num_paths);
+
     % transposing the edges
     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
 
@@ -85,7 +104,7 @@ func main()
     while (round > 0)
         print "size ";
         print frontier.getVertexSetSize();
-        transposed_edges.from(frontier).apply(backward_update);
+        transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
         frontier = frontier_list.pop();
         frontier.apply(backward_vertex_f);
         round = round - 1;
@@ -94,4 +113,16 @@ func main()
 
     vertices.apply(final_vertex_f);
 
+    % print "-------dependences-------";
+    % vertices.apply(print_dependences);
+
+    var sum : double = 0;
+    for i in 0: edges.getVertices()
+        if dependences[i] > 0
+            sum += dependences[i];
+        end
+    end
+
+    print "sum: ";
+    print sum;
 end
