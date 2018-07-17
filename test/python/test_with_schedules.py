@@ -395,8 +395,13 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_eigenvector_centrality(self):
 	    self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
 
+
+    # TODO: change these tests to be verified correctness test
     def test_bc_SparsePushDensePull_basic(self):
         self.bc_basic_compile_tets("bc_SparsePushDensePull.gt", True);
+
+    def test_bc_SparsePushDensePull_bitvector_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -409,10 +414,10 @@ if __name__ == '__main__':
             print ("using numa")
             del sys.argv[sys.argv.index("numa")]
     
-    unittest.main()
+    # unittest.main()
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_basic'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_basic'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
