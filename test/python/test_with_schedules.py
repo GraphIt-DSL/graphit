@@ -403,6 +403,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_basic(self):
         self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
 
+    def test_bc_SparsePush_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePush.gt", True);
+
 if __name__ == '__main__':
     while len(sys.argv) > 1:
         if "parallel" in sys.argv:
@@ -414,10 +417,10 @@ if __name__ == '__main__':
             print ("using numa")
             del sys.argv[sys.argv.index("numa")]
     
-    # unittest.main()
+    unittest.main()
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_basic'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePush_basic'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
