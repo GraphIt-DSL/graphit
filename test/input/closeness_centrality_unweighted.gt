@@ -1,9 +1,8 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../../../baghdadi/data3/socLive/socLive_gapbs.sg");
 const vertices : vertexset{Vertex} = edges.getVertices();
-const sumOfDist : vector{Vertex}(int) = 0;
 const checked : vector{Vertex}(int) = -1;
 
 func updateEdge(src : Vertex, dst : Vertex)
@@ -14,34 +13,27 @@ func toFilter(v : Vertex) -> output : bool
      output = checked[v] == -1;
 end
 
-func revertToUnchecked(v : Vertex)
-     checked[v] = -1;
-end
-
-func printSum(v : Vertex)
-     print sumOfDist[v];
-end
-
 func main()
         startTimer();
        
-	checked[4] = 0;
+	checked[1] = 0;
 
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
-        frontier.addVertex(4);
+        frontier.addVertex(1);
 
 
 
         while (frontier.getVertexSetSize() != 0)
 
-              print "size";
-
-              print frontier.getVertexSetSize();
-
-              frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+             #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
 
         end
+
+
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
 
         var notConnected : vertexset{Vertex} = vertices.where(toFilter);
 
@@ -54,7 +46,7 @@ func main()
 
 
         for i in 0 : numVerts
-             sum += checked[i];
+           #s2#  sum += checked[i];
         end
 
         sum = sum + amountNotConnected;
@@ -62,8 +54,5 @@ func main()
 	print "sum: ";
 	print sum;
 
-        var elapsed_time : float = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
 
 end

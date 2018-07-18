@@ -3,64 +3,36 @@ element Edge end
 
 const edges : edgeset{Edge}(Vertex, Vertex, int) = load ("../../test/graphs/test_closeness_sssp.wel");
 const vertices : vertexset{Vertex} = edges.getVertices();
-
-const distance : vector{Vertex}(int) = -1;
-
+const starting_node : int = 3;
+       
+const distance_from_start : vector{Vertex}(int) = 21474836;
 func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool
-	if distance[dst] == -1
-		distance[dst] = distance[src] + weight;
-	elif distance[dst] > distance[src] + weight
-		distance[dst] = distance[src] + weight;
-      	end
+           distance_from_start[dst] min= (distance_from_start[src] + weight);
 end
-
 func toFilter(v : Vertex) -> output : bool
-     output = checked[v] == -1;
+     output = distance_from_start[v] == 21474836;
 end
-
 func main()
-        startTimer();   
- 	
-        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-        frontier.addVertex(1);
-	distance[1] = 0;
-
-	var n : int = edges.getVertices();
-	print "number of vertices ";
-	print n;
-
-	var rounds : int = 0;
-        while (frontier.getVertexSetSize() != 0)
-
-              print "size of frontier at round: ";
-	      print rounds;
-              print frontier.getVertexSetSize();
-
-              frontier = edges.from(frontier).applyModified(updateEdge, distance);
-	      rounds = rounds + 1;
-	      if  rounds == n
-			print "negative cycle";
-			break;
-	      end
-        end
-
-        var notConnected : vertexset{Vertex} = vertices.where(toFilter);
-        var amountNotConnected : int = notConnected.getVertexSetSize();
-      
-        var sum: int = 0;
-        var numVerts : int = vertices.size();
-
-        for i in 0 : numVerts
-             sum += distance[i];
-        end
-
-        sum = sum + amountNotConnected;
-	
-	print "sum: ";
-	print sum;
-
-        var elapsed_time : float = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
-
+  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+  frontier.addVertex(starting_node);
+  distance_from_start[starting_node] = 0;
+  var n : int = edges.getVertices();
+  var rounds : int = 0;
+  while (frontier.getVertexSetSize() != 0)
+      #s1# frontier = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      rounds = rounds + 1;
+      if  rounds == n
+         print "negative cycle";
+         break;
+      end
+  end
+  var sum: int = 0;
+  var numVerts : int = vertices.size();
+  for i in 0 : numVerts
+      if distance_from_start[i] != 21474836
+      	#s2# sum += distance_from_start[i];
+      end
+  end
+  print "sum of distance_from_starts: ";
+  print sum; 
 end

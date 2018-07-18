@@ -190,7 +190,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def pr_delta_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
-            self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
+            self.basic_compile_test_with_separate_algo_schedule_files("cc_hybrid_dense_parallel_bitvector.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
@@ -239,6 +239,33 @@ class TestGraphitCompiler(unittest.TestCase):
         lines = proc.stdout.readlines()
         print (lines)
         self.assertEqual(float(lines[0].strip()), 3.2)
+
+    def closeness_centrality_unweighted_test(self, input_file_name, use_separate_algo_file=False):
+	if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        print (cmd)
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        lines = proc.stdout.readlines()
+        print (lines)
+        self.assertEqual(float(lines[3].strip()), 19541449)
+
+    def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
+	if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        print (cmd)
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        lines = proc.stdout.readlines()
+        print (lines)
+        self.assertEqual(float(lines[1].strip()), 15)
+
 
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
@@ -384,6 +411,12 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_eigenvector_centrality(self):
 	self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
+       
+    def test_closeness_centrality_unweighted(self):
+        self.closeness_centrality_unweighted_test("closeness_centrality_unweighted.gt",True)	
+    
+    def test_closeness_centrality_weighted(self):
+        self.closeness_centrality_weighted_test("closeness_centrality_weighted.gt",True)	
 
 
 if __name__ == '__main__':
@@ -400,7 +433,7 @@ if __name__ == '__main__':
     unittest.main()
 
     #used for enabling a specific test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_eigenvector_pagerank_fusion'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted'))
+    #unittest.TextTestRunner(verbosity=2).run(suite)
 
