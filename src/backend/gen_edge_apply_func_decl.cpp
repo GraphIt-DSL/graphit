@@ -511,9 +511,9 @@ namespace graphit {
         if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
             oss_ << "  Bitmap bitmap(numVertices);\n"
                     "  bitmap.reset();\n"
-                    "  parallel_for(int i = 0; i < numVertices; i+=32){\n"
+                    "  parallel_for(int i = 0; i < numVertices; i+=64){\n"
                     "     int start = i;\n"
-                    "     int end = (((i + 32) < numVertices)? (i+32):numVertices);\n"
+                    "     int end = (((i + 64) < numVertices)? (i+64):numVertices);\n"
                     "     for(int j = start; j < end; j++){\n"
                     "        if (from_vertexset->bool_map_[j])\n"
                     "          bitmap.set_bit(j);\n"
