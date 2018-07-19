@@ -33,7 +33,9 @@ namespace graphit {
                             {"SparsePush", "push"},
                             {"DensePull", "pull"},
                             {"SparsePush-DensePull", "hybrid_dense"},
-                            {"DensePush-SparsePush", "hybrid_dense_forward"}
+                            {"DensePull-SparsePush", "hybrid_dense"},
+                            {"DensePush-SparsePush", "hybrid_dense_forward"},
+                            {"SparsePush-DensePush", "hybrid_dense_forward"}
                     };
 
                     parallelCompatibilityMap_ = {
