@@ -1792,45 +1792,6 @@ namespace graphit {
         return tensorType;
     }
 
-
-    // vector_block_type: 'vector' ['[' index_set ']' | '{' element_type '}' ]
-//                    '(' (vector_block_type | tensor_component_type) ')'
-//    fir::ListType::Ptr Parser::parseVectorBlockType() {
-//        auto tensorType = std::make_shared<fir::NDTensorType>();
-//        tensorType->transposed = false;
-//
-//        const Token tensorToken = consume(Token::Type::VECTOR);
-//        tensorType->setBeginLoc(tensorToken);
-//
-//        if (tryConsume(Token::Type::LB)) {
-//            const fir::IndexSet::Ptr indexSet = parseIndexSet();
-//            tensorType->indexSets.push_back(indexSet);
-//            consume(Token::Type::RB);
-//        }
-//
-//        // added to support specifying the Element Type.
-//        // The vector is essentially a field of the Element
-//        if (tryConsume(Token::Type::LC)) {
-//            const fir::ElementType::Ptr element = parseElementType();
-//            tensorType->element = element;
-//            consume(Token::Type::RC);
-//        }
-//
-//        consume(Token::Type::LP);
-//        if (peek().type == Token::Type::VECTOR) {
-//            tensorType->blockType = parseVectorBlockType();
-//        } else {
-//            tensorType->blockType = parseScalarType();
-//        }
-//
-//        const Token rightParenToken = consume(Token::Type::RP);
-//        tensorType->setEndLoc(rightParenToken);
-//
-//        return tensorType;
-//    }
-
-
-
 // matrix_block_type: 'matrix' ['[' index_set ',' index_set ']']
 //                    '(' (matrix_block_type | tensor_component_type) ')'
     fir::NDTensorType::Ptr Parser::parseMatrixBlockType() {
