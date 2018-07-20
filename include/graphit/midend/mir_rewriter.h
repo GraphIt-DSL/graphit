@@ -75,7 +75,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<FloatLiteral> op) { node = op; };
 
             virtual void visit(std::shared_ptr<IntLiteral> op) { node = op; } //leaf FIR nodes need no recursive calls
+
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+
+            virtual void visit(std::shared_ptr<ListAllocExpr>);
 
             virtual void visit(std::shared_ptr<VarExpr> op) { node = op; };
 
@@ -109,6 +112,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ElementType> op) { node = op; };
 
             virtual void visit(std::shared_ptr<VertexSetType>);
+
+            virtual void visit(std::shared_ptr<ListType>);
 
             virtual void visit(std::shared_ptr<EdgeSetType>);
 

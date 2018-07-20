@@ -1,0 +1,8 @@
+element Vertex end
+
+func main()
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    var vertexset_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
+    vertexset_list.append(frontier);
+    var pop_frontier : vertexset{Vertex} = vertexset_list.pop();
+end

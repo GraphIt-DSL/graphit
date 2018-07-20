@@ -137,7 +137,7 @@ In the schedules shown in Table 8, the keyword ’Program’ and the continuatio
 
 ```
 schedule:
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
     program->configApplyNumSSG("s1", "fixed-vertex-count",  X, "DensePull");
     
 ```

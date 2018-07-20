@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleAssignReturnFrontierNewAPI";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleMaxReduce";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetTranspose";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
@@ -37,12 +37,12 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCNoSchedule";R
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ClosenessCentralityWeightedDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 //
 
 
-//      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPullEdgeAwareParallelSchedule";
+//      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLabelForVarDecl";
 //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
  //   ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
