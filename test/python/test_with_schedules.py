@@ -393,7 +393,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
     def test_eigenvector_centrality(self):
-	    self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
+	    self.eigenvector_centrality_verified_test("eigenvector_centrality_DensePull_parallel.gt", True)
 
 
     # TODO: change these tests to be verified correctness test
@@ -421,6 +421,6 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePush_basic'))
+    # suite.addTest(TestGraphitCompiler('test_eigenvector_centrality'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
