@@ -30,7 +30,7 @@ func main()
   var numVerts : int = vertices.size();
   for i in 0 : numVerts
       if distance_from_start[i] != 21474836
-      	#s2# sum += distance_from_start[i];
+      	sum += distance_from_start[i];
       end
   end
   print "sum of distance_from_starts: ";

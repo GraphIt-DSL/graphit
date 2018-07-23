@@ -1,7 +1,7 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../../../baghdadi/data3/socLive/socLive_gapbs.sg");
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../test/graphs/test.el");
 const vertices : vertexset{Vertex} = edges.getVertices();
 const checked : vector{Vertex}(int) = -1;
 
@@ -46,7 +46,7 @@ func main()
 
 
         for i in 0 : numVerts
-           #s2#  sum += checked[i];
+        	sum += checked[i];
         end
 
         sum = sum + amountNotConnected;

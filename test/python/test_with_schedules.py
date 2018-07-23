@@ -258,7 +258,7 @@ class TestGraphitCompiler(unittest.TestCase):
         #check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print (lines)
-        self.assertEqual(float(lines[3].strip()), 19541449)
+        self.assertEqual(float(lines[3].strip()), 3)
 
     def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
 	if use_separate_algo_file:
