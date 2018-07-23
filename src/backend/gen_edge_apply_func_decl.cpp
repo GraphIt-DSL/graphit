@@ -657,6 +657,7 @@ namespace graphit {
         if (apply_expr_gen_frontier) {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
+                    "  next_frontier->is_dense = true;\n"
                     "  return next_frontier;\n";
         }
 

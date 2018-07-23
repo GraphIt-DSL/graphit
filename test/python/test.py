@@ -132,6 +132,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertexset_apply(self):
         self.basic_compile_exec_test("simple_vertexset_apply.gt")
 
+    def test_simple_int_list(self):
+        self.basic_compile_exec_test("simple_int_list.gt")
+
+    def test_simple_vertexset_list(self):
+        self.basic_compile_exec_test("simple_vertexset_list.gt")
+
     def test_simple_vertexset_apply_expect(self):
         self.expect_output_val("simple_vertexset_apply.gt", 10)
 
@@ -186,6 +192,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_bfs(self):
         self.basic_compile_exec_test("simple_bfs.gt")
 
+    def test_simple_bc(self):
+        self.basic_compile_exec_test("simple_bc.gt")
+
     def test_bfs_verified(self):
         self.basic_compile_test("simple_bfs.gt")
         # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
@@ -219,6 +228,9 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_simple_sssp(self):
         self.basic_compile_exec_test("simple_sssp.gt")
+
+    def test_simple_edgeset_transpose(self):
+        self.basic_compile_exec_test("simple_edgeset_transpose.gt")
 
     def test_sssp_with_tracking(self):
         self.basic_compile_exec_test("sssp.gt")
@@ -258,5 +270,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_sssp'))
+    # suite.addTest(TestGraphitCompiler('test_simple_bc'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

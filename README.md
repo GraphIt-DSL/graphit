@@ -23,6 +23,7 @@ After you have cloned the directory:
     cd build
     cmake ..
     make
+    
 ```
 Currently, we do require you to name the build directory `build` for the unit tests to work. 
 To run the C++ test suite do (all tests should pass):
@@ -30,6 +31,7 @@ To run the C++ test suite do (all tests should pass):
 ```
     cd build/bin
     ./graphit_test
+    
 ```
 
 To run the Python end-to-end test suite:
@@ -42,9 +44,12 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
     cd graphit/test/python
     python test.py
     python test_with_schedules.py
+    
 ```
 
-When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. Examples are given in the comments of the main function in `test_with_schedules.py`. 
+When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. We provide examples of enabling a subset of Python tests in the comments of the main function in `test_with_schedules.py`. 
+
+Note when running `test.py`, some error message may be printed during the run that are expected. We have expected to fail tests that print certain error messages. Please check the final output. `test_with_schedules.py` might take a few minutes to run. 
 
 Compile GraphIt Programs
 ===========
@@ -53,16 +58,17 @@ To compile an input GraphIt file with schedules in the same file (assuming the b
 
 ```
     cd build/bin
-    python graphitc.py -f ../../test/input/simple_vector_sum.gt -o test.cpp
+    python graphitc.py -f ../../test/input_with_schedules/pagerank_benchmark_cache.gt -o test.cpp
     
 ```
 To compile an input algorithm file and another separate schedule file (some of the test files have hardcoded paths to test inputs, be sure to modify that or change the directory you run the compiled files)
 
-The example below compiles the algorithm file (../../test/input/cc.gt), with a separate schedule file (../../test/input_with_schedules/cc_pull_parallel.gt)
+The example below compiles the algorithm file (../../test/input/pagerank.gt), with a separate schedule file (../../test/input_with_schedules/pagerank_pull_parallel.gt)
 
 ```
    cd build/bin
-   python graphitc.py -a ../../test/input/cc.gt -f ../../test/input_with_schedules/cc_pull_parallel.gt -o test.cpp
+   python graphitc.py -a ../../test/input/pagerank_with_filename_arg.gt -f ../../test/input_with_schedules/pagerank_pull_parallel.gt -o test.cpp
+   
 ```
 
 Compile and Run Generated C++ Programs
@@ -71,8 +77,9 @@ To compile a serial version, you can use reguar g++ with support of c++11 standa
  
 ```
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-    g++ -std=c++11 -I ../../src/runtime_lib/ test.cpp  -o -O3 test
-    ./test
+    g++ -std=c++11 -I ../../src/runtime_lib/ -O3 test.cpp  -o test
+    ./test ../../test/graphs/4.el
+    
 ```
 
 To compile a parallel version of the c++ program, you will need both CILK and OPENMP. OPENMP is required for programs using NUMA optimized schedule (configApplyNUMA enabled) and static parallel optimizations (static-vertex-parallel option in configApplyParallelization). All other programs can be compiled with CILK. For analyzing large graphs (e.g., twitter, friendster, webgraph) on NUMA machines, numacl -i all improves the parallel performance. For smaller graphs, such as LiveJournal and Road graphs, not using numactl can be faster. 
@@ -81,30 +88,39 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
 
     # compile and run with CILK
-    # icpc
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
-    # g++ (gcc) with cilk support
-    g++ -std=c++11 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
-    # run the compiled binary
-    numactl -i all ./test
+      # icpc
+      icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
+    
+      # g++ (gcc) with cilk support
+      g++ -std=c++11 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
+    
+      # to run the compiled binary on a small test graph, 4.el
+      numactl -i all ./test ../../test/graphs/4.el
     
     # compile and run with OPENMP
-    # icpc
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
-    # g++ (gcc) with openmp support
-    g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
-    # run the compiled binary
-    numactl -i all ./test
+      # icpc
+      icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
     
-    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma)
-    # icpc
-    icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp -lnuma -O3 test.cpp -o test
-    # g++ (gcc)
-    g++	-std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -lnuma -O3 test.cpp -o test
-    # run with NUMA enabled
-    OMP_PLACES=sockets ./test
+      # g++ (gcc) with openmp support
+      g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
+    
+      # to run the compiled binary on a small test graph, 4.el
+      numactl -i all ./test ../../test/graphs/4.el
+    
+    # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma). 
+      # Sometimes -lnuma will have to come after the test.cpp file
+      # icpc
+      icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
+    
+      # g++ (gcc)
+      g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
+      
+      # to run with NUMA enabled on a small test graph, 4.el
+      OMP_PLACES=sockets ./test ../../test/graphs/4.el
     
 ```
+
+You should see some running times printed. The pagerank example files require a commandline argument for the input graph file. If you see a segfault, then it probably means you did not specify an input graph. 
 
 
 Evaluate GraphIt's Performance
@@ -121,8 +137,9 @@ In the schedules shown in Table 8, the keyword ’Program’ and the continuatio
 
 ```
 schedule:
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
     program->configApplyNumSSG("s1", "fixed-vertex-count",  X, "DensePull");
+    
 ```
 
 The **test/input** and **test/input\_with\_schedules** directories contain many examples of the algorithm and schedule files. Use them as references when writing your own schedule.
@@ -132,5 +149,5 @@ Input Graph Formats
 
 GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
 
-We have provided sample input graph files in the graphit/test/graphs/ directory. The python tests use the sample input files. 
+We have provided sample input graph files in the `graphit/test/graphs/` directory. The python tests use the sample input files. 
 

@@ -258,6 +258,18 @@ namespace graphit {
             return node;
         }
 
+        void ListAllocExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<ListAllocExpr>(node);
+            size_expr = expr->size_expr->clone<Expr>();
+            element_type = expr->element_type;
+        }
+
+        MIRNode::Ptr ListAllocExpr::cloneNode() {
+            const auto node = std::make_shared<ListAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void NaryExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<NaryExpr>(node);
             for (const auto & operand : expr->operands){
@@ -479,6 +491,18 @@ namespace graphit {
 
         MIRNode::Ptr VertexSetType::cloneNode() {
             const auto node = std::make_shared<VertexSetType>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ListType::copy(MIRNode::Ptr node) {
+            auto type_node = to<mir::ListType>(node);
+            element_type = type_node->element_type->clone<ListType>();
+        }
+
+
+        MIRNode::Ptr ListType::cloneNode() {
+            const auto node = std::make_shared<ListType>();
             node->copy(shared_from_this());
             return node;
         }

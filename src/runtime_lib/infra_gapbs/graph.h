@@ -103,6 +103,7 @@ class CSRGraph {
   };
 
   void ReleaseResources() {
+    //added a second condition to prevent double free (transpose graphs)
     if (out_index_ != nullptr)
       delete[] out_index_;
     if (out_neighbors_ != nullptr)
@@ -124,7 +125,7 @@ class CSRGraph {
  public:
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
-  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr) {}
+  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false) {}
 
   CSRGraph(int64_t num_nodes, DestID_** index, DestID_* neighs) :
     directed_(false), num_nodes_(num_nodes),
@@ -141,18 +142,28 @@ class CSRGraph {
         DestID_** in_index, DestID_* in_neighs) :
     directed_(true), num_nodes_(num_nodes),
     out_index_(out_index), out_neighbors_(out_neighs),
-    in_index_(in_index), in_neighbors_(in_neighs) {
+    in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
 
       flags_ = new int[num_nodes_];
     SetUpOffsets(true);
+  }
 
+    CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
+        DestID_** in_index, DestID_* in_neighs, bool is_transpose) :
+    directed_(true), num_nodes_(num_nodes),
+    out_index_(out_index), out_neighbors_(out_neighs),
+    in_index_(in_index), in_neighbors_(in_neighs) , is_transpose_(is_transpose){
+      num_edges_ = out_index_[num_nodes_] - out_index_[0];
+
+      flags_ = new int[num_nodes_];
+    SetUpOffsets(true);
   }
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
     out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
-    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_) {
+    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false) {
       other.num_edges_ = -1;
       other.num_nodes_ = -1;
       other.out_index_ = nullptr;
@@ -164,12 +175,14 @@ class CSRGraph {
   }
 
   ~CSRGraph() {
-    ReleaseResources();
+    if (!is_transpose_)
+        ReleaseResources();
   }
 
   CSRGraph& operator=(CSRGraph&& other) {
     if (this != &other) {
-      ReleaseResources();
+        if (!is_transpose_)
+            ReleaseResources();
       directed_ = other.directed_;
       num_edges_ = other.num_edges_;
       num_nodes_ = other.num_nodes_;
@@ -353,7 +366,8 @@ class CSRGraph {
   int* flags_;
     SGOffset * offsets_;
 
- private:
+// private:
+  bool is_transpose_;
   bool directed_;
   int64_t num_nodes_;
   int64_t num_edges_;

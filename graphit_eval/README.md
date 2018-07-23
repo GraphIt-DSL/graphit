@@ -1,0 +1,1 @@
+This folder contains scripts to evaluate different aspects of the GraphIt compiler, such as code generation and performance.

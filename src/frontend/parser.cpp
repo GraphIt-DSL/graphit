@@ -1261,6 +1261,8 @@ namespace graphit {
                 expr = apply_expr;
 
             } else {
+
+                // transforming into builtin intrinsics (runtime libraries)
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
                     //make a  method call expression
@@ -1532,7 +1534,9 @@ namespace graphit {
             case Token::Type::VERTEX_SET:
                 type = parseVertexSetType();
                 break;
-
+            case Token::Type::LIST:
+                type = parseListType();
+                break;
             case Token::Type::GRID:
                 type = parseGridSetType();
                 break;
@@ -2330,6 +2334,7 @@ namespace graphit {
         return token;
     }
 
+    //parse the vertexset type vertexset{ElementType}
     fir::VertexSetType::Ptr Parser::parseVertexSetType() {
         const Token setToken = consume(Token::Type::VERTEX_SET);
         consume(Token::Type::LC);
@@ -2342,6 +2347,21 @@ namespace graphit {
         vertexSetType->setEndLoc(rightCurlyToken);
 
         return vertexSetType;
+    }
+
+    // parses the list type list{Type}
+    fir::ListType::Ptr Parser::parseListType(){
+        const Token listToken = consume(Token::Type::LIST);
+        consume(Token::Type::LC);
+        const fir::Type::Ptr list_element_type = parseType();
+        const Token rightCurlyToken = consume(Token::Type::RC);
+
+        auto listType = std::make_shared<fir::ListType>();
+        listType->setBeginLoc(listToken);
+        listType->list_element_type = list_element_type;
+        listType->setEndLoc(rightCurlyToken);
+
+        return listType;
     }
 
     fir::Type::Ptr Parser::parseEdgeSetType() {
@@ -2385,7 +2405,7 @@ namespace graphit {
     }
 
     // added for parsing the allocation expression for GraphIt
-    // new_expr: 'new' 'VertexSet' '{' element_type '}' '(' [expr] ')'
+    // new_expr: 'new' ('VertexSet'| 'list')  '{' element_type '}' '(' [expr] ')'
     fir::NewExpr::Ptr Parser::parseNewExpr() {
 
         const Token newToken = consume(Token::Type::NEW);
@@ -2402,7 +2422,23 @@ namespace graphit {
 
             consume(Token::Type::LP);
             if (tryConsume(Token::Type::RP)) {
-                //no expression in the
+                //no expression in the "( )"
+            } else {
+                const auto expr = parseExpr();
+                output_new_expr->numElements = expr;
+                consume(Token::Type::RP);
+            }
+        } else if (tryConsume(Token::Type::LIST)){
+            //allocating a new List
+            output_new_expr = std::make_shared<fir::ListAllocExpr>();
+            consume(Token::Type::LC);
+            const auto list_element_type = parseType();
+            output_new_expr->general_element_type = list_element_type;
+            consume(Token::Type::RC);
+
+            consume(Token::Type::LP);
+            if (tryConsume(Token::Type::RP)) {
+                //no expression in the "( )"
             } else {
                 const auto expr = parseExpr();
                 output_new_expr->numElements = expr;
@@ -2448,13 +2484,23 @@ namespace graphit {
 
     void Parser::initIntrinsics() {
         // set up method call intrinsics
+
+        //TODO: this one might need to be removed
         intrinsics_.push_back("sum");
+
+
+        //library functions for edgeset
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+
+        // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");
         intrinsics_.push_back("addVertex");
 
-
+        //library functions for list
+        intrinsics_.push_back("append");
+        intrinsics_.push_back("pop");
+        intrinsics_.push_back("transpose");
 
         // set up function call intrinsics
         decls.insert("fabs", IdentType::FUNCTION);

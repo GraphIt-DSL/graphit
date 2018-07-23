@@ -3,8 +3,8 @@
 //
 
 #include <gtest.h>
-#include "infra_gapbs/graph_verifier.h"
 #include "intrinsics.h"
+#include "infra_gapbs/graph_verifier.h"
 
 
 

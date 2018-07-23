@@ -883,9 +883,24 @@ namespace graphit {
             oss << "}";
         }
 
+        void FIRPrinter::visit(ListType::Ptr type) {
+            oss << "list{";
+            type->list_element_type->accept(this);
+            oss << "}";
+        }
         void FIRPrinter::visit(VertexSetAllocExpr::Ptr expr) {
             oss << "alloc vertexset {";
             expr->elementType->accept(this);
+            oss << "}(";
+            if (expr->numElements != nullptr) {
+                expr->numElements->accept(this);
+            }
+            oss << ")";
+        }
+
+        void FIRPrinter::visit(ListAllocExpr::Ptr expr) {
+            oss << "alloc list {";
+            expr->general_element_type->accept(this);
             oss << "}(";
             if (expr->numElements != nullptr) {
                 expr->numElements->accept(this);

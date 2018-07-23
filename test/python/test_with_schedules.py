@@ -188,9 +188,16 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
+    def bc_basic_compile_tets(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+
     def pr_delta_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
-            self.basic_compile_test_with_separate_algo_schedule_files("cc_hybrid_dense_parallel_bitvector.gt", input_file_name)
+            self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
@@ -393,6 +400,9 @@ class TestGraphitCompiler(unittest.TestCase):
         if self.numa_flags:
             self.pr_delta_verified_test("pagerank_delta_pull_parallel_numa.gt", True)
 
+    def test_prdelta_hybrid_alternate_direction_specification(self):
+        self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_bitvector_altdir.gt", True)
+
     def test_prdelta_parallel_hybrid_segment_expect(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_segment.gt", True)
 
@@ -409,15 +419,25 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_prdelta_parallel_load_balance_hybrid_dense_without_bitvec(self):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
-    def test_eigenvector_centrality(self):
-	self.eigenvector_centrality_verified_test("eigenvector_centrality.gt", True)
-       
-    def test_closeness_centrality_unweighted(self):
-        self.closeness_centrality_unweighted_test("closeness_centrality_unweighted.gt",True)	
-    
-    def test_closeness_centrality_weighted(self):
-        self.closeness_centrality_weighted_test("closeness_centrality_weighted.gt",True)	
+    def test_eigenvector_centrality_densepull_parallel(self):
+	self.eigenvector_centrality_verified_test("eigenvector_centrality_DensePull_parallel.gt", True)
 
+    def test_closeness_centrality_unweighted_hybrid_parallel(self):
+        self.closeness_centrality_unweighted_test("closeness_centrality_unweighted_hybrid_parallel.gt",True)	
+    
+    def test_closeness_centrality_weighted_hybrid_parallel(self):
+        self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt",True)	
+
+    # TODO: change these tests to be verified correctness test
+    def test_bc_SparsePushDensePull_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePushDensePull.gt", True);
+
+    def test_bc_SparsePushDensePull_bitvector_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
+
+
+    def test_bc_SparsePush_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePush.gt", True);
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -433,7 +453,9 @@ if __name__ == '__main__':
     unittest.main()
 
     #used for enabling a specific test
+
     #suite = unittest.TestSuite()
     #suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted'))
     #unittest.TextTestRunner(verbosity=2).run(suite)
+
 

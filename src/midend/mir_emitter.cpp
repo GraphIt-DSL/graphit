@@ -18,7 +18,7 @@ namespace graphit {
         mir_var_decl->name = var_decl->name->ident;
         mir_var_decl->initVal = emitExpr(var_decl->initVal);
         mir_var_decl->type = emitType(var_decl->type);
-
+        mir_var_decl->stmt_label = var_decl->stmt_label;
 
         retStmt = mir_var_decl;
     };
@@ -104,6 +104,18 @@ namespace graphit {
             return;
         };
         retType = mir_vertex_set_type;
+    }
+
+
+    void MIREmitter::visit(fir::ListType::Ptr list_type) {
+        const auto mir_list_set_type = std::make_shared<mir::ListType>();
+        mir_list_set_type->element_type = std::dynamic_pointer_cast<mir::Type>(
+                emitType(list_type->list_element_type));
+        if (!mir_list_set_type) {
+            std::cout << "Error in Emitting MIR VertexSetType " << std::endl;
+            return;
+        };
+        retType = mir_list_set_type;
     }
 
     void MIREmitter::visit(fir::EdgeSetType::Ptr edge_set_type) {
@@ -262,6 +274,16 @@ namespace graphit {
         retExpr = mir_vertexsetalloc_expr;
     }
 
+
+    void MIREmitter::visit(fir::ListAllocExpr::Ptr expr) {
+        // Currently we only record a size information in the MIR::ListAllocExpr
+        const auto mir_listalloc_expr = std::make_shared<mir::ListAllocExpr>();
+        if (expr->numElements != nullptr)
+            mir_listalloc_expr->size_expr = emitExpr(expr->numElements);
+        mir_listalloc_expr->element_type = mir::to<mir::Type>(emitType(expr->general_element_type));
+        retExpr = mir_listalloc_expr;
+    }
+
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
         auto mir_load_expr = std::make_shared<mir::EdgeSetLoadExpr>();
         mir_load_expr->file_name = emitExpr(load_expr->file_name);
@@ -356,6 +378,7 @@ namespace graphit {
             args.push_back(mir_arg);
         }
         mir_expr->args = args;
+
         retExpr = mir_expr;
     };
 
@@ -368,6 +391,8 @@ namespace graphit {
         }
 
         auto target_expr = std::dynamic_pointer_cast<fir::VarExpr>(method_call_expr->target);
+        auto mir_target_var = ctx->getSymbol(target_expr->ident);
+        auto mir_target_type = mir_target_var.getType();
 
         if (ctx->isConstVertexSet(target_expr->ident)) {
             // If target is a vertexset (vertexset is not an actual concrete object)
@@ -377,8 +402,27 @@ namespace graphit {
                 retExpr = ctx->getElementCount(vertex_element_type);
             }
 
+        } else if (mir::isa<mir::ListType>(mir_target_type)){
+            //if this is a List type
+            auto mir_list_type = mir::to<mir::ListType>(mir_target_type);
+            mir_call_expr->generic_type = mir_list_type->element_type;
+            mir_call_expr->name = method_call_expr->method_name->ident;
+
+            std::vector<mir::Expr::Ptr> args;
+            const auto self_arg = emitExpr(method_call_expr->target);
+            //add the target to the argument
+            args.push_back(self_arg);
+
+            for (auto &fir_arg : method_call_expr->args) {
+                const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                args.push_back(mir_arg);
+            }
+            mir_call_expr->args = args;
+            retExpr = mir_call_expr;
+
         } else {
             // If target is a vector or an edgeset (actual concrete object)
+
             mir_call_expr->generic_type = ctx->getVectorItemType(target_expr->ident);
             mir_call_expr->name = method_call_expr->method_name->ident;
 
@@ -420,8 +464,8 @@ namespace graphit {
             return;
         }
 
-        if (ctx->isConstVertexSet(mir_var->var.getName())) {
-
+        //if (ctx->isConstVertexSet(mir_var->var.getName())) {
+        if (mir::isa<mir::VertexSetType>(mir_var->var.getType())){
             //dense vertexset apply
             auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
             vertexset_apply_expr->target = target_expr;
@@ -432,7 +476,10 @@ namespace graphit {
             retExpr = vertexset_apply_expr;
         }
 
-        if (ctx->isEdgeSet(mir_var->var.getName())) {
+        //if (ctx->isEdgeSet(mir_var->var.getName())) {
+        //replace the isEdgeSet metadata, which was incomplete
+        if(mir::isa<mir::EdgeSetType>(mir_var->var.getType())){
+
             auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
             edgeset_apply_expr->target = target_expr;
             edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;

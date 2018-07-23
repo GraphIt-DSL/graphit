@@ -416,6 +416,25 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+
+        // A type for list. The element in list can be of any type, VertexsetType, TensorType ...
+        struct ListType : public Type {
+
+            Type::Ptr list_element_type;
+
+
+            typedef std::shared_ptr<ListType> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ListType>());
+            }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
         struct OpaqueType : public Type {
             typedef std::shared_ptr<OpaqueType> Ptr;
 
@@ -1474,7 +1493,7 @@ namespace graphit {
 
         struct NewExpr : public Expr {
             typedef std::shared_ptr<NewExpr> Ptr;
-
+            Type::Ptr general_element_type;
             ElementType::Ptr elementType;
             Expr::Ptr numElements;
         };
@@ -1492,6 +1511,19 @@ namespace graphit {
             virtual void copy(FIRNode::Ptr);
         };
 
+
+        // Allocator expression for List
+        struct ListAllocExpr : public NewExpr {
+            typedef std::shared_ptr<ListAllocExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ListAllocExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+            virtual void copy(FIRNode::Ptr);
+        };
 
         struct LoadExpr : public Expr {
             typedef std::shared_ptr<LoadExpr> Ptr;

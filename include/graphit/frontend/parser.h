@@ -198,6 +198,8 @@ namespace graphit {
         //Graphit Set system
         fir::VertexSetType::Ptr parseVertexSetType();
 
+        fir::ListType::Ptr parseListType();
+
         fir::Type::Ptr parseEdgeSetType();
 
         fir::NewExpr::Ptr parseNewExpr();

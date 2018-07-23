@@ -210,6 +210,13 @@ namespace graphit {
                     oss << " += ";
                     reduce_stmt->expr->accept(this);
                     oss << ";" << std::endl;
+
+                    if (reduce_stmt->tracking_var_name_ != "") {
+                        // need to set the tracking variable
+                        printIndent();
+                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                    }
+
                     break;
                 case mir::ReduceStmt::ReductionOp::MIN:
                     printIndent();
@@ -238,6 +245,7 @@ namespace graphit {
                     break;
                 case mir::ReduceStmt::ReductionOp::MAX:
                     //TODO: not supported yet
+
                     oss << " max= ";
                     break;
                 case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
@@ -856,23 +864,50 @@ namespace graphit {
         oss << ")";
     }
 
+    void CodeGenCPP::visit(mir::ListAllocExpr::Ptr alloc_expr) {
+        oss << "new std::vector< ";
+        alloc_expr->element_type->accept(this);
+        oss << " > ( ";
+        // currently we don't support initializing a vector with size
+        //This is the current number of elements, but we need the range
+        //alloc_expr->size_expr->accept(this);
+        //const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
+        //size_expr->accept(this);
+        //oss << " , ";
+        //alloc_expr->size_expr->accept(this);
+        oss << ")";
+    }
+
+
     void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
         //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
-        auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
-        assert(associated_element_type);
-        auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-        assert(associated_element_type_size);
-        std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-        oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
-        associated_element_type_size->accept(this);
-        oss << "; vertexsetapply_iter++) {" << std::endl;
-        indent();
-        printIndent();
-        oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
-        dedent();
-        printIndent();
-        oss << "}";
+
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())){
+            //if the verstexset is a const / global vertexset, then we can get size easily
+            auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+            assert(associated_element_type);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            assert(associated_element_type_size);
+            std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
+            oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
+            associated_element_type_size->accept(this);
+            oss << "; vertexsetapply_iter++) {" << std::endl;
+            indent();
+            printIndent();
+            oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            dedent();
+            printIndent();
+            oss << "}";
+        } else {
+            // if this is a dynamically created vertexset
+            oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
+            oss << apply_expr->input_function_name << "() ); " << std::endl;
+
+
+        }
+
+
     }
 
     void CodeGenCPP::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
@@ -989,13 +1024,19 @@ namespace graphit {
         oss << "VertexSubset<int> *  ";
     }
 
+    void CodeGenCPP::visit(mir::ListType::Ptr list_type) {
+        oss << "std::vector< ";
+        list_type->element_type->accept(this);
+        oss << " > *  ";
+    }
+
     void CodeGenCPP::visit(mir::NegExpr::Ptr neg_expr) {
         if (neg_expr->negate) oss << " -";
         neg_expr->operand->accept(this);
     }
 
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
-
+        // the arguments order here has to be consistent with genEdgeApplyFunctionSignature in gen_edge_apply_func_decl.cpp
 
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
@@ -1025,6 +1066,9 @@ namespace graphit {
             }
         }
 
+        // the original apply function (pull direction in hybrid case)
+        arguments.push_back(apply->input_function_name + "()");
+
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
@@ -1032,9 +1076,6 @@ namespace graphit {
                 arguments.push_back(apply_expr->push_to_function_ + "()");
             }
         }
-
-        // the original apply function (pull direction in hybrid case)
-        arguments.push_back(apply->input_function_name + "()");
 
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
@@ -1061,5 +1102,9 @@ namespace graphit {
             edgeset_load_expr->file_name->accept(this);
             oss << ") ";
         }
+    }
+
+    void CodeGenCPP::visit(mir::EdgeSetType::Ptr edgeset_type) {
+        oss << " Graph ";
     }
 }

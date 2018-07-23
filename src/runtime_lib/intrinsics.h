@@ -88,6 +88,15 @@ void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
 
+template <typename T> void builtin_append (std::vector<T>* vec, T element){
+    vec->push_back(element);
+}
+
+template <typename T> T builtin_pop (std::vector<T>* vec){
+    T last_element = vec->back();
+    vec->pop_back();
+    return last_element;
+}
 
 //float getTime(){
 //    using namespace std::chrono;
@@ -111,6 +120,23 @@ float stopTimer(){
 
 }
 
+Graph builtin_transpose(Graph &graph){
+    return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
+}
 
+
+template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
+   if (vertex_subset->is_dense){
+       parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
+           if(vertex_subset->bool_map_[v]){
+               apply_func(v);
+           }
+       }
+   } else {
+       parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+           apply_func(vertex_subset->dense_vertex_set_[i]);
+       }
+   }
+}
 
 #endif //GRAPHIT_INTRINSICS_H_H
