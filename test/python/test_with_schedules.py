@@ -454,8 +454,8 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
 
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted'))
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_prdelta_hybrid_alternate_direction_specification'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
