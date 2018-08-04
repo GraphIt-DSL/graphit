@@ -1,0 +1,61 @@
+
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[2]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const checked : vector{Vertex}(int) = -1;
+
+func updateEdge(src : Vertex, dst : Vertex)
+     checked[dst] = checked[src] + 1;
+end
+
+func toFilter(v : Vertex) -> output : bool
+     output = checked[v] == -1;
+end
+
+func main()
+	var starting: int = argv[1];
+       
+	checked[starting] = 0;
+
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+
+        frontier.addVertex(starting);
+
+
+        startTimer();
+
+        while (frontier.getVertexSetSize() != 0)
+
+             #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+
+        end
+
+
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+
+        var notConnected : vertexset{Vertex} = vertices.where(toFilter);
+
+        var amountNotConnected : int = notConnected.getVertexSetSize();
+
+      
+        var sum: int = 0;
+
+        var numVerts : int = vertices.size();
+
+
+        for i in 0 : numVerts
+           #s2#  sum += checked[i];
+
+        end
+
+        sum = sum + amountNotConnected;
+	
+	print "sum: ";
+	print sum;
+
+
+end
