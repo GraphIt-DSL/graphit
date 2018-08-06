@@ -12,7 +12,7 @@ class TestGraphitCompiler(unittest.TestCase):
     def setUpClass(cls):
         build_dir = "../../build"
         if not os.path.isdir(build_dir):
-            print "build the binaries"
+            print("build the binaries")
             #shutil.rmtree("../../build_dir")
             os.mkdir(build_dir)
             os.chdir(build_dir)
@@ -85,7 +85,7 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
-        print "output: " + output.strip()
+        print("output: " + output.strip())
         self.assertEqual(float(output.strip()), expected_output_val)
 
     # actual test cases
@@ -173,7 +173,7 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
-        print "output: " + output.strip()
+        print("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
 
