@@ -268,7 +268,7 @@ class TestGraphitCompiler(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
-
+    # quick testing
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_bc'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
