@@ -435,6 +435,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_basic(self):
         self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
 
+    def test_bc_SparsePushDensePull_bitvector_cache_basic(self):
+        self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector_cache.gt", True);
 
     def test_bc_SparsePush_basic(self):
         self.bc_basic_compile_tets("bc_SparsePush.gt", True);
@@ -455,7 +457,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_hybrid_alternate_direction_specification'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_cache_basic'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

@@ -112,7 +112,16 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<VarDecl> var_decl) {
+
+            if (var_decl->stmt_label != "") {
+                label_scope_.scope(var_decl->stmt_label);
+            }
+
             var_decl->initVal->accept(this);
+
+            if (var_decl->stmt_label != "") {
+                label_scope_.unscope();
+            }
         }
 
         void MIRVisitor::visitBinaryExpr(BinaryExpr::Ptr expr) {

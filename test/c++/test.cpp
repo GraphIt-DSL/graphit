@@ -45,7 +45,9 @@ int main(int argc, char **argv) {
 //      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLabelForVarDecl";
 //::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
- //   ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushSchedule";
+
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
