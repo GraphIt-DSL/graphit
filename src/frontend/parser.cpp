@@ -1185,7 +1185,7 @@ namespace graphit {
                 apply_expr->change_tracking_field = change_tracking_field;
                 consume(Token::Type::RP);
                 expr = apply_expr;
-            } else if (tryConsume(Token::Type::WHERE)) {
+            } else if (tryConsume(Token::Type::WHERE) or tryConsume(Token::Type::FILTER)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
                 where_expr->input_func = parseIdent();

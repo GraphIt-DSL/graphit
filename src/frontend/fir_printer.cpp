@@ -947,7 +947,7 @@ namespace graphit {
 
         void FIRPrinter::visit(WhereExpr::Ptr expr) {
             expr->target->accept(this);
-            oss << ".WHERE(";
+            oss << ".where(";
             expr->input_func->accept(this);
             oss << ")";
 
