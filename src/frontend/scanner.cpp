@@ -57,6 +57,7 @@ namespace graphit {
         if (token == "edgeset") return Token::Type::EDGE_SET;
         if (token == "load") return Token::Type::LOAD;
         if (token == "where") return Token::Type::WHERE;
+        if (token == "filter") return Token::Type::FILTER;
         if (token == "from") return Token::Type::FROM;
         if (token == "srcFilter") return Token::Type::SRC_FILTER;
         if (token == "break") return Token::Type::BREAK;

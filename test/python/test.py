@@ -12,7 +12,7 @@ class TestGraphitCompiler(unittest.TestCase):
     def setUpClass(cls):
         build_dir = "../../build"
         if not os.path.isdir(build_dir):
-            print("build the binaries")
+            print ("build the binaries")
             #shutil.rmtree("../../build_dir")
             os.mkdir(build_dir)
             os.chdir(build_dir)
@@ -85,7 +85,8 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
-        print("output: " + output.strip())
+
+        print ("output: " + str(output.strip()))
         self.assertEqual(float(output.strip()), expected_output_val)
 
     # actual test cases
@@ -173,7 +174,7 @@ class TestGraphitCompiler(unittest.TestCase):
         proc = subprocess.Popen("./"+ self.executable_file_name + " ../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
-        print("output: " + output.strip())
+        print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
 
@@ -182,6 +183,9 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_simple_vertex_filter(self):
         self.basic_compile_exec_test("simple_vertexset_filter.gt")
+
+    def test_simple_vertex_filter(self):
+        self.basic_compile_exec_test("simple_vertexset_where.gt")
 
     def test_simple_edgeset_apply_from_to(self):
         self.basic_compile_exec_test("simple_edgeset_apply_from_to.gt")
@@ -268,7 +272,7 @@ class TestGraphitCompiler(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
-    # quick testing
+
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_simple_bc'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

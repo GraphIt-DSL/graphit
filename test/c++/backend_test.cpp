@@ -312,9 +312,9 @@ TEST_F(BackendTest, SimpleVertexsetFilterComplete) {
     istringstream is("element Vertex end\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "const age : vector{Vertex}(int) = 0;\n"
-                             "func filter(v: Vertex) -> output : bool output = (age[v] > 40); end\n"
+                             "func to_filter(v: Vertex) -> output : bool output = (age[v] > 40); end\n"
                              "func main() \n"
-                             "var vertices_above_40 : vertexset{Vertex} = vertices.where(filter);"
+                             "var vertices_above_40 : vertexset{Vertex} = vertices.filter(to_filter);"
                              "end");
     EXPECT_EQ (0, basicTest(is));
 }

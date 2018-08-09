@@ -97,6 +97,7 @@ namespace graphit {
             VERTEX_SET,
             EDGE_SET,
             WHERE,
+            FILTER,
             LOAD,
             FROM,
             BREAK,
