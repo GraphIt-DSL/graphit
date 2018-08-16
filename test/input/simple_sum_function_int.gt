@@ -1,0 +1,7 @@
+element Vertex end
+const vector_a : vector{Vertex}(int) = 1.0;
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+func main()
+    var summation : int = vector_a.sum();
+    print summation;
+end
