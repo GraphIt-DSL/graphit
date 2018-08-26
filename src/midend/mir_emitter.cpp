@@ -431,6 +431,13 @@ namespace graphit {
             //add the target to the argument
             args.push_back(self_arg);
 
+            //adds an additional argument for Builtin Sum
+            if (method_call_expr->method_name->ident == "builtin_sum") {
+                auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
+                const auto size_arg = ctx->getElementCount(vertex_element_type);
+                args.push_back(size_arg);
+            }
+
             for (auto &fir_arg : method_call_expr->args) {
                 const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
                 args.push_back(mir_arg);

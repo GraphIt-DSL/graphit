@@ -29,16 +29,19 @@
 #include <chrono>
 
 
-// Deprecated, needed for
-//template <typename T>
-//T builtin_sum(T* input_vector){
-//    T output_sum = 0;
-//    int num_elem = sizeof(input_vector) / sizeof(input_vector[0]);
-//    for (int i = 0; i < num_elem; i++){
-//        output_sum += input_vector[i];
-//    }
-//    return output_sum;
-//}
+
+template <typename T>
+T builtin_sum(T* input_vector, int num_elem){
+    //Serial Code for summation
+    //T output_sum = 0;
+    //for (int i = 0; i < num_elem; i++){
+    //    output_sum += input_vector[i];
+    //}
+
+    T reduce_sum = sequence::plusReduce(input_vector, num_elem);
+
+    return reduce_sum;
+}
 
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call

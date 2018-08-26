@@ -153,7 +153,10 @@ TEST_F(BackendTest, SimpleVectorSum) {
     istringstream is("element Vertex end\n"
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
-                             "func main() var sum : float = vector_a.sum(); print sum; end");
+                             "func main() \n"
+                             "     var summation : float = vector_a.sum(); \n"
+                             "     print summation; \n"
+                             "end");
     EXPECT_EQ (0, basicTest(is));
 }
 
@@ -162,7 +165,10 @@ TEST_F(BackendTest, SimpleVertexSetApply) {
                              "const vector_a : vector{Vertex}(float) = 1.0;\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
-                             "func main() vertices.apply(addone); print vector_a.sum(); end");
+                             "func main() "
+                             "      vertices.apply(addone); "
+                             "      print vector_a.sum(); "
+                             "end");
     EXPECT_EQ (0, basicTest(is));
 }
 
