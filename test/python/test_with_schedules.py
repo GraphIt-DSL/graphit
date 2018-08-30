@@ -281,6 +281,9 @@ class TestGraphitCompiler(unittest.TestCase):
         #self.basic_compile_test("simple_pagerank_with_AoS.gt")
         self.basic_compile_test_with_separate_algo_schedule_files("pagerank.gt", "simple_pagerank_with_AoS.gt")
 
+    def test_filter_sum_parallel(self):
+        self.basic_compile_test_with_separate_algo_schedule_files("simple_apply_sum.gt", "simple_vector_sum.gt")
+
     def test_eigenvector_pagerank_fusion(self):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
@@ -435,11 +438,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_basic(self):
         self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
 
-    def test_bc_SparsePushDensePull_bitvector_cache_basic(self):
-        self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector_cache.gt", True);
-
     def test_bc_SparsePush_basic(self):
         self.bc_basic_compile_tets("bc_SparsePush.gt", True);
+
+
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:

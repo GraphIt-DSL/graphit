@@ -35,7 +35,7 @@ func main()
         print "elapsed time: ";
         print elapsed_time;
 
-        var notConnected : vertexset{Vertex} = vertices.where(toFilter);
+        var notConnected : vertexset{Vertex} = vertices.filter(toFilter);
 
         var amountNotConnected : int = notConnected.getVertexSetSize();
 

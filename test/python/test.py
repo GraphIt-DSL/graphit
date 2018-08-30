@@ -130,6 +130,18 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vector_sum_expect(self):
         self.expect_output_val("simple_vector_sum.gt", 5)
 
+    def test_simple_vector_sum_function_float_expect(self):
+        self.expect_output_val("simple_sum_function_float.gt", 5)
+
+    def test_simple_vector_sum_function_double_expect(self):
+        self.expect_output_val("simple_sum_function_double.gt", 5)
+
+    def test_simple_vector_sum_function_int_expect(self):
+        self.expect_output_val("simple_sum_function_int.gt", 5)
+
+    def test_simple_apply_sum_expected(self):
+        self.expect_output_val("simple_apply_sum.gt", 7)
+
     def test_simple_vertexset_apply(self):
         self.basic_compile_exec_test("simple_vertexset_apply.gt")
 
@@ -184,7 +196,7 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_vertex_filter(self):
         self.basic_compile_exec_test("simple_vertexset_filter.gt")
 
-    def test_simple_vertex_filter(self):
+    def test_simple_vertex_where(self):
         self.basic_compile_exec_test("simple_vertexset_where.gt")
 
     def test_simple_edgeset_apply_from_to(self):
@@ -273,6 +285,6 @@ if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_bc'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_simple_vector_sum_function_double_expect'))
+    #unittest.TextTestRunner(verbosity=2).run(suite)
