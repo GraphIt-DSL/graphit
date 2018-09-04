@@ -19,7 +19,6 @@ if __name__ == '__main__':
     output_file_name = args['output_file_name']
     runtime_include_path = args['runtime_include_path']
     graphitlib_path = args['graphitlib_path']
-    compile_template_file = "main.cpp"
 
     #check if user supplied a separate algorithm file from the schedule file
     supplied_separate_algo_file = False
@@ -31,6 +30,7 @@ if __name__ == '__main__':
     else:
         # use the input_file for both the algorithm and schedule
         algo_file_name = 'algo.gt'
+
     compile_file_name = 'compile.cpp'
 
 
@@ -56,21 +56,17 @@ if __name__ == '__main__':
     if not supplied_separate_algo_file:
         algo_file.close();
 
-    # generate a file compile.cpp for compiling the algo.gt file
-    with open(compile_template_file) as f:
-        content = f.readlines()
-
-    # copy over the default file template
+    # generate the schedule file schedule.cpp
     compile_file = open(compile_file_name, 'w')
 
-    for line in content:
-        if "insert schedule here" in line:
-            #insert the schedule commands here
-            for schedule_cmd in schedule_cmd_list:
-                compile_file.write(schedule_cmd)
+    compile_file.write("#include <graphit/frontend/high_level_schedule.h>\n")
+    compile_file.write("namespace graphit {\n")
+    compile_file.write("void user_defined_schedule (graphit::fir::high_level_schedule::ProgramScheduleNode::Ptr program) {\n")
+    for schedule_cmd in schedule_cmd_list:
+        compile_file.write(schedule_cmd)
+    compile_file.write("}\n")
+    compile_file.write("}")
 
-        else:
-            compile_file.write(line)
 
     compile_file.close();
 
