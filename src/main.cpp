@@ -11,6 +11,11 @@
 
 using namespace graphit;
 
+
+namespace graphit {
+	extern void user_defined_schedule (fir::high_level_schedule::ProgramScheduleNode::Ptr program);
+}
+
 int main(int argc, char* argv[]) {
     // Set up various data structures
     CLBase cli(argc, argv, "graphit compiler");
@@ -41,7 +46,11 @@ int main(int argc, char* argv[]) {
 
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context);
-    //insert schedule here
+
+#ifndef USE_DEFAULT_SCHEDULE    
+    //Call the user provided schedule for the algorithm
+    user_defined_schedule(program);
+#endif
 
     graphit::Midend* me = new graphit::Midend(context, program->getSchedule());
     me->emitMIR(mir_context);
