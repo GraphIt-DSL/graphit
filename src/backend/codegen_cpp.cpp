@@ -383,10 +383,13 @@ namespace graphit {
                 bool is_weighted = (edge_set_type->weight_type != nullptr);
                 for (auto label_iter = (*edge_iter).second.begin();
                      label_iter != (*edge_iter).second.end(); label_iter++) {
-                    oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << (*label_iter).first
-                        << "\", " << (*label_iter).second
-                        << (mir_context_->edgeset_to_label_to_merge_reduce[(*edge_iter).first][(*label_iter).first]->numa_aware
-                            ? ", true" : "") << ");" << std::endl;
+                    auto edge_iter_first = (*edge_iter).first;
+                    auto label_iter_first = (*label_iter).first;
+                    auto label_iter_second = (*label_iter).second;
+                    auto numa_aware_flag = mir_context_->edgeset_to_label_to_merge_reduce[edge_iter_first][label_iter_first]->numa_aware;
+                    oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
+                        << "\", " << label_iter_second
+                        << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
                 }
             }
 

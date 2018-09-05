@@ -332,83 +332,62 @@ protected:
 
         const char* bc_char = ("element Vertex end\n"
                 "element Edge end\n"
-                "\n"
                 "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/4.el\");\n"
                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-                "\n"
-                "const num_paths : vector{Vertex}(int) = 0;\n"
+                "const num_paths : vector{Vertex}(double) = 0;\n"
                 "const dependences : vector{Vertex}(double) = 0;\n"
                 "const visited : vector{Vertex}(bool) = false;\n"
-                "\n"
                 "func forward_update(src : Vertex, dst : Vertex)\n"
                 "    num_paths[dst] +=  num_paths[src];\n"
                 "end\n"
-                "\n"
                 "func visited_vertex_filter(v : Vertex) -> output : bool\n"
                 "    output = (visited[v] == false);\n"
                 "end\n"
-                "\n"
                 "func mark_visited(v : Vertex)\n"
                 "    visited[v] = true;\n"
                 "end\n"
-                "\n"
                 "func mark_unvisited(v : Vertex)\n"
                 "    visited[v] = false;\n"
                 "end\n"
-                "\n"
                 "func backward_vertex_f(v : Vertex)\n"
                 "    visited[v] = true;\n"
                 "    dependences[v] += 1 / num_paths[v];\n"
                 "end\n"
-                "\n"
                 "func backward_update(src : Vertex, dst : Vertex)\n"
                 "    dependences[dst] += dependences[src];\n"
                 "end\n"
-                "\n"
                 "func final_vertex_f(v : Vertex)\n"
                 "    dependences[v] = (dependences[v] - 1 / num_paths[v]) * num_paths[v];\n"
                 "end\n"
-                "\n"
-                "\n"
                 "func main()\n"
-                "\n"
                 "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
                 "    frontier.addVertex(8);\n"
                 "    num_paths[8] = 1;\n"
                 "    visited[8] = true;\n"
                 "    var round : int = 0;\n"
                 "    var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();\n"
-                "\n"
                 "    % foward pass to propagate num_paths\n"
-                "\n"
                 "    while (frontier.getVertexSetSize() != 0)\n"
                 "        round = round + 1;\n"
-                "        var output : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);\n"
+                "        #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);\n"
                 "        output.apply(mark_visited);\n"
                 "        frontier_list.append(output);\n"
                 "        frontier = output;\n"
                 "    end\n"
-                "\n"
                 "    % transposing the edges\n"
                 "    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();\n"
-                "\n"
                 "    % resetting the visited information for the backward pass\n"
-                "\n"
                 "    vertices.apply(mark_unvisited);\n"
                 "    frontier.apply(backward_vertex_f);\n"
                 "    frontier_list.pop();\n"
-                "\n"
                 "    % backward pass to accumulate the dependencies\n"
-                "\n"
                 "    while (round > 1)\n"
                 "        round = round - 1;\n"
-                "        transposed_edges.from(frontier).apply(backward_update);\n"
+                "        #s2# transposed_edges.from(frontier).apply(backward_update);\n"
                 "        frontier = frontier_list.pop();\n"
                 "        frontier.apply(backward_vertex_f);\n"
                 "    end\n"
-                "\n"
                 "    vertices.apply(final_vertex_f);\n"
-                "\n"
                 "end");
 
         const char* closeness_centrality_weighted_char = (
@@ -1643,6 +1622,36 @@ TEST_F(HighLevelScheduleTest, BCDefaultSchedule) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, BCDensePullSparsePushSchedule) {
+    istringstream is (bc_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull-SparsePush")
+            ->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel")
+            ->configApplyDirection("s2", "DensePull-SparsePush")
+            ->configApplyDenseVertexSet("s2", "bitvector", "src-vertexset", "DensePull")
+            ->configApplyParallelization("s2", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, BCDensePullSparsePushCacheOptimizedSchedule) {
+    istringstream is (bc_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull-SparsePush")
+            ->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel")
+            ->configApplyNumSSG("s1", "fixed-vertex-count",  10, "DensePull")
+            ->configApplyDirection("s2", "DensePull-SparsePush")
+            ->configApplyDenseVertexSet("s2", "bitvector", "src-vertexset", "DensePull")
+            ->configApplyParallelization("s2", "dynamic-vertex-parallel");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 

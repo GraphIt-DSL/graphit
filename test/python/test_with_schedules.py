@@ -459,7 +459,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_prdelta_hybrid_alternate_direction_specification'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_cache_basic'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

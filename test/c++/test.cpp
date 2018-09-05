@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleEdgeSetTranspose";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
@@ -46,6 +46,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLabelForVarDecl";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
