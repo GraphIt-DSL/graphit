@@ -1,4 +1,6 @@
-GraphIt Domain Specific Langauge and Compiler.
+GraphIt Domain Specific Langauge and Compiler [![Build Status](https://travis-ci.org/GraphIt-DSL/graphit.svg?branch=master)](https://travis-ci.org/GraphIt-DSL/graphit)
+==========
+GraphIt is a high-performance Graph DSL. [Website](graphit-lang.org)
 
 Dependencies
 ===========
