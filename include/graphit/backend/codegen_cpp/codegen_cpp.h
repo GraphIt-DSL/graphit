@@ -10,7 +10,7 @@
 #include <graphit/midend/mir_context.h>
 #include <iostream>
 #include <sstream>
-#include <graphit/backend/gen_edge_apply_func_decl.h>
+#include <graphit/backend/codegen_cpp/gen_edge_apply_func_decl.h>
 
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{

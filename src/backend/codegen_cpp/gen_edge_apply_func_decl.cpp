@@ -1,7 +1,7 @@
 //
 // Created by Yunming Zhang on 7/10/17.
 
-#include <graphit/backend/gen_edge_apply_func_decl.h>
+#include <graphit/backend/codegen_cpp/gen_edge_apply_func_decl.h>
 
 namespace graphit {
     using namespace std;

@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     graphit::Midend* me = new graphit::Midend(context, program->getSchedule());
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
-    be->emitCPP(output_file);
+    be->emit(output_file);
 
     output_file.close();
 

@@ -45,7 +45,7 @@ protected:
         graphit::Midend* me = new graphit::Midend(context_);
         me->emitMIR(mir_context_);
         graphit::Backend* be = new graphit::Backend(mir_context_);
-        return be->emitCPP();
+        return be->emit();
     }
 
     bool basicTest(std::istream & is){
@@ -58,7 +58,7 @@ protected:
 
         me->emitMIR(mir_context_);
         graphit::Backend* be = new graphit::Backend(mir_context_);
-        return be->emitCPP();
+        return be->emit();
     }
 
 
@@ -71,7 +71,7 @@ protected:
 
         me->emitMIR(mir_context_);
         graphit::Backend* be = new graphit::Backend(mir_context_);
-        return be->emitCPP();
+        return be->emit();
     }
 
     std::vector<ParseError> * errors_;
@@ -180,7 +180,7 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyPullSchedule) {
     graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-    EXPECT_EQ (0, be->emitCPP());
+    EXPECT_EQ (0, be->emit());
 
 }
 
@@ -217,7 +217,7 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyPushSchedule) {
     graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-    EXPECT_EQ (0, be->emitCPP());
+    EXPECT_EQ (0, be->emit());
 
 }
 
@@ -260,7 +260,7 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
     graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-    EXPECT_EQ (0, be->emitCPP());
+    EXPECT_EQ (0, be->emit());
 
 }
 
@@ -301,7 +301,7 @@ TEST_F(LowLevelScheduleTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
     graphit::Backend *be = new graphit::Backend(mir_context_);
 
 
-    EXPECT_EQ (0, be->emitCPP());
+    EXPECT_EQ (0, be->emit());
 
 }
 
@@ -355,7 +355,7 @@ TEST_F(LowLevelScheduleTest, SimpleBFSPushSchedule) {
 
     ofstream test_file;
     test_file.open("../test.cpp");
-    be->emitCPP(test_file);
+    be->emit(test_file);
     test_file.close();
     std::cout << exec_cmd("g++ -std=c++11 -I ../../src/runtime_lib/ ../test.cpp  -o test.o 2>&1");
     std::cout << exec_cmd("./test.o 2>&1");

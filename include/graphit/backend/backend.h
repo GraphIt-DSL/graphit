@@ -6,7 +6,7 @@
 #define GRAPHIT_BACKEND_H
 
 #include <graphit/midend/mir_context.h>
-#include <graphit/backend/codegen_cpp.h>
+//#include <graphit/backend/codegen_cpp/codegen_cpp.h>
 
 namespace graphit {
     class Backend {
@@ -15,7 +15,7 @@ namespace graphit {
 
         }
 
-        int emitCPP(std::ostream &oss = std::cout);
+        int emit(std::ostream &oss = std::cout);
 
     private:
         MIRContext* mir_context_;

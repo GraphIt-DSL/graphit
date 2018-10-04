@@ -45,7 +45,7 @@ protected:
 
         me->emitMIR(mir_context_);
         graphit::Backend *be = new graphit::Backend(mir_context_);
-        return be->emitCPP();
+        return be->emit();
     }
 
     std::vector<ParseError> *errors_;

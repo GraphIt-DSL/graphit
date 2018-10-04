@@ -2,7 +2,7 @@
 // Created by Yunming Zhang on 2/14/17.
 //
 
-#include <graphit/backend/codegen_cpp.h>
+#include <graphit/backend/codegen_cpp/codegen_cpp.h>
 
 namespace graphit {
     int CodeGenCPP::genCPP() {
