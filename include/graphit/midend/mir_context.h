@@ -17,12 +17,19 @@
 
 namespace graphit {
 
+	enum BackendT {
+		backend_cpp,
+		backend_gpu,
+
+		backend_invalid
+	};
+
 
         // Data structure that holds the internal representation of the program
         class MIRContext {
 
         public:
-            MIRContext() {
+            MIRContext() : backend_selection(backend_cpp){
             }
 
 
@@ -260,6 +267,10 @@ namespace graphit {
             }
         //private:
 
+
+    
+	    enum BackendT backend_selection;
+
             // maps element type to an input file that reads the set from
             // for example, reading an edge set
             std::map<std::string, mir::Expr::Ptr> input_filename_map_;
@@ -307,7 +318,7 @@ namespace graphit {
             std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
 
             // used by cache/numa optimization
-	        std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
+	    std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
 
             // used by numa optimization
             std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
