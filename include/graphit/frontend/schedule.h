@@ -11,6 +11,15 @@
 
 namespace graphit {
 
+    /** An enum describing the backend selection chosen by the User */
+    enum BackendT {
+        BACKEND_CPP,
+        BACKEND_GPU,
+        
+        BACKEND_INVALID
+    };
+
+
     //TODO: move this into the FieldVectorPhysicalDataLayout class definition
     /** An enum describing a type of physical data layout */
     enum class FieldVectorDataLayoutType {
@@ -196,7 +205,7 @@ namespace graphit {
          */
         class Schedule {
         public:
-            Schedule() {
+            Schedule() : backend_selection(BACKEND_CPP) {
                 physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
                 apply_schedules = new std::map<std::string, ApplySchedule>();
                 vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
@@ -208,6 +217,8 @@ namespace graphit {
                 delete physical_data_layouts;
                 delete apply_schedules;
             }
+
+            enum BackendT backend_selection;
 
             //TODO: what does it mean??
             std::map<std::string, FieldVectorPhysicalDataLayout> *physical_data_layouts;

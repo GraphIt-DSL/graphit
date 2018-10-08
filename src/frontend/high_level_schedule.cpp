@@ -7,6 +7,16 @@
 namespace graphit {
     namespace fir {
 
+
+	// Use the GPU backend instead of the CPU backend
+	high_level_schedule::ProgramScheduleNode::Ptr
+	high_level_schedule::ProgramScheduleNode::generateGPUCode(void) {
+		if (schedule_ == nullptr)
+			schedule_ = new Schedule();
+		schedule_->backend_selection = BACKEND_GPU;
+		return this->shared_from_this();
+	}
+
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::splitForLoop(std::string original_loop_label,
                                                                std::string split_loop1_label,

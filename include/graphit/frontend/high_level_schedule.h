@@ -53,6 +53,8 @@ namespace graphit {
 
                 typedef std::shared_ptr<ProgramScheduleNode> Ptr;
 
+		// High Level API for selecting the GPU backend
+		ProgramScheduleNode::Ptr generateGPUCode(void);
 
                 // High level API for fusing together two fields / system vectors as ArrayOfStructs
                 ProgramScheduleNode::Ptr fuseFields(string first_field_name,

@@ -14,22 +14,16 @@
 
 #include <graphit/utils/scopedmap.h>
 #include <graphit/midend/mir.h>
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
-
-	enum BackendT {
-		backend_cpp,
-		backend_gpu,
-
-		backend_invalid
-	};
 
 
         // Data structure that holds the internal representation of the program
         class MIRContext {
 
         public:
-            MIRContext() : backend_selection(backend_cpp){
+            MIRContext() : backend_selection(BACKEND_INVALID){
             }
 
 
