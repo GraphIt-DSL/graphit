@@ -49,7 +49,18 @@ set(PYTHON_SOURCE_FILES ./test/python/test.py)
 #add_executable(PYTHON_TEST ${PYTHON_SOURCE_FILES})
 #target_link_libraries(PYTHON_TEST ${PYTHON_LIBRARIES})
 
-configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
+#configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
+set(GRAPHITC_PY
+	"${CMAKE_BINARY_DIR}/bin/graphitc.py"
+)
+add_custom_command(OUTPUT ${GRAPHITC_PY}
+	COMMAND sed -e s?CXX_COMPILER_PLACEHOLDER?${CMAKE_CXX_COMPILER}?g -e s?GRAPHIT_SOURCE_DIRECTORY_PLACEHOLDER?${CMAKE_SOURCE_DIR}?g -e s?GRAPHIT_BUILD_DIRECTORY_PLACEHOLDER?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/src/graphitc.py > ${GRAPHITC_PY}
+	DEPENDS ${CMAKE_SOURCE_DIR}/src/graphitc.py
+	VERBATIM
+)
+
+add_custom_target(copy_graphitc_py ALL DEPENDS ${GRAPHITC_PY})
+
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)
