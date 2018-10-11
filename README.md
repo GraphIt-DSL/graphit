@@ -27,7 +27,7 @@ After you have cloned the directory:
     make
     
 ```
-Currently, we do require you to name the build directory `build` for the unit tests to work. 
+Currently, we do require the build directory to be in the root project directory for some unit tests to work. 
 To run the C++ test suite do (all tests should pass):
 
 ```
@@ -38,14 +38,14 @@ To run the C++ test suite do (all tests should pass):
 
 To run the Python end-to-end test suite:
 
-start at the top level graphit directory cloned from Github, NOT the build directory
+start from inside the build directory
+
 (All tests would pass, but some would generate error messages from the g++ compiler. This is expected.)
 Currently the project supports Python 2.x and not Python 3.x (the print syntax is different)
 
 ```
-    cd graphit/test/python
-    python test.py
-    python test_with_schedules.py
+    python python_tests/test.py
+    python python_tests/test_with_schedules.py
     
 ```
 
@@ -56,7 +56,7 @@ Note when running `test.py`, some error message may be printed during the run th
 Compile GraphIt Programs
 ===========
 GraphIt compiler currently generates a C++ output file from the .gt input GraphIt programs. 
-To compile an input GraphIt file with schedules in the same file (assuming the build directory is in the root project directory). For now, graphitc.py ONLY works in the build/bin directory.
+To compile an input GraphIt file with schedules in the same file (assuming the build directory is in the root project directory).
 
 ```
     cd build/bin

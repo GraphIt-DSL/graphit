@@ -9,14 +9,20 @@ import sys
 use_parallel = False
 use_numa = False
 
+GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip("/")
+GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
+CXX_COMPILER="${CXX_COMPILER}"
+
+
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
 
     #NOTE: currently the tests can only work within the build/bin directory
     @classmethod
     def setUpClass(cls):
-        build_dir = "../../build"
+        build_dir = GRAPHIT_BUILD_DIRECTORY
         if not os.path.isdir(build_dir):
+	    # This can never be true now since the test is run from the build directory
             print ("build the binaries")
             #shutil.rmtree("../../build_dir")
             os.mkdir(build_dir)
@@ -30,9 +36,9 @@ class TestGraphitCompiler(unittest.TestCase):
             os.chdir('./bin')
 
         cwd = os.getcwd()
-        cls.root_test_input_dir = "../test/input/"
+        cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
         cls.compile_flags = "-std=c++11"
-        cls.include_path = "../src/runtime_lib"
+        cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
 
@@ -42,7 +48,7 @@ class TestGraphitCompiler(unittest.TestCase):
             cls.parallel_framework = "-DOPENMP"
         else:
             cls.numa_flags = ""
-            cls.cpp_compiler = "g++"
+            cls.cpp_compiler = CXX_COMPILER
             cls.parallel_framework = "-DCILK"
 
 
@@ -63,43 +69,43 @@ class TestGraphitCompiler(unittest.TestCase):
     # compiles the program with a separate input algorithm file and input schedule file
     # allows us to unit test various different schedules with the same algorithm
     def basic_compile_test_with_separate_algo_schedule_files(self, input_algo_file, input_schedule_file):
-        input_algos_path = '../../test/input/'
-        input_schedules_path = '../../test/input_with_schedules/'
+        input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
+        input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
         algo_file = input_algos_path + input_algo_file
         schedule_file = input_schedules_path + input_schedule_file
         compile_cmd = "python graphitc.py -a " + algo_file + " -f " + schedule_file + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+ " " + self.numa_flags + " test.cpp -o test.o"
         if use_parallel:
             print ("using icpc for parallel compilation")
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I " + self.include_path +" "+ self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
         print (cpp_compile_cmd)
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     # compiles the input file with both the algorithm and schedule specification
     def basic_compile_test(self, input_file_name):
-        input_with_schedule_path = '../../test/input_with_schedules/'
+        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
 
         if use_parallel:
             print ("using icpc for parallel compilation")
-            cpp_compile_cmd = "icpc -g -std=c++11 -I ../../src/runtime_lib/ " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=c++11 -I "+self.include_path+" " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     def basic_compile_exec_test(self, input_file_name):
-        input_with_schedule_path = '../../test/input_with_schedules/'
+        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I ../../src/runtime_lib/ " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
@@ -114,12 +120,12 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "OMP_PLACES=sockets ./bin/test.o ../test/graphs/4.el" + " > verifier_input"
+        cmd = "OMP_PLACES=sockets ./bin/test.o "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el" + " > verifier_input"
         print (cmd)
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
-        verify_cmd = "./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8"
+        verify_cmd = "./bin/bfs_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 8"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
         test_flag = False
@@ -142,7 +148,7 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
-        verify_cmd = "./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input"
+        verify_cmd = "./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
         test_flag = False
@@ -164,7 +170,7 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
-        verify_cmd = "./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0"
+        verify_cmd = "./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
         test_flag = False
@@ -180,7 +186,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("pagerank_with_filename_arg.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -193,14 +199,14 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
 
     def pr_delta_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("pr_delta.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -226,7 +232,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("cf.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test_cf.wel"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test_cf.wel"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -239,7 +245,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("eigenvector_centrality.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -252,7 +258,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -265,7 +271,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " ../../test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
