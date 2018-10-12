@@ -38,12 +38,13 @@ To run the C++ test suite do (all tests should pass):
 
 To run the Python end-to-end test suite:
 
-start from inside the build directory
+Start from the root directory and change to the build directory
 
 (All tests would pass, but some would generate error messages from the g++ compiler. This is expected.)
 Currently the project supports Python 2.x and not Python 3.x (the print syntax is different)
 
 ```
+    cd build
     python python_tests/test.py
     python python_tests/test_with_schedules.py
     
