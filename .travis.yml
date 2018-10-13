@@ -14,9 +14,9 @@ script:
         - make
         - cd bin 
         - ./graphit_test
-        - cd ../../test/python
-        - python test.py
-        - python test_with_schedules.py
+        - cd ..
+        - python python_tests/test.py
+        - python python_tests/test_with_schedules.py
 
 
 
