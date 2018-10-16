@@ -161,6 +161,26 @@ namespace graphit {
             mir::EdgeSetType::Ptr getEdgesetType(std::string edgeset_name){
                 return edgeset_element_type_map_[edgeset_name];
             }
+	    mir::EdgeSetType::Ptr getEdgeSetTypeFromElementType(mir::ElementType::Ptr element_type, bool match_both = false){
+               for(auto edge_set = edgeset_element_type_map_.begin(); edge_set != edgeset_element_type_map_.end(); edge_set++) {
+                   if (match_both == false) {
+                      if ((*edge_set->second->vertex_element_type_list)[0]->ident == element_type->ident || (*edge_set->second->vertex_element_type_list)[1]->ident == element_type->ident)
+                          return edge_set->second;
+                   }else{
+                      if ((*edge_set->second->vertex_element_type_list)[0]->ident == element_type->ident && (*edge_set->second->vertex_element_type_list)[1]->ident == element_type->ident)
+                          return edge_set->second; 
+                   }
+               }
+               return nullptr;
+	    }
+
+            std::string getEdgeSetNameFromEdgeSetType(mir::EdgeSetType::Ptr edge_set_type) {
+                for(auto edge_set = edgeset_element_type_map_.begin(); edge_set != edgeset_element_type_map_.end(); edge_set++) {
+                  if (edge_set->second == edge_set_type)
+		    return edge_set->first;
+                }
+                return "";
+            }
 
             bool updateElementCount(mir::ElementType::Ptr element_type, mir::Expr::Ptr count_expr){
                 if (num_elements_map_.find(element_type->ident) == num_elements_map_.end()){

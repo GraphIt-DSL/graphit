@@ -721,6 +721,7 @@ namespace graphit {
                 result = mir::Var(decl->result.getName(), decl->result.getType());
             //I am not sure, I think this just copies over everything
             field_vector_properties_map_ = decl->field_vector_properties_map_;
+	    realized_context = decl->realized_context; 
         }
 
 

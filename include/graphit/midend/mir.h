@@ -546,12 +546,22 @@ namespace graphit {
 
 
         struct FuncDecl : public MIRNode {
+
+            enum function_context {
+		CONTEXT_NONE = 0x0,
+                CONTEXT_HOST = 0x01,
+                CONTEXT_DEVICE = 0x02,
+                
+                CONTEXT_BOTH = 0x3
+	    };
+	   
+	    enum function_context realized_context = CONTEXT_NONE;
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
             std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
             bool isFunctor;
-
+	
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
 
@@ -567,6 +577,8 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+	inline enum FuncDecl::function_context operator|(enum FuncDecl::function_context a, enum FuncDecl::function_context b){return static_cast<enum FuncDecl::function_context>( (int)a | (int)b);} 
+	inline enum FuncDecl::function_context& operator|=(enum FuncDecl::function_context &a, enum FuncDecl::function_context b){return (enum FuncDecl::function_context&)( ((int&)a) |= (int)b);} 
 
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
@@ -711,6 +723,9 @@ namespace graphit {
             //default to parallel
             bool is_parallel = true;
 
+            
+	    mir::Var *var;
+            
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());
             }
@@ -725,6 +740,7 @@ namespace graphit {
                 target_expr->var = target_var;
                 target = target_expr;
                 input_function_name = function_name;
+                var = nullptr;
             }
 
         protected:
@@ -930,6 +946,9 @@ namespace graphit {
                 DENSE
             };
             Layout layout;
+            // GPU code generation (gunrock especially) needs the name of the variable to be allocated. For example frontier.Allocate(...)
+            std::string vertex_set_name;
+
             typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

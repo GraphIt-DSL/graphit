@@ -17,7 +17,8 @@
 namespace graphit {
 	class CodeGenGunrock : mir::MIRVisitor {
 		public:
-			CodeGenGunrock(std::ostream &input_oss, MIRContext *mir_context) : oss(input_oss), mir_context_(mir_context) {
+			CodeGenGunrock(std::ostream &input_oss, MIRContext *mir_context) : oss(input_oss), mir_context_(mir_context), indent_value(0), current_context(mir::FuncDecl::CONTEXT_HOST){
+
 			}
 			int genGunrockCode(void);
 
@@ -51,6 +52,9 @@ namespace graphit {
 			virtual void visit(mir::IfStmt::Ptr);
 			virtual void visit(mir::BreakStmt::Ptr);
 			virtual void visit(mir::BoolLiteral::Ptr);
+			virtual void visit(mir::VertexSetAllocExpr::Ptr);
+			virtual void visit(mir::MulExpr::Ptr);
+			virtual void visit(mir::StmtBlock::Ptr);
 
 
 			// Defaults - 
@@ -62,7 +66,6 @@ namespace graphit {
 			DEFAULT(FloatLiteral)
 			DEFAULT(ListAllocExpr)
 			DEFAULT(ListType)
-			DEFAULT(MulExpr)
 			DEFAULT(NegExpr)
 			DEFAULT(PullEdgeSetApplyExpr)
 			DEFAULT(PushEdgeSetApplyExpr)
@@ -71,7 +74,6 @@ namespace graphit {
 			DEFAULT(TensorReadExpr)
 			DEFAULT(TensorStructReadExpr)
 			DEFAULT(VectorType)
-			DEFAULT(VertexSetAllocExpr)
 			DEFAULT(VertexSetWhereExpr)
 
 
@@ -83,6 +85,23 @@ namespace graphit {
 			MIRContext * mir_context_;
 			std::ostream &oss;
 			int indent_value;
+			enum mir::FuncDecl::function_context current_context;
+	};
+	class ExtractReadWriteSet : public mir::MIRVisitor {
+		public: 
+			ExtractReadWriteSet() : read_set(read_set_), write_set(write_set_){
+			}
+			const std::vector<mir::Var> &read_set;
+			const std::vector<mir::Var> &write_set;
+		protected:
+			virtual void visit(mir::TensorArrayReadExpr::Ptr);
+			virtual void visit(mir::AssignStmt::Ptr);
+			virtual void visit(mir::StmtBlock::Ptr);
+		private:
+			void add_read(mir::Var);
+			void add_write(mir::Var);
+			std::vector<mir::Var> read_set_;
+			std::vector<mir::Var> write_set_;
 	};
 }
 

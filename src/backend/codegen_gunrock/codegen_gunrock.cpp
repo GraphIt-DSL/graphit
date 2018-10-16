@@ -1,4 +1,5 @@
 #include "graphit/backend/codegen_gunrock/codegen_gunrock.h"
+#include "graphit/backend/codegen_gunrock/assign_function_context.h"
 
 namespace graphit {
 
@@ -13,6 +14,10 @@ namespace graphit {
 	}
 
 	int CodeGenGunrock::genGunrockCode(void) {
+
+		AssignFunctionContext assign_function_context(mir_context_);
+		assign_function_context.assign_function_context();
+				
 		genIncludeStmts();
 		genEdgeSets();
 
@@ -187,6 +192,8 @@ namespace graphit {
 				dedent();
 				printIndent();
 				oss << "}" << std::endl;
+				printIndent();
+				oss << var_name << ".Move(util::HOST, util::DEVICE, 0);" << std::endl;
 
 			}
 
@@ -210,7 +217,8 @@ namespace graphit {
 				oss << " ";
 			} else 
 				oss << "void ";
-			oss << func_decl->name << "(";
+			std::string target_config = (func_decl->realized_context & mir::FuncDecl::CONTEXT_DEVICE)?"__device__":"__host__";
+			oss << func_decl->name << " " << target_config << " (";
 			bool print_delimeter = false;
 			for (auto arg: func_decl->args) {
 				if(print_delimeter)
@@ -233,6 +241,8 @@ namespace graphit {
 
 
 		assert(func_decl->body->stmts);
+
+		current_context = func_decl->realized_context;
 
 		func_decl->body->accept(this);	
 
@@ -266,13 +276,133 @@ namespace graphit {
 		printIndent();
 		var_decl->type->accept(this);
 		oss << " " << var_decl->name;
-		if (var_decl->initVal != nullptr) {
+
+	
+		if (var_decl->initVal != nullptr && !mir::isa<mir::VertexSetType>(var_decl->type)) {
 			oss << " = ";
 			var_decl->initVal->accept(this);
 		}
+		
 		oss << ";" << std::endl;
+		if (var_decl->initVal != nullptr && mir::isa<mir::VertexSetType>(var_decl->type)) {
+			mir::EdgeSetType::Ptr edge_set = mir_context_->getEdgeSetTypeFromElementType(mir::to<mir::VertexSetType>(var_decl->type)->element);
+			printIndent();
+			if (edge_set->weight_type == nullptr)
+				oss << "OprtrParametersT " << var_decl->name << "_parameters;" << std::endl;
+			else 
+				oss << "WOprtrParametersT " << var_decl->name << "_parameters;" << std::endl;
+			mir::to<mir::VertexSetAllocExpr>(var_decl->initVal) -> vertex_set_name = var_decl->name;
+			var_decl->initVal->accept(this);
+		}
 	}
 
+
+	void CodeGenGunrock::visit(mir::VertexSetAllocExpr::Ptr vsae) {
+		printIndent();
+		oss << vsae->vertex_set_name << ".Init(2);" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << ".Reset();" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << ".queue_index = 0;" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << ".queue_length = 0;" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << ".queue_reset = true;" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << ".work_progress.Reset();" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.Init();" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.stream = 0;" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.frontier = &" << vsae->vertex_set_name << ";" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.cuda_props = NULL;" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.advance_mode = \"LB_CULL\";" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.filter_mode = \"CULL\";" << std::endl;
+		printIndent();
+		oss << "{" << std::endl;
+		indent();
+		printIndent();
+		oss << "std::vector<double> queue_factors;" << std::endl;
+		printIndent();
+		oss << "queue_factors.push_back(6.0);" << std::endl;
+		printIndent();
+		oss << "queue_factors.push_back(6.0);" << std::endl;
+		printIndent();
+		
+		mir::Expr::Ptr size_expr = mir_context_->getElementCount(vsae->element_type);
+		
+		oss << vsae->vertex_set_name << ".Allocate(";
+		size_expr->accept(this);
+
+		mir::Expr::Ptr arg = mir::to<mir::Call>(size_expr)->args[0];
+
+		oss <<", builtin_getEdges(" << mir::to<mir::VarExpr>(arg)->var.getName() <<  "), queue_factors);" << std::endl;
+
+
+
+		dedent();
+		printIndent();
+		oss << "}" << std::endl; 
+			
+		
+	}
+
+
+	void CodeGenGunrock::visit(mir::StmtBlock::Ptr stmt_block) {
+		for (auto stmt: *(stmt_block->stmts)) {
+			if(current_context == mir::FuncDecl::CONTEXT_DEVICE)
+				stmt->accept(this);
+			else {
+				ExtractReadWriteSet extractor;
+				stmt->accept(&extractor);
+				std::vector<std::string> read_inserted;
+				for (auto var: extractor.read_set) {
+					auto vector_type = mir::to<mir::VectorType>(var.getType());
+					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+					std::string name = var.getName();
+					if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()){
+						printIndent();
+						oss << name << ".Move(util::DEVICE, util::HOST, ";
+						size_expr->accept(this);
+						oss << ", 0,  0);" << std::endl;	
+						read_inserted.push_back(name);
+					}
+				}
+				for (auto var: extractor.write_set) {
+					auto vector_type = mir::to<mir::VectorType>(var.getType());
+					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+					std::string name = var.getName();
+					if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()) {
+						printIndent();
+						oss << name << ".Move(util::DEVICE, util::HOST, ";
+						size_expr->accept(this);
+						oss << ", 0,  0);" << std::endl;	
+						read_inserted.push_back(name);
+					}
+				}
+				stmt->accept(this);
+				std::vector<std::string> write_inserted;
+				for (auto var: extractor.write_set) {
+					auto vector_type = mir::to<mir::VectorType>(var.getType());
+					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+					std::string name = var.getName();
+					if (std::find(write_inserted.begin(), write_inserted.end(), name) == write_inserted.end()) {
+						printIndent();
+						oss << name << ".Move(util::HOST, util::DEVICE, ";
+						size_expr->accept(this);
+						oss << ", 0,  0);" << std::endl;	
+						write_inserted.push_back(name);
+					}
+				}
+				
+			}
+
+		}
+	}
 
 	void CodeGenGunrock::visit(mir::StringLiteral::Ptr string_literal) {
 		oss << "\"" << string_literal->val << "\"";		
@@ -309,10 +439,17 @@ namespace graphit {
 
 	void CodeGenGunrock::visit(mir::AssignStmt::Ptr assign_stmt) {
 		printIndent();
-		assign_stmt->lhs->accept(this);
-		oss << " = ";
-		assign_stmt->expr->accept(this);
-		oss << ";" << std::endl;		
+		if (mir::isa<mir::VertexSetApplyExpr>(assign_stmt->expr)){
+			mir::to<mir::VertexSetApplyExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
+			assign_stmt->expr->accept(this);	
+			
+		}
+		else{
+			assign_stmt->lhs->accept(this);
+			oss << " = ";
+			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;		
+		}
 	}
 
 
@@ -321,6 +458,15 @@ namespace graphit {
 		add_expr->lhs->accept(this);
 		oss << " + ";
 		add_expr->rhs->accept(this);
+		oss << ")";
+		
+	}
+
+	void CodeGenGunrock::visit(mir::MulExpr::Ptr mul_expr) {
+		oss << "(";
+		mul_expr->lhs->accept(this);
+		oss << " * ";
+		mul_expr->rhs->accept(this);
 		oss << ")";
 		
 	}
@@ -386,9 +532,30 @@ namespace graphit {
 			printIndent();
 			oss << "}";				
 
-		}else {
-			std::cerr << "Dynamic set VertexSetApplyExpr not supported yet. Exiting with failure" << std::endl;
-			exit(-1);
+		}else {	
+			auto mir_var = mir::to<mir::VarExpr>(vsae->target);
+			oss << "{" << std::endl;
+			indent();
+			printIndent();
+			oss << "auto apply_lambda = [] __device__ (const VertexT &src, VertexT &dest, const SizeT &edge_id, const VertexT &input_item, const SizeT &input_pos, SizeT &output_pos) -> bool {" << std::endl;
+			indent();
+			printIndent();
+			oss << "return " << vsae->input_function_name << "(dest);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+			mir::VertexSetType::Ptr vst = mir::to<mir::VertexSetType>(mir_var->var.getType());
+			mir::ElementType::Ptr element_type = vst->element;
+			printIndent();
+			std::string graph_name = mir_context_->getEdgeSetNameFromEdgeSetType(mir_context_->getEdgeSetTypeFromElementType(element_type));
+			assert(graph_name != "");
+			if (vsae->var == nullptr)
+				oss << "oprtr::Filter<oprtr::OprtrType_V2V>(" << graph_name << ".csr(), " << mir_var->var.getName() << ".V_Q(), nullptr, " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
+			else
+				oss << "oprtr::Filter<oprtr::OprtrType_V2V(" << graph_name << ".cse(), " << mir_var->var.getName() << ".V_Q(), " << vsae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}";
 		}
 	}
 
@@ -495,5 +662,31 @@ namespace graphit {
 			}
 		}
 		return 0;
+	}
+
+	void ExtractReadWriteSet::add_read(mir::Var var) {
+		read_set_.push_back(var);
+	}
+	void ExtractReadWriteSet::add_write(mir::Var var) {
+		write_set_.push_back(var);
+	}
+	void ExtractReadWriteSet::visit(mir::TensorArrayReadExpr::Ptr tare) {
+		mir::Var target = mir::to<mir::VarExpr>(tare->target)->var;
+		add_read(target);
+		tare->index->accept(this);
+	}
+	void ExtractReadWriteSet::visit(mir::StmtBlock::Ptr stmt_block) {
+		return;
+	}
+	void ExtractReadWriteSet::visit(mir::AssignStmt::Ptr assign_expr) {
+		if (mir::isa<mir::TensorArrayReadExpr>(assign_expr->lhs)) {
+			mir::Var target = mir::to<mir::VarExpr>(mir::to<mir::TensorArrayReadExpr>(assign_expr->lhs)->target)->var;
+			add_write(target);
+			mir::to<mir::TensorArrayReadExpr>(assign_expr->lhs)->index->accept(this);
+			assign_expr->expr->accept(this);
+		}else{
+			assign_expr->lhs->accept(this);
+			assign_expr->expr->accept(this);
+		}
 	}
 }
