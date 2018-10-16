@@ -49,7 +49,32 @@ set(PYTHON_SOURCE_FILES ./test/python/test.py)
 #add_executable(PYTHON_TEST ${PYTHON_SOURCE_FILES})
 #target_link_libraries(PYTHON_TEST ${PYTHON_LIBRARIES})
 
-configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
+#configure_file(src/graphitc.py ${CMAKE_BINARY_DIR}/bin/graphitc.py COPYONLY)
+set(GRAPHITC_PY
+	"${CMAKE_BINARY_DIR}/bin/graphitc.py"
+)
+add_custom_command(OUTPUT ${GRAPHITC_PY}
+	COMMAND sed -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/src/graphitc.py > ${GRAPHITC_PY}
+	DEPENDS ${CMAKE_SOURCE_DIR}/src/graphitc.py
+	VERBATIM
+)
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/python_tests
+	COMMAND sed -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/test/python/test_with_schedules.py > ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/test/python/test_with_schedules.py
+	VERBATIM
+)
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python_tests/test.py
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/python_tests
+	COMMAND sed -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/test/python/test.py > ${CMAKE_BINARY_DIR}/python_tests/test.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/test/python/test.py
+	VERBATIM
+)
+
+
+add_custom_target(copy_graphitc_py ALL DEPENDS ${GRAPHITC_PY})
+add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py ${CMAKE_BINARY_DIR}/python_tests/test.py)
+
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)

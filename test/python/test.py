@@ -5,13 +5,19 @@ import subprocess
 import os
 import shutil
 
+GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip("/")
+GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
+CXX_COMPILER="${CXX_COMPILER}"
+
+
 class TestGraphitCompiler(unittest.TestCase):
     first_time_setup = True
 
     @classmethod
     def setUpClass(cls):
-        build_dir = "../../build"
+        build_dir = GRAPHIT_BUILD_DIRECTORY
         if not os.path.isdir(build_dir):
+	    #This should never be true because test is invoked from build not source
             print ("build the binaries")
             #shutil.rmtree("../../build_dir")
             os.mkdir(build_dir)
@@ -23,10 +29,10 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cwd = os.getcwd()
 
-        cls.root_test_input_dir = "../test/input/"
-        cls.cpp_compiler = "g++"
+        cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
+        cls.cpp_compiler = CXX_COMPILER
         cls.compile_flags = "-std=c++11"
-        cls.include_path = "../src/runtime_lib"
+        cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
 
@@ -183,7 +189,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_pagerank_cmdline_arg_expect(self):
         self.basic_compile_test("pagerank_with_filename_arg.gt")
-        proc = subprocess.Popen("./"+ self.executable_file_name + " ../test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
+        proc = subprocess.Popen("./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el", shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print ("output: " + output.strip())
@@ -221,7 +227,7 @@ class TestGraphitCompiler(unittest.TestCase):
         #     print line.rstrip()
 
         # invoke the BFS verifier
-        proc = subprocess.Popen("./bin/bfs_verifier -f ../test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("./bin/bfs_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 8", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
              if line.rstrip().find("SUCCESSFUL") != -1:
@@ -260,7 +266,7 @@ class TestGraphitCompiler(unittest.TestCase):
         #     print line.rstrip()
 
         # invoke the SSSP verifier
-        proc = subprocess.Popen("./bin/sssp_verifier -f ../test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
             if line.rstrip().find("SUCCESSFUL"):
@@ -273,7 +279,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("cc.gt")
         cmd = "./" + self.executable_file_name + " > verifier_input"
         subprocess.call(cmd, shell=True)
-        proc = subprocess.Popen("./bin/cc_verifier -f ../test/graphs/4.el -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen("./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
         test_flag = False
         for line in iter(proc.stdout.readline,''):
             if line.rstrip().find("SUCCESSFUL") != -1:

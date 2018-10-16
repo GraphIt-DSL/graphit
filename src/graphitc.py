@@ -3,13 +3,20 @@ import unittest
 import subprocess
 import os
 
+CXX_COMPILER="${CXX_COMPILER}"
+GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip('/')
+GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip('/')
+
+
+
+
 def parseArgs():
     parser = argparse.ArgumentParser(description='compiling graphit files')
     parser.add_argument('-f', dest = 'input_file_name')
     parser.add_argument('-o', dest = 'output_file_name')
     parser.add_argument('-a', dest = 'input_algo_file_name')
-    parser.add_argument('-i', dest = 'runtime_include_path', default = '../../include/')
-    parser.add_argument('-l', dest = 'graphitlib_path', default = '../lib/libgraphitlib.a')
+    parser.add_argument('-i', dest = 'runtime_include_path', default = GRAPHIT_SOURCE_DIRECTORY+'/include/')
+    parser.add_argument('-l', dest = 'graphitlib_path', default = GRAPHIT_BUILD_DIRECTORY+'/lib/libgraphitlib.a')
     args = parser.parse_args()
     return vars(args)
 
@@ -73,6 +80,6 @@ if __name__ == '__main__':
     # compile and execute compile.cpp file to complete the compilation
     #TODO: code here uses very fragile relavtive paths, figure out a better way
     # Maybe setting environment variables
-    subprocess.check_call("g++ -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), shell=True)
+    subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), shell=True)
     subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name, shell=True)
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
