@@ -709,6 +709,7 @@ namespace graphit {
             std::string input_function_name = "";
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
+	    mir::Var *var;
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -724,7 +725,6 @@ namespace graphit {
             bool is_parallel = true;
 
             
-	    mir::Var *var;
             
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());

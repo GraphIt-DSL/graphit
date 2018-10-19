@@ -410,6 +410,9 @@ namespace graphit {
 	void CodeGenGunrock::visit(mir::IntLiteral::Ptr int_literal) {
 		oss << int_literal->val;
 	}
+	void CodeGenGunrock::visit(mir::FloatLiteral::Ptr float_literal) {
+		oss << float_literal->val;
+	}
 	void CodeGenGunrock::visit(mir::BoolLiteral::Ptr bool_literal) {
 		oss << bool_literal->val?"true":"false";
 	}
@@ -443,8 +446,10 @@ namespace graphit {
 			mir::to<mir::VertexSetApplyExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
 			assign_stmt->expr->accept(this);	
 			
-		}
-		else{
+		}else if(mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr)){
+			mir::to<mir::PushEdgeSetApplyExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
+			assign_stmt->expr->accept(this);
+		}else{
 			assign_stmt->lhs->accept(this);
 			oss << " = ";
 			assign_stmt->expr->accept(this);
@@ -461,12 +466,28 @@ namespace graphit {
 		oss << ")";
 		
 	}
+	void CodeGenGunrock::visit(mir::SubExpr::Ptr sub_expr) {
+		oss << "(";
+		sub_expr->lhs->accept(this);
+		oss << " - ";
+		sub_expr->rhs->accept(this);
+		oss << ")";
+		
+	}
 
 	void CodeGenGunrock::visit(mir::MulExpr::Ptr mul_expr) {
 		oss << "(";
 		mul_expr->lhs->accept(this);
 		oss << " * ";
 		mul_expr->rhs->accept(this);
+		oss << ")";
+		
+	}
+	void CodeGenGunrock::visit(mir::DivExpr::Ptr div_expr) {
+		oss << "(";
+		div_expr->lhs->accept(this);
+		oss << " / ";
+		div_expr->rhs->accept(this);
 		oss << ")";
 		
 	}
@@ -494,8 +515,42 @@ namespace graphit {
 				printIndent();
 				oss << "}" << std::endl;
 				break;
+
+			case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
+				printIndent();
+				if (reduce_stmt->tracking_var_name_ != "")
+					oss << reduce_stmt->tracking_var_name_ << " = ";
+				oss << "writeMin((";
+				reduce_stmt->lhs->accept(this);
+				oss << "), ";
+				reduce_stmt->expr->accept(this);
+				oss << ");" << std::endl;
+				break;
+			case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
+				printIndent();
+				if(reduce_stmt->tracking_var_name_ != "")
+					oss << reduce_stmt->tracking_var_name_ << " = ";
+				oss << "writeSum((";
+				reduce_stmt->lhs->accept(this);
+				oss << "), ";
+				reduce_stmt->expr->accept(this);
+				oss << ");" << std::endl;
+				break;
+			case mir::ReduceStmt::ReductionOp::SUM:
+				printIndent();
+				reduce_stmt->lhs->accept(this);
+				oss << " += ";
+				reduce_stmt->expr->accept(this);
+				oss << ";" << std::endl;
+				if (reduce_stmt->tracking_var_name_ != "") {
+					printIndent();
+					oss << reduce_stmt->tracking_var_name_ << " = (";
+					reduce_stmt->expr->accept(this);
+					oss << ") == 0;" << std::endl;
+				}
+				break;
 			default:
-				std::cerr << "Reduction operator not implemented yet.";
+				std::cerr << "Reduction operator not implemented yet." << std::endl;
 				break;	
 		}
 		
@@ -552,12 +607,77 @@ namespace graphit {
 			if (vsae->var == nullptr)
 				oss << "oprtr::Filter<oprtr::OprtrType_V2V>(" << graph_name << ".csr(), " << mir_var->var.getName() << ".V_Q(), nullptr, " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
 			else
-				oss << "oprtr::Filter<oprtr::OprtrType_V2V(" << graph_name << ".cse(), " << mir_var->var.getName() << ".V_Q(), " << vsae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
+				oss << "oprtr::Filter<oprtr::OprtrType_V2V(" << graph_name << ".csr(), " << mir_var->var.getName() << ".V_Q(), " << vsae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
 			dedent();
 			printIndent();
 			oss << "}";
 		}
 	}
+	void CodeGenGunrock::visit(mir::PushEdgeSetApplyExpr::Ptr pesae) {
+		auto mir_var = mir::to<mir::VarExpr>(pesae->target);
+		if(!mir_context_->isEdgeSet(mir_var->var.getName())) {
+			std::cerr << "Edge set apply on non const edge sets not supporeted yet. Exiting with failure" << std::endl;
+			exit(-1);
+		}
+
+		if(mir_context_->isFunction(pesae->from_func)){
+			std::cerr << "Edge set apply from funcyion not supported yet. Exiting with failure" << std::endl;
+			exit(-1);
+		}
+
+		if(pesae->from_func=="") {
+			if (pesae->var != nullptr) {
+				std::cerr << "Output frontier without input frontier not supported yet. Exiting with failure" << std::endl;
+				exit(-1);
+			}
+			oss << "{" << std::endl;
+			indent();
+			printIndent();
+			oss << "auto apply_lamda = [] __device__ (const VertexT *dummy, const SizeT &e) -> bool {" << std::endl;
+			indent();
+			printIndent();
+			oss << "VertexT src, dest;" << std::endl; 
+			printIndent();
+			oss << mir_var->var.getName() << ".GetEdgeSrcDest(e, src, dest);" << std::endl;
+			printIndent();
+			oss << "auto edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + e);" << std::endl;
+			printIndent();
+			oss << pesae->input_function_name << "(src, dest, edge_weight);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+			printIndent();
+			oss << "oprtr::ForAll((VertexT*) NULL, apply_lambda, " << mir_var->var.getName() << ".edges, util::DEVICE, 0);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+			
+		} else {
+			oss << "{" << std::endl;
+			indent();
+			printIndent();
+			oss << "auto apply_lambda = [] __device__ (const VertexT &src, VertexT &dest, const SizeT &edge_id, const VertexT &input_item, const SizeT &input_pos, SizeT &output_pos) -> bool {" << std::endl;
+			indent();
+			printIndent();
+			oss << "auto edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + edge_id);" << std::endl; 
+			printIndent();
+			oss << "return " << pesae->input_function_name << "(src, dest, edge_weight);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+			printIndent();	
+			if(pesae->var == nullptr)
+				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << mir_var->var.getName() << ".V_Q(), nullptr, " << mir_var->var.getName() << "_parameters, apply_lambda, pass_lambda);" << std::endl;
+			else 
+				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << mir_var->var.getName() << ".V_Q(), " << pesae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda, lambda_pass);" << std::endl;
+
+			
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;	
+		}
+	}	
+
 
 	void CodeGenGunrock::visit(mir::ForStmt::Ptr for_stmt) {
 		printIndent();

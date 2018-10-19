@@ -55,22 +55,23 @@ namespace graphit {
 			virtual void visit(mir::VertexSetAllocExpr::Ptr);
 			virtual void visit(mir::MulExpr::Ptr);
 			virtual void visit(mir::StmtBlock::Ptr);
+			virtual void visit(mir::PushEdgeSetApplyExpr::Ptr);
+			virtual void visit(mir::FloatLiteral::Ptr);
+			virtual void visit(mir::DivExpr::Ptr);
+			virtual void visit(mir::SubExpr::Ptr);
+			
 
 
 			// Defaults - 
 			DEFAULT(CompareAndSwapStmt)
-			DEFAULT(DivExpr)
 			DEFAULT(EdgeSetLoadExpr)
 			DEFAULT(EdgeSetType)
 			DEFAULT(EdgeSetWhereExpr)
-			DEFAULT(FloatLiteral)
 			DEFAULT(ListAllocExpr)
 			DEFAULT(ListType)
 			DEFAULT(NegExpr)
 			DEFAULT(PullEdgeSetApplyExpr)
-			DEFAULT(PushEdgeSetApplyExpr)
 			DEFAULT(StructTypeDecl)
-			DEFAULT(SubExpr)
 			DEFAULT(TensorReadExpr)
 			DEFAULT(TensorStructReadExpr)
 			DEFAULT(VectorType)
