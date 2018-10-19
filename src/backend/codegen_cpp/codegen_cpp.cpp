@@ -401,7 +401,8 @@ namespace graphit {
                     if (type->element_type != nullptr) {
                         //genPropertyArrayImplementationWithInitialization(constant);
                         //genPropertyArrayDecl(constant);
-                        genPropertyArrayAlloc(constant);
+			if (constant->needs_allocation)
+	                        genPropertyArrayAlloc(constant);
                     }
                 } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                     // if the constant is a vertex set  decl

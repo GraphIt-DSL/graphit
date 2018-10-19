@@ -500,7 +500,8 @@ namespace graphit {
             std::string name;
             Type::Ptr type;
             Expr::Ptr initVal;
-
+            //field to keep track of whether the variable needs allocation. Used only for vectors
+            bool needs_allocation = true;
             typedef std::shared_ptr<VarDecl> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
