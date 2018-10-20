@@ -47,7 +47,9 @@ namespace  graphit {
                         }
 
                         //insert another const var decl as the temporary holder for the function
+			//this vector is always going to be assigned a value (pointer) returned from the function call and hence does not need allocation
                         auto tmp_var_decl = std::make_shared<mir::VarDecl>();
+			tmp_var_decl->needs_allocation = false;
                         tmp_var_decl->type = var_decl->type;
                         tmp_var_decl->initVal = orig_init_val;
                         tmp_var_decl->name = "generated_tmp_vector_" + mir_context_->getUniqueNameCounterString();
