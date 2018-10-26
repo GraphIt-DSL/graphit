@@ -9,7 +9,6 @@
 #include <iostream>
 #include <sstream>
 
-
 #define DEFAULT(T) virtual void visit(mir::T::Ptr x) { std::cerr << "Is a " #T "\n";}
 
 
@@ -25,8 +24,11 @@ namespace graphit {
 		protected:
 			int genIncludeStmts(void);
 			int genEdgeSets(void);
+			int genVertexSets(void);
 			int genPropertyArrayDecl(mir::VarDecl::Ptr);
 			int genPropertyArrayAlloca(mir::VarDecl::Ptr);
+			int fillLambdaBody(mir::FuncDecl::Ptr, std::vector<std::string>);
+			std::string getAllGlobals(void);
 
 
 
@@ -59,6 +61,7 @@ namespace graphit {
 			virtual void visit(mir::FloatLiteral::Ptr);
 			virtual void visit(mir::DivExpr::Ptr);
 			virtual void visit(mir::SubExpr::Ptr);
+			virtual void visit(mir::VertexSetWhereExpr::Ptr);
 			
 
 
@@ -75,7 +78,6 @@ namespace graphit {
 			DEFAULT(TensorReadExpr)
 			DEFAULT(TensorStructReadExpr)
 			DEFAULT(VectorType)
-			DEFAULT(VertexSetWhereExpr)
 
 
 			int indent(void);
@@ -94,6 +96,9 @@ namespace graphit {
 			}
 			const std::vector<mir::Var> &read_set;
 			const std::vector<mir::Var> &write_set;
+			std::vector<mir::Var> getReadSet(void);
+			std::vector<mir::Var> getWriteSet(void);
+			
 		protected:
 			virtual void visit(mir::TensorArrayReadExpr::Ptr);
 			virtual void visit(mir::AssignStmt::Ptr);

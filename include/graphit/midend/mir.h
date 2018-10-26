@@ -710,7 +710,7 @@ namespace graphit {
             std::string input_function_name = "";
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
-	    mir::Var *var;
+	    mir::Var *var = nullptr;
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -900,7 +900,7 @@ namespace graphit {
             bool is_constant_set = false;
             std::string input_func;
             typedef std::shared_ptr<WhereExpr> Ptr;
-
+	    mir::Var *var = nullptr;
         protected:
             virtual void copy(MIRNode::Ptr);
 

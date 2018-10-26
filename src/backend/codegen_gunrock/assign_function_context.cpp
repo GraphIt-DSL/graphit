@@ -32,5 +32,9 @@ namespace graphit {
 		if(mir_context_->isFunction(pesae->to_func))
 			mir_context_->getFunction(pesae->to_func)->realized_context |= mir::FuncDecl::CONTEXT_DEVICE;
 	}
+	void AssignFunctionContext::visit(mir::VertexSetWhereExpr::Ptr vswe) {
+		if(mir_context_->isFunction(vswe->input_func))
+			mir_context_->getFunction(vswe->input_func)->realized_context |= mir::FuncDecl::CONTEXT_DEVICE;
+	}
 }
 

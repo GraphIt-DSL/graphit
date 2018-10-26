@@ -1,6 +1,7 @@
 #include "graphit/backend/codegen_gunrock/codegen_gunrock.h"
 #include "graphit/backend/codegen_gunrock/assign_function_context.h"
-
+#include <cctype>
+#include <cstdlib>
 namespace graphit {
 
 	void CodeGenGunrock::printIndent(void) {
@@ -21,9 +22,14 @@ namespace graphit {
 		genIncludeStmts();
 		genEdgeSets();
 
+		genVertexSets();
+
 		for (auto constant : mir_context_->getLoweredConstants()) {
 			if (auto type = std::dynamic_pointer_cast<mir::VectorType>(constant->type)){
 				genPropertyArrayDecl(constant);
+			}else{
+				constant->type->accept(this);
+				oss << " " << constant->name << ";" << std::endl;	
 			}
 		}
 
@@ -36,8 +42,43 @@ namespace graphit {
 		return 0;
 	}
 
+	int CodeGenGunrock::fillLambdaBody(mir::FuncDecl::Ptr func_decl, std::vector<std::string> args) {
+		int counter = 0;
+		for(auto arg:func_decl->args){
+			printIndent();
+			oss << "auto &" << arg.getName() << " = " << args[counter++] <<";"<< std::endl;
+		}	
+		auto old_context = current_context;
+		current_context = mir::FuncDecl::CONTEXT_DEVICE;
+		
+		if (func_decl->result.isInitialized()) {
+			mir::VarDecl::Ptr var_decl = std::make_shared<mir::VarDecl>();
+			var_decl->name = func_decl->result.getName();
+			var_decl->type = func_decl->result.getType();
+			var_decl->accept(this);
+		}
+		func_decl->body->accept(this);	
+		if (func_decl->result.isInitialized()) {
+			printIndent();
+			oss << "return " << func_decl->result.getName() << ";" << std::endl;
+		}
+		current_context = old_context;
+	}
+
+	int CodeGenGunrock::genVertexSets(void) {
+		for (auto var:mir_context_->getConstVertexSets()){
+			oss << "FrontierT " << var->name << ";" << std::endl;
+			 
+			mir::EdgeSetType::Ptr edge_set = mir_context_->getEdgeSetTypeFromElementType(mir::to<mir::VertexSetType>(var->type)->element);
+			if (edge_set->weight_type == nullptr)
+				oss << "OprtrParametersT " << var->name << "_parameters;" << std::endl;
+			else 
+				oss << "WOprtrParametersT " << var->name << "_parameters;" << std::endl;
+		}
+	}
+
 	int CodeGenGunrock::genPropertyArrayDecl(mir::VarDecl::Ptr var_decl) {
-		oss << "// " << var_decl->name << std::endl;
+		//oss << "// " << var_decl->name << std::endl;
 
 		auto vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
 		assert(vector_type != nullptr);
@@ -55,6 +96,16 @@ namespace graphit {
 
 		return 0;
 
+	}
+	std::string CodeGenGunrock::getAllGlobals(void) {
+		std::string output;
+		for (auto edgeset : mir_context_->getEdgeSets()) {
+			output += (edgeset->name + ", ");
+		}
+		for (auto constant : mir_context_->getLoweredConstants()) {
+			output += (constant->name + ", ");
+		}
+		return output.substr(0, output.length()-2);
 	}
 
 
@@ -120,6 +171,7 @@ namespace graphit {
 
 
 	int CodeGenGunrock::genIncludeStmts(void) {
+		/*
 		oss << "#include <gunrock/gunrock.h>" << std::endl;
 		oss << "#include <gunrock/graphio/graphio.cuh>" << std::endl;
 		oss << "#include <gunrock/app/test_base.cuh>" << std::endl;
@@ -127,19 +179,23 @@ namespace graphit {
 		oss << "#include <gunrock/app/frontier.cuh>" << std::endl;
 		oss << "#include <gunrock/app/enactor_types.cuh>" << std::endl;
 		oss << "#include <gunrock/oprtr/oprtr.cuh>" << std::endl;
+		*/
+
+
+		oss << "#include \"builtins_gunrock.h\"" << std::endl;
 
 		oss << "using namespace gunrock;" << std::endl;
 
 		oss << "typedef uint32_t VertexT;" << std::endl;
 		oss << "typedef size_t SizeT;" << std::endl;
-		oss << "typedef float ValueT;" << std::endl;
+		oss << "typedef int ValueT;" << std::endl;
 
 		oss << "typedef typename app::TestGraph<VertexT, SizeT, ValueT, graph::HAS_EDGE_VALUES | graph::HAS_CSR> WGraphT;" << std::endl; 
 		oss << "typedef typename app::TestGraph<VertexT, SizeT, ValueT, graph::HAS_CSR> GraphT;" << std::endl; 
 		
 		oss << "typedef typename app::Frontier<VertexT, SizeT, util::ARRAY_NONE, 0> FrontierT;" << std::endl;
-		oss << "typedef typename oprtr::OprtrParameters<GraphT, Frontier, VertexT> OprtrParametersT;" << std::endl;
-		oss << "typedef typename oprtr::OprtrParameters<WGraphT, Frontier, VertexT> WOprtrParametersT;" << std::endl;
+		oss << "typedef typename oprtr::OprtrParameters<GraphT, FrontierT, VertexT> OprtrParametersT;" << std::endl;
+		oss << "typedef typename oprtr::OprtrParameters<WGraphT, FrontierT, VertexT> WOprtrParametersT;" << std::endl;
 
 
 		return 0;
@@ -148,9 +204,13 @@ namespace graphit {
 
 
 	void CodeGenGunrock::visit(mir::FuncDecl::Ptr func_decl) {
-		oss << "// Generating code for function - " <<  func_decl->name << std::endl;
+		//oss << "// Generating code for function - " <<  func_decl->name << std::endl;
 
 		// Special case for the main function
+
+		// Do not generate code for Device functions for now, the body will be generated as a lambda
+		if (func_decl->realized_context & mir::FuncDecl::CONTEXT_DEVICE)
+			return; 
 
 		if (func_decl->name == "main") {
 			func_decl->isFunctor = false;
@@ -181,7 +241,9 @@ namespace graphit {
 				printIndent();
 				oss << "graphio::UseParameters(parameters);" << std::endl;
 				printIndent();
-				oss << "parameters.Set(\"graph-type\", \"market\")" << std::endl;
+				oss << "parameters.Set(\"graph-type\", \"market\");" << std::endl;
+				//printIndent();
+				//oss << "parameters.Set(\"undirected\", false);" << std::endl;
 				printIndent();
 				oss << "parameters.Set(\"graph-file\", ";
 				edge_set_load_expr->file_name->accept(this);
@@ -198,9 +260,32 @@ namespace graphit {
 			}
 
 
+		
+				
+			for (auto var:mir_context_->getConstVertexSets()){
+				mir::VertexSetAllocExpr::Ptr vsae = std::make_shared<mir::VertexSetAllocExpr>();
+				vsae->vertex_set_name = var->name;
+				vsae->element_type = mir::to<mir::VertexSetType>(var->type)->element;
+				vsae->accept(this);
+				printIndent();
+				oss << "builtin_addAllVertices(" << var->name << ", ";
+				mir_context_->getElementCount(vsae->element_type)->accept(this);
+				oss << ");" << std::endl;
+				
+			}
+
+
 			for (auto constant : mir_context_->getLoweredConstants()) {
 				if (auto type = std::dynamic_pointer_cast<mir::VectorType>(constant->type)){
-					genPropertyArrayAlloca(constant);
+					if (constant->needs_allocation)
+						genPropertyArrayAlloca(constant);
+				}else{
+					if (constant->initVal != nullptr){
+						printIndent();
+						oss << constant->name  << " = ";
+						constant->initVal->accept(this);
+						oss << ";" << std::endl;
+					}	
 				}
 			}
 
@@ -249,18 +334,19 @@ namespace graphit {
 
 		if (func_decl->name == "main") {	
 			for (auto stmt : mir_context_->getLoweredConstants()) {
-				printIndent();
-				std::string var_name = stmt->name;	
-				oss << var_name << ".Release();" << std::endl;
+				if (auto type = mir::to<mir::VectorType>(stmt->type) && stmt->needs_allocation) {
+					printIndent();
+					std::string var_name = stmt->name;	
+					oss << var_name << ".Release();" << std::endl;
+				}
 			}
 			printIndent();
-			oss << "return 0;" << std::endl;
-			
+			oss << "return 0;" << std::endl;	
 		}
 
 		if (func_decl->result.isInitialized()) {
 			printIndent();
-			oss << "return " << func_decl->result.getName() << std::endl;
+			oss << "return " << func_decl->result.getName() << ";" << std::endl;
 		}
 
 
@@ -299,7 +385,7 @@ namespace graphit {
 
 	void CodeGenGunrock::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 		printIndent();
-		oss << vsae->vertex_set_name << ".Init(2);" << std::endl;
+		oss << vsae->vertex_set_name << ".Init(2, NULL, \"\", util::DEVICE | util::HOST);" << std::endl;
 		printIndent();
 		oss << vsae->vertex_set_name << ".Reset();" << std::endl;
 		printIndent();
@@ -309,7 +395,7 @@ namespace graphit {
 		printIndent();
 		oss << vsae->vertex_set_name << ".queue_reset = true;" << std::endl;
 		printIndent();
-		oss << vsae->vertex_set_name << ".work_progress.Reset();" << std::endl;
+		oss << vsae->vertex_set_name << ".work_progress.Reset_();" << std::endl;
 		printIndent();
 		oss << vsae->vertex_set_name << "_parameters.Init();" << std::endl;
 		printIndent();
@@ -322,6 +408,8 @@ namespace graphit {
 		oss << vsae->vertex_set_name << "_parameters.advance_mode = \"LB_CULL\";" << std::endl;
 		printIndent();
 		oss << vsae->vertex_set_name << "_parameters.filter_mode = \"CULL\";" << std::endl;
+		printIndent();
+		oss << vsae->vertex_set_name << "_parameters.context = mgpu::CreateCudaDeviceAttachStream(3, 0);" << std::endl;
 		printIndent();
 		oss << "{" << std::endl;
 		indent();
@@ -359,59 +447,138 @@ namespace graphit {
 			else {
 				ExtractReadWriteSet extractor;
 				stmt->accept(&extractor);
-				std::vector<std::string> read_inserted;
-				for (auto var: extractor.read_set) {
+
+				for (auto var: extractor.getReadSet()) {
 					auto vector_type = mir::to<mir::VectorType>(var.getType());
 					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
 					std::string name = var.getName();
-					if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()){
-						printIndent();
-						oss << name << ".Move(util::DEVICE, util::HOST, ";
-						size_expr->accept(this);
-						oss << ", 0,  0);" << std::endl;	
-						read_inserted.push_back(name);
-					}
-				}
-				for (auto var: extractor.write_set) {
-					auto vector_type = mir::to<mir::VectorType>(var.getType());
-					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
-					std::string name = var.getName();
-					if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()) {
-						printIndent();
-						oss << name << ".Move(util::DEVICE, util::HOST, ";
-						size_expr->accept(this);
-						oss << ", 0,  0);" << std::endl;	
-						read_inserted.push_back(name);
-					}
+					printIndent();
+					oss << name << ".Move(util::DEVICE, util::HOST, ";
+					size_expr->accept(this);
+					oss << ", 0, 0);" << std::endl;						
 				}
 				stmt->accept(this);
-				std::vector<std::string> write_inserted;
-				for (auto var: extractor.write_set) {
+				for (auto var: extractor.getWriteSet()) {
 					auto vector_type = mir::to<mir::VectorType>(var.getType());
 					auto size_expr = mir_context_->getElementCount(vector_type->element_type);
 					std::string name = var.getName();
-					if (std::find(write_inserted.begin(), write_inserted.end(), name) == write_inserted.end()) {
-						printIndent();
-						oss << name << ".Move(util::HOST, util::DEVICE, ";
-						size_expr->accept(this);
-						oss << ", 0,  0);" << std::endl;	
-						write_inserted.push_back(name);
-					}
-				}
-				
+					printIndent();
+					oss << name << ".Move(util::HOST, util::DEVICE, ";
+					size_expr->accept(this);
+					oss << ", 0, 0);" << std::endl;						
+				}	
 			}
-
 		}
+		
+	}
+
+	void CodeGenGunrock::visit(mir::VertexSetWhereExpr::Ptr vswe) {
+		if (vswe->input_func == "") {
+			std::cerr << "VertexSetWhereExpr without a from function. Exiting with failure.\n";
+			exit(-1);
+		} 
+		if (vswe->var == nullptr) {
+			std::cerr << "VertexSetWhereExpr result not assigned. Exiting with failure\n";
+			exit(-1);
+		}
+		auto mir_var = mir_context_->getSymbol(vswe->target);
+		oss << "{" << std::endl;
+		indent();
+		for(auto var:mir_context_->getLoweredConstants()){
+			printIndent();
+			oss << "auto " << var->name << " = ::" << var->name << ";" << std::endl;
+		}
+		for (auto edgeset : mir_context_->getEdgeSets()) {
+			printIndent();
+			oss << "auto " << edgeset->name << " = ::" << edgeset->name << ";" << std::endl;
+		}
+		printIndent();
+		oss << "auto apply_lambda = [" << getAllGlobals() << "] __device__ (const VertexT &_src, VertexT &_dest, const SizeT &_edge_id, const VertexT &_input_item, const SizeT &_input_pos, SizeT &_output_pos) -> bool {" << std::endl;
+		indent();
+		//printIndent();
+		//oss << "return " << vsae->input_function_name << "(dest);" << std::endl;	
+		fillLambdaBody(mir_context_->getFunction(vswe->input_func), {"_dest"});
+		dedent();
+		printIndent();
+		oss << "};" << std::endl;
+		mir::VertexSetType::Ptr vst = mir::to<mir::VertexSetType>(mir_var.getType());
+		mir::ElementType::Ptr element_type = vst->element;
+
+
+		if (vswe->var->getName() != mir_var.getName()){
+			printIndent();
+			oss << mir_var.getName() << ".GetQueueLength(0);" << std::endl;
+			printIndent();
+			oss << "auto old_length = " << mir_var.getName() << ".queue_length;" << std::endl;
+		}
+		printIndent();
+		std::string graph_name = mir_context_->getEdgeSetNameFromEdgeSetType(mir_context_->getEdgeSetTypeFromElementType(element_type));
+		assert(graph_name != "");
+
+		oss << "oprtr::Filter<oprtr::OprtrType_V2V>(" << graph_name << ".csr(), " << mir_var.getName() << ".V_Q(), " << mir_var.getName() << ".Next_V_Q(), " << mir_var.getName() << "_parameters, apply_lambda);" << std::endl;
+		printIndent();
+		oss << "cudaDeviceSynchronize();" << std::endl;
+
+
+		if (vswe->var->getName() != mir_var.getName()) {
+
+			/*
+			auto tmp_queue = vswe->var->getName().V_Q();
+			vswe->var->getName(). queue_map[queue_index % 2] = mir_var.getName().V_Q();
+			mir_var.getName().queue_map[queue_index %2] = tmp_queue;
+			mir_var.queue_index = ((mir_var.queue_index-1) % 2);
+			mir_var.work_progress.SetQueueLength(old_length);
+			*/
+
+			printIndent();
+			oss << mir_var.getName() << ".GetQueueLength(0);" << std::endl;
+
+			printIndent();
+			oss << "auto tmp_queue = *(" << vswe->var->getName() << ".V_Q());" << std::endl;
+			printIndent();
+			oss << "*(" << vswe->var->getName() << ".V_Q()) = *(" << mir_var.getName() << ".V_Q());" << std::endl;
+			printIndent();
+			oss << "*(" << mir_var.getName() << ".V_Q()) = tmp_queue;" << std::endl;
+			printIndent();
+			oss << mir_var.getName() << ".queue_index = ((" << mir_var.getName() << ".queue_index - 1) % 2);" << std::endl;
+			printIndent();	
+			oss << vswe->var->getName() << ".queue_length = " << mir_var.getName() << ".queue_length;" << std::endl;
+			printIndent();
+			oss << vswe->var->getName() << ".work_progress.SetQueueLength("<< vswe->var->getName() << ".queue_index, " << vswe->var->getName() << ".queue_length);" << std::endl;
+
+			printIndent();
+			oss << mir_var.getName() << ".queue_length = old_length;" << std::endl;
+			printIndent();
+			oss << mir_var.getName() << ".work_progress.SetQueueLength(" << mir_var.getName() << ".queue_index, old_length);" << std::endl;
+			printIndent();
+			oss << mir_var.getName() << ".work_progress.SetQueueLength((" << mir_var.getName() << ".queue_index+1)%2, 0);" << std::endl;
+			
+
+			//vswe->var->getName();
+		}
+
+
+	
+		vswe->var->getName();
+		dedent();
+		printIndent();
+		oss << "}";
 	}
 
 	void CodeGenGunrock::visit(mir::StringLiteral::Ptr string_literal) {
-		oss << "\"" << string_literal->val << "\"";		
+		oss << "\"";
+		for (auto ch : string_literal->val)
+			if (iscntrl(ch) || ch == '\\' || ch == '\"' || ch == '\'') {
+				oss << "\\0" << std::oct << (int)(ch);	
+			}else
+				oss << ch;
+		oss << "\"";		
 	}
 	void CodeGenGunrock::visit(mir::IntLiteral::Ptr int_literal) {
 		oss << int_literal->val;
 	}
 	void CodeGenGunrock::visit(mir::FloatLiteral::Ptr float_literal) {
-		oss << float_literal->val;
+		oss << "((float)" << float_literal->val << ")";
 	}
 	void CodeGenGunrock::visit(mir::BoolLiteral::Ptr bool_literal) {
 		oss << bool_literal->val?"true":"false";
@@ -444,11 +611,17 @@ namespace graphit {
 		printIndent();
 		if (mir::isa<mir::VertexSetApplyExpr>(assign_stmt->expr)){
 			mir::to<mir::VertexSetApplyExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
-			assign_stmt->expr->accept(this);	
+			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;	
 			
 		}else if(mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr)){
 			mir::to<mir::PushEdgeSetApplyExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
 			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;
+		}else if(mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)){
+			mir::to<mir::VertexSetWhereExpr>(assign_stmt->expr)->var = &(mir::to<mir::VarExpr>(assign_stmt->lhs)->var);
+			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;
 		}else{
 			assign_stmt->lhs->accept(this);
 			oss << " = ";
@@ -520,7 +693,7 @@ namespace graphit {
 				printIndent();
 				if (reduce_stmt->tracking_var_name_ != "")
 					oss << reduce_stmt->tracking_var_name_ << " = ";
-				oss << "writeMin((";
+				oss << "builtin_writeMin((";
 				reduce_stmt->lhs->accept(this);
 				oss << "), ";
 				reduce_stmt->expr->accept(this);
@@ -530,7 +703,7 @@ namespace graphit {
 				printIndent();
 				if(reduce_stmt->tracking_var_name_ != "")
 					oss << reduce_stmt->tracking_var_name_ << " = ";
-				oss << "writeSum((";
+				oss << "builtin_writeSum((";
 				reduce_stmt->lhs->accept(this);
 				oss << "), ";
 				reduce_stmt->expr->accept(this);
@@ -569,20 +742,32 @@ namespace graphit {
 			}
 			oss << "{" << std::endl;
 			indent();
+			
+			for(auto var:mir_context_->getLoweredConstants()){
+				printIndent();
+				oss << "auto " << var->name << " = ::" << var->name << ";" << std::endl;
+			}
+			for (auto edgeset : mir_context_->getEdgeSets()) {
+				printIndent();
+				oss << "auto " << edgeset->name << " = ::" << edgeset->name << ";" << std::endl;
+			}
+				
 			printIndent();
-			oss << "auto apply_lambda = [] __device__ (VertexT *dummy, const SizeT &vertex_) {" << std::endl;
+			oss << "auto apply_lambda = [" << getAllGlobals() << "] __device__ (VertexT *_dummy, const SizeT &_vertex) {" << std::endl;
 			indent();
-			printIndent();
-			oss << vsae->input_function_name << "(vertex_);" << std::endl;
+			//printIndent();
+			//oss << vsae->input_function_name << "(vertex_);" << std::endl;
+			fillLambdaBody(mir_context_->getFunction(vsae->input_function_name), {"_vertex"});
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;
+			oss << "};" << std::endl;
 
 			printIndent();
 			oss << "oprtr::ForAll((VertexT*) NULL, apply_lambda, ";
 			associated_element_type_size->accept(this);
 			oss << ", util::DEVICE, 0);" << std::endl;
-
+			printIndent();
+			oss << "cudaDeviceSynchronize();" << std::endl;
 			dedent();
 			printIndent();
 			oss << "}";				
@@ -591,14 +776,23 @@ namespace graphit {
 			auto mir_var = mir::to<mir::VarExpr>(vsae->target);
 			oss << "{" << std::endl;
 			indent();
+			for(auto var:mir_context_->getLoweredConstants()){
+				printIndent();
+				oss << "auto " << var->name << " = ::" << var->name << ";" << std::endl;
+			}
+			for (auto edgeset : mir_context_->getEdgeSets()) {
+				printIndent();
+				oss << "auto " << edgeset->name << " = ::" << edgeset->name << ";" << std::endl;
+			}
 			printIndent();
-			oss << "auto apply_lambda = [] __device__ (const VertexT &src, VertexT &dest, const SizeT &edge_id, const VertexT &input_item, const SizeT &input_pos, SizeT &output_pos) -> bool {" << std::endl;
+			oss << "auto apply_lambda = [" << getAllGlobals() << "] __device__ (const VertexT &_src, VertexT &_dest, const SizeT &_edge_id, const VertexT &_input_item, const SizeT &_input_pos, SizeT &_output_pos) -> bool {" << std::endl;
 			indent();
-			printIndent();
-			oss << "return " << vsae->input_function_name << "(dest);" << std::endl;
+			//printIndent();
+			//oss << "return " << vsae->input_function_name << "(dest);" << std::endl;	
+			fillLambdaBody(mir_context_->getFunction(vsae->input_function_name), {"_dest"});
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;
+			oss << "};" << std::endl;
 			mir::VertexSetType::Ptr vst = mir::to<mir::VertexSetType>(mir_var->var.getType());
 			mir::ElementType::Ptr element_type = vst->element;
 			printIndent();
@@ -608,6 +802,8 @@ namespace graphit {
 				oss << "oprtr::Filter<oprtr::OprtrType_V2V>(" << graph_name << ".csr(), " << mir_var->var.getName() << ".V_Q(), nullptr, " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
 			else
 				oss << "oprtr::Filter<oprtr::OprtrType_V2V(" << graph_name << ".csr(), " << mir_var->var.getName() << ".V_Q(), " << vsae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda);" << std::endl;
+			printIndent();
+			oss << "cudaDeviceSynchronize();" << std::endl;
 			dedent();
 			printIndent();
 			oss << "}";
@@ -628,53 +824,89 @@ namespace graphit {
 		if(pesae->from_func=="") {
 			if (pesae->var != nullptr) {
 				std::cerr << "Output frontier without input frontier not supported yet. Exiting with failure" << std::endl;
+				std::cerr << pesae->var->getName() << std::endl;
 				exit(-1);
 			}
 			oss << "{" << std::endl;
 			indent();
+			for(auto var:mir_context_->getLoweredConstants()){
+				printIndent();
+				oss << "auto " << var->name << " = ::" << var->name << ";" << std::endl;
+			}
+			for (auto edgeset : mir_context_->getEdgeSets()) {
+				printIndent();
+				oss << "auto " << edgeset->name << " = ::" << edgeset->name << ";" << std::endl;
+			}
 			printIndent();
-			oss << "auto apply_lamda = [] __device__ (const VertexT *dummy, const SizeT &e) -> bool {" << std::endl;
+			oss << "auto apply_lambda = [" << getAllGlobals() << "] __device__ (const VertexT *_dummy, const SizeT &_e) -> bool {" << std::endl;
 			indent();
 			printIndent();
-			oss << "VertexT src, dest;" << std::endl; 
+			oss << "VertexT _src, _dest;" << std::endl; 
 			printIndent();
-			oss << mir_var->var.getName() << ".GetEdgeSrcDest(e, src, dest);" << std::endl;
-			printIndent();
-			oss << "auto edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + e);" << std::endl;
-			printIndent();
-			oss << pesae->input_function_name << "(src, dest, edge_weight);" << std::endl;
+			oss << mir_var->var.getName() << ".GetEdgeSrcDest(_e, _src, _dest);" << std::endl;
+			auto edge_set_type = mir::to<mir::EdgeSetType>(mir_context_->getConstEdgeSetByName(mir_var->var.getName())->type);
+			if (edge_set_type->weight_type != nullptr){
+				printIndent();
+				oss << "auto _edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + _e);" << std::endl;
+			}
+			fillLambdaBody(mir_context_->getFunction(pesae->input_function_name), {"_src", "_dest", "_edge_weight"});
+				
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;
+			oss << "};" << std::endl;
 			printIndent();
 			oss << "oprtr::ForAll((VertexT*) NULL, apply_lambda, " << mir_var->var.getName() << ".edges, util::DEVICE, 0);" << std::endl;
+			printIndent();
+			oss << "cudaDeviceSynchronize();" << std::endl;
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;
+			oss << "}";
 			
 		} else {
 			oss << "{" << std::endl;
 			indent();
+			for(auto var:mir_context_->getLoweredConstants()){
+				printIndent();
+				oss << "auto " << var->name << " = ::" << var->name << ";" << std::endl;
+			}
+			for (auto edgeset : mir_context_->getEdgeSets()) {
+				printIndent();
+				oss << "auto " << edgeset->name << " = ::" << edgeset->name << ";" << std::endl;
+			}
 			printIndent();
-			oss << "auto apply_lambda = [] __device__ (const VertexT &src, VertexT &dest, const SizeT &edge_id, const VertexT &input_item, const SizeT &input_pos, SizeT &output_pos) -> bool {" << std::endl;
+			oss << "auto apply_lambda = [" << getAllGlobals() << "] __device__ (const VertexT &_src, VertexT &_dest, const SizeT &_edge_id, const VertexT &_input_item, const SizeT &_input_pos, SizeT &_output_pos) -> bool {" << std::endl;
 			indent();
-			printIndent();
-			oss << "auto edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + edge_id);" << std::endl; 
-			printIndent();
-			oss << "return " << pesae->input_function_name << "(src, dest, edge_weight);" << std::endl;
+			
+			auto edge_set_type = mir::to<mir::EdgeSetType>(mir_context_->getConstEdgeSetByName(mir_var->var.getName())->type);
+			if (edge_set_type->weight_type != nullptr){
+				printIndent();
+				oss << "auto _edge_weight = Load<cub::LOAD_CS>(" << mir_var->var.getName() << ".CsrT::edge_values + _edge_id);" << std::endl;
+			}
+			fillLambdaBody(mir_context_->getFunction(pesae->input_function_name), {"_src", "_dest", "_edge_weight"});
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;
+			oss << "};" << std::endl;
+			printIndent();
+			oss << "auto pass_lambda = [] __device__ (const VertexT &src, VertexT &dest, const SizeT &edge_id, const VertexT &input_item, const SizeT &input_pos, SizeT &output_pos) -> bool {" << std::endl;
+			indent();
+			printIndent();
+			oss << "return true;" << std::endl;	
+			dedent();
+			printIndent();
+			oss << "};" << std::endl;
+
 			printIndent();	
 			if(pesae->var == nullptr)
-				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << mir_var->var.getName() << ".V_Q(), nullptr, " << mir_var->var.getName() << "_parameters, apply_lambda, pass_lambda);" << std::endl;
+				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << pesae->from_func << ".V_Q(), nullptr, " << pesae->from_func << "_parameters, apply_lambda, pass_lambda);" << std::endl;
 			else 
-				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << mir_var->var.getName() << ".V_Q(), " << pesae->var->getName() << ".Next_V_Q(), " << mir_var->var.getName() << "_parameters, apply_lambda, lambda_pass);" << std::endl;
+				oss << "oprtr::Advance<oprtr::OprtrType_V2V>(" << mir_var->var.getName() << ".csr(), " << pesae->from_func << ".V_Q(), " << pesae->var->getName() << ".Next_V_Q(), " << pesae->from_func << "_parameters, apply_lambda, pass_lambda);" << std::endl;
+			printIndent();
+			oss << "cudaDeviceSynchronize();" << std::endl;
 
 			
 			dedent();
 			printIndent();
-			oss << "}" << std::endl;	
+			oss << "}";	
 		}
 	}	
 
@@ -689,7 +921,28 @@ namespace graphit {
 		for_domain->upper->accept(this);
 		oss << "; " << loop_var << "++ ) {" << std::endl;
 		indent();
+		ExtractReadWriteSet extractor;
+		for_stmt->accept(&extractor);
+			
+		for (auto var: extractor.getWriteSet()) {
+			auto vector_type = mir::to<mir::VectorType>(var.getType());
+			auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+			std::string name = var.getName();
+			printIndent();
+			oss << name << ".Move(util::HOST, util::DEVICE, ";
+			size_expr->accept(this);
+			oss << ", 0, 0);" << std::endl;						
+		}	
 		for_stmt->body->accept(this);
+		for (auto var: extractor.getReadSet()) {
+			auto vector_type = mir::to<mir::VectorType>(var.getType());
+			auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+			std::string name = var.getName();
+			printIndent();
+			oss << name << ".Move(util::DEVICE, util::HOST, ";
+			size_expr->accept(this);
+			oss << ", 0, 0);" << std::endl;						
+		}	
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;
@@ -701,7 +954,32 @@ namespace graphit {
 		while_stmt->cond->accept(this);
 		oss << ") {" << std::endl;
 		indent();
+		
+		ExtractReadWriteSet extractor;
+		while_stmt->cond->accept(&extractor);
+			
+		for (auto var: extractor.getWriteSet()) {
+			auto vector_type = mir::to<mir::VectorType>(var.getType());
+			auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+			std::string name = var.getName();
+			printIndent();
+			oss << name << ".Move(util::HOST, util::DEVICE, ";
+			size_expr->accept(this);
+			oss << ", 0, 0);" << std::endl;						
+		}	
+		
 		while_stmt->body->accept(this);
+
+		for (auto var: extractor.getReadSet()) {
+			auto vector_type = mir::to<mir::VectorType>(var.getType());
+			auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+			std::string name = var.getName();
+			printIndent();
+			oss << name << ".Move(util::DEVICE, util::HOST, ";
+			size_expr->accept(this);
+			oss << ", 0, 0);" << std::endl;						
+		}	
+
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;	
@@ -808,5 +1086,36 @@ namespace graphit {
 			assign_expr->lhs->accept(this);
 			assign_expr->expr->accept(this);
 		}
+	}
+	std::vector<mir::Var> ExtractReadWriteSet::getReadSet(void) {
+		std::vector<std::string> read_inserted;
+		std::vector<mir::Var> read_inserted_var;
+		for (auto var: read_set_) {
+			std::string name = var.getName();
+			if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()){
+				read_inserted.push_back(name);
+				read_inserted_var.push_back(var);
+			}
+		}
+		for (auto var: write_set_) {
+			std::string name = var.getName();
+			if (std::find(read_inserted.begin(), read_inserted.end(), name) == read_inserted.end()) {
+				read_inserted.push_back(name);
+				read_inserted_var.push_back(var);
+			}
+		}	
+		return read_inserted_var;
+	}
+	std::vector<mir::Var> ExtractReadWriteSet::getWriteSet(void) {
+		std::vector<std::string> write_inserted;
+		std::vector<mir::Var> write_inserted_var;
+		for (auto var: write_set_) {
+			std::string name = var.getName();
+			if(std::find(write_inserted.begin(), write_inserted.end(), name) == write_inserted.end()) {
+				write_inserted.push_back(name);
+				write_inserted_var.push_back(var);
+			}
+		}
+		return write_inserted_var;
 	}
 }

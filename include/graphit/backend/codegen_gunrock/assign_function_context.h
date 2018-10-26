@@ -19,6 +19,7 @@ namespace graphit {
 			void visit(mir::VertexSetApplyExpr::Ptr);
 			void visit(mir::PullEdgeSetApplyExpr::Ptr);
 			void visit(mir::PushEdgeSetApplyExpr::Ptr);
+			void visit(mir::VertexSetWhereExpr::Ptr);
 		private:
 			MIRContext *mir_context_;
 	};
