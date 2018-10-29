@@ -73,6 +73,14 @@ struct VertexSubset {
 
     // delete the contents
      ~VertexSubset(){
+	if(dense_vertex_set_)
+		delete[] dense_vertex_set_;
+	if(bitmap_)
+		delete bitmap_;
+	if(bool_map_)
+		delete[] bool_map_;
+	if(sliding_queue_)
+		delete sliding_queue_;	
     }
 
     bool contains(NodeID_ v){

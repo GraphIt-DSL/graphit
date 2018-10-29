@@ -257,6 +257,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_sssp_with_tracking(self):
         self.basic_compile_exec_test("sssp.gt")
 
+    def test_sssp_delete(self):
+	self.basic_compile_exec_test("sssp_delete.gt")
+
     def test_sssp_verified(self):
         self.basic_compile_test("sssp.gt")
         cmd = "./" + self.executable_file_name + " > verifier_input"
@@ -273,7 +276,21 @@ class TestGraphitCompiler(unittest.TestCase):
                 test_flag = True
         self.assertEqual(test_flag, True)
 
+    def test_sssp_delete_verified(self):
+        self.basic_compile_test("sssp_delete.gt")
+        cmd = "./" + self.executable_file_name + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+        #check the value printed to stdout is as expected
+        # for line in iter(proc.stdout.readline,''):
+        #     print line.rstrip()
 
+        # invoke the SSSP verifier
+        proc = subprocess.Popen("./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0", stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL"):
+                test_flag = True
+        self.assertEqual(test_flag, True)
 
     def test_cc_verified(self):
         self.basic_compile_test("cc.gt")
