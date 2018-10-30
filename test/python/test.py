@@ -258,7 +258,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_exec_test("sssp.gt")
 
     def test_sssp_delete(self):
-	self.basic_compile_exec_test("sssp_delete.gt")
+	self.basic_compile_exec_test("sssp_with_delete.gt")
 
     def test_sssp_verified(self):
         self.basic_compile_test("sssp.gt")

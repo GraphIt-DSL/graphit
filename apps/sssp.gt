@@ -25,14 +25,15 @@ func main()
         var rounds : int = 0;
         while (frontier.getVertexSetSize() != 0)
             #s1# var output: vertexset{Vertex}  = edges.from(frontier).applyModified(updateEdge, SP);
-	    delete frontier;
-	    frontier = output;
-	    rounds = rounds + 1;
+            delete frontier;
+            frontier = output;
+            rounds = rounds + 1;
     	    if rounds == n
 	            print "negative cycle";
 	            break;
 	    end
         end
+        delete frontier;
         var elapsed_time : float = stopTimer();
         print "elapsed time: ";
         print elapsed_time;
