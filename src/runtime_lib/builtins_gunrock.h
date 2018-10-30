@@ -52,10 +52,17 @@ gunrock::util::Array1D<size_t, int> __host__ builtin_getOutDegrees(GraphT &graph
 	gunrock::util::Array1D<size_t, int> OutDegrees;
 	OutDegrees.Allocate(graph.nodes, gunrock::util::DEVICE);
 	OutDegrees.Allocate(graph.nodes, gunrock::util::HOST);
-	gunrock::oprtr::ForAll((uint32_t *)NULL, 
-		[graph, OutDegrees] __device__ (uint32_t *dummy, const size_t &v) {
-			OutDegrees[v] = graph.row_offsets[v+1] - graph.row_offsets[v];		
+	OutDegrees.ForEach(
+		[] __device__ (int &v) {
+			v = 0;
 		}, graph.nodes, gunrock::util::DEVICE, 0);
+	gunrock::oprtr::ForAll((uint32_t *)NULL, 
+		[graph, OutDegrees] __device__ (uint32_t *dummy, const size_t &edge_id) {
+			uint32_t src, dst;
+			graph.GetEdgeSrcDest(edge_id, src, dst);
+			//OutDegrees[v] = graph.row_offsets[v+1] - graph.row_offsets[v];		
+			atomicAdd(&OutDegrees[src], 1);
+		}, graph.edges, gunrock::util::DEVICE, 0);
 	return OutDegrees;
 }
 template <typename T>
