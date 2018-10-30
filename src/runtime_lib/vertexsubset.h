@@ -79,8 +79,6 @@ struct VertexSubset {
 		delete bitmap_;
 	if(bool_map_)
 		delete[] bool_map_;
-	if(sliding_queue_)
-		delete sliding_queue_;	
     }
 
     bool contains(NodeID_ v){
