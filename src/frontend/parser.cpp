@@ -2541,6 +2541,7 @@ namespace graphit {
         decls.insert("fabs", IdentType::FUNCTION);
         decls.insert("startTimer", IdentType::FUNCTION);
         decls.insert("stopTimer", IdentType::FUNCTION);
+        decls.insert("atoi", IdentType::FUNCTION);
 	
     }
 

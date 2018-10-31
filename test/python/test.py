@@ -235,6 +235,13 @@ class TestGraphitCompiler(unittest.TestCase):
                  break;
         self.assertEqual(test_flag, True)
 
+    def test_simple_atoi(self):
+        self.basic_compile_test("simple_atoi.gt")	
+        cmd = "./" + self.executable_file_name + " 150 170"
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        output = proc.stdout.readline().strip()
+        print ("output: " + str(output))
+        self.assertEqual(int(output), 320)
 
     def test_simple_if_elif_else(self):
         self.basic_compile_exec_test("simple_if_elif_else.gt")

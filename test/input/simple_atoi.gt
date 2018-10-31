@@ -1,0 +1,5 @@
+func main()
+    var input1 : int = atoi(argv[1]);
+    var input2 : int = atoi(argv[2]);
+    print input1 + input2;
+end
