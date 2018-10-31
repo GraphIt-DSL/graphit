@@ -116,8 +116,8 @@ namespace graphit {
             if (var_decl->stmt_label != "") {
                 label_scope_.scope(var_decl->stmt_label);
             }
-
-            var_decl->initVal->accept(this);
+            if (var_decl->initVal != nullptr)
+            	var_decl->initVal->accept(this);
 
             if (var_decl->stmt_label != "") {
                 label_scope_.unscope();

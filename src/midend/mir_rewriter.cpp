@@ -120,8 +120,8 @@ namespace graphit {
             if (var_decl->stmt_label != "") {
                 label_scope_.scope(var_decl->stmt_label);
             }
-
-            var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            if (var_decl->initVal != nullptr)
+	            var_decl->initVal = rewrite<Expr>(var_decl->initVal);
             node = var_decl;
 
             if (var_decl->stmt_label != "") {

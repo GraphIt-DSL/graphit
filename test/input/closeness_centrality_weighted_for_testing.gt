@@ -23,13 +23,16 @@ func main()
 
   startTimer();
   while (frontier.getVertexSetSize() != 0)
-      #s1# frontier = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      delete frontier;
+      frontier = output;
       rounds = rounds + 1;
       if  rounds == n
          print "negative cycle";
          break;
       end
   end
+  delete frontier;
 
   var elapsed_time : float = stopTimer();
   print "elapsed time: ";
