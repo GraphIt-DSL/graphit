@@ -4,4 +4,5 @@ const age : vector{Vertex}(int) = 0;
 func vertex_filter(v: Vertex) -> output : bool output = (age[v] > 40); end
 func main()
      var vertices_above_40 : vertexset{Vertex} = vertices.filter(vertex_filter);
+     delete vertices_above_40;
 end

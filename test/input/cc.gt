@@ -25,9 +25,12 @@ func main()
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
     vertices.apply(init);
     while (frontier.getVertexSetSize() != 0)
-        #s1# frontier = edges.from(frontier).applyModified(updateEdge, IDs);
+        var output : vertexset{Vertex};
+        #s1# output = edges.from(frontier).applyModified(updateEdge, IDs);
+        delete frontier;
+        frontier = output;
     end
-
+    delete frontier;
     #s2# vertices.apply(printID);
 end
 

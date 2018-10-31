@@ -28,8 +28,12 @@ func main()
     parent[8] = 8;
 
     while (frontier.getVertexSetSize() != 0)
-         #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true);
+         var output : vertexset{Vertex};
+         #s1# output = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true);
+         delete frontier;
+         frontier = output;
     end
-
+    delete frontier;
+      
      #s2# vertices.apply(printParent);
 end

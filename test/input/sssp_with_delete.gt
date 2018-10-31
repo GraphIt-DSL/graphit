@@ -40,7 +40,7 @@ func main()
             break;
         end
     end
-
+    delete frontier;
     #s2# vertices.apply(printSP);
 
     % print rounds;

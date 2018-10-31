@@ -34,8 +34,11 @@ func main()
     vertices.apply(init);
 
     while (frontier.getVertexSetSize() != 0)
-        frontier = edges.from(frontier).apply(updateEdge);
+        var output : vertexset{Vertex} = edges.from(frontier).apply(updateEdge);
+        delete frontier;
+        frontier = output;
     end
+    delete frontier;
 
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";

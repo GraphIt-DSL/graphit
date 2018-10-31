@@ -30,14 +30,16 @@ func main()
 
     var rounds : int = 0;
     while (frontier.getVertexSetSize() != 0)
-        frontier = edges.from(frontier).apply(updateEdge);
+        var output : vertexset{Vertex} = edges.from(frontier).apply(updateEdge);
+        delete frontier;
+        frontier = output;
 	    rounds = rounds + 1;
     	if rounds == n
 	        print "negative cycle";
 	        break;
 	    end
     end
-
+    delete frontier;
     print rounds;
     var elapsed_time : float = stopTimer();
     print "elapsed time: ";

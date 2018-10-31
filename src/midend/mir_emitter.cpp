@@ -16,7 +16,10 @@ namespace graphit {
         addVarOrConst(var_decl, false);
         auto mir_var_decl = std::make_shared<mir::VarDecl>();
         mir_var_decl->name = var_decl->name->ident;
-        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+	if (var_decl->initVal != nullptr)
+	        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+	else
+		mir_var_decl->initVal = nullptr;
         mir_var_decl->type = emitType(var_decl->type);
         mir_var_decl->stmt_label = var_decl->stmt_label;
 

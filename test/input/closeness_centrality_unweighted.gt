@@ -25,11 +25,13 @@ func main()
 
 
         while (frontier.getVertexSetSize() != 0)
-
-             #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+             
+             #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);
+             delete frontier;
+             frontier = output;
 
         end
-
+        delete frontier;
 
         var elapsed_time : float = stopTimer();
         print "elapsed time: ";
