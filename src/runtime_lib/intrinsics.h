@@ -142,4 +142,10 @@ template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* ve
    }
 }
 
+template<typename OBJECT_TYPE>
+void deleteObject(OBJECT_TYPE* object) {
+   if(object)
+       delete object;
+}
+
 #endif //GRAPHIT_INTRINSICS_H_H

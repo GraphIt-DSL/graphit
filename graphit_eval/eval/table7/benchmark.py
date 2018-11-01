@@ -113,9 +113,6 @@ def get_cmd(framework, graph, app, point):
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-f', '--frameworks', nargs='+',
-                        default=["graphit"], # "netflix" only used for cf
-                        help="frameworks to benchmark")
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["testGraph"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
@@ -127,10 +124,10 @@ def main():
     if args.use_NUMACTL != 1:
         use_NUMACTL = False
 
-    path_setup(args.frameworks)
+    path_setup(["graphit"])
 
     for graph in args.graphs:
-        for framework in args.frameworks:
+        for framework in ["graphit"]:
             for generic_app_name in args.applications:
                 assert generic_app_name in framework_app_lookup[framework]
 

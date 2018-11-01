@@ -21,8 +21,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 
 file(GLOB_RECURSE SOURCE_FILES include/*.h include/graphit/midend/*.h src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/utils/*.h include/utils/*.h)
-add_executable(graphitc ${SOURCE_FILES})
-target_compile_definitions(graphitc PRIVATE USE_DEFAULT_SCHEDULE)
+add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp)
 
 # build a front end library used for unit testing
 file(GLOB_RECURSE LIB_SOURCE_FILES include/*.h src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/main.cpp)

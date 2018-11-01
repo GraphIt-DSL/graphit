@@ -22,4 +22,5 @@ func main()
                                     edges.from(from_filter)
                                     .to(to_filter)
                                     .apply(update);
+    delete active_vertices;
 end

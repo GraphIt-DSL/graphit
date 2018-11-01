@@ -83,6 +83,8 @@ namespace graphit {
 
         fir::PrintStmt::Ptr parsePrintStmt();
 
+        fir::ExprStmt::Ptr parseDeleteStmt();
+
         fir::ApplyStmt::Ptr parseApplyStmt();
 
         fir::ExprStmt::Ptr parseExprOrAssignStmt();

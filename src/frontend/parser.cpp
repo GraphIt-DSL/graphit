@@ -370,6 +370,8 @@ namespace graphit {
                 stmt->stmt_label = label->ident;
                 return stmt;
             }
+            case Token::Type::DELETE:
+		return parseDeleteStmt();
             default:
                 return parseExprOrAssignStmt();
         }
@@ -688,6 +690,39 @@ namespace graphit {
             return fir::PrintStmt::Ptr();
         }
     }
+
+// delete_stmt: ('delete') expr ';'
+  fir::ExprStmt::Ptr Parser::parseDeleteStmt() {
+      try {
+          fir::ExprStmt::Ptr stmt;
+	  stmt = std::make_shared<fir::ExprStmt>();
+
+          const Token deleteToken = consume(Token::Type::DELETE);
+          fir::CallExpr::Ptr call_expr = std::make_shared<fir::CallExpr>();
+
+          auto ident = std::make_shared<fir::Identifier>();
+          ident->ident = "deleteObject";
+	  ident->setLoc(deleteToken);
+          call_expr->func = ident;
+
+          const fir::Expr::Ptr arg = parseExpr();
+          call_expr->args.push_back(arg);
+
+          stmt->expr = call_expr;
+
+          const Token endToken = consume(Token::Type::SEMICOL);
+	  call_expr->setLoc(endToken);
+          stmt->setLoc(endToken);
+          
+          return stmt;     
+     
+      } catch (const SyntaxError &) {
+        skipTo({Token::Type::SEMICOL});
+        consume(Token::Type::SEMICOL); 
+        
+        return fir::ExprStmt::Ptr();
+      }
+  }
 
 // apply_stmt: apply ident ['<' endpoints '>'] ['(' [expr_params] ')']
 //             'to' set_index_set ';'
@@ -2506,7 +2541,8 @@ namespace graphit {
         decls.insert("fabs", IdentType::FUNCTION);
         decls.insert("startTimer", IdentType::FUNCTION);
         decls.insert("stopTimer", IdentType::FUNCTION);
-
+        decls.insert("atoi", IdentType::FUNCTION);
+	
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {

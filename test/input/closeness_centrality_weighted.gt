@@ -19,13 +19,16 @@ func main()
   var n : int = edges.getVertices();
   var rounds : int = 0;
   while (frontier.getVertexSetSize() != 0)
-      #s1# frontier = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      delete frontier;
+      frontier = output;
       rounds = rounds + 1;
       if  rounds == n
          print "negative cycle";
          break;
       end
   end
+  delete frontier;
   var sum: int = 0;
   var numVerts : int = vertices.size();
   for i in 0 : numVerts
