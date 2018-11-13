@@ -387,9 +387,20 @@ namespace graphit {
                     auto label_iter_first = (*label_iter).first;
                     auto label_iter_second = (*label_iter).second;
                     auto numa_aware_flag = mir_context_->edgeset_to_label_to_merge_reduce[edge_iter_first][label_iter_first]->numa_aware;
-                    oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
-                        << "\", " << label_iter_second
-                        << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
+
+                    if (label_iter_second < 0) {
+                        //do a specical case for negative number of segments. I
+                        // in the case of negative integer, we use the number as argument to runtimve argument argv
+                        // this is the only place in the generated code that we set the number of segments
+                        oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
+                            << "\", " << "atoi(argv[" << -1*label_iter_second << "])"
+                            << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
+                    } else {
+                        // just use the positive integer as argument to number of segments
+                        oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
+                            << "\", " << label_iter_second
+                            << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
+                    }
                 }
             }
 

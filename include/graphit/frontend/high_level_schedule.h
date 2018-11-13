@@ -14,6 +14,8 @@
 #include <graphit/frontend/low_level_schedule.h>
 #include <graphit/frontend/schedule.h>
 #include <map>
+#include <regex>
+
 
 namespace graphit {
     namespace fir {
@@ -129,10 +131,14 @@ namespace graphit {
                     return setApply(apply_label, "num_segment", num_segment);
                 }
 
-
+                // High level API for specifying the number of segments for a particular direction
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNumSSG(std::string apply_label, std::string config, int num_segment, std::string direction="all");
 
+                // High level API for specifying the number of segments for a particular direction
+                // the user can specify a string "argv[x]" to use argv[x] as argument to number of segments at runtime
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyNumSSG(std::string apply_label, std::string config, string num_segment_argv, std::string direction="all");
 
                 // High level API for enabling NUMA optimization
                 // Deprecated, to be replaced with configApplyNUMA
@@ -174,6 +180,7 @@ namespace graphit {
                 std::map<string, string> parallelCompatibilityMap_;
 
                 void initGraphIterationSpaceIfNeeded(string label);
+                int extractIntegerFromString(string input_string);
 
             };
 
