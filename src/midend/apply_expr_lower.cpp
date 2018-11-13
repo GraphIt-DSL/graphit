@@ -85,8 +85,10 @@ namespace graphit {
                     node = hybrid_dense_edgeset_apply;
                 }
 
-                // Check for number of segment
-                if (apply_schedule->second.num_segment > 0) {
+                // No longer need this check as we moved the check to high-level scheduling API
+                // We use negative integers between -1 and -10 to denote argv numbers
+                // it can't be 0 as well, which indicates that this schedule is not needed
+                if (apply_schedule->second.num_segment > -10 && apply_schedule->second.num_segment != 0) {
                     mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = apply_schedule->second.scope_label_name;
                     mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][apply_schedule->second.scope_label_name] =
                             apply_schedule->second.num_segment;
