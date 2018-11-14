@@ -55,8 +55,8 @@ func main()
             else
                 output = vertices.where(updateVertex);
             end
-	    delete frontier;
-	    delete output;
+        delete frontier;
+        frontier = output;
         end
 	delete frontier;
 
