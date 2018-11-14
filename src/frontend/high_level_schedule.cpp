@@ -720,13 +720,15 @@ namespace graphit {
                         throw "Unsupported Schedule!";
                     }
 
-                    regex argv_regex ("argv\\[(\\d)\\]");
+                    // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
+                    //regex argv_regex ("argv\\[(\\d)\\]");
 
                     // here we do a hack and uses a negative integer to denote the integer argument to argv
                     // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
                     // to use as number of segments
                     // the user input argv string has to match a pattern argv[integer]
-                    if (regex_match(num_segment_argv, argv_regex)){
+                    //if (regex_match(num_segment_argv, argv_regex)){
+                    if (num_segment_argv.rfind("argv[", 0) == 0){
                         argv_number = -1*extractIntegerFromString(num_segment_argv);
                     } else {
                         std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
