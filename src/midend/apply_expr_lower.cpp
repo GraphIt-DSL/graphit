@@ -117,8 +117,10 @@ namespace graphit {
                     }
                 }
 
+                //if this is applyModified with a tracking field
                 if (edgeset_apply->tracking_field != "") {
-                    if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
+                    // only enable deduplication when the argument to ApplyModified is True (disable deduplication), or the user manually set disable
+                    if (edgeset_apply->enable_deduplication && apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
                         //only enable deduplication if there is needed for tracking
                         mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
                     }
