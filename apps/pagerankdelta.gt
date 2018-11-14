@@ -49,6 +49,7 @@ func main()
 
         for i in 1:11
             #s1# edges.from(frontier).apply(updateEdge);
+            var output : vertexset{Vertex};
             if i == 1
                 output = vertices.where(updateVertexFirstRound);
             else

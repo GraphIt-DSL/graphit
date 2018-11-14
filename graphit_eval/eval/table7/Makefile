@@ -38,6 +38,10 @@ cf_cilk_cpps = cf_pull_load_balance_segment
 all: graphit_files cpps
 
 graphit_files:
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cf.gt -f ${GRAPHIT_SCHEDULE_DIR}/cf_pull_parallel_load_balance_segment.gt -o cpps/cf_pull_load_balance_segment.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_hybrid_dense.gt -o cpps/pagerankdelta_hybrid_dense.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_benchmark_cache.gt -o cpps/pagerankdelta_hybrid_dense_bitvec_segment.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_sparse_push_parallel.gt -o cpps/pagerankdelta_sparse_push.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cc.gt -f ${GRAPHIT_SCHEDULE_DIR}/cc_benchmark_cache.gt -o cpps/cc_hybrid_dense_bitvec_segment.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cc.gt -f ${GRAPHIT_SCHEDULE_DIR}/cc_hybrid_dense_parallel_cas.gt -o cpps/cc_hybrid_dense.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bfs.gt -f ${GRAPHIT_SCHEDULE_DIR}/bfs_hybrid_dense_parallel_cas.gt -o cpps/bfs_hybrid_dense.cpp
@@ -50,9 +54,6 @@ graphit_files:
 
 cpps:  $(prd_cilk_cpps) $(bfs_cilk_cpps) $(cc_cilk_cpps) $(sssp_cilk_cpps) $(pr_cilk_cpps) openmp_only_cpps
 
-test:  ${cc_cilk_cpps} $(bfs_cilk_cpps) ${sssp_cilk_cpps}
-	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp
-	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
 
 # this two cpps files can only be compiled with openmp to get parallel performance
 openmp_only_cpps:
