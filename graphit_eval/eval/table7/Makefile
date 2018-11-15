@@ -63,4 +63,5 @@ openmp_only_cpps:
 	$(PCC) $(CILK_FLAGS) -o bin/$@ $<
 
 clean:
+	rm cpps/*.cpp
 	rm bin/*
