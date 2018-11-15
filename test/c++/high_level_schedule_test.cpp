@@ -759,7 +759,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     program->configApplyDirection("s1", "SparsePush");
-    program->setApply("s1", "sliding_queue")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
+    program->setApply("s1", "sliding_queue")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
