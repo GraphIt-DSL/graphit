@@ -147,6 +147,8 @@ schedule:
 
 The **test/input** and **test/input\_with\_schedules** directories contain many examples of the algorithm and schedule files. Use them as references when writing your own schedule.
 
+ We provide **more detailed instructions on evaluating the code generation and performance capability** of GraphIt in **graphit/graphit_eval/GraphIt_Evaluation_Guide.md**. In the guide, we provide instructions for using a series of scripts that make it easeir for people to evaluate GraphIt.. 
+
 Input Graph Formats
 ===========
 
