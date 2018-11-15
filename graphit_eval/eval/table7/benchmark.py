@@ -105,6 +105,17 @@ def get_cmd_graphit(g, p, point):
             command += " 30"
         else:
             command += " 16"
+
+    if g in ["netflix", "netflix_2x"]:
+        if use_NUMACTL:
+            command = "numactl -i all " + command
+
+        #set the number of segments
+        if g == "netflix":
+            command += " 5"
+        else:
+            command += " 15"
+
     return command
 
 

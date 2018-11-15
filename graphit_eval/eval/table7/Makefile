@@ -33,12 +33,16 @@ sssp_cilk_cpps = sssp_hybrid_denseforward
 cc_cilk_cpps = cc_hybrid_dense cc_hybrid_dense_bitvec_segment
 bfs_cilk_cpps = bfs_hybrid_dense bfs_hybrid_dense_bitvec 
 prd_cilk_cpps = pagerankdelta_hybrid_dense pagerankdelta_hybrid_dense_bitvec_segment pagerankdelta_sparse_push
+
+#this can only be compiled with icpc for now, not sure why
 cf_cilk_cpps = cf_pull_load_balance_segment 
 
-all: graphit_files cpps
+all: 
+	make graphit_files
+	make cpps
 
 graphit_files:
-	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cf.gt -f ${GRAPHIT_SCHEDULE_DIR}/cf_pull_parallel_load_balance_segment.gt -o cpps/cf_pull_load_balance_segment.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cf.gt -f ${GRAPHIT_SCHEDULE_DIR}/cf_pull_parallel_load_balance_segment_argv.gt -o cpps/cf_pull_load_balance_segment.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_hybrid_dense.gt -o cpps/pagerankdelta_hybrid_dense.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_benchmark_cache.gt -o cpps/pagerankdelta_hybrid_dense_bitvec_segment.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerankdelta.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_delta_sparse_push_parallel.gt -o cpps/pagerankdelta_sparse_push.cpp
