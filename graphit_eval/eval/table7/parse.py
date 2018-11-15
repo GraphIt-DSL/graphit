@@ -30,7 +30,10 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     with open(log_file_name) as f:
         content = f.readlines()
     content = [x.strip() for x in content]
-
+    # if the file is empty, don't try to parse it
+    if (len(content) < 3):
+        print "invalid log file" + log_file_name
+        return -1
     initial_inner_cnt = inner_cnt
     min_time = 10000000
     sum_time = 0
