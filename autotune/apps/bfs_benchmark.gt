@@ -24,7 +24,7 @@ func main()
         vertices.apply(reset);
     	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
     	frontier.addVertex(14);
-    	parent[14] = 14;
+    	parent[5] = 5;
 
     	while (frontier.getVertexSetSize() != 0)
             #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);

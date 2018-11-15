@@ -155,3 +155,8 @@ Input Graph Formats
 GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
 
 We have provided sample input graph files in the `graphit/test/graphs/` directory. The python tests use the sample input files. 
+
+Autotuning GraphIt Schedules
+===========
+Pleaes refer to **README.md** in **graphit/auotune** for more details. 
+The auotuner is still somehwat experimental. Please read the instructions carefully before trying it out. 
