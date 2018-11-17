@@ -284,7 +284,7 @@ namespace graphit {
 
             // If no schedule has been specified for the current label, create a new one
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
-                //Default schedule pull, serial
+                //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
                         = {apply_label, ApplySchedule::DirectionType::PULL,
                            ApplySchedule::ParType::Serial,
@@ -292,7 +292,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, -1, false};
+                           0, -100, false};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -330,7 +330,7 @@ namespace graphit {
             // If no schedule has been specified for the current label, create a new one
 
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
-                //Default schedule pull, serial
+                //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
                         = (*schedule_->apply_schedules)[apply_label]
                         = {apply_label, ApplySchedule::DirectionType::PULL,
@@ -339,7 +339,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, -1, false};
+                           0, -100, false};
             }
 
 
@@ -681,6 +681,70 @@ namespace graphit {
 
         }
 
+        // extract the integer from a string
+        int high_level_schedule::ProgramScheduleNode::extractIntegerFromString(string input_string){
+
+            std::size_t const n = input_string.find_first_of("0123456789");
+            if (n != std::string::npos)
+            {
+                std::size_t const m = input_string.find_first_not_of("0123456789", n);
+                return stoi(input_string.substr(n, m != std::string::npos ? m-n : m));
+            }
+            return -1;
+
+        }
+
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
+                                                                    string num_segment_argv, std::string direction) {
+
+            initGraphIterationSpaceIfNeeded(apply_label);
+            auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
+            int argv_number;
+
+            for (auto &gis : *gis_vec) {
+                if (gis.scheduling_api_direction == direction || direction == "all") {
+                    if (config == "fixed-vertex-count"){
+                        if (gis.scheduling_api_direction != "DensePull"){
+                            //currently, we don't support any direction other than DensePull for graph partitioning
+                            // push based partitioning is coming
+                            std::cout << "unsupported direction for partition SSGs: "  << gis.scheduling_api_direction << std::endl;
+                            throw "Unsupported Schedule!";
+                        }
+                        gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::FixedVertexCount);
+                    } else if (config == "edge-aware-vertex-count"){
+                        gis.setPTTag(GraphIterationSpace::Dimension::SSG, Tags::PT_Tag::EdgeAwareVertexCount);
+                        throw "Unsupported Schedule!";
+                    } else {
+                        throw "Unsupported Schedule!";
+                    }
+
+                    // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
+                    //regex argv_regex ("argv\\[(\\d)\\]");
+
+                    // here we do a hack and uses a negative integer to denote the integer argument to argv
+                    // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
+                    // to use as number of segments
+                    // the user input argv string has to match a pattern argv[integer]
+                    //if (regex_match(num_segment_argv, argv_regex)){
+                    if (num_segment_argv.rfind("argv[", 0) == 0){
+                        argv_number = -1*extractIntegerFromString(num_segment_argv);
+                    } else {
+                        std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
+                        throw "Unsupported Schedule!";
+                    }
+
+                    //gis is not really used right now
+                    gis.num_ssg = argv_number;
+                }
+            }
+
+            // for now, we still use the old setApply API. We will probably switch to full graph iteration space soon
+            return setApply(apply_label, "num_segment", argv_number);
+
+        }
+
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
                                                                     int num_segment, std::string direction) {
@@ -705,6 +769,7 @@ namespace graphit {
                     } else {
                         throw "Unsupported Schedule!";
                     }
+                    assert(num_segment > 0);
                     gis.num_ssg = num_segment;
                 }
             }

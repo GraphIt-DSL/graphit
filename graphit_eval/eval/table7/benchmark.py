@@ -6,7 +6,7 @@ import shlex
 import time
 from threading import Timer
 
-use_NUMACTL = True
+use_NUMACTL = True 
 
 
 framework_app_lookup = {
@@ -31,15 +31,15 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                       "webGraph" : {"pr":"pagerank_pull_segment",
                                     "sssp" : "sssp_hybrid_denseforward",
                                     "cc" : "cc_hybrid_dense_bitvec_segment",
-                                    "bfs" :"bfs_hybrid_dense_bitvec_segment",
+                                    "bfs" :"bfs_hybrid_dense_bitvec",
                                     "prd" : "pagerankdelta_hybrid_dense_bitvec_segment"},
                       "friendster" : {"pr":"pagerank_pull_segment",
                                       "sssp" : "sssp_hybrid_denseforward",
                                       "cc" : "cc_hybrid_dense_bitvec_segment",
-                                      "bfs" :"bfs_hybrid_dense_bitvec_segment",
+                                      "bfs" :"bfs_hybrid_dense_bitvec",
                                       "prd" : "pagerankdelta_hybrid_dense_bitvec_segment"},
                       "road-usad" : {"pr":"pagerank_pull",
-                                     "sssp" : "sssp_hybrid_denseforward",
+                                     "sssp" : "sssp_push_slq",
                                      "cc" : "cc_hybrid_dense",
                                      "bfs" :"bfs_push_slq",
                                      "prd" : "pagerankdelta_sparse_push"},
@@ -68,7 +68,9 @@ def path_setup(frameworks):
 
 def get_starting_points(graph):
     """ Use the points with non-zero out degree and don't hang during execution.  """
-    if graph != "friendster":
+    if graph == "testGraph":
+        return ["1","2"]
+    elif graph != "friendster":
         return ["17", "38", "47", "52", "53", "58", "59", "69", "94", "96"]
     else:
         # friendster takes a long time so use fewer starting points
@@ -93,7 +95,7 @@ def get_cmd_graphit(g, p, point):
 
     command = graphit_PATH + graphit_binary_map[g][p] + " " + args
     #if p in ["pr", "cc", "prd"] and g in ["twitter", "webGraph", "friendster"]:
-    if g in ["twitter", "webGraph", "friendster"]:
+    if g in ["socLive", "twitter", "webGraph", "friendster"]:
         
         if use_NUMACTL:
             # if NUAMCTL is available
@@ -103,6 +105,17 @@ def get_cmd_graphit(g, p, point):
             command += " 30"
         else:
             command += " 16"
+
+    if g in ["netflix", "netflix_2x"]:
+        if use_NUMACTL:
+            command = "numactl -i all " + command
+
+        #set the number of segments
+        if g == "netflix":
+            command += " 5"
+        else:
+            command += " 15"
+
     return command
 
 
@@ -118,11 +131,11 @@ def main():
     parser.add_argument('-a', '--applications', nargs='+',
                         default=["bfs", "sssp", "pr", "cc", "prd"], 
                         help="applications to benchmark. Defaults to all four applications.")
-    parser.add_argument('--use_NUMACTL', type=int, default=1, help='use numactl when running. 1 for enable (default), 0 for disable')
+    
     args = parser.parse_args()
 
-    if args.use_NUMACTL != 1:
-        use_NUMACTL = False
+
+
 
     path_setup(["graphit"])
 

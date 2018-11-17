@@ -85,8 +85,10 @@ namespace graphit {
                     node = hybrid_dense_edgeset_apply;
                 }
 
-                // Check for number of segment
-                if (apply_schedule->second.num_segment > 0) {
+                // No longer need this check as we moved the check to high-level scheduling API
+                // We use negative integers between -1 and -10 to denote argv numbers
+                // it can't be 0 as well, which indicates that this schedule is not needed
+                if (apply_schedule->second.num_segment > -10 && apply_schedule->second.num_segment != 0) {
                     mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = apply_schedule->second.scope_label_name;
                     mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][apply_schedule->second.scope_label_name] =
                             apply_schedule->second.num_segment;
@@ -115,8 +117,10 @@ namespace graphit {
                     }
                 }
 
+                //if this is applyModified with a tracking field
                 if (edgeset_apply->tracking_field != "") {
-                    if (apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
+                    // only enable deduplication when the argument to ApplyModified is True (disable deduplication), or the user manually set disable
+                    if (edgeset_apply->enable_deduplication && apply_schedule->second.deduplication_type == ApplySchedule::DeduplicationType::Enable) {
                         //only enable deduplication if there is needed for tracking
                         mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
                     }

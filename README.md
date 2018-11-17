@@ -147,9 +147,16 @@ schedule:
 
 The **test/input** and **test/input\_with\_schedules** directories contain many examples of the algorithm and schedule files. Use them as references when writing your own schedule.
 
+ We provide **more detailed instructions on evaluating the code generation and performance capability** of GraphIt in **graphit/graphit_eval/GraphIt_Evaluation_Guide.md**. In the guide, we provide instructions for using a series of scripts that make it easeir for people to evaluate GraphIt.. 
+
 Input Graph Formats
 ===========
 
 GraphIt reuses [GAPBS input formats](https://github.com/sbeamer/gapbs). Specifically, we have tested with edge list file (.el), weighted edge list file (.wel), binary edge list (.sg), and weighted binary edge list (.wsg) formats. Users can use the converters in GAPBS (GAPBS/src/converter.cc) to convert other graph formats into the supported formats, or convert weighted and unweighted edge list files into their respective binary formats. 
 
 We have provided sample input graph files in the `graphit/test/graphs/` directory. The python tests use the sample input files. 
+
+Autotuning GraphIt Schedules
+===========
+Pleaes refer to **README.md** in **graphit/auotune** for more details. 
+The auotuner is still somehwat experimental. Please read the instructions carefully before trying it out. 

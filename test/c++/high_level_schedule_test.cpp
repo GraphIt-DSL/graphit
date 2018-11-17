@@ -759,7 +759,8 @@ TEST_F(HighLevelScheduleTest, BFSPushSlidingQueueSchedule) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     program->configApplyDirection("s1", "SparsePush");
-    program->setApply("s1", "sliding_queue")->configApplyParallelization("s1", "dynamic-vertex-parallel")->setApply("s1", "disable_deduplication");
+    program->setApply("s1", "sliding_queue")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -981,6 +982,25 @@ TEST_F(HighLevelScheduleTest, PRPullParallelTwoSegments) {
     // Set the pull parameter to 2 segments
     program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
     program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  2);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+
+    mir::ForStmt::Ptr for_stmt = mir::to<mir::ForStmt>((*(main_func_decl->body->stmts))[0]);
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
+    EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
+
+}
+
+
+TEST_F(HighLevelScheduleTest, PRPullParallelRuntimeSegmentArgs) {
+    istringstream is (pr_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Set the pull parameter to 2 segments
+    program->configApplyDirection("l1:s1", "DensePull")->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+    program->configApplyNumSSG("l1:s1", "fixed-vertex-count",  "argv[1]");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
@@ -1333,6 +1353,26 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
     mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr);
     EXPECT_EQ(true, apply_expr->is_parallel);
+}
+
+TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseForwardSerialSchedule){
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program_schedule_node->configApplyDirection("s1", "DensePush-SparsePush")
+    ->configApplyParallelization("s1", "serial");
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
+
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+
+    //check that the apply expr is push and parallel
+    EXPECT_EQ(true, mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(assign_stmt->expr));
+    mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::HybridDenseForwardEdgeSetApplyExpr>(assign_stmt->expr);
+    EXPECT_EQ(false, apply_expr->is_parallel);
 }
 
 TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){

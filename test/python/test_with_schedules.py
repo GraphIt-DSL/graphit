@@ -181,12 +181,16 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def pr_verified_test(self, input_file_name, use_separate_algo_file=False):
+    def pr_verified_test(self, input_file_name, use_separate_algo_file=False, use_segment_argv=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("pagerank_with_filename_arg.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
+
+        if not use_segment_argv:
+            cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
+        else:
+            cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el  2"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
@@ -376,6 +380,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pagerank_parallel_pull_segment_expect(self):
         self.pr_verified_test("pagerank_pull_parallel_segment.gt", True)
 
+    def test_pagerank_parallel_pull_segment_argv_expect(self):
+        self.pr_verified_test("pagerank_pull_parallel_segment_argv.gt", True, True)
+
     def test_pagerank_parallel_pull_numa_expect(self):
         if self.numa_flags:
             self.pr_verified_test("pagerank_pull_parallel_numa.gt", True)
@@ -465,7 +472,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_cache_basic'))
+    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_segment_argv_expect'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

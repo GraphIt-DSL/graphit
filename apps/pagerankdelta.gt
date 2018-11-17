@@ -49,12 +49,16 @@ func main()
 
         for i in 1:11
             #s1# edges.from(frontier).apply(updateEdge);
+            var output : vertexset{Vertex};
             if i == 1
-                frontier = vertices.where(updateVertexFirstRound);
+                output = vertices.where(updateVertexFirstRound);
             else
-                frontier = vertices.where(updateVertex);
+                output = vertices.where(updateVertex);
             end
+        delete frontier;
+        frontier = output;
         end
+	delete frontier;
 
          var elapsed_time : double = stopTimer();
          print "elapsed time: ";

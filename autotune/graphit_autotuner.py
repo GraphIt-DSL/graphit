@@ -13,6 +13,9 @@ from opentuner import Result
 from sys import exit
 import argparse
 
+py_graphitc_file = "../build/bin/graphitc.py"
+serial_compiler = "icc"
+par_compiler = "icpc"
 
 class GraphItTuner(MeasurementInterface):
     new_schedule_file_name = ''
@@ -167,15 +170,15 @@ class GraphItTuner(MeasurementInterface):
 
 
         #compile the schedule file along with the original algorithm file
-        compile_graphit_cmd = 'python graphitc.py -a  {algo_file} -f {schedule_file} -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp'.format(algo_file=self.args.algo_file, schedule_file=self.new_schedule_file_name) 
+        compile_graphit_cmd = 'python ' + py_graphitc_file +  ' -a  {algo_file} -f {schedule_file} -i ../include/ -l ../build/lib/libgraphitlib.a  -o test.cpp'.format(algo_file=self.args.algo_file, schedule_file=self.new_schedule_file_name) 
 
         if not self.use_NUMA:
             if not self.enable_parallel_tuning:
                 # if parallel icpc compiler is not needed (only tuning serial schedules)
-                compile_cpp_cmd = 'g++ -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = serial_compiler + ' -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
             else:
                 # if parallel icpc compiler is supported and needed
-                compile_cpp_cmd = 'icpc -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = par_compiler + ' -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
             compile_cpp_cmd = 'icpc -std=c++11 -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
@@ -307,7 +310,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(parents=opentuner.argparsers())
     parser.add_argument('--graph', type=str, default="../test/graphs/4.sg",
                     help='the graph to tune on')
-    parser.add_argument('--enable_NUMA_tuning', type=int, default=1, help='enable tuning NUMA-aware schedules. 1 for enable (default), 0 for disable')
+    parser.add_argument('--enable_NUMA_tuning', type=int, default=0, help='enable tuning NUMA-aware schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--enable_parallel_tuning', type=int, default=1, help='enable tuning paralleliation schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--enable_denseVertexSet_tuning', type=int, default=1, help='enable tuning denseVertexSet schedules. 1 for enable (default), 0 for disable')
     parser.add_argument('--algo_file', type=str, required=True, help='input algorithm file')

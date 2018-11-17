@@ -31,14 +31,14 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.VertexSubsetSimpleTest";
 //
-//    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleInsertNameNodeBefore";
+//    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ClosenessCentralityWeightedDefaultSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithHyrbidDenseForwardSerialSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 //
 

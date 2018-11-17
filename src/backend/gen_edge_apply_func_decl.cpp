@@ -790,16 +790,16 @@ namespace graphit {
             oss_ << "next[" << dst_type <<  "] = 1; " << std::endl;
             dedent();
             printIndent();
-            oss_ << "}" << std::endl;
+            oss_ << "} //end of generating the next frontier" << std::endl;
         }
 
 
 
-        // end of from filtering
-        if (apply->from_func != "" && !from_vertexset_specified) {
+        // end of to filtering
+        if (apply->to_func != "") {
             dedent();
             printIndent();
-            oss_ << "}" << std::endl;
+            oss_ << "} // end of if to_func filtering" << std::endl;
         }
 
 
@@ -810,7 +810,7 @@ namespace graphit {
         if (apply->from_func != "") {
             dedent();
             printIndent();
-            oss_ << "} // end of if for from func or from vertexset" << std::endl;
+            oss_ << "} // end of if for from_func or from vertexset" << std::endl;
         }
 
         dedent();
