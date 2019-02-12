@@ -76,6 +76,7 @@ add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests
 
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 
+add_executable(bc_verifier ./test/verifiers/bc_verifier.cpp)
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)
 add_executable(sssp_verifier ./test/verifiers/sssp_verifier.cpp)
 add_executable(cc_verifier ./test/verifiers/cc_verifier.cpp)

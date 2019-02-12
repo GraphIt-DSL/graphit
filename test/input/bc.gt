@@ -33,20 +33,26 @@ func backward_update(src : Vertex, dst : Vertex)
     dependences[dst] += dependences[src];
 end
 
+
+
 func final_vertex_f(v : Vertex)
     if num_paths[v] != 0
         dependences[v] = (dependences[v] - 1 / num_paths[v]) * num_paths[v];
     else
-        dependences[v] = -1;
+        dependences[v] = 0;
     end
+end
+
+func printDependences(v : Vertex)
+    print dependences[v];
 end
 
 func main()
 
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-    frontier.addVertex(2);
-    num_paths[2] = 1;
-    visited[2] = true;
+    frontier.addVertex(3);
+    num_paths[3] = 1;
+    visited[3] = true;
     var round : int = 0;
     var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
     frontier_list.append(frontier);
@@ -86,6 +92,7 @@ func main()
     delete frontier;
 
     vertices.apply(final_vertex_f);
+    vertices.apply(printDependences);
 
 
 end
