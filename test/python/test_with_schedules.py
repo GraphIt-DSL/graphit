@@ -159,6 +159,28 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def bc_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)        # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..")
+        cmd = "OMP_PLACES=sockets ./bin/test.o "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el" + " > verifier_input"
+        print (cmd)
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        verify_cmd = "./bin/bc_verifier -f ../test/graphs/4.el -t verifier_input -r 3"
+        print (verify_cmd)
+        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
     def sssp_verified_test(self, input_file_name, use_separate_algo_file=True):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("sssp.gt", input_file_name)
@@ -198,7 +220,7 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
-    def bc_basic_compile_tets(self, input_file_name, use_separate_algo_file=False):
+    def bc_basic_compile_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
         else:
@@ -436,7 +458,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.pr_delta_verified_test("pagerank_delta_hybrid_dense_parallel_load_balance_no_bitvector.gt", True)
 
     def test_eigenvector_centrality_densepull_parallel(self):
-	self.eigenvector_centrality_verified_test("eigenvector_centrality_DensePull_parallel.gt", True)
+	    self.eigenvector_centrality_verified_test("eigenvector_centrality_DensePull_parallel.gt", True)
 
     def test_closeness_centrality_unweighted_hybrid_parallel(self):
         self.closeness_centrality_unweighted_test("closeness_centrality_unweighted_hybrid_parallel.gt",True)	
@@ -444,15 +466,29 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_closeness_centrality_weighted_hybrid_parallel(self):
         self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt",True)	
 
-    # TODO: change these tests to be verified correctness test
     def test_bc_SparsePushDensePull_basic(self):
-        self.bc_basic_compile_tets("bc_SparsePushDensePull.gt", True);
+        self.bc_basic_compile_test("bc_SparsePushDensePull.gt", True);
 
     def test_bc_SparsePushDensePull_bitvector_basic(self):
-        self.bc_basic_compile_tets("bc_SparsePushDensePull_bitvector.gt", True);
+        self.bc_basic_compile_test("bc_SparsePushDensePull_bitvector.gt", True);
 
     def test_bc_SparsePush_basic(self):
-        self.bc_basic_compile_tets("bc_SparsePush.gt", True);
+        self.bc_basic_compile_test("bc_SparsePush.gt", True);
+
+    def test_bc_SparsePushDensePull_bitvector_cache_basic(self):
+        self.bc_basic_compile_test("bc_SparsePushDensePull_bitvector_cache.gt", True);
+
+    def test_bc_SparsePush_verified(self):
+        self.bc_verified_test("bc_SparsePush.gt", True)
+
+    def test_bc_SparsePushDensePull_verified(self):
+        self.bc_verified_test("bc_SparsePushDensePull.gt", True)
+
+    def test_bc_SparsePushDensePull_bitvector_verified(self):
+        self.bc_verified_test("bc_SparsePushDensePull_bitvector.gt", True)
+
+    def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
+        self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
 
 
@@ -472,7 +508,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pagerank_parallel_pull_segment_argv_expect'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePush_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
