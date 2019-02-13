@@ -12,6 +12,8 @@ To compile the generated C++ implementations with support for parallleism, you n
 
 To use NUMA optimizations on multi-socket machines, libnuma needs to be installed (on Ubuntu, sudo apt-get install libnuma-dev). We do note, a good number of optimized implementations do not require enabling NUMA optimizations. You can give GraphIt a try even if you do not have libnuma installed.  
 
+If you are a mac user who recently upgraded to macOS Mojave, and are having issues with unable to find header files "string.h" or "wchar.h" when using cmake, c++ compiler, or the python scripts that uses the c++ compilers, maybe this [post](https://yunmingzhang.wordpress.com/2019/02/13/mojave-upgrade-c-compilation-and-header-files-missing-issue/) will help. As always, let us know if you have any issues with building and using GraphIt. 
+
 Build Graphit
 ===========
 
