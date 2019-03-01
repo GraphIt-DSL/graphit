@@ -56,9 +56,14 @@ namespace graphit {
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+	std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
+
+	for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
+	    it->get()->accept(this);
+	}
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
-            it->get()->accept(this);
+	    it->get()->accept(this);
         }
 
         oss << std::endl;
@@ -320,6 +325,32 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
+
+	if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+	    oss << "extern ";
+            if (func_decl->result.isInitialized())
+	        func_decl->result.getType()->accept(this);
+            else
+                oss << "void ";
+            oss << func_decl->name << " (";
+            
+            bool printDelimiter = false;
+            for (auto arg : func_decl->args) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+
+                arg.getType()->accept(this);
+                oss << arg.getName();
+                printDelimiter = true;
+            }
+            if (!printDelimiter)
+                oss << "void";
+            oss << "); ";
+            oss << std::endl;
+            return;
+	}
+
         // Generate function signature
         if (func_decl->name == "main") {
             func_decl->isFunctor = false;
@@ -465,7 +496,7 @@ namespace graphit {
 
 
         //if the function has a body
-        if (func_decl->body->stmts) {
+        if (func_decl->body && func_decl->body->stmts) {
 
 
             func_decl->body->accept(this);

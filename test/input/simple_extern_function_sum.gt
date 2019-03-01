@@ -1,0 +1,9 @@
+extern func sum_list(v: list{int}) -> output: int;
+
+func main() 
+	var v: list{int} = new list{int}();
+	for i in 1:100
+		v.append(i);
+	end
+	print sum_list(v);	
+end

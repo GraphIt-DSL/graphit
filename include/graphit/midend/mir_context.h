@@ -47,8 +47,13 @@ namespace graphit {
                 functions_list_.insert(functions_list_.begin(), f);
             }
 
+            void addExternFunction(mir::FuncDecl::Ptr f) {
+                extern_functions_map_[f->name] = f;
+                extern_functions_list_.push_back(f);
+            }
+
             bool isFunction(const std::string &name) const {
-                return functions_map_.find(name) != functions_map_.end();
+                return functions_map_.find(name) != functions_map_.end() || extern_functions_map_.find(name) != extern_functions_map_.find(name);
             }
 
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
@@ -66,6 +71,9 @@ namespace graphit {
 
             const std::vector<mir::FuncDecl::Ptr> &getFunctionList() {
                 return functions_list_;
+            }
+            const std::vector<mir::FuncDecl::Ptr> &getExternFunctionList() {
+                return extern_functions_list_;
             }
 
             bool hasSymbol(const std::string &name) {
@@ -293,8 +301,11 @@ namespace graphit {
             std::vector<mir::VarDecl::Ptr> lowered_constants_;
 
             std::map<std::string, mir::FuncDecl::Ptr>  functions_map_;
+            std::map<std::string, mir::FuncDecl::Ptr>  extern_functions_map_;
+
             //need to store the ordering of function declarations
             std::vector<mir::FuncDecl::Ptr> functions_list_;
+	    std::vector<mir::FuncDecl::Ptr> extern_functions_list_;
 
             // symbol table
             util::ScopedMap<std::string, mir::Var> symbol_table_;

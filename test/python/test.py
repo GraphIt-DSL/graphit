@@ -62,14 +62,14 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
             0)
 
-    def basic_compile_exec_test(self, input_file_name):
+    def basic_compile_exec_test(self, input_file_name, extra_cpp_args=[]):
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
         # check the return code of the call as a way to check if compilation happened correctly
         self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
         # check if g++ compilation succeeded
         self.assertEqual(
-            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
+            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
             0)
         self.assertEqual(subprocess.call(["./"+ self.executable_file_name]), 0)
 
@@ -86,8 +86,8 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.output_file_name, "-o", self.executable_file_name]),
             0)
 
-    def expect_output_val(self, input_file_name, expected_output_val):
-        self.basic_compile_exec_test(input_file_name)
+    def expect_output_val(self, input_file_name, expected_output_val, extra_cpp_args=[]):
+        self.basic_compile_exec_test(input_file_name, extra_cpp_args)
         proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
@@ -171,6 +171,12 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_simple_for_loop(self):
         self.basic_compile_exec_test("simple_for_loop.gt")
+
+    def test_simple_extern_function(self):
+        self.basic_compile_test("simple_extern_function.gt")
+
+    def test_simple_extern_functioni_sum(self):
+        self.expect_output_val("simple_extern_function_sum.gt", 4950, [self.root_test_input_dir + "simple_extern_function_sum.cpp"])
 
     def test_outdegree_sum(self):
         self.basic_compile_exec_test("outdegree_sum.gt")

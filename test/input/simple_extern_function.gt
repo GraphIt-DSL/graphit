@@ -1,0 +1,5 @@
+extern func pow(base: float, exponent: float) -> output: float;
+
+func main() 
+	pow(2, 10);
+end
