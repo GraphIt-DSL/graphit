@@ -73,7 +73,7 @@ class SourcePicker {
 
 // Returns k pairs with largest values from list of key-value pairs
 template<typename KeyT, typename ValT>
-std::vector<std::pair<ValT, KeyT>> TopK(
+static std::vector<std::pair<ValT, KeyT>> TopK(
     const std::vector<std::pair<KeyT, ValT>> &to_sort, size_t k) {
   std::vector<std::pair<ValT, KeyT>> top_k;
   ValT min_so_far = 0;
@@ -91,7 +91,7 @@ std::vector<std::pair<ValT, KeyT>> TopK(
 }
 
 
-bool VerifyUnimplemented(...) {
+static bool VerifyUnimplemented(...) {
   std::cout << "** verify unimplemented **" << std::endl;
   return false;
 }
@@ -100,7 +100,7 @@ bool VerifyUnimplemented(...) {
 // Calls (and times) kernel according to command line arguments
 template<typename GraphT_, typename GraphFunc, typename AnalysisFunc,
          typename VerifierFunc>
-void BenchmarkKernel(const CLApp &cli, const GraphT_ &g,
+static void BenchmarkKernel(const CLApp &cli, const GraphT_ &g,
                      GraphFunc kernel, AnalysisFunc stats,
                      VerifierFunc verify) {
   g.PrintStats();

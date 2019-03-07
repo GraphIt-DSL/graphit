@@ -334,7 +334,7 @@ inline ulong hashInt(ulong a) {
 }
 
 //remove duplicate integers in [0,...,n-1]
-void remDuplicates(uintE* indices, uintE* flags, long m, long n) {
+static void remDuplicates(uintE* indices, uintE* flags, long m, long n) {
   //make flags for first time
   if(flags == NULL) {flags = newA(uintE,n); 
     {parallel_for(long i=0;i<n;i++) flags[i]=UINT_E_MAX;}}

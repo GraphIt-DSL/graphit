@@ -62,7 +62,7 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
             0)
 
-    def basic_compile_exec_test(self, input_file_name, extra_cpp_args=[]):
+    def basic_compile_exec_test(self, input_file_name, extra_cpp_args=[], extra_exec_args=[]):
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
         # check the return code of the call as a way to check if compilation happened correctly
@@ -71,7 +71,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(
             subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
             0)
-        self.assertEqual(subprocess.call(["./"+ self.executable_file_name]), 0)
+        self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
 
     # expect to fail graphit compiler
     def basic_compile_test_graphit_compile_fail(self, input_file_name):
@@ -86,9 +86,9 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.output_file_name, "-o", self.executable_file_name]),
             0)
 
-    def expect_output_val(self, input_file_name, expected_output_val, extra_cpp_args=[]):
-        self.basic_compile_exec_test(input_file_name, extra_cpp_args)
-        proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+    def expect_output_val(self, input_file_name, expected_output_val, extra_cpp_args=[], extra_exec_args=[]):
+        self.basic_compile_exec_test(input_file_name, extra_cpp_args, extra_exec_args)
+        proc = subprocess.Popen(["./"+ self.executable_file_name] + extra_exec_args, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
         output = proc.stdout.readline()
 
@@ -175,8 +175,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_extern_function(self):
         self.basic_compile_test("simple_extern_function.gt")
 
-    def test_simple_extern_functioni_sum(self):
+    def test_simple_extern_function_sum(self):
         self.expect_output_val("simple_extern_function_sum.gt", 4950, [self.root_test_input_dir + "simple_extern_function_sum.cpp"])
+
+    def test_astar_distance_loader(self):
+	self.expect_output_val("astar_distance_loader.gt", 203845, [self.root_test_input_dir + "astar_distance_loader.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"])
 
     def test_outdegree_sum(self):
         self.basic_compile_exec_test("outdegree_sum.gt")
