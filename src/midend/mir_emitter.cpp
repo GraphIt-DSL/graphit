@@ -576,8 +576,17 @@ namespace graphit {
 
         const auto func_name = func_decl->name->ident;
         mir_func_decl->name = func_name;
-        //add the constructed function decl to functions
-        ctx->addFunction(mir_func_decl);
+        // Copy the type from the fir node to the mir node (for external/internal type) 
+        mir_func_decl->type = getMirFuncDeclType(func_decl->type);
+
+	if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {
+		//add the constructed function decl to functions
+		ctx->addFunction(mir_func_decl);
+	}else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+		//add the constructed function decl to the list of external functions
+		ctx->addExternFunction(mir_func_decl);
+	}
+
     }
 
     void MIREmitter::visit(fir::BoolLiteral::Ptr fir_expr) {
@@ -733,6 +742,14 @@ namespace graphit {
 
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
+    }
+    mir::FuncDecl::Type MIREmitter::getMirFuncDeclType(fir::FuncDecl::Type t) {
+        switch(t) {
+            case fir::FuncDecl::Type::INTERNAL: return mir::FuncDecl::Type::INTERNAL;
+            case fir::FuncDecl::Type::EXPORTED: return mir::FuncDecl::Type::EXPORTED;
+            case fir::FuncDecl::Type::EXTERNAL: return mir::FuncDecl::Type::EXTERNAL;
+            default: std::cout << "Invalid fir::FuncDecl::Type\n"; return mir::FuncDecl::Type::INTERNAL;
+        }
     }
 
 }

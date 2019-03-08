@@ -119,6 +119,7 @@ namespace graphit {
 
             void addVarOrConst(fir::VarDecl::Ptr var_decl, bool is_const);
             void addElementType(mir::ElementType::Ptr);
+            mir::FuncDecl::Type getMirFuncDeclType(fir::FuncDecl::Type);
 
         };
 

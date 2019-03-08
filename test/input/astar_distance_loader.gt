@@ -1,0 +1,14 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex, int) = load(argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+extern func load_coords(filename: string, num_nodes: int);
+extern func calculate_distance(source: Vertex, destination: Vertex) -> output: double;
+
+
+func main()
+	load_coords(argv[1], vertices.size());
+	print calculate_distance(4, 20);
+end

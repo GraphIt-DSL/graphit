@@ -76,7 +76,7 @@ namespace graphit {
 
         void MIRRewriter::visit(FuncDecl::Ptr func_decl) {
 
-            if (func_decl->body->stmts) {
+            if (func_decl->body && func_decl->body->stmts) {
                 func_decl->body = rewrite<StmtBlock>(func_decl->body);
             }
             node = func_decl;

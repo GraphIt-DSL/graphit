@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cassert>
 #include <type_traits>
 
 #include "pvector.h"
@@ -216,16 +217,84 @@ class Reader {
     return el;
   }
 
+  EdgeList ReadInAstar(std::ifstream &in) {
+    EdgeList el;
+
+    // Entry reading utilities
+    auto readU = [&]() -> uint32_t {
+        union U {
+            uint32_t val;
+            char bytes[sizeof(uint32_t)];
+        };
+        U u;
+        in.read(u.bytes, sizeof(uint32_t));
+        assert(!in.fail());
+        return u.val;
+    };
+
+    auto readD = [&]() -> double {
+        union U {
+            double val;
+            char bytes[sizeof(double)];
+        };
+        U u;
+        in.read(u.bytes, sizeof(double));
+        assert(!in.fail());
+        return u.val;
+    };
+
+    uint32_t magic = readU();
+
+    if (magic != 0x150842A7) {
+      std::cout << "Cannot read astar graph: Magic number mismatch."
+              << std::endl;
+      std::exit(-1);
+    }
+    uint32_t numNodes = readU();
+    //std::cout << "Reading " << numNodes << " nodes." << std::endl;
+
+    for (uint32_t u=0; u<numNodes; u++) {
+      readD();
+      readD();
+      uint32_t numNeighbors = readU();
+
+      std::vector<NodeWeight<NodeID_, WeightT_>> neighbors(numNeighbors);
+
+      for (uint32_t j=0; j<numNeighbors; j++) {
+        neighbors[j].v = readU();
+      }
+
+      for (uint32_t j=0; j<numNeighbors; j++) {
+        static double EARTH_RADIUS_CM = 637100000.0;
+        neighbors[j].w = readD() * EARTH_RADIUS_CM;
+      }
+
+      for (auto neighbor : neighbors) {
+        el.push_back(Edge(u, neighbor));
+      }
+    }
+
+    return el;
+  }
+
   EdgeList ReadFile(bool &needs_weights) {
     Timer t;
     t.Start();
     EdgeList el;
     std::string suffix = GetSuffix();
-    std::ifstream file(filename_);
+    std::ifstream file;
+
+    if (suffix == ".bin") {
+      file.open(filename_, std::ios::binary);
+    } else {
+      file.open(filename_);
+    }
+
     if (!file.is_open()) {
       std::cout << "Couldn't open file " << filename_ << std::endl;
       std::exit(-2);
     }
+
     if (suffix == ".el") {
       el = ReadInEL(file);
     } else if (suffix == ".wel") {
@@ -238,6 +307,8 @@ class Reader {
       el = ReadInMetis(file, needs_weights);
     } else if (suffix == ".mtx") {
       el = ReadInMTX(file, needs_weights);
+    } else if (suffix == ".bin") {
+      el = ReadInAstar(file);
     } else {
       std::cout << "Unrecognized suffix: " << suffix << std::endl;
       std::exit(-3);
@@ -295,7 +366,7 @@ class Reader {
     }
     file.close();
     t.Stop();
-    //PrintTime("Read Time", t.Seconds());
+    PrintTime("Read Time", t.Seconds());
     if (directed)
       return CSRGraph<NodeID_, DestID_, invert>(num_nodes, index, neighs,
                                                 inv_index, inv_neighs);

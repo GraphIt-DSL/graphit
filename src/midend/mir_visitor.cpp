@@ -80,7 +80,7 @@ namespace graphit {
 //            func_decl->result->accept(this);
 
             enclosing_func_decl_ = func_decl;
-            if (func_decl->body->stmts) {
+            if (func_decl->body && func_decl->body->stmts) {
                 func_decl->body->accept(this);
             }
             enclosing_func_decl_ = nullptr;
