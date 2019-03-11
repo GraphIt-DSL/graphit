@@ -41,6 +41,9 @@
 #include "gettime.h"
 using namespace std;
 
+
+/**
+
 //*****START FRAMEWORK*****
 
 //options to edgeMap for different versions of dense edgeMap (default is DENSE)
@@ -75,15 +78,15 @@ bool* edgeMapDenseForward(graph<vertex> GA, bool* vertexSubset, F &f) {
 }
 
 template <class vertex, class F>
-pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices, 
-        uintT* degrees, uintT m, F &f, 
+pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices,
+        uintT* degrees, uintT m, F &f,
         long remDups=0, uintE* flags=NULL) {
   uintT* offsets = degrees;
   long outEdgeCount = sequence::plusScan(offsets, degrees, m);
   uintE* outEdges = newA(uintE,outEdgeCount);
   {parallel_for (long i = 0; i < m; i++) {
       uintT v = indices[i], o = offsets[i];
-      vertex vert = frontierVertices[i]; 
+      vertex vert = frontierVertices[i];
       vert.decodeOutNghSparse(v, o, f, outEdges);
     }}
   uintE* nextIndices = newA(uintE, outEdgeCount);
@@ -96,7 +99,7 @@ pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices,
 
 // decides on sparse or dense base on number of nonzeros in the active vertices
 template <class vertex, class F>
-vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1, 
+vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1,
 		 char option=DENSE, bool remDups=false) {
   long numVertices = GA.n, numEdges = GA.m;
   if(threshold == -1) threshold = numEdges/20; //default threshold
@@ -118,20 +121,20 @@ vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1
     }}
   uintT outDegrees = sequence::plusReduce(degrees, m);
   if (outDegrees == 0) return vertexSubset(numVertices);
-  if (m + outDegrees > threshold) { 
+  if (m + outDegrees > threshold) {
     V.toDense();
     free(degrees);
     free(frontierVertices);
-    bool* R = (option == DENSE_FORWARD) ? 
-      edgeMapDenseForward(GA,V.d,f) : 
+    bool* R = (option == DENSE_FORWARD) ?
+      edgeMapDenseForward(GA,V.d,f) :
       edgeMapDense(GA, V.d, f, option);
     vertexSubset v1 = vertexSubset(numVertices, R);
     //cout << "size (D) = " << v1.m << endl;
     return v1;
-  } else { 
-    pair<long,uintE*> R = 
-      remDups ? 
-      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f, 
+  } else {
+    pair<long,uintE*> R =
+      remDups ?
+      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f,
 		    numVertices, GA.flags) :
       edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f);
     //cout << "size (S) = " << R.first << endl;
@@ -172,6 +175,12 @@ vertexSubset vertexFilter(vertexSubset V, F filter) {
 
 //cond function that always returns true
 inline bool cond_true (intT d) { return 1; }
+
+
+
+
+
+ **/
 
 
 #endif

@@ -18,7 +18,6 @@ namespace graphit {
             var = Var(var_expr->var.getName(), var_expr->var.getType());
         }
 
-
         MIRNode::Ptr VarExpr::cloneNode() {
             const auto node = std::make_shared<VarExpr>();
             node->copy(shared_from_this());

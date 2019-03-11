@@ -83,3 +83,37 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
     EXPECT_EQ(true, test_flag);
 
 }
+
+
+//test init of the eager priority queue based on GAPBS
+TEST_F(RuntimeLibTest, EagerPriorityQueueInit) {
+
+    EXPECT_EQ(true, true);
+}
+
+//test init of the buffered priority queue based on Julienne
+TEST_F(RuntimeLibTest, BufferedPriorityQueueInit) {
+
+    EXPECT_EQ(true, true);
+}
+
+// test compilation of the C++ version of SSSP using eager priority queue
+TEST_F(RuntimeLibTest, SSSP_test){
+
+}
+
+// test compilation of the C++ version of PPSP using eager priority queue
+TEST_F(RuntimeLibTest, PPSP_test){
+
+}
+
+// test compilation of the C++ version of AStar using eager priority queue
+TEST_F(RuntimeLibTest, AStar_test){
+
+}
+
+// test compilation of the C++ version of KCore using buffered priority queue
+TEST_F(RuntimeLibTest, KCore_test){
+
+}
+
