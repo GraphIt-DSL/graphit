@@ -88,7 +88,16 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
 //test init of the eager priority queue based on GAPBS
 TEST_F(RuntimeLibTest, EagerPriorityQueueInit) {
 
-    EXPECT_EQ(true, true);
+    const WeightT kDistInf = numeric_limits<WeightT>::max()/2;
+
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    WeightT* dist_array = new WeightT[g.num_nodes()];
+    for (int i = 0; i < g.num_nodes(); i++){
+        dist_array[i] = kDistInf;
+    }
+    EagerPriorityQueue<WeightT>* pq = new EagerPriorityQueue<WeightT>(dist_array);
+
+    EXPECT_EQ(pq->get_current_priority(), 0);
 }
 
 //test init of the buffered priority queue based on Julienne

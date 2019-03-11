@@ -15,6 +15,7 @@
 #include "infra_gapbs/graph.h"
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
+#include "infra_gapbs/eager_priority_queue.h"
 #include <queue>
 #include <curses.h>
 #include "infra_gapbs/timer.h"
