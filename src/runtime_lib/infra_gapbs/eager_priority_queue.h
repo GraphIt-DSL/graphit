@@ -47,8 +47,8 @@ public:
   }
 
   PriorityT_* priorities_;
-  const PriorityT_ kDistInf = numeric_limits<PriorityT_>::max()/2;
-  const size_t kMaxBin = numeric_limits<size_t>::max()/2;
+  const PriorityT_ kDistInf = std::numeric_limits<PriorityT_>::max()/2;
+  const size_t kMaxBin = std::numeric_limits<size_t>::max()/2;
   PriorityT_ delta_;
   size_t shared_indexes[2];
   size_t frontier_tails[2];
