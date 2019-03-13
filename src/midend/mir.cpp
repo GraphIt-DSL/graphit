@@ -729,6 +729,47 @@ namespace graphit {
             return node;
         }
 
+        void PriorityQueueType::copy(MIRNode::Ptr node) {
+            auto type_node = to<mir::PriorityQueueType>(node);
+            element = type_node->element->clone<ElementType>();
+        }
 
+
+        MIRNode::Ptr PriorityQueueType::cloneNode() {
+            const auto node = std::make_shared<PriorityQueueType>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void PriorityQueueAllocExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<PriorityQueueAllocExpr>(node);
+            element_type = expr->element_type;
+	    dup_within_bucket = expr->dup_within_bucket;
+	    dup_across_bucket = expr->dup_across_bucket;
+	    vector_function = expr->vector_function;
+	    bucket_ordering = expr->bucket_ordering;
+	    priority_ordering = expr->priority_ordering;
+	    init_bucket = expr->init_bucket;
+	    starting_node = expr->starting_node;
+            
+        }
+
+        MIRNode::Ptr PriorityQueueAllocExpr::cloneNode() {
+            const auto node = std::make_shared<PriorityQueueAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void UpdatePriorityEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<UpdatePriorityEdgeSetApplyExpr>(node);
+            EdgeSetApplyExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr UpdatePriorityEdgeSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<UpdatePriorityEdgeSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
     }
 }

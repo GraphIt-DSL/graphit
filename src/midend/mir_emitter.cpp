@@ -751,5 +751,67 @@ namespace graphit {
             default: std::cout << "Invalid fir::FuncDecl::Type\n"; return mir::FuncDecl::Type::INTERNAL;
         }
     }
+    
+    // OG Additions
+    void MIREmitter::visit(fir::PriorityQueueType::Ptr priority_queue_type) {
+	const auto mir_priority_queue_type = std::make_shared<mir::PriorityQueueType>();
+        if (!mir_priority_queue_type) {
+	    std::cout << "Error in Emitting MIR PriorityQueueType " << std::endl;
+            return;
+	}
+        mir_priority_queue_type->element = std::dynamic_pointer_cast<mir::ElementType>(emitType(priority_queue_type->element));
 
+        retType = mir_priority_queue_type;
+    }
+
+    void MIREmitter::visit(fir::PriorityQueueAllocExpr::Ptr expr) {
+        const auto mir_priority_queue_alloc_expr = std::make_shared<mir::PriorityQueueAllocExpr>();
+        mir_priority_queue_alloc_expr->element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
+
+        // Extract the dup_within_bucket value;
+        if (fir::isa<fir::BoolLiteral>(expr->dup_within_bucket)) {
+	    mir_priority_queue_alloc_expr->dup_within_bucket = fir::to<fir::BoolLiteral>(expr->dup_within_bucket)->val;	    
+	}else{
+	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+	}
+
+
+        // Extract the dup_across_bucket value;
+        if (fir::isa<fir::BoolLiteral>(expr->dup_across_bucket)) {
+	    mir_priority_queue_alloc_expr->dup_across_bucket = fir::to<fir::BoolLiteral>(expr->dup_across_bucket)->val;	    
+	}else{
+	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+	}
+
+
+	// Extract the vector_function value;
+	mir_priority_queue_alloc_expr->vector_function = expr->vector_function->ident;
+
+        // Extract the bucket_ordering value;
+        if (fir::isa<fir::IntLiteral>(expr->bucket_ordering)) {
+	    mir_priority_queue_alloc_expr->bucket_ordering = fir::to<fir::IntLiteral>(expr->bucket_ordering)->val;	    
+	}else{
+	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+	}
+
+        // Extract the priority_ordering value;
+        if (fir::isa<fir::IntLiteral>(expr->priority_ordering)) {
+	    mir_priority_queue_alloc_expr->priority_ordering = fir::to<fir::IntLiteral>(expr->priority_ordering)->val;	    
+	}else{
+	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+	}
+
+
+        // Extract the init_bucket value;
+        if (fir::isa<fir::BoolLiteral>(expr->init_bucket)) {
+	    mir_priority_queue_alloc_expr->init_bucket = fir::to<fir::BoolLiteral>(expr->init_bucket)->val;	    
+	}else{
+	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+	}
+
+	mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);	
+
+
+        retExpr = mir_priority_queue_alloc_expr;
+    }
 }

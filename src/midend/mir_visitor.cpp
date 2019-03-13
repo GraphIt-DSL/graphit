@@ -282,7 +282,16 @@ namespace graphit {
             load_expr->file_name->accept(this);
         }
 
-
-
+        // OG Additions
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> apply_expr) {
+	    apply_expr->target->accept(this);
+	}
+        void MIRVisitor::visit(std::shared_ptr<PriorityQueueType> type) {
+	    type->element->accept(this);
+	}
+	void MIRVisitor::visit(std::shared_ptr<PriorityQueueAllocExpr> expr) {
+	    expr->starting_node->accept(this);
+            expr->element_type->accept(this);
+	}
     }
 }
