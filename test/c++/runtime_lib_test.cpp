@@ -175,7 +175,7 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
 //test init of the eager priority queue based on GAPBS
 TEST_F(RuntimeLibTest, EagerPriorityQueueInit) {
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.el");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
@@ -195,7 +195,7 @@ TEST_F(RuntimeLibTest, BufferedPriorityQueueInit) {
 // test compilation of the C++ version of SSSP using eager priority queue
 TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.el");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
@@ -236,7 +236,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
 // test compilation of the C++ version of SSSP using eager priority queue
 TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.el");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
@@ -276,7 +276,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
 // test compilation of the C++ version of PPSP using eager priority queue
 TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.el");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
@@ -319,7 +319,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
 
 TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.el");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
