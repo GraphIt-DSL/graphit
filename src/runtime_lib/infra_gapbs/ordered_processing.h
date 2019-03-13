@@ -59,7 +59,7 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
   {
     vector<vector<NodeID> > local_bins(0);
     size_t iter = 0;
-    while (while_cond()) {
+    while (while_cond() && pq->shared_indexes[iter&1] != kMaxBin) {
       //TODO: refactor to use user supplied 
       // while (user_supplied_condition())
 
@@ -145,7 +145,7 @@ template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
   {
     vector<vector<NodeID> > local_bins(0);
     size_t iter = 0;
-    while (while_cond()) {
+    while (while_cond() && pq->shared_indexes[iter&1] != kMaxBin) {
       //TODO: refactor to use user supplied 
       // while (user_supplied_condition())
 
