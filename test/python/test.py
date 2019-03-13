@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import os
 import shutil
+import sys
 
 GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip("/")
 GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
@@ -321,6 +322,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
 
 if __name__ == '__main__':
+
+    if sys.version_info[0] >= 3:
+        raise Exception("Tests require Python 2")
+
     unittest.main()
     # used for enabling a specific test
 
