@@ -13,6 +13,9 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VertexsetFiltering";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueDeclaration";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueApplyUpdatePriority";
+
 //
 //
 //

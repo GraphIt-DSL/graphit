@@ -459,3 +459,86 @@ TEST_F(FrontendTest, VertexsetFiltering) {
     istringstream is("func main() vertices.where(filter_func); end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+
+
+TEST_F(FrontendTest, PriorityQueueDeclaration) {
+    istringstream is("element Vertex end func main() var pq: priority_queue{Vertex}; end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, PriorityQueueAllocation) {
+    istringstream is("element Vertex end func udf() end func main() var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, udf, 1, 2, false, -1); end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, PriorityQueueMultipleAllocation) {
+    istringstream is("element Vertex end\n"
+		     "func udf() end\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, udf, 1, 2, false, -1);\n"
+                     "    var pq2: priority_queue{Vertex} = new priority_queue{Vertex}(true, true, udf, 0, 0, false, 1024);\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, PriorityQueueWithDelete) {
+    istringstream is("element Vertex end\n"
+		     "func udf() end\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, udf, 1, 2, false, -1);\n"
+		     "    delete pq;\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+
+TEST_F(FrontendTest, PriorityQueueWithVector) { 
+    istringstream is("element Vertex end\n"
+		     "const array: vector{Vertex}(int) = 0;\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+
+TEST_F(FrontendTest, PriorityQueueLibraryCall) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
+		     "const array: vector{Vertex}(int) = 0;\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
+                     "    var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, PriorityQueueApplyUpdatePriority) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
+		     "const array: vector{Vertex}(int) = 0;\n"
+                     "func udf(src: Vertex, dst: Vertex) end\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
+                     "    var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                     "    edges.from(frontier).applyUpdatePriority(udf);\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, PriorityQueueApplyUpdatePriorityExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
+		     "const array: vector{Vertex}(int) = 0;\n"
+                     "extern func udf(src: Vertex, dst: Vertex);\n"
+                     "func main()\n"
+                     "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
+                     "    var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                     "    frontier.applyUpdatePriorityExtern(udf);\n"
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
