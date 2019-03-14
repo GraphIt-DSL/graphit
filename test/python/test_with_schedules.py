@@ -493,6 +493,10 @@ class TestGraphitCompiler(unittest.TestCase):
 
 
 if __name__ == '__main__':
+
+    if sys.version_info[0] >= 3:
+        raise Exception("Tests require Python 2")
+
     while len(sys.argv) > 1:
         if "parallel" in sys.argv:
             use_parallel = True

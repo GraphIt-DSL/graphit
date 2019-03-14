@@ -1,3 +1,7 @@
+#ifndef EAGER_PRIORITY_QUEUE_H
+#define EAGER_PRIORITY_QUEUE_H
+
+
 #include <algorithm>
 #include <cinttypes>
 
@@ -13,9 +17,9 @@ template<typename PriorityT_>
 class EagerPriorityQueue {
 
 public:
-  explicit EagerPriorityQueue(PriorityT_* priorities) {
-    priorities_ = priorities;
-    init_indexes_tails();
+  explicit EagerPriorityQueue(PriorityT_* priorities, PriorityT_ delta=1) 
+  		: priorities_(priorities), delta_(delta){
+    	init_indexes_tails();
   }
 
   // set up shared_indexes, iter and frontier_tails data structures
@@ -42,16 +46,14 @@ public:
       return get_current_priority() == kMaxBin;
   }
 
-  void updatePriorityMin(NodeID dst, PriorityT_ new_p, PriorityT_ old_p){
-
-  }
-
   PriorityT_* priorities_;
   const PriorityT_ kDistInf = std::numeric_limits<PriorityT_>::max()/2;
   const size_t kMaxBin = std::numeric_limits<size_t>::max()/2;
-
+  PriorityT_ delta_;
   size_t shared_indexes[2];
   size_t frontier_tails[2];
   size_t iter_;;
 
 };
+
+#endif // EAGER_PRIORITY_QUEUE_H
