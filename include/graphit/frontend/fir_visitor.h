@@ -117,6 +117,10 @@ namespace graphit {
 
         struct ReduceStmt;
 
+	// OG Additions
+	struct PriorityQueueType;
+	struct PriorityQueueAllocExpr;
+
 
         struct FIRVisitor {
             virtual void visit(std::shared_ptr<Program>);
@@ -299,6 +303,12 @@ namespace graphit {
             virtual void visit(std::shared_ptr<WhereExpr>);
             virtual void visit(std::shared_ptr<FromExpr>);
             virtual void visit(std::shared_ptr<ToExpr>);
+	
+            // OG Additions
+
+	    virtual void visit(std::shared_ptr<PriorityQueueType>){};
+            virtual void visit(std::shared_ptr<PriorityQueueAllocExpr>);
+
 
         protected:
             LabelScope label_scope_;

@@ -771,5 +771,17 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+
+        void UpdatePriorityExternVertexSetApplyExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<UpdatePriorityExternVertexSetApplyExpr>(node);
+            VertexSetApplyExpr::copy(expr);
+        }
+
+
+        MIRNode::Ptr UpdatePriorityExternVertexSetApplyExpr::cloneNode() {
+            const auto node = std::make_shared<UpdatePriorityExternVertexSetApplyExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
     }
 }

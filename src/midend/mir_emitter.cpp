@@ -476,33 +476,57 @@ namespace graphit {
 
         //if (ctx->isConstVertexSet(mir_var->var.getName())) {
         if (mir::isa<mir::VertexSetType>(mir_var->var.getType())){
-            //dense vertexset apply
-            auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
-            vertexset_apply_expr->target = target_expr;
-            vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
-            if (apply_expr->change_tracking_field != nullptr)
-                vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
-                        apply_expr->change_tracking_field)->ident;
-            retExpr = vertexset_apply_expr;
+	    if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
+                //dense vertexset apply
+                auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
+                vertexset_apply_expr->target = target_expr;
+                vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
+                if (apply_expr->change_tracking_field != nullptr)
+                    vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
+                            apply_expr->change_tracking_field)->ident;
+                retExpr = vertexset_apply_expr;
+	    } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY) {
+                auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityExternVertexSetApplyExpr>();
+		apply_update_priority_expr->target = target_expr;
+		apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+		retExpr = apply_update_priority_expr;	
+	    } else {
+                std::cout << "Unsupported apply type with vertex set" << std::endl;
+		return;
+	    }
         }
 
         //if (ctx->isEdgeSet(mir_var->var.getName())) {
         //replace the isEdgeSet metadata, which was incomplete
         if(mir::isa<mir::EdgeSetType>(mir_var->var.getType())){
 
-            auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
-            edgeset_apply_expr->target = target_expr;
-            edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
-            if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
-            if (apply_expr->from_expr) {
-                //TODO: move the checking from expr is a function or vertexsubset logic here
-                edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
-            }
-            if (apply_expr->change_tracking_field != nullptr)
-                edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
-            if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
-            else edgeset_apply_expr->enable_deduplication = true;
-            retExpr = edgeset_apply_expr;
+	    if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
+                auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
+                edgeset_apply_expr->target = target_expr;
+                edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
+                if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
+                if (apply_expr->from_expr) {
+                    //TODO: move the checking from expr is a function or vertexsubset logic here
+                    edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
+                }
+                if (apply_expr->change_tracking_field != nullptr)
+                    edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
+                if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
+                else edgeset_apply_expr->enable_deduplication = true;
+                retExpr = edgeset_apply_expr;
+	    } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
+                auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
+		apply_update_priority_expr->target = target_expr;
+		apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+		if(apply_expr->to_expr)
+		    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
+		if(apply_expr->from_expr)
+		    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->ident;
+		retExpr = apply_update_priority_expr;
+	    } else {
+                std::cout << "Unsupported apply type with edge set" << std::endl;
+		return;
+	    }
         }
 
     }

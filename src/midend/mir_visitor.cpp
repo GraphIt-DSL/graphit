@@ -293,5 +293,8 @@ namespace graphit {
 	    expr->starting_node->accept(this);
             expr->element_type->accept(this);
 	}
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr> apply_expr) {
+	    apply_expr->target->accept(this);
+	}
     }
 }

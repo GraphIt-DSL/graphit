@@ -87,6 +87,12 @@ namespace graphit {
         struct EdgeSetType;
         struct VectorType;
 
+        // OG Additions
+        struct PriorityQueueType;
+        struct PriorityQueueAllocExpr;
+        struct UpdatePriorityEdgeSetApplyExpr;
+	struct UpdatePriorityExternVertexSetApplyExpr;
+
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
 
@@ -158,6 +164,11 @@ namespace graphit {
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
+	    // OG Additions
+	    virtual void visit(std::shared_ptr<PriorityQueueType>);
+	    virtual void visit(std::shared_ptr<PriorityQueueAllocExpr>);
+            virtual void visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr>);
+            virtual void visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr>);
         protected:
             std::shared_ptr<MIRNode> node;
             LabelScope label_scope_;

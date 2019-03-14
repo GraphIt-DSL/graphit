@@ -1623,13 +1623,16 @@ namespace graphit {
 
 
         struct ApplyExpr : public Expr {
+
+	    enum class Type {REGULAR_APPLY, UPDATE_PRIORITY_APPLY, UPDATE_PRIORITY_EXTERN_APPLY};            
+
             Expr::Ptr                  target;
             Identifier::Ptr            input_function;
             FromExpr::Ptr              from_expr;
             ToExpr::Ptr                to_expr;
             Identifier::Ptr            change_tracking_field;
             bool disable_deduplication = false;
-
+	    Type type = Type::REGULAR_APPLY;
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
             virtual void accept(FIRVisitor *visitor) {
@@ -1643,6 +1646,40 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
+	// OG additions
+
+        struct PriorityQueueType : public Type {
+            ElementType::Ptr element;
+
+            typedef std::shared_ptr<PriorityQueueType> Ptr;
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<PriorityQueueType>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+            virtual void copy(FIRNode::Ptr);
+        };
+
+	struct PriorityQueueAllocExpr : public NewExpr {
+	    typedef std::shared_ptr<PriorityQueueAllocExpr> Ptr;
+
+	    virtual void accept(FIRVisitor *visitor) {
+		visitor->visit(self<PriorityQueueAllocExpr>());
+	    }
+
+	    Expr::Ptr dup_within_bucket;
+            Expr::Ptr dup_across_bucket;
+            Identifier::Ptr vector_function;
+            Expr::Ptr bucket_ordering;
+            Expr::Ptr priority_ordering;
+            Expr::Ptr init_bucket;
+	    Expr::Ptr starting_node;
+
+	protected:
+	    virtual FIRNode::Ptr cloneNode();
+	    virtual void copy(FIRNode::Ptr);
+	};
 
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;

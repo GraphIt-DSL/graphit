@@ -451,5 +451,20 @@ namespace graphit {
         void FIRVisitor::visit(std::shared_ptr<ToExpr> expr) {
             expr->input_func->accept(this);
         }
+
+	// OG additions
+
+        void FIRVisitor::visit(std::shared_ptr<PriorityQueueAllocExpr> expr){
+            expr->elementType->accept(this);
+            if (expr->numElements != nullptr)
+                expr->numElements->accept(this);
+            expr->dup_within_bucket->accept(this);
+            expr->dup_across_bucket->accept(this);
+            expr->vector_function->accept(this);
+            expr->bucket_ordering->accept(this);
+            expr->priority_ordering->accept(this);
+            expr->init_bucket->accept(this);
+            expr->starting_node->accept(this);
+        }
     }
 }

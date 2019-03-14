@@ -99,7 +99,12 @@ namespace graphit {
             virtual void visit(fir::ListType::Ptr);
             virtual void visit(fir::EdgeSetType::Ptr);
             virtual void visit(fir::NDTensorType::Ptr);
+            
+            // OG Additions
+	    virtual void visit(fir::PriorityQueueType::Ptr);
+	    virtual void visit(fir::PriorityQueueAllocExpr::Ptr);
 
+    
 
             MIRContext *ctx;
 
