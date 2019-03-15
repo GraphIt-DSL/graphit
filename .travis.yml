@@ -7,17 +7,17 @@ os:
 dist: trusty
 sudo: required
 language:
-  - cpp
+        - cpp
 compiler:
-  - gcc
+        - gcc
 addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-5
-      - g++-5
-      - cmake
+        apt:
+                sources:
+                        - ubuntu-toolchain-r-test
+                packages:
+                        - gcc-5
+                        - g++-5
+                        - cmake
 language: generic
 
 install:
@@ -25,8 +25,8 @@ install:
         - tar xvf cmake.tar.gz
         - mv cmake-3.12.1-Linux-x86_64 cmake
 script:
-        - ln -s /usr/bin/gcc-5 /usr/local/bin/gcc
-        - ln -s /usr/bin/g++-5 /usr/local/bin/g++
+        - sudo ln -s /usr/bin/gcc-5 /usr/local/bin/gcc
+        - sudo ln -s /usr/bin/g++-5 /usr/local/bin/g++
         - export CC=/usr/bin/gcc-5
         - export CXX=/usr/bin/g++-5
         - mkdir build
