@@ -25,11 +25,10 @@ install:
         - tar xvf cmake.tar.gz
         - mv cmake-3.12.1-Linux-x86_64 cmake
 script:
-	- ln -s /usr/bin/gcc-5 /usr/local/bin/gcc
-	- ln -s /usr/bin/g++-5 /usr/local/bin/g++
-	# Export CC and CXX to tell cmake which compiler to use
-	- export CC=/usr/bin/gcc-5
-	- export CXX=/usr/bin/g++-5
+        - ln -s /usr/bin/gcc-5 /usr/local/bin/gcc
+        - ln -s /usr/bin/g++-5 /usr/local/bin/g++
+        - export CC=/usr/bin/gcc-5
+        - export CXX=/usr/bin/g++-5
         - mkdir build
         - cd build
         - ../cmake/bin/cmake ..
