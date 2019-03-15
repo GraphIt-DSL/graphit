@@ -421,3 +421,71 @@ TEST_F(RuntimeLibTest, KCore_test){
     G.del();
 }
 
+
+
+TEST_F(RuntimeLibTest, SetCover_test){
+#if 0
+    char iFile[] = "../../test/graphs/rMatGraph_J_5_100";
+    bool symmetric = true;
+    bool compressed = false;
+    bool binary = false;
+    bool mmap = false;
+    julienne::graph<julienne::symmetricVertex> G = julienne::readGraph<julienne::symmetricVertex>(iFile, compressed, symmetric, binary, mmap);
+    
+    // Compute
+    auto GA = G;
+    auto D = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return G.V[i].getOutDegree(); });
+
+    auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
+    auto bucket_f = [&] (size_t i) { return get_bucket_clamped(D(i)); };
+
+    /* Extern C++ code start */
+    constexpr julienne::uintE TOP_BIT = ((julienne::uintE)INT_E_MAX) + 1;
+    constexpr julienne::uintE COVERED = ((julienne::uintE)INT_E_MAX) - 1;
+    constexpr double epsilon = 0.01;
+    const double x = 1.0/log(1.0 + epsilon);
+    auto max_f = [] (julienne::uintE x, julienne::uintE y) { return std::max(x,y); };
+
+    auto Elms = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return UINT_E_MAX; });
+    auto ExternFunction = [&] (julienne::vertexSubset active) {
+        // 1. sets -> elements (Pack out sets and update their degree)
+        auto pack_predicate = [&] (const julienne::uintE& u, const julienne::uintE& ngh) { return Elms[ngh] != COVERED; };
+        auto pack_apply = [&] (julienne::uintE v, size_t ct) { D[v] = ct; };
+        auto packed_vtxs = julienne::edgeMapFilter(G, active, pack_predicate, julienne::pack_edges);
+        julienne::vertexMap(packed_vtxs, pack_apply);
+        // Calculate the sets which still have sufficient degree (degree >= threshold)
+        size_t threshold = ceil(pow(1.0+epsilon, pq->get_current_priority()));
+        auto above_threshold = [&] (const uintE& v, const uintE& deg) { return deg >= threshold; };
+        auto still_active = vertexFilter2<uintE>(packed_vtxs, above_threshold);
+        packed_vtxs.del();
+        // 2. sets -> elements (writeMin to acquire neighboring elements)
+        edgeMap(G, still_active, Visit_Elms(Elms.s), -1, no_output | dense_forward);
+        // 3. sets -> elements (count and add to cover if enough elms were won)
+        const size_t low_threshold = std::max((size_t)ceil(pow(1.0+epsilon,cur_bkt-1)), (size_t)1);
+        auto won_ngh_f = [&] (const uintE& u, const uintE& v) -> bool { return Elms[v] == u; };
+        auto threshold_f = [&] (const uintE& v, const uintE& numWon) {
+          if (numWon >= low_threshold) D[v] |= TOP_BIT;
+        };
+        auto activeAndCts = edgeMapFilter(G, still_active, won_ngh_f);
+        vertexMap(activeAndCts, threshold_f);
+        auto inCover = vertexFilter2(activeAndCts, [&] (const uintE& v, const uintE& numWon) {
+            return numWon >= low_threshold; });
+        cover.copyInF([&] (uintE i) { return inCover.vtx(i); }, inCover.size());
+        inCover.del(); activeAndCts.del();
+        // 4. sets -> elements (Sets that joined the cover mark their neighboring
+        // elements as covered. Sets that didn't reset any acquired elements)
+        auto reset_f = [&] (const uintE& u, const uintE& v) -> bool {
+          if (Elms[v] == u) {
+            if (D(u) & TOP_BIT) Elms[v] = COVERED;
+            else Elms[v] = UINT_E_MAX;
+          } return false;
+        };
+        edgeMap(G, still_active, EdgeMap_F<decltype(reset_f)>(reset_f), -1, no_output | dense_forward);
+    }    
+
+
+ 
+    G.del();
+
+#endif
+}

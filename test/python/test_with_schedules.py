@@ -37,7 +37,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cwd = os.getcwd()
         cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
-        cls.compile_flags = "-std=c++11"
+        cls.compile_flags = "-std=gnu++1y"
         cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
@@ -77,10 +77,10 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -a " + algo_file + " -f " + schedule_file + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+ " " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I "+self.include_path+ " " + self.numa_flags + " test.cpp -o test.o"
         if use_parallel:
             print ("using icpc for parallel compilation")
-            cpp_compile_cmd = "icpc -g -std=c++11 -I " + self.include_path +" "+ self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=gnu++1y -I " + self.include_path +" "+ self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
         print (cpp_compile_cmd)
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
@@ -91,11 +91,11 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
 
         if use_parallel:
             print ("using icpc for parallel compilation")
-            cpp_compile_cmd = "icpc -g -std=c++11 -I "+self.include_path+" " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
+            cpp_compile_cmd = "icpc -g -std=gnu++1y -I "+self.include_path+" " + self.parallel_framework + " " + self.numa_flags + " test.cpp -o test.o"
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
@@ -105,7 +105,7 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I "+self.include_path+" " + self.numa_flags + " test.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
