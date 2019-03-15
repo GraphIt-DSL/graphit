@@ -28,9 +28,15 @@
 
 #include <time.h>
 #include <chrono>
+#include <type_traits>
 
-
-
+namespace julienne {
+#include "infra_julienne/parallel.h"
+#include "infra_julienne/graph.h"
+#include "infra_julienne/IO.h"
+#include "infra_julienne/priority_queue.h"
+#include "infra_julienne/edgeMapReduce.h"
+}
 template <typename T>
 T builtin_sum(T* input_vector, int num_elem){
     //Serial Code for summation

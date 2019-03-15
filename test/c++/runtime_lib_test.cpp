@@ -366,6 +366,58 @@ TEST_F(RuntimeLibTest, AStar_test){
 
 // test compilation of the C++ version of KCore using buffered priority queue
 TEST_F(RuntimeLibTest, KCore_test){
+    char iFile[] = "../../test/graphs/rMatGraph_J_5_100";
+    bool symmetric = true;
+    bool compressed = false;
+    bool binary = false;
+    bool mmap = false;
+    julienne::graph<julienne::symmetricVertex> G = julienne::readGraph<julienne::symmetricVertex>(iFile, compressed, symmetric, binary, mmap);
+    
+    // Compute
 
+    auto &GA = G;
+    const size_t n = GA.n; 
+    const size_t m = GA.m;
+    julienne::uintE* updated_degree;
+    updated_degree = new julienne::uintE[n];
+    
+    parallel_for(int i = 0; i < n; i++) updated_degree[i] = GA.V[i].getOutDegree();
+    size_t num_buckets = 128;
+    auto pq = new julienne::PriorityQueue<julienne::PriorityFunctor<julienne::uintE>>(n, updated_degree, julienne::increasing, julienne::strictly_decreasing, num_buckets);
+
+    auto apply_function = [&] (const tuple<julienne::uintE, julienne::uintE>& p) {
+        julienne::uintE v = std::get<0>(p), edgesRemoved = std::get<1>(p);
+        julienne::uintE deg = updated_degree[v];
+        julienne::uintE k = pq->get_current_priority();
+        if (deg > k) {
+            julienne::uintE new_deg = std::max(deg - edgesRemoved, k);
+            updated_degree[v] = new_deg;
+            julienne::uintE bkt = pq->get_bucket(new_deg);
+            return julienne::wrap(v, bkt);
+        }
+        return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE> >();
+    };
+
+
+    auto em = julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(GA, std::make_tuple(UINT_E_MAX, 0), (size_t)GA.m/5);
+    size_t finished = 0;
+    while (finished != n) {
+        auto active = pq->next_bucket().identifiers;
+        finished += active.size();
+        julienne::vertexSubsetData<julienne::uintE> moved = em.template edgeMapCount<julienne::uintE>(active, apply_function);
+        pq->update_buckets(moved.get_fn_repr(), moved.size());
+        moved.del();
+        active.del();
+    }
+
+    delete pq;
+
+    julienne::uintE mc = 0;
+    for (size_t i=0; i < GA.n; i++) { 
+        mc = std::max(mc, updated_degree[i]); 
+    }
+    EXPECT_EQ(4, mc);
+    delete[] updated_degree;
+    G.del();
 }
 
