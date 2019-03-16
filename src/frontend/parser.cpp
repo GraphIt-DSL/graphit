@@ -1264,8 +1264,8 @@ namespace graphit {
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY;
-	        apply_expr->from_expr = from_expr;
-		apply_expr->to_expr = to_expr;
+	            apply_expr->from_expr = from_expr;
+		        apply_expr->to_expr = to_expr;
                 expr = apply_expr;
             } else if (tryConsume(Token::Type::APPLY_UPDATE_PRIORITY_EXTERN)) {
                 consume(Token::Type::LP);

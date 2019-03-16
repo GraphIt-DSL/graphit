@@ -118,8 +118,8 @@ namespace graphit {
         struct ReduceStmt;
 
 	// OG Additions
-	struct PriorityQueueType;
-	struct PriorityQueueAllocExpr;
+        struct PriorityQueueType;
+        struct PriorityQueueAllocExpr;
 
 
         struct FIRVisitor {

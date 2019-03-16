@@ -472,6 +472,18 @@ TEST_F(FrontendTest, PriorityQueueAllocation) {
     EXPECT_EQ(0, basicTest(is));
 }
 
+
+TEST_F(FrontendTest, GlobalPriorityQueueAllocation) {
+    istringstream is("element Vertex end "
+                     "const pq: priority_queue{Vertex};"
+                     "func udf() end "
+                     "func main() "
+                     "      pq = new priority_queue{Vertex}(false, false, udf, 1, 2, false, -1); "
+                     "end");
+    EXPECT_EQ(0, basicTest(is));
+}
+
+
 TEST_F(FrontendTest, PriorityQueueMultipleAllocation) {
     istringstream is("element Vertex end\n"
 		     "func udf() end\n"
@@ -487,7 +499,7 @@ TEST_F(FrontendTest, PriorityQueueWithDelete) {
 		     "func udf() end\n"
                      "func main()\n"
                      "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, udf, 1, 2, false, -1);\n"
-		     "    delete pq;\n"
+		                  "delete pq;\n"
                      "end");
     EXPECT_EQ(0, basicTest(is));
 }
@@ -507,7 +519,7 @@ TEST_F(FrontendTest, PriorityQueueLibraryCall) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"
                      "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
-		     "const array: vector{Vertex}(int) = 0;\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
                      "func main()\n"
                      "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
                      "    var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
@@ -519,7 +531,7 @@ TEST_F(FrontendTest, PriorityQueueApplyUpdatePriority) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"
                      "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
-		     "const array: vector{Vertex}(int) = 0;\n"
+		             "const array: vector{Vertex}(int) = 0;\n"
                      "func udf(src: Vertex, dst: Vertex) end\n"
                      "func main()\n"
                      "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
