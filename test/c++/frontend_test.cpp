@@ -545,7 +545,7 @@ TEST_F(FrontendTest, PriorityQueueApplyUpdatePriorityExtern) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"
                      "const edges: edgeset{Edge}(Vertex, Vertex, int);\n"
-		     "const array: vector{Vertex}(int) = 0;\n"
+		            "const array: vector{Vertex}(int) = 0;\n"
                      "extern func udf(src: Vertex, dst: Vertex);\n"
                      "func main()\n"
                      "    var pq: priority_queue{Vertex} = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);\n"
@@ -553,4 +553,55 @@ TEST_F(FrontendTest, PriorityQueueApplyUpdatePriorityExtern) {
                      "    frontier.applyUpdatePriorityExtern(udf);\n"
                      "end");
     EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(FrontendTest, DeltaStepping) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.wel\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                     "const pq: priority_queue{Vertex};"
+
+                     "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                            "var new_dist : int = dist[src] + weight; "
+                            "pq.updatePriorityMin(dst, new_dist, dist[dst]); "
+                     "end\n"
+                     "func main() "
+                     "  var start_vertex : Vertex = 1;"
+                     "  pq = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);"
+                     "  while (not pq.finishedAllNodes()) "
+                       "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
+                         "  edges.from(frontier).applyModifyPriority(updateEdge);  \n"
+                         "  delete frontier; "
+                         "end\n"
+                     "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
+
+TEST_F(FrontendTest, PointToPointShortestPath) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.wel\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                     "const pq: priority_queue{Vertex};"
+                     "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                     "  var new_dist : int = dist[src] + weight; "
+                     "  pq.updatePriorityMin(dst, new_dist, dist[dst]); "
+                     "end\n"
+                     "func main() "
+                     "  var start_vertex : Vertex = 1;"
+                     "  var end_vertex : Vertex = 10; "
+                     "  pq = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);"
+                     "  while (not pq.finishedNode(end_vertex)) "
+                     "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
+                     "    edges.from(frontier).applyModifyPriority(updateEdge);  \n"
+                     "    delete frontier; "
+                     "  end\n"
+                     "end");
+    EXPECT_EQ (0,  basicTest(is));
+
 }
