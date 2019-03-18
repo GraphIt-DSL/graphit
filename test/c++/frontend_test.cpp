@@ -570,7 +570,7 @@ TEST_F(FrontendTest, DeltaStepping) {
                      "func main() "
                      "  var start_vertex : Vertex = 1;"
                      "  pq = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);"
-                     "  while (not pq.finishedAllNodes()) "
+                     "  while (not pq.finished()) "
                        "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
                          "  edges.from(frontier).applyModifyPriority(updateEdge);  \n"
                          "  delete frontier; "

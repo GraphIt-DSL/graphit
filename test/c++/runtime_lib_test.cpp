@@ -207,10 +207,6 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
     EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
     WeightT input_delta = 2;
 
-    auto src_filter_func = [&](NodeID v)-> bool {
-        return (dist_array[v] >= input_delta * static_cast<WeightT>(pq.get_current_priority()));
-    };
-
     auto while_cond_func = [&]()->bool{
             return !pq.finished();
     };
@@ -222,7 +218,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorWithMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func, 1000,  source);
+    OrderedProcessingOperatorWithMerge(&pq, g, while_cond_func, edge_update_func, 1000,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -248,10 +244,6 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
     EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
     WeightT input_delta = 2;
 
-    auto src_filter_func = [&](NodeID v)-> bool {
-        return (dist_array[v] >= input_delta * static_cast<WeightT>(pq.get_current_priority()));
-    };
-
     auto while_cond_func = [&]()->bool{
         return !pq.finished();
     };
@@ -263,7 +255,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorNoMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func,  source);
+    OrderedProcessingOperatorNoMerge(&pq, g,  while_cond_func, edge_update_func,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -289,12 +281,8 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
     EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
     WeightT input_delta = 2;
 
-    auto src_filter_func = [&](NodeID v)-> bool {
-        return (dist_array[v] < dist_array[dest] && dist_array[v] >= input_delta * static_cast<WeightT>(pq.get_current_priority()));
-    };
-
     auto while_cond_func = [&]()->bool{
-            return dist_array[dest]/input_delta >=  pq.get_current_priority();
+            return !pq.finishedNode(dest);
     };
 
 
@@ -304,7 +292,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorNoMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func,  source);
+    OrderedProcessingOperatorNoMerge(&pq, g, while_cond_func, edge_update_func,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -332,12 +320,8 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
     EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
     WeightT input_delta = 2;
 
-    auto src_filter_func = [&](NodeID v)-> bool {
-        return (dist_array[v] < dist_array[dest] && dist_array[v] >= input_delta * static_cast<WeightT>(pq.get_current_priority()));
-    };
-
     auto while_cond_func = [&]()->bool{
-        return dist_array[dest]/input_delta >=  pq.get_current_priority();
+        return !pq.finishedNode(dest);
     };
 
 
@@ -347,7 +331,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorWithMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func, 1000, source);
+    OrderedProcessingOperatorWithMerge(&pq, g, while_cond_func, edge_update_func, 1000, source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
