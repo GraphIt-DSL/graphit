@@ -7,14 +7,14 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.DeltaStepping";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.PointToPointShortestPath";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.VertexsetFiltering";
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueDeclaration";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueApplyUpdatePriority";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueAllocation";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.GlobalPriorityQueueAllocation";
 
 //
 //

@@ -222,7 +222,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorWithMerge(&pq, g, dist_array, src_filter_func, while_cond_func, edge_update_func, 1000,  source);
+    OrderedProcessingOperatorWithMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func, 1000,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -263,7 +263,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorNoMerge(&pq, g, dist_array, src_filter_func, while_cond_func, edge_update_func,  source);
+    OrderedProcessingOperatorNoMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -304,7 +304,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorNoMerge(&pq, g, dist_array, src_filter_func, while_cond_func, edge_update_func,  source);
+    OrderedProcessingOperatorNoMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){
@@ -347,7 +347,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorWithMerge(&pq, g, dist_array, src_filter_func, while_cond_func, edge_update_func, 1000, source);
+    OrderedProcessingOperatorWithMerge(&pq, g, src_filter_func, while_cond_func, edge_update_func, 1000, source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){

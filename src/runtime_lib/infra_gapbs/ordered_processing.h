@@ -14,7 +14,7 @@ struct update_priority_min
   void operator()(EagerPriorityQueue<PriorityT_>* pq, 
   					vector<vector<NodeID> >& local_bins, 
   					NodeID dst, PriorityT_ old_val, 
-  					PriorityT_ new_val){
+		  PriorityT_ new_val){
     if (new_val < old_val) {
       bool changed_dist = true;
       while (!compare_and_swap(pq->priorities_[dst], old_val, new_val)) {
@@ -41,7 +41,7 @@ struct update_priority_min
 
 
 template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond>
-  void OrderedProcessingOperatorNoMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, Priority* dist_array, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply,  NodeID optional_source_node){
+  void OrderedProcessingOperatorNoMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply,  NodeID optional_source_node){
 
   pvector<NodeID> frontier(g.num_edges_directed());
   // two element arrays for double buffering curr=iter&1, next=(iter+1)&1
@@ -59,7 +59,7 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
   {
     vector<vector<NodeID> > local_bins(0);
     size_t iter = 0;
-    while (while_cond() && pq->shared_indexes[iter&1] != kMaxBin) {
+    while (while_cond()) {
       //TODO: refactor to use user supplied 
       // while (user_supplied_condition())
 
@@ -118,7 +118,7 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
       #pragma omp barrier
     }
     #pragma omp single
-    cout << "took " << iter << " iterations" << endl;
+    cout << "order processing took " << iter << " iterations" << endl;
   }//end of pragma omp parallel   
   
 
@@ -127,7 +127,7 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
 
 
 template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
-  void OrderedProcessingOperatorWithMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, Priority* dist_array, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply, int bin_size_threshold = 1000, NodeID optional_source_node=-1){
+  void OrderedProcessingOperatorWithMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply, int bin_size_threshold = 1000, NodeID optional_source_node=-1){
 
   pvector<NodeID> frontier(g.num_edges_directed());
   // two element arrays for double buffering curr=iter&1, next=(iter+1)&1
@@ -145,7 +145,7 @@ template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
   {
     vector<vector<NodeID> > local_bins(0);
     size_t iter = 0;
-    while (while_cond() && pq->shared_indexes[iter&1] != kMaxBin) {
+    while (while_cond()) {
       //TODO: refactor to use user supplied 
       // while (user_supplied_condition())
 
