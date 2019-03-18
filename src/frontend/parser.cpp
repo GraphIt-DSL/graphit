@@ -2568,7 +2568,9 @@ namespace graphit {
         decls.insert("startTimer", IdentType::FUNCTION);
         decls.insert("stopTimer", IdentType::FUNCTION);
         decls.insert("atoi", IdentType::FUNCTION);
-	
+        decls.insert("floor", IdentType::FUNCTION);
+        decls.insert("log", IdentType::FUNCTION);
+        decls.insert("to_double", IdentType::FUNCTION);	
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {

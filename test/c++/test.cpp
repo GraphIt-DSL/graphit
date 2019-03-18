@@ -15,7 +15,8 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueApplyUpdatePriority";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.PriorityQueueAllocation";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.GlobalPriorityQueueAllocation";
-
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.KCoreFrontendTest";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.SetCoverFrontendTest";
 //
 //
 //
