@@ -71,7 +71,9 @@ public:
   
   buckets<D>* buckets_;
   uintE cur_priority_ = 0;
-
-
+  
+  inline bool finished(void) {
+      return cur_priority_ == buckets_->null_bkt;
+  }
 
 };

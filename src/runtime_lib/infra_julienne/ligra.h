@@ -21,8 +21,8 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#ifndef LIGRA_H
-#define LIGRA_H
+#ifndef JULIENNE_LIGRA_H
+#define JULIENNE_LIGRA_H
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -465,7 +465,11 @@ inline bool cond_true (intT d) { return 1; }
 
 template<class vertex>
 void Compute(graph<vertex>&, commandLine);
-
+#ifdef INCLUDE_MAIN
+#undef INCLUDE_MAIN
+#endif
+#define INCLUDE_MAIN 0
+#if INCLUDE_MAIN
 int parallel_main(int argc, char* argv[]) {
   commandLine P(argc,argv," [-s] <inFile>");
   char* iFile = P.getArgument(0);
@@ -525,4 +529,5 @@ int parallel_main(int argc, char* argv[]) {
     }
   }
 }
+#endif
 #endif
