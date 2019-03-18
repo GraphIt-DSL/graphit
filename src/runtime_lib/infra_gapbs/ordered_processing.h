@@ -40,8 +40,8 @@ struct update_priority_min
 };
 
 
-template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond>
-  void OrderedProcessingOperatorNoMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply,  NodeID optional_source_node){
+template< class Priority, class EdgeApplyFunc , class WhileCond>
+  void OrderedProcessingOperatorNoMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, WhileCond while_cond, EdgeApplyFunc edge_apply,  NodeID optional_source_node){
 
   pvector<NodeID> frontier(g.num_edges_directed());
   // two element arrays for double buffering curr=iter&1, next=(iter+1)&1
@@ -78,7 +78,8 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
       for (size_t i=0; i < curr_frontier_tail; i++) {
         NodeID u = frontier[i];
 	//TODO: need to refactor to use user supplied filtering on the source node
-        if (src_filter(u)) {
+        //if (src_filter(u)) { //hard code this into the library
+	if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
           for (WNode wn : g.out_neigh(u)) {
              edge_apply(local_bins, u, wn.v, wn.w);
           }
@@ -126,8 +127,8 @@ template< class Priority, class SrcFilter, class EdgeApplyFunc , class WhileCond
 
 
 
-template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
-  void OrderedProcessingOperatorWithMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g, SrcFilter src_filter, WhileCond while_cond, EdgeApplyFunc edge_apply, int bin_size_threshold = 1000, NodeID optional_source_node=-1){
+template<class Priority,  class WhileCond, class EdgeApplyFunc >
+  void OrderedProcessingOperatorWithMerge(EagerPriorityQueue<Priority>* pq, const WGraph &g,  WhileCond while_cond, EdgeApplyFunc edge_apply, int bin_size_threshold = 1000, NodeID optional_source_node=-1){
 
   pvector<NodeID> frontier(g.num_edges_directed());
   // two element arrays for double buffering curr=iter&1, next=(iter+1)&1
@@ -164,7 +165,8 @@ template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
       for (size_t i=0; i < curr_frontier_tail; i++) {
         NodeID u = frontier[i];
 	//TODO: need to refactor to use user supplied filtering on the source node
-        if (src_filter(u)) {
+        //if (src_filter(u)) {
+	if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
           for (WNode wn : g.out_neigh(u)) {
              edge_apply(local_bins, u, wn.v, wn.w);
           }
@@ -182,7 +184,8 @@ template<class Priority, class SrcFilter, class WhileCond, class EdgeApplyFunc >
         local_bins[curr_bin_index].resize(0);
         for (size_t i=0; i < cur_bin_size; i++) {
           NodeID u = cur_bin_copy[i];
-          if (src_filter(u)) {
+          //if (src_filter(u)) {
+	  if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
               for (WNode wn : g.out_neigh(u)) {  
                  edge_apply(local_bins, u, wn.v, wn.w);
               }

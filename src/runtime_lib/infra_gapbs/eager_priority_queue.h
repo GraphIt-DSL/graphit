@@ -26,6 +26,7 @@ public:
   void init_indexes_tails(){
     shared_indexes[0] = 0;
     shared_indexes[1] = kMaxBin;
+    //this actually needs to be careful
     frontier_tails[0] = 1;
     frontier_tails[1] = 0;
 
@@ -43,7 +44,11 @@ public:
   }
   
   bool finished() {
-      return get_current_priority() == kMaxBin;
+    return get_current_priority() == kMaxBin;
+  }
+
+  bool finishedNode(NodeID v){
+    return priorities_[v]/delta_ < get_current_priority();
   }
 
   PriorityT_* priorities_;
