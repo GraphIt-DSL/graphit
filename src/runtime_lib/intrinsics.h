@@ -41,9 +41,9 @@
 #include <iostream>
 #include <limits.h>
 #include <limits>
-#include <malloc.h>
+//#include <malloc.h>
 #include <math.h>
-#include <omp.h>
+//#include <omp.h>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
