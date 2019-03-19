@@ -150,6 +150,9 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNUMA(std::string apply_label, std::string config, std::string direction = "all");
 
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyPriorityUpdate(std::string apply_label, std::string config);
+
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr

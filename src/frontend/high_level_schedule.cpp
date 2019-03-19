@@ -292,6 +292,7 @@ namespace graphit {
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
                            0, -100, false};
             }
 
@@ -332,13 +333,13 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = (*schedule_->apply_schedules)[apply_label]
                         = {apply_label, ApplySchedule::DirectionType::PULL,
                            ApplySchedule::ParType::Serial,
                            ApplySchedule::DeduplicationType::Enable,
                            ApplySchedule::OtherOpt::QUEUE,
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
                            0, -100, false};
             }
 
@@ -368,6 +369,9 @@ namespace graphit {
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
                 (*schedule_->apply_schedules)[apply_label].numa_aware = true;
+            } else if (apply_schedule_str == "eager_priority_update"){
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -693,6 +697,16 @@ namespace graphit {
             return -1;
 
         }
+
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdate(std::string apply_label, std::string config) {
+            initGraphIterationSpaceIfNeeded(apply_label);
+
+            // for now, we still use the old setApply API. We will probably switch to full graph iteration space soon
+            return setApply(apply_label, config);
+        }
+
 
 
         high_level_schedule::ProgramScheduleNode::Ptr

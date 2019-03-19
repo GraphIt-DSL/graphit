@@ -426,6 +426,30 @@ protected:
                 "  sum = sum + amountNotConnected;\n"
                 "end");
 
+
+
+        const char* delta_stepping_char = ("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.wel\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                             "const pq: priority_queue{Vertex};"
+
+                             "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                             "var new_dist : int = dist[src] + weight; "
+                             "pq.updatePriorityMin(dst, new_dist, dist[dst]); "
+                             "end\n"
+                             "func main() "
+                             "  var start_vertex : Vertex = 1;"
+                             "  pq = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);"
+                             "  while (not pq.finished()) "
+                             "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
+                             "    #s1# edges.from(frontier).applyModifyPriority(updateEdge);  \n"
+                             "    delete frontier; "
+                             "end\n"
+                             "end");
+
+
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
@@ -437,6 +461,7 @@ protected:
         pr_cc_str_ = string(pr_cc_char);
         bc_str_ = string(bc_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
+        delta_stepping_str_ = string(delta_stepping_char);
     }
 
     virtual void TearDown() {
@@ -504,6 +529,7 @@ protected:
     string pr_cc_str_;
     string bc_str_;
     string closeness_centrality_weighted_str_;
+    string delta_stepping_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1703,3 +1729,13 @@ TEST_F(HighLevelScheduleTest, ClosenessCentralityWeightedDefaultSchedule) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
+    //EXPECT_EQ (0, basicTestWithSchedule(program));
+}
