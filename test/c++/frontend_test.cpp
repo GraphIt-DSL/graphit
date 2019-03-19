@@ -603,5 +603,70 @@ TEST_F(FrontendTest, PointToPointShortestPath) {
                      "  end\n"
                      "end");
     EXPECT_EQ (0,  basicTest(is));
+}
 
+
+TEST_F(FrontendTest, KCoreFrontendTest) {
+    istringstream is("element Vertex end\n"
+		     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+		     "const vertices : vertexset{Vertex} = edge.getVertices();\n"
+		     "const D: vector{Vertex}(int) = edges.getOutDegrees();\n"
+		     "const pq: priority_queue{Vertex};\n"
+                     "func apply_f(src: Vertex, dst: Vertex)\n"
+                     "    var deg: int = D[dst];\n"
+                     "    var k: int = pq.get_current_priority();\n"
+                     "    if (deg > k) \n"
+                     "        pq.updatePrioritySum(dst, -1);\n"
+                     "    end\n"
+                     "end \n"
+		     "func main()\n"
+                     "    pq = new priority_queue{Vertex}(false, false, D, 1, 2, false, -1);\n"
+                     "    var finished: int = 0; \n"
+                     "    while (finished != vertices.size()) \n"
+                     "        var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                     "        finished += frontier.size();\n"
+                     "        edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                     "        delete frontier;\n"
+                     "    end\n"
+                     "    delete pq;\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+}
+
+
+TEST_F(FrontendTest, SetCoverFrontendTest) {
+    istringstream is("element Vertex end\n"
+		     "element Edge end\n"
+		     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+		     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+		     "const degrees: vector{Vertex}(int) = edges.getOutDegrees();\n"
+		     "const D: vector{Vertex}(int);\n"
+		     "const pq: priority_queue{Vertex};\n"
+                     "const epsilon: double = 0.01;\n"
+		     "const x: double = 1.0/log(1.0 + epsilon);\n"
+		     "func init_udf(v: Vertex) \n"
+	             "    var deg: int = degrees[v];\n"
+                     "    if deg == 0\n"
+                     "        D[v] = 0;\n"
+                     "    else\n"
+                     "        D[v] = floor(x*log(to_double(deg)));\n"
+                     "    end\n"
+		     "end\n"
+		     "extern func extern_function(active: vertexset{Vertex}) -> output: vertexset{Vertex};\n"
+		     "func main() \n"
+                     "    vertices.apply(init_udf);\n"
+	 	     "    pq = new priority_queue{Vertex}(false, false, D, 1, 2, false, -1);\n"
+                     "    while (1) \n"
+                     "        var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                     "        if frontier.is_null()\n"
+		     "            break;\n"
+                     "        end\n"
+                     "        frontier.applyUpdatePriorityExtern(extern_function);\n"
+                     "        delete frontier;\n"
+                     "    end\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
 }
