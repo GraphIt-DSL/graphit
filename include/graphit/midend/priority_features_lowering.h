@@ -18,8 +18,28 @@ namespace graphit {
         PriorityFeaturesLower(MIRContext *mir_context) : mir_context_(mir_context) {};
 
         PriorityFeaturesLower(MIRContext *mir_context, Schedule *schedule)
-        : schedule_(schedule), mir_context_(mir_context) {};
+                : schedule_(schedule), mir_context_(mir_context) {};
 
+
+        // use the schedule to set the type for MIR::PriorityQeueuType and PriorityQueueAllocExpr
+        struct LowerPriorityQueueTypeandAllocExpr : public mir::MIRVisitor {
+            using mir::MIRVisitor::visit;
+
+            LowerPriorityQueueTypeandAllocExpr(Schedule* schedule) : schedule_(schedule){
+
+            };
+
+            virtual void visit(mir::PriorityQueueType){
+
+            }
+
+            virtual void visit(mir::PriorityQueueAllocExpr){
+
+            }
+
+            Schedule * schedule_;
+
+        };
 
         void lower();
 
