@@ -1170,6 +1170,8 @@ namespace graphit {
             const auto priorityQueueType = to<PriorityQueueType>(node);
             Type::copy(priorityQueueType);
             element = priorityQueueType->element->clone<ElementType>();
+            priority_type = priorityQueueType->element->clone<ScalarType>();
+
         }
         FIRNode::Ptr PriorityQueueType::cloneNode() {
             const auto node = std::make_shared<PriorityQueueType>();

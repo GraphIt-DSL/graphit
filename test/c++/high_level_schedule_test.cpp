@@ -433,20 +433,20 @@ protected:
                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.wel\");\n"
                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
                              "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
-                             "const pq: priority_queue{Vertex};"
+                             "const pq: priority_queue{Vertex}(int);"
 
                              "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
-                             "var new_dist : int = dist[src] + weight; "
-                             "pq.updatePriorityMin(dst, new_dist, dist[dst]); "
+                             "  var new_dist : int = dist[src] + weight; "
+                             "  pq.updatePriorityMin(dst, new_dist, dist[dst]); "
                              "end\n"
                              "func main() "
                              "  var start_vertex : Vertex = 1;"
-                             "  pq = new priority_queue{Vertex}(false, false, array, 1, 2, false, -1);"
-                             "  while (not pq.finished()) "
+                             "  pq = new priority_queue{Vertex}(int)(false, false, array, 1, 2, false, -1);"
+                             "  while (pq.finished() == false) "
                              "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
-                             "    #s1# edges.from(frontier).applyModifyPriority(updateEdge);  \n"
+                             "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                              "    delete frontier; "
-                             "end\n"
+                             "  end\n"
                              "end");
 
 
@@ -1736,6 +1736,6 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyPriorityUpdate("s1", "eager_priority_update");
-    EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
-    //EXPECT_EQ (0, basicTestWithSchedule(program));
+    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }

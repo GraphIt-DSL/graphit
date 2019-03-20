@@ -901,12 +901,16 @@ namespace graphit {
         void FIRPrinter::visit(PriorityQueueType::Ptr type) {
             oss << "PriorityQueue {";
             type->element->accept(this);
-            oss << "}";
+            oss << "}(";
+            type->priority_type->accept(this);
+            oss << ")";
         }
         void FIRPrinter::visit(PriorityQueueAllocExpr::Ptr expr) {
             oss << "alloc PriorityQueue {";
             expr->elementType->accept(this);
-            oss << "}()";
+            oss << "}(";
+            expr->priority_type->accept(this);
+            oss << ")";
         }
 
 

@@ -209,8 +209,8 @@ namespace graphit {
         fir::LoadExpr::Ptr parseLoadExpr();
 
 
-       // OG Additions
-       fir::PriorityQueueType::Ptr parsePriorityQueueType();
+        // OG Additions
+        fir::PriorityQueueType::Ptr parsePriorityQueueType();
 
 
         void reportError(const Token &, std::string);

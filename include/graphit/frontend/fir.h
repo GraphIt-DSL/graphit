@@ -6,7 +6,6 @@
 #define GRAPHIT_FIR_H
 
 
-
 #include <string>
 #include <vector>
 #include <memory>
@@ -23,12 +22,12 @@ namespace graphit {
         struct FIRNode;
         struct SetType;
 
-        template <typename T>
+        template<typename T>
         inline bool isa(std::shared_ptr<FIRNode> ptr) {
-            return (bool)std::dynamic_pointer_cast<T>(ptr);
+            return (bool) std::dynamic_pointer_cast<T>(ptr);
         }
 
-        template <typename T>
+        template<typename T>
         inline const std::shared_ptr<T> to(std::shared_ptr<FIRNode> ptr) {
             std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
             assert(ret != nullptr);
@@ -41,25 +40,32 @@ namespace graphit {
 
             FIRNode() : lineBegin(0), colBegin(0), lineEnd(0), colEnd(0) {}
 
-            template <typename T = FIRNode> std::shared_ptr<T> clone() {
+            template<typename T = FIRNode>
+            std::shared_ptr<T> clone() {
                 return to<T>(cloneNode());
             }
 
             virtual void accept(FIRVisitor *) = 0;
 
             virtual unsigned getLineBegin() { return lineBegin; }
+
             virtual unsigned getColBegin() { return colBegin; }
+
             virtual unsigned getLineEnd() { return lineEnd; }
+
             virtual unsigned getColEnd() { return colEnd; }
 
             void setBeginLoc(const Token &);
+
             void setEndLoc(const Token &);
+
             void setLoc(const Token &);
 
             friend std::ostream &operator<<(std::ostream &, FIRNode &);
 
         protected:
-            template <typename T = FIRNode> std::shared_ptr<T> self() {
+            template<typename T = FIRNode>
+            std::shared_ptr<T> self() {
                 return to<T>(shared_from_this());
             }
 
@@ -137,7 +143,7 @@ namespace graphit {
         };
 
         struct SetIndexSet : public IndexSet {
-            std::string              setName;
+            std::string setName;
             std::shared_ptr<SetType> setDef; // Reference to original definition of set.
 
             typedef std::shared_ptr<SetIndexSet> Ptr;
@@ -153,7 +159,9 @@ namespace graphit {
         };
 
         struct GenericIndexSet : public SetIndexSet {
-            enum class Type {UNKNOWN, RANGE};
+            enum class Type {
+                UNKNOWN, RANGE
+            };
 
             Type type;
 
@@ -181,7 +189,7 @@ namespace graphit {
         };
 
         struct ElementType : public Type {
-            std::string      ident;
+            std::string ident;
             SetIndexSet::Ptr source; // Reference to inferred source index set.
 
             typedef std::shared_ptr<ElementType> Ptr;
@@ -207,8 +215,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return set->getLineBegin(); }
+
             virtual unsigned getColBegin() { return set->getColBegin(); }
+
             virtual unsigned getLineEnd() { return set->getLineEnd(); }
+
             virtual unsigned getColEnd() { return set->getColEnd(); }
 
         protected:
@@ -231,8 +242,10 @@ namespace graphit {
         struct UnstructuredSetType : public SetType {
             typedef std::shared_ptr<UnstructuredSetType> Ptr;
 
-            virtual bool          isHomogeneous() const { return true; }
-            virtual size_t        getArity() const { return 0; }
+            virtual bool isHomogeneous() const { return true; }
+
+            virtual size_t getArity() const { return 0; }
+
             virtual Endpoint::Ptr getEndpoint(size_t) const { return Endpoint::Ptr(); }
         };
 
@@ -252,7 +265,7 @@ namespace graphit {
         };
 
         struct HomogeneousEdgeSetType : public UnstructuredSetType {
-            Endpoint::Ptr    endpoint;
+            Endpoint::Ptr endpoint;
             TupleLength::Ptr arity;
 
             typedef std::shared_ptr<HomogeneousEdgeSetType> Ptr;
@@ -261,7 +274,8 @@ namespace graphit {
                 visitor->visit(self<HomogeneousEdgeSetType>());
             }
 
-            virtual size_t        getArity() const { return arity->val; }
+            virtual size_t getArity() const { return arity->val; }
+
             virtual Endpoint::Ptr getEndpoint(size_t i) const { return endpoint; }
 
         protected:
@@ -279,8 +293,10 @@ namespace graphit {
                 visitor->visit(self<HeterogeneousEdgeSetType>());
             }
 
-            virtual bool          isHomogeneous() const;
-            virtual size_t        getArity() const { return endpoints.size(); }
+            virtual bool isHomogeneous() const;
+
+            virtual size_t getArity() const { return endpoints.size(); }
+
             virtual Endpoint::Ptr getEndpoint(size_t i) const { return endpoints.at(i); }
 
         protected:
@@ -291,7 +307,7 @@ namespace graphit {
 
         struct GridSetType : public SetType {
             Endpoint::Ptr underlyingPointSet;
-            size_t        dimensions;
+            size_t dimensions;
 
             typedef std::shared_ptr<GridSetType> Ptr;
 
@@ -325,7 +341,7 @@ namespace graphit {
         };
 
         struct TupleElement : public FIRNode {
-            Identifier::Ptr  name;
+            Identifier::Ptr name;
             ElementType::Ptr element;
 
             typedef std::shared_ptr<TupleElement> Ptr;
@@ -335,8 +351,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return name->getLineBegin(); }
+
             virtual unsigned getColBegin() { return name->getColBegin(); }
+
             virtual unsigned getLineEnd() { return element->getLineEnd(); }
+
             virtual unsigned getColEnd() { return element->getColEnd(); }
 
         protected:
@@ -381,7 +400,9 @@ namespace graphit {
         };
 
         struct ScalarType : public TensorType {
-            enum class Type {INT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING};
+            enum class Type {
+                INT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
+            };
 
             Type type;
 
@@ -399,8 +420,8 @@ namespace graphit {
 
         struct NDTensorType : public TensorType {
             std::vector<IndexSet::Ptr> indexSets;
-            TensorType::Ptr            blockType;
-            bool                       transposed = false;
+            TensorType::Ptr blockType;
+            bool transposed = false;
             //adding support for edge_element_type type in vectors
             ElementType::Ptr element;
 
@@ -450,7 +471,7 @@ namespace graphit {
 
         struct IdentDecl : public FIRNode {
             Identifier::Ptr name;
-            Type::Ptr       type;
+            Type::Ptr type;
 
             typedef std::shared_ptr<IdentDecl> Ptr;
 
@@ -459,8 +480,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return name->getLineBegin(); }
+
             virtual unsigned getColBegin() { return name->getColBegin(); }
+
             virtual unsigned getLineEnd() { return type->getLineEnd(); }
+
             virtual unsigned getColEnd() { return type->getColEnd(); }
 
         protected:
@@ -477,6 +501,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return FIRNode::getLineEnd(); }
+
             virtual unsigned getColEnd() { return FIRNode::getColEnd(); }
 
         protected:
@@ -484,7 +509,7 @@ namespace graphit {
         };
 
         struct ElementTypeDecl : public FIRNode {
-            Identifier::Ptr             name;
+            Identifier::Ptr name;
             std::vector<FieldDecl::Ptr> fields;
 
             typedef std::shared_ptr<ElementTypeDecl> Ptr;
@@ -520,6 +545,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return FIRNode::getLineBegin(); }
+
             virtual unsigned getColBegin() { return FIRNode::getColBegin(); }
 
             virtual bool isInOut() { return true; }
@@ -536,8 +562,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return FIRNode::getLineBegin(); }
+
             virtual unsigned getColBegin() { return FIRNode::getColBegin(); }
+
             virtual unsigned getLineEnd() { return FIRNode::getLineEnd(); }
+
             virtual unsigned getColEnd() { return FIRNode::getColEnd(); }
 
         protected:
@@ -545,10 +574,12 @@ namespace graphit {
         };
 
         struct GenericParam : public FIRNode {
-            enum class Type {UNKNOWN, RANGE};
+            enum class Type {
+                UNKNOWN, RANGE
+            };
 
             std::string name;
-            Type        type;
+            Type type;
 
             typedef std::shared_ptr<GenericParam> Ptr;
 
@@ -563,15 +594,17 @@ namespace graphit {
         };
 
         struct FuncDecl : public FIRNode {
-            enum class Type {INTERNAL, EXPORTED, EXTERNAL};
+            enum class Type {
+                INTERNAL, EXPORTED, EXTERNAL
+            };
 
-            Identifier::Ptr                name;
+            Identifier::Ptr name;
             std::vector<GenericParam::Ptr> genericParams;
-            std::vector<Argument::Ptr>     args;
-            std::vector<IdentDecl::Ptr>    results;
-            StmtBlock::Ptr                 body;
-            Type                           type;
-            std::string                    originalName;
+            std::vector<Argument::Ptr> args;
+            std::vector<IdentDecl::Ptr> results;
+            StmtBlock::Ptr body;
+            Type type;
+            std::string originalName;
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 
@@ -587,8 +620,8 @@ namespace graphit {
 
         struct VarDecl : public Stmt {
             Identifier::Ptr name;
-            Type::Ptr       type;
-            Expr::Ptr       initVal;
+            Type::Ptr type;
+            Expr::Ptr initVal;
 
             typedef std::shared_ptr<VarDecl> Ptr;
 
@@ -614,7 +647,7 @@ namespace graphit {
         };
 
         struct WhileStmt : public Stmt {
-            Expr::Ptr      cond;
+            Expr::Ptr cond;
             StmtBlock::Ptr body;
 
             typedef std::shared_ptr<WhileStmt> Ptr;
@@ -637,6 +670,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return cond->getLineEnd(); }
+
             virtual unsigned getColEnd() { return cond->getColEnd(); }
 
         protected:
@@ -674,8 +708,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return set->getLineBegin(); }
+
             virtual unsigned getColBegin() { return set->getColBegin(); }
+
             virtual unsigned getLineEnd() { return set->getLineEnd(); }
+
             virtual unsigned getColEnd() { return set->getColEnd(); }
 
         protected:
@@ -695,8 +732,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return lower->getLineBegin(); }
+
             virtual unsigned getColBegin() { return lower->getColBegin(); }
+
             virtual unsigned getLineEnd() { return upper->getLineEnd(); }
+
             virtual unsigned getColEnd() { return upper->getColEnd(); }
 
         protected:
@@ -707,8 +747,8 @@ namespace graphit {
 
         struct ForStmt : public Stmt {
             Identifier::Ptr loopVar;
-            ForDomain::Ptr  domain;
-            StmtBlock::Ptr  body;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
 
             typedef std::shared_ptr<ForStmt> Ptr;
 
@@ -724,7 +764,7 @@ namespace graphit {
 
 
         struct NameNode : public Stmt {
-            StmtBlock::Ptr  body;
+            StmtBlock::Ptr body;
 
             typedef std::shared_ptr<NameNode> Ptr;
 
@@ -740,7 +780,7 @@ namespace graphit {
 
         struct PrintStmt : public Stmt {
             std::vector<Expr::Ptr> args;
-            bool                   printNewline = false;
+            bool printNewline = false;
 
             typedef std::shared_ptr<PrintStmt> Ptr;
 
@@ -778,6 +818,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return expr->getLineBegin(); }
+
             virtual unsigned getColBegin() { return expr->getColBegin(); }
 
         protected:
@@ -796,6 +837,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return lhs.front()->getLineBegin(); }
+
             virtual unsigned getColBegin() { return lhs.front()->getColBegin(); }
 
         protected:
@@ -807,7 +849,9 @@ namespace graphit {
 
         struct ReduceStmt : public ExprStmt {
             std::vector<Expr::Ptr> lhs;
-            enum class ReductionOp {MIN, SUM, MAX, ASYNC_MAX, ASYNC_MIN};
+            enum class ReductionOp {
+                MIN, SUM, MAX, ASYNC_MAX, ASYNC_MIN
+            };
             ReductionOp reduction_op;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
@@ -817,6 +861,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return lhs.front()->getLineBegin(); }
+
             virtual unsigned getColBegin() { return lhs.front()->getColBegin(); }
 
         protected:
@@ -855,8 +900,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return expr->getLineBegin(); }
+
             virtual unsigned getColBegin() { return expr->getColBegin(); }
+
             virtual unsigned getLineEnd() { return expr->getLineEnd(); }
+
             virtual unsigned getColEnd() { return expr->getColEnd(); }
 
         protected:
@@ -866,13 +914,15 @@ namespace graphit {
         };
 
         struct MapExpr : public Expr {
-            enum class ReductionOp {NONE, SUM};
+            enum class ReductionOp {
+                NONE, SUM
+            };
 
-            Identifier::Ptr            func;
+            Identifier::Ptr func;
             std::vector<IndexSet::Ptr> genericArgs;
-            std::vector<Expr::Ptr>     partialActuals;
-            SetIndexSet::Ptr           target;
-            SetIndexSet::Ptr           through;
+            std::vector<Expr::Ptr> partialActuals;
+            SetIndexSet::Ptr target;
+            SetIndexSet::Ptr through;
 
             typedef std::shared_ptr<MapExpr> Ptr;
 
@@ -911,6 +961,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return target->getLineEnd(); }
+
             virtual unsigned getColEnd() { return target->getColEnd(); }
 
             virtual ReductionOp getReductionOp() const { return ReductionOp::NONE; }
@@ -936,8 +987,11 @@ namespace graphit {
             typedef std::shared_ptr<BinaryExpr> Ptr;
 
             virtual unsigned getLineBegin() { return lhs->getLineBegin(); }
+
             virtual unsigned getColBegin() { return lhs->getColBegin(); }
+
             virtual unsigned getLineEnd() { return rhs->getLineEnd(); }
+
             virtual unsigned getColEnd() { return rhs->getColEnd(); }
 
         protected:
@@ -987,7 +1041,9 @@ namespace graphit {
         };
 
         struct EqExpr : public NaryExpr {
-            enum class Op {LT, LE, GT, GE, EQ, NE};
+            enum class Op {
+                LT, LE, GT, GE, EQ, NE
+            };
 
             std::vector<Op> ops;
 
@@ -998,8 +1054,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return operands.front()->getLineBegin(); }
+
             virtual unsigned getColBegin() { return operands.front()->getColBegin(); }
+
             virtual unsigned getLineEnd() { return operands.back()->getLineEnd(); }
+
             virtual unsigned getColEnd() { return operands.back()->getColEnd(); }
 
         protected:
@@ -1016,6 +1075,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return operand->getLineEnd(); }
+
             virtual unsigned getColEnd() { return operand->getColEnd(); }
 
         protected:
@@ -1109,6 +1169,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return operand->getLineEnd(); }
+
             virtual unsigned getColEnd() { return operand->getColEnd(); }
 
         protected:
@@ -1136,6 +1197,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return operand->getLineBegin(); }
+
             virtual unsigned getColBegin() { return operand->getColBegin(); }
 
         protected:
@@ -1143,9 +1205,9 @@ namespace graphit {
         };
 
         struct CallExpr : public Expr {
-            Identifier::Ptr            func;
+            Identifier::Ptr func;
             std::vector<IndexSet::Ptr> genericArgs;
-            std::vector<Expr::Ptr>     args;
+            std::vector<Expr::Ptr> args;
 
             typedef std::shared_ptr<CallExpr> Ptr;
 
@@ -1154,6 +1216,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return func->getLineBegin(); }
+
             virtual unsigned getColBegin() { return func->getColBegin(); }
 
         protected:
@@ -1163,7 +1226,7 @@ namespace graphit {
         };
 
         struct TensorReadExpr : public Expr {
-            Expr::Ptr                   tensor;
+            Expr::Ptr tensor;
             std::vector<ReadParam::Ptr> indices;
 
             typedef std::shared_ptr<TensorReadExpr> Ptr;
@@ -1173,6 +1236,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return tensor->getLineBegin(); }
+
             virtual unsigned getColBegin() { return tensor->getColBegin(); }
 
         protected:
@@ -1182,7 +1246,7 @@ namespace graphit {
         };
 
         struct SetReadExpr : public Expr {
-            Expr::Ptr              set;
+            Expr::Ptr set;
             std::vector<Expr::Ptr> indices;
 
             typedef std::shared_ptr<SetReadExpr> Ptr;
@@ -1192,6 +1256,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return set->getLineBegin(); }
+
             virtual unsigned getColBegin() { return set->getColBegin(); }
 
         protected:
@@ -1206,6 +1271,7 @@ namespace graphit {
             typedef std::shared_ptr<TupleReadExpr> Ptr;
 
             virtual unsigned getLineBegin() { return tuple->getLineBegin(); }
+
             virtual unsigned getColBegin() { return tuple->getColBegin(); }
 
         protected:
@@ -1222,6 +1288,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineEnd() { return elem->getLineEnd(); }
+
             virtual unsigned getColEnd() { return elem->getColEnd(); }
 
         protected:
@@ -1246,7 +1313,7 @@ namespace graphit {
         };
 
         struct FieldReadExpr : public Expr {
-            Expr::Ptr       setOrElem;
+            Expr::Ptr setOrElem;
             Identifier::Ptr field;
 
             typedef std::shared_ptr<FieldReadExpr> Ptr;
@@ -1256,8 +1323,11 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return setOrElem->getLineBegin(); }
+
             virtual unsigned getColBegin() { return setOrElem->getColBegin(); }
+
             virtual unsigned getLineEnd() { return field->getLineEnd(); }
+
             virtual unsigned getColEnd() { return field->getColEnd(); }
 
         protected:
@@ -1436,6 +1506,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return map->getLineBegin(); }
+
             virtual unsigned getColBegin() { return map->getColBegin(); }
 
         protected:
@@ -1445,9 +1516,9 @@ namespace graphit {
         };
 
         struct Test : public FIRNode {
-            Identifier::Ptr        func;
+            Identifier::Ptr func;
             std::vector<Expr::Ptr> args;
-            Expr::Ptr              expected;
+            Expr::Ptr expected;
 
             typedef std::shared_ptr<Test> Ptr;
 
@@ -1466,12 +1537,14 @@ namespace graphit {
             ElementType::Ptr element;
 
             typedef std::shared_ptr<VertexSetType> Ptr;
+
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<VertexSetType>());
             }
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
@@ -1481,12 +1554,14 @@ namespace graphit {
             std::vector<ElementType::Ptr> vertex_element_type_list;
             ScalarType::Ptr weight_type;
             typedef std::shared_ptr<EdgeSetType> Ptr;
+
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetType>());
             }
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
@@ -1508,6 +1583,7 @@ namespace graphit {
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
@@ -1522,6 +1598,7 @@ namespace graphit {
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
@@ -1543,13 +1620,14 @@ namespace graphit {
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
         struct MethodCallExpr : public Expr {
-            Identifier::Ptr            method_name;
-            Expr::Ptr                  target;
-            std::vector<Expr::Ptr>     args;
+            Identifier::Ptr method_name;
+            Expr::Ptr target;
+            std::vector<Expr::Ptr> args;
 
             typedef std::shared_ptr<MethodCallExpr> Ptr;
 
@@ -1558,6 +1636,7 @@ namespace graphit {
             }
 
             virtual unsigned getLineBegin() { return method_name->getLineBegin(); }
+
             virtual unsigned getColBegin() { return method_name->getColBegin(); }
 
         protected:
@@ -1567,12 +1646,9 @@ namespace graphit {
         };
 
 
-
-
-
         struct WhereExpr : public Expr {
-            Expr::Ptr            target;
-            Identifier::Ptr            input_func;
+            Expr::Ptr target;
+            Identifier::Ptr input_func;
 
             typedef std::shared_ptr<WhereExpr> Ptr;
 
@@ -1589,7 +1665,7 @@ namespace graphit {
 
 
         struct FromExpr : public Expr {
-            Identifier::Ptr            input_func;
+            Identifier::Ptr input_func;
 
             typedef std::shared_ptr<FromExpr> Ptr;
 
@@ -1606,7 +1682,7 @@ namespace graphit {
 
 
         struct ToExpr : public Expr {
-            Identifier::Ptr            input_func;
+            Identifier::Ptr input_func;
 
             typedef std::shared_ptr<ToExpr> Ptr;
 
@@ -1624,15 +1700,17 @@ namespace graphit {
 
         struct ApplyExpr : public Expr {
 
-	    enum class Type {REGULAR_APPLY, UPDATE_PRIORITY_APPLY, UPDATE_PRIORITY_EXTERN_APPLY};            
+            enum class Type {
+                REGULAR_APPLY, UPDATE_PRIORITY_APPLY, UPDATE_PRIORITY_EXTERN_APPLY
+            };
 
-            Expr::Ptr                  target;
-            Identifier::Ptr            input_function;
-            FromExpr::Ptr              from_expr;
-            ToExpr::Ptr                to_expr;
-            Identifier::Ptr            change_tracking_field;
+            Expr::Ptr target;
+            Identifier::Ptr input_function;
+            FromExpr::Ptr from_expr;
+            ToExpr::Ptr to_expr;
+            Identifier::Ptr change_tracking_field;
             bool disable_deduplication = false;
-	    Type type = Type::REGULAR_APPLY;
+            Type type = Type::REGULAR_APPLY;
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
             virtual void accept(FIRVisitor *visitor) {
@@ -1646,44 +1724,50 @@ namespace graphit {
             virtual FIRNode::Ptr cloneNode();
         };
 
-	// OG additions
+        // OG additions
 
         struct PriorityQueueType : public Type {
             ElementType::Ptr element;
+            ScalarType::Ptr priority_type;
 
             typedef std::shared_ptr<PriorityQueueType> Ptr;
+
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<PriorityQueueType>());
             }
 
         protected:
             virtual FIRNode::Ptr cloneNode();
+
             virtual void copy(FIRNode::Ptr);
         };
 
-	struct PriorityQueueAllocExpr : public NewExpr {
-	    typedef std::shared_ptr<PriorityQueueAllocExpr> Ptr;
+        struct PriorityQueueAllocExpr : public NewExpr {
+            typedef std::shared_ptr<PriorityQueueAllocExpr> Ptr;
 
-	    virtual void accept(FIRVisitor *visitor) {
-		visitor->visit(self<PriorityQueueAllocExpr>());
-	    }
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<PriorityQueueAllocExpr>());
+            }
 
-	    Expr::Ptr dup_within_bucket;
+            Expr::Ptr dup_within_bucket;
             Expr::Ptr dup_across_bucket;
             Identifier::Ptr vector_function;
             Expr::Ptr bucket_ordering;
             Expr::Ptr priority_ordering;
             Expr::Ptr init_bucket;
-	    Expr::Ptr starting_node;
+            Expr::Ptr starting_node;
 
-	protected:
-	    virtual FIRNode::Ptr cloneNode();
-	    virtual void copy(FIRNode::Ptr);
-	};
+            ScalarType::Ptr priority_type;
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+
+            virtual void copy(FIRNode::Ptr);
+        };
 
         // Utility functions
         typedef std::vector<IndexSet::Ptr> IndexDomain;
-        typedef std::vector<IndexDomain>   TensorDimensions;
+        typedef std::vector<IndexDomain> TensorDimensions;
 
         TensorType::Ptr
         makeTensorType(ScalarType::Type componentType,

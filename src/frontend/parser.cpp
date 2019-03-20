@@ -372,7 +372,7 @@ namespace graphit {
                 return stmt;
             }
             case Token::Type::DELETE:
-		return parseDeleteStmt();
+                return parseDeleteStmt();
             default:
                 return parseExprOrAssignStmt();
         }
@@ -435,7 +435,7 @@ namespace graphit {
             }
 
             //if an initial value is specified
-            if (tryConsume(Token::Type::ASSIGN)){
+            if (tryConsume(Token::Type::ASSIGN)) {
                 //consume(Token::Type::ASSIGN);
                 constDecl->initVal = parseExpr();
             }
@@ -693,37 +693,37 @@ namespace graphit {
     }
 
 // delete_stmt: ('delete') expr ';'
-  fir::ExprStmt::Ptr Parser::parseDeleteStmt() {
-      try {
-          fir::ExprStmt::Ptr stmt;
-	  stmt = std::make_shared<fir::ExprStmt>();
+    fir::ExprStmt::Ptr Parser::parseDeleteStmt() {
+        try {
+            fir::ExprStmt::Ptr stmt;
+            stmt = std::make_shared<fir::ExprStmt>();
 
-          const Token deleteToken = consume(Token::Type::DELETE);
-          fir::CallExpr::Ptr call_expr = std::make_shared<fir::CallExpr>();
+            const Token deleteToken = consume(Token::Type::DELETE);
+            fir::CallExpr::Ptr call_expr = std::make_shared<fir::CallExpr>();
 
-          auto ident = std::make_shared<fir::Identifier>();
-          ident->ident = "deleteObject";
-	  ident->setLoc(deleteToken);
-          call_expr->func = ident;
+            auto ident = std::make_shared<fir::Identifier>();
+            ident->ident = "deleteObject";
+            ident->setLoc(deleteToken);
+            call_expr->func = ident;
 
-          const fir::Expr::Ptr arg = parseExpr();
-          call_expr->args.push_back(arg);
+            const fir::Expr::Ptr arg = parseExpr();
+            call_expr->args.push_back(arg);
 
-          stmt->expr = call_expr;
+            stmt->expr = call_expr;
 
-          const Token endToken = consume(Token::Type::SEMICOL);
-	  call_expr->setLoc(endToken);
-          stmt->setLoc(endToken);
-          
-          return stmt;     
-     
-      } catch (const SyntaxError &) {
-        skipTo({Token::Type::SEMICOL});
-        consume(Token::Type::SEMICOL); 
-        
-        return fir::ExprStmt::Ptr();
-      }
-  }
+            const Token endToken = consume(Token::Type::SEMICOL);
+            call_expr->setLoc(endToken);
+            stmt->setLoc(endToken);
+
+            return stmt;
+
+        } catch (const SyntaxError &) {
+            skipTo({Token::Type::SEMICOL});
+            consume(Token::Type::SEMICOL);
+
+            return fir::ExprStmt::Ptr();
+        }
+    }
 
 // apply_stmt: apply ident ['<' endpoints '>'] ['(' [expr_params] ')']
 //             'to' set_index_set ';'
@@ -766,7 +766,7 @@ namespace graphit {
 
     fir::ReduceStmt::Ptr Parser::parseReduceStmt(Token::Type token_type,
                                                  fir::ReduceStmt::ReductionOp reduce_op,
-                                                 fir::Expr::Ptr expr){
+                                                 fir::Expr::Ptr expr) {
         auto reduce_stmt = std::make_shared<fir::ReduceStmt>();
         reduce_stmt->reduction_op = reduce_op;
         reduce_stmt->lhs.push_back(expr);
@@ -840,12 +840,14 @@ namespace graphit {
                     }
 
                     case Token::Type::ASYNC_MAX_REDUCE: {
-                        stmt = parseReduceStmt(Token::Type::ASYNC_MAX_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MAX, expr);
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MAX_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MAX,
+                                               expr);
                         break;
                     }
 
                     case Token::Type::ASYNC_MIN_REDUCE: {
-                        stmt = parseReduceStmt(Token::Type::ASYNC_MIN_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MIN, expr);
+                        stmt = parseReduceStmt(Token::Type::ASYNC_MIN_REDUCE, fir::ReduceStmt::ReductionOp::ASYNC_MIN,
+                                               expr);
                         break;
                     }
 
@@ -1201,26 +1203,26 @@ namespace graphit {
         // We don't need to supprot set read expressions, so we just work with factors directly
         //fir::Expr::Ptr expr = parseSetReadExpr();
         fir::Expr::Ptr expr = parseFactor();
-        
+
         fir::FromExpr::Ptr from_expr;
-	fir::ToExpr::Ptr to_expr;
+        fir::ToExpr::Ptr to_expr;
 
         while (tryConsume(Token::Type::PERIOD)) {
 
-	    // For now, we are assuming that FROM and TO filters cannot appear by themselves. They will always be fused into the apply family of nodes
+            // For now, we are assuming that FROM and TO filters cannot appear by themselves. They will always be fused into the apply family of nodes
             // right now this is a bit of a hack, srcFilter and from act the same in the compiler
-	    if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
+            if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
                 consume(Token::Type::LP);
                 from_expr = std::make_shared<fir::FromExpr>();
                 from_expr->input_func = parseIdent();
                 consume(Token::Type::RP);
-            // right now this is a bit of a hack, dstFilter and to act the same in the compiler
-	    } else if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
+                // right now this is a bit of a hack, dstFilter and to act the same in the compiler
+            } else if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
                 consume(Token::Type::LP);
-               	to_expr = std::make_shared<fir::ToExpr>();
+                to_expr = std::make_shared<fir::ToExpr>();
                 to_expr->input_func = parseIdent();
                 consume(Token::Type::RP);
-	    } else if (tryConsume(Token::Type::APPLY)) {
+            } else if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
@@ -1229,30 +1231,30 @@ namespace graphit {
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
                 apply_expr->from_expr = from_expr;
-		apply_expr->to_expr = to_expr;
-	    } else if (tryConsume(Token::Type::APPLYMODIFIED)) {
-	        consume(Token::Type::LP);
+                apply_expr->to_expr = to_expr;
+            } else if (tryConsume(Token::Type::APPLYMODIFIED)) {
+                consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
-	        apply_expr->target = expr;
-	        apply_expr->input_function = parseIdent();
-	        consume(Token::Type::COMMA);
-	        auto change_tracking_field = parseIdent();
-	        apply_expr->change_tracking_field = change_tracking_field;
-	        //check for the optional boolean variable
-	        if(tryConsume(Token::Type::COMMA)){
-	            if (tryConsume(Token::Type::FALSE)) {
-	                //set the deduplication field
-	                apply_expr->disable_deduplication = false;
-	            } else if (tryConsume(Token::Type::TRUE)) {
-	                apply_expr->disable_deduplication = true;
-	            } else {
-	                reportError(peek(), "applyModified with unrecognized argument for deduplication");
-	                throw SyntaxError();
-	            }
-	        }
- 		consume(Token::Type::RP);
-	        apply_expr->from_expr = from_expr;
-		apply_expr->to_expr = to_expr;
+                apply_expr->target = expr;
+                apply_expr->input_function = parseIdent();
+                consume(Token::Type::COMMA);
+                auto change_tracking_field = parseIdent();
+                apply_expr->change_tracking_field = change_tracking_field;
+                //check for the optional boolean variable
+                if (tryConsume(Token::Type::COMMA)) {
+                    if (tryConsume(Token::Type::FALSE)) {
+                        //set the deduplication field
+                        apply_expr->disable_deduplication = false;
+                    } else if (tryConsume(Token::Type::TRUE)) {
+                        apply_expr->disable_deduplication = true;
+                    } else {
+                        reportError(peek(), "applyModified with unrecognized argument for deduplication");
+                        throw SyntaxError();
+                    }
+                }
+                consume(Token::Type::RP);
+                apply_expr->from_expr = from_expr;
+                apply_expr->to_expr = to_expr;
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
                 expr = apply_expr;
 
@@ -1264,8 +1266,8 @@ namespace graphit {
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY;
-	            apply_expr->from_expr = from_expr;
-		        apply_expr->to_expr = to_expr;
+                apply_expr->from_expr = from_expr;
+                apply_expr->to_expr = to_expr;
                 expr = apply_expr;
             } else if (tryConsume(Token::Type::APPLY_UPDATE_PRIORITY_EXTERN)) {
                 consume(Token::Type::LP);
@@ -1275,8 +1277,8 @@ namespace graphit {
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY;
-	        apply_expr->from_expr = from_expr;
-		apply_expr->to_expr = to_expr;
+                apply_expr->from_expr = from_expr;
+                apply_expr->to_expr = to_expr;
                 expr = apply_expr;
             } else if (tryConsume(Token::Type::WHERE) || tryConsume(Token::Type::FILTER)) {
                 consume(Token::Type::LP);
@@ -1285,7 +1287,7 @@ namespace graphit {
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
-	    } else if(peek().type == Token::Type::IDENT) {
+            } else if (peek().type == Token::Type::IDENT) {
                 // transforming into builtin intrinsics (runtime libraries)
                 auto ident = parseIdent();
                 if (tryConsume(Token::Type::LP)) {
@@ -1309,9 +1311,9 @@ namespace graphit {
                     expr = field_read;
                 }
             } else {
-		reportError(peek(), " error parsing FieldReadExpr");
-		throw SyntaxError();
-	    }
+                reportError(peek(), " error parsing FieldReadExpr");
+                throw SyntaxError();
+            }
 
         }
         return expr;
@@ -1384,9 +1386,9 @@ namespace graphit {
                     switch (decls.get(identStr)) {
                         case IdentType::FUNCTION:
                             // If the function is actually being called, then return a CallExpr, else treat the function name as a variable and return a VarExpr
-                            if (peek(1).type == Token::Type::LP) 
+                            if (peek(1).type == Token::Type::LP)
                                 return parseCallExpr();
-                   	    break;
+                            break;
                         case IdentType::RANGE_GENERIC_PARAM:
                             return parseRangeConst();
                         case IdentType::TUPLE:
@@ -1590,7 +1592,7 @@ namespace graphit {
                 consume(Token::Type::OPAQUE);
                 type = std::make_shared<fir::OpaqueType>();
                 break;
-            // OG Additions
+                // OG Additions
             case Token::Type::PRIORITY_QUEUE:
                 type = parsePriorityQueueType();
                 break;
@@ -2386,7 +2388,7 @@ namespace graphit {
     }
 
     // parses the list type list{Type}
-    fir::ListType::Ptr Parser::parseListType(){
+    fir::ListType::Ptr Parser::parseListType() {
         const Token listToken = consume(Token::Type::LIST);
         consume(Token::Type::LC);
         const fir::Type::Ptr list_element_type = parseType();
@@ -2464,7 +2466,7 @@ namespace graphit {
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
             }
-        } else if (tryConsume(Token::Type::LIST)){
+        } else if (tryConsume(Token::Type::LIST)) {
             //allocating a new List
             output_new_expr = std::make_shared<fir::ListAllocExpr>();
             consume(Token::Type::LC);
@@ -2484,27 +2486,32 @@ namespace graphit {
             auto priority_queue_expr = std::make_shared<fir::PriorityQueueAllocExpr>();
 
             output_new_expr = priority_queue_expr;
-            
+
             consume(Token::Type::LC);
             const auto element_type = parseElementType();
             priority_queue_expr->elementType = element_type;
             consume(Token::Type::RC);
 
             consume(Token::Type::LP);
-	    priority_queue_expr->dup_within_bucket = parseExpr();
+            const auto priority_type = parseScalarType();
+            priority_queue_expr->priority_type = priority_type;
+            consume(Token::Type::RP);
+
+            consume(Token::Type::LP);
+            priority_queue_expr->dup_within_bucket = parseExpr();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->dup_across_bucket = parseExpr();
+            priority_queue_expr->dup_across_bucket = parseExpr();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->vector_function = parseIdent();
+            priority_queue_expr->vector_function = parseIdent();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->bucket_ordering = parseExpr();
+            priority_queue_expr->bucket_ordering = parseExpr();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->priority_ordering = parseExpr();
+            priority_queue_expr->priority_ordering = parseExpr();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->init_bucket = parseExpr();
+            priority_queue_expr->init_bucket = parseExpr();
             consume(Token::Type::COMMA);
-	    priority_queue_expr->starting_node = parseExpr();
-	    consume(Token::Type::RP);
+            priority_queue_expr->starting_node = parseExpr();
+            consume(Token::Type::RP);
         }
 
         output_new_expr->setBeginLoc(newToken);
@@ -2570,7 +2577,7 @@ namespace graphit {
         decls.insert("atoi", IdentType::FUNCTION);
         decls.insert("floor", IdentType::FUNCTION);
         decls.insert("log", IdentType::FUNCTION);
-        decls.insert("to_double", IdentType::FUNCTION);	
+        decls.insert("to_double", IdentType::FUNCTION);
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {
@@ -2581,7 +2588,7 @@ namespace graphit {
 
 
     //OG Additions
-   
+
     //parse the priority_queue type priority_queue{ElementType}
     fir::PriorityQueueType::Ptr Parser::parsePriorityQueueType() {
         const Token queueToken = consume(Token::Type::PRIORITY_QUEUE);
@@ -2589,10 +2596,17 @@ namespace graphit {
         const fir::ElementType::Ptr element = parseElementType();
         const Token rightCurlyToken = consume(Token::Type::RC);
 
+        consume(Token::Type::LP);
+        //parse the type of the priority
+        const fir::ScalarType::Ptr priority_type = parseScalarType();
+        const Token RP_token = consume(Token::Type::RP);
+
+
         auto priorityQueueType = std::make_shared<fir::PriorityQueueType>();
         priorityQueueType->setBeginLoc(queueToken);
         priorityQueueType->element = element;
-        priorityQueueType->setEndLoc(rightCurlyToken);
+        priorityQueueType->priority_type = priority_type;
+        priorityQueueType->setEndLoc(RP_token);
 
         return priorityQueueType;
     }

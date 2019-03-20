@@ -16,10 +16,10 @@ namespace graphit {
         addVarOrConst(var_decl, false);
         auto mir_var_decl = std::make_shared<mir::VarDecl>();
         mir_var_decl->name = var_decl->name->ident;
-	if (var_decl->initVal != nullptr)
-	        mir_var_decl->initVal = emitExpr(var_decl->initVal);
-	else
-		mir_var_decl->initVal = nullptr;
+        if (var_decl->initVal != nullptr)
+            mir_var_decl->initVal = emitExpr(var_decl->initVal);
+        else
+            mir_var_decl->initVal = nullptr;
         mir_var_decl->type = emitType(var_decl->type);
         mir_var_decl->stmt_label = var_decl->stmt_label;
 
@@ -60,7 +60,7 @@ namespace graphit {
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MIN;
                 break;
 
-            //for now in the midend, MAX and ASYNC_MAX are the same.
+                //for now in the midend, MAX and ASYNC_MAX are the same.
             case fir::ReduceStmt::ReductionOp::MAX:
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::MAX;
                 break;
@@ -188,7 +188,7 @@ namespace graphit {
         //element of a vector can be a non-scalar (vector type)
         mir_vector_type->vector_element_type = emitType(ND_tensor_type->blockType);
         if (ND_tensor_type->indexSets.size() == 1 &&
-                fir::isa<fir::RangeIndexSet>(ND_tensor_type->indexSets[0])){
+            fir::isa<fir::RangeIndexSet>(ND_tensor_type->indexSets[0])) {
             auto range_index_set = fir::to<fir::RangeIndexSet>(ND_tensor_type->indexSets[0]);
             mir_vector_type->range_indexset = range_index_set->range;
         }
@@ -405,7 +405,7 @@ namespace graphit {
                 retExpr = ctx->getElementCount(vertex_element_type);
             }
 
-        } else if (mir::isa<mir::ListType>(mir_target_type)){
+        } else if (mir::isa<mir::ListType>(mir_target_type)) {
             //if this is a List type
             auto mir_list_type = mir::to<mir::ListType>(mir_target_type);
             mir_call_expr->generic_type = mir_list_type->element_type;
@@ -475,8 +475,8 @@ namespace graphit {
         }
 
         //if (ctx->isConstVertexSet(mir_var->var.getName())) {
-        if (mir::isa<mir::VertexSetType>(mir_var->var.getType())){
-	    if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
+        if (mir::isa<mir::VertexSetType>(mir_var->var.getType())) {
+            if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
                 //dense vertexset apply
                 auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
                 vertexset_apply_expr->target = target_expr;
@@ -485,22 +485,22 @@ namespace graphit {
                     vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
                             apply_expr->change_tracking_field)->ident;
                 retExpr = vertexset_apply_expr;
-	    } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY) {
+            } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityExternVertexSetApplyExpr>();
-		apply_update_priority_expr->target = target_expr;
-		apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
-		retExpr = apply_update_priority_expr;	
-	    } else {
+                apply_update_priority_expr->target = target_expr;
+                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+                retExpr = apply_update_priority_expr;
+            } else {
                 std::cout << "Unsupported apply type with vertex set" << std::endl;
-		return;
-	    }
+                return;
+            }
         }
 
         //if (ctx->isEdgeSet(mir_var->var.getName())) {
         //replace the isEdgeSet metadata, which was incomplete
-        if(mir::isa<mir::EdgeSetType>(mir_var->var.getType())){
+        if (mir::isa<mir::EdgeSetType>(mir_var->var.getType())) {
 
-	    if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
+            if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
                 auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
                 edgeset_apply_expr->target = target_expr;
                 edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
@@ -510,23 +510,24 @@ namespace graphit {
                     edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
                 }
                 if (apply_expr->change_tracking_field != nullptr)
-                    edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(apply_expr->change_tracking_field)->ident;
+                    edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(
+                            apply_expr->change_tracking_field)->ident;
                 if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
                 else edgeset_apply_expr->enable_deduplication = true;
                 retExpr = edgeset_apply_expr;
-	    } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
+            } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
-		apply_update_priority_expr->target = target_expr;
-		apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
-		if(apply_expr->to_expr)
-		    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
-		if(apply_expr->from_expr)
-		    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->ident;
-		retExpr = apply_update_priority_expr;
-	    } else {
+                apply_update_priority_expr->target = target_expr;
+                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+                if (apply_expr->to_expr)
+                    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
+                if (apply_expr->from_expr)
+                    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->ident;
+                retExpr = apply_update_priority_expr;
+            } else {
                 std::cout << "Unsupported apply type with edge set" << std::endl;
-		return;
-	    }
+                return;
+            }
         }
 
     }
@@ -603,13 +604,13 @@ namespace graphit {
         // Copy the type from the fir node to the mir node (for external/internal type) 
         mir_func_decl->type = getMirFuncDeclType(func_decl->type);
 
-	if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {
-		//add the constructed function decl to functions
-		ctx->addFunction(mir_func_decl);
-	}else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
-		//add the constructed function decl to the list of external functions
-		ctx->addExternFunction(mir_func_decl);
-	}
+        if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {
+            //add the constructed function decl to functions
+            ctx->addFunction(mir_func_decl);
+        } else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+            //add the constructed function decl to the list of external functions
+            ctx->addExternFunction(mir_func_decl);
+        }
 
     }
 
@@ -767,23 +768,30 @@ namespace graphit {
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
     }
+
     mir::FuncDecl::Type MIREmitter::getMirFuncDeclType(fir::FuncDecl::Type t) {
-        switch(t) {
-            case fir::FuncDecl::Type::INTERNAL: return mir::FuncDecl::Type::INTERNAL;
-            case fir::FuncDecl::Type::EXPORTED: return mir::FuncDecl::Type::EXPORTED;
-            case fir::FuncDecl::Type::EXTERNAL: return mir::FuncDecl::Type::EXTERNAL;
-            default: std::cout << "Invalid fir::FuncDecl::Type\n"; return mir::FuncDecl::Type::INTERNAL;
+        switch (t) {
+            case fir::FuncDecl::Type::INTERNAL:
+                return mir::FuncDecl::Type::INTERNAL;
+            case fir::FuncDecl::Type::EXPORTED:
+                return mir::FuncDecl::Type::EXPORTED;
+            case fir::FuncDecl::Type::EXTERNAL:
+                return mir::FuncDecl::Type::EXTERNAL;
+            default:
+                std::cout << "Invalid fir::FuncDecl::Type\n";
+                return mir::FuncDecl::Type::INTERNAL;
         }
     }
-    
+
     // OG Additions
     void MIREmitter::visit(fir::PriorityQueueType::Ptr priority_queue_type) {
-	const auto mir_priority_queue_type = std::make_shared<mir::PriorityQueueType>();
+        const auto mir_priority_queue_type = std::make_shared<mir::PriorityQueueType>();
         if (!mir_priority_queue_type) {
-	    std::cout << "Error in Emitting MIR PriorityQueueType " << std::endl;
+            std::cout << "Error in Emitting MIR PriorityQueueType " << std::endl;
             return;
-	}
-        mir_priority_queue_type->element = std::dynamic_pointer_cast<mir::ElementType>(emitType(priority_queue_type->element));
+        }
+        mir_priority_queue_type->element = std::dynamic_pointer_cast<mir::ElementType>(
+                emitType(priority_queue_type->element));
 
         retType = mir_priority_queue_type;
     }
@@ -794,46 +802,46 @@ namespace graphit {
 
         // Extract the dup_within_bucket value;
         if (fir::isa<fir::BoolLiteral>(expr->dup_within_bucket)) {
-	    mir_priority_queue_alloc_expr->dup_within_bucket = fir::to<fir::BoolLiteral>(expr->dup_within_bucket)->val;	    
-	}else{
-	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
-	}
+            mir_priority_queue_alloc_expr->dup_within_bucket = fir::to<fir::BoolLiteral>(expr->dup_within_bucket)->val;
+        } else {
+            std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+        }
 
 
         // Extract the dup_across_bucket value;
         if (fir::isa<fir::BoolLiteral>(expr->dup_across_bucket)) {
-	    mir_priority_queue_alloc_expr->dup_across_bucket = fir::to<fir::BoolLiteral>(expr->dup_across_bucket)->val;	    
-	}else{
-	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
-	}
+            mir_priority_queue_alloc_expr->dup_across_bucket = fir::to<fir::BoolLiteral>(expr->dup_across_bucket)->val;
+        } else {
+            std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+        }
 
 
-	// Extract the vector_function value;
-	mir_priority_queue_alloc_expr->vector_function = expr->vector_function->ident;
+        // Extract the vector_function value;
+        mir_priority_queue_alloc_expr->vector_function = expr->vector_function->ident;
 
         // Extract the bucket_ordering value;
         if (fir::isa<fir::IntLiteral>(expr->bucket_ordering)) {
-	    mir_priority_queue_alloc_expr->bucket_ordering = fir::to<fir::IntLiteral>(expr->bucket_ordering)->val;	    
-	}else{
-	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
-	}
+            mir_priority_queue_alloc_expr->bucket_ordering = fir::to<fir::IntLiteral>(expr->bucket_ordering)->val;
+        } else {
+            std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+        }
 
         // Extract the priority_ordering value;
         if (fir::isa<fir::IntLiteral>(expr->priority_ordering)) {
-	    mir_priority_queue_alloc_expr->priority_ordering = fir::to<fir::IntLiteral>(expr->priority_ordering)->val;	    
-	}else{
-	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
-	}
+            mir_priority_queue_alloc_expr->priority_ordering = fir::to<fir::IntLiteral>(expr->priority_ordering)->val;
+        } else {
+            std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+        }
 
 
         // Extract the init_bucket value;
         if (fir::isa<fir::BoolLiteral>(expr->init_bucket)) {
-	    mir_priority_queue_alloc_expr->init_bucket = fir::to<fir::BoolLiteral>(expr->init_bucket)->val;	    
-	}else{
-	    std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
-	}
+            mir_priority_queue_alloc_expr->init_bucket = fir::to<fir::BoolLiteral>(expr->init_bucket)->val;
+        } else {
+            std::cout << "Error in Emitting MIR PriorityQueueAllocExpr " << std::endl;
+        }
 
-	mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);	
+        mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);
 
 
         retExpr = mir_priority_queue_alloc_expr;

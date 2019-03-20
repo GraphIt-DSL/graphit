@@ -547,8 +547,10 @@ namespace graphit {
 
 
         struct FuncDecl : public MIRNode {
-            enum class Type {INTERNAL, EXPORTED, EXTERNAL};
- 
+            enum class Type {
+                INTERNAL, EXPORTED, EXTERNAL
+            };
+
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
@@ -759,7 +761,7 @@ namespace graphit {
             //hard coded default value for grain size
             int pull_edge_based_load_balance_grain_size = 4096;
             std::string scope_label_name;
-	        MergeReduceField::Ptr merge_reduce;
+            MergeReduceField::Ptr merge_reduce;
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -775,7 +777,7 @@ namespace graphit {
         struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
 
-            PushEdgeSetApplyExpr(){}
+            PushEdgeSetApplyExpr() {}
 
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -800,7 +802,7 @@ namespace graphit {
         struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
 
-            PullEdgeSetApplyExpr(){}
+            PullEdgeSetApplyExpr() {}
 
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -826,7 +828,7 @@ namespace graphit {
         struct HybridDenseForwardEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> Ptr;
 
-            HybridDenseForwardEdgeSetApplyExpr(){}
+            HybridDenseForwardEdgeSetApplyExpr() {}
 
 
             HybridDenseForwardEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
@@ -856,7 +858,7 @@ namespace graphit {
             std::string push_function_;
             std::string push_to_function_;
 
-            HybridDenseEdgeSetApplyExpr(){}
+            HybridDenseEdgeSetApplyExpr() {}
 
             HybridDenseEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -1108,7 +1110,12 @@ namespace graphit {
         };
 
         // OG Additions
-        
+        enum PriorityUpdateType {
+            EagerPriorityUpdate,
+            ReduceBeforePriorityUpdate
+        };
+
+
         struct PriorityQueueType : public Type {
             ElementType::Ptr element;
 
@@ -1128,13 +1135,16 @@ namespace graphit {
         struct PriorityQueueAllocExpr : public NewExpr {
             typedef std::shared_ptr<PriorityQueueAllocExpr> Ptr;
 
-	    bool dup_within_bucket;
-	    bool dup_across_bucket;
-	    std::string vector_function;
+            bool dup_within_bucket;
+            bool dup_across_bucket;
+            std::string vector_function;
             int bucket_ordering;
             int priority_ordering;
             bool init_bucket;
             Expr::Ptr starting_node;
+
+            PriorityUpdateType;
+            mir::ScalarType::Ptr priority_element_type;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PriorityQueueAllocExpr>());
@@ -1146,11 +1156,11 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
 
         };
-	
+
         struct UpdatePriorityEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> Ptr;
 
-            UpdatePriorityEdgeSetApplyExpr(){}
+            UpdatePriorityEdgeSetApplyExpr() {}
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -1171,10 +1181,11 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
         struct UpdatePriorityExternVertexSetApplyExpr : VertexSetApplyExpr {
             typedef std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr> Ptr;
 
-            UpdatePriorityExternVertexSetApplyExpr(){}
+            UpdatePriorityExternVertexSetApplyExpr() {}
 
             UpdatePriorityExternVertexSetApplyExpr(VertexSetApplyExpr::Ptr vertexset_apply) {
                 target = vertexset_apply->target;
