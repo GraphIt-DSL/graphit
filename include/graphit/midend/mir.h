@@ -1111,7 +1111,10 @@ namespace graphit {
 
         // OG Additions
         enum PriorityUpdateType {
+            NoPriorityUpdate, //default type
             EagerPriorityUpdate,
+            EagerPriorityUpdateWithMerge,
+            ConstSumReduceBeforePriorityUpdate,
             ReduceBeforePriorityUpdate
         };
 
