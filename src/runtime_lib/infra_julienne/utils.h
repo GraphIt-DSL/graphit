@@ -388,7 +388,7 @@ void remDuplicates(G& get_key, uintE* flags, long m, long n) {
   } \
   }
 
-namespace pbbs {
+namespace pbbso {
 
   struct empty {};
 
@@ -459,14 +459,12 @@ namespace pbbs {
   template<typename E>
   E* new_array(size_t n) {
     E* r = new_array_no_init<E>(n);
-    // Removed this check because this feature is available only in gcc >= 5.0. 
-    // Test this if something goes wrong
-    //if (!std::is_trivially_default_constructible<E>::value) {
+    if (!std::is_trivially_default_constructible<E>::value) {
       if (n > 2048)
 	parallel_for (size_t i = 0; i < n; i++) new ((void*) (r+i)) E;
       else
 	for (size_t i = 0; i < n; i++) new ((void*) (r+i)) E;
-    //}
+    }
     return r;
   }
 

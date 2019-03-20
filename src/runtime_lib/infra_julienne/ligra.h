@@ -30,7 +30,6 @@
 #include <string>
 #include <algorithm>
 #include "parallel.h"
-#include "gettime.h"
 #include "utils.h"
 #include "vertex.h"
 #include "compressedVertex.h"
@@ -145,7 +144,7 @@ vertexSubsetData<data> edgeMapSparse(graph<vertex>& GA, vertex* frontierVertices
       remDuplicates(get_key, GA.flags, outEdgeCount, n);
     }
     auto p = [] (tuple<uintE, data>& v) { return std::get<0>(v) != UINT_E_MAX; };
-    size_t nextM = pbbs::filterf(outEdges, nextIndices, outEdgeCount, p);
+    size_t nextM = pbbso::filterf(outEdges, nextIndices, outEdgeCount, p);
     free(outEdges);
     return vertexSubsetData<data>(n, nextM, nextIndices);
   } else {
@@ -175,7 +174,7 @@ vertexSubsetData<data> edgeMapSparse_no_filter(graph<vertex>& GA,
   auto lt = [] (const uintT& l, const uintT& r) { return l < r; };
   parallel_for(size_t i=0; i<n_blocks; i++) {
     size_t s_val = i*b_size;
-    block_offs[i] = pbbs::binary_search(offsets_m, s_val, lt);
+    block_offs[i] = pbbso::binary_search(offsets_m, s_val, lt);
   }
   block_offs[n_blocks] = m;
   parallel_for (size_t i=0; i<n_blocks; i++) {
@@ -223,7 +222,7 @@ vertexSubsetData<data> edgeMapSparse_no_filter(graph<vertex>& GA,
     remDuplicates(get_key, GA.flags, outSize, n);
     S* nextIndices = newA(S, outSize);
     auto p = [] (tuple<uintE, data>& v) { return std::get<0>(v) != UINT_E_MAX; };
-    size_t nextM = pbbs::filterf(out, nextIndices, outSize, p);
+    size_t nextM = pbbso::filterf(out, nextIndices, outSize, p);
     free(out);
     return vertexSubsetData<data>(n, nextM, nextIndices);
   }
@@ -279,7 +278,7 @@ vertexSubsetData<data> edgeMapData(graph<vertex>& GA, VS &vs, F f,
 template <class vertex, class VS, class F>
 vertexSubset edgeMap(graph<vertex> GA, VS& vs, F f,
     intT threshold = -1, const flags& fl=0) {
-  return edgeMapData<pbbs::empty>(GA, vs, f, threshold, fl);
+  return edgeMapData<pbbso::empty>(GA, vs, f, threshold, fl);
 }
 
 // Packs out the adjacency lists of all vertex in vs. A neighbor, ngh, is kept
@@ -298,7 +297,7 @@ vertexSubsetData<uintE> packEdges(graph<vertex>& GA, vertexSubset& vs, P& p, con
     uintE v = vs.vtx(i);
     degrees[i] = G[v].getOutDegree();
   });
-  long outEdgeCount = pbbs::scan_add(degrees, degrees);
+  long outEdgeCount = pbbso::scan_add(degrees, degrees);
   S* outV;
   if (should_output(fl)) {
     outV = newA(S, vs.size());
@@ -432,7 +431,7 @@ vertexSubset vertexFilter2(vertexSubset V, F filter) {
   }}
   auto v_imap = make_in_imap<uintE>(m, [&] (size_t i) { return V.vtx(i); });
   auto bits_m = make_in_imap<bool>(m, [&] (size_t i) { return bits[i]; });
-  auto out = pbbs::pack(v_imap, bits_m);
+  auto out = pbbso::pack(v_imap, bits_m);
   out.alloc = false;
   free(bits);
   return vertexSubset(n, out.size(), out.s);
@@ -452,7 +451,7 @@ vertexSubset vertexFilter2(vertexSubsetData<data> V, F filter) {
   }
   auto v_imap = make_in_imap<uintE>(m, [&] (size_t i) { return V.vtx(i); });
   auto bits_m = make_in_imap<bool>(m, [&] (size_t i) { return bits[i]; });
-  auto out = pbbs::pack(v_imap, bits_m);
+  auto out = pbbso::pack(v_imap, bits_m);
   out.alloc = false;
   free(bits);
   return vertexSubset(n, out.size(), out.s);
@@ -463,13 +462,13 @@ vertexSubset vertexFilter2(vertexSubsetData<data> V, F filter) {
 //cond function that always returns true
 inline bool cond_true (intT d) { return 1; }
 
+#define INCLUDE_MAIN (0)
+
+#if INCLUDE_MAIN
+
 template<class vertex>
 void Compute(graph<vertex>&, commandLine);
-#ifdef INCLUDE_MAIN
-#undef INCLUDE_MAIN
-#endif
-#define INCLUDE_MAIN 0
-#if INCLUDE_MAIN
+
 int parallel_main(int argc, char* argv[]) {
   commandLine P(argc,argv," [-s] <inFile>");
   char* iFile = P.getArgument(0);
@@ -485,9 +484,9 @@ int parallel_main(int argc, char* argv[]) {
         readCompressedGraph<compressedSymmetricVertex>(iFile,symmetric,mmap); //symmetric graph
       Compute(G,P);
       for(int r=0;r<rounds;r++) {
-        startTime();
+        pbbso::timer t;
         Compute(G,P);
-        nextTime("Running time");
+        t.stop(); t.reportTotal("Running time");
       }
       G.del();
     } else {
@@ -496,9 +495,9 @@ int parallel_main(int argc, char* argv[]) {
       Compute(G,P);
       if(G.transposed) G.transpose();
       for(int r=0;r<rounds;r++) {
-        startTime();
+        pbbso::timer t;
         Compute(G,P);
-        nextTime("Running time");
+        t.stop(); t.reportTotal("Running time");
         if(G.transposed) G.transpose();
       }
       G.del();
@@ -509,9 +508,9 @@ int parallel_main(int argc, char* argv[]) {
         readGraph<symmetricVertex>(iFile,compressed,symmetric,binary,mmap); //symmetric graph
       Compute(G,P);
       for(int r=0;r<rounds;r++) {
-        startTime();
+        pbbso::timer t;
         Compute(G,P);
-        nextTime("Running time");
+        t.stop(); t.reportTotal("Running time");
       }
       G.del();
     } else {
@@ -520,9 +519,9 @@ int parallel_main(int argc, char* argv[]) {
       Compute(G,P);
       if(G.transposed) G.transpose();
       for(int r=0;r<rounds;r++) {
-        startTime();
+        pbbso::timer t;
         Compute(G,P);
-        nextTime("Running time");
+        t.stop(); t.reportTotal("Running time");
         if(G.transposed) G.transpose();
       }
       G.del();

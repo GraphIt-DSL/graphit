@@ -1,3 +1,4 @@
+#pragma once
 #include <algorithm>
 #include <cinttypes>
 
@@ -7,6 +8,10 @@
 
 typedef int64_t NodeID;
 
+
+
+// The functor is not required for the new API
+/*
 template<class Priority>
 class PriorityFunctor {
 
@@ -22,24 +27,17 @@ class PriorityFunctor {
   Priority* priority_;
   
 };
-
+*/
 
 template<class D>
 class PriorityQueue {
 
 public:
-  explicit PriorityQueue(size_t n, bucket_order bkt_order, D* d,  priority_order pri_order, size_t total_buckets=128) {
-    buckets_ = new buckets<D>(n, d, bkt_order, pri_order, total_buckets);
-    cur_priority_ = 0;
-  }
 
-  template <class P>
-  explicit PriorityQueue(size_t n, P* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
+  explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
     
     //cout << "constructing a priority map from array" << endl;
-    PriorityFunctor<P>* pfw = new PriorityFunctor<P>(priority_array);
-    buckets_ = new buckets<PriorityFunctor<P>>(n, pfw, bkt_order, pri_order, total_buckets);
-
+    buckets_ = new buckets<D*>(n, priority_array, bkt_order, pri_order, total_buckets);
     cur_priority_ = 0;
   }
 
@@ -69,7 +67,7 @@ public:
     delete buckets_;
   }
   
-  buckets<D>* buckets_;
+  buckets<D*>* buckets_;
   uintE cur_priority_ = 0;
   
   inline bool finished(void) {

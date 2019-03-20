@@ -367,7 +367,7 @@ TEST_F(RuntimeLibTest, KCore_test){
     
     parallel_for(int i = 0; i < n; i++) updated_degree[i] = GA.V[i].getOutDegree();
     size_t num_buckets = 128;
-    auto pq = new julienne::PriorityQueue<julienne::PriorityFunctor<julienne::uintE>>(n, updated_degree, julienne::increasing, julienne::strictly_decreasing, num_buckets);
+    auto pq = new julienne::PriorityQueue<julienne::uintE>(n, updated_degree, julienne::increasing, julienne::strictly_decreasing, num_buckets);
 
     auto apply_function = [&] (const tuple<julienne::uintE, julienne::uintE>& p) {
         julienne::uintE v = std::get<0>(p), edgesRemoved = std::get<1>(p);
@@ -417,27 +417,20 @@ TEST_F(RuntimeLibTest, SetCover_test){
     
     // Compute
     auto GA = G;
-    auto D = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return G.V[i].getOutDegree(); });
-
-    constexpr julienne::uintE TOP_BIT = ((julienne::uintE)INT_E_MAX) + 1;
-    constexpr julienne::uintE COVERED = ((julienne::uintE)INT_E_MAX) - 1;
+    //auto D = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return G.V[i].getOutDegree(); });
     constexpr double epsilon = 0.01;
     const double x = 1.0/log(1.0 + epsilon);
-    auto max_f = [] (julienne::uintE x, julienne::uintE y) { return std::max(x,y); };
+
     auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
-    auto bucket_f = [&] (size_t i) { return get_bucket_clamped(D(i)); };
+    auto D = new julienne::uintE[G.n];
+    parallel_for (int index = 0; index < G.n; index++)
+        D[index] = get_bucket_clamped(G.V[index].getOutDegree()); 
+
+    constexpr julienne::uintE COVERED = ((julienne::uintE)INT_E_MAX) - 1;
+    auto max_f = [] (julienne::uintE x, julienne::uintE y) { return std::max(x,y); };
     
-    class SetCoverPriorityFunctor: public julienne::PriorityFunctor<julienne::uintE> {
-        public:
-        std::function<julienne::uintE(size_t)> bucket_f;
-        SetCoverPriorityFunctor(std::function<julienne::uintE(size_t)> bucket_f_passed) {bucket_f = bucket_f_passed;};
-        julienne::uintE virtual operator() (julienne::NodeID v) {
-            return  bucket_f(v);
-        }
-    };
-    julienne::PriorityFunctor<julienne::uintE> *functor = new SetCoverPriorityFunctor(bucket_f);
     size_t num_buckets = 128;
-    auto pq = new julienne::PriorityQueue<julienne::PriorityFunctor<julienne::uintE>>(G.n, julienne::decreasing, functor, julienne::strictly_decreasing, num_buckets);
+    auto pq = new julienne::PriorityQueue<julienne::uintE>(G.n, D, julienne::decreasing, julienne::strictly_decreasing, num_buckets);
 
 
     /* Extern C++ code start */
@@ -457,7 +450,7 @@ TEST_F(RuntimeLibTest, SetCover_test){
     auto ExternFunction = [&] (julienne::vertexSubset active) -> julienne::vertexSubset {
         // 1. sets -> elements (Pack out sets and update their degree)
         auto pack_predicate = [&] (const julienne::uintE& u, const julienne::uintE& ngh) { return Elms[ngh] != COVERED; };
-        auto pack_apply = [&] (julienne::uintE v, size_t ct) { D[v] = ct; };
+        auto pack_apply = [&] (julienne::uintE v, size_t ct) { D[v] = get_bucket_clamped(ct); };
         auto packed_vtxs = julienne::edgeMapFilter(G, active, pack_predicate, julienne::pack_edges);
         julienne::vertexMap(packed_vtxs, pack_apply);
         // Calculate the sets which still have sufficient degree (degree >= threshold)
@@ -471,7 +464,7 @@ TEST_F(RuntimeLibTest, SetCover_test){
         const size_t low_threshold = std::max((size_t)ceil(pow(1.0+epsilon,pq->get_current_priority()-1)), (size_t)1);
         auto won_ngh_f = [&] (const julienne::uintE& u, const julienne::uintE& v) -> bool { return Elms[v] == u; };
         auto threshold_f = [&] (const julienne::uintE& v, const julienne::uintE& numWon) {
-          if (numWon >= low_threshold) D[v] |= TOP_BIT;
+          if (numWon >= low_threshold) D[v] = UINT_E_MAX;
         };
         auto activeAndCts = julienne::edgeMapFilter(G, still_active, won_ngh_f);
         julienne::vertexMap(activeAndCts, threshold_f);
@@ -483,7 +476,7 @@ TEST_F(RuntimeLibTest, SetCover_test){
         // elements as covered. Sets that didn't reset any acquired elements)
         auto reset_f = [&] (const julienne::uintE& u, const julienne::uintE& v) -> bool {
           if (Elms[v] == u) {
-            if (D(u) & TOP_BIT) Elms[v] = COVERED;
+            if (D[u] == UINT_E_MAX) Elms[v] = COVERED;
             else Elms[v] = UINT_E_MAX;
           } return false;
         };
@@ -504,16 +497,14 @@ TEST_F(RuntimeLibTest, SetCover_test){
         modified.toSparse();
         auto f = [&] (size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
             const julienne::uintE v = modified.vtx(i);
-            const julienne::uintE dv = D(v);
-            uintE bkt = UINT_E_MAX;
-            if (!(dv & TOP_BIT))
-                bkt = pq->get_bucket(get_bucket_clamped(dv));
+            const julienne::uintE bkt = pq->get_bucket(D[v]);
             return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
         };
         pq->update_buckets(f, modified.size());
         
         active.del();    
         rounds+=1;
+
     }  
     
     EXPECT_EQ(rounds, 24);

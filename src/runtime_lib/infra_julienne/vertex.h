@@ -1,5 +1,5 @@
-#ifndef VERTEX_H
-#define VERTEX_H
+#ifndef JULIENNE_VERTEX_H
+#define JULIENNE_VERTEX_H
 #include "vertexSubset.h"
 using namespace std;
 
@@ -136,7 +136,7 @@ namespace decode_uncompressed {
         cts[i] = ct;
       }
       size_t count = 0;
-      return pbbs::reduce_add(cts);
+      return pbbso::reduce_add(cts);
     }
   }
 
