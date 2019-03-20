@@ -29,11 +29,11 @@ namespace graphit {
 
             };
 
-            virtual void visit(mir::PriorityQueueType){
+            virtual void visit(mir::PriorityQueueType::Ptr){
 
             }
 
-            virtual void visit(mir::PriorityQueueAllocExpr){
+            virtual void visit(mir::PriorityQueueAllocExpr::Ptr){
 
             }
 
