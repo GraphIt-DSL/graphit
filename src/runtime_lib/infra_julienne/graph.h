@@ -1,5 +1,5 @@
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef JULIENNE_GRAPH_H
+#define JULIENNE_GRAPH_H
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>

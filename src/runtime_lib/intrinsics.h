@@ -57,10 +57,10 @@
 #include <type_traits>
 #include <unistd.h>
 namespace julienne {
+#include "infra_julienne/priority_queue.h"
 #include "infra_julienne/parallel.h"
 #include "infra_julienne/graph.h"
 #include "infra_julienne/IO.h"
-#include "infra_julienne/priority_queue.h"
 #include "infra_julienne/edgeMapReduce.h"
 }
 template <typename T>
