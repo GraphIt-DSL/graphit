@@ -1204,6 +1204,39 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
+	struct UpdatePriorityUpdateBucketsCall : Stmt {
+		Expr::Ptr priority_queue;
+		std::string lambda_name;
+		std::string modified_vertexsubset_name;
+		
+		typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
+		
+		UpdatePriorityUpdateBucketsCall() {}
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<UpdatePriorityUpdateBucketsCall>());
+		}
+		protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+        };
+
+	struct UpdatePriorityExternCall : Stmt {
+		Expr::Ptr input_set;
+		Expr::Ptr priority_queue;
+		std::string output_set_name;
+		std::string lambda_name;
+			
+		typedef std::shared_ptr<UpdatePriorityExternCall> Ptr;
+		UpdatePriorityExternCall() {}
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<UpdatePriorityExternCall>());
+		}
+		protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
+
+
     }
 
 }

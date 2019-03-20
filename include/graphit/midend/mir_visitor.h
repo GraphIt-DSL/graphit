@@ -92,6 +92,8 @@ namespace graphit {
         struct PriorityQueueAllocExpr;
         struct UpdatePriorityEdgeSetApplyExpr;
         struct UpdatePriorityExternVertexSetApplyExpr;
+        struct UpdatePriorityUpdateBucketsCall;
+	struct UpdatePriorityExternCall;
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>) {};
@@ -212,6 +214,10 @@ namespace graphit {
             virtual void visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<UpdatePriorityUpdateBucketsCall>);
+	
+            virtual void visit(std::shared_ptr<UpdatePriorityExternCall>);
 
         protected:
             std::shared_ptr<MIRNode> node;

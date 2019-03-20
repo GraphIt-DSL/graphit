@@ -41,6 +41,18 @@ namespace graphit {
 
         };
 
+        struct LowerUpdatePriorityExternVertexSetApplyExpr : public mir::MIRRewriter {
+	    using mir::MIRRewriter::visit;
+	    LowerUpdatePriorityExternVertexSetApplyExpr(Schedule *schedule) : schedule_(schedule) {
+    
+	    }
+            virtual void visit(mir::ExprStmt::Ptr);
+	     
+            Schedule * schedule_;
+
+	};
+
+
         void lower();
 
     private:

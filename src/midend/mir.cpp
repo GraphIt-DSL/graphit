@@ -783,5 +783,32 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+        
+        void UpdatePriorityUpdateBucketsCall::copy(MIRNode::Ptr node) {
+	    const auto expr = mir::to<UpdatePriorityUpdateBucketsCall>(node); 
+	    priority_queue = expr->priority_queue;
+	    lambda_name = expr->lambda_name;
+	    modified_vertexsubset_name = expr->modified_vertexsubset_name;
+	}
+
+	MIRNode::Ptr UpdatePriorityUpdateBucketsCall::cloneNode() {
+	    const auto node = std::make_shared<UpdatePriorityUpdateBucketsCall>();
+	    node->copy(shared_from_this());
+            return node;	
+	}
+
+	void UpdatePriorityExternCall::copy(MIRNode::Ptr node) {
+	    const auto expr = mir::to<UpdatePriorityExternCall>(node);
+	    input_set = expr->input_set;
+	    priority_queue = expr->priority_queue;
+	    output_set_name = expr->output_set_name;
+	    lambda_name = expr->lambda_name;
+	}
+
+	MIRNode::Ptr UpdatePriorityExternCall::cloneNode() {
+	    const auto node = std::make_shared<UpdatePriorityExternCall>();
+	    node->copy(shared_from_this());
+	    return node;
+	}
     }
 }
