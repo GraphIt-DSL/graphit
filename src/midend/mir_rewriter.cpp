@@ -303,10 +303,34 @@ namespace graphit {
             node = load_expr;
         }
 
+        // OG Additions
         void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {
             apply_expr->target = rewrite<Expr>(apply_expr->target);
             node = apply_expr;
         }
+
+        void MIRRewriter::visit(PriorityQueueType::Ptr queue_type) {
+            queue_type->element = rewrite<ElementType>(queue_type->element);
+	    node = queue_type;
+        }
+
+        void MIRRewriter::visit(PriorityQueueAllocExpr::Ptr expr) {
+            expr->element_type = rewrite<ElementType>(expr->element_type);
+	    expr->starting_node = rewrite<Expr>(expr->starting_node);
+            node = expr;
+	}
+
+
+        void MIRRewriter::visit(UpdatePriorityUpdateBucketsCall::Ptr stmt) {
+	    stmt->priority_queue = rewrite<Expr> (stmt->priority_queue);
+	    node = stmt;
+	}
+
+	void MIRRewriter::visit(UpdatePriorityExternCall::Ptr stmt) {
+	    stmt->input_set = rewrite<Expr> (stmt->input_set);
+	    stmt->priority_queue = rewrite<Expr> (stmt->priority_queue);
+	    node = stmt;
+	}
 
     }
 }

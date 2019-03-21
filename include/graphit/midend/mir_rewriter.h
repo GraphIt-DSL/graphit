@@ -119,9 +119,19 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VectorType>);
 
+
+	    // OG Additions
             virtual void visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr>);
 
             virtual void visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr>);
+
+	    virtual void visit(std::shared_ptr<PriorityQueueType>);
+   
+            virtual void visit(std::shared_ptr<PriorityQueueAllocExpr>);
+
+	    virtual void visit(std::shared_ptr<UpdatePriorityUpdateBucketsCall>);
+    
+            virtual void visit(std::shared_ptr<UpdatePriorityExternCall>);
 
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {
