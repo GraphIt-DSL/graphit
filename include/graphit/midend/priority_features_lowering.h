@@ -47,7 +47,6 @@ namespace graphit {
     
 	    }
             virtual void visit(mir::ExprStmt::Ptr);
-	     
             Schedule * schedule_;
 
 	};

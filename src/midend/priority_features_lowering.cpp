@@ -17,6 +17,7 @@ namespace graphit {
 
     }
     void PriorityFeaturesLower::LowerUpdatePriorityExternVertexSetApplyExpr::visit(mir::ExprStmt::Ptr expr_stmt) {
+	std::cout << "Expr stmt\n";
         if (mir::isa<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr)) {
 		std::cout << "Found a UpdatePriorityExternVertexSetApplyExpr\n";
 	}
