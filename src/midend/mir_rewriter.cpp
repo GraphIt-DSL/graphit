@@ -298,5 +298,10 @@ namespace graphit {
             node = load_expr;
         }
 
+        void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {
+            apply_expr->target = rewrite<Expr>(apply_expr->target);
+            node = apply_expr;
+        }
+
     }
 }
