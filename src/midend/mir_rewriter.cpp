@@ -120,8 +120,12 @@ namespace graphit {
             if (var_decl->stmt_label != "") {
                 label_scope_.scope(var_decl->stmt_label);
             }
-            if (var_decl->initVal != nullptr)
-	            var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            if (var_decl->initVal != nullptr) {
+                var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            }
+
+            var_decl->type = rewrite<Type>(var_decl->type);
+
             node = var_decl;
 
             if (var_decl->stmt_label != "") {
@@ -311,12 +315,14 @@ namespace graphit {
 
         void MIRRewriter::visit(PriorityQueueType::Ptr queue_type) {
             queue_type->element = rewrite<ElementType>(queue_type->element);
-	    node = queue_type;
+            queue_type->priority_type = rewrite<ScalarType>(queue_type->priority_type);
+	        node = queue_type;
         }
 
         void MIRRewriter::visit(PriorityQueueAllocExpr::Ptr expr) {
             expr->element_type = rewrite<ElementType>(expr->element_type);
-	    expr->starting_node = rewrite<Expr>(expr->starting_node);
+	        expr->starting_node = rewrite<Expr>(expr->starting_node);
+            expr->priority_type = rewrite<ScalarType>(expr->priority_type);
             node = expr;
 	}
 

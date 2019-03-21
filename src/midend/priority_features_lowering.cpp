@@ -15,6 +15,15 @@ namespace graphit {
             function->accept(&schedule_finder);
         }
 
+        auto lower_priority_queue_type_and_alloc_expr = LowerPriorityQueueTypeandAllocExpr(mir_context_, schedule_);
+
+        for (auto constant : mir_context_->getConstants()) {
+            constant->accept(&lower_priority_queue_type_and_alloc_expr);
+        }
+        for (auto function : functions) {
+            function->accept(&lower_priority_queue_type_and_alloc_expr);
+        }
+
         auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
         for (auto function : functions) {
             lower_extern_apply_expr.rewrite(function);
