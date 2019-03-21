@@ -163,6 +163,11 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<HybridDenseEdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             node = expr;

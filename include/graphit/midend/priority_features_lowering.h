@@ -21,6 +21,26 @@ namespace graphit {
                 : schedule_(schedule), mir_context_(mir_context) {};
 
 
+        struct PriorityUpdateScheduleFinder : public mir::MIRVisitor {
+            using mir::MIRVisitor::visit;
+
+            PriorityUpdateScheduleFinder(MIRContext* mir_context,  Schedule* schedule)
+                : mir_context_(mir_context), schedule_(schedule){
+
+            };
+
+            void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr update_priority_edgeset_apply_expr);
+
+            void visit(mir::UpdatePriorityExternVertexSetApplyExpr::Ptr update_priority_extern_vertexset_apply_expr);
+
+            void setPrioritySchedule(std::string current_label);
+
+            Schedule *schedule_ = nullptr;
+            MIRContext *mir_context_ = nullptr;
+
+         };
+
+
         // use the schedule to set the type for MIR::PriorityQeueuType and PriorityQueueAllocExpr
         struct LowerPriorityQueueTypeandAllocExpr : public mir::MIRVisitor {
             using mir::MIRVisitor::visit;
@@ -29,11 +49,11 @@ namespace graphit {
 
             };
 
-            virtual void visit(mir::PriorityQueueType::Ptr){
+                void visit(mir::PriorityQueueType::Ptr){
 
             }
 
-            virtual void visit(mir::PriorityQueueAllocExpr::Ptr){
+                void visit(mir::PriorityQueueAllocExpr::Ptr){
 
             }
 
@@ -53,6 +73,9 @@ namespace graphit {
 
 
         void lower();
+
+        //sets the priority update schedule
+        void setCurrentPriorityUpdateSchedule();
 
     private:
         Schedule *schedule_ = nullptr;

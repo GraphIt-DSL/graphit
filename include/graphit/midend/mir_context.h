@@ -328,7 +328,7 @@ namespace graphit {
         // The type of priority update that the schedule has specified
         // We assume that only one type of priority is happening right now
         // By default, it is NoPriorityUpdate
-        mir::PriorityUpdateType priorityUpdateType = mir::PriorityUpdateType::NoPriorityUpdate;
+        mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
     };
 
 }
