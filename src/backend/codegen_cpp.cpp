@@ -56,14 +56,14 @@ namespace graphit {
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-	std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
+        std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
 
-	for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
-	    it->get()->accept(this);
-	}
+        for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
+            it->get()->accept(this);
+        }
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
-	    it->get()->accept(this);
+            it->get()->accept(this);
         }
 
         oss << std::endl;
@@ -73,7 +73,7 @@ namespace graphit {
     void CodeGenCPP::genIncludeStmts() {
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
-	oss << "#include <algorithm>" << std::endl;
+        oss << "#include <algorithm>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
     }
 
@@ -172,7 +172,7 @@ namespace graphit {
             printIndent();
 
             assign_stmt->lhs->accept(this);
-            oss << "  = ____graphit_tmp_out; "  << std::endl;
+            oss << "  = ____graphit_tmp_out; " << std::endl;
 
         } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
@@ -326,14 +326,14 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
 
-	if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
-	    oss << "extern ";
+        if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+            oss << "extern ";
             if (func_decl->result.isInitialized())
-	        func_decl->result.getType()->accept(this);
+                func_decl->result.getType()->accept(this);
             else
                 oss << "void ";
             oss << func_decl->name << " (";
-            
+
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -349,7 +349,7 @@ namespace graphit {
             oss << "); ";
             oss << std::endl;
             return;
-	}
+        }
 
         // Generate function signature
         if (func_decl->name == "main") {
@@ -424,7 +424,7 @@ namespace graphit {
                         // in the case of negative integer, we use the number as argument to runtimve argument argv
                         // this is the only place in the generated code that we set the number of segments
                         oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
-                            << "\", " << "atoi(argv[" << -1*label_iter_second << "])"
+                            << "\", " << "atoi(argv[" << -1 * label_iter_second << "])"
                             << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
                     } else {
                         // just use the positive integer as argument to number of segments
@@ -443,13 +443,15 @@ namespace graphit {
                     if (type->element_type != nullptr) {
                         //genPropertyArrayImplementationWithInitialization(constant);
                         //genPropertyArrayDecl(constant);
-			if (constant->needs_allocation)
-	                        genPropertyArrayAlloc(constant);
+                        if (constant->needs_allocation)
+                            genPropertyArrayAlloc(constant);
                     }
-                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type) ||
+                        std::dynamic_pointer_cast<mir::PriorityQueueType>(constant->type)){
                     // if the constant is a vertex set  decl
-                    // currently, no code is generated
-                } else {
+                    //if it is a priorty queue type, then don't do anything
+
+                }else {
                     // regular constant declaration
                     //constant->accept(this);
                     genScalarAlloc(constant);
@@ -511,10 +513,10 @@ namespace graphit {
         }
 
         if (func_decl->isFunctor) {
-          dedent();
-          printEndIndent();
-          oss << ";";
-          oss << std::endl;
+            dedent();
+            printEndIndent();
+            oss << ";";
+            oss << std::endl;
         }
 
         if (func_decl->name == "main") {
@@ -526,7 +528,9 @@ namespace graphit {
                         oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
                         merge_reduce->scalar_type->accept(this);
                         oss << ") * ";
-                        mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
+                        mir_context_->getElementCount(
+                                mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(
+                                this);
                         oss << ");\n  }\n";
                     }
                 }
@@ -581,7 +585,7 @@ namespace graphit {
             oss << " > ";
         }
 
-	    if (mir_context_->isFunction(call_expr->name)) {
+        if (mir_context_->isFunction(call_expr->name)) {
             auto mir_func_decl = mir_context_->getFunction(call_expr->name);
             if (mir_func_decl->isFunctor)
                 oss << "()";
@@ -750,7 +754,7 @@ namespace graphit {
 
     };
 
-    void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl){
+    void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl) {
         //the declaration and the value are separate. The value is generated as a separate assign statement in the main function
         var_decl->type->accept(this);
         oss << var_decl->name << "; " << std::endl;
@@ -790,7 +794,7 @@ namespace graphit {
         oss << ";" << std::endl;
          **/
 
-        if (!mir::isa<mir::VectorType>(vector_element_type)){
+        if (!mir::isa<mir::VectorType>(vector_element_type)) {
             vector_element_type->accept(this);
             oss << " * __restrict " << name << ";" << std::endl;
         } else if (mir::isa<mir::VectorType>(vector_element_type)) {
@@ -803,7 +807,7 @@ namespace graphit {
             oss << "typedef ";
             vector_vector_element_type->vector_element_type->accept(this);
             std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
-            oss << typedef_name <<  " ";
+            oss << typedef_name << " ";
             oss << "[ " << range << "]; " << std::endl;
             vector_vector_element_type->typedef_name_ = typedef_name;
 
@@ -839,7 +843,7 @@ namespace graphit {
 
         oss << " = new ";
 
-        if (mir::isa<mir::VectorType>(vector_element_type)){
+        if (mir::isa<mir::VectorType>(vector_element_type)) {
             //for vector type, we use the name from typedef
             auto vector_type_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
             assert(vector_type_vector_element_type->typedef_name_ != "");
@@ -849,7 +853,7 @@ namespace graphit {
         }
 
         oss << "[ ";
-        size_expr -> accept(this);
+        size_expr->accept(this);
         oss << "];" << std::endl;
     }
 
@@ -929,7 +933,7 @@ namespace graphit {
         //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
 
-        if (mir_context_->isConstVertexSet(mir_var->var.getName())){
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
             //if the verstexset is a const / global vertexset, then we can get size easily
             auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
             assert(associated_element_type);
@@ -1016,10 +1020,10 @@ namespace graphit {
             printIndent();
             oss << "} //end of loop\n";
             oss << "____graphit_tmp_out->num_vertices_ = sequence::sum( "
-                <<  next_bool_map_name << ", " ;
+                << next_bool_map_name << ", ";
             vertices_range_expr->accept(this);
             oss << " );\n"
-                    "____graphit_tmp_out->bool_map_ = ";
+                   "____graphit_tmp_out->bool_map_ = ";
             oss << next_bool_map_name << ";\n";
         }
 
@@ -1116,15 +1120,15 @@ namespace graphit {
         arguments.push_back(apply->input_function_name + "()");
 
         // a filter function for the push direction in hybrid code
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            if (apply_expr->push_to_function_ != ""){
+            if (apply_expr->push_to_function_ != "") {
                 arguments.push_back(apply_expr->push_to_function_ + "()");
             }
         }
 
         // the push direction apply function for hybrid schedule
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             arguments.push_back(apply_expr->push_function_ + "()");
         }
@@ -1139,7 +1143,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
-        if (edgeset_load_expr->is_weighted_){
+        if (edgeset_load_expr->is_weighted_) {
             oss << "builtin_loadWeightedEdgesFromFile ( ";
             edgeset_load_expr->file_name->accept(this);
             oss << ") ";
@@ -1156,11 +1160,11 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::PriorityQueueType::Ptr priority_queue_type) {
         if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
-        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+            || priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
 
             oss << "EagerPriorityQueue < ";
             priority_queue_type->priority_type->accept(this);
-            oss << " > ";
+            oss << " >* ";
 
         } else {
             std::cout << "PriorityQueue type not supported yet" << std::endl;
@@ -1168,6 +1172,21 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
+
+        if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
+            ||
+            priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+
+
+            oss << "new EagerPriorityQueue < ";
+            priority_queue_alloc_expr->priority_type->accept(this);
+            oss << " > ( ";
+            oss << priority_queue_alloc_expr->vector_function;
+            oss << " ); ";
+
+        } else {
+            std::cout << "PriorityQueue constructor not supported yet" << std::endl;
+        }
 
     }
 }
