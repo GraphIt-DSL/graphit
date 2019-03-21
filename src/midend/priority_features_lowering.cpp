@@ -41,15 +41,23 @@ namespace graphit {
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::setPrioritySchedule(std::string current_label){
         auto apply_schedule = schedule_->apply_schedules->find(current_label);
         if (apply_schedule != schedule_->apply_schedules->end()) { //a schedule is found
-            if (apply_schedule->second.priority_update_type == ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE){
+            if (apply_schedule->second.priority_update_type
+            == ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE){
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
-            } else if (apply_schedule->second.priority_update_type == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE){
+            } else if (apply_schedule->second.priority_update_type
+            == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE){
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
-            } else if (apply_schedule->second.priority_update_type == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE){
+            } else if (apply_schedule->second.priority_update_type
+            == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE){
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
-            } else {
+            } else if (apply_schedule->second.priority_update_type
+            == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
+            } else {
+                mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
             }
+        }else{
+            mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
         }
     }
 

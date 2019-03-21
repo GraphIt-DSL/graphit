@@ -1153,4 +1153,21 @@ namespace graphit {
     void CodeGenCPP::visit(mir::EdgeSetType::Ptr edgeset_type) {
         oss << " Graph ";
     }
+
+    void CodeGenCPP::visit(mir::PriorityQueueType::Ptr priority_queue_type) {
+        if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
+        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+
+            oss << "EagerPriorityQueue < ";
+            priority_queue_type->priority_type->accept(this);
+            oss << " > ";
+
+        } else {
+            std::cout << "PriorityQueue type not supported yet" << std::endl;
+        }
+    }
+
+    void CodeGenCPP::visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
+
+    }
 }

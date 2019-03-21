@@ -1122,6 +1122,7 @@ namespace graphit {
         struct PriorityQueueType : public Type {
             ElementType::Ptr element;
             PriorityUpdateType priority_update_type;
+            ScalarType::Ptr priority_type;
 
             typedef std::shared_ptr<PriorityQueueType> Ptr;
 
@@ -1148,7 +1149,7 @@ namespace graphit {
             Expr::Ptr starting_node;
 
             PriorityUpdateType priority_update_type;
-            mir::ScalarType::Ptr priority_element_type;
+            mir::ScalarType::Ptr priority_type;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PriorityQueueAllocExpr>());

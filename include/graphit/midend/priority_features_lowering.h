@@ -45,20 +45,20 @@ namespace graphit {
         struct LowerPriorityQueueTypeandAllocExpr : public mir::MIRVisitor {
             using mir::MIRVisitor::visit;
 
-            LowerPriorityQueueTypeandAllocExpr(Schedule* schedule) : schedule_(schedule){
+            LowerPriorityQueueTypeandAllocExpr(MIRContext* mir_context,  Schedule* schedule)
+                    : mir_context_(mir_context), schedule_(schedule){};
 
-            };
-
-                void visit(mir::PriorityQueueType::Ptr){
-
-            }
-
-                void visit(mir::PriorityQueueAllocExpr::Ptr){
+            void visit(mir::PriorityQueueType::Ptr priority_queue_type){
+                priority_queue_type->priority_update_type = mir_context_->priority_update_type;
 
             }
 
-            Schedule * schedule_;
+            void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr){
+                priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
+            }
 
+            Schedule *schedule_ = nullptr;
+            MIRContext *mir_context_ = nullptr;
         };
 
         struct LowerUpdatePriorityExternVertexSetApplyExpr : public mir::MIRRewriter {

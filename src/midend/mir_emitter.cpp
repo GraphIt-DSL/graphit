@@ -792,6 +792,8 @@ namespace graphit {
         }
         mir_priority_queue_type->element = std::dynamic_pointer_cast<mir::ElementType>(
                 emitType(priority_queue_type->element));
+        mir_priority_queue_type->priority_type = std::dynamic_pointer_cast<mir::ScalarType>(
+                emitType(priority_queue_type->priority_type));
 
         retType = mir_priority_queue_type;
     }
@@ -842,7 +844,8 @@ namespace graphit {
         }
 
         mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);
-
+        mir_priority_queue_alloc_expr->priority_type = std::dynamic_pointer_cast<mir::ScalarType>(
+                emitType(expr->priority_type));
 
         retExpr = mir_priority_queue_alloc_expr;
     }
