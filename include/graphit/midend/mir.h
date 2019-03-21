@@ -1228,7 +1228,8 @@ namespace graphit {
 		Expr::Ptr priority_queue;
 		std::string output_set_name;
 		std::string lambda_name;
-			
+	        std::string apply_function_name;
+                		
 		typedef std::shared_ptr<UpdatePriorityExternCall> Ptr;
 		UpdatePriorityExternCall() {}
 		virtual void accept(MIRVisitor *visitor) {

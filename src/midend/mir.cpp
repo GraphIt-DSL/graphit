@@ -803,6 +803,7 @@ namespace graphit {
 	    priority_queue = expr->priority_queue;
 	    output_set_name = expr->output_set_name;
 	    lambda_name = expr->lambda_name;
+            apply_function_name = expr->apply_function_name;
 	}
 
 	MIRNode::Ptr UpdatePriorityExternCall::cloneNode() {
