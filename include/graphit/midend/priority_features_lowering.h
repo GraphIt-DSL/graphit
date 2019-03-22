@@ -55,6 +55,7 @@ namespace graphit {
 
             void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
                 priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
+                priority_queue_alloc_expr->delta = mir_context_->delta_;
             }
 
             Schedule *schedule_ = nullptr;

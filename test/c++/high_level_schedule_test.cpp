@@ -1736,6 +1736,7 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    program->configApplyPriorityUpdateDelta("s1", 2);
     //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }

@@ -1147,6 +1147,7 @@ namespace graphit {
             int priority_ordering;
             bool init_bucket;
             Expr::Ptr starting_node;
+            int delta;
 
             PriorityUpdateType priority_update_type;
             mir::ScalarType::Ptr priority_type;

@@ -1178,11 +1178,13 @@ namespace graphit {
             priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
 
 
-            oss << "new EagerPriorityQueue < ";
+            oss << "new EagerPriorityQueue <";
             priority_queue_alloc_expr->priority_type->accept(this);
-            oss << " > ( ";
+            oss << "> ( ";
             oss << priority_queue_alloc_expr->vector_function;
-            oss << " ); ";
+            oss << ", ";
+            oss << priority_queue_alloc_expr->delta;
+            oss << "); ";
 
         } else {
             std::cout << "PriorityQueue constructor not supported yet" << std::endl;

@@ -293,7 +293,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, false};
+                           0, -100, 1, false};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -306,7 +306,9 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "num_segment") {
                 (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
-            } else {
+            }  else if (apply_schedule_str == "delta") {
+                (*schedule_->apply_schedules)[apply_label].delta = parameter;
+            }else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
             }
@@ -340,7 +342,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, false};
+                           0, -100, 1, false};
             }
 
 
@@ -369,9 +371,9 @@ namespace graphit {
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
                 (*schedule_->apply_schedules)[apply_label].numa_aware = true;
-            } else if (apply_schedule_str == "eager_priority_update"){
+            } else if (apply_schedule_str == "eager_priority_update") {
                 (*schedule_->apply_schedules)[apply_label].priority_update_type
-                = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
+                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -835,6 +837,11 @@ namespace graphit {
                 return setApply(apply_label, "numa_aware");
             else
                 return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label, int delta) {
+            return setApply(apply_label, "delta", delta);
         }
 
     }

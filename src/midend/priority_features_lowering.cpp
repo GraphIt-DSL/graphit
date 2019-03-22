@@ -65,9 +65,15 @@ namespace graphit {
             } else {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
             }
+
+            if (apply_schedule->second.delta > 1){
+                mir_context_->delta_ = apply_schedule->second.delta;
+            }
+
         }else{
             mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
         }
+
     }
 
     void PriorityFeaturesLower::LowerUpdatePriorityExternVertexSetApplyExpr::visit(mir::ExprStmt::Ptr expr_stmt) {

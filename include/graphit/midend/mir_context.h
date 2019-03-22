@@ -329,6 +329,8 @@ namespace graphit {
         // We assume that only one type of priority is happening right now
         // By default, it is NoPriorityUpdate
         mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
+
+        int delta_ = 1;
     };
 
 }
