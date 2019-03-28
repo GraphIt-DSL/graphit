@@ -77,6 +77,16 @@ namespace graphit {
         };
 
 
+        struct LowerIntoOrderedProcessingOperatorRewriter : public mir::MIRRewriter {
+            using mir::MIRRewriter::visit;
+
+            virtual void visit(mir::WhileStmt::Ptr while_stmt);
+
+            bool checkWhileStmtPattern(mir::WhileStmt::Ptr while_stmt);
+
+        };
+
+
         void lower();
 
         //sets the priority update schedule

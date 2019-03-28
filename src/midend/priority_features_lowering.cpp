@@ -10,11 +10,16 @@ namespace graphit {
 
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
 
+        // find the schedules specified for priority updates,
+        // assuming we only have one priority queue at the moment
         auto schedule_finder = PriorityUpdateScheduleFinder(mir_context_, schedule_);
+
+        //this visitor sets the priorty update type, and delta in mir_context
         for (auto function : functions) {
             function->accept(&schedule_finder);
         }
 
+        // lowers the Priority Queue Type, and Alloc Expr based on the schedule
         auto lower_priority_queue_type_and_alloc_expr = LowerPriorityQueueTypeandAllocExpr(mir_context_, schedule_);
 
         for (auto constant : mir_context_->getConstants()) {
@@ -24,6 +29,7 @@ namespace graphit {
             function->accept(&lower_priority_queue_type_and_alloc_expr);
         }
 
+        // lowers the extern apply expression
         auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
         for (auto function : functions) {
             lower_extern_apply_expr.rewrite(function);
@@ -96,5 +102,17 @@ namespace graphit {
 */
 	}
 	node = expr_stmt;
+    }
+
+    void PriorityFeaturesLower::LowerIntoOrderedProcessingOperatorRewriter::visit(mir::WhileStmt::Ptr while_stmt) {
+        // check if it matches the pattern
+        if (checkWhileStmtPattern(while_stmt)){
+            // if matches the pattern, then replace with a separate operator
+        }
+    }
+
+    bool PriorityFeaturesLower::LowerIntoOrderedProcessingOperatorRewriter::checkWhileStmtPattern(
+            mir::WhileStmt::Ptr while_stmt) {
+        return false;
     }
 }

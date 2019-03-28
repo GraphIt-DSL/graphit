@@ -133,6 +133,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<UpdatePriorityExternCall>);
 
+            virtual void visit(std::shared_ptr<OrderedProcessingOperator>);
+
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {
                 auto tmp = node;

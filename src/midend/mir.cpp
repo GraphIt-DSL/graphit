@@ -68,7 +68,7 @@ namespace graphit {
         void Call::copy(MIRNode::Ptr node) {
             auto expr = to<mir::Call>(node);
             name = expr->name;
-            for (const auto & arg: expr->args){
+            for (const auto &arg: expr->args) {
                 args.push_back(arg);
             }
             generic_type = expr->generic_type->clone<Type>();
@@ -231,7 +231,6 @@ namespace graphit {
         }
 
 
-
         void EdgeSetWhereExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<EdgeSetWhereExpr>(node);
             WhereExpr::copy(expr);
@@ -271,7 +270,7 @@ namespace graphit {
 
         void NaryExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<NaryExpr>(node);
-            for (const auto & operand : expr->operands){
+            for (const auto &operand : expr->operands) {
                 operands.push_back(operand);
             }
         }
@@ -309,7 +308,7 @@ namespace graphit {
         void EqExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<EqExpr>(node);
             NaryExpr::copy(expr);
-            for (const auto & op : expr->ops){
+            for (const auto &op : expr->ops) {
                 ops.push_back(op);
             }
         }
@@ -415,9 +414,6 @@ namespace graphit {
         }
 
 
-
-
-
         void Stmt::copy(MIRNode::Ptr node) {
             auto stmt = to<mir::Stmt>(node);
         }
@@ -432,7 +428,7 @@ namespace graphit {
         void StmtBlock::copy(MIRNode::Ptr node) {
             auto stmt_blk = to<mir::StmtBlock>(node);
             stmts = new std::vector<Stmt::Ptr>();
-            for (auto & stmt : (*(stmt_blk->stmts))){
+            for (auto &stmt : (*(stmt_blk->stmts))) {
                 stmts->push_back(stmt->clone<Stmt>());
             }
         }
@@ -586,7 +582,7 @@ namespace graphit {
         void AssignStmt::copy(MIRNode::Ptr node) {
             auto expr_stmt = to<mir::AssignStmt>(node);
             expr = expr_stmt->expr->clone<Expr>();
-            lhs =  expr_stmt->lhs->clone<Expr>();
+            lhs = expr_stmt->lhs->clone<Expr>();
         }
 
 
@@ -599,7 +595,7 @@ namespace graphit {
         void ReduceStmt::copy(MIRNode::Ptr node) {
             auto stmt = to<mir::ReduceStmt>(node);
             expr = stmt->expr->clone<Expr>();
-            lhs =  stmt->lhs->clone<Expr>();
+            lhs = stmt->lhs->clone<Expr>();
             reduce_op_ = stmt->reduce_op_;
             tracking_var_name_ = stmt->tracking_var_name_;
             is_atomic_ = stmt->is_atomic_;
@@ -650,7 +646,6 @@ namespace graphit {
         }
 
 
-
         void IfStmt::copy(MIRNode::Ptr node) {
             auto stmt = to<mir::IfStmt>(node);
             cond = stmt->cond->clone<Expr>();
@@ -697,7 +692,7 @@ namespace graphit {
         void StructTypeDecl::copy(MIRNode::Ptr node) {
             auto decl = to<StructTypeDecl>(node);
             name = decl->name;
-            for (const auto & field : decl->fields){
+            for (const auto &field : decl->fields) {
                 fields.push_back(field);
             }
         }
@@ -712,7 +707,7 @@ namespace graphit {
         void FuncDecl::copy(MIRNode::Ptr node) {
             auto decl = to<FuncDecl>(node);
             name = decl->name;
-            for (const auto & arg : decl->args){
+            for (const auto &arg : decl->args) {
                 args.push_back(arg);
             }
             body = decl->body->clone<StmtBlock>();
@@ -744,14 +739,14 @@ namespace graphit {
         void PriorityQueueAllocExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<PriorityQueueAllocExpr>(node);
             element_type = expr->element_type;
-	    dup_within_bucket = expr->dup_within_bucket;
-	    dup_across_bucket = expr->dup_across_bucket;
-	    vector_function = expr->vector_function;
-	    bucket_ordering = expr->bucket_ordering;
-	    priority_ordering = expr->priority_ordering;
-	    init_bucket = expr->init_bucket;
-	    starting_node = expr->starting_node;
-            
+            dup_within_bucket = expr->dup_within_bucket;
+            dup_across_bucket = expr->dup_across_bucket;
+            vector_function = expr->vector_function;
+            bucket_ordering = expr->bucket_ordering;
+            priority_ordering = expr->priority_ordering;
+            init_bucket = expr->init_bucket;
+            starting_node = expr->starting_node;
+
         }
 
         MIRNode::Ptr PriorityQueueAllocExpr::cloneNode() {
@@ -783,33 +778,49 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
-        
+
         void UpdatePriorityUpdateBucketsCall::copy(MIRNode::Ptr node) {
-	    const auto expr = mir::to<UpdatePriorityUpdateBucketsCall>(node); 
-	    priority_queue = expr->priority_queue;
-	    lambda_name = expr->lambda_name;
-	    modified_vertexsubset_name = expr->modified_vertexsubset_name;
-	}
+            const auto expr = mir::to<UpdatePriorityUpdateBucketsCall>(node);
+            priority_queue = expr->priority_queue;
+            lambda_name = expr->lambda_name;
+            modified_vertexsubset_name = expr->modified_vertexsubset_name;
+        }
 
-	MIRNode::Ptr UpdatePriorityUpdateBucketsCall::cloneNode() {
-	    const auto node = std::make_shared<UpdatePriorityUpdateBucketsCall>();
-	    node->copy(shared_from_this());
-            return node;	
-	}
+        MIRNode::Ptr UpdatePriorityUpdateBucketsCall::cloneNode() {
+            const auto node = std::make_shared<UpdatePriorityUpdateBucketsCall>();
+            node->copy(shared_from_this());
+            return node;
+        }
 
-	void UpdatePriorityExternCall::copy(MIRNode::Ptr node) {
-	    const auto expr = mir::to<UpdatePriorityExternCall>(node);
-	    input_set = expr->input_set;
-	    priority_queue = expr->priority_queue;
-	    output_set_name = expr->output_set_name;
-	    lambda_name = expr->lambda_name;
+        void UpdatePriorityExternCall::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<UpdatePriorityExternCall>(node);
+            input_set = expr->input_set;
+            priority_queue = expr->priority_queue;
+            output_set_name = expr->output_set_name;
+            lambda_name = expr->lambda_name;
             apply_function_name = expr->apply_function_name;
-	}
+        }
 
-	MIRNode::Ptr UpdatePriorityExternCall::cloneNode() {
-	    const auto node = std::make_shared<UpdatePriorityExternCall>();
-	    node->copy(shared_from_this());
-	    return node;
-	}
+        MIRNode::Ptr UpdatePriorityExternCall::cloneNode() {
+            const auto node = std::make_shared<UpdatePriorityExternCall>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void OrderedProcessingOperator::copy(MIRNode::Ptr node) {
+            const auto op = mir::to<OrderedProcessingOperator>(node);
+            edge_update_func = op->edge_update_func;
+            while_cond_expr = op->while_cond_expr;
+            optional_source_node = op->optional_source_node;
+            priority_queue_name = op->priority_queue_name;
+            priority_udpate_type = op->priority_udpate_type;
+            merge_threshold = op->merge_threshold;
+        }
+
+        MIRNode::Ptr OrderedProcessingOperator::cloneNode() {
+            const auto node = std::make_shared<OrderedProcessingOperator>();
+            node->copy(shared_from_this());
+            return node;
+        }
     }
 }

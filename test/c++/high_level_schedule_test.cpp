@@ -443,7 +443,7 @@ protected:
                              "  var start_vertex : Vertex = 1;"
                              "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, -1);"
                              "  while (pq.finished() == false) "
-                             "    var frontier : vertexsubset = pq.get_current_priority_nodes(); \n"
+                             "    var frontier : vertexsubset = pq.dequeue_lowest_priority(); % dequeue_ready_set() \n"
                              "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                              "    delete frontier; "
                              "  end\n"

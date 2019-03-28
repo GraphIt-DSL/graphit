@@ -316,27 +316,32 @@ namespace graphit {
         void MIRRewriter::visit(PriorityQueueType::Ptr queue_type) {
             queue_type->element = rewrite<ElementType>(queue_type->element);
             queue_type->priority_type = rewrite<ScalarType>(queue_type->priority_type);
-	        node = queue_type;
+            node = queue_type;
         }
 
         void MIRRewriter::visit(PriorityQueueAllocExpr::Ptr expr) {
             expr->element_type = rewrite<ElementType>(expr->element_type);
-	        expr->starting_node = rewrite<Expr>(expr->starting_node);
+            expr->starting_node = rewrite<Expr>(expr->starting_node);
             expr->priority_type = rewrite<ScalarType>(expr->priority_type);
             node = expr;
-	}
+        }
 
 
         void MIRRewriter::visit(UpdatePriorityUpdateBucketsCall::Ptr stmt) {
-	    stmt->priority_queue = rewrite<Expr> (stmt->priority_queue);
-	    node = stmt;
-	}
+            stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
+            node = stmt;
+        }
 
-	void MIRRewriter::visit(UpdatePriorityExternCall::Ptr stmt) {
-	    stmt->input_set = rewrite<Expr> (stmt->input_set);
-	    stmt->priority_queue = rewrite<Expr> (stmt->priority_queue);
-	    node = stmt;
-	}
+        void MIRRewriter::visit(UpdatePriorityExternCall::Ptr stmt) {
+            stmt->input_set = rewrite<Expr>(stmt->input_set);
+            stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
+            node = stmt;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<OrderedProcessingOperator> op) {
+           op->while_cond_expr = rewrite<OrderedProcessingOperator>(op->while_cond_expr);
+           node = op;
+        }
 
     }
 }

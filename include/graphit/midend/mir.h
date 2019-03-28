@@ -1209,39 +1209,73 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
-	struct UpdatePriorityUpdateBucketsCall : Stmt {
-		Expr::Ptr priority_queue;
-		std::string lambda_name;
-		std::string modified_vertexsubset_name;
-		
-		typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
-		
-		UpdatePriorityUpdateBucketsCall() {}
-		virtual void accept(MIRVisitor *visitor) {
-			visitor->visit(self<UpdatePriorityUpdateBucketsCall>());
-		}
-		protected:
-		virtual void copy(MIRNode::Ptr);
-		virtual MIRNode::Ptr cloneNode();
+        struct UpdatePriorityUpdateBucketsCall : Stmt {
+            Expr::Ptr priority_queue;
+            std::string lambda_name;
+            std::string modified_vertexsubset_name;
+
+            typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
+
+            UpdatePriorityUpdateBucketsCall() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityUpdateBucketsCall>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
         };
 
-	struct UpdatePriorityExternCall : Stmt {
-		Expr::Ptr input_set;
-		Expr::Ptr priority_queue;
-		std::string output_set_name;
-		std::string lambda_name;
-	        std::string apply_function_name;
-                		
-		typedef std::shared_ptr<UpdatePriorityExternCall> Ptr;
-		UpdatePriorityExternCall() {}
-		virtual void accept(MIRVisitor *visitor) {
-			visitor->visit(self<UpdatePriorityExternCall>());
-		}
-		protected:
-		virtual void copy(MIRNode::Ptr);
-		virtual MIRNode::Ptr cloneNode();
-	};
+        struct UpdatePriorityExternCall : Stmt {
+            Expr::Ptr input_set;
+            Expr::Ptr priority_queue;
+            std::string output_set_name;
+            std::string lambda_name;
+            std::string apply_function_name;
 
+            typedef std::shared_ptr<UpdatePriorityExternCall> Ptr;
+
+            UpdatePriorityExternCall() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityExternCall>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
+        struct OrderedProcessingOperator : Stmt {
+            Expr::Ptr while_cond_expr;
+            std::string edge_update_func;
+            std::string priority_queue_name;
+            int optional_source_node;
+
+            //need to know if the merge optimization is needed or not
+            PriorityUpdateType priority_udpate_type;
+
+            //the threshold used for merging buckets
+            int merge_threshold = 0;
+
+            typedef std::shared_ptr<OrderedProcessingOperator> Ptr;
+
+            OrderedProcessingOperator() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<OrderedProcessingOperator>());
+            }
+
+            protected:
+                virtual void copy(MIRNode::Ptr);
+
+                virtual MIRNode::Ptr cloneNode();
+
+        };
 
     }
 
