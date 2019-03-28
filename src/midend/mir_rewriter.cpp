@@ -339,7 +339,7 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<OrderedProcessingOperator> op) {
-           op->while_cond_expr = rewrite<OrderedProcessingOperator>(op->while_cond_expr);
+           op->while_cond_expr = rewrite<Expr>(op->while_cond_expr);
            node = op;
         }
 
