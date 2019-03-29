@@ -89,8 +89,6 @@ namespace graphit {
 
         void lower();
 
-        //sets the priority update schedule
-        void setCurrentPriorityUpdateSchedule();
 
     private:
         Schedule *schedule_ = nullptr;

@@ -29,6 +29,12 @@ namespace graphit {
             function->accept(&lower_priority_queue_type_and_alloc_expr);
         }
 
+        // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
+        auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter();
+        for (auto function : functions) {
+            lower_ordered_processing_op.rewrite(function);
+        }
+
         // lowers the extern apply expression
         auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
         for (auto function : functions) {
@@ -109,10 +115,17 @@ namespace graphit {
         if (checkWhileStmtPattern(while_stmt)){
             // if matches the pattern, then replace with a separate operator
         }
+
+        node = while_stmt;
     }
 
     bool PriorityFeaturesLower::LowerIntoOrderedProcessingOperatorRewriter::checkWhileStmtPattern(
             mir::WhileStmt::Ptr while_stmt) {
+        auto stmt_blk = while_stmt->body;
+        mir::Stmt::Ptr first_stmt = (*(stmt_blk->stmts))[0];
+        if (mir::isa<mir::VarDecl>(first_stmt)){
+
+        }
         return false;
     }
 }
