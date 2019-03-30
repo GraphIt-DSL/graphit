@@ -91,6 +91,8 @@ namespace graphit {
         virtual void visit(mir::PriorityQueueType::Ptr priority_queue_type);
         virtual void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr);
 
+        virtual void visit(mir::OrderedProcessingOperator::Ptr ordered_op);
+
     private:
         void genIncludeStmts();
 

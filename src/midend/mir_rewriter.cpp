@@ -67,8 +67,9 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(StmtBlock::Ptr stmt_block) {
-            for (auto stmt : *(stmt_block->stmts)) {
-                stmt = rewrite<Stmt>(stmt);
+            for (int i = 0; i < (stmt_block->stmts)->size(); i++){
+                auto tmp = rewrite<Stmt>(stmt_block->stmts->at(i));
+                stmt_block->stmts->at(i) = tmp;
             }
             node = stmt_block;
         }
@@ -339,8 +340,9 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<OrderedProcessingOperator> op) {
-           op->while_cond_expr = rewrite<Expr>(op->while_cond_expr);
-           node = op;
+            assert(op->while_cond_expr != nullptr);
+            op->while_cond_expr = rewrite<Expr>(op->while_cond_expr);
+            node = op;
         }
 
     }

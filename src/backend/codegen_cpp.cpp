@@ -1191,4 +1191,8 @@ namespace graphit {
         }
 
     }
+
+    void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
+        oss << "OrderedProcessingWithNoMerge();" << std::endl;
+    }
 }
