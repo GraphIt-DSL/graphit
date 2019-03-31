@@ -292,7 +292,8 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
         update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
-    OrderedProcessingOperatorNoMerge(&pq, g, while_cond_func, edge_update_func,  source);
+    OrderedProcessingOperatorNoMerge(&pq, g, [&]()->bool{return !pq.finishedNode(dest); },
+            edge_update_func,  source);
 
     pvector<WeightT> dist = pvector<WeightT>(g.num_nodes());
     for (int i = 0; i < g.num_nodes(); i++){

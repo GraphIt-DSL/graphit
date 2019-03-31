@@ -1193,6 +1193,19 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
-        oss << "OrderedProcessingWithNoMerge();" << std::endl;
+        printIndent();
+        oss << "OrderedProcessingWithNoMerge(";
+        oss << "&" << ordered_op->priority_queue_name << ", ";
+        ordered_op->graph_name->accept(this);
+        oss << ", ";
+
+        //lambda function for while condition
+        oss << "[&]()->bool{return ";
+        ordered_op->while_cond_expr->accept(this);
+        oss << ";}, ";
+
+        oss << "EdgeUpdateFunc (TODO), ";
+        ordered_op->optional_source_node->accept(this);
+        oss << ");" << std::endl;
     }
 }

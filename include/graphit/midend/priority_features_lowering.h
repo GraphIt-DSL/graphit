@@ -50,12 +50,12 @@ namespace graphit {
 
             void visit(mir::PriorityQueueType::Ptr priority_queue_type) {
                 priority_queue_type->priority_update_type = mir_context_->priority_update_type;
-
             }
 
             void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
                 priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
                 priority_queue_alloc_expr->delta = mir_context_->delta_;
+                mir_context_->optional_starting_source_node = priority_queue_alloc_expr->starting_node;
             }
 
             Schedule *schedule_ = nullptr;
@@ -80,9 +80,17 @@ namespace graphit {
         struct LowerIntoOrderedProcessingOperatorRewriter : public mir::MIRRewriter {
             using mir::MIRRewriter::visit;
 
+            LowerIntoOrderedProcessingOperatorRewriter(Schedule *schedule, MIRContext *mir_context) : schedule_(
+                    schedule), mir_context_(mir_context) {
+
+            }
+
             virtual void visit(mir::WhileStmt::Ptr while_stmt);
 
             bool checkWhileStmtPattern(mir::WhileStmt::Ptr while_stmt);
+
+            Schedule *schedule_;
+            MIRContext *mir_context_;
 
         };
 

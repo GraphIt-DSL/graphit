@@ -762,6 +762,7 @@ namespace graphit {
             int pull_edge_based_load_balance_grain_size = 4096;
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
+
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1254,7 +1255,8 @@ namespace graphit {
             Expr::Ptr while_cond_expr;
             std::string edge_update_func;
             std::string priority_queue_name;
-            int optional_source_node;
+            Expr::Ptr optional_source_node;
+            Expr::Ptr graph_name;
 
             //need to know if the merge optimization is needed or not
             PriorityUpdateType priority_udpate_type;

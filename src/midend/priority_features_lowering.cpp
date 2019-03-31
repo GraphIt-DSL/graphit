@@ -30,7 +30,7 @@ namespace graphit {
         }
 
         // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
-        auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter();
+        auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
         for (auto function : functions) {
             lower_ordered_processing_op.rewrite(function);
         }
@@ -112,18 +112,41 @@ namespace graphit {
 
     void PriorityFeaturesLower::LowerIntoOrderedProcessingOperatorRewriter::visit(mir::WhileStmt::Ptr while_stmt) {
         // check if it matches the pattern
-//        if (checkWhileStmtPattern(while_stmt)) {
-//            // if matches the pattern, then replace with a separate operator
-//            mir::OrderedProcessingOperator::Ptr ordered_op = std::make_shared<mir::OrderedProcessingOperator>();
-//            node = ordered_op;
-//        } else {
-//            node = while_stmt;
-//        }
+        if (checkWhileStmtPattern(while_stmt)) {
+            // if matches the pattern, then replace with a separate operator
+            mir::OrderedProcessingOperator::Ptr ordered_op = std::make_shared<mir::OrderedProcessingOperator>();
+            ordered_op->while_cond_expr = while_stmt->cond;
+            //get the UpdatePriorityEdgesetApply label, for retrieving the schedule
+            auto stmt_blk = while_stmt->body;
+            mir::Stmt::Ptr first_stmt = (*(stmt_blk->stmts))[0];
+            mir::Stmt::Ptr second_stmt = (*(stmt_blk->stmts))[1];
+            mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>(second_stmt);
+            auto update_priority_edgesetapply_expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr);
+            auto edge_update_func_name = update_priority_edgesetapply_expr->input_function_name;
+            auto graph_name = update_priority_edgesetapply_expr->target;
+
+            ordered_op->graph_name = graph_name;
+
+            //auto priority_queue_name;
+            std::string priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+            ordered_op->priority_queue_name = priority_queue_name;
+            ordered_op->optional_source_node = mir_context_->optional_starting_source_node;
+
+            if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+                ordered_op->priority_udpate_type =  mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
+                //TODO: set the merge threshold
+                //ordered_op->merge_threshold = mir_context_->
+            } else {
+                ordered_op->priority_udpate_type = mir::PriorityUpdateType::EagerPriorityUpdate;
+            }
 
 
-        //mir::OrderedProcessingOperator::Ptr ordered_op = std::make_shared<mir::OrderedProcessingOperator>();
-        //node = ordered_op;
-        node = while_stmt;
+
+                //use the schedule to set
+            node = ordered_op;
+        } else {
+            node = while_stmt;
+        }
     }
 
 

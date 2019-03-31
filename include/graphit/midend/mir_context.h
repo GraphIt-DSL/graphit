@@ -268,6 +268,16 @@ namespace graphit {
             std::cout << "No main function declared" << std::endl;
             return nullptr;
         }
+
+        mir::VarDecl::Ptr getPriorityQueueDecl(){
+            for (mir::VarDecl::Ptr constant : getConstants()){
+                if (mir::isa<mir::PriorityQueueType>(constant->type)){
+                    return constant;
+                }
+            }
+            return nullptr;
+        }
+
         //private:
 
         // maps element type to an input file that reads the set from
@@ -331,6 +341,7 @@ namespace graphit {
         mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
 
         int delta_ = 1;
+        mir::Expr::Ptr optional_starting_source_node = nullptr;
     };
 
 }

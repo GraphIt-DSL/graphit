@@ -441,7 +441,7 @@ protected:
                              "end\n"
                              "func main() "
                              "  var start_vertex : Vertex = 1;"
-                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, -1);"
+                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                              "  while (pq.finished() == false) "
                              "    var frontier : vertexsubset = pq.dequeue_lowest_priority(); % dequeue_ready_set() \n"
                              "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"

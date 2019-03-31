@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
-//       ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.EagerPriorityQueueInit";
+//       ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.PPSPOrderProcessingNoMergeTest";
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
