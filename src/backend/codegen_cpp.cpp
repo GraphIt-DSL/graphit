@@ -380,7 +380,14 @@ namespace graphit {
             }
 
             oss << "operator() (";
+
+
+            // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+            // Then we need to insert an extra argument local bins
+            oss << "vector<vector<NodeID>>& local_bins, ";
+
             bool printDelimiter = false;
+
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
                     oss << ", ";
@@ -1204,7 +1211,9 @@ namespace graphit {
         ordered_op->while_cond_expr->accept(this);
         oss << ";}, ";
 
-        oss << "EdgeUpdateFunc (TODO), ";
+        //the user defined edge update function
+        // augmented with local_bins argument,
+        oss << ordered_op->edge_update_func  << ", ";
         ordered_op->optional_source_node->accept(this);
         oss << ");" << std::endl;
     }

@@ -34,6 +34,17 @@ namespace graphit {
         analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
     }
 
+    // Analyze the read / write properties for the priority update edgeset apply function
+    // For now, only push direction is supported for EagerUpdates
+    // TODO figure out how this would interact with the original edgeset apply
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(
+            mir::UpdatePriorityEdgeSetApplyExpr::Ptr priority_update_expr) {
+        if (mir_context_->priority_update_type == mir::EagerPriorityUpdate ||
+                mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
+            analyzeSingleFunctionEdgesetApplyExpr(priority_update_expr->input_function_name, "push");
+        }
+    }
+
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::analyzeSingleFunctionEdgesetApplyExpr(
             std::string function_name, std::string direction) {
         // The analysis only makes sense if it is a parallel apply expr
@@ -42,6 +53,8 @@ namespace graphit {
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&property_visitor);
     }
+
+
 
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {

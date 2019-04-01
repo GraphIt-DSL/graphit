@@ -123,7 +123,10 @@ namespace graphit {
             mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>(second_stmt);
             auto update_priority_edgesetapply_expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr);
             auto edge_update_func_name = update_priority_edgesetapply_expr->input_function_name;
+
+            ordered_op->edge_update_func = edge_update_func_name;
             auto graph_name = update_priority_edgesetapply_expr->target;
+            mir_context_->eager_priority_update_edge_function_name = edge_update_func_name;
 
             ordered_op->graph_name = graph_name;
 

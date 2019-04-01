@@ -31,6 +31,8 @@ namespace graphit {
 
             virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
 
+            virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr apply_expr);
+
         private:
 
             //does a pattern recognition and replace if condition and assignment in apply function with CAS in apply funciton

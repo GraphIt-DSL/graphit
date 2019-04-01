@@ -81,6 +81,8 @@ namespace graphit {
 
             virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
 
+            virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr priority_update_expr);
+
         private:
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
