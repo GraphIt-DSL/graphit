@@ -87,7 +87,6 @@ namespace graphit {
             Call::copy(node);
             destination_node_id = expr->destination_node_id;
             priority_queue = expr->priority_queue;
-            priority_vector = expr->priority_vector;
         }
 
 

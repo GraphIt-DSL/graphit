@@ -95,7 +95,6 @@ namespace graphit {
     }
 
     void PriorityFeaturesLower::LowerUpdatePriorityExternVertexSetApplyExpr::visit(mir::ExprStmt::Ptr expr_stmt) {
-        MIRRewriter::visit(expr_stmt);
         if (mir::isa<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr)) {
 
 /*
@@ -198,17 +197,30 @@ namespace graphit {
         auto call_args = call->args;
         if (call->name == "updatePriorityMin") {
             mir::PriorityUpdateOperatorMin::Ptr priority_update_min = std::make_shared<mir::PriorityUpdateOperatorMin>();
+
+            priority_update_min->name = call->name;
+            priority_update_min->args = call->args;
+
             priority_update_min->priority_queue = call_args[0];
             priority_update_min->destination_node_id= call_args[1];
             priority_update_min->new_val = call_args[2];
             priority_update_min->old_val = call_args[3];
+
+            mir::VarDecl::Ptr priority_queue_decl = mir_context_->getPriorityQueueDecl();
+            mir::ScalarType::Ptr priority_value_type
+                = (mir::to<mir::PriorityQueueType>(priority_queue_decl->type))->priority_type;
+
+            priority_update_min->generic_type = priority_value_type;
+
             node = priority_update_min;
         } else if (call->name == "updatePrioritySum") {
+
+
 
         } else {
             node = call;
         }
 
-        node = call;
+        //node = call;
     }
 }

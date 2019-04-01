@@ -158,6 +158,9 @@ namespace graphit {
 
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
 
+            void rewrite_call_args(Call::Ptr expr);
+            void rewrite_priority_update_operator(PriorityUpdateOperator::Ptr expr);
+
         };
     }
 }

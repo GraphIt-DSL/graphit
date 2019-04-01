@@ -1220,4 +1220,43 @@ namespace graphit {
         ordered_op->optional_source_node->accept(this);
         oss << ");" << std::endl;
     }
+
+    void CodeGenCPP::visit(mir::PriorityUpdateOperatorMin::Ptr priority_update_op) {
+        oss << priority_update_op->name;
+
+
+        if (priority_update_op->generic_type != nullptr) {
+            oss << " < ";
+            priority_update_op->generic_type->accept(this);
+            oss << " > ";
+        }
+
+        if (mir_context_->isFunction(priority_update_op->name)) {
+            auto mir_func_decl = mir_context_->getFunction(priority_update_op->name);
+            if (mir_func_decl->isFunctor)
+                oss << "()";
+        }
+
+        oss << "(";
+
+
+        if(mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
+                mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
+            // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+            // Then we need to insert an extra argument local bins
+            oss << "vector<vector<NodeID>>& local_bins, ";
+        }
+
+        bool printDelimiter = false;
+
+        for (auto arg : priority_update_op->args) {
+            if (printDelimiter) {
+                oss << ", ";
+            }
+            arg->accept(this);
+            printDelimiter = true;
+        }
+
+        oss << ") ";
+    }
 }

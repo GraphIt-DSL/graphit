@@ -676,8 +676,6 @@ namespace graphit {
         // this can be either a PriorityUpdateSum or PriorityUpdateMin
         struct PriorityUpdateOperator : public Call {
             Expr::Ptr priority_queue;
-            //the vector that stores
-            Expr::Ptr priority_vector;
             //the node whose priority is going to be updated
             Expr::Ptr destination_node_id;
 

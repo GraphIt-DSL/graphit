@@ -83,11 +83,15 @@ namespace graphit {
             node = func_decl;
         }
 
-        void MIRRewriter::visit(Call::Ptr expr) {
-            // need to use & to actually modify the argument (with reference), not a copy of it
+        void MIRRewriter::rewrite_call_args(Call::Ptr expr){
             for (auto &arg : expr->args) {
                 arg = rewrite<Expr>(arg);
             }
+        }
+
+        void MIRRewriter::visit(Call::Ptr expr) {
+            // need to use & to actually modify the argument (with reference), not a copy of it
+            rewrite_call_args(expr);
             node = expr;
         };
 
@@ -346,29 +350,31 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperator> op) {
-            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
-            op->priority_queue = rewrite<Expr>(op->priority_queue);
-            op->priority_vector = rewrite<Expr>(op->priority_vector);
-
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
+            node = op;
         }
 
         void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorMin> op) {
-            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
-            op->priority_queue = rewrite<Expr>(op->priority_queue);
-            op->priority_vector = rewrite<Expr>(op->priority_vector);
-
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
             op->old_val = rewrite<Expr>(op->old_val);
             op->new_val = rewrite<Expr>(op->new_val);
+            node = op;
         }
 
 
         void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
-            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
-            op->priority_queue = rewrite<Expr>(op->priority_queue);
-            op->priority_vector = rewrite<Expr>(op->priority_vector);
-
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
             op->delta = rewrite<Expr>(op->delta);
             op->minimum_val = rewrite<Expr>(op->minimum_val);
+            node = op;
+        }
+
+        void MIRRewriter::rewrite_priority_update_operator(PriorityUpdateOperator::Ptr op) {
+            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
+            op->priority_queue = rewrite<Expr>(op->priority_queue);
         }
 
     }
