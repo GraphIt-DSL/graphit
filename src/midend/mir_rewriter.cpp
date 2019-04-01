@@ -352,5 +352,24 @@ namespace graphit {
 
         }
 
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorMin> op) {
+            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
+            op->priority_queue = rewrite<Expr>(op->priority_queue);
+            op->priority_vector = rewrite<Expr>(op->priority_vector);
+
+            op->old_val = rewrite<Expr>(op->old_val);
+            op->new_val = rewrite<Expr>(op->new_val);
+        }
+
+
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
+            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
+            op->priority_queue = rewrite<Expr>(op->priority_queue);
+            op->priority_vector = rewrite<Expr>(op->priority_vector);
+
+            op->delta = rewrite<Expr>(op->delta);
+            op->minimum_val = rewrite<Expr>(op->minimum_val);
+        }
+
     }
 }

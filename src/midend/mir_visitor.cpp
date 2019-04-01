@@ -321,5 +321,25 @@ namespace graphit {
             op->priority_queue->accept(this);
             op->destination_node_id->accept(this);
         }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperatorMin> op) {
+            op->priority_vector->accept(this);
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+
+            op->old_val->accept(this);
+            op->new_val->accept(this);
+
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
+            op->priority_vector->accept(this);
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+
+            op->minimum_val->accept(this);
+            op->delta->accept(this);
+
+        }
     }
 }

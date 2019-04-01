@@ -673,12 +673,19 @@ namespace graphit {
         };
 
 
+        // this can be either a PriorityUpdateSum or PriorityUpdateMin
         struct PriorityUpdateOperator : public Call {
             Expr::Ptr priority_queue;
             //the vector that stores
             Expr::Ptr priority_vector;
             //the node whose priority is going to be updated
             Expr::Ptr destination_node_id;
+
+            typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperator>());
+            }
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -687,6 +694,48 @@ namespace graphit {
 
 
         };
+
+
+        struct PriorityUpdateOperatorMin : public PriorityUpdateOperator {
+            Expr::Ptr new_val;
+            //old priority value (could be optional)
+            Expr::Ptr old_val;
+
+            typedef std::shared_ptr<PriorityUpdateOperatorMin> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperatorMin>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
+
+        struct PriorityUpdateOperatorSum : public PriorityUpdateOperator {
+            Expr::Ptr delta;
+            // a minimum value for how low the priority can be reduced to (optional)
+            Expr::Ptr minimum_val;
+
+            typedef std::shared_ptr<PriorityUpdateOperatorSum> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperatorSum>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
 
 
         struct LoadExpr : public Expr {

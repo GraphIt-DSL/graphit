@@ -137,6 +137,11 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
 
+            virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
+
+            virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
+
+
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {
                 auto tmp = node;

@@ -229,9 +229,9 @@ namespace graphit {
 
 			virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
 
-//			virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
-//
-//			virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
+			virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
+
+			virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
 
 
 		protected:
