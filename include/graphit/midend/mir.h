@@ -1182,10 +1182,10 @@ namespace graphit {
         // OG Additions
         enum PriorityUpdateType {
             NoPriorityUpdate, //default type
-            EagerPriorityUpdate,
-            EagerPriorityUpdateWithMerge,
-            ConstSumReduceBeforePriorityUpdate,
-            ReduceBeforePriorityUpdate
+            EagerPriorityUpdate, // GAPBS refactored runtime lib
+            EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
+            ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+            ReduceBeforePriorityUpdate //Julienne refactored runtime lib
         };
 
 

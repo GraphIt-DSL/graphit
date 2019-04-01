@@ -20,7 +20,7 @@ namespace graphit {
         }
 
         // lowers the Priority Queue Type, and Alloc Expr based on the schedule
-        auto lower_priority_queue_type_and_alloc_expr = LowerPriorityQueueTypeandAllocExpr(mir_context_, schedule_);
+        auto lower_priority_queue_type_and_alloc_expr = LowerPriorityRelatedTypeAndExpr(mir_context_, schedule_);
 
         for (auto constant : mir_context_->getConstants()) {
             constant->accept(&lower_priority_queue_type_and_alloc_expr);
@@ -33,6 +33,12 @@ namespace graphit {
         auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
         for (auto function : functions) {
             lower_ordered_processing_op.rewrite(function);
+        }
+
+        // Lowers into PriorityUpdateOperators (PriorityUpdateMin and PriorityUpdateSum)
+        auto lower_priority_update_rewriter = LowerPriorityUpdateOperatorRewriter(schedule_, mir_context_);
+        for (auto function : functions) {
+            lower_priority_update_rewriter.rewrite(function);
         }
 
         // lowers the extern apply expression
@@ -135,8 +141,8 @@ namespace graphit {
             ordered_op->priority_queue_name = priority_queue_name;
             ordered_op->optional_source_node = mir_context_->optional_starting_source_node;
 
-            if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
-                ordered_op->priority_udpate_type =  mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
+            if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+                ordered_op->priority_udpate_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
                 //TODO: set the merge threshold
                 //ordered_op->merge_threshold = mir_context_->
             } else {
@@ -145,7 +151,7 @@ namespace graphit {
 
 
 
-                //use the schedule to set
+            //use the schedule to set
             node = ordered_op;
         } else {
             node = while_stmt;
@@ -186,5 +192,23 @@ namespace graphit {
             }
         }
         return false;
+    }
+
+    void PriorityFeaturesLower::LowerPriorityUpdateOperatorRewriter::visit(mir::Call::Ptr call) {
+        auto call_args = call->args;
+        if (call->name == "updatePriorityMin") {
+            mir::PriorityUpdateOperatorMin::Ptr priority_update_min = std::make_shared<mir::PriorityUpdateOperatorMin>();
+            priority_update_min->priority_queue = call_args[0];
+            priority_update_min->destination_node_id= call_args[1];
+            priority_update_min->new_val = call_args[2];
+            priority_update_min->old_val = call_args[3];
+            node = priority_update_min;
+        } else if (call->name == "updatePrioritySum") {
+
+        } else {
+            node = call;
+        }
+
+        node = call;
     }
 }

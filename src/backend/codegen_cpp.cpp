@@ -381,10 +381,13 @@ namespace graphit {
 
             oss << "operator() (";
 
+            if (mir_context_->eager_priority_update_edge_function_name == func_decl->name){
 
-            // if this is a priority update edge function for EagerPriorityUpdate with and without merge
-            // Then we need to insert an extra argument local bins
-            oss << "vector<vector<NodeID>>& local_bins, ";
+
+                // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+                // Then we need to insert an extra argument local bins
+                oss << "vector<vector<NodeID>>& local_bins, ";
+            }
 
             bool printDelimiter = false;
 

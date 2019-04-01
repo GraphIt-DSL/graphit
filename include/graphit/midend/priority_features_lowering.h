@@ -42,10 +42,10 @@ namespace graphit {
 
 
         // use the schedule to set the type for MIR::PriorityQeueuType and PriorityQueueAllocExpr
-        struct LowerPriorityQueueTypeandAllocExpr : public mir::MIRVisitor {
+        struct LowerPriorityRelatedTypeAndExpr : public mir::MIRVisitor {
             using mir::MIRVisitor::visit;
 
-            LowerPriorityQueueTypeandAllocExpr(MIRContext *mir_context, Schedule *schedule)
+            LowerPriorityRelatedTypeAndExpr(MIRContext *mir_context, Schedule *schedule)
                     : mir_context_(mir_context), schedule_(schedule) {};
 
             void visit(mir::PriorityQueueType::Ptr priority_queue_type) {
@@ -94,6 +94,23 @@ namespace graphit {
 
         };
 
+        //lowers a few special call expressions that updates the priority
+        struct LowerPriorityUpdateOperatorRewriter : public mir::MIRRewriter {
+            using mir::MIRRewriter::visit;
+
+            LowerPriorityUpdateOperatorRewriter(Schedule *schedule, MIRContext *mir_context) : schedule_(
+                    schedule), mir_context_(mir_context) {
+
+            }
+
+            virtual void visit(mir::Call::Ptr call);
+
+
+            Schedule *schedule_;
+            MIRContext *mir_context_;
+
+        };
+
 
         void lower();
 
@@ -103,6 +120,9 @@ namespace graphit {
         MIRContext *mir_context_ = nullptr;
 
     };
+
+
+
 }
 
 
