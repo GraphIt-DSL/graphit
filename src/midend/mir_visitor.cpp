@@ -315,5 +315,11 @@ namespace graphit {
         void MIRVisitor::visit(std::shared_ptr<OrderedProcessingOperator> op) {
             op->while_cond_expr->accept(this);
         }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperator> op) {
+            op->priority_vector->accept(this);
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+        }
     }
 }

@@ -443,6 +443,9 @@ namespace graphit {
         };
 
 
+
+
+
         struct CompareAndSwapStmt : public AssignStmt {
             Expr::Ptr compare_val_expr;
             std::string tracking_var_;
@@ -668,6 +671,23 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+
+        struct PriorityUpdateOperator : public Call {
+            Expr::Ptr priority_queue;
+            //the vector that stores
+            Expr::Ptr priority_vector;
+            //the node whose priority is going to be updated
+            Expr::Ptr destination_node_id;
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
 
         struct LoadExpr : public Expr {
             Expr::Ptr file_name;

@@ -345,5 +345,12 @@ namespace graphit {
             node = op;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperator> op) {
+            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
+            op->priority_queue = rewrite<Expr>(op->priority_queue);
+            op->priority_vector = rewrite<Expr>(op->priority_vector);
+
+        }
+
     }
 }

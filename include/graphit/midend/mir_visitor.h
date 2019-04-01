@@ -97,6 +97,10 @@ namespace graphit {
 
 	    struct OrderedProcessingOperator;
 
+	    struct PriorityUpdateOperator;
+	    struct PriorityUpdateOperatorMin;
+	    struct PriorityUpdateOperatorSum;
+
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>) {};
 
@@ -223,8 +227,14 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<OrderedProcessingOperator>);
 
+			virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
 
-        protected:
+//			virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
+//
+//			virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
+
+
+		protected:
             std::shared_ptr<MIRNode> node;
             LabelScope label_scope_;
             std::shared_ptr<FuncDecl> enclosing_func_decl_ = nullptr;

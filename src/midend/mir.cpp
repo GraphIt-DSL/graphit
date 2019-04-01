@@ -81,6 +81,23 @@ namespace graphit {
             return node;
         }
 
+
+        void PriorityUpdateOperator::copy(MIRNode::Ptr node) {
+            auto expr = to<mir::PriorityUpdateOperator>(node);
+            Call::copy(node);
+            destination_node_id = expr->destination_node_id;
+            priority_queue = expr->priority_queue;
+            priority_vector = expr->priority_vector;
+        }
+
+
+        MIRNode::Ptr PriorityUpdateOperator::cloneNode() {
+            const auto node = std::make_shared<PriorityUpdateOperator>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
         void LoadExpr::copy(MIRNode::Ptr node) {
             Expr::copy(node);
             auto expr = to<mir::LoadExpr>(node);
