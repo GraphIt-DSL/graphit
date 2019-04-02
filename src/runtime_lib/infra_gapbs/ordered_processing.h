@@ -4,15 +4,18 @@
 #include "graph.h"
 #include "eager_priority_queue.h"
 
-const size_t kMaxBin = numeric_limits<size_t>::max()/2;
+
+using namespace std;
+
+const size_t kMaxBin = std::numeric_limits<size_t>::max()/2;
 
 
 
 template <typename PriorityT_>
-struct update_priority_min
+struct updatePriorityMin
 {
   void operator()(EagerPriorityQueue<PriorityT_>* pq, 
-  					vector<vector<NodeID> >& local_bins, 
+  					vector<vector<NodeID> >& local_bins,
   					NodeID dst, PriorityT_ old_val, 
 		  PriorityT_ new_val){
     if (new_val < old_val) {
@@ -79,7 +82,7 @@ template< class Priority, class EdgeApplyFunc , class WhileCond>
         NodeID u = frontier[i];
 	//TODO: need to refactor to use user supplied filtering on the source node
         //if (src_filter(u)) { //hard code this into the library
-	if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
+	if (pq->priorities_[u] >= pq->delta_*pq->get_current_priority()){
           for (WNode wn : g.out_neigh(u)) {
              edge_apply(local_bins, u, wn.v, wn.w);
           }
@@ -118,8 +121,8 @@ template< class Priority, class EdgeApplyFunc , class WhileCond>
       
       #pragma omp barrier
     }
-    #pragma omp single
-    cout << "order processing took " << iter << " iterations" << endl;
+    //#pragma omp single
+    //cout << "order processing took " << iter << " iterations" << endl;
   }//end of pragma omp parallel   
   
 
@@ -166,7 +169,7 @@ template<class Priority,  class WhileCond, class EdgeApplyFunc >
         NodeID u = frontier[i];
 	//TODO: need to refactor to use user supplied filtering on the source node
         //if (src_filter(u)) {
-	if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
+	if (pq->priorities_[u] >= pq->delta_*pq->get_current_priority()){
           for (WNode wn : g.out_neigh(u)) {
              edge_apply(local_bins, u, wn.v, wn.w);
           }
@@ -185,7 +188,7 @@ template<class Priority,  class WhileCond, class EdgeApplyFunc >
         for (size_t i=0; i < cur_bin_size; i++) {
           NodeID u = cur_bin_copy[i];
           //if (src_filter(u)) {
-	  if (pq->priorities_[u] == pq->delta_*pq->get_current_priority()){
+	  if (pq->priorities_[u] >= pq->delta_*pq->get_current_priority()){
               for (WNode wn : g.out_neigh(u)) {  
                  edge_apply(local_bins, u, wn.v, wn.w);
               }
@@ -223,8 +226,8 @@ template<class Priority,  class WhileCond, class EdgeApplyFunc >
       
       #pragma omp barrier
     }
-    #pragma omp single
-    cout << "took " << iter << " iterations" << endl;
+    //#pragma omp single
+    //cout << "took " << iter << " iterations" << endl;
   }//end of pragma omp parallel   
   
 

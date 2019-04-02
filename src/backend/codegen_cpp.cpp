@@ -586,6 +586,24 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::Call::Ptr call_expr) {
+
+        bool call_on_built_in_priority_queue = false;
+        std::string priority_queue_name = "";
+
+        //check if this is a call on priority queue
+        if (mir_context_->getPriorityQueueDecl() != nullptr){
+            auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
+            auto target_name = target_name_expr->var.getName();
+            priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+            if (target_name == priority_queue_name){
+                call_on_built_in_priority_queue = true;
+            }
+        }
+
+
+        if (call_on_built_in_priority_queue){
+            oss << priority_queue_name << "->";
+        }
         oss << call_expr->name;
 
 
@@ -603,17 +621,35 @@ namespace graphit {
 
         oss << "(";
 
-        bool printDelimiter = false;
 
-        for (auto arg : call_expr->args) {
-            if (printDelimiter) {
-                oss << ", ";
+        if (!call_on_built_in_priority_queue){
+            bool printDelimiter = false;
+
+            for (auto arg : call_expr->args) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
             }
-            arg->accept(this);
-            printDelimiter = true;
+
+            oss << ") ";
+        } else {
+            //ignore the first argument if it is working on a priority queue
+            // generate pq.finished() style code for priority queue
+
+            bool printDelimiter = false;
+
+            for (int i = 1; i < call_expr->args.size(); i++){
+                auto arg = call_expr->args[i];
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
+            }
         }
 
-        oss << ") ";
     };
 
     /**
@@ -1204,20 +1240,21 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
         printIndent();
-        oss << "OrderedProcessingWithNoMerge(";
-        oss << "&" << ordered_op->priority_queue_name << ", ";
+        oss << "OrderedProcessingOperatorNoMerge(";
+        oss << ordered_op->priority_queue_name << ", ";
         ordered_op->graph_name->accept(this);
         oss << ", ";
 
         //lambda function for while condition
         oss << "[&]()->bool{return ";
         ordered_op->while_cond_expr->accept(this);
-        oss << ";}, ";
+        oss << ");}, ";
 
-        //the user defined edge update function
+        //the user defined edge update function, instantiated with a functor
         // augmented with local_bins argument,
-        oss << ordered_op->edge_update_func  << ", ";
+        oss << ordered_op->edge_update_func  << "(), ";
         ordered_op->optional_source_node->accept(this);
+
         oss << ");" << std::endl;
     }
 
@@ -1231,16 +1268,10 @@ namespace graphit {
             oss << " > ";
         }
 
-        if (mir_context_->isFunction(priority_update_op->name)) {
-            auto mir_func_decl = mir_context_->getFunction(priority_update_op->name);
-            if (mir_func_decl->isFunctor)
-                oss << "()";
-        }
-
+        oss << "()"; //this should be a functor
         oss << "(";
 
         auto priority_queue_name_expr = priority_update_op->args[0];
-        oss << "&";
         priority_queue_name_expr->accept(this);
         oss << ", ";
 
@@ -1249,7 +1280,7 @@ namespace graphit {
                 mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
             // if this is a priority update edge function for EagerPriorityUpdate with and without merge
             // Then we need to insert an extra argument local bins
-            oss << "vector<vector<NodeID>>& local_bins, ";
+            oss << "local_bins, ";
         }
 
         bool printDelimiter = false;

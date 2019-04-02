@@ -14,7 +14,7 @@
 using namespace std;
 
 const WeightT kDistInf = numeric_limits<WeightT>::max()/2;
-const size_t kMaxBin = numeric_limits<size_t>::max()/2;
+//const size_t kMaxBin = numeric_limits<size_t>::max()/2;
 
 
 // Compares against simple serial implementation

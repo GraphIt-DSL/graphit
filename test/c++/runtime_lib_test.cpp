@@ -5,7 +5,6 @@
 #include <gtest.h>
 #include "intrinsics.h"
 #include "infra_gapbs/graph_verifier.h"
-#include "infra_gapbs/ordered_processing.h"
 
 
 
@@ -215,7 +214,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
     auto edge_update_func = [&](vector<vector<NodeID> >& local_bins, NodeID src, NodeID dst, WeightT wt) {
         WeightT old_dist = dist_array[dst];
         WeightT new_dist = dist_array[src] + wt;
-        update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
+        updatePriorityMin<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
     OrderedProcessingOperatorWithMerge(&pq, g, while_cond_func, edge_update_func, 1000,  source);
@@ -232,17 +231,16 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingWithMergeTest){
 // test compilation of the C++ version of SSSP using eager priority queue
 TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
 
-    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel");
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/4.wel");
     WeightT* dist_array = new WeightT[g.num_nodes()];
     for (int i = 0; i < g.num_nodes(); i++){
         dist_array[i] = kDistInf;
     }
 
-    NodeID source = 2;
+    NodeID source = 0;
     dist_array[source] = 0;
-
-    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
-    WeightT input_delta = 2;
+    int delta = 3;
+    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array, delta);
 
     auto while_cond_func = [&]()->bool{
         return !pq.finished();
@@ -252,7 +250,7 @@ TEST_F(RuntimeLibTest, SSSPOrderProcessingNoMergeTest){
     auto edge_update_func = [&](vector<vector<NodeID> >& local_bins, NodeID src, NodeID dst, WeightT wt) {
         WeightT old_dist = dist_array[dst];
         WeightT new_dist = dist_array[src] + wt;
-        update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
+        updatePriorityMin<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
     OrderedProcessingOperatorNoMerge(&pq, g,  while_cond_func, edge_update_func,  source);
@@ -278,8 +276,8 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
     NodeID dest = 3;
     dist_array[source] = 0;
 
-    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
-    WeightT input_delta = 2;
+    WeightT input_delta = 3;
+    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array, input_delta);
 
     auto while_cond_func = [&]()->bool{
             return !pq.finishedNode(dest);
@@ -289,7 +287,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingNoMergeTest){
     auto edge_update_func = [&](vector<vector<NodeID> >& local_bins, NodeID src, NodeID dst, WeightT wt) {
         WeightT old_dist = dist_array[dst];
         WeightT new_dist = dist_array[src] + wt;
-        update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
+        updatePriorityMin<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
     OrderedProcessingOperatorNoMerge(&pq, g, [&]()->bool{return !pq.finishedNode(dest); },
@@ -318,8 +316,8 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
     NodeID dest = 3;
     dist_array[source] = 0;
 
-    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array);
     WeightT input_delta = 2;
+    EagerPriorityQueue<WeightT> pq = EagerPriorityQueue<WeightT>(dist_array, input_delta);
 
     auto while_cond_func = [&]()->bool{
         return !pq.finishedNode(dest);
@@ -329,7 +327,7 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
     auto edge_update_func = [&](vector<vector<NodeID> >& local_bins, NodeID src, NodeID dst, WeightT wt) {
         WeightT old_dist = dist_array[dst];
         WeightT new_dist = dist_array[src] + wt;
-        update_priority_min<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
+        updatePriorityMin<WeightT>()(&pq, local_bins, dst, old_dist, new_dist);
     };
 
     OrderedProcessingOperatorWithMerge(&pq, g, while_cond_func, edge_update_func, 1000, source);

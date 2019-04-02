@@ -1,6 +1,6 @@
 element Vertex end
 element Edge end
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.wel");
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/4.wel");
 const vertices : vertexset{Vertex} = edges.getVertices();
 const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 const pq: priority_queue{Vertex}(int);
@@ -10,12 +10,20 @@ func updateEdge(src : Vertex, dst : Vertex, weight : int)
     pq.updatePriorityMin(dst, dist[dst], new_dist);
 end
 
+func printDist(v : Vertex)
+    print dist[v];
+end
+
 func main()
-    var start_vertex : Vertex = 1;
+    var start_vertex : Vertex = 0;
+    dist[start_vertex] = 0;
     pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
     while (pq.finished() == false)
          var frontier : vertexsubset = pq.dequeue_lowest_priority(); % dequeue_ready_set()
          #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
          delete frontier;
     end
+
+    #s2# vertices.apply(printDist);
+
 end

@@ -20,6 +20,8 @@
 #include <curses.h>
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
+#include "infra_gapbs/ordered_processing.h"
+
 #include "edgeset_apply_functions.h"
 
 #include "infra_ligra/ligra/ligra.h"
