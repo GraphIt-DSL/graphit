@@ -1239,6 +1239,11 @@ namespace graphit {
 
         oss << "(";
 
+        auto priority_queue_name_expr = priority_update_op->args[0];
+        oss << "&";
+        priority_queue_name_expr->accept(this);
+        oss << ", ";
+
 
         if(mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
                 mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
@@ -1249,7 +1254,9 @@ namespace graphit {
 
         bool printDelimiter = false;
 
-        for (auto arg : priority_update_op->args) {
+        //start from index 1, so printed the first argument of priority queue name earlier
+        for (int i = 1; i < priority_update_op->args.size(); i++) {
+            auto arg = priority_update_op->args[i];
             if (printDelimiter) {
                 oss << ", ";
             }

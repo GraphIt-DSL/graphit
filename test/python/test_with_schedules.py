@@ -181,9 +181,14 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def sssp_verified_test(self, input_file_name, use_separate_algo_file=True):
+    def sssp_verified_test(self, input_file_name, use_separate_algo_file=True, use_delta_stepping=False):
         if use_separate_algo_file:
-            self.basic_compile_test_with_separate_algo_schedule_files("sssp.gt", input_file_name)
+            # just use the regular Bellman-Ford based source file
+            if not use_delta_stepping:
+                self.basic_compile_test_with_separate_algo_schedule_files("sssp.gt", input_file_name)
+            # use delta stepping source file
+            else:
+                self.basic_compile_test_with_separate_algo_schedule_files("delta_stepping.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
@@ -202,6 +207,7 @@ class TestGraphitCompiler(unittest.TestCase):
                 break;
         self.assertEqual(test_flag, True)
         os.chdir("bin")
+
 
     def pr_verified_test(self, input_file_name, use_separate_algo_file=False, use_segment_argv=False):
         if use_separate_algo_file:
@@ -461,10 +467,10 @@ class TestGraphitCompiler(unittest.TestCase):
 	    self.eigenvector_centrality_verified_test("eigenvector_centrality_DensePull_parallel.gt", True)
 
     def test_closeness_centrality_unweighted_hybrid_parallel(self):
-        self.closeness_centrality_unweighted_test("closeness_centrality_unweighted_hybrid_parallel.gt",True)	
-    
+        self.closeness_centrality_unweighted_test("closeness_centrality_unweighted_hybrid_parallel.gt",True)
+
     def test_closeness_centrality_weighted_hybrid_parallel(self):
-        self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt",True)	
+        self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt",True)
 
     def test_bc_SparsePushDensePull_basic(self):
         self.bc_basic_compile_test("bc_SparsePushDensePull.gt", True);
@@ -490,7 +496,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
-
+    def test_delta_stepping_eager(self):
+        self.sssp_verified_test("delta_stepping_eager_no_merge.gt", True, True);
 
 if __name__ == '__main__':
 
@@ -506,13 +513,14 @@ if __name__ == '__main__':
             use_numa = True
             print ("using numa")
             del sys.argv[sys.argv.index("numa")]
-    
-    unittest.main()
+
+    #comment out if want to enable a specific test only
+    #unittest.main()
 
     #used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePush_verified'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_delta_stepping_eager'))
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
 

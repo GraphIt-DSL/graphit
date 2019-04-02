@@ -437,7 +437,7 @@ protected:
 
                              "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
                              "  var new_dist : int = dist[src] + weight; "
-                             "  pq.updatePriorityMin(dst, new_dist, dist[dst]); "
+                             "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
                              "end\n"
                              "func main() "
                              "  var start_vertex : Vertex = 1;"
