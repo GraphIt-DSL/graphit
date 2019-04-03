@@ -430,7 +430,7 @@ protected:
 
         const char* delta_stepping_char = ("element Vertex end\n"
                              "element Edge end\n"
-                             "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
                              "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
                              "const pq: priority_queue{Vertex}(int);"
@@ -440,7 +440,7 @@ protected:
                              "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
                              "end\n"
                              "func main() "
-                             "  var start_vertex : Vertex = 0;"
+                             "  var start_vertex : int = atoi(argv[2]);"
                              "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                              "  while (pq.finished() == false) "
                              "    var frontier : vertexsubset = pq.dequeue_lowest_priority(); % dequeue_ready_set() \n"

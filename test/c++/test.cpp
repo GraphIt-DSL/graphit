@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 //
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdateWithMerge";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdateArgv";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdateArgv";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";

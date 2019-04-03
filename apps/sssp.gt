@@ -19,7 +19,7 @@ func main()
         vertices.apply(reset);
         var n : int = edges.getVertices();
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-	var start_vertex : int = atoi(argv[2]);
+	    var start_vertex : int = atoi(argv[2]);
         frontier.addVertex(start_vertex); %add source vertex
         SP[start_vertex] = 0;
 

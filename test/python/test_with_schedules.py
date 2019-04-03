@@ -508,7 +508,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
 
     def test_delta_stepping_eager_no_merge_argv1(self):
-        self.sssp_verified_test("priority_update_eager_no_merge_argv3.gt", True, True, True);
+        self.sssp_verified_test("priority_update_eager_no_merge_argv1.gt", True, True, True);
 
     def test_delta_stepping_eager_with_merge(self):
         self.sssp_verified_test("priority_update_eager_with_merge.gt", True, True);

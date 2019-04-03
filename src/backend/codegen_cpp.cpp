@@ -592,11 +592,13 @@ namespace graphit {
 
         //check if this is a call on priority queue
         if (mir_context_->getPriorityQueueDecl() != nullptr){
-            auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
-            auto target_name = target_name_expr->var.getName();
-            priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
-            if (target_name == priority_queue_name){
-                call_on_built_in_priority_queue = true;
+            if (call_expr->args.size() > 0 && mir::isa<mir::VarExpr>(call_expr->args[0])) {
+                auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
+                auto target_name = target_name_expr->var.getName();
+                priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+                if (target_name == priority_queue_name){
+                    call_on_built_in_priority_queue = true;
+                }
             }
         }
 
