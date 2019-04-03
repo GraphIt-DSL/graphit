@@ -459,12 +459,12 @@ namespace pbbso {
   template<typename E>
   E* new_array(size_t n) {
     E* r = new_array_no_init<E>(n);
-    if (!std::is_trivially_default_constructible<E>::value) {
+    //if (!std::is_trivially_default_constructible<E>::value) {
       if (n > 2048)
 	parallel_for (size_t i = 0; i < n; i++) new ((void*) (r+i)) E;
       else
 	for (size_t i = 0; i < n; i++) new ((void*) (r+i)) E;
-    }
+      //}
     return r;
   }
 
@@ -472,12 +472,12 @@ namespace pbbso {
   template<typename E>
   void delete_array(E* A, size_t n) {
     // C++14 -- suppored by gnu C++11
-    if (!std::is_trivially_destructible<E>::value) {
+    //if (!std::is_trivially_destructible<E>::value) {
       if (n > 2048)
 	parallel_for (size_t i = 0; i < n; i++) A[i].~E();
       else
 	for (size_t i = 0; i < n; i++) A[i].~E();
-    }
+      //}
     free(A);
   }
 
