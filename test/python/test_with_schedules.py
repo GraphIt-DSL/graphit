@@ -181,7 +181,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def sssp_verified_test(self, input_file_name, use_separate_algo_file=True, use_delta_stepping=False):
+    def sssp_verified_test(self, input_file_name,
+                           use_separate_algo_file=True,
+                           use_delta_stepping=False,
+                           use_delta_from_argv=False):
         if use_separate_algo_file:
             # just use the regular Bellman-Ford based source file
             if not use_delta_stepping:
@@ -192,7 +195,12 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             self.basic_compile_test(input_file_name)
         os.chdir("..");
-        cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
+
+        if (use_delta_from_argv):
+            cmd = "OMP_PLACES=sockets ./bin/test.o 2" + " > verifier_input"
+        else:
+            cmd = "OMP_PLACES=sockets ./bin/test.o" + " > verifier_input"
+
         print (cmd)
         subprocess.call(cmd, shell=True)
 
@@ -499,6 +507,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
 
+    def test_delta_stepping_eager_no_merge_argv1(self):
+        self.sssp_verified_test("priority_update_eager_no_merge_argv3.gt", True, True, True);
+
     def test_delta_stepping_eager_with_merge(self):
         self.sssp_verified_test("priority_update_eager_with_merge.gt", True, True);
 
@@ -523,7 +534,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_with_merge'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_no_merge_argv1'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

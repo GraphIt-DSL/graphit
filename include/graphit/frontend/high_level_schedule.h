@@ -158,6 +158,10 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyPriorityUpdateDelta(std::string apply_label, int delta);
 
+                //configures the delta parameter for delta-stepping
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyPriorityUpdateDelta(std::string apply_label, string delta_argv);
+
                 //configures the parameter for merge threshold for buckets
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configBucketMergeThreshold(std::string apply_label, int delta);
@@ -194,7 +198,7 @@ namespace graphit {
 
                 void initGraphIterationSpaceIfNeeded(string label);
                 int extractIntegerFromString(string input_string);
-
+                int extractArgvNumFromStringArg(string argv_str);
             };
 
 
