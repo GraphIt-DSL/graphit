@@ -74,18 +74,23 @@ namespace graphit {
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
+                if (apply_schedule->second.delta > 1) {
+                    mir_context_->delta_ = apply_schedule->second.delta;
+                }
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
+                if (apply_schedule->second.delta > 1) {
+                    mir_context_->delta_ = apply_schedule->second.delta;
+                }
+                if (apply_schedule->second.merge_threshold > 0){
+                    mir_context_->bucket_merge_threshold_ = apply_schedule->second.merge_threshold;
+                }
             } else {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
-            }
-
-            if (apply_schedule->second.delta > 1) {
-                mir_context_->delta_ = apply_schedule->second.delta;
             }
 
         } else {
@@ -142,12 +147,10 @@ namespace graphit {
 
             if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
                 ordered_op->priority_udpate_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
-                //TODO: set the merge threshold
-                //ordered_op->merge_threshold = mir_context_->
+                ordered_op->bucket_merge_threshold = mir_context_->bucket_merge_threshold_;
             } else {
                 ordered_op->priority_udpate_type = mir::PriorityUpdateType::EagerPriorityUpdate;
             }
-
 
 
             //use the schedule to set

@@ -293,7 +293,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false};
+                           0, -100, 1, false, 0};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -306,9 +306,11 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "num_segment") {
                 (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
-            }  else if (apply_schedule_str == "delta") {
+            } else if (apply_schedule_str == "delta") {
                 (*schedule_->apply_schedules)[apply_label].delta = parameter;
-            }else {
+            } else if (apply_schedule_str == "bucket_merge_threshold"){
+                (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
+            } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
             }
@@ -342,7 +344,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false};
+                           0, -100, 1, false, 0};
             }
 
 
@@ -374,6 +376,9 @@ namespace graphit {
             } else if (apply_schedule_str == "eager_priority_update") {
                 (*schedule_->apply_schedules)[apply_label].priority_update_type
                         = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
+            } else if (apply_schedule_str == "eager_priority_update_with_merge") {
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -842,6 +847,11 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label, int delta) {
             return setApply(apply_label, "delta", delta);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, int threshold) {
+            return setApply(apply_label, "bucket_merge_threshold", threshold);
         }
 
     }

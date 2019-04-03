@@ -335,12 +335,16 @@ namespace graphit {
         // used by numa optimization
         std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
 
+
+        // Ordered GraphIt additions
+
         // The type of priority update that the schedule has specified
         // We assume that only one type of priority is happening right now
         // By default, it is NoPriorityUpdate
         mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
 
         int delta_ = 1;
+        int bucket_merge_threshold_ = 0;
         mir::Expr::Ptr optional_starting_source_node = nullptr;
         std::string eager_priority_update_edge_function_name = "";
     };

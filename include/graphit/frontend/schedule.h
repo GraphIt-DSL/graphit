@@ -198,6 +198,7 @@ namespace graphit {
             int num_segment;
             int delta;
             bool numa_aware;
+            int merge_threshold;
         };
 
         /**

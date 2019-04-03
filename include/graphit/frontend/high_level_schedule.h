@@ -158,6 +158,10 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyPriorityUpdateDelta(std::string apply_label, int delta);
 
+                //configures the parameter for merge threshold for buckets
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configBucketMergeThreshold(std::string apply_label, int delta);
+
 
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial

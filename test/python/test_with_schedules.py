@@ -496,8 +496,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
-    def test_delta_stepping_eager(self):
+    def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("delta_stepping_eager_no_merge.gt", True, True);
+
+    def test_delta_stepping_eager_with_merge(self):
+        self.sssp_verified_test("delta_stepping_eager_with_merge.gt", True, True);
 
 if __name__ == '__main__':
 
@@ -520,7 +523,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_with_merge'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

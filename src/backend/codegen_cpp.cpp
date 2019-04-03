@@ -1240,7 +1240,13 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
         printIndent();
-        oss << "OrderedProcessingOperatorNoMerge(";
+        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdate){
+            oss << "OrderedProcessingOperatorNoMerge(";
+        } else if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+            oss << "OrderedProcessingOperatorWithMerge(";
+        } else {
+            std::cout << "Error: Unsupported Schedule for OrderedProcessingOperator" << std::endl;
+        }
         oss << ordered_op->priority_queue_name << ", ";
         ordered_op->graph_name->accept(this);
         oss << ", ";
@@ -1253,6 +1259,13 @@ namespace graphit {
         //the user defined edge update function, instantiated with a functor
         // augmented with local_bins argument,
         oss << ordered_op->edge_update_func  << "(), ";
+
+
+        // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
+        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+            oss << ordered_op->bucket_merge_threshold << ", ";
+        }
+
         ordered_op->optional_source_node->accept(this);
 
         oss << ");" << std::endl;

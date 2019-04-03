@@ -1324,6 +1324,7 @@ namespace graphit {
             std::string priority_queue_name;
             Expr::Ptr optional_source_node;
             Expr::Ptr graph_name;
+            int bucket_merge_threshold;
 
             //need to know if the merge optimization is needed or not
             PriorityUpdateType priority_udpate_type;
