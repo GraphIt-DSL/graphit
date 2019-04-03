@@ -74,7 +74,7 @@ namespace graphit {
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
-                if (apply_schedule->second.delta > 1) {
+                if (apply_schedule->second.delta != 1) {
                     mir_context_->delta_ = apply_schedule->second.delta;
                 }
             } else if (apply_schedule->second.priority_update_type
@@ -83,10 +83,10 @@ namespace graphit {
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
-                if (apply_schedule->second.delta > 1) {
+                if (apply_schedule->second.delta != 1) {
                     mir_context_->delta_ = apply_schedule->second.delta;
                 }
-                if (apply_schedule->second.merge_threshold > 0){
+                if (apply_schedule->second.merge_threshold != 0){
                     mir_context_->bucket_merge_threshold_ = apply_schedule->second.merge_threshold;
                 }
             } else {

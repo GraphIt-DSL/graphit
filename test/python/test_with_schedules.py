@@ -497,10 +497,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
     def test_delta_stepping_eager_no_merge(self):
-        self.sssp_verified_test("delta_stepping_eager_no_merge.gt", True, True);
+        self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
 
     def test_delta_stepping_eager_with_merge(self):
-        self.sssp_verified_test("delta_stepping_eager_with_merge.gt", True, True);
+        self.sssp_verified_test("priority_update_eager_with_merge.gt", True, True);
 
 if __name__ == '__main__':
 
