@@ -1747,7 +1747,7 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyPriorityUpdate("s1", "eager_priority_update");
-    program->configApplyPriorityUpdateDelta("s1", "argv[1]");
+    program->configApplyPriorityUpdateDelta("s1", "argv[3]");
     //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
@@ -1760,6 +1760,18 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMerge) {
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configApplyPriorityUpdateDelta("s1", 2);
     program->configBucketMergeThreshold("s1", 1000);
+    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[3]");
     //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }

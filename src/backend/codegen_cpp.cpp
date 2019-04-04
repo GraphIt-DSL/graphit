@@ -1270,7 +1270,12 @@ namespace graphit {
 
         // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
         if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
-            oss << ordered_op->bucket_merge_threshold << ", ";
+
+            if (ordered_op->bucket_merge_threshold < 0){
+                oss << " stoi(argv[" << -1*ordered_op->bucket_merge_threshold << "]), ";
+            } else {
+                oss << ordered_op->bucket_merge_threshold << ", ";
+            }
         }
 
         ordered_op->optional_source_node->accept(this);

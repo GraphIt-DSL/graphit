@@ -293,7 +293,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 0};
+                           0, -100, 1, false, 1000};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -344,7 +344,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 0};
+                           0, -100, 1, false, 1000};
             }
 
 
@@ -869,6 +869,11 @@ namespace graphit {
             return setApply(apply_label, "delta", argv_num);
         }
 
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, string threshold_argv) {
+            int argv_num = extractArgvNumFromStringArg(threshold_argv);
+            return setApply(apply_label, "bucket_merge_threshold", argv_num);
+        }
 
     }
 }
