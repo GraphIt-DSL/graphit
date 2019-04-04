@@ -163,7 +163,7 @@ namespace graphit {
 
     // One example of a pattern that we are detecting
     //"  while (pq.finished() == false) "
-    //"    var frontier : vertexsubset = pq.dequeue_lowest_priority(); % dequeue_ready_set() \n"
+    //"    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
     //"    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
     //"    delete frontier; "
 
