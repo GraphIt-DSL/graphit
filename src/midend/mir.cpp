@@ -826,7 +826,7 @@ namespace graphit {
 
         void UpdatePriorityUpdateBucketsCall::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<UpdatePriorityUpdateBucketsCall>(node);
-            priority_queue = expr->priority_queue;
+            priority_queue_name = expr->priority_queue_name;
             lambda_name = expr->lambda_name;
             modified_vertexsubset_name = expr->modified_vertexsubset_name;
         }
@@ -840,7 +840,7 @@ namespace graphit {
         void UpdatePriorityExternCall::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<UpdatePriorityExternCall>(node);
             input_set = expr->input_set;
-            priority_queue = expr->priority_queue;
+            priority_queue_name = expr->priority_queue_name;
             output_set_name = expr->output_set_name;
             lambda_name = expr->lambda_name;
             apply_function_name = expr->apply_function_name;

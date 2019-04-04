@@ -333,13 +333,12 @@ namespace graphit {
 
 
         void MIRRewriter::visit(UpdatePriorityUpdateBucketsCall::Ptr stmt) {
-            stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
+            //stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
             node = stmt;
         }
 
         void MIRRewriter::visit(UpdatePriorityExternCall::Ptr stmt) {
             stmt->input_set = rewrite<Expr>(stmt->input_set);
-            stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
             node = stmt;
         }
 

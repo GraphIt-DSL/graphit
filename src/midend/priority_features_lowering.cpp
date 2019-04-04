@@ -102,20 +102,29 @@ namespace graphit {
     void PriorityFeaturesLower::LowerUpdatePriorityExternVertexSetApplyExpr::visit(mir::ExprStmt::Ptr expr_stmt) {
         if (mir::isa<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr)) {
 
-/*
-		mir::UpdatePriorityExternCall::Ptr call_stmt = make_shared<mir::UpdatePriorityExternCall>();
-		call_stmt->input_set = expr_stmt->target;
-		call_stmt->apply_function_name = expr_stmt->apply_function_name;
+		mir::to<mir::PriorityQueueType>(mir_context_->getPriorityQueueDecl()->type)->priority_update_type = mir::PriorityUpdateType::ExternPriorityUpdate;
+
+		mir::UpdatePriorityExternVertexSetApplyExpr::Ptr expr = mir::to<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr);
+
+		mir::UpdatePriorityExternCall::Ptr call_stmt = std::make_shared<mir::UpdatePriorityExternCall>();
+		call_stmt->input_set = expr->target;
+		call_stmt->apply_function_name = expr->input_function_name;
 		call_stmt->lambda_name = mir_context_->getUniqueNameCounterString();
 		call_stmt->output_set_name = mir_context_->getUniqueNameCounterString();	
+		call_stmt->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;	
 		
 			
-		mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = make_shared<mir::UpdatePriorityUpdateBucketsCall>();
+		mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = std::make_shared<mir::UpdatePriorityUpdateBucketsCall>();
 		update_call->lambda_name = call_stmt->lambda_name;
-		call_stmt->modified_vertexsubset_name = call_stmt->output_set_name;
+		update_call->modified_vertexsubset_name = call_stmt->output_set_name;
+		update_call->priority_queue_name = call_stmt->priority_queue_name;	
+	
+		mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+		stmt_block->insertStmtEnd(call_stmt);
+		stmt_block->insertStmtEnd(update_call);
 		
-		mir::StmtBlock::Ptr stmt_block = make_shared<mir::StmtBlock>();
-*/
+		node = stmt_block;
+		return;
         }
         node = expr_stmt;
     }

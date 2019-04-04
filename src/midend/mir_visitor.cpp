@@ -304,11 +304,10 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<UpdatePriorityUpdateBucketsCall> call_expr) {
-            call_expr->priority_queue->accept(this);
+            //call_expr->priority_queue->accept(this);
         }
 
         void MIRVisitor::visit(std::shared_ptr<UpdatePriorityExternCall> call_expr) {
-            call_expr->priority_queue->accept(this);
             call_expr->input_set->accept(this);
         }
 

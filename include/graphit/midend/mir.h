@@ -1183,7 +1183,8 @@ namespace graphit {
             EagerPriorityUpdate, // GAPBS refactored runtime lib
             EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
             ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
-            ReduceBeforePriorityUpdate //Julienne refactored runtime lib
+            ReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+	    ExternPriorityUpdate, // Julienne refactored runtime lib
         };
 
 
@@ -1278,7 +1279,7 @@ namespace graphit {
         };
 
         struct UpdatePriorityUpdateBucketsCall : Stmt {
-            Expr::Ptr priority_queue;
+            std::string priority_queue_name;
             std::string lambda_name;
             std::string modified_vertexsubset_name;
 
@@ -1298,7 +1299,7 @@ namespace graphit {
 
         struct UpdatePriorityExternCall : Stmt {
             Expr::Ptr input_set;
-            Expr::Ptr priority_queue;
+            std::string priority_queue_name;
             std::string output_set_name;
             std::string lambda_name;
             std::string apply_function_name;

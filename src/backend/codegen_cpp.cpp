@@ -591,7 +591,7 @@ namespace graphit {
         std::string priority_queue_name = "";
 
         //check if this is a call on priority queue
-        if (mir_context_->getPriorityQueueDecl() != nullptr){
+        if (mir_context_->getPriorityQueueDecl() != nullptr && mir::isa<mir::VarExpr>(call_expr->args[0])){
             auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
             auto target_name = target_name_expr->var.getName();
             priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
@@ -1212,8 +1212,12 @@ namespace graphit {
             priority_queue_type->priority_type->accept(this);
             oss << " >* ";
 
-        } else {
-            std::cout << "PriorityQueue type not supported yet" << std::endl;
+        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate ) { // Add rest of the cases here as required
+            oss << "julienne::PriorityQueue < ";
+	    priority_queue_type->priority_type->accept(this);
+	    oss << " >* ";
+	} else {
+           std::cout << "PriorityQueue type not supported yet" << std::endl;
         }
     }
 
