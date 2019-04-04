@@ -591,12 +591,14 @@ namespace graphit {
         std::string priority_queue_name = "";
 
         //check if this is a call on priority queue
-        if (mir_context_->getPriorityQueueDecl() != nullptr && mir::isa<mir::VarExpr>(call_expr->args[0])){
-            auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
-            auto target_name = target_name_expr->var.getName();
-            priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
-            if (target_name == priority_queue_name){
-                call_on_built_in_priority_queue = true;
+        if (mir_context_->getPriorityQueueDecl() != nullptr){
+            if (call_expr->args.size() > 0 && mir::isa<mir::VarExpr>(call_expr->args[0])) {
+                auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
+                auto target_name = target_name_expr->var.getName();
+                priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+                if (target_name == priority_queue_name){
+                    call_on_built_in_priority_queue = true;
+                }
             }
         }
 
@@ -1233,7 +1235,12 @@ namespace graphit {
             oss << "> ( ";
             oss << priority_queue_alloc_expr->vector_function;
             oss << ", ";
-            oss << priority_queue_alloc_expr->delta;
+
+            if (priority_queue_alloc_expr->delta < 0 ){
+                oss << " stoi(argv[" << -1*priority_queue_alloc_expr->delta << "])";
+            } else {
+                oss << priority_queue_alloc_expr->delta;
+            }
             oss << "); ";
 
         } else {
@@ -1267,7 +1274,12 @@ namespace graphit {
 
         // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
         if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
-            oss << ordered_op->bucket_merge_threshold << ", ";
+
+            if (ordered_op->bucket_merge_threshold < 0){
+                oss << " stoi(argv[" << -1*ordered_op->bucket_merge_threshold << "]), ";
+            } else {
+                oss << ordered_op->bucket_merge_threshold << ", ";
+            }
         }
 
         ordered_op->optional_source_node->accept(this);

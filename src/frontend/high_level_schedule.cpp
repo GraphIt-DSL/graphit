@@ -293,7 +293,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 0};
+                           0, -100, 1, false, 1000};
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -344,7 +344,7 @@ namespace graphit {
                            ApplySchedule::PullFrontierType::BOOL_MAP,
                            ApplySchedule::PullLoadBalance::VERTEX_BASED,
                            ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 0};
+                           0, -100, 1, false, 1000};
             }
 
 
@@ -706,6 +706,26 @@ namespace graphit {
         }
 
 
+        // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
+        //regex argv_regex ("argv\\[(\\d)\\]");
+
+        // here we do a hack and uses a negative integer to denote the integer argument to argv
+        // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
+        // to use as number of segments
+        // the user input argv string has to match a pattern argv[integer]
+        //if (regex_match(num_segment_argv, argv_regex)){
+        int high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(string argv_str) {
+            int argv_number;
+            if (argv_str.rfind("argv[", 0) == 0){
+                argv_number = -1*extractIntegerFromString(argv_str);
+            } else {
+                std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
+                throw "Unsupported Schedule!";
+            }
+            return argv_number;
+        }
+
+
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdate(std::string apply_label, std::string config) {
             initGraphIterationSpaceIfNeeded(apply_label);
@@ -741,20 +761,7 @@ namespace graphit {
                         throw "Unsupported Schedule!";
                     }
 
-                    // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
-                    //regex argv_regex ("argv\\[(\\d)\\]");
-
-                    // here we do a hack and uses a negative integer to denote the integer argument to argv
-                    // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
-                    // to use as number of segments
-                    // the user input argv string has to match a pattern argv[integer]
-                    //if (regex_match(num_segment_argv, argv_regex)){
-                    if (num_segment_argv.rfind("argv[", 0) == 0){
-                        argv_number = -1*extractIntegerFromString(num_segment_argv);
-                    } else {
-                        std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
-                        throw "Unsupported Schedule!";
-                    }
+                    argv_number = extractArgvNumFromStringArg(num_segment_argv);
 
                     //gis is not really used right now
                     gis.num_ssg = argv_number;
@@ -852,6 +859,20 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, int threshold) {
             return setApply(apply_label, "bucket_merge_threshold", threshold);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label,
+                                                                                 std::string delta_argv) {
+
+            int argv_num = extractArgvNumFromStringArg(delta_argv);
+            return setApply(apply_label, "delta", argv_num);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, string threshold_argv) {
+            int argv_num = extractArgvNumFromStringArg(threshold_argv);
+            return setApply(apply_label, "bucket_merge_threshold", argv_num);
         }
 
     }
