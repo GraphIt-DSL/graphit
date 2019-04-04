@@ -449,6 +449,27 @@ protected:
                              "  end\n"
                              "end");
 
+        const char* ppsp_char = ("element Vertex end\n"
+                                           "element Edge end\n"
+                                           "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                                           "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                           "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                           "const pq: priority_queue{Vertex}(int);"
+
+                                           "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                                           "  var new_dist : int = dist[src] + weight; "
+                                           "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
+                                           "end\n"
+                                           "func main() "
+                                           "  var start_vertex : int = atoi(argv[2]);"
+                                            "  var dst_vertex : int = atoi(argv[3]);"
+                                            "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
+                                           "  while (pq.finishedNode(dst_vertex) == false) "
+                                           "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                           "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                                           "    delete frontier; "
+                                           "  end\n"
+                                           "end");
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -462,6 +483,7 @@ protected:
         bc_str_ = string(bc_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
         delta_stepping_str_ = string(delta_stepping_char);
+        ppsp_str_ = string(ppsp_char);
     }
 
     virtual void TearDown() {
@@ -530,6 +552,8 @@ protected:
     string bc_str_;
     string closeness_centrality_weighted_str_;
     string delta_stepping_str_;
+    string ppsp_str_;
+
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1737,7 +1761,6 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyPriorityUpdate("s1", "eager_priority_update");
     program->configApplyPriorityUpdateDelta("s1", 2);
-    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
@@ -1748,7 +1771,6 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyPriorityUpdate("s1", "eager_priority_update");
     program->configApplyPriorityUpdateDelta("s1", "argv[3]");
-    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
@@ -1760,7 +1782,6 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMerge) {
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configApplyPriorityUpdateDelta("s1", 2);
     program->configBucketMergeThreshold("s1", 1000);
-    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
@@ -1772,6 +1793,26 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMergeArgv)
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configApplyPriorityUpdateDelta("s1", 2);
     program->configBucketMergeThreshold("s1", "argv[3]");
-    //EXPECT_EQ(0,0); //Just a dummy test for now, setting up the API
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateArgv) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    program->configApplyPriorityUpdateDelta("s1", "argv[4]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[4]");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
