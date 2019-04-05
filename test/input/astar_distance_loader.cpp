@@ -3,15 +3,7 @@
 #include <queue>
 #include <vector>
 
-#include "infra_gapbs/benchmark.h"
-#include "infra_gapbs/builder.h"
-#include "infra_gapbs/command_line.h"
-#include "infra_gapbs/graph.h"
-#include "infra_gapbs/platform_atomics.h"
-#include "infra_gapbs/pvector.h"
-#include "infra_gapbs/timer.h"
-#include "infra_gapbs/bitmap.h"
-#include "vertexsubset.h"
+#include "intrinsics.h"
 
 struct Coords {
   double lat;
