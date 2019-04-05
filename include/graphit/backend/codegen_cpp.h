@@ -94,6 +94,8 @@ namespace graphit {
         virtual void visit(mir::OrderedProcessingOperator::Ptr ordered_op);
         virtual void visit(mir::PriorityUpdateOperatorMin::Ptr min_update_op);
 
+        virtual void visit(mir::UpdatePriorityExternCall::Ptr);
+	virtual void visit(mir::UpdatePriorityUpdateBucketsCall::Ptr);
     private:
         void genIncludeStmts();
 

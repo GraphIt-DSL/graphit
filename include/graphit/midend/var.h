@@ -33,6 +33,9 @@ namespace graphit {
 
             bool isInitialized(){
                 return is_initialized_;
+            } 
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(this);
             }
         };
 

@@ -278,6 +278,8 @@ namespace graphit {
             return nullptr;
         }
 
+	std::vector<mir::PriorityQueueAllocExpr::Ptr> priority_queue_alloc_list_;
+
         //private:
 
         // maps element type to an input file that reads the set from

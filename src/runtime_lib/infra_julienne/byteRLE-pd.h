@@ -237,7 +237,7 @@ template <class T>
 /*
   Compresses the first edge, writing target-source and a sign bit.
 */
-long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
+static inline long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
   uchar* saveStart = start;
   long saveOffset = offset;
 
@@ -394,7 +394,7 @@ long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degre
 /*
   Compresses the edge set in parallel.
 */
-uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static inline uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   long *charsUsedArr = newA(long, n);
@@ -455,7 +455,7 @@ typedef pair<uintE,intE> intEPair;
   Compresses the first edge, writing target-source and a sign bit.
 */
 
-int numBytesSigned (intE x) {
+static inline int numBytesSigned (intE x) {
   if(x < ONE_BYTE_SIGNED_MAX && x > ONE_BYTE_SIGNED_MIN) return 1;
   else return 4;
 }
@@ -707,7 +707,7 @@ template <class T>
   }
 }
 
-long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, uintE edgeI, int numBytes, int numBytesWeight, uintT runlength) {
+static inline long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, uintE edgeI, int numBytes, int numBytesWeight, uintT runlength) {
   //header
   uchar header = numBytes - 1;
   if(numBytesWeight == 4) header |= 4; //use 3 bits for info on bytes needed
@@ -740,7 +740,7 @@ long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, u
   return curOffset;
 }
 
-long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, intEPair *savedEdges) {
+static inline long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, intEPair *savedEdges) {
   if (degree > 0) {
     long startOffset = currentOffset;
     long numChunks = 1+(degree-1)/PARALLEL_DEGREE;
@@ -862,7 +862,7 @@ long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uin
   return currentOffset;
 }
 
-uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static inline uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   long *charsUsedArr = newA(long, n);

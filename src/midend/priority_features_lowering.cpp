@@ -14,6 +14,14 @@ namespace graphit {
         // assuming we only have one priority queue at the moment
         auto schedule_finder = PriorityUpdateScheduleFinder(mir_context_, schedule_);
 
+        // lowers the extern apply expression - This has to be done before lower_priority_queue_type_and_alloc_expr because this gathers some parameters into mir_context_ like the schedules
+        auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
+        for (auto function : functions) {
+            lower_extern_apply_expr.rewrite(function);
+        }
+
+
+
         //this visitor sets the priorty update type, and delta in mir_context
         for (auto function : functions) {
             function->accept(&schedule_finder);
@@ -25,9 +33,17 @@ namespace graphit {
         for (auto constant : mir_context_->getConstants()) {
             constant->accept(&lower_priority_queue_type_and_alloc_expr);
         }
+        for (auto constant : mir_context_->const_edge_sets_) {
+	    constant->accept(&lower_priority_queue_type_and_alloc_expr);
+	}
         for (auto function : functions) {
             function->accept(&lower_priority_queue_type_and_alloc_expr);
         }
+	for (auto function : mir_context_->getExternFunctionList()) {
+	    function->accept(&lower_priority_queue_type_and_alloc_expr);
+	}
+
+       
 
         // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
         auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
@@ -41,11 +57,6 @@ namespace graphit {
             lower_priority_update_rewriter.rewrite(function);
         }
 
-        // lowers the extern apply expression
-        auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
-        for (auto function : functions) {
-            lower_extern_apply_expr.rewrite(function);
-        }
 
     }
 
@@ -103,14 +114,15 @@ namespace graphit {
         if (mir::isa<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr)) {
 
 		mir::to<mir::PriorityQueueType>(mir_context_->getPriorityQueueDecl()->type)->priority_update_type = mir::PriorityUpdateType::ExternPriorityUpdate;
+		mir_context_->priority_update_type = mir::PriorityUpdateType::ExternPriorityUpdate;
 
 		mir::UpdatePriorityExternVertexSetApplyExpr::Ptr expr = mir::to<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr);
 
 		mir::UpdatePriorityExternCall::Ptr call_stmt = std::make_shared<mir::UpdatePriorityExternCall>();
 		call_stmt->input_set = expr->target;
 		call_stmt->apply_function_name = expr->input_function_name;
-		call_stmt->lambda_name = mir_context_->getUniqueNameCounterString();
-		call_stmt->output_set_name = mir_context_->getUniqueNameCounterString();	
+		call_stmt->lambda_name = "generate_lamda_function_" + mir_context_->getUniqueNameCounterString();
+		call_stmt->output_set_name = "generated_vertex_subset_" +mir_context_->getUniqueNameCounterString();	
 		call_stmt->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;	
 		
 			

@@ -15,6 +15,7 @@
 namespace graphit {
     namespace mir {
 
+        class Var;
         struct MIRNode;
 
         struct Program;
@@ -102,6 +103,8 @@ namespace graphit {
 	    struct PriorityUpdateOperatorSum;
 
         struct MIRVisitor {
+            virtual void visit(Var*);
+
             virtual void visit(std::shared_ptr<Stmt>) {};
 
             virtual void visit(std::shared_ptr<NameNode>);

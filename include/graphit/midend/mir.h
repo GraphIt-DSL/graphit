@@ -265,8 +265,19 @@ namespace graphit {
 
         };
 
+        // OG Additions - moved here because VertexSetType needs it too
+        enum PriorityUpdateType {
+            NoPriorityUpdate, //default type
+            EagerPriorityUpdate, // GAPBS refactored runtime lib
+            EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
+            ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+            ReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+	    ExternPriorityUpdate, // Julienne refactored runtime lib
+        };
         struct VertexSetType : public Type {
             ElementType::Ptr element;
+
+	    PriorityUpdateType priority_update_type = NoPriorityUpdate;
 
             typedef std::shared_ptr<VertexSetType> Ptr;
 
@@ -749,11 +760,15 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+        
 
+        
         struct EdgeSetLoadExpr : public Expr {
             Expr::Ptr file_name;
             bool is_weighted_ = false;
+            PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+     
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetLoadExpr>());
@@ -1175,16 +1190,6 @@ namespace graphit {
             virtual void copy(MIRNode::Ptr);
 
             virtual MIRNode::Ptr cloneNode();
-        };
-
-        // OG Additions
-        enum PriorityUpdateType {
-            NoPriorityUpdate, //default type
-            EagerPriorityUpdate, // GAPBS refactored runtime lib
-            EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
-            ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
-            ReduceBeforePriorityUpdate, //Julienne refactored runtime lib
-	    ExternPriorityUpdate, // Julienne refactored runtime lib
         };
 
 

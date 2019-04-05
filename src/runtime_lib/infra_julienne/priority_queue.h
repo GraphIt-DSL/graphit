@@ -73,5 +73,8 @@ public:
   inline bool finished(void) {
       return cur_priority_ == buckets_->null_bkt;
   }
-
+  inline julienne::vertexSubset dequeue_ready_set() {
+	auto bucket = next_bucket();
+	return bucket.identifiers;
+  }
 };

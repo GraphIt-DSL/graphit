@@ -13,6 +13,11 @@
 namespace graphit {
     namespace mir {
 
+	void MIRVisitor::visit(Var* var) {
+		if (var->getType())
+			var->getType()->accept(this);
+	}
+
         void MIRVisitor::visit(Expr::Ptr expr) {
             expr->accept(this);
         };
@@ -74,10 +79,10 @@ namespace graphit {
 
         void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
 
-//            for (auto arg : func_decl->args) {
-//                arg->accept(this);
-//            }
-//            func_decl->result->accept(this);
+            for (auto arg : func_decl->args) {
+                arg.accept(this);
+            }
+            func_decl->result.accept(this);
 
             enclosing_func_decl_ = func_decl;
             if (func_decl->body && func_decl->body->stmts) {

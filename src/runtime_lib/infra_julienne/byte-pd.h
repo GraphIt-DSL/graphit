@@ -187,7 +187,7 @@ template <class T>
 /*
   Compresses the first edge, writing target-source and a sign bit.
 */
-long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
+static inline long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
   uchar* saveStart = start;
   long saveOffset = offset;
 
@@ -282,7 +282,7 @@ long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degre
 /*
   Compresses the edge set in parallel.
 */
-uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static inline uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   long *charsUsedArr = newA(long, n);
@@ -374,7 +374,7 @@ long sequentialCompressWeightedEdgeSet
 /*
   Compresses the weighted edge set in parallel.
 */
-uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static inline uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   long *charsUsedArr = newA(long, n);

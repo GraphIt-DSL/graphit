@@ -6,6 +6,53 @@
 #define GRAPHIT_INTRINSICS_H_H
 
 
+
+/* Julinne requirements -- should be in this order only */
+#include <algorithm>
+//#include <cilk/cilk.h>
+//#include <cilk/cilk_api.h>
+#include <cinttypes>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits.h>
+#include <limits>
+#include <malloc.h>
+#include <math.h>
+//#include <omp.h>
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <tuple>
+#include <type_traits>
+#include <unistd.h>
+namespace julienne {
+#include "infra_julienne/priority_queue.h"
+#include "infra_julienne/parallel.h"
+#include "infra_julienne/graph.h"
+}
+
+static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0, 0, NULL);
+
+#undef INT_T_MAX
+#undef UINT_T_MAX
+
+/* Julienne requirements end */
+
+
 #include <vector>
 
 #include "infra_gapbs/builder.h"
@@ -27,46 +74,14 @@
 #include "infra_ligra/ligra/ligra.h"
 
 #include "vertexsubset.h"
-#include <algorithm>
-//#include <cilk/cilk.h>
-//#include <cilk/cilk_api.h>
-#include <cinttypes>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <fcntl.h>
-#include <fstream>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <limits.h>
-#include <limits>
-//#include <malloc.h>
-#include <math.h>
-//#include <omp.h>
-#include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <tuple>
-#include <type_traits>
-#include <unistd.h>
+
 namespace julienne {
-#include "infra_julienne/priority_queue.h"
-#include "infra_julienne/parallel.h"
-#include "infra_julienne/graph.h"
 #include "infra_julienne/IO.h"
 #include "infra_julienne/edgeMapReduce.h"
 }
+
 template <typename T>
-T builtin_sum(T* input_vector, int num_elem){
+static T builtin_sum(T* input_vector, int num_elem){
     //Serial Code for summation
     //T output_sum = 0;
     //for (int i = 0; i < num_elem; i++){
@@ -80,29 +95,29 @@ T builtin_sum(T* input_vector, int num_elem){
 
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
-WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
+static WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     WeightedBuilder weighted_builder (cli);
     WGraph g = weighted_builder.MakeGraph();
     return g;
 }
 
-Graph builtin_loadEdgesFromFile(std::string file_name){
+static Graph builtin_loadEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     Builder builder (cli);
     Graph g = builder.MakeGraph();
     return g;
 }
 
-int builtin_getVertices(Graph &edges){
+static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
 
-int builtin_getVertices(WGraph &edges){
+static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
-int * builtin_getOutDegrees(Graph &edges){
+static int * builtin_getOutDegrees(Graph &edges){
     int * out_degrees  = new int [edges.num_nodes()];
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
@@ -110,7 +125,7 @@ int * builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
-pvector<int> builtin_getOutDegreesPvec(Graph &edges){
+static pvector<int> builtin_getOutDegreesPvec(Graph &edges){
     pvector<int> out_degrees (edges.num_nodes(), 0);
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
@@ -118,19 +133,21 @@ pvector<int> builtin_getOutDegreesPvec(Graph &edges){
     return out_degrees;
 }
 
-int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
+static int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
     return vertex_subset->size();
 }
 
-void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
+static void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
 
-template <typename T> void builtin_append (std::vector<T>* vec, T element){
+template <typename T> 
+static void builtin_append (std::vector<T>* vec, T element){
     vec->push_back(element);
 }
 
-template <typename T> T builtin_pop (std::vector<T>* vec){
+template <typename T> 
+static T builtin_pop (std::vector<T>* vec){
     T last_element = vec->back();
     vec->pop_back();
     return last_element;
@@ -143,14 +160,14 @@ template <typename T> T builtin_pop (std::vector<T>* vec){
 //    return (float)(usec.time_since_epoch().count())/1000;
 //}
 
-struct timeval start_time_;
-struct timeval elapsed_time_;
+static struct timeval start_time_;
+static struct timeval elapsed_time_;
 
-void startTimer(){
+static void startTimer(){
     gettimeofday(&start_time_, NULL);
 }
 
-float stopTimer(){
+static float stopTimer(){
     gettimeofday(&elapsed_time_, NULL);
     elapsed_time_.tv_sec  -= start_time_.tv_sec;
     elapsed_time_.tv_usec -= start_time_.tv_usec;
@@ -158,12 +175,13 @@ float stopTimer(){
 
 }
 
-Graph builtin_transpose(Graph &graph){
+static Graph builtin_transpose(Graph &graph){
     return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
 }
 
 
-template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
+template<typename APPLY_FUNC> 
+static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
    if (vertex_subset->is_dense){
        parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
            if(vertex_subset->bool_map_[v]){
@@ -178,9 +196,25 @@ template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* ve
 }
 
 template<typename OBJECT_TYPE>
-void deleteObject(OBJECT_TYPE* object) {
+static void deleteObject(OBJECT_TYPE* object) {
    if(object)
        delete object;
+}
+
+typedef julienne::graph<julienne::symmetricVertex> julienne_graph_type;
+
+static inline julienne_graph_type builtin_loadJulienneEdgesFromFile(std::string filename) {
+	char * fname = (char*) filename.c_str();
+	return julienne::readGraph<julienne::symmetricVertex>(fname, false, true, false, false);
+}
+
+template <typename T>
+static inline double to_double(T t) {
+	return (double)t;
+}
+
+static void deleteObject(julienne::vertexSubset set) {
+	set.del();
 }
 
 #endif //GRAPHIT_INTRINSICS_H_H

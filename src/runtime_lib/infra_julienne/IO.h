@@ -85,7 +85,7 @@ inline bool isSpace(char c) {
   }
 }
 
-_seq<char> mmapStringFromFile(const char *filename) {
+static inline _seq<char> mmapStringFromFile(const char *filename) {
   struct stat sb;
   int fd = open(filename, O_RDONLY);
   if (fd == -1) {
@@ -124,7 +124,7 @@ _seq<char> mmapStringFromFile(const char *filename) {
   return _seq<char>(p, n);
 }
 
-_seq<char> readStringFromFile(char *fileName) {
+static inline _seq<char> readStringFromFile(char *fileName) {
   ifstream file (fileName, ios::in | ios::binary | ios::ate);
   if (!file.is_open()) {
     std::cout << "Unable to open file: " << fileName << std::endl;
@@ -140,7 +140,7 @@ _seq<char> readStringFromFile(char *fileName) {
 }
 
 // parallel code for converting a string to words
-words stringToWords(char *Str, long n) {
+static inline words stringToWords(char *Str, long n) {
   {parallel_for (long i=0; i < n; i++)
       if (isSpace(Str[i])) Str[i] = 0; }
 
@@ -236,7 +236,7 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
 
   if(!isSymmetric) {
     uintT* tOffsets = newA(uintT,n);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = INT_T_MAX;}
+    {parallel_for(long i=0;i<n;i++) tOffsets[i] = (uintT)INT_T_MAX;}
 #ifndef WEIGHTED
     intPair* temp = newA(intPair,m);
 #else
@@ -385,7 +385,7 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
 
   if(!isSymmetric) {
     uintT* tOffsets = newA(uintT,n);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = INT_T_MAX;}
+    {parallel_for(long i=0;i<n;i++) tOffsets[i] = (uintT)INT_T_MAX;}
 #ifndef WEIGHTED
     intPair* temp = newA(intPair,m);
 #else

@@ -409,7 +409,7 @@ namespace pbbso {
   }
 
   // a 32-bit hash function
-  uint32_t hash32(uint32_t a) {
+  static inline uint32_t hash32(uint32_t a) {
     a = (a+0x7ed55d16) + (a<<12);
     a = (a^0xc761c23c) ^ (a>>19);
     a = (a+0x165667b1) + (a<<5);
@@ -420,7 +420,7 @@ namespace pbbso {
   }
 
   // from numerical recipes
-  uint64_t hash64(uint64_t u )
+  static inline uint64_t hash64(uint64_t u )
   {
     uint64_t v = u * 3935559000370003845 + 2691343689449507681;
     v ^= v >> 21;

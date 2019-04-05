@@ -56,8 +56,17 @@ namespace graphit {
                 priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
                 priority_queue_alloc_expr->delta = mir_context_->delta_;
                 mir_context_->optional_starting_source_node = priority_queue_alloc_expr->starting_node;
+		mir_context_->priority_queue_alloc_list_.push_back(priority_queue_alloc_expr);
             }
-
+            
+            void visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
+	        edgeset_load_expr->priority_update_type = mir_context_->priority_update_type;
+	    }
+            
+            void visit(mir::VertexSetType::Ptr vertex_set_type) {
+		vertex_set_type->priority_update_type = mir_context_->priority_update_type;
+	    }
+	    
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
         };

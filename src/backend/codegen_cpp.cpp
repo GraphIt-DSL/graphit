@@ -181,7 +181,41 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else {
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) { // Add other checks here
+	    printIndent();
+	    oss << "{" << std::endl;
+            indent();
+	    printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << " = ";
+	    //assign_stmt->expr->accept(this);
+	    auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
+	    if (edgeset_load_expr->is_weighted_) {
+                oss << "builtin_loadWeightedEdgesFromFile ( ";
+                edgeset_load_expr->file_name->accept(this);
+		oss << " + std::string(\".wel\")"; 
+                oss << ") ";
+            } else {
+                oss << "builtin_loadEdgesFromFile ( ";
+                edgeset_load_expr->file_name->accept(this);
+		oss << " + std::string(\".el\")"; 
+                oss << ") ";
+            }	
+	    oss << ";" << std::endl;
+            // Now load the Julienne type graph
+	    printIndent();
+	    assign_stmt->lhs->accept(this);
+	    oss << ".julienne_graph";
+            oss << " = ";
+            oss << "builtin_loadJulienneEdgesFromFile(";	    
+	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
+	    oss << ");" << std::endl;
+            
+	    dedent();
+	    printIndent();
+	    oss << "}" << std::endl;
+	    
+	} else {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -307,6 +341,16 @@ namespace graphit {
             oss << var_decl->name << " = ";
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
+/*	} else if (mir::isa<mir::VertexSetType>(var_decl->type) && mir::to<mir::VertexSetType>(var_decl->type)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {
+	    printIndent();
+	    oss << "julienne::vertexSubset ";
+	    oss << var_decl->name << " ";
+	    if (var_decl->initVal != nullptr) {
+	        oss << "= ";
+	        var_decl->initVal->accept(this);
+	    }
+	    oss << ";" <<std::endl;
+*/
         } else {
             printIndent();
 
@@ -650,6 +694,7 @@ namespace graphit {
                 arg->accept(this);
                 printDelimiter = true;
             }
+	    oss << ") ";
         }
 
     };
@@ -1119,7 +1164,10 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
-        oss << "VertexSubset<int> *  ";
+	if (vertexset_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate)
+	    oss << "julienne::vertexSubset ";
+	else 
+	    oss << "VertexSubset<int> *  ";
     }
 
     void CodeGenCPP::visit(mir::ListType::Ptr list_type) {
@@ -1243,7 +1291,30 @@ namespace graphit {
             }
             oss << "); ";
 
-        } else {
+        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {  // Add other types here 
+	    oss << "new julienne::PriorityQueue <";
+	    priority_queue_alloc_expr->priority_type->accept(this);
+	    oss << " > ( ";
+	    
+	    oss << mir_context_->getEdgeSets()[0]->name;
+	    oss << ".julienne_graph.n, ";
+	    
+	    oss << priority_queue_alloc_expr->vector_function;
+            oss << ", ";
+
+	    oss << "(julienne::bucket_order)";
+            oss << priority_queue_alloc_expr->bucket_ordering;
+            oss << ", ";
+            
+	    oss << "(julienne::priority_order)";
+	    oss << priority_queue_alloc_expr->priority_ordering;
+	    oss << ", ";
+
+	    oss << "128";
+            
+            oss << ")";
+
+	} else {
             std::cout << "PriorityQueue constructor not supported yet" << std::endl;
         }
 
@@ -1326,4 +1397,67 @@ namespace graphit {
 
         oss << ") ";
     }
+
+
+    void CodeGenCPP::visit(mir::UpdatePriorityExternCall::Ptr extern_call) {
+//        printIndent();
+//	oss << "{" << std::endl;
+//	indent();
+        printIndent();
+	oss << "julienne::vertexSubset ";
+	oss << extern_call->output_set_name; 
+	oss << " = ";
+	oss << extern_call->apply_function_name;
+	oss << "( ";
+	extern_call->input_set->accept(this);
+	oss << ");" << std::endl;
+	
+	printIndent();
+	oss << "auto ";
+	oss << extern_call->lambda_name;
+	oss << " = ";
+
+	oss << "[&] (size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, ";
+	//mir::to<mir::PriorityQueueType>(mir_context_->getPriorityQueueDecl()->type)->priority_type->accept(this);
+
+	oss << "julienne::uintE";
+	oss << ">> {" << std::endl;
+	
+	indent();
+
+	printIndent();
+	oss << "const julienne::uintE v = ";
+	extern_call->input_set->accept(this);
+	oss << ".vtx(i);" << std::endl;
+	
+	printIndent();
+	oss << "const julienne::uintE bkt = ";
+	oss << extern_call->priority_queue_name;
+	oss << "->get_bucket(";
+	oss << mir_context_->priority_queue_alloc_list_[0]->vector_function;	
+	oss << "[v]);" << std::endl;
+
+	printIndent();
+	oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));" << std::endl;
+	
+	dedent();
+	printIndent();
+	oss << "};" << std::endl;
+	
+	
+//	dedent();
+//	printIndent();
+//	oss << "}" << std::endl;
+    }
+
+    void CodeGenCPP::visit(mir::UpdatePriorityUpdateBucketsCall::Ptr update_call) {
+        printIndent();
+	oss << update_call->priority_queue_name;
+	oss << "->update_buckets(";
+	oss << update_call->lambda_name;
+	oss << ", ";
+	oss << update_call->modified_vertexsubset_name;
+	oss << ".size());" << std::endl;
+    }
+
 }
