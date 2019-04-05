@@ -24,7 +24,9 @@
 #include <iostream>
 #include <limits.h>
 #include <limits>
+#if !defined __APPLE__ && !defined LOWMEM
 #include <malloc.h>
+#endif
 #include <math.h>
 //#include <omp.h>
 #include <sstream>
