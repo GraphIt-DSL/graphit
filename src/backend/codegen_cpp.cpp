@@ -1334,7 +1334,7 @@ namespace graphit {
         oss << ", ";
 
         //lambda function for while condition
-        oss << "[&]()->bool{return ";
+        oss << "[&]()->bool{return (";
         ordered_op->while_cond_expr->accept(this);
         oss << ");}, ";
 
