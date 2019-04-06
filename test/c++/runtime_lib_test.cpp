@@ -342,8 +342,10 @@ TEST_F(RuntimeLibTest, PPSPOrderProcessingWithMergeTest){
     EXPECT_EQ(PPSPVerifier(g, source, dest, dist), true);
 }
 
-// test compilation of the C++ version of AStar using eager priority queue
-TEST_F(RuntimeLibTest, AStar_test){
+TEST_F(RuntimeLibTest, AStar_load_graph){
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/monaco.bin");
+    WeightT* dist_array = new WeightT[g.num_nodes()];
+    std::cout << "number of nodes: " << g.num_nodes() << std::endl;
 
 }
 

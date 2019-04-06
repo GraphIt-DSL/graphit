@@ -441,6 +441,7 @@ protected:
                              "end\n"
                              "func main() "
                              "  var start_vertex : int = atoi(argv[2]);"
+                             " dist[start_vertex] = 0;"
                              "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                              "  while (pq.finished() == false) "
                              "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
@@ -463,6 +464,7 @@ protected:
                                            "func main() "
                                            "  var start_vertex : int = atoi(argv[2]);"
                                             "  var dst_vertex : int = atoi(argv[3]);"
+                                            " dist[start_vertex] = 0;"
                                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                                            "  while (pq.finishedNode(dst_vertex) == false) "
                                            "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
@@ -470,6 +472,37 @@ protected:
                                            "    delete frontier; "
                                            "  end\n"
                                            "end");
+
+        const char* astar_char = ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "extern func load_coords(filename: string, num_nodes: int);\n"
+                                 "extern func calculate_distance(source: Vertex, destination: Vertex) -> output: double;\n"
+                                 "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                 "const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                 "const pq: priority_queue{Vertex}(int);"
+
+                                 "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                                 "  var new_f_score : int = f_score[src] + weight; "
+                                 "  var changed : bool = writeMin(f_score[dst], new_f_score);"
+                                 "  if changed \n"
+                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst), g_score[src]);"
+                                 "    pq.updatePriorityMin(dst, g_score[dst], new_g_score); "
+                                 "  end\n"
+                                 "end\n"
+                                 "func main() "
+                                 "  var start_vertex : int = atoi(argv[2]);"
+                                 "  var dst_vertex : int = atoi(argv[3]);"
+                                 "  load_coords(argv[1]);"
+                                 "  pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);"
+                                 "  while (pq.finishedNode(dst_vertex) == false) "
+                                 "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                 "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                                 "    delete frontier; "
+                                 "  end\n"
+                                 "end");
+
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -484,6 +517,7 @@ protected:
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
         delta_stepping_str_ = string(delta_stepping_char);
         ppsp_str_ = string(ppsp_char);
+        astar_str_ = string(astar_char);
     }
 
     virtual void TearDown() {
@@ -553,6 +587,7 @@ protected:
     string closeness_centrality_weighted_str_;
     string delta_stepping_str_;
     string ppsp_str_;
+    string astar_str_;
 
 };
 
@@ -1808,6 +1843,18 @@ TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateArgv) {
 
 TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
     istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[4]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, AStarDeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (astar_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);

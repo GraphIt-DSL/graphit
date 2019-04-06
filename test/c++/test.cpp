@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
-//      ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SSSPOrderProcessingNoMergeTest";
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.AStar_load_graph";
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleBFSWithHyrbidDenseForwardSerialSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.AStarDeltaSteppingWithEagerPriorityUpdateWithMergeArgv";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
 //
 

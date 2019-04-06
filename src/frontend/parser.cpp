@@ -2556,7 +2556,6 @@ namespace graphit {
         //TODO: this one might need to be removed
         intrinsics_.push_back("sum");
 
-
         //library functions for edgeset
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
@@ -2578,6 +2577,10 @@ namespace graphit {
         decls.insert("floor", IdentType::FUNCTION);
         decls.insert("log", IdentType::FUNCTION);
         decls.insert("to_double", IdentType::FUNCTION);
+
+        decls.insert("max", IdentType::FUNCTION);
+        decls.insert("writeMin", IdentType::FUNCTION);
+
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {
