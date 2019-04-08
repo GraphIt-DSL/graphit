@@ -111,6 +111,26 @@ class TestGraphitCompiler(unittest.TestCase):
 
         # actual test cases
 
+
+    def astar_basic_exec_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
+        input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
+        input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
+        print ("current directory: " + os.getcwd())
+        if (use_separate_algo_file):
+            algo_file = input_algos_path + "astar.gt"
+            graphit_compile_cmd = "python graphitc.py -a " +  algo_file  + " -f " + input_schedules_path + input_file_name + " -o  test.cpp"
+            print (graphit_compile_cmd)
+            self.assertEqual(subprocess.call(graphit_compile_cmd, shell=True), 0)
+            # check if g++ compilation succeeded
+            self.assertEqual(
+                subprocess.call([self.cpp_compiler, self.compile_flags, "-g", "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
+            0)
+            self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
+        else:
+            print("not supporting default schedules with AStar yet")
+
+
+
     def bfs_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("bfs_with_filename_arg.gt", input_file_name)
@@ -528,6 +548,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_delta_stepping_eager_with_merge(self):
         self.ppsp_basic_exec_test("priority_update_eager_with_merge.gt", True);
 
+    def test_astar_eager_with_merge(self):
+        self.astar_basic_exec_test("priority_update_eager_with_merge.gt",
+                                   True,
+                                   [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                   [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
 if __name__ == '__main__':
 
     if sys.version_info[0] >= 3:
@@ -549,5 +575,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_with_merge'))
+    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

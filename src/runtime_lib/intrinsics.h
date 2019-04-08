@@ -100,6 +100,14 @@ static T builtin_sum(T* input_vector, int num_elem){
     return reduce_sum;
 }
 
+static int max(double val1, int val2){
+    return max(int(val1), val2);
+}
+
+static bool writeMin(int * val_array, int index, int old_val){
+    return writeMin(&val_array[index], old_val);
+}
+
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
 static WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
