@@ -8,6 +8,10 @@ const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 const pq: priority_queue{Vertex}(int);
 
+func printDist(v : Vertex)
+    print f_score[v];
+end
+
 func updateEdge(src : Vertex, dst : Vertex, weight : int)
     var new_f_score : int = f_score[src] + weight;
     var changed : bool = writeMin(f_score, dst, new_f_score);
@@ -19,7 +23,8 @@ end
 
 func main()
     var start_vertex : int = 0;
-    var dst_vertex : int = 5;
+    var dst_vertex : int = 4;
+    f_score[start_vertex] = 0;
     load_coords(argv[1], edges.getVertices());
     pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);
     while (pq.finishedNode(dst_vertex) == false)
@@ -27,4 +32,5 @@ func main()
            #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
            delete frontier;
      end
+     vertices.apply(printDist);
 end

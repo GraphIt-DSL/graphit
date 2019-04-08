@@ -1,6 +1,6 @@
 element Vertex end
 element Edge end
-const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/4.wel");
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 const pq: priority_queue{Vertex}(int);
@@ -16,7 +16,7 @@ end
 
 func main()
     var start_vertex : Vertex = 0;
-    var dst_vertex : Vertex = 2;
+    var dst_vertex : Vertex = 4;
 
     dist[start_vertex] = 0;
     pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);

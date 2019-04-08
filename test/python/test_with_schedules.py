@@ -112,7 +112,7 @@ class TestGraphitCompiler(unittest.TestCase):
         # actual test cases
 
 
-    def astar_basic_exec_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
+    def astar_verified_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
         input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
         input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
@@ -121,11 +121,25 @@ class TestGraphitCompiler(unittest.TestCase):
             graphit_compile_cmd = "python graphitc.py -a " +  algo_file  + " -f " + input_schedules_path + input_file_name + " -o  test.cpp"
             print (graphit_compile_cmd)
             self.assertEqual(subprocess.call(graphit_compile_cmd, shell=True), 0)
+            compile_cpp_cmd = [self.cpp_compiler, self.compile_flags, "-g", "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args
+            print(compile_cpp_cmd)
             # check if g++ compilation succeeded
-            self.assertEqual(
-                subprocess.call([self.cpp_compiler, self.compile_flags, "-g", "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
-            0)
-            self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
+            self.assertEqual(subprocess.call(compile_cpp_cmd), 0)
+            cmd = "./"+ self.executable_file_name + " " + extra_exec_args[0] + "> verifier_input"
+            print(cmd)
+            self.assertEqual(subprocess.call(cmd, shell=True), 0)
+
+            # invoke the PPSP verifier with starting point 0, end point 4
+            verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin -t verifier_input -r 0 -u 4"
+            print (verify_cmd)
+            proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+            test_flag = False
+            for line in iter(proc.stdout.readline, ''):
+                if line.rstrip().find("SUCCESSFUL") != -1:
+                    test_flag = True
+                    break;
+            self.assertEqual(test_flag, True)
+
         else:
             print("not supporting default schedules with AStar yet")
 
@@ -222,7 +236,7 @@ class TestGraphitCompiler(unittest.TestCase):
         print (cmd)
         subprocess.call(cmd, shell=True)
 
-        # invoke the BFS verifier
+        # invoke the SSSP verifier
         verify_cmd = "./bin/sssp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel -t verifier_input -r 0"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
@@ -338,16 +352,26 @@ class TestGraphitCompiler(unittest.TestCase):
         print (lines)
         self.assertEqual(float(lines[1].strip()), 15)
 
-    def ppsp_basic_exec_test(self, input_file_name, use_separate_algo_file=False):
+    def ppsp_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("ppsp_delta_stepping.gt",
                                                                       input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel  > verifier_input"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
 
+        # invoke the PPSP verifier with starting point 0, end point 4
+        verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel -t verifier_input -r 0 -u 4"
+        print (verify_cmd)
+        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline, ''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
 
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
@@ -543,16 +567,16 @@ class TestGraphitCompiler(unittest.TestCase):
         self.sssp_verified_test("priority_update_eager_with_merge.gt", True, True);
 
     def test_ppsp_delta_stepping_eager_no_merge(self):
-        self.ppsp_basic_exec_test("priority_update_eager_no_merge.gt", True);
+        self.ppsp_verified_test("priority_update_eager_no_merge.gt", True);
 
     def test_delta_stepping_eager_with_merge(self):
-        self.ppsp_basic_exec_test("priority_update_eager_with_merge.gt", True);
+        self.ppsp_verified_test("priority_update_eager_with_merge.gt", True);
 
     def test_astar_eager_with_merge(self):
-        self.astar_basic_exec_test("priority_update_eager_with_merge.gt",
-                                   True,
-                                   [self.root_test_input_dir + "astar_distance_loader.cpp"],
-                                   [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+        self.astar_verified_test("priority_update_eager_with_merge.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
 if __name__ == '__main__':
 
@@ -570,10 +594,10 @@ if __name__ == '__main__':
             del sys.argv[sys.argv.index("numa")]
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    # unittest.main()
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
+    unittest.TextTestRunner(verbosity=2).run(suite)
