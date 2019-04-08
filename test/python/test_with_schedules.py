@@ -594,10 +594,10 @@ if __name__ == '__main__':
             del sys.argv[sys.argv.index("numa")]
 
     # comment out if want to enable a specific test only
-    # unittest.main()
+    unittest.main()
 
     # used for enabling a specific test
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

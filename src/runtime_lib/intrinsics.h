@@ -104,8 +104,8 @@ static int max(double val1, int val2){
     return max(int(val1), val2);
 }
 
-static bool writeMin(int * val_array, int index, int old_val){
-    return writeMin(&val_array[index], old_val);
+static bool writeMin(int * val_array, int index, int new_val){
+    return writeMin(&val_array[index], new_val);
 }
 
 //For now, assume the weights are ints, this would be good enough for now

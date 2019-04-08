@@ -508,7 +508,9 @@ namespace graphit {
                 }else {
                     // regular constant declaration
                     //constant->accept(this);
-                    genScalarAlloc(constant);
+                    if(constant->initVal != nullptr){
+                        genScalarAlloc(constant);
+                    }
                 }
             }
 
