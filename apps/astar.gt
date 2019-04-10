@@ -26,12 +26,13 @@ func updateEdge(src : Vertex, dst : Vertex, weight : int)
 end
 
 func main()
+    var start_vertex : int = atoi(argv[2]);
+    dst_vertex = atoi(argv[3]);
+    load_coords(argv[1], edges.getVertices());
+
     for trail in 0:10
         startTimer();
         vertices.apply(reset);
-        var start_vertex : int = atoi(argv[2]);
-        dst_vertex = atoi(argv[3]);
-        load_coords(argv[1], edges.getVertices());
         f_score[start_vertex] = 0;
         g_score[start_vertex] = calculate_distance(start_vertex, dst_vertex);
         pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);
