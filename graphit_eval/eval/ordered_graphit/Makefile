@@ -60,4 +60,5 @@ cilk_only_cpps:
 
 clean:
 	rm cpps/*.cpp
-	rm bin/*
+	rm -r bin/*
+	rm -r compile*
