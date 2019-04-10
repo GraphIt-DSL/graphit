@@ -47,7 +47,11 @@ graphit_files:
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/astar.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_with_merge_argv4.gt -o cpps/astar_with_merge.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/astar.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_no_merge_argv4.gt -o cpps/astar_no_merge.cpp
 
-cpps:  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps} ${astar_cpps}
+astar:
+	$(PCC) $(OPENMP_FLAGS) -o astar_no_merge cpps/astar_no_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
+	$(PCC) $(OPENMP_FLAGS) -o astar_with_merge cpps/astar_with_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
+
+cpps:  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps} astar
 
 
 #$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
