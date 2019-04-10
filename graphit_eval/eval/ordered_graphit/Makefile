@@ -9,7 +9,7 @@ GRAPHIT_SCHEDULE_DIR= ../../../test/input_with_schedules
 
 ifdef GCC_PAR
 # compiling with gcc CILK and OPENMP
-PCC = g++
+PCC = g++-5.4
 CILK_FLAGS +=  -fcilkplus -lcilkrts -O2 -DCILK
 OPENMP_FLAGS += -DOPENMP -fopenmp -O3 
 
@@ -48,8 +48,8 @@ graphit_files:
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/astar.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_no_merge_argv4.gt -o cpps/astar_no_merge.cpp
 
 astar:
-	$(PCC) $(OPENMP_FLAGS) -o astar_no_merge cpps/astar_no_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
-	$(PCC) $(OPENMP_FLAGS) -o astar_with_merge cpps/astar_with_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
+	$(PCC) $(OPENMP_FLAGS) -o bin/astar_no_merge cpps/astar_no_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
+	$(PCC) $(OPENMP_FLAGS) -o bin/astar_with_merge cpps/astar_with_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
 
 cpps:  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps} astar
 
