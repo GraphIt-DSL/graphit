@@ -30,7 +30,11 @@
 #endif
 
 #include <math.h>
-//#include <omp.h>
+
+#if defined(OPENMP)
+#include <omp.h>
+#endif
+
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>

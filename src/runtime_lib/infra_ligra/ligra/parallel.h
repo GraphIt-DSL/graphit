@@ -80,7 +80,7 @@ static void setWorkers(int n) {
 
 //#define parallel_for _Pragma("omp parallel for ") for
 
-#define parallel_for _Pragma("omp parallel for ") for
+//#define parallel_for _Pragma("omp parallel for ") for
 //#define parallel_for _Pragma("omp parallel for schedule (dynamic, 64)") for
 
 #define parallel_for_1 _Pragma("omp parallel for schedule (static,1)") for
