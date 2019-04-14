@@ -33,17 +33,18 @@ template<class D>
 class PriorityQueue {
 
 public:
-
+  D* tracking_variable;
   explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
     
     //cout << "constructing a priority map from array" << endl;
     buckets_ = new buckets<D*>(n, priority_array, bkt_order, pri_order, total_buckets);
+    tracking_variable = priority_array;
     cur_priority_ = 0;
   }
 
 
   // get the prioirty of the current iteration (each iter has a priority)
-  uintE get_current_priority(){
+  D get_current_priority(){
     return cur_priority_;
   }
 
@@ -77,4 +78,15 @@ public:
 	auto bucket = next_bucket();
 	return bucket.identifiers;
   }
+  void updatePrioritySum(uintE a, int b, D c) {
+  
+  }
+  void updatePrioritySum(uintE a, int b) {
+  }
+  D* get_tracking_variable(void) {
+    return tracking_variable;
+  }
+  void deleteObject(void) {
+    delete this;
+  } 
 };

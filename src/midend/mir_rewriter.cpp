@@ -375,6 +375,12 @@ namespace graphit {
             op->destination_node_id = rewrite<Expr>(op->destination_node_id);
             op->priority_queue = rewrite<Expr>(op->priority_queue);
         }
+	
+	void MIRRewriter::visit(UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr ptr) {
+	    //visit(std::static_pointer_cast<EdgeSetApplyExpr>(ptr));
+            ptr->target = rewrite<Expr>(ptr->target);
+            node = ptr;
+	}
 
     }
 }

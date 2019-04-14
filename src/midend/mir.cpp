@@ -867,5 +867,18 @@ namespace graphit {
             node->copy(shared_from_this());
             return node;
         }
+
+	void UpdatePriorityEdgeCountEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<UpdatePriorityEdgeCountEdgeSetApplyExpr>(node);
+		lambda_name = op->lambda_name;
+		moved_object_name = op->moved_object_name;
+		EdgeSetApplyExpr::copy(node);	
+	}
+	MIRNode::Ptr UpdatePriorityEdgeCountEdgeSetApplyExpr::cloneNode() {
+		const auto node = std::make_shared<UpdatePriorityEdgeCountEdgeSetApplyExpr>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
     }
 }

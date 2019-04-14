@@ -9,8 +9,11 @@
 
 /* Julinne requirements -- should be in this order only */
 #include <algorithm>
-//#include <cilk/cilk.h>
-//#include <cilk/cilk_api.h>
+
+#ifdef CILK
+#include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
+#endif
 #include <cinttypes>
 #include <cmath>
 #include <cstddef>
@@ -53,7 +56,11 @@
 namespace julienne {
 #include "infra_julienne/priority_queue.h"
 #include "infra_julienne/parallel.h"
+template <typename X, typename Y>
+struct EdgeMap;
 #include "infra_julienne/graph.h"
+}
+namespace julienne {
 }
 
 static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0, 0, NULL);
@@ -136,10 +143,25 @@ static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
+template <typename T>
+static int builtin_getVertices(julienne::graph<T> &edges) {
+    return edges.n;
+}
+
+
 static int * builtin_getOutDegrees(Graph &edges){
     int * out_degrees  = new int [edges.num_nodes()];
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
+template <typename T>
+static int * builtin_getOutDegrees(julienne::graph<T> &edges) {
+    int * out_degrees = new int [edges.n];
+    for (unsigned int n = 0; n < edges.n; n++) {
+	out_degrees[n] = edges.V[n].degree;
     }
     return out_degrees;
 }
@@ -154,6 +176,10 @@ static pvector<int> builtin_getOutDegreesPvec(Graph &edges){
 
 static int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
     return vertex_subset->size();
+}
+
+static int builtin_getVertexSetSize(julienne::vertexSubset vs) {
+    return vs.size();
 }
 
 static void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){

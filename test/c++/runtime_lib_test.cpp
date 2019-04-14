@@ -389,7 +389,7 @@ TEST_F(RuntimeLibTest, KCore_test){
     while (finished != n) {
         auto active = pq->next_bucket().identifiers;
         finished += active.size();
-        julienne::vertexSubsetData<julienne::uintE> moved = em.template edgeMapCount<julienne::uintE>(active, apply_function);
+        julienne::vertexSubsetData<julienne::uintE> moved = em.edgeMapCount<julienne::uintE>(active, apply_function);
         pq->update_buckets(moved.get_fn_repr(), moved.size());
         moved.del();
         active.del();

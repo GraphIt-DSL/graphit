@@ -96,6 +96,9 @@ namespace graphit {
 
         virtual void visit(mir::UpdatePriorityExternCall::Ptr);
 	virtual void visit(mir::UpdatePriorityUpdateBucketsCall::Ptr);
+
+	virtual void visit(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr);
+
     private:
         void genIncludeStmts();
 
@@ -128,6 +131,8 @@ namespace graphit {
         void genScalarDecl(mir::VarDecl::Ptr var_decl);
 
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
+
+	void get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call);
     };
 }
 

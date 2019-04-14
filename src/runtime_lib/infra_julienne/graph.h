@@ -63,6 +63,8 @@ struct graph {
   uintE* flags;
   Deletable *D;
 
+  EdgeMap<uintE, vertex> *em;
+
 graph(vertex* _V, long _n, long _m, Deletable* _D) : V(_V), n(_n), m(_m),
   D(_D), flags(NULL), transposed(0) {}
 

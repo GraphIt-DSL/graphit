@@ -101,6 +101,7 @@ namespace graphit {
 	    struct PriorityUpdateOperator;
 	    struct PriorityUpdateOperatorMin;
 	    struct PriorityUpdateOperatorSum;
+	struct UpdatePriorityEdgeCountEdgeSetApplyExpr;
 
         struct MIRVisitor {
             virtual void visit(Var*);
@@ -236,6 +237,9 @@ namespace graphit {
 
 			virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
 
+
+            virtual void visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr>);
+	    
 
 		protected:
             std::shared_ptr<MIRNode> node;

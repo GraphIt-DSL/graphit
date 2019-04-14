@@ -313,6 +313,7 @@ namespace graphit {
             ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr> *vertex_element_type_list;
 
+	    PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetType> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1258,7 +1259,6 @@ namespace graphit {
 
         protected:
             virtual void copy(MIRNode::Ptr);
-
             virtual MIRNode::Ptr cloneNode();
         };
 
@@ -1323,6 +1323,26 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
+
+	struct UpdatePriorityEdgeCountEdgeSetApplyExpr: public UpdatePriorityEdgeSetApplyExpr {
+		std::string lambda_name;
+		std::string moved_object_name;
+		
+		std::string priority_queue_name;
+	
+		typedef std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> Ptr;
+		UpdatePriorityEdgeCountEdgeSetApplyExpr() {}
+		
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<UpdatePriorityEdgeCountEdgeSetApplyExpr>());
+		}
+                void copyFrom(UpdatePriorityEdgeSetApplyExpr::Ptr op) {
+			UpdatePriorityEdgeSetApplyExpr::copy(op);
+		}
+		protected:	
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
 
         struct OrderedProcessingOperator : Stmt {
             Expr::Ptr while_cond_expr;

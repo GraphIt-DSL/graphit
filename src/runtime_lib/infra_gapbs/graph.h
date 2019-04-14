@@ -124,6 +124,7 @@ class CSRGraph {
 
  public:
   julienne::graph<julienne::symmetricVertex> julienne_graph = __julienne_null_graph;
+  //julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex> *em;
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
   in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false) {}

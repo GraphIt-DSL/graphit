@@ -342,5 +342,10 @@ namespace graphit {
             op->delta->accept(this);
 
         }
+
+	void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> op) {
+		visit(std::static_pointer_cast<EdgeSetApplyExpr>(op));
+	}
+
     }
 }

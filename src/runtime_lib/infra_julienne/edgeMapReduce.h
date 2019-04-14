@@ -74,7 +74,7 @@ struct EdgeMap {
   }
 
   template <class O, class Apply, class VS>
-  inline vertexSubsetData<O> edgeMapCount(VS& vs, Apply& apply_f) {
+  inline vertexSubsetData<O> edgeMapCount(VS& vs, Apply apply_f) {
     auto map_f = [] (const uintE& i, const uintE& j) { return pbbso::empty(); };
     auto reduce_f = [&] (const uintE& cur, const tuple<uintE, pbbso::empty>& r) { return cur + 1; };
     return edgeMapReduce<O, pbbso::empty>(vs, map_f, reduce_f, apply_f);

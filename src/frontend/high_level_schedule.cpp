@@ -379,6 +379,9 @@ namespace graphit {
             } else if (apply_schedule_str == "eager_priority_update_with_merge") {
                 (*schedule_->apply_schedules)[apply_label].priority_update_type
                         = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE;
+	    } else if (apply_schedule_str == "constant_sum_reduce_before_update") {
+	        (*schedule_->apply_schedules)[apply_label].priority_update_type
+		        = ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);

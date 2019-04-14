@@ -43,7 +43,11 @@ namespace graphit {
 	    function->accept(&lower_priority_queue_type_and_alloc_expr);
 	}
 
-       
+	LowerUpdatePriorityEdgeSetApplyExpr lower_update_priority_edge_set_apply_expr = LowerUpdatePriorityEdgeSetApplyExpr(schedule_, mir_context_);
+	
+	for (auto function : functions) {
+		function->accept(&lower_update_priority_edge_set_apply_expr);
+	}
 
         // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
         auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
@@ -64,7 +68,7 @@ namespace graphit {
             mir::UpdatePriorityEdgeSetApplyExpr::Ptr update_priority_edgeset_apply_expr) {
         if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
             auto current_label = label_scope_.getCurrentScope();
-            setPrioritySchedule(current_label);
+            setPrioritySchedule(current_label);	
         }
     }
 
@@ -103,7 +107,6 @@ namespace graphit {
             } else {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
             }
-
         } else {
             mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
         }
@@ -239,12 +242,54 @@ namespace graphit {
             node = priority_update_min;
         } else if (call->name == "updatePrioritySum") {
 
-
+	    node = call;
 
         } else {
             node = call;
         }
 
         //node = call;
+    }
+    //void LowerUpdatePriorityEdgeSetApplyExpr::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr expr) {
+    void PriorityFeaturesLower::LowerUpdatePriorityEdgeSetApplyExpr::visit(mir::ExprStmt::Ptr stmt) {
+
+	node = stmt;
+	if (!mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr))
+		return;
+        if (stmt->stmt_label != "") {
+            label_scope_.scope(stmt->stmt_label);
+        }
+	auto expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr);
+        if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
+            auto current_label = label_scope_.getCurrentScope();	
+	    auto apply_schedule = schedule_->apply_schedules->find(current_label);
+	    if (apply_schedule != schedule_->apply_schedules->end()) { //a schedule is found
+	        if (apply_schedule->second.priority_update_type == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
+		    auto new_expr = std::make_shared<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>();
+		    new_expr->copyFrom(expr);
+		    //new_expr->lambda_name = "place_holder_lamda";
+		    new_expr->moved_object_name = "moved_object_" + mir_context_->getUniqueNameCounterString();
+		    new_expr->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+		    stmt->expr = new_expr;
+		    node = stmt;
+
+
+       		    mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = std::make_shared<mir::UpdatePriorityUpdateBucketsCall>();
+		    update_call->lambda_name = new_expr->moved_object_name + ".get_fn_repr()";
+		    update_call->modified_vertexsubset_name = new_expr->moved_object_name;
+		    update_call->priority_queue_name = new_expr->priority_queue_name;	
+	
+		    mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+		    stmt_block->insertStmtEnd(stmt);
+		    stmt_block->insertStmtEnd(update_call);
+		    
+		    node = stmt_block;
+
+		}
+	    }
+	}
+	if (stmt->stmt_label != "") {
+		label_scope_.scope(stmt->stmt_label);
+	}
     }
 }

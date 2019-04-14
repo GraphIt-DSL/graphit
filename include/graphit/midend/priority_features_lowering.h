@@ -66,6 +66,9 @@ namespace graphit {
             void visit(mir::VertexSetType::Ptr vertex_set_type) {
 		vertex_set_type->priority_update_type = mir_context_->priority_update_type;
 	    }
+            void visit(mir::EdgeSetType::Ptr edge_set_type) {
+                edge_set_type->priority_update_type = mir_context_->priority_update_type;
+	    }
 	    
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
@@ -119,6 +122,18 @@ namespace graphit {
             MIRContext *mir_context_;
 
         };
+
+	struct LowerUpdatePriorityEdgeSetApplyExpr : public mir::MIRRewriter {
+		using mir::MIRRewriter::visit;
+		LowerUpdatePriorityEdgeSetApplyExpr(Schedule *schedule, MIRContext *mir_context) : 
+			schedule_(schedule), mir_context_(mir_context) {
+		}
+		//virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr expr);
+		virtual void visit(mir::ExprStmt::Ptr stmt);
+	
+		Schedule *schedule_;
+		MIRContext *mir_context_;
+	};
 
 
         void lower();

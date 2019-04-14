@@ -149,11 +149,17 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
-
+	
         if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
-            printIndent();
-            auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
-            genEdgesetApplyFunctionCall(edgeset_apply_expr);
+	    if (mir::isa<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>(expr_stmt->expr)) {
+                printIndent();
+		expr_stmt->expr->accept(this);
+		oss << ";" << std::endl;
+	    } else {
+                printIndent();
+                auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
+                genEdgesetApplyFunctionCall(edgeset_apply_expr);
+	    }
         } else {
             printIndent();
             expr_stmt->expr->accept(this);
@@ -181,7 +187,7 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) { // Add other checks here
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
 	    printIndent();
 	    oss << "{" << std::endl;
             indent();
@@ -190,6 +196,8 @@ namespace graphit {
             oss << " = ";
 	    //assign_stmt->expr->accept(this);
 	    auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
+            // DO no load the infra_gapbs format 
+            /*
 	    if (edgeset_load_expr->is_weighted_) {
                 oss << "builtin_loadWeightedEdgesFromFile ( ";
                 edgeset_load_expr->file_name->accept(this);
@@ -200,17 +208,27 @@ namespace graphit {
                 edgeset_load_expr->file_name->accept(this);
 		oss << " + std::string(\".el\")"; 
                 oss << ") ";
-            }	
+            }
+	
 	    oss << ";" << std::endl;
+            */
             // Now load the Julienne type graph
 	    printIndent();
 	    assign_stmt->lhs->accept(this);
-	    oss << ".julienne_graph";
+	    //oss << ".julienne_graph";
             oss << " = ";
             oss << "builtin_loadJulienneEdgesFromFile(";	    
 	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
 	    oss << ");" << std::endl;
-            
+           
+            printIndent();
+            assign_stmt->lhs->accept(this);
+	    oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
+            assign_stmt->lhs->accept(this);
+            oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
+            assign_stmt->lhs->accept(this);
+            oss << ".m/5);" << std::endl;
+	 
 	    dedent();
 	    printIndent();
 	    oss << "}" << std::endl;
@@ -741,6 +759,15 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr) {
+        if (mir::isa<mir::EdgeSetType>(expr->var.getType())) {  
+            mir::PriorityUpdateType update_type = mir::to<mir::EdgeSetType>(expr->var.getType())->priority_update_type;
+            if (update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate || update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {
+                oss << expr->var.getName() << ".julienne_graph";
+                return;
+            }
+
+        }
+           
         oss << expr->var.getName();
     };
 
@@ -1166,7 +1193,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
-	if (vertexset_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate)
+	if (vertexset_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || vertexset_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
 	    oss << "julienne::vertexSubset ";
 	else 
 	    oss << "VertexSubset<int> *  ";
@@ -1186,6 +1213,7 @@ namespace graphit {
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
         // the arguments order here has to be consistent with genEdgeApplyFunctionSignature in gen_edge_apply_func_decl.cpp
 
+	
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
@@ -1264,7 +1292,7 @@ namespace graphit {
             priority_queue_type->priority_type->accept(this);
             oss << " >* ";
 
-        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate ) { // Add rest of the cases here as required
+        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate) { // Add rest of the cases here as required
             oss << "julienne::PriorityQueue < ";
 	    priority_queue_type->priority_type->accept(this);
 	    oss << " >* ";
@@ -1293,7 +1321,7 @@ namespace graphit {
             }
             oss << "); ";
 
-        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {  // Add other types here 
+        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate) {  // Add other types here 
 	    oss << "new julienne::PriorityQueue <";
 	    priority_queue_alloc_expr->priority_type->accept(this);
 	    oss << " > ( ";
@@ -1461,5 +1489,112 @@ namespace graphit {
 	oss << update_call->modified_vertexsubset_name;
 	oss << ".size());" << std::endl;
     }
+
+    void CodeGenCPP::get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {
+        //oss <<  "place_holder_edge_count_lambda";
+	oss << "[&] (const tuple<julienne::uintE, julienne::uintE> &__p) {" << std::endl;
+	indent();
+	//printIndent();
+
+	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function_name);
+	//udf->accept(this);
+
+		
+        //for (auto stmt : *(udf->body->stmts)) {
+	for (auto stmt = udf->body->stmts->begin(); stmt != (udf->body->stmts->end()-1); stmt++){ 
+		(*stmt)->accept(this);
+	}
+
+	mir::Stmt::Ptr stmt = *(udf->body->stmts->end()-1);
+	assert(mir::isa<mir::ExprStmt>(stmt));
+	mir::Expr::Ptr expr = mir::to<mir::ExprStmt>(stmt)->expr;
+	
+	assert(mir::to<mir::Call>(expr));
+	mir::Call::Ptr call_expr = mir::to<mir::Call>(expr);
+	
+	mir::Expr::Ptr arg1 = call_expr->args[0];
+	mir::Expr::Ptr arg2 = call_expr->args[1];
+	mir::Expr::Ptr arg3 = call_expr->args[2];
+
+	
+	//arg3->accept(this);
+	
+	//if (call_expr->args.size() > 3)
+	//	call_expr->args[3]->accept(this);
+
+
+	if (call_expr->args.size() > 3) {
+		mir::Expr::Ptr arg4 = call_expr->args[3];
+		printIndent();			
+		oss << "if ( ";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)]";
+		oss << " > ";
+		arg4->accept(this);
+		oss << ") {" << std::endl;
+		indent();
+		printIndent();
+		oss << "auto __new_pri = std::max(";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] + ";
+		arg3->accept(this);
+		oss << "  * std::get<1>(__p), (unsigned int)(";
+		arg4->accept(this);
+		oss << "));" << std::endl;
+		printIndent();
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		//oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		printIndent();
+		oss << "return julienne::wrap(std::get<0>(__p), ";
+		oss << call->priority_queue_name;
+		oss << "->get_bucket(__new_pri));" << std::endl;
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+		printIndent();
+		oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>();" << std::endl;
+	} else {
+		printIndent();
+		
+		oss << "auto __new_pri = ";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] + ";
+		arg3->accept(this);
+		oss << "  * std::get<1>(__p);" << std::endl;
+		printIndent();
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		//oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		printIndent();
+		oss << "return julienne::wrap(std::get<0>(__p), ";
+		oss << call->priority_queue_name;
+		oss << "->get_bucket(__new_pri));" << std::endl;
+	}
+	
+
+	oss << std::endl;
+	dedent();
+	printIndent();
+	oss << "}";
+	
+    }
+
+    void CodeGenCPP::visit(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {
+	//oss << "< UpdatePriorityEdgeCountEdgeSetApplyExpr > ";
+
+
+	oss << "julienne::vertexSubsetData<julienne::uintE> ";
+	oss << call->moved_object_name;
+	oss << " = ";
+	call->target->accept(this);
+	oss << ".em->edgeMapCount<julienne::uintE> (";
+	oss << call->from_func;
+	oss << ", ";
+	get_edge_count_lambda(call);
+	oss << ")";
+    }
+
+
 
 }
