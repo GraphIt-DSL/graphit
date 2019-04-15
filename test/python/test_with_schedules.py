@@ -133,6 +133,7 @@ class TestGraphitCompiler(unittest.TestCase):
             verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin -t verifier_input -r 0 -u 4"
             print (verify_cmd)
             proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	    proc.wait()
             test_flag = False
             for line in iter(proc.stdout.readline, ''):
                 if line.rstrip().find("SUCCESSFUL") != -1:
@@ -159,6 +160,7 @@ class TestGraphitCompiler(unittest.TestCase):
         verify_cmd = "./bin/bfs_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.el -t verifier_input -r 8"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	proc.wait()
         test_flag = False
         for line in iter(proc.stdout.readline, ''):
             if line.rstrip().find("SUCCESSFUL") != -1:
@@ -182,6 +184,7 @@ class TestGraphitCompiler(unittest.TestCase):
         verify_cmd = "./bin/cc_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.el -t verifier_input"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	proc.wait()
         test_flag = False
         for line in iter(proc.stdout.readline, ''):
             if line.rstrip().find("SUCCESSFUL") != -1:
@@ -205,6 +208,7 @@ class TestGraphitCompiler(unittest.TestCase):
         verify_cmd = "./bin/bc_verifier -f ../test/graphs/4.el -t verifier_input -r 3"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	proc.wait()
         test_flag = False
         for line in iter(proc.stdout.readline, ''):
             if line.rstrip().find("SUCCESSFUL") != -1:
@@ -240,6 +244,7 @@ class TestGraphitCompiler(unittest.TestCase):
         verify_cmd = "./bin/sssp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel -t verifier_input -r 0"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	proc.wait()
         test_flag = False
         for line in iter(proc.stdout.readline, ''):
             if line.rstrip().find("SUCCESSFUL") != -1:
@@ -260,6 +265,7 @@ class TestGraphitCompiler(unittest.TestCase):
             cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el  2"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print ("output: " + output.strip())
@@ -280,6 +286,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print (lines)
@@ -306,6 +313,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test_cf.wel"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         output = proc.stdout.readline()
         print ("output: " + output.strip())
@@ -319,6 +327,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print (lines)
@@ -333,6 +342,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print (lines)
@@ -347,6 +357,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
         # check the value printed to stdout is as expected
         lines = proc.stdout.readlines()
         print (lines)
@@ -361,11 +372,13 @@ class TestGraphitCompiler(unittest.TestCase):
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel  > verifier_input"
         print (cmd)
         proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+	proc.wait()
 
         # invoke the PPSP verifier with starting point 0, end point 4
         verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel -t verifier_input -r 0 -u 4"
         print (verify_cmd)
         proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+	proc.wait()
         test_flag = False
         for line in iter(proc.stdout.readline, ''):
             if line.rstrip().find("SUCCESSFUL") != -1:
