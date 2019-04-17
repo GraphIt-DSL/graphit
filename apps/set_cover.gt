@@ -12,7 +12,7 @@ const x: double = 1.0/log(1.0+epsilon);
 
 func get_bucket_clamped(deg: int) -> output: int 
 	if deg == 0
-		output = 0;
+		output = 4294967295;
 	else 
 		output = floor( x * log(to_double(deg)));
 	end
@@ -29,6 +29,7 @@ extern func extern_function(active: vertexset{Vertex}) -> output: vertexset{Vert
 extern func get_cover_size() -> size: int;
 
 func main()
+	startTimer();
 	vertices.apply(init_udf);
 	pq = new priority_queue{Vertex}(int)(false, false, D, 0, 0, false, -1);
 	var rounds: int = 0;
@@ -41,6 +42,7 @@ func main()
 		delete frontier;
 		rounds += 1;
 	end
-	print rounds;
-	print get_cover_size();
+        var elapsed_time: float = stopTimer();
+        print "elapsed_time";
+	print elapsed_time;
 end
