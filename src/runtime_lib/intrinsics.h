@@ -123,6 +123,19 @@ float stopTimer(){
 
 }
 
+char* argv_safe(int index, char** argv, int argc ){
+    // if index is less than or equal to argc than return argv[index]
+    //else return false or break command
+
+    if (index < argc) {
+        return argv[index];
+    } else {
+        std::cout << "Error: Did not provide argv[" << index << "] as part of the command line input" << std::endl;
+        throw std::invalid_argument( "Did not provide argument" );
+    }
+
+}
+
 Graph builtin_transpose(Graph &graph){
     return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
 }

@@ -1,0 +1,8 @@
+func main()
+    var input1 : int = atoi(argv[1]);
+    var input2 : int = atoi(argv[2]);
+    var input3 : int = atoi(argv[3]);
+    var input4 : int = atoi(argv[4]);
+    var input5 : int = atoi(argv[5]);
+    print input1 + input2;
+end
