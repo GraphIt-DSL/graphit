@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.CF";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
@@ -43,7 +44,7 @@ int main(int argc, char **argv) {
 //
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLabelForVarDecl";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseTwoSegments";
-//      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelDifferentSegments";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelDifferentSegments";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 

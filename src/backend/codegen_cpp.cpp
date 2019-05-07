@@ -3,6 +3,7 @@
 //
 
 #include <graphit/backend/codegen_cpp.h>
+#include <graphit/midend/mir.h>
 
 namespace graphit {
     int CodeGenCPP::genCPP() {
@@ -621,11 +622,34 @@ namespace graphit {
  */
     void CodeGenCPP::visit(mir::TensorArrayReadExpr::Ptr expr) {
         //for dense array tensor read
-        expr->target->accept(this);
-        oss << "[";
-        expr->index->accept(this);
-        oss << "]";
-    };
+//        expr->target->accept(this);
+//        oss << "[";
+//        expr->index->accept(this);
+//        oss << "]";
+//    }
+        if (mir::isa<mir::MIRNode>(expr.get()->target.get()->shared_from_this())) {
+            //not sure what this is std::shared_ptr<mir::MIRNode> ptr = expr.get()->target.get()->shared_from_this();
+            std::string nameptr = expr.get()->getTargetNameStr();
+            if (nameptr == "argv"){
+                expr->target->accept(this);
+                oss << "_safe(";
+                expr->index->accept(this);
+                oss << ", argv, argc)";
+            }
+            else{
+                expr->target->accept(this);
+                oss << "[";
+                expr->index->accept(this);
+                oss << "]";
+            }
+
+        } else {
+            expr->target->accept(this);
+            oss << "[";
+            expr->index->accept(this);
+            oss << "]";
+        }
+    }
 
 /**
  * Generate tensor read code for struct implementation

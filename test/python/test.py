@@ -95,6 +95,8 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + str(output.strip()))
         self.assertEqual(float(output.strip()), expected_output_val)
 
+
+
     # actual test cases
 
     def test_main(self):
@@ -319,6 +321,29 @@ class TestGraphitCompiler(unittest.TestCase):
                 test_flag = True
                 break
         self.assertEqual(test_flag, True)
+
+    def test_argv_safe(self):
+        self.basic_compile_test("simple_atoi.gt")
+        cmd = "./" + self.executable_file_name + " 150 170"
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        output = proc.stdout.readline().strip()
+        print ("output: " + str(output))
+        self.assertEqual(int(output), 320)
+
+    def test_argv_safe_fail(self):
+        self.basic_compile_test("simple_atoi.gt")
+        cmd = "./" + self.executable_file_name + " 1"
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        output = proc.stdout.readline().strip()
+        print ("output: " + str(output))
+        self.assertEqual(output, "Error: Did not provide argv[2] as part of the command line input")
+
+        self.basic_compile_test("argv_safe.gt")
+        cmd = "./" + self.executable_file_name + " 1 2 3"
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        output = proc.stdout.readline().strip()
+        print ("output: " + str(output))
+        self.assertEqual(output, "Error: Did not provide argv[4] as part of the command line input")
 
 if __name__ == '__main__':
     unittest.main()

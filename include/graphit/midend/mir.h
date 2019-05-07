@@ -593,6 +593,12 @@ namespace graphit {
             }
 
             std::string getTargetNameStr() {
+                //check for tensorarray expression and then return empty string
+                std::string empty = "";
+                if(mir::isa<mir::TensorReadExpr>(target.get()->shared_from_this())) {
+                    return empty;}
+
+
                 auto target_expr = mir::to<mir::VarExpr>(target);
                 auto target_name = target_expr->var.getName();
                 return target_name;
