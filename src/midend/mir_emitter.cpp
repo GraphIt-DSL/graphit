@@ -778,10 +778,9 @@ namespace graphit {
     }
 
     mir::Stmt::Ptr MIREmitter::makeNoOPStmt() {
-        auto no_op_stmt = std::make_shared<mir::AssignStmt>();
+        auto no_op_stmt = std::make_shared<mir::ExprStmt>();
         auto true_expr = std::make_shared<mir::BoolLiteral>();
         true_expr->val = true;
-        no_op_stmt->lhs = true_expr;
         no_op_stmt->expr = true_expr;
         return no_op_stmt;
 
