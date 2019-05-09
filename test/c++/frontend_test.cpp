@@ -94,6 +94,11 @@ TEST_F(FrontendTest, MainFunctionWithArgv) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, ExportFunction) {
+    istringstream is("export func export_func() print 4; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 TEST_F(FrontendTest, MainFunctionWithCall) {
     istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
                              " func main() add(4, 5); end");

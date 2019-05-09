@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
+    ::testing::GTEST_FLAG(filter) = "FrontendTest.ExportFunction";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
+    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportSimpleVertexSetLoad";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";

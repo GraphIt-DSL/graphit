@@ -582,9 +582,15 @@ namespace graphit {
 	if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {
 		//add the constructed function decl to functions
 		ctx->addFunction(mir_func_decl);
-	}else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+	} else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
 		//add the constructed function decl to the list of external functions
 		ctx->addExternFunction(mir_func_decl);
+	} else if (mir_func_decl->type == mir::FuncDecl::Type::EXPORTED) {
+        ctx->addFunction(mir_func_decl);
+        ctx->addExportedFunction(mir_func_decl);
+
+    } else {
+	    std::cout << " Unsupported type of function: " << func_name << std::endl;
 	}
 
     }

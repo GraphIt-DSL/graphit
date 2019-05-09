@@ -57,14 +57,14 @@ namespace graphit {
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-	std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
+        std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
 
-	for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
-	    it->get()->accept(this);
-	}
+        for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
+            it->get()->accept(this);
+        }
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
-	    it->get()->accept(this);
+	        it->get()->accept(this);
         }
 
         oss << std::endl;
