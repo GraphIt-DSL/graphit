@@ -213,6 +213,19 @@ TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
 }
 
 
+TEST_F(BackendTest, EdgeSetExportFunc) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"

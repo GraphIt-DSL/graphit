@@ -179,7 +179,22 @@ class CSRGraph {
         ReleaseResources();
   }
 
-  CSRGraph& operator=(CSRGraph&& other) {
+    CSRGraph& operator=(CSRGraph& other) {
+        if (this != &other) {
+            if (!is_transpose_)
+                ReleaseResources();
+            directed_ = other.directed_;
+            num_edges_ = other.num_edges_;
+            num_nodes_ = other.num_nodes_;
+            out_index_ = other.out_index_;
+            out_neighbors_ = other.out_neighbors_;
+            in_index_ = other.in_index_;
+            in_neighbors_ = other.in_neighbors_;
+        }
+        return *this;
+    }
+
+    CSRGraph& operator=(CSRGraph&& other) {
     if (this != &other) {
         if (!is_transpose_)
             ReleaseResources();
