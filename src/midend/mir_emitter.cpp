@@ -34,10 +34,29 @@ namespace graphit {
     }
 
     void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
+
+
+
         auto mir_assign_stmt = std::make_shared<mir::AssignStmt>();
         //we only have one expression on the left hand size
         assert(assign_stmt->lhs.size() == 1);
         mir_assign_stmt->lhs = emitExpr(assign_stmt->lhs.front());
+
+        //check if this is assigning to a vertexset,
+        //if assigning to a vertexset, then we do not generate the assign statement
+        // but instead update the count of the global variable
+        if (mir::isa<mir::VarExpr>(mir_assign_stmt->lhs)){
+            auto var_expr = mir::to<mir::VarExpr>(mir_assign_stmt->lhs);
+            auto var_name = var_expr->var.getName();
+            if (ctx->isConstVertexSet(var_name)){
+                //update the count of the vertexset
+                ctx->updateElementCount(ctx->getElementTypeFromVectorOrSetName(var_name), emitExpr(assign_stmt->expr));
+                //returns a No OP statement
+                retStmt = makeNoOPStmt();
+                return;
+            }
+        }
+
         mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
         mir_assign_stmt->stmt_label = assign_stmt->stmt_label;
         retStmt = mir_assign_stmt;
@@ -730,10 +749,10 @@ namespace graphit {
                         const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
                         mir_var_decl->initVal = init_val;
                         ctx->updateElementInputFilename(type->element, init_val->file_name);
-                        ctx->addEdgeSet(mir_var_decl);
-                        ctx->addEdgesetType(mir_var_decl->name, type);
                     }
                 }
+                ctx->addEdgeSet(mir_var_decl);
+                ctx->addEdgesetType(mir_var_decl->name, type);
 
             } else {
                 mir_var_decl->modifier = "const";
@@ -756,6 +775,16 @@ namespace graphit {
             case fir::FuncDecl::Type::EXTERNAL: return mir::FuncDecl::Type::EXTERNAL;
             default: std::cout << "Invalid fir::FuncDecl::Type\n"; return mir::FuncDecl::Type::INTERNAL;
         }
+    }
+
+    mir::Stmt::Ptr MIREmitter::makeNoOPStmt() {
+        auto no_op_stmt = std::make_shared<mir::AssignStmt>();
+        auto true_expr = std::make_shared<mir::BoolLiteral>();
+        true_expr->val = true;
+        no_op_stmt->lhs = true_expr;
+        no_op_stmt->expr = true_expr;
+        return no_op_stmt;
+
     }
 
 }

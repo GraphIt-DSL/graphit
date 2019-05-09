@@ -206,7 +206,7 @@ TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
                      "const edges : edgeset{Edge}(Vertex,Vertex);\n"
                      "const vertices : vertexset{Vertex};\n"
                      "export func process() "
-                     "      edges =  = load (\"test.el\");"
+                     "      edges = load (\"test.el\");"
                      "      vertices = edges.getVertices();"
                      " end");
     EXPECT_EQ (0, basicTest(is));
