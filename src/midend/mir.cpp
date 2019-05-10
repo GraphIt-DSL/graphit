@@ -258,6 +258,19 @@ namespace graphit {
             return node;
         }
 
+
+        void VectorAllocExpr::copy(MIRNode::Ptr node) {
+            const auto expr = mir::to<VectorAllocExpr>(node);
+            size_expr = expr->size_expr->clone<Expr>();
+            element_type = expr->element_type;
+        }
+
+        MIRNode::Ptr VectorAllocExpr::cloneNode() {
+            const auto node = std::make_shared<VectorAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void ListAllocExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<ListAllocExpr>(node);
             size_expr = expr->size_expr->clone<Expr>();

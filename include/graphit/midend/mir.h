@@ -954,6 +954,24 @@ namespace graphit {
         };
 
 
+        struct VectorAllocExpr : public NewExpr {
+            Expr::Ptr size_expr;
+            ScalarType::Ptr scalar_type;
+
+            typedef std::shared_ptr<VectorAllocExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<VectorAllocExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+
         struct ListAllocExpr : public NewExpr {
             Expr::Ptr size_expr;
             Type::Ptr element_type;
