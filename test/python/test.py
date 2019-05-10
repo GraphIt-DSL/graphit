@@ -359,10 +359,13 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_export_function(self):
         self.basic_compile_as_library_test("simple_export_func.gt");
 
+    def test_export_edgeset_apply_function(self):
+        self.basic_compile_as_library_test("export_simple_edgeset_apply.gt");
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_export_function'))
+    # suite.addTest(TestGraphitCompiler('test_export_edgeset_apply_function'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

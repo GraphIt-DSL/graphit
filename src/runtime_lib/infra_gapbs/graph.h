@@ -160,6 +160,22 @@ class CSRGraph {
     SetUpOffsets(true);
   }
 
+
+    CSRGraph(CSRGraph& other) : directed_(other.directed_),
+                                 num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
+                                 out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
+                                 in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false) {
+        other.num_edges_ = -1;
+        other.num_nodes_ = -1;
+        other.out_index_ = nullptr;
+        other.out_neighbors_ = nullptr;
+        other.in_index_ = nullptr;
+        other.in_neighbors_ = nullptr;
+        other.flags_ = nullptr;
+        other.offsets_ = nullptr;
+    }
+
+
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
     out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
@@ -173,6 +189,10 @@ class CSRGraph {
       other.flags_ = nullptr;
     other.offsets_ = nullptr;
   }
+
+
+
+
 
   ~CSRGraph() {
     if (!is_transpose_)
@@ -190,6 +210,15 @@ class CSRGraph {
             out_neighbors_ = other.out_neighbors_;
             in_index_ = other.in_index_;
             in_neighbors_ = other.in_neighbors_;
+            //need the following, otherwise would get double free errors
+          other.num_edges_ = -1;
+          other.num_nodes_ = -1;
+          other.out_index_ = nullptr;
+          other.out_neighbors_ = nullptr;
+          other.in_index_ = nullptr;
+          other.in_neighbors_ = nullptr;
+          other.flags_ = nullptr;
+          other.offsets_ = nullptr;
         }
         return *this;
     }
