@@ -2479,6 +2479,22 @@ namespace graphit {
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
             }
+        } else if (tryConsume(Token::Type::VECTOR)){
+            //allocating a new vector
+            output_new_expr = std::make_shared<fir::VectorAllocExpr>();
+            consume(Token::Type::LC);
+            //this is Vertex in vector{Vertex}(int)
+            const auto element_type = parseType();
+            consume(Token::Type::RC);
+
+            //this is int in vector{Vertex}(int)
+            consume(Token::Type::LP);
+            fir::ScalarType::Ptr scalar_type = parseScalarType();
+            consume(Token::Type::RP);
+
+
+        } else {
+            reportError(peek(), "do not support this new expression");
         }
 
         output_new_expr->setBeginLoc(newToken);
