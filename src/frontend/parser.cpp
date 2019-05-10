@@ -2481,18 +2481,21 @@ namespace graphit {
             }
         } else if (tryConsume(Token::Type::VECTOR)){
             //allocating a new vector
-            output_new_expr = std::make_shared<fir::VectorAllocExpr>();
+            auto vector_alloc_expr = std::make_shared<fir::VectorAllocExpr>();
             consume(Token::Type::LC);
             //this is Vertex in vector{Vertex}(int)
-            const auto element_type = parseType();
+            const auto element_type = parseElementType();
             consume(Token::Type::RC);
 
             //this is int in vector{Vertex}(int)
             consume(Token::Type::LP);
             fir::ScalarType::Ptr scalar_type = parseScalarType();
             consume(Token::Type::RP);
-
-
+            vector_alloc_expr->elementType = element_type;
+            vector_alloc_expr->vector_scalar_type = scalar_type;
+            output_new_expr = vector_alloc_expr;
+            consume(Token::Type::LP);
+            consume(Token::Type::RP);
         } else {
             reportError(peek(), "do not support this new expression");
         }

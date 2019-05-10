@@ -912,9 +912,7 @@ namespace graphit {
             oss << "alloc vector {";
             expr->elementType->accept(this);
             oss << "}(";
-            if (expr->numElements != nullptr) {
-                expr->numElements->accept(this);
-            }
+            expr->vector_scalar_type->accept(this);
             oss << ")";
         }
 

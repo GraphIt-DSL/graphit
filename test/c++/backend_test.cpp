@@ -237,7 +237,7 @@ TEST_F(BackendTest, EdgeSetExportFuncVectorInit) {
                      "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
                      "      edges = input_edges;"
                      "      vertices = edges.getVertices();"
-                     "      vector_a = new vector{Vertex}(float)(); %get the size info from the element type"
+                     "      vector_a = new vector{Vertex}(float)();"
                      "      vertices.apply(update_vector);"
                      " end");
     EXPECT_EQ (0, basicTest(is));
