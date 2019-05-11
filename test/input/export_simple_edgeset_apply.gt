@@ -16,6 +16,7 @@ end
 export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex))
     edges = input_edges;
     vertices = edges.getVertices();
+    vector_a = new vector{Vertex}(float)();
     vertices.apply(vector_a_init);
     edges.apply(srcAddOne);
     var sum : float = 0;
