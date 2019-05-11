@@ -112,6 +112,18 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
+    def basic_library_compile_exec_test(self, input_file_name):
+        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
+        print ("current directory: " + os.getcwd())
+        compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
+        print (compile_cmd)
+        subprocess.check_call(compile_cmd, shell=True)
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + " library_test_driver.cpp -o test.o"
+        subprocess.check_call(cpp_compile_cmd, shell=True)
+        os.chdir("..")
+        subprocess.check_call("bin/test.o")
+        os.chdir("bin")
+
         # actual test cases
 
     def bfs_verified_test(self, input_file_name, use_separate_algo_file=False):
@@ -490,6 +502,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
+    def test_basic_library(self):
+        self.basic_library_compile_exec_test("export_simple_edgeset_apply.gt");
 
 
 if __name__ == '__main__':
@@ -508,7 +522,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePush_verified'))
+    # suite.addTest(TestGraphitCompiler('test_basic_library'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
