@@ -296,6 +296,17 @@ namespace graphit {
         retExpr = mir_vertexsetalloc_expr;
     }
 
+    void MIREmitter::visit(fir::VectorAllocExpr::Ptr expr) {
+        // Currently we only record a size information in the MIR::VertexSetAllocExpr
+        const auto mir_vertexsetalloc_expr = std::make_shared<mir::VectorAllocExpr>();
+        auto element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
+        mir_vertexsetalloc_expr->size_expr = ctx->getElementCount(element_type);
+        mir_vertexsetalloc_expr->element_type = element_type;
+        mir_vertexsetalloc_expr->scalar_type = mir::to<mir::ScalarType>(emitType(expr->vector_scalar_type));
+        retExpr = mir_vertexsetalloc_expr;
+    }
+
+
 
     void MIREmitter::visit(fir::ListAllocExpr::Ptr expr) {
         // Currently we only record a size information in the MIR::ListAllocExpr
