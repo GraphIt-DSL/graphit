@@ -112,8 +112,8 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
-    def basic_library_compile_exec_test(self, input_file_name):
-        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
+    def basic_library_compile_exec_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + input_file_directory
         print ("current directory: " + os.getcwd())
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
@@ -505,6 +505,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_basic_library(self):
         self.basic_library_compile_exec_test("export_simple_edgeset_apply.gt");
 
+    def test_library_pagerank(self):
+        self.basic_library_compile_exec_test("export_pr.gt", '/test/input/');
+
+
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -522,7 +526,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_basic_library'))
+    # suite.addTest(TestGraphitCompiler('test_library_pagerank'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
