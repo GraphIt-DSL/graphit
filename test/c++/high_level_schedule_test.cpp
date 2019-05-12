@@ -71,7 +71,40 @@ protected:
                                              "    end\n"
                                              "end");
 
-
+        const char*  export_pr_char = ("element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                "const vertices : vertexset{Vertex};\n"
+                                "const old_rank : vector{Vertex}(float);\n"
+                                "const new_rank : vector{Vertex}(float);\n"
+                                "const out_degrees : vector{Vertex}(int);\n"
+                                "const damp : float = 0.85;\n"
+                                "const beta_score : float;\n"
+                                "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                "    new_rank[dst] += old_rank[src] / out_degrees[src];\n"
+                                "end\n"
+                                "func updateVertex(v : Vertex)\n"
+                                "    new_rank[v] = beta_score + damp*(new_rank[v]);\n"
+                                "    old_rank[v] = new_rank[v];\n"
+                                "    new_rank[v] = 0.0;\n"
+                                "end\n"
+                                "func initVectors(v : Vertex) "
+                                "   old_rank[v] = 1.0; "
+                                "   new_rank[v] = 0.0; "
+                                "end\n"
+                                "export func export_func()\n"
+                                "   edges = load (\"test.el\"); "
+                                "   vertices = edges.getVertices(); "
+                                "   old_rank = new vector{Vertex}(float)(); "
+                                "   new_rank = new vector{Vertex}(float)(); "
+                                "   out_degrees = edges.getOutDegrees(); "
+                                "   beta_score = (1.0 - damp) / vertices.size(); "
+                                "   vertices.apply(initVectors); "
+                                "   #l1# for i in 1:10\n"
+                                "       #s1# edges.apply(updateEdge);\n"
+                                "       #s2# vertices.apply(updateVertex);\n"
+                                "   end\n"
+                                "end");
 
         const char * sssp_char =      "element Vertex end\n"
                                                          "element Edge end\n"
@@ -437,6 +470,7 @@ protected:
         pr_cc_str_ = string(pr_cc_char);
         bc_str_ = string(bc_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
+        export_pr_str_ = string(export_pr_char);
     }
 
     virtual void TearDown() {
@@ -504,6 +538,7 @@ protected:
     string pr_cc_str_;
     string bc_str_;
     string closeness_centrality_weighted_str_;
+    string export_pr_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1697,6 +1732,15 @@ TEST_F(HighLevelScheduleTest, BCDensePullSparsePushCacheOptimizedSchedule) {
 
 TEST_F(HighLevelScheduleTest, ClosenessCentralityWeightedDefaultSchedule) {
     istringstream is (closeness_centrality_weighted_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, ExportPRTest){
+    istringstream is (export_pr_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
