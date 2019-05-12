@@ -493,6 +493,16 @@ namespace graphit {
                     }
                 }
             }
+        } //end of if "main" condition
+
+        // still generate the constant declarations
+        if (func_decl->type == mir::FuncDecl::Type::EXPORTED){
+            for (auto constant : mir_context_->getLoweredConstants()) {
+                if (mir::isa<mir::ScalarType>(constant->type) &&
+                        constant->initVal != nullptr){
+                    genScalarAlloc(constant);
+                }
+            }
         }
 
 

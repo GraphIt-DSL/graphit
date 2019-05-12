@@ -112,7 +112,7 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
-    def basic_library_compile_exec_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+    def basic_library_compile(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
         input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + input_file_directory
         print ("current directory: " + os.getcwd())
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
@@ -120,11 +120,24 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.check_call(compile_cmd, shell=True)
         cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + " library_test_driver.cpp -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
+
+    def basic_library_compile_exec_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory)
         os.chdir("..")
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
 
-        # actual test cases
+
+    def library_pr_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory)
+        os.chdir("..")
+        cmd = "bin/test.o"
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        output = proc.stdout.readline()
+        print ("output: " + output.strip())
+        self.assertEqual(float(output.strip()), 0.00289518)
+        os.chdir("bin")
 
     def bfs_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
@@ -508,7 +521,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_pagerank(self):
         self.basic_library_compile_exec_test("export_pr.gt", '/test/input/');
 
-
+    def test_library_pagerank_verified(self):
+        self.library_pr_verified_test("export_pr.gt", '/test/input/');
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -526,7 +540,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_pagerank'))
+    # suite.addTest(TestGraphitCompiler('test_library_pagerank_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
