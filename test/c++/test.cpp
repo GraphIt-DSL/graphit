@@ -7,8 +7,8 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithArgv";
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimplePlusReduce";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.ExportFunction";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.EdgeSetExportFuncVectorInit";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
@@ -17,15 +17,15 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportSimpleVertexSetLoadInFunction";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFunc";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.CF";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInit";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";

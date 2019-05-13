@@ -48,6 +48,8 @@ namespace graphit {
 
         virtual void visit(mir::VertexSetAllocExpr::Ptr);
         virtual void visit(mir::ListAllocExpr::Ptr);
+        virtual void visit(mir::VectorAllocExpr::Ptr);
+
 
         //functional operators
         virtual void visit(mir::VertexSetApplyExpr::Ptr);

@@ -42,6 +42,11 @@ namespace graphit {
                 functions_list_.push_back(f);
             }
 
+            void addExportedFunction(mir::FuncDecl::Ptr f) {
+                exported_functions_list_.push_back(f);
+            }
+
+
             void addFunctionFront(mir::FuncDecl::Ptr f) {
                 functions_map_[f->name] = f;
                 functions_list_.insert(functions_list_.begin(), f);
@@ -305,7 +310,9 @@ namespace graphit {
 
             //need to store the ordering of function declarations
             std::vector<mir::FuncDecl::Ptr> functions_list_;
-	    std::vector<mir::FuncDecl::Ptr> extern_functions_list_;
+	        std::vector<mir::FuncDecl::Ptr> extern_functions_list_;
+            std::vector<mir::FuncDecl::Ptr> exported_functions_list_;
+
 
             // symbol table
             util::ScopedMap<std::string, mir::Var> symbol_table_;
