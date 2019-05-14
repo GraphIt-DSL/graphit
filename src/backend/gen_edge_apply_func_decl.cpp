@@ -155,7 +155,7 @@ namespace graphit {
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
             oss_ << "    if (g.flags_ == nullptr){\n"
                     "      g.flags_ = new int[numVertices]();\n"
-                    "      ligra::parallel_for(0, (int)numVertices,[&] (int i) { g.flags_[i]=0; });\n"
+                    "      ligra::parallel_for(0, (int)numVertices, [&] (int i) { g.flags_[i]=0; });\n"
                     "    }\n";
         }
 
@@ -335,7 +335,7 @@ namespace graphit {
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
-                    oss_ << "  ligra::parallel_for((int)0; (int)nextM; [&] (int i) {\n"
+                    oss_ << "  ligra::parallel_for((int)0, (int)nextM, [&] (int i) {\n"
                             "     g.flags_[nextIndices[i]] = 0;\n"
                             "  });\n";
             }
