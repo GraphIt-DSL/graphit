@@ -5,6 +5,7 @@
 #include <gtest.h>
 #include "intrinsics.h"
 #include "infra_gapbs/graph_verifier.h"
+#include "infra_gapbs/intersections.h"
 
 
 
@@ -82,4 +83,41 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
 
     EXPECT_EQ(true, test_flag);
 
+} 
+
+TEST_F(RuntimeLibTest, IntersectHiroshiTest){
+
+    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
+    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersect_hiroshi(A, B, 5, 5);
+    delete A;
+    delete B;
+    EXPECT_EQ(4, count);
+
+
 }
+
+
+TEST_F(RuntimeLibTest, IntersectBinarySearchTest){
+
+    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
+    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersect_binary_search(A, B, 5, 5);
+    delete A;
+    delete B;
+    EXPECT_EQ(4, count);
+
+
+}
+
+TEST_F(RuntimeLibTest, IntersectMultipleSkipTest){
+
+    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
+    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersect_multiple_skip(A, B, 5, 5);
+    delete A;
+    delete B;
+    EXPECT_EQ(4, count);
+
+}
+
