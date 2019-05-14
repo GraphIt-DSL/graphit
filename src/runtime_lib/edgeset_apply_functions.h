@@ -685,7 +685,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_dense_parallel_deduplicatied_from_ver
 
     } else {
       //std::cout << "sparse" << std::endl;
-      
+
         if (g.flags_ == nullptr)
 	  g.flags_ = new int[numVertices]();
 
@@ -919,7 +919,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
     if (outDegrees == 0) return next_frontier;
     if (m + outDegrees > numEdges / 20) {
       //std::cout << "edgemap dense forward" << std::endl;
-      
+
         //ligra code
         //        bool* next = newA(bool,numVertices);
 //        {parallel_for(long i=0;i<numVertices;i++) next[i] = 0;}
@@ -965,7 +965,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
       if (g.flags_ == nullptr){
         g.flags_ = new int[numVertices]();
       }
-      
+
         uintT *offsets = degrees;
         long outEdgeCount = sequence::plusScan(offsets, degrees, m);
         uintE *outEdges = newA(uintE, outEdgeCount);
@@ -984,7 +984,7 @@ VertexSubset<NodeID> *edgeset_apply_hybrid_denseforward_parallel_weighted_dedupl
 	    for (WNode dst : g.out_neigh(src)) {
 	      if (apply_func(src, dst.v, dst.w) && CAS(&(g.flags_[dst.v]), 0, 1)) {
                         outEdges[offset + j] = dst.v;
-                    
+
                 } else {
                     outEdges[offset + j] = UINT_E_MAX;
                 }

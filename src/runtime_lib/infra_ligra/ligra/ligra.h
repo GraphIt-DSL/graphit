@@ -1,5 +1,5 @@
 // This code is part of the project "Ligra: A Lightweight Graph Processing
-// Framework for Shared Memory", presented at Principles and Practice of 
+// Framework for Shared Memory", presented at Principles and Practice of
 // Parallel Programming, 2013.
 // Copyright (c) 2013 Julian Shun and Guy Blelloch
 //
@@ -51,12 +51,12 @@ bool* edgeMapDense(graph<vertex> GA, bool* vertexSubset, F &f, bool parallel = 0
   long numVertices = GA.n;
   vertex *G = GA.V;
   bool* next = newA(bool,numVertices);
-  {parallel_for (long i=0; i<numVertices; i++) {
-    next[i] = 0;
-    if (f.cond(i)) {
-      G[i].decodeInNghBreakEarly(i, vertexSubset, f, next, parallel);
-    }
-  }}
+  ligra::parallel_for((long)0, (long)numVertices, [&] (long i) {
+      next[i] = 0;
+      if (f.cond(i)) {
+        G[i].decodeInNghBreakEarly(i, vertexSubset, f, next, parallel);
+      }
+    });
   return next;
 }
 
@@ -65,27 +65,28 @@ bool* edgeMapDenseForward(graph<vertex> GA, bool* vertexSubset, F &f) {
   long numVertices = GA.n;
   vertex *G = GA.V;
   bool* next = newA(bool,numVertices);
-  {parallel_for(long i=0;i<numVertices;i++) next[i] = 0;}
-  {parallel_for (long i=0; i<numVertices; i++){
-    if (vertexSubset[i]) {
-      G[i].decodeOutNgh(i, vertexSubset, f, next);
-    }
-  }}
+  ligra::parallel_for((long)0, (long)numVertices, [&] (long i) { next[i] = 0; });
+  ligra::parallel_for((long)0, (long)numVertices, [&] (long i) {
+      if (vertexSubset[i]) {
+        G[i].decodeOutNgh(i, vertexSubset, f, next);
+      }
+    });
   return next;
 }
 
 template <class vertex, class F>
-pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices, 
-        uintT* degrees, uintT m, F &f, 
-        long remDups=0, uintE* flags=NULL) {
+pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices,
+                                uintT* degrees, uintT m, F &f,
+                                long remDups=0, uintE* flags=NULL) {
   uintT* offsets = degrees;
   long outEdgeCount = sequence::plusScan(offsets, degrees, m);
   uintE* outEdges = newA(uintE,outEdgeCount);
-  {parallel_for (long i = 0; i < m; i++) {
+
+  ligra::parallel_for((long)0, (long)m, [&] (long i) {
       uintT v = indices[i], o = offsets[i];
-      vertex vert = frontierVertices[i]; 
+      vertex vert = frontierVertices[i];
       vert.decodeOutNghSparse(v, o, f, outEdges);
-    }}
+    });
   uintE* nextIndices = newA(uintE, outEdgeCount);
   if(remDups) remDuplicates(outEdges,flags,outEdgeCount,remDups);
   // Filter out the empty slots (marked with -1)
@@ -96,8 +97,8 @@ pair<long,uintE*> edgeMapSparse(vertex* frontierVertices, uintE* indices,
 
 // decides on sparse or dense base on number of nonzeros in the active vertices
 template <class vertex, class F>
-vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1, 
-		 char option=DENSE, bool remDups=false) {
+vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1,
+                     char option=DENSE, bool remDups=false) {
   long numVertices = GA.n, numEdges = GA.m;
   if(threshold == -1) threshold = numEdges/20; //default threshold
   vertex *G = GA.V;
@@ -111,28 +112,28 @@ vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1
   vertex* frontierVertices;
   V.toSparse();
   frontierVertices = newA(vertex,m);
-  {parallel_for (long i=0; i < m; i++){
-    vertex v = G[V.s[i]];
-    degrees[i] = v.getOutDegree();
-    frontierVertices[i] = v;
-    }}
+  ligra::parallel_for((long)0, (long)m, [&] (long i) {
+      vertex v = G[V.s[i]];
+      degrees[i] = v.getOutDegree();
+      frontierVertices[i] = v;
+    });
   uintT outDegrees = sequence::plusReduce(degrees, m);
   if (outDegrees == 0) return vertexSubset(numVertices);
-  if (m + outDegrees > threshold) { 
+  if (m + outDegrees > threshold) {
     V.toDense();
     free(degrees);
     free(frontierVertices);
-    bool* R = (option == DENSE_FORWARD) ? 
-      edgeMapDenseForward(GA,V.d,f) : 
+    bool* R = (option == DENSE_FORWARD) ?
+      edgeMapDenseForward(GA,V.d,f) :
       edgeMapDense(GA, V.d, f, option);
     vertexSubset v1 = vertexSubset(numVertices, R);
     //cout << "size (D) = " << v1.m << endl;
     return v1;
-  } else { 
-    pair<long,uintE*> R = 
-      remDups ? 
-      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f, 
-		    numVertices, GA.flags) :
+  } else {
+    pair<long,uintE*> R =
+      remDups ?
+      edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f,
+                    numVertices, GA.flags) :
       edgeMapSparse(frontierVertices, V.s, degrees, V.numNonzeros(), f);
     //cout << "size (S) = " << R.first << endl;
     free(degrees);
@@ -149,11 +150,13 @@ template <class F>
 void vertexMap(vertexSubset V, F add) {
   long n = V.numRows(), m = V.numNonzeros();
   if(V.isDense) {
-    {parallel_for(long i=0;i<n;i++)
-	if(V.d[i]) add(i);}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        if(V.d[i]) add(i);
+      });
   } else {
-    {parallel_for(long i=0;i<m;i++)
-	add(V.s[i]);}
+    ligra::parallel_for((long)0, (long)m, [&] (long i) {
+        add(V.s[i]);
+      });
   }
 }
 
@@ -164,9 +167,10 @@ vertexSubset vertexFilter(vertexSubset V, F filter) {
   long n = V.numRows(), m = V.numNonzeros();
   V.toDense();
   bool* d_out = newA(bool,n);
-  {parallel_for(long i=0;i<n;i++) d_out[i] = 0;}
-  {parallel_for(long i=0;i<n;i++)
-      if(V.d[i]) d_out[i] = filter(i);}
+  ligra::parallel_for((long)0, (long)n, [&] (long i) { d_out[i] = 0; });
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      if(V.d[i]) d_out[i] = filter(i);
+    });
   return vertexSubset(n,d_out);
 }
 
