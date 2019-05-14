@@ -1,0 +1,46 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex);
+const vertices : vertexset{Vertex};
+const old_rank : vector{Vertex}(float);
+const new_rank : vector{Vertex}(float);
+const out_degrees : vector{Vertex}(int);
+const error : vector{Vertex}(float);
+const damp : float = 0.85;
+const beta_score : float;
+
+func updateEdge(src : Vertex, dst : Vertex)
+     new_rank[dst] += old_rank[src] / out_degrees[src];
+end
+
+func updateVertex(v : Vertex)
+     new_rank[v] = beta_score + damp*(new_rank[v]);
+     error[v] = fabs(new_rank[v] - old_rank[v]);
+     old_rank[v] = new_rank[v];
+     new_rank[v] = 0.0;
+end
+
+func initVectors(v : Vertex)
+     old_rank[v] = 1.0/edges.getVertices();
+     new_rank[v] = 0.0;
+     error[v] = 0.0;
+end
+
+export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex)) -> output : vector{Vertex}(float)
+     edges = input_edges;
+     vertices = edges.getVertices();
+     old_rank = new vector{Vertex}(float)();
+     new_rank = new vector{Vertex}(float)();
+     error = new vector{Vertex}(float)();
+     out_degrees = edges.getOutDegrees();
+     beta_score = (1.0 - damp) / vertices.size();
+     vertices.apply(initVectors);
+     #l1# for i in 1:10
+         #s1# edges.apply(updateEdge);
+         #s2# vertices.apply(updateVertex);
+     end
+
+    print error.sum();
+    output = old_rank;
+
+end

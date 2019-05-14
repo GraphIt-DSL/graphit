@@ -244,6 +244,46 @@ TEST_F(BackendTest, EdgeSetExportFuncVectorInit) {
 }
 
 
+TEST_F(BackendTest, EdgeSetExportFuncVectorInitWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)();"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInputWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex), input_vector : vector{Vertex}(float)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = input_vector;"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 
 TEST_F(BackendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"

@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportSimpleVertexSetLoadInFunction";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFunc";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInitWithReturn";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInputWithReturn";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
