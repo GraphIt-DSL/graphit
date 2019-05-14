@@ -92,7 +92,7 @@ _seq<char> readStringFromFile(char *fileName) {
 
 // parallel code for converting a string to words
 words stringToWords(char *Str, long n) {
-  ligra::parallel_for((long)0, n; [&] (long i) {
+  ligra::parallel_for((long)0, n, [&] (long i) {
       if (isSpace(Str[i])) Str[i] = 0;
     });
 

@@ -276,7 +276,7 @@ _seq<intT> packIndex(bool* Fl, intT n) {
 template <class ET, class intT, class PRED>
 intT filter(ET* In, ET* Out, intT n, PRED p) {
   bool *Fl = newA(bool,n);
-  ligra::parallel_for((intT)0, (intT)n, [&] (intT i) { Fl[i] = (bool) p(In[i]) });;
+  ligra::parallel_for((intT)0, (intT)n, [&] (intT i) { Fl[i] = (bool) p(In[i]); });
   intT  m = pack(In, Out, Fl, n);
   free(Fl);
   return m;
