@@ -549,142 +549,145 @@ namespace graphit {
         oss << ";";
         oss << std::endl;
 	if (func_decl-> type == mir::FuncDecl::Type::EXPORTED) {
-		oss << "//PyBind Wrappers for function" << func_decl->name << std::endl;
-		//Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
-		if (func_decl->result.isInitialized())
+		generatePyBindWrapper(func_decl);
+	}
+    };
+    void CodeGenCPP::generatePyBindWrapper(mir::FuncDecl::Ptr func_decl) {
+	    oss << "//PyBind Wrappers for function" << func_decl->name << std::endl;
+	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
+	    if (func_decl->result.isInitialized())
 		    func_decl->result.getType()->accept(this);
-		else
+	    else
 		    oss << "void ";
-		oss << func_decl->name << "__wrapper (";
-		// For argument types we need to check if it is a graph, if it is, we need to expand it into 3 numpy arrays
-		bool printDelimiter = false;
-		for (auto arg : func_decl->args) {
+	    oss << func_decl->name << "__wrapper (";
+	    // For argument types we need to check if it is a graph, if it is, we need to expand it into 3 numpy arrays
+	    bool printDelimiter = false;
+	    for (auto arg : func_decl->args) {
 		    if (printDelimiter) {
-		        oss << ", ";
+			    oss << ", ";
 		    }
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
-			mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
-			oss << "py::array_t<";
-			if (type->weight_type != NULL) 
-				type->weight_type->accept(this);
-			else 
-				oss << "int";
-			oss << "> ";
-			oss << arg.getName() << "__data";
-			oss << ", ";
-			oss << "py::array_t<";
-			type->element->accept(this);
-			oss << "> ";
-			oss << arg.getName() << "__indices";
-			oss << ", ";
-			oss << "py::array_t<int> ";
-			oss << arg.getName() << "__indptr";
-			
+			    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
+			    oss << "py::array_t<";
+			    if (type->weight_type != NULL) 
+				    type->weight_type->accept(this);
+			    else 
+				    oss << "int";
+			    oss << "> ";
+			    oss << arg.getName() << "__data";
+			    oss << ", ";
+			    oss << "py::array_t<";
+			    type->element->accept(this);
+			    oss << "> ";
+			    oss << arg.getName() << "__indices";
+			    oss << ", ";
+			    oss << "py::array_t<int> ";
+			    oss << arg.getName() << "__indptr";
+
 		    }else {
-		        arg.getType()->accept(this);
-		        oss << arg.getName();
+			    arg.getType()->accept(this);
+			    oss << arg.getName();
 		    }
 		    printDelimiter = true;
-		}
-		if (!printDelimiter)
+	    }
+	    if (!printDelimiter)
 		    oss << "void";
-		oss << ") ";	
-		oss << "{ " << std::endl;
-		indent();
-		printIndent();
-		// Need to generate translation for graph arguments before the actual call
-		
-		for (auto arg : func_decl->args) {
-			if (!mir::isa<mir::EdgeSetType>(arg.getType()))
-				continue;
-			mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
-			if (type->weight_type != NULL) {
-				oss << "//Cannot generate code for weighted graph for now" << std::endl;
-				continue;
-			}	
-			arg.getType()->accept(this);
-			oss << arg.getName() << ";" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".num_nodes_ = " << arg.getName() << "__indptr.size() - 1;" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".num_edges_ = " << arg.getName() << "__indices.size();" << std::endl;
-			printIndent();
-			// Node sure what this is, generating true for now
-			oss << arg.getName() << ".directed_ = true;" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".out_neighbors_  = (";
-			type->element->accept(this);
-			oss << "*) ";
-			oss << arg.getName() << "__indices.data();" << std::endl;
+	    oss << ") ";	
+	    oss << "{ " << std::endl;
+	    indent();
+	    printIndent();
+	    // Need to generate translation for graph arguments before the actual call
 
-			printIndent();
-			oss << arg.getName() << ".out_index_ = new ";
-			type->element->accept(this);
-			oss << "*[";
-			oss << arg.getName() << ".num_nodes_ + 1]" << std::endl;
-		
-			printIndent();
-			oss << "for (int __x = 0; __x < " << arg.getName() << ".num_nodes_; __x++) { " << std::endl;
-			indent();
-			printIndent();
-			oss << arg.getName() << ".out_index_[__x] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << "__indptr() [__x];" << std::endl;
-			dedent();
-			printIndent();
-			oss << "}" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".out_index_[" << arg.getName() << ".num_nodes_] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << ".num_edges_;" << std::endl;
-			printIndent();
-			// Node sure what this is, generating false for now
-			oss << arg.getName() << ".is_transpose_ = false;" << std::endl;
-			printIndent();
-			oss << "//Assume the graph is symmetric" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".in_neighbors_ = " << arg.getName() << ".out_neighbors_;" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".in_index_ = " << arg.getName() << ".out_index_;" << std::endl;
-			printIndent();
-			oss << "//This is so that the Graph object doesn't claim ownership of the graph elements and free it when it is destroyed" << std::endl;
-			printIndent();
-			oss << arg.getName() << ".destructor_free = false; " << std::endl;
-		 
-		}
-		printIndent();
-		if (func_decl->result.isInitialized()) {
+	    for (auto arg : func_decl->args) {
+		    if (!mir::isa<mir::EdgeSetType>(arg.getType()))
+			    continue;
+		    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
+		    if (type->weight_type != NULL) {
+			    oss << "//Cannot generate code for weighted graph for now" << std::endl;
+			    continue;
+		    }	
+		    arg.getType()->accept(this);
+		    oss << arg.getName() << ";" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".num_nodes_ = " << arg.getName() << "__indptr.size() - 1;" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".num_edges_ = " << arg.getName() << "__indices.size();" << std::endl;
+		    printIndent();
+		    // Node sure what this is, generating true for now
+		    oss << arg.getName() << ".directed_ = true;" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".out_neighbors_  = (";
+		    type->element->accept(this);
+		    oss << "*) ";
+		    oss << arg.getName() << "__indices.data();" << std::endl;
+
+		    printIndent();
+		    oss << arg.getName() << ".out_index_ = new ";
+		    type->element->accept(this);
+		    oss << "*[";
+		    oss << arg.getName() << ".num_nodes_ + 1]" << std::endl;
+
+		    printIndent();
+		    oss << "for (int __x = 0; __x < " << arg.getName() << ".num_nodes_; __x++) { " << std::endl;
+		    indent();
+		    printIndent();
+		    oss << arg.getName() << ".out_index_[__x] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << "__indptr() [__x];" << std::endl;
+		    dedent();
+		    printIndent();
+		    oss << "}" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".out_index_[" << arg.getName() << ".num_nodes_] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << ".num_edges_;" << std::endl;
+		    printIndent();
+		    // Node sure what this is, generating false for now
+		    oss << arg.getName() << ".is_transpose_ = false;" << std::endl;
+		    printIndent();
+		    oss << "//Assume the graph is symmetric" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".in_neighbors_ = " << arg.getName() << ".out_neighbors_;" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".in_index_ = " << arg.getName() << ".out_index_;" << std::endl;
+		    printIndent();
+		    oss << "//This is so that the Graph object doesn't claim ownership of the graph elements and free it when it is destroyed" << std::endl;
+		    printIndent();
+		    oss << arg.getName() << ".destructor_free = false; " << std::endl;
+
+	    }
+	    printIndent();
+	    if (func_decl->result.isInitialized()) {
 		    func_decl->result.getType()->accept(this);
 		    oss << func_decl->result.getName() << " = ";
-		}
-		oss << func_decl->name;
-		if (func_decl->isFunctor)
-			oss << "()";
-		oss << "(";
-		printDelimiter = false;
-		for (auto arg : func_decl->args) {
+	    }
+	    oss << func_decl->name;
+	    if (func_decl->isFunctor)
+		    oss << "()";
+	    oss << "(";
+	    printDelimiter = false;
+	    for (auto arg : func_decl->args) {
 		    if (printDelimiter) {
-		        oss << ", ";
+			    oss << ", ";
 		    }
 		    oss << arg.getName();
 		    printDelimiter = true;
-		}
-		oss << ");" << std::endl;
-		
-		// Now we need to free the extra allocations we made for the graph types
-		for (auto arg : func_decl->args) {
-			if (!mir::isa<mir::EdgeSetType>(arg.getType()))
-				continue;
-			mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
-			printIndent();		
-			oss << "delete[] " << arg.getName() << ".out_index_;" << std::endl;
-		}
-		if (func_decl->result.isInitialized()) {
-			printIndent();
-			oss << "return " << func_decl->result.getName() << ";" << std::endl;
-		}		
-		dedent();
-		printIndent();
-		oss << "}" << std::endl;
-		
-	}
-    };
+	    }
+	    oss << ");" << std::endl;
+
+	    // Now we need to free the extra allocations we made for the graph types
+	    for (auto arg : func_decl->args) {
+		    if (!mir::isa<mir::EdgeSetType>(arg.getType()))
+			    continue;
+		    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
+		    printIndent();		
+		    oss << "delete[] " << arg.getName() << ".out_index_;" << std::endl;
+	    }
+	    if (func_decl->result.isInitialized()) {
+		    printIndent();
+		    oss << "return " << func_decl->result.getName() << ";" << std::endl;
+	    }		
+	    dedent();
+	    printIndent();
+	    oss << "}" << std::endl;
+
+    }
 
     void CodeGenCPP::visit(mir::ScalarType::Ptr scalar_type) {
         switch (scalar_type->type) {
