@@ -950,8 +950,8 @@ void CodeGenCPP::visit(mir::VertexSetApplyExpr::Ptr apply_expr) {
         oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
         dedent();
         printIndent();
-        if (apply->is_parallel) {
-            oss << "});"
+        if (apply_expr->is_parallel) {
+            oss << "});";
         } else {
             oss << "}";
         }
