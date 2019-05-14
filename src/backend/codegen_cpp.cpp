@@ -553,6 +553,7 @@ namespace graphit {
 	}
     };
     void CodeGenCPP::generatePyBindWrapper(mir::FuncDecl::Ptr func_decl) {
+	    oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
 	    oss << "//PyBind Wrappers for function" << func_decl->name << std::endl;
 	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
 	    if (func_decl->result.isInitialized())
@@ -686,6 +687,7 @@ namespace graphit {
 	    dedent();
 	    printIndent();
 	    oss << "}" << std::endl;
+	    oss << "#endif" << std::endl;
 
     }
 
