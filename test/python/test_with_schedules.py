@@ -524,6 +524,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_pagerank_verified(self):
         self.library_pr_verified_test("export_pr.gt", '/test/input/');
 
+    def test_library_pagerank_with_return_verified(self):
+        self.library_pr_verified_test("export_pr_with_return.gt", '/test/input/');
+
 if __name__ == '__main__':
     while len(sys.argv) > 1:
         if "parallel" in sys.argv:
@@ -540,7 +543,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_pagerank_verified'))
+    # suite.addTest(TestGraphitCompiler('test_library_pagerank_with_return_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

@@ -712,9 +712,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
-        //MIRVisitor::visit(vector_type);
-
-
+        vector_type->vector_element_type->accept(this);
+        oss << " * ";
     }
 
     void CodeGenCPP::visit(mir::StructTypeDecl::Ptr struct_type) {
