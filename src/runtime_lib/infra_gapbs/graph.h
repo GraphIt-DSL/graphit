@@ -109,9 +109,9 @@ class CSRGraph {
     if (out_neighbors_ != nullptr)
       delete[] out_neighbors_;
     if (directed_) {
-      if (in_index_ != nullptr)
+      if (in_index_ != nullptr && in_index_ != out_index_)
         delete[] in_index_;
-      if (in_neighbors_ != nullptr)
+      if (in_neighbors_ != nullptr && in_neighbors_ != out_neighbors_)
         delete[] in_neighbors_;
     }
     if (flags_ != nullptr)
@@ -125,12 +125,12 @@ class CSRGraph {
  public:
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
-  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false) {}
+  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false), destructor_free(true) {}
 
   CSRGraph(int64_t num_nodes, DestID_** index, DestID_* neighs) :
     directed_(false), num_nodes_(num_nodes),
     out_index_(index), out_neighbors_(neighs),
-    in_index_(index), in_neighbors_(neighs) {
+    in_index_(index), in_neighbors_(neighs), destructor_free(true) {
       num_edges_ = (out_index_[num_nodes_] - out_index_[0]) / 2;
       //adding flags used for deduplication
       flags_ = new int[num_nodes_];
@@ -142,7 +142,7 @@ class CSRGraph {
         DestID_** in_index, DestID_* in_neighs) :
     directed_(true), num_nodes_(num_nodes),
     out_index_(out_index), out_neighbors_(out_neighs),
-    in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false) {
+    in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false), destructor_free(true) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
 
       flags_ = new int[num_nodes_];
@@ -153,7 +153,7 @@ class CSRGraph {
         DestID_** in_index, DestID_* in_neighs, bool is_transpose) :
     directed_(true), num_nodes_(num_nodes),
     out_index_(out_index), out_neighbors_(out_neighs),
-    in_index_(in_index), in_neighbors_(in_neighs) , is_transpose_(is_transpose){
+    in_index_(in_index), in_neighbors_(in_neighs) , is_transpose_(is_transpose), destructor_free(true) {
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
 
       flags_ = new int[num_nodes_];
@@ -164,7 +164,8 @@ class CSRGraph {
     CSRGraph(CSRGraph& other) : directed_(other.directed_),
                                  num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
                                  out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
-                                 in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false) {
+                                 in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false), destructor_free(false) {
+   /* Commenting this because object is not taking owner ship of the elements, notice destructor_free is set to false
         other.num_edges_ = -1;
         other.num_nodes_ = -1;
         other.out_index_ = nullptr;
@@ -173,13 +174,14 @@ class CSRGraph {
         other.in_neighbors_ = nullptr;
         other.flags_ = nullptr;
         other.offsets_ = nullptr;
+  */
     }
 
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
     out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
-    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false) {
+    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false), destructor_free(other.destructor_free){
       other.num_edges_ = -1;
       other.num_nodes_ = -1;
       other.out_index_ = nullptr;
@@ -188,6 +190,7 @@ class CSRGraph {
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
     other.offsets_ = nullptr;
+    
   }
 
 
@@ -195,6 +198,8 @@ class CSRGraph {
 
 
   ~CSRGraph() {
+    if (!destructor_free)
+        return;
     if (!is_transpose_)
         ReleaseResources();
   }
@@ -420,6 +425,7 @@ class CSRGraph {
   DestID_** in_index_;
   DestID_*  in_neighbors_;
   std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
+  bool destructor_free;
 };
 
 #endif  // GRAPH_H_

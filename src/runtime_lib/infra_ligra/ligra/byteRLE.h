@@ -169,7 +169,7 @@ template <class T, class F>
 /*
   Compresses the first edge, writing target-source and a sign bit. 
 */
-long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
+static long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
   uchar* saveStart = start;
   long saveOffset = offset;
 
@@ -208,7 +208,7 @@ long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
   Should provide the difference between this edge and the previous edge
 */
 
-long compressEdges(uchar *start, long curOffset, uintE* savedEdges, uintE edgeI, int numBytes, uintT runlength) {
+static long compressEdges(uchar *start, long curOffset, uintE* savedEdges, uintE edgeI, int numBytes, uintT runlength) {
   //header
   uchar header = numBytes - 1;
   header |= ((runlength-1) << 2); 
@@ -247,7 +247,7 @@ long compressEdges(uchar *start, long curOffset, uintE* savedEdges, uintE edgeI,
   Returns:
     The new offset into the edge array
 */
-long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, uintE *savedEdges) {
+static long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, uintE *savedEdges) {
   if (degree > 0) {
     // Compress the first edge whole, which is signed difference coded
     currentOffset = compressFirstEdge(edgeArray, currentOffset, 
@@ -317,7 +317,7 @@ long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degre
 /*
   Compresses the edge set in parallel. 
 */
-uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   uintT *degrees = newA(uintT, n+1);
@@ -383,7 +383,7 @@ typedef pair<uintE,intE> intEPair;
   Compresses the first edge, writing target-source and a sign bit. 
 */
 
-int numBytesSigned (intE x) {
+static int numBytesSigned (intE x) {
   if(x < ONE_BYTE_SIGNED_MAX && x > ONE_BYTE_SIGNED_MIN) return 1;
   else return 4;
 }
@@ -510,7 +510,7 @@ template <class T, class F>
   }
 }
 
-long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, uintE edgeI, int numBytes, int numBytesWeight, uintT runlength) {
+static long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, uintE edgeI, int numBytes, int numBytesWeight, uintT runlength) {
   //header
   //use 3 bits for info on bytes needed 
   uchar header = numBytes - 1;
@@ -545,7 +545,7 @@ long compressWeightedEdges(uchar *start, long curOffset, intEPair* savedEdges, u
   return curOffset;
 }
 
-long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, intEPair *savedEdges) {
+static long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, uintE vertexNum, intEPair *savedEdges) {
   if (degree > 0) {
     currentOffset = compressFirstEdge(edgeArray, currentOffset, 
                                        vertexNum, savedEdges[0].first);
@@ -656,7 +656,7 @@ long sequentialCompressWeightedEdgeSet(uchar *edgeArray, long currentOffset, uin
   return currentOffset;
 }
 
-uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
+static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
   uintE **edgePts = newA(uintE*, n);
   uintT *degrees = newA(uintT, n+1);
