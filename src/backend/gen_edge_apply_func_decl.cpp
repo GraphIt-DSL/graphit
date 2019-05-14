@@ -111,16 +111,16 @@ namespace graphit {
                         "    {\n";
 
                 if (from_vertexset_specified){
-                    oss_ <<  "        parallel_for (long i = 0; i < m; i++) {\n"
+                    oss_ <<  "        ligra::parallel_for((long)0, (long)m, [&] (long i) {\n"
                             "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
                             "            degrees[i] = g.out_degree(v);\n"
-                            "        }\n"
+                            "         });\n"
                             "    }\n"
                             "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
                 } else {
-                    oss_ << "        parallel_for (long i = 0; i < numVertices; i++) {\n"
+                    oss_ << "        ligra::parallel_for((long)0, (long)numVertices, [&] (long i) {\n"
                             "            degrees[i] = g.out_degree(i);\n"
-                            "        }\n"
+                            "        });\n"
                             "    }\n"
                             "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
                 }
@@ -155,7 +155,7 @@ namespace graphit {
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
             oss_ << "    if (g.flags_ == nullptr){\n"
                     "      g.flags_ = new int[numVertices]();\n"
-                    "      parallel_for(int i = 0; i < numVertices; i++) g.flags_[i]=0;\n"
+                    "      ligra::parallel_for(0, (int)numVertices,[&] (int i) { g.flags_[i]=0; });\n"
                     "    }\n";
         }
 
@@ -187,11 +187,18 @@ namespace graphit {
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
+        if (apply->is_parallel) {
+            if (from_vertexset_specified)
+                oss_ << "ligra::parallel_for((long)0, (long)m, [&] (long i) {" << std::endl;
+            else
+                oss_ << "ligra::parallel_for ((NodeID)0, g.num_nodes(), [&] (NodeID s) {" << std::endl;
+        } else {
 
-        if (from_vertexset_specified)
-            oss_ << for_type << " (long i=0; i < m; i++) {" << std::endl;
-        else
-            oss_ << for_type << " (NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+            if (from_vertexset_specified)
+                oss_ << for_type << " (long i=0; i < m; i++) {" << std::endl;
+            else
+                oss_ << for_type << " (NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+        }
 
         indent();
 
@@ -309,10 +316,12 @@ namespace graphit {
 
         dedent();
         printIndent();
-        oss_ << "}" << std::endl;
 
-
-
+        if (apply->is_parallel) {
+            oss_ << "});" << std::endl;
+        } else {
+            oss_ << "}" << std::endl;
+        }
 
         //return a new vertexset if no subset vertexset is returned
         if (apply_expr_gen_frontier) {
@@ -326,9 +335,9 @@ namespace graphit {
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
-                    oss_ << "  parallel_for(int i = 0; i < nextM; i++){\n"
+                    oss_ << "  ligra::parallel_for((int)0; (int)nextM; [&] (int i) {\n"
                             "     g.flags_[nextIndices[i]] = 0;\n"
-                            "  }\n";
+                            "  });\n";
             }
             oss_ << "  return next_frontier;\n";
         }
@@ -451,30 +460,30 @@ namespace graphit {
         oss_ << "}// end of per-socket parallel region\n\n";
         auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
         auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
-        oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
+        oss_ << "  ligra::parallel_for ((int)0, (int)numVertices, [&] (int n) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
         oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
         switch (apply->merge_reduce->reduce_op) {
-	case mir::ReduceStmt::ReductionOp::SUM:
-	  oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
-	  break;
-	case mir::ReduceStmt::ReductionOp::MIN:
-	  oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
-	       << apply->merge_reduce->field_name  << "[socketId][n]);\n";
-	  break;
-	default:
-	  // TODO: fill in the missing operators when they are actually used
-	  abort();
+        case mir::ReduceStmt::ReductionOp::SUM:
+            oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+            break;
+        case mir::ReduceStmt::ReductionOp::MIN:
+            oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
+                 << apply->merge_reduce->field_name  << "[socketId][n]);\n";
+            break;
+        default:
+            // TODO: fill in the missing operators when they are actually used
+            abort();
         }
-        oss_ << "    }\n  }" << std::endl;
+        oss_ << "    }\n  });" << std::endl;
     }
 
     void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
-        oss_ << "parallel_for (int n = 0; n < numVertices; n++) {\n";
+        oss_ << "ligra::parallel_for((int)0, (int)numVertices, [&] (int n) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
         oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
              << apply->merge_reduce->field_name << "[n];\n";
-        oss_ << "    }\n  }\n";
+        oss_ << "    }\n  });\n";
     }
 
     // Print the code for traversing the edges in the push direction and return the new frontier
@@ -494,7 +503,7 @@ namespace graphit {
 
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
-                    "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
+                    "  ligra::parallel_for((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
         }
 
         indent();
@@ -511,14 +520,14 @@ namespace graphit {
         if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
             oss_ << "  Bitmap bitmap(numVertices);\n"
                     "  bitmap.reset();\n"
-                    "  parallel_for(int i = 0; i < numVertices; i+=64){\n"
+                    "  ligra::parallel_for((int) 0, (int)numVertices, 64, [&] (int i){\n"
                     "     int start = i;\n"
                     "     int end = (((i + 64) < numVertices)? (i+64):numVertices);\n"
                     "     for(int j = start; j < end; j++){\n"
                     "        if (from_vertexset->bool_map_[j])\n"
                     "          bitmap.set_bit(j);\n"
                     "     }\n"
-                    "  }" << std::endl;
+                    "  });" << std::endl;
         }
 
         printIndent();
@@ -557,7 +566,7 @@ namespace graphit {
                 std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
                 oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
-		oss_ << "    int segmentsPerSocket = (numSegments + numPlaces - 1) / numPlaces;\n";
+                oss_ << "    int segmentsPerSocket = (numSegments + numPlaces - 1) / numPlaces;\n";
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
                 oss_ << "    int socketId = omp_get_place_num();\n";
                 oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
@@ -578,9 +587,11 @@ namespace graphit {
             if (numa_aware) {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
                 oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
-            } else if (apply->is_parallel) {
-                for_type = "parallel_for";
             }
+            // OpenMP only, no need to use templated ligra::parallel_for
+            // else if (apply->is_parallel) {
+            //     for_type = "parallel_for";
+            // }
 
             //printIndent();
             oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
@@ -701,7 +712,7 @@ namespace graphit {
 
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
-                    "  parallel_for (int i = 0; i < numVertices; i++)next[i] = 0;\n";
+                    "  ligra::parallel_for((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
         }
 
         indent();
@@ -720,7 +731,11 @@ namespace graphit {
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
-        oss_ << for_type << " ( NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+        if (apply->is_parallel) {
+            oss_ << "ligra::parallel_for((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+        } else {
+            oss_ << "for ( NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+        }
         indent();
 
         // print the checks on filtering on sources s
@@ -815,7 +830,11 @@ namespace graphit {
 
         dedent();
         printIndent();
-        oss_ << "} //end of outer for loop" << std::endl;
+        if (apply->is_parallel) {
+            oss_ << "}); //end of outer for loop" << std::endl;
+        } else {
+            oss_ << "} //end of outer for loop" << std::endl;
+        }
 
         //return a new vertexset if no subset vertexset is returned
         if (apply_expr_gen_frontier) {
