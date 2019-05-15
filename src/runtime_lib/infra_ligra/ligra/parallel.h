@@ -47,17 +47,20 @@ void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
 }
 template<typename IterT, typename BodyT>
 void parallel_for(IterT start, IterT end, BodyT body) {
-  parallel_for(start, end, (IterT)1, body);
+  cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
-  parallel_for_1(start, end, (IterT)1, body);
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
-  parallel_for_256(start, end, (IterT)1, body);
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 }
 #include <cilk/cilk_api.h>
@@ -100,17 +103,20 @@ void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
 }
 template<typename IterT, typename BodyT>
 void parallel_for(IterT start, IterT end, BodyT body) {
-  parallel_for(start, end, (IterT)1, body);
+  cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
-  parallel_for_1(start, end, (IterT)1, body);
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
-  parallel_for_256(start, end, (IterT)1, body);
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
 }
 }
 #define parallel_main main
@@ -135,11 +141,15 @@ static void setWorkers(int n) {
 #elif defined(TBB)
 #include "tbb/tbb.h"
 #include "tbb/task_scheduler_init.h"
+#define cilk_spawn
+#define cilk_sync
 namespace ligra {
-template<typename IterT, typename BodyT>
-void parallel_for(IterT start, IterT end, IterT step, BodyT body) {
-  tbb::parallel_for(start, end, step, body);
-}
+using tbb::parallel_for;
+
+// ignore grain size for now
+// c++14
+// template<typename IterT, typename BodyT>
+// const auto parallel_for_1 = tbb::parallel_for<IterT, BodyT>;
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, IterT step, BodyT body) {
@@ -149,22 +159,17 @@ void parallel_for_1(IterT start, IterT end, IterT step, BodyT body) {
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
-  // ignore grain size for now
   tbb::parallel_for(start, end, step, body);
-}
-template<typename IterT, typename BodyT>
-void parallel_for(IterT start, IterT end, BodyT body) {
-  parallel_for(start, end, (IterT)1, body);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
-  parallel_for_1(start, end, (IterT)1, body);
+  tbb::parallel_for(start, end, body);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
-  parallel_for_256(start, end, (IterT)1, body);
+  tbb::parallel_for(start, end, body);
 }
 }
 #define parallel_main main
@@ -203,17 +208,20 @@ void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
 }
 template<typename IterT, typename BodyT>
 void parallel_for(IterT start, IterT end, BodyT body) {
-  parallel_for(start, end, (IterT)1, body);
+  _Pragma("omp parallel for ") for (IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
-  parallel_for_1(start, end, (IterT)1, body);
+  _Pragma("omp parallel for schedule (static,1)") for (IterT i = start; i < end; ++i)
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
-  parallel_for_256(start, end, (IterT)1, body);
+  _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; ++i)
+    body(i);
 }
 }
 //#define parallel_for _Pragma("omp parallel for ") for
@@ -241,22 +249,25 @@ void parallel_for_1(IterT start, IterT end, IterT step, BodyT body) {
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
-  for (IterT i = start; i < end; ++i)
+  for (IterT i = start; i < end; i += step)
     body(i);
 }
 template<typename IterT, typename BodyT>
 void parallel_for(IterT start, IterT end, BodyT body) {
-  parallel_for(start, end, (IterT)1, body);
+  for (IterT i = start; i < end; ++i)
+    body(1);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
-  parallel_for_1(start, end, (IterT)1, body);
+  for (IterT i = start; i < end; ++i)
+    body(1);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
-  parallel_for_256(start, end, (IterT)1, body);
+  for (IterT i = start; i < end; ++i)
+    body(1);
 }
 }
 #define cilk_for for
