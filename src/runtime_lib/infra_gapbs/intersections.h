@@ -17,58 +17,57 @@
 
 using namespace std;
 
-size_t TWITTER_NUM_NODES = 61578415;
+size_t MAX_LIMIT = 61578415;
 
 
-
-size_t intersect_bitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+//TODO: there might be some issues with the allocating space
+size_t intersectBitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+  
   size_t total = 0;
 
-  Bitmap a_array(TWITTER_NUM_NODES);
-  a_array.reset();
+  //we only want to build bitmap for bigger array
+  if (totalA > totalB) {
 
-  for(size_t i = 0; i < totalA; i++){
-      a_array.set_bit(*(A+i));
+    Bitmap a_array(MAX_LIMIT);
+    a_array.reset();
+
+    for(size_t i = 0; i < totalA; i++){
+        a_array.set_bit(*(A+i));
+    }
+
+    for(size_t j = 0; j < totalB; j++){
+        if (a_array.get_bit(*(B+j))){
+            total++;
+        }
+    }
+
+  } 
+  else {
+    Bitmap b_array(MAX_LIMIT);
+    b_array.reset();
+
+    for(size_t i = 0; i < totalB; i++){
+        b_array.set_bit(*(B+i));
+    }
+
+    for(size_t j = 0; j < totalA; j++){
+        if (b_array.get_bit(*(A+j))){
+            total++;
+        }
+    }
   }
 
-  Timer t;
-  t.Start();
-  for(size_t j = 0; j < totalB; j++){
-      if (a_array.get_bit(*(B+j))){
-          total++;
-      }
-  }
-  t.Stop();
+  
 
-  cout << "inside " << t.Microsecs() << "\n";
 
         
   return total;
 }
 
-size_t intersect_bitset_parallel(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
-  size_t total = 0;
-
-  Bitmap a_array(TWITTER_NUM_NODES);
-  a_array.reset();
-  #pragma omp for schedule(dynamic, 64)
-  for(size_t i = 0; i < totalA; i++){
-      //a_array.set_bit(*(A+i))
-      a_array.set_bit(*(A+i));
-  }
-
-  for(size_t j = 0; j < totalB; j++){
-      if (a_array.get_bit(*(B+j))){
-          total++;
-      }
-  }
-
-        
-  return total;
-}
 
 
-long int inline BinarySearch(NodeID* A, long int start, size_t total, NodeID* B, size_t offset) {
+
+long int inline binarySearch(NodeID* A, long int start, size_t total, NodeID* B, size_t offset) {
 
   long int left = start == -1? 0 : start;
   long int right = total-1;
@@ -98,12 +97,13 @@ long int inline BinarySearch(NodeID* A, long int start, size_t total, NodeID* B,
 
 }
 
-size_t intersect_binary_search(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+//set intersection by looking up smaller arrays in big arrays
+size_t intersectBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
     size_t count = 0;
     long int start = 0;
     long int prevStart = 0;
     for (size_t j = 0; j < totalB; j++) {
-        start = BinarySearch(A, start, totalA, B, j);
+        start = binarySearch(A, start, totalA, B, j);
         if (start >= 0) {
             prevStart = start;
             count++;    
@@ -120,8 +120,8 @@ size_t intersect_binary_search(NodeID* A, NodeID* B, size_t totalA, size_t total
 
 }
 
-
-size_t intersect_hiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+//set intersection based on Hiroshi method
+size_t intersectHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 
     size_t begin_a = 0;
     size_t begin_b = 0;
@@ -201,7 +201,8 @@ size_t intersect_hiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 
 }
 
-size_t intersect_multiple_skip(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+//set intersection where it skips multiple element in batch
+size_t intersectMultipleSkip(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 
     size_t it_a = 0;
     auto it_b = 0;
@@ -245,36 +246,52 @@ size_t intersect_multiple_skip(NodeID* A, NodeID* B, size_t totalA, size_t total
     return count;
 }
 
+//Naive set intersection method. 
+size_t intersectNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
 
-// This is for checking if our implementation is correct
-size_t SetIntersectionVerifier(NodeID *A, NodeID *B, size_t totalSizeA, size_t totalSizeB) {
-  
-  
-  size_t total = 0;
-  size_t beginA = 0;
-  size_t beginB = 0;
+    size_t begin_a = 0;
+    size_t begin_b = 0;
+    size_t count = 0;
 
-  while (beginA < totalSizeA && beginB < totalSizeB) {
+    // intersect the tail using scalar intersection
+    while (begin_a < totalA && begin_b < totalB) {
 
-      if (*(A + beginA) < *(B + beginB)){
-          beginA++;
-      }
-
-      else if(*(A + beginA) > *(B + beginB)){
-          beginB++;
-      }
-
-      else {
-          total++;
-          beginA++;
-          beginB++;
-      }
-  }
-
-  return total;
-
+        if (*(A + begin_a) < *(B + begin_b)) {
+            begin_a++;
+        }
+        else if (*(A + begin_a) > *(B + begin_b)) {
+            begin_b++;
+        }
+        else {
+            count++;
+            begin_a++;
+            begin_b++;
+        }
+    }
+    return count;
 
 }
+
+//TODO add more if else conditions to make it more general
+size_t intersectCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold) {
+
+    size_t count = 0;
+
+    if (totalA > sizeThreshold && totalB > sizeThreshold && (totalA > ratioThreshold*totalB || totalB > ratioThreshold*totalA)){
+        count += intersectHiroshi(A, B, totalA, totalB);
+
+    } else {
+        count += intersectMultipleSkip(A, B, totalA, totalB);
+    }
+
+    return count;
+
+    
+
+}
+
+
+
 
 
 
