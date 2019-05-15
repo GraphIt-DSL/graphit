@@ -206,7 +206,8 @@ class CSRGraph {
 
     CSRGraph& operator=(CSRGraph& other) {
         if (this != &other) {
-            if (!is_transpose_)
+
+            if (!is_transpose_ && destructor_free)
                 ReleaseResources();
             directed_ = other.directed_;
             num_edges_ = other.num_edges_;
@@ -215,7 +216,9 @@ class CSRGraph {
             out_neighbors_ = other.out_neighbors_;
             in_index_ = other.in_index_;
             in_neighbors_ = other.in_neighbors_;
+            destructor_free = false;
             //need the following, otherwise would get double free errors
+/*
           other.num_edges_ = -1;
           other.num_nodes_ = -1;
           other.out_index_ = nullptr;
@@ -224,6 +227,7 @@ class CSRGraph {
           other.in_neighbors_ = nullptr;
           other.flags_ = nullptr;
           other.offsets_ = nullptr;
+*/
         }
         return *this;
     }
@@ -247,7 +251,7 @@ class CSRGraph {
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
       other.offsets_ = nullptr;
-
+      destructor_free = other.destructor_free;
     }
     return *this;
   }
