@@ -240,12 +240,14 @@ TEST_F(RuntimeLibTest, IntersectLongerSets){
                                2834, 2839, 2852, 2866, 2870, 2888, 2897, 2906, 
                                2908, 2932, 2938, 2972};
 
-    size_t countHiroshi = intersectHiroshi(A, B, 230, 240);
-    size_t countBitset = intersectBitset(A, B, 230, 240);
-    size_t countCombined1 = intersectCombined(A, B, 230, 240, 0.1, 20);
-    size_t countCombined2 = intersectCombined(A, B, 230, 240, 0.2, 5000);
-    size_t countMultiSkip = intersectMultipleSkip(A, B, 230, 240);
-    size_t countNaive = intersectNaive(A, B, 230, 240);
+    size_t countHiroshi = intersectHiroshi(A, B, 234, 240);
+    size_t countBitset = intersectBitset(A, B, 234, 240);
+    size_t countBinarySearch = intersectBinarySearch(B, A, 240, 234);
+    size_t countBinarySearch2 = intersectBinarySearch(A, B, 234, 240);
+    size_t countCombined1 = intersectCombined(A, B, 234, 240, 0.1, 20);
+    size_t countCombined2 = intersectCombined(A, B, 234, 240, 0.2, 5000);
+    size_t countMultiSkip = intersectMultipleSkip(A, B, 234, 240);
+    size_t countNaive = intersectNaive(A, B, 234, 240);
 
     delete A;
     delete B;
@@ -254,6 +256,8 @@ TEST_F(RuntimeLibTest, IntersectLongerSets){
     EXPECT_EQ(13, countBitset);
     EXPECT_EQ(13, countCombined1);
     EXPECT_EQ(13, countCombined2);
+    EXPECT_EQ(13, countBinarySearch);
+    EXPECT_EQ(13, countBinarySearch2);    
     EXPECT_EQ(13, countMultiSkip);
     EXPECT_EQ(13, countNaive);
 
@@ -267,6 +271,7 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
     ASSERT_DEATH(intersectHiroshi(A, B, 0, 5), ".*");
 
     size_t countBitset = intersectBitset(A, B, 0, 5);
+    size_t countBinarySearch = intersectBinarySearch(A, B, 0, 5);
     size_t countCombined1 = intersectCombined(A, B, 0, 5, 0.1, 1);
     size_t countCombined2 = intersectCombined(A, B, 0, 5, 0.2, 5000);
     size_t countMultiSkip = intersectMultipleSkip(A, B, 0, 5);
@@ -277,6 +282,7 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
 
     
     EXPECT_EQ(0, countBitset);
+    EXPECT_EQ(0, countBinarySearch);
     EXPECT_EQ(0, countCombined1);
     EXPECT_EQ(0, countCombined2);
     EXPECT_EQ(0, countMultiSkip);
@@ -288,6 +294,7 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
     ASSERT_DEATH(intersectHiroshi(A1, B1, 5, 0), ".*");
 
     countBitset = intersectBitset(A1, B1, 5, 0);
+    countBinarySearch = intersectBinarySearch(A1, B1, 5, 0);
     countCombined1 = intersectCombined(A1, B1, 5, 0, 0.1, 1);
     countCombined2 = intersectCombined(A1, B1, 5, 0, 0.2, 5000);
     countMultiSkip = intersectMultipleSkip(A1, B1, 5, 0);
@@ -298,6 +305,7 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
 
     
     EXPECT_EQ(0, countBitset);
+    EXPECT_EQ(0, countBinarySearch);
     EXPECT_EQ(0, countCombined1);
     EXPECT_EQ(0, countCombined2);
     EXPECT_EQ(0, countMultiSkip);

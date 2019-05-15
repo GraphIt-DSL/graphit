@@ -17,6 +17,13 @@
 
 using namespace std;
 
+
+/*
+Runtime library for various set intersection methods
+*/
+
+
+
 size_t MAX_LIMIT = 61578415;
 
 
@@ -99,22 +106,43 @@ long int inline binarySearch(NodeID* A, long int start, size_t total, NodeID* B,
 
 //set intersection by looking up smaller arrays in big arrays
 size_t intersectBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+
     size_t count = 0;
     long int start = 0;
     long int prevStart = 0;
-    for (size_t j = 0; j < totalB; j++) {
-        start = binarySearch(A, start, totalA, B, j);
-        if (start >= 0) {
-            prevStart = start;
-            count++;    
 
-        }
-        else {
-            start = prevStart;
-        }
+    if (totalA >= totalB) {
 
-    } 
+        for (size_t j = 0; j < totalB; j++) {
+            start = binarySearch(A, start, totalA, B, j);
+            if (start >= 0) {
+                prevStart = start;
+                count++;    
 
+            }
+            else {
+                start = prevStart;
+            }
+
+        } 
+
+    } else {
+
+        for (size_t j = 0; j < totalA; j++) {
+            start = binarySearch(B, start, totalB, A, j);
+            if (start >= 0) {
+                prevStart = start;
+                count++;    
+
+            }
+            else {
+                start = prevStart;
+            }
+
+        } 
+
+    }
+    
     return count;
  
 
