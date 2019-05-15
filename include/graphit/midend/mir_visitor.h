@@ -61,6 +61,9 @@ namespace graphit {
 
         struct VertexSetAllocExpr;
         struct ListAllocExpr;
+        struct VectorAllocExpr;
+
+
         struct VarExpr;
         struct MulExpr;
         struct DivExpr;
@@ -86,6 +89,7 @@ namespace graphit {
         struct ListType;
         struct EdgeSetType;
         struct VectorType;
+
 
         struct MIRVisitor {
             virtual void visit(std::shared_ptr<Stmt>){};
@@ -131,6 +135,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<FloatLiteral>){};
             virtual void visit(std::shared_ptr<IntLiteral> op) {} //leaf FIR nodes need no recursive calls
             virtual void visit(std::shared_ptr<VertexSetAllocExpr>);
+
+            virtual void visit(std::shared_ptr<VectorAllocExpr>);
+
             virtual void visit(std::shared_ptr<ListAllocExpr>);
             virtual void visit(std::shared_ptr<VarExpr>){};
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);

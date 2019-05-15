@@ -62,6 +62,17 @@ class TestGraphitCompiler(unittest.TestCase):
             subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
             0)
 
+    # does not compile with a main function
+    def basic_compile_as_library_test(self, input_file_name):
+        # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
+        graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
+        # check the return code of the call as a way to check if compilation happened correctly
+        self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
+        # check if g++ compilation succeeded
+        self.assertEqual(
+            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-c"]),
+            0)
+
     def basic_compile_exec_test(self, input_file_name, extra_cpp_args=[], extra_exec_args=[]):
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
@@ -345,10 +356,16 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + str(output))
         self.assertEqual(output, "Error: Did not provide argv[4] as part of the command line input")
 
+    def test_simple_export_function(self):
+        self.basic_compile_as_library_test("simple_export_func.gt");
+
+    def test_export_edgeset_apply_function(self):
+        self.basic_compile_as_library_test("export_simple_edgeset_apply.gt");
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
-    #suite = unittest.TestSuite()
-    #suite.addTest(TestGraphitCompiler('test_simple_vector_sum_function_double_expect'))
-    #unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_export_edgeset_apply_function'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

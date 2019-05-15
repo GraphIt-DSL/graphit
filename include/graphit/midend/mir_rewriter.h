@@ -119,6 +119,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VectorType>);
 
+            virtual void visit(std::shared_ptr<VectorAllocExpr>);
+
 
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {

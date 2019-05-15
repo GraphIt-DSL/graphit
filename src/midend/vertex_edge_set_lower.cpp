@@ -23,15 +23,18 @@ namespace graphit {
             mir_var_expr->var = mir_var;
 
             assign_stmt->lhs = mir_var_expr;
-            auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(edgeset_decl->initVal);
 
-            auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset_decl->type);
-            if (edge_set_type->weight_type != nullptr) {
-                edgeset_load_expr->is_weighted_ = true;
+            // generate the load expression only if the initial value for edgeset expression is specified
+            if (edgeset_decl->initVal != nullptr){
+                auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(edgeset_decl->initVal);
+
+                auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset_decl->type);
+                if (edge_set_type->weight_type != nullptr) {
+                    edgeset_load_expr->is_weighted_ = true;
+                }
+                assign_stmt->expr = edgeset_load_expr;
+                mir_context_->edgeset_alloc_stmts.push_back(assign_stmt);
             }
-            assign_stmt->expr = edgeset_load_expr;
-            mir_context_->edgeset_alloc_stmts.push_back(assign_stmt);
-            //set_initialization_block->insertStmtEnd(assign_stmt);
         }
 
         //Actually, we might not need to support all the vertex sets, since the global vertex sets are not really

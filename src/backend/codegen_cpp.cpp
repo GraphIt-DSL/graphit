@@ -57,14 +57,14 @@ namespace graphit {
         //Processing the functions
         std::map<std::string, mir::FuncDecl::Ptr>::iterator it;
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
-	std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
+        std::vector<mir::FuncDecl::Ptr> extern_functions = mir_context_->getExternFunctionList();
 
-	for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
-	    it->get()->accept(this);
-	}
+        for (auto it = extern_functions.begin(); it != extern_functions.end(); it++) {
+            it->get()->accept(this);
+        }
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
-	    it->get()->accept(this);
+	        it->get()->accept(this);
         }
 
         oss << std::endl;
@@ -493,6 +493,16 @@ namespace graphit {
                     }
                 }
             }
+        } //end of if "main" condition
+
+        // still generate the constant declarations
+        if (func_decl->type == mir::FuncDecl::Type::EXPORTED){
+            for (auto constant : mir_context_->getLoweredConstants()) {
+                if (mir::isa<mir::ScalarType>(constant->type) &&
+                        constant->initVal != nullptr){
+                    genScalarAlloc(constant);
+                }
+            }
         }
 
 
@@ -563,9 +573,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
-        //MIRVisitor::visit(vector_type);
-
-
+        vector_type->vector_element_type->accept(this);
+        oss << " * ";
     }
 
     void CodeGenCPP::visit(mir::StructTypeDecl::Ptr struct_type) {
@@ -1176,5 +1185,16 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::EdgeSetType::Ptr edgeset_type) {
         oss << " Graph ";
+    }
+
+    void CodeGenCPP::visit(mir::VectorAllocExpr::Ptr alloc_expr) {
+        oss << "new ";
+        alloc_expr->scalar_type->accept(this);
+        oss << "[ ";
+        //This is the current number of elements, but we need the range
+        //alloc_expr->size_expr->accept(this);
+        const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
+        size_expr->accept(this);
+        oss << "]";
     }
 }

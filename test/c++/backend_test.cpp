@@ -190,6 +190,101 @@ TEST_F(BackendTest, SimpleVertexSetLoad) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+TEST_F(BackendTest, ExportSimpleVertexSetLoad) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func process() print 0; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "export func process() "
+                     "      edges = load (\"test.el\");"
+                     "      vertices = edges.getVertices();"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFunc) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInit) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)();"
+                     "      vertices.apply(update_vector);"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInitWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)();"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInputWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex), input_vector : vector{Vertex}(float)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = input_vector;"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
 TEST_F(BackendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"

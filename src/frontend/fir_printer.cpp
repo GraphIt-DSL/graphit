@@ -908,6 +908,14 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(VectorAllocExpr::Ptr expr) {
+            oss << "alloc vector {";
+            expr->elementType->accept(this);
+            oss << "}(";
+            expr->vector_scalar_type->accept(this);
+            oss << ")";
+        }
+
         void FIRPrinter::visit(MethodCallExpr::Ptr expr) {
             expr->target->accept(this);
             oss << ".";

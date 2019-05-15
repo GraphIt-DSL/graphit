@@ -136,6 +136,13 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<VectorAllocExpr> expr) {
+            expr->size_expr = rewrite<Expr>(expr->size_expr);
+            expr->element_type = rewrite<ElementType>(expr->element_type);
+            expr->scalar_type = rewrite<ScalarType>(expr->scalar_type);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ListAllocExpr> expr) {
             if (expr->size_expr != nullptr)
                 expr->size_expr = rewrite<Expr>(expr->size_expr);

@@ -1037,6 +1037,13 @@ namespace graphit {
             file_name = edge_set_load_expr->file_name->clone<Expr>();
         }
 
+
+        FIRNode::Ptr EdgeSetLoadExpr::cloneNode() {
+            const auto node = std::make_shared<EdgeSetLoadExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         FIRNode::Ptr ListAllocExpr::cloneNode() {
             const auto node = std::make_shared<ListAllocExpr>();
             node->copy(shared_from_this());
@@ -1049,13 +1056,20 @@ namespace graphit {
             general_element_type = list_alloc_expr->general_element_type->clone<Type>();
         }
 
-        FIRNode::Ptr EdgeSetLoadExpr::cloneNode() {
-            const auto node = std::make_shared<EdgeSetLoadExpr>();
+
+        FIRNode::Ptr VectorAllocExpr::cloneNode() {
+            const auto node = std::make_shared<VectorAllocExpr>();
             node->copy(shared_from_this());
             return node;
         }
 
-
+        void VectorAllocExpr::copy(FIRNode::Ptr node) {
+            const auto vector_alloc_expr = to<VectorAllocExpr>(node);
+            Expr::copy(vector_alloc_expr);
+            general_element_type = vector_alloc_expr->general_element_type->clone<Type>();
+            elementType = vector_alloc_expr->elementType->clone<ElementType>();
+            vector_scalar_type = vector_alloc_expr->vector_scalar_type->clone<ScalarType>();
+        }
 
         void MethodCallExpr::copy(FIRNode::Ptr node) {
             const auto method_call_expr = to<MethodCallExpr>(node);
