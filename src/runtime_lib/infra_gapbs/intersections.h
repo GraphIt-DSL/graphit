@@ -20,7 +20,7 @@ using namespace std;
 size_t MAX_LIMIT = 61578415;
 
 
-//TODO: there might be some issues with the allocating space
+//TODO: there might be some issues with the allocating space (for now I am just allocating big enough space)
 size_t intersectBitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
   
   size_t total = 0;
@@ -126,6 +126,8 @@ size_t intersectHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
     size_t begin_a = 0;
     size_t begin_b = 0;
     size_t count = 0;
+    assert(totalA > 2);
+    assert(totalB > 2);
 
     while (true) {
         NodeID Bdat0 = *(B + begin_b);
@@ -272,7 +274,6 @@ size_t intersectNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
 
 }
 
-//TODO add more if else conditions to make it more general
 size_t intersectCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold) {
 
     size_t count = 0;
@@ -280,8 +281,18 @@ size_t intersectCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, siz
     if (totalA > sizeThreshold && totalB > sizeThreshold && (totalA > ratioThreshold*totalB || totalB > ratioThreshold*totalA)){
         count += intersectHiroshi(A, B, totalA, totalB);
 
-    } else {
+    } 
+    else if (totalA >= totalB){
         count += intersectMultipleSkip(A, B, totalA, totalB);
+    } 
+    else if (totalA < totalB){
+        count += intersectMultipleSkip(B, A, totalB, totalA);
+
+    } 
+    else {
+        //shouldn't be here
+        return 0;
+
     }
 
     return count;

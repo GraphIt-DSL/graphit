@@ -264,17 +264,39 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
     NodeID* A = new NodeID[0]{};
     NodeID* B = new NodeID[5]{3, 4, 23, 45, 56};
 
-    size_t countHiroshi = intersectHiroshi(A, B, 0, 5);
+    ASSERT_DEATH(intersectHiroshi(A, B, 0, 5), ".*");
+
     size_t countBitset = intersectBitset(A, B, 0, 5);
     size_t countCombined1 = intersectCombined(A, B, 0, 5, 0.1, 1);
     size_t countCombined2 = intersectCombined(A, B, 0, 5, 0.2, 5000);
     size_t countMultiSkip = intersectMultipleSkip(A, B, 0, 5);
     size_t countNaive = intersectNaive(A, B, 0, 5);
-
+    
     delete A;
     delete B;
 
-    EXPECT_EQ(0, countHiroshi);
+    
+    EXPECT_EQ(0, countBitset);
+    EXPECT_EQ(0, countCombined1);
+    EXPECT_EQ(0, countCombined2);
+    EXPECT_EQ(0, countMultiSkip);
+    EXPECT_EQ(0, countNaive);
+
+    NodeID* A1 = new NodeID[5]{2, 3, 5, 6, 7};
+    NodeID* B1 = new NodeID[0]{};
+
+    ASSERT_DEATH(intersectHiroshi(A1, B1, 5, 0), ".*");
+
+    countBitset = intersectBitset(A1, B1, 5, 0);
+    countCombined1 = intersectCombined(A1, B1, 5, 0, 0.1, 1);
+    countCombined2 = intersectCombined(A1, B1, 5, 0, 0.2, 5000);
+    countMultiSkip = intersectMultipleSkip(A1, B1, 5, 0);
+    countNaive = intersectNaive(A1, B1, 5, 0);
+
+    delete A1;
+    delete B1;
+
+    
     EXPECT_EQ(0, countBitset);
     EXPECT_EQ(0, countCombined1);
     EXPECT_EQ(0, countCombined2);
