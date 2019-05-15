@@ -1,0 +1,14 @@
+//
+// Created by Yunming Zhang on 5/10/19.
+//
+
+#include "intrinsics.h"
+#include "test.cpp"
+
+
+int main(){
+
+    WGraph edges = builtin_loadWeightedEdgesFromFile("../test/graphs/4.wel");
+    export_func()(edges);
+
+}
