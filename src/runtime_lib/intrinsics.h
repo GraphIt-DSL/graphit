@@ -59,6 +59,17 @@ static Graph builtin_loadEdgesFromFile(std::string file_name){
     return g;
 }
 
+static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, NodeID> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++)
+		for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++)
+			el.push_back(Edge(x, indices[_y]));
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID> bb(cli);
+	return bb.MakeGraphFromEL(el);
+}
 static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }

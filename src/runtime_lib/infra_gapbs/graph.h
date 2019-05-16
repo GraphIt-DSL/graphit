@@ -103,6 +103,8 @@ class CSRGraph {
   };
 
   void ReleaseResources() {
+    if(!destructor_free)
+	return;
     //added a second condition to prevent double free (transpose graphs)
     if (out_index_ != nullptr)
       delete[] out_index_;
@@ -216,7 +218,7 @@ class CSRGraph {
             out_neighbors_ = other.out_neighbors_;
             in_index_ = other.in_index_;
             in_neighbors_ = other.in_neighbors_;
-            destructor_free = false;
+	    destructor_free = false;
             //need the following, otherwise would get double free errors
 /*
           other.num_edges_ = -1;
@@ -234,7 +236,7 @@ class CSRGraph {
 
     CSRGraph& operator=(CSRGraph&& other) {
     if (this != &other) {
-        if (!is_transpose_)
+        if (!is_transpose_ && destructor_free)
             ReleaseResources();
       directed_ = other.directed_;
       num_edges_ = other.num_edges_;
