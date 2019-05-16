@@ -76,6 +76,8 @@ add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests
 
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 configure_file(src/library_test_driver_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver.cpp COPYONLY)
+configure_file(src/library_test_driver_weighted_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver_weighted.cpp COPYONLY)
+
 
 add_executable(bc_verifier ./test/verifiers/bc_verifier.cpp)
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)

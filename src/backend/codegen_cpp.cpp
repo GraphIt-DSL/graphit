@@ -1062,14 +1062,18 @@ namespace graphit {
         for (auto edgeset : mir_context_->getEdgeSets()) {
 
             auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
-            if (edge_set_type->weight_type != nullptr) {
-                //weighted edgeset
-                //unweighted edgeset
-                oss << "WGraph " << edgeset->name << ";" << std::endl;
-            } else {
-                //unweighted edgeset
-                oss << "Graph " << edgeset->name << "; " << std::endl;
-            }
+            edge_set_type->accept(this);
+            oss << edgeset->name << ";" << std::endl;
+
+            // Deprecated code 
+//            if (edge_set_type->weight_type != nullptr) {
+//                //weighted edgeset
+//                //unweighted edgeset
+//                oss << "WGraph " << edgeset->name << ";" << std::endl;
+//            } else {
+//                //unweighted edgeset
+//                oss << "Graph " << edgeset->name << "; " << std::endl;
+//            }
         }
     }
 
@@ -1184,7 +1188,14 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::EdgeSetType::Ptr edgeset_type) {
-        oss << " Graph ";
+        if (edgeset_type->weight_type != nullptr) {
+            //weighted edgeset
+            //unweighted edgeset
+            oss << "WGraph ";
+        } else {
+            //unweighted edgeset
+            oss << "Graph ";
+        }
     }
 
     void CodeGenCPP::visit(mir::VectorAllocExpr::Ptr alloc_expr) {

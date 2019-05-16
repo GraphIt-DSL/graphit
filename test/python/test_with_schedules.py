@@ -112,13 +112,14 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
-    def basic_library_compile(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+    def basic_library_compile(self, input_file_name, input_file_directory='/test/input_with_schedules/',
+                              driver = 'library_test_driver.cpp'):
         input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + input_file_directory
         print ("current directory: " + os.getcwd())
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + " library_test_driver.cpp -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + " " + driver +  "  -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     def basic_library_compile_exec_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
@@ -138,6 +139,29 @@ class TestGraphitCompiler(unittest.TestCase):
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
         os.chdir("bin")
+
+    def library_sssp_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory, driver='library_test_driver_weighted.cpp')
+        os.chdir("..")
+        cmd = "bin/test.o > verifier_input"
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
+        print (cmd)
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        verify_cmd = "./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0"
+        print (verify_cmd)
+        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        test_flag = False
+        for line in iter(proc.stdout.readline,''):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+
 
     def bfs_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
@@ -527,6 +551,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_pagerank_with_return_verified(self):
         self.library_pr_verified_test("export_pr_with_return.gt", '/test/input/');
 
+    def test_library_sssp_with_return_verified(self):
+        self.library_sssp_verified_test("export_sssp.gt", '/test/input/');
+
+
 if __name__ == '__main__':
     while len(sys.argv) > 1:
         if "parallel" in sys.argv:
@@ -543,7 +571,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_pagerank_with_return_verified'))
+    # suite.addTest(TestGraphitCompiler('test_library_sssp_with_return_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
