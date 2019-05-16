@@ -196,12 +196,29 @@ namespace graphit {
             }
 
             void setElementTypeWithVectorOrSetName(std::string vectorOrSetName, mir::ElementType::Ptr element_type){
+		// This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+		// So we will just use the symbol table to get the type and element type from there
+		// We will still do the insertion here, but this value will never be used
                 vector_set_element_type_map_[vectorOrSetName] = element_type;
 
             };
 
             mir::ElementType::Ptr getElementTypeFromVectorOrSetName(std::string vector_name){
-                return vector_set_element_type_map_[vector_name];
+		// This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+		// So we will just use the symbol table to get the type and element type from there
+                //return vector_set_element_type_map_[vector_name];
+		auto var = getSymbol(vector_name);
+		auto type = var.getType();
+		if (mir::isa<mir::VectorType>(type))
+			return mir::to<mir::VectorType>(type)->element_type;	
+		else if (mir::isa<mir::EdgeSetType>(type))
+			return mir::to<mir::EdgeSetType>(type)->element;
+		else if (mir::isa<mir::VertexSetType>(type))
+			return mir::to<mir::VertexSetType>(type)->element;
+		else {
+			assert(false && "Cannot indentify type of vector or set\n");
+		}
+		
             }
 
             bool updateElementInputFilename(mir::ElementType::Ptr  element_type, mir::Expr::Ptr file_name){

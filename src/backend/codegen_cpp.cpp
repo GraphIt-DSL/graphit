@@ -600,25 +600,13 @@ namespace graphit {
 			    oss << ", ";
 		    }
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
-			/*
-			    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
-			    oss << "py::array_t<";
-			    if (type->weight_type != NULL) 
-				    type->weight_type->accept(this);
-			    else 
-				    oss << "int";
-			    oss << "> ";
-			    oss << arg.getName() << "__data";
-			    oss << ", ";
-			    oss << "py::array_t<";
-			    type->element->accept(this);
-			    oss << "> ";
-			    oss << arg.getName() << "__indices";
-			    oss << ", ";
-			    oss << "py::array_t<int> ";
-			    oss << arg.getName() << "__indptr";
-			*/
 			    oss << "py::object _" << arg.getName();
+		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
+			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    oss << "py::array_t<";
+			    vector_type->vector_element_type->accept(this);
+			    oss << ">";	
+			    oss << " _" << arg.getName();
 		    }else {
 			    arg.getType()->accept(this);
 			    oss << arg.getName();
@@ -633,66 +621,73 @@ namespace graphit {
 	    // Need to generate translation for graph arguments before the actual call
 
 	    for (auto arg : func_decl->args) {
-		    if (!mir::isa<mir::EdgeSetType>(arg.getType()))
-			    continue;
-		    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
-		    if (type->weight_type != NULL) {
-			    oss << "//Cannot generate code for weighted graph for now" << std::endl;
-			    continue;
-		    }	
-		    //Prepare the individual arrays from the object
+		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
+			    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
+			    if (type->weight_type != NULL) {
+				    oss << "//Cannot generate code for weighted graph for now" << std::endl;
+				    continue;
+			    }	
+			    //Prepare the individual arrays from the object
 
-	    	    printIndent();
-		    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
-	    	    printIndent();
-		    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
-	    	    printIndent();
-		    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
-	    	    printIndent();
-		    arg.getType()->accept(this);
-		    oss << arg.getName() << ";" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".num_nodes_ = " << arg.getName() << "__indptr.size() - 1;" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".num_edges_ = " << arg.getName() << "__indices.size();" << std::endl;
-		    printIndent();
-		    // Node sure what this is, generating true for now
-		    oss << arg.getName() << ".directed_ = true;" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".out_neighbors_  = (";
-		    type->element->accept(this);
-		    oss << "*) ";
-		    oss << arg.getName() << "__indices.data();" << std::endl;
+			    printIndent();
+			    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
+			    printIndent();
+			    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
+			    printIndent();
+			    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
+			    printIndent();
+			    arg.getType()->accept(this);
+			    oss << arg.getName() << ";" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".num_nodes_ = " << arg.getName() << "__indptr.size() - 1;" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".num_edges_ = " << arg.getName() << "__indices.size();" << std::endl;
+			    printIndent();
+			    // Node sure what this is, generating true for now
+			    oss << arg.getName() << ".directed_ = true;" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".out_neighbors_  = (";
+			    type->element->accept(this);
+			    oss << "*) ";
+			    oss << arg.getName() << "__indices.data();" << std::endl;
 
-		    printIndent();
-		    oss << arg.getName() << ".out_index_ = new ";
-		    type->element->accept(this);
-		    oss << "*[";
-		    oss << arg.getName() << ".num_nodes_ + 1];" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".out_index_ = new ";
+			    type->element->accept(this);
+			    oss << "*[";
+			    oss << arg.getName() << ".num_nodes_ + 1];" << std::endl;
 
-		    printIndent();
-		    oss << "for (int __x = 0; __x < " << arg.getName() << ".num_nodes_; __x++) { " << std::endl;
-		    indent();
-		    printIndent();
-		    oss << arg.getName() << ".out_index_[__x] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << "__indptr.data() [__x];" << std::endl;
-		    dedent();
-		    printIndent();
-		    oss << "}" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".out_index_[" << arg.getName() << ".num_nodes_] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << ".num_edges_;" << std::endl;
-		    printIndent();
-		    // Node sure what this is, generating false for now
-		    oss << arg.getName() << ".is_transpose_ = false;" << std::endl;
-		    printIndent();
-		    oss << "//Assume the graph is symmetric" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".in_neighbors_ = " << arg.getName() << ".out_neighbors_;" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".in_index_ = " << arg.getName() << ".out_index_;" << std::endl;
-		    printIndent();
-		    oss << "//This is so that the Graph object doesn't claim ownership of the graph elements and free it when it is destroyed" << std::endl;
-		    printIndent();
-		    oss << arg.getName() << ".destructor_free = false; " << std::endl;
+			    printIndent();
+			    oss << "for (int __x = 0; __x < " << arg.getName() << ".num_nodes_; __x++) { " << std::endl;
+			    indent();
+			    printIndent();
+			    oss << arg.getName() << ".out_index_[__x] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << "__indptr.data() [__x];" << std::endl;
+			    dedent();
+			    printIndent();
+			    oss << "}" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".out_index_[" << arg.getName() << ".num_nodes_] = " << arg.getName() << ".out_neighbors_ + " << arg.getName() << ".num_edges_;" << std::endl;
+			    printIndent();
+			    // Node sure what this is, generating false for now
+			    oss << arg.getName() << ".is_transpose_ = false;" << std::endl;
+			    printIndent();
+			    oss << "//Assume the graph is symmetric" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".in_neighbors_ = " << arg.getName() << ".out_neighbors_;" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".in_index_ = " << arg.getName() << ".out_index_;" << std::endl;
+			    printIndent();
+			    oss << "//This is so that the Graph object doesn't claim ownership of the graph elements and free it when it is destroyed" << std::endl;
+			    printIndent();
+			    oss << arg.getName() << ".destructor_free = false; " << std::endl;
+		    } else if (mir::isa<mir::VectorType>(arg.getType())) {
+			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    printIndent();
+		            vector_type->accept(this);
+			    oss << " " << arg.getName() << " = (";
+			    vector_type->accept(this);
+			    oss << ")_" << arg.getName() << ".data();" << std::endl; 
+		    }
 
 	    }
 	    printIndent();

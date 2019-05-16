@@ -467,6 +467,8 @@ namespace graphit {
             //adds an additional argument for Builtin Sum
             if (method_call_expr->method_name->ident == "builtin_sum") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
+		//assert(mir::isa<mir::VectorType>(mir_target_type));
+		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
                 const auto size_arg = ctx->getElementCount(vertex_element_type);
                 args.push_back(size_arg);
             }
