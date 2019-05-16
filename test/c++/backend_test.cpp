@@ -821,3 +821,27 @@ TEST_F(BackendTest, CF) {
                      );
     EXPECT_EQ (0, basicTest(is));
 }
+
+
+
+TEST_F(BackendTest, vertexsetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateVertex(v : Vertex);\n"
+                     "func main() vertices.apply(UDF_updateVertex); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+//TEST_F(BackendTest, edgesetApplyExtern) {
+//    istringstream is("element Vertex end\n"
+//                     "element Edge end\n"
+//                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+//                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+//                     "const vec : vector{Vertex}(float);\n"
+//                     "func updateVertex(v : Vertex) var a : float = fabs(vec[v]); end\n"
+//                     "func main() vertices.apply(updateVertex); end");
+//    EXPECT_EQ (0, basicTest(is));
+//}

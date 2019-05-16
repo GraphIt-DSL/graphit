@@ -57,6 +57,10 @@ namespace graphit {
                 extern_functions_list_.push_back(f);
             }
 
+            bool isExternFunction(std::string function_name){
+                return extern_functions_map_.find(function_name) != extern_functions_map_.end();
+            }
+
             bool isFunction(const std::string &name) const {
                 return functions_map_.find(name) != functions_map_.end() || extern_functions_map_.find(name) != extern_functions_map_.find(name);
             }

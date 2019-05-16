@@ -974,11 +974,19 @@ namespace graphit {
             oss << "; vertexsetapply_iter++) {" << std::endl;
             indent();
             printIndent();
-            oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            if (mir_context_->isExternFunction(apply_expr->input_function_name)){
+                // This function is an extern function (not a functor)
+                oss << apply_expr->input_function_name << "(vertexsetapply_iter);" << std::endl;
+            } else  {
+                // This function is not an extern function, it is defined in GraphIt code
+                // This would generate a functor declaration
+                oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            }
             dedent();
             printIndent();
             oss << "}";
         } else {
+            // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
             oss << apply_expr->input_function_name << "() ); " << std::endl;
@@ -1065,7 +1073,7 @@ namespace graphit {
             edge_set_type->accept(this);
             oss << edgeset->name << ";" << std::endl;
 
-            // Deprecated code 
+            // Deprecated code
 //            if (edge_set_type->weight_type != nullptr) {
 //                //weighted edgeset
 //                //unweighted edgeset
