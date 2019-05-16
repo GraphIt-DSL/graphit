@@ -14,7 +14,7 @@
 #include "util.h"
 
 #include "segmentgraph.h"
-
+#include <memory>
 
 /*
 GAP Benchmark Suite
@@ -103,9 +103,8 @@ class CSRGraph {
   };
 
   void ReleaseResources() {
-    if(!destructor_free)
-	return;
     //added a second condition to prevent double free (transpose graphs)
+/*
     if (out_index_ != nullptr)
       delete[] out_index_;
     if (out_neighbors_ != nullptr)
@@ -118,6 +117,13 @@ class CSRGraph {
     }
     if (flags_ != nullptr)
       delete[] flags_;
+*/
+    out_index_shared_.reset();
+    out_neighbors_shared_.reset();
+    in_index_shared_.reset();
+    in_neighbors_shared_.reset();
+    flags_shared_.reset();
+    offsets_shared_.reset();
     for (auto iter = label_to_segment.begin(); iter != label_to_segment.end(); iter++) {
       delete ((*iter).second);
     }
@@ -127,15 +133,21 @@ class CSRGraph {
  public:
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
-  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false), destructor_free(true) {}
+  in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false) {}
 
   CSRGraph(int64_t num_nodes, DestID_** index, DestID_* neighs) :
     directed_(false), num_nodes_(num_nodes),
     out_index_(index), out_neighbors_(neighs),
-    in_index_(index), in_neighbors_(neighs), destructor_free(true) {
+    in_index_(index), in_neighbors_(neighs){
+      out_index_shared_.reset(index);
+      out_neighbors_shared_.reset(neighs);
+      in_index_shared_ = out_index_shared_;
+      in_neighbors_shared_ = out_neighbors_shared_;
+      
       num_edges_ = (out_index_[num_nodes_] - out_index_[0]) / 2;
       //adding flags used for deduplication
       flags_ = new int[num_nodes_];
+      flags_shared_.reset(flags_);
     //adding offsets for load balacne scheme
     SetUpOffsets(true);
     }
@@ -144,10 +156,16 @@ class CSRGraph {
         DestID_** in_index, DestID_* in_neighs) :
     directed_(true), num_nodes_(num_nodes),
     out_index_(out_index), out_neighbors_(out_neighs),
-    in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false), destructor_free(true) {
+    in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false){
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
 
+
+      out_index_shared_.reset(out_index);
+      out_neighbors_shared_.reset(out_neighs);
+      in_index_shared_.reset(in_index);
+      in_neighbors_shared_.reset(in_neighs);
       flags_ = new int[num_nodes_];
+      flags_shared_.reset(flags_);
     SetUpOffsets(true);
   }
 
@@ -155,18 +173,38 @@ class CSRGraph {
         DestID_** in_index, DestID_* in_neighs, bool is_transpose) :
     directed_(true), num_nodes_(num_nodes),
     out_index_(out_index), out_neighbors_(out_neighs),
-    in_index_(in_index), in_neighbors_(in_neighs) , is_transpose_(is_transpose), destructor_free(true) {
+    in_index_(in_index), in_neighbors_(in_neighs) , is_transpose_(is_transpose){
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
 
+      out_index_shared_.reset(out_index);
+      out_neighbors_shared_.reset(out_neighs);
+      in_index_shared_.reset(in_index);
+      in_neighbors_shared_.reset(in_neighs);
       flags_ = new int[num_nodes_];
+      flags_shared_.reset(flags_);
+    SetUpOffsets(true);
+  }
+    CSRGraph(int64_t num_nodes, std::shared_ptr<DestID_*> out_index, std::shared_ptr<DestID_> out_neighs,
+        shared_ptr<DestID_*> in_index, shared_ptr<DestID_> in_neighs, bool is_transpose) :
+    directed_(true), num_nodes_(num_nodes),
+    out_index_(out_index.get()), out_neighbors_(out_neighs.get()),
+    in_index_(in_index.get()), in_neighbors_(in_neighs.get()) , is_transpose_(is_transpose){
+      num_edges_ = out_index_[num_nodes_] - out_index_[0];
+
+      out_index_shared_ = (out_index);
+      out_neighbors_shared_ = (out_neighs);
+      in_index_shared_ = (in_index);
+      in_neighbors_shared_ = (in_neighs);
+      flags_ = new int[num_nodes_];
+      flags_shared_.reset(flags_);
     SetUpOffsets(true);
   }
 
-
+  
     CSRGraph(CSRGraph& other) : directed_(other.directed_),
                                  num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
                                  out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
-                                 in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false), destructor_free(false) {
+                                 in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false){
    /* Commenting this because object is not taking owner ship of the elements, notice destructor_free is set to false
         other.num_edges_ = -1;
         other.num_nodes_ = -1;
@@ -177,13 +215,18 @@ class CSRGraph {
         other.flags_ = nullptr;
         other.offsets_ = nullptr;
   */
+        out_index_shared_ = other.out_index_shared_;
+        out_neighbors_shared_ = other.out_neighbors_shared_;
+        in_index_shared_ = other.in_index_shared_;
+        in_neighbors_shared_ = other.in_neighbors_shared_;
+	
     }
 
 
   CSRGraph(CSRGraph&& other) : directed_(other.directed_),
     num_nodes_(other.num_nodes_), num_edges_(other.num_edges_),
     out_index_(other.out_index_), out_neighbors_(other.out_neighbors_),
-    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false), destructor_free(other.destructor_free){
+    in_index_(other.in_index_), in_neighbors_(other.in_neighbors_), is_transpose_(false){
       other.num_edges_ = -1;
       other.num_nodes_ = -1;
       other.out_index_ = nullptr;
@@ -192,16 +235,29 @@ class CSRGraph {
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
     other.offsets_ = nullptr;
-    
+       
+        out_index_shared_ = other.out_index_shared_;
+        out_neighbors_shared_ = other.out_neighbors_shared_;
+        in_index_shared_ = other.in_index_shared_;
+        in_neighbors_shared_ = other.in_neighbors_shared_;
+       
+        other.out_index_shared_.reset(); 
+        other.out_neighbors_shared_.reset();
+        other.in_index_shared_.reset(); 
+        other.in_neighbors_shared_.reset();
+       
+        other.flags_shared_.reset(); 
+        other.offsets_shared_.reset();
   }
+ 
+        
+        
 
 
 
 
 
   ~CSRGraph() {
-    if (!destructor_free)
-        return;
     if (!is_transpose_)
         ReleaseResources();
   }
@@ -209,7 +265,7 @@ class CSRGraph {
     CSRGraph& operator=(CSRGraph& other) {
         if (this != &other) {
 
-            if (!is_transpose_ && destructor_free)
+            if (!is_transpose_)
                 ReleaseResources();
             directed_ = other.directed_;
             num_edges_ = other.num_edges_;
@@ -218,7 +274,10 @@ class CSRGraph {
             out_neighbors_ = other.out_neighbors_;
             in_index_ = other.in_index_;
             in_neighbors_ = other.in_neighbors_;
-	    destructor_free = false;
+        out_index_shared_ = other.out_index_shared_;
+        out_neighbors_shared_ = other.out_neighbors_shared_;
+        in_index_shared_ = other.in_index_shared_;
+        in_neighbors_shared_ = other.in_neighbors_shared_;
             //need the following, otherwise would get double free errors
 /*
           other.num_edges_ = -1;
@@ -236,7 +295,7 @@ class CSRGraph {
 
     CSRGraph& operator=(CSRGraph&& other) {
     if (this != &other) {
-        if (!is_transpose_ && destructor_free)
+        if (!is_transpose_ )
             ReleaseResources();
       directed_ = other.directed_;
       num_edges_ = other.num_edges_;
@@ -245,6 +304,10 @@ class CSRGraph {
       out_neighbors_ = other.out_neighbors_;
       in_index_ = other.in_index_;
       in_neighbors_ = other.in_neighbors_;
+        out_index_shared_ = other.out_index_shared_;
+        out_neighbors_shared_ = other.out_neighbors_shared_;
+        in_index_shared_ = other.in_index_shared_;
+        in_neighbors_shared_ = other.in_neighbors_shared_;
       other.num_edges_ = -1;
       other.num_nodes_ = -1;
       other.out_index_ = nullptr;
@@ -253,7 +316,13 @@ class CSRGraph {
       other.in_neighbors_ = nullptr;
       other.flags_ = nullptr;
       other.offsets_ = nullptr;
-      destructor_free = other.destructor_free;
+        other.out_index_shared_.reset(); 
+        other.out_neighbors_shared_.reset();
+        other.in_index_shared_.reset(); 
+        other.in_neighbors_shared_.reset();
+       
+        other.flags_shared_.reset(); 
+        other.offsets_shared_.reset();
     }
     return *this;
   }
@@ -332,6 +401,7 @@ class CSRGraph {
 
   void SetUpOffsets(bool in_graph = false)  {
       offsets_ = new SGOffset[num_nodes_+1];
+      offsets_shared_.reset(offsets_);
       for (NodeID_ n=0; n < num_nodes_+1; n++)
         if (in_graph)
           offsets_[n] = in_index_[n] - in_index_[0];
@@ -416,12 +486,12 @@ class CSRGraph {
     }
 #endif
   }
- 
+private:
+  // Making private so cannot be modified from outside
   //useful for deduplication
   int* flags_;
     SGOffset * offsets_;
 
-// private:
   bool is_transpose_;
   bool directed_;
   int64_t num_nodes_;
@@ -430,8 +500,30 @@ class CSRGraph {
   DestID_*  out_neighbors_;
   DestID_** in_index_;
   DestID_*  in_neighbors_;
+public:
+  std::shared_ptr<int> flags_shared_;
+  std::shared_ptr<SGOffset> offsets_shared_;
+
+  std::shared_ptr<DestID_*> out_index_shared_;
+  std::shared_ptr<DestID_> out_neighbors_shared_;
+
+  std::shared_ptr<DestID_*> in_index_shared_;
+  std::shared_ptr<DestID_> in_neighbors_shared_;
+
   std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
-  bool destructor_free;
+ 
+  DestID_** get_out_index_(void) {
+      return out_index_;
+  } 
+  DestID_* get_out_neighbors_(void) {
+      return out_neighbors_;
+  }
+  DestID_** get_in_index_(void) {
+      return in_index_;
+  } 
+  DestID_* get_in_neighbors_(void) {
+      return in_neighbors_;
+  }
 };
 
 #endif  // GRAPH_H_
