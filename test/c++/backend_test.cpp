@@ -835,6 +835,8 @@ TEST_F(BackendTest, vertexsetApplyExtern) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+
 //TEST_F(BackendTest, edgesetApplyExtern) {
 //    istringstream is("element Vertex end\n"
 //                     "element Edge end\n"
