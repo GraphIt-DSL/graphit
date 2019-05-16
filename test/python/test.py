@@ -196,6 +196,10 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_extern_vertexset_apply(self):
         self.expect_output_val("extern_vertexset_apply.gt", 10, [self.root_test_input_dir + "extern_add_one.cpp"])
 
+    def test_extern_simple_edgeset_apply(self):
+        self.expect_output_val("extern_simple_edgeset_apply.gt", 7, [self.root_test_input_dir + "extern_src_add_one.cpp"])
+
+
     def test_astar_distance_loader(self):
 	self.expect_output_val("astar_distance_loader.gt", 203845, [self.root_test_input_dir + "astar_distance_loader.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"])
 
@@ -372,5 +376,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_extern_vertexset_apply'))
+    # suite.addTest(TestGraphitCompiler('test_extern_simple_edgeset_apply'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
