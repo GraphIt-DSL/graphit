@@ -153,9 +153,10 @@ namespace graphit {
 
         //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
-            oss_ << "    if (g.flags_ == nullptr){\n"
-                    "      g.flags_ = new int[numVertices]();\n"
-                    "      parallel_for(int i = 0; i < numVertices; i++) g.flags_[i]=0;\n"
+            oss_ << "    if (g.get_flags_() == nullptr){\n"
+//                    "      g.flags_ = new int[numVertices]();\n"
+                    "      g.set_flags_(new int[numVertices]());\n"
+                    "      parallel_for(int i = 0; i < numVertices; i++) g.get_flags_()[i]=0;\n"
                     "    }\n";
         }
 
@@ -255,7 +256,7 @@ namespace graphit {
 
             //need to return a frontier
             if (apply->enable_deduplication && apply_expr_gen_frontier) {
-                oss_ << " && CAS(&(g.flags_[" << dst_type << "]), 0, 1) ";
+                oss_ << " && CAS(&(g.get_flags_()[" << dst_type << "]), 0, 1) ";
             }
 
             indent();
@@ -327,7 +328,7 @@ namespace graphit {
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
                     oss_ << "  parallel_for(int i = 0; i < nextM; i++){\n"
-                            "     g.flags_[nextIndices[i]] = 0;\n"
+                            "     g.get_flags_()[nextIndices[i]] = 0;\n"
                             "  }\n";
             }
             oss_ << "  return next_frontier;\n";
@@ -594,8 +595,8 @@ namespace graphit {
             // recursive load balance scheme
 
             //set up the edge index (in in edge array) for estimating number of edges
-            oss_ << "  if (g.offsets_ == nullptr) g.SetUpOffsets(true);\n"
-                    "  SGOffset * edge_in_index = g.offsets_;\n";
+            oss_ << "  if (g.get_offsets_() == nullptr) g.SetUpOffsets(true);\n"
+                    "  SGOffset * edge_in_index = g.get_offsets_();\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
                     "    [" << (apply->to_func != "" ?  "&to_func, " : "")

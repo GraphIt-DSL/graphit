@@ -524,6 +524,16 @@ public:
   DestID_* get_in_neighbors_(void) {
       return in_neighbors_;
   }
+  inline int* get_flags_() {
+      return flags_;
+  }
+  inline void set_flags_(int *flags) {
+      flags_ = flags;
+      flags_shared_.reset(flags);
+  }
+  inline SGOffset * get_offsets_(void) {
+      return offsets_;
+  }
 };
 
 #endif  // GRAPH_H_
