@@ -55,6 +55,9 @@ namespace graphit {
             void addExternFunction(mir::FuncDecl::Ptr f) {
                 extern_functions_map_[f->name] = f;
                 extern_functions_list_.push_back(f);
+                //Also add the extern function to regular function map
+                //Hopefully this is not going to be an issue
+                addFunction(f);
             }
 
             bool isExternFunction(std::string function_name){
@@ -68,6 +71,11 @@ namespace graphit {
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
                 assert(isFunction(name));
                 return functions_map_[name];
+            }
+
+            mir::FuncDecl::Ptr getExternFunction(const std::string &name) {
+                assert(isExternFunction(name));
+                return extern_functions_map_[name];
             }
 
             void addSymbol(mir::Var var) {

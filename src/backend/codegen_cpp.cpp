@@ -1139,7 +1139,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
                 // Create functor instance
-                arguments.push_back(apply->from_func + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply->from_func));
             } else {
                 // the input is an input from vertexset
                 arguments.push_back(apply->from_func);
@@ -1150,7 +1150,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
                 // Create functor instance
-                arguments.push_back(apply->to_func + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply->to_func));
             } else {
                 // the input is an input to vertexset
                 arguments.push_back(apply->to_func);
@@ -1158,20 +1158,20 @@ namespace graphit {
         }
 
         // the original apply function (pull direction in hybrid case)
-        arguments.push_back(apply->input_function_name + "()");
+        arguments.push_back(genFuncNameAsArgumentString(apply->input_function_name));
 
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(apply_expr->push_to_function_ + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
             }
         }
 
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(apply_expr->push_function_ + "()");
+            arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
         }
 
         // the edgeset that is being applied over (target)
@@ -1215,5 +1215,15 @@ namespace graphit {
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
         size_expr->accept(this);
         oss << "]";
+    }
+
+    std::string CodeGenCPP::genFuncNameAsArgumentString(std::string func_name) {
+        if (mir_context_->isExternFunction(func_name)){
+            //If it is an extern function, don't need to do anything, just pass the func name
+            return func_name;
+        } else {
+            //If it is a GraphIt generated function, then we need to instantiate the functor
+            return func_name + "()";
+        }
     }
 }

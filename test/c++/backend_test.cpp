@@ -837,13 +837,13 @@ TEST_F(BackendTest, vertexsetApplyExtern) {
 
 
 
-//TEST_F(BackendTest, edgesetApplyExtern) {
-//    istringstream is("element Vertex end\n"
-//                     "element Edge end\n"
-//                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
-//                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-//                     "const vec : vector{Vertex}(float);\n"
-//                     "func updateVertex(v : Vertex) var a : float = fabs(vec[v]); end\n"
-//                     "func main() vertices.apply(updateVertex); end");
-//    EXPECT_EQ (0, basicTest(is));
-//}
+TEST_F(BackendTest, edgesetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateEdge(src : Vertex, dst : Vertex);\n"
+                     "func main() edges.apply(UDF_updateEdge); end");
+    EXPECT_EQ (0, basicTest(is));
+}

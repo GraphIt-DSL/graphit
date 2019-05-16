@@ -981,7 +981,9 @@ namespace graphit {
         // Weighted: "" (unweighted) or "weighted"
 
         string output_name = "edgeset_apply";
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+        auto original_apply_func_name = apply->input_function_name;
+
+        mir::FuncDecl::Ptr apply_func = mir_context_->getFunction(apply->input_function_name);
 
         //check direction
         if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
