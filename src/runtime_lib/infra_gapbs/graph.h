@@ -15,6 +15,7 @@
 
 #include "segmentgraph.h"
 #include <memory>
+#include <assert.h>
 
 /*
 GAP Benchmark Suite
@@ -150,6 +151,8 @@ class CSRGraph {
       flags_shared_.reset(flags_);
     //adding offsets for load balacne scheme
     SetUpOffsets(true);
+    //Set this up for getting random neighbors
+      srand(time(NULL));
     }
 
   CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
@@ -166,7 +169,10 @@ class CSRGraph {
       in_neighbors_shared_.reset(in_neighs);
       flags_ = new int[num_nodes_];
       flags_shared_.reset(flags_);
-    SetUpOffsets(true);
+        SetUpOffsets(true);
+
+      //Set this up for getting random neighbors
+      srand(time(NULL));
   }
 
     CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
@@ -183,6 +189,9 @@ class CSRGraph {
       flags_ = new int[num_nodes_];
       flags_shared_.reset(flags_);
     SetUpOffsets(true);
+
+        //Set this up for getting random neighbors
+        srand(time(NULL));
   }
     CSRGraph(int64_t num_nodes, std::shared_ptr<DestID_*> out_index, std::shared_ptr<DestID_> out_neighs,
         shared_ptr<DestID_*> in_index, shared_ptr<DestID_> in_neighs, bool is_transpose) :
@@ -198,6 +207,8 @@ class CSRGraph {
       flags_ = new int[num_nodes_];
       flags_shared_.reset(flags_);
     SetUpOffsets(true);
+        //Set this up for getting random neighbors
+        srand(time(NULL));
   }
 
   
@@ -219,6 +230,8 @@ class CSRGraph {
         out_neighbors_shared_ = other.out_neighbors_shared_;
         in_index_shared_ = other.in_index_shared_;
         in_neighbors_shared_ = other.in_neighbors_shared_;
+        //Set this up for getting random neighbors
+        srand(time(NULL));
 	
     }
 
@@ -248,6 +261,8 @@ class CSRGraph {
        
         other.flags_shared_.reset(); 
         other.offsets_shared_.reset();
+      //Set this up for getting random neighbors
+      srand(time(NULL));
   }
  
         
@@ -359,6 +374,20 @@ class CSRGraph {
   Neighborhood in_neigh(NodeID_ n) const {
     static_assert(MakeInverse, "Graph inversion disabled but reading inverse");
     return Neighborhood(n, in_index_);
+  }
+
+  NodeID_ get_random_out_neigh(NodeID_ n)  {
+      int num_nghs = out_degree(n);
+      assert(num_nghs!=0);
+      int rand_index = rand() % num_nghs;
+      return out_index_[n][rand_index];
+  }
+
+  NodeID_ get_random_in_neigh(NodeID_ n)  {
+      int num_nghs = in_degree(n);
+      assert(num_nghs!=0);
+      int rand_index = rand() % num_nghs;
+      return in_index_[n][rand_index];
   }
 
   void PrintStats() const {

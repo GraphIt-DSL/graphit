@@ -83,3 +83,20 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
     EXPECT_EQ(true, test_flag);
 
 }
+
+TEST_F(RuntimeLibTest, GetRandomOutNeighborTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    NodeID ngh = g.get_random_out_neigh(1);
+    std::cout << ngh << std::endl;
+    EXPECT_LE (ngh , 5);
+    EXPECT_GE (ngh , 2);
+}
+
+TEST_F(RuntimeLibTest, GetRandomInNeighborTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    NodeID ngh = g.get_random_in_neigh(4);
+    std::cout << ngh << std::endl;
+    EXPECT_LE (ngh , 3);
+    EXPECT_GE (ngh , 1);
+
+}
