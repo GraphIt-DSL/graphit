@@ -122,6 +122,8 @@ namespace graphit {
         void genScalarDecl(mir::VarDecl::Ptr var_decl);
 
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
+
+        std::string genFuncNameAsArgumentString(std::string func_name);
     };
 }
 

@@ -974,11 +974,19 @@ namespace graphit {
             oss << "; vertexsetapply_iter++) {" << std::endl;
             indent();
             printIndent();
-            oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            if (mir_context_->isExternFunction(apply_expr->input_function_name)){
+                // This function is an extern function (not a functor)
+                oss << apply_expr->input_function_name << "(vertexsetapply_iter);" << std::endl;
+            } else  {
+                // This function is not an extern function, it is defined in GraphIt code
+                // This would generate a functor declaration
+                oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+            }
             dedent();
             printIndent();
             oss << "}";
         } else {
+            // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
             oss << apply_expr->input_function_name << "() ); " << std::endl;
@@ -1065,7 +1073,7 @@ namespace graphit {
             edge_set_type->accept(this);
             oss << edgeset->name << ";" << std::endl;
 
-            // Deprecated code 
+            // Deprecated code
 //            if (edge_set_type->weight_type != nullptr) {
 //                //weighted edgeset
 //                //unweighted edgeset
@@ -1131,7 +1139,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
                 // Create functor instance
-                arguments.push_back(apply->from_func + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply->from_func));
             } else {
                 // the input is an input from vertexset
                 arguments.push_back(apply->from_func);
@@ -1142,7 +1150,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
                 // Create functor instance
-                arguments.push_back(apply->to_func + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply->to_func));
             } else {
                 // the input is an input to vertexset
                 arguments.push_back(apply->to_func);
@@ -1150,20 +1158,20 @@ namespace graphit {
         }
 
         // the original apply function (pull direction in hybrid case)
-        arguments.push_back(apply->input_function_name + "()");
+        arguments.push_back(genFuncNameAsArgumentString(apply->input_function_name));
 
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(apply_expr->push_to_function_ + "()");
+                arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
             }
         }
 
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(apply_expr->push_function_ + "()");
+            arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
         }
 
         // the edgeset that is being applied over (target)
@@ -1207,5 +1215,15 @@ namespace graphit {
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
         size_expr->accept(this);
         oss << "]";
+    }
+
+    std::string CodeGenCPP::genFuncNameAsArgumentString(std::string func_name) {
+        if (mir_context_->isExternFunction(func_name)){
+            //If it is an extern function, don't need to do anything, just pass the func name
+            return func_name;
+        } else {
+            //If it is a GraphIt generated function, then we need to instantiate the functor
+            return func_name + "()";
+        }
     }
 }

@@ -36,11 +36,16 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::analyzeSingleFunctionEdgesetApplyExpr(
             std::string function_name, std::string direction) {
+
         // The analysis only makes sense if it is a parallel apply expr
         auto property_visitor = PropertyAnalyzingVisitor(direction);
         auto apply_func_decl_name = function_name;
-        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        apply_func_decl->accept(&property_visitor);
+
+        if (!mir_context_->isExternFunction(apply_func_decl_name)){
+            //Only perform the property analysis for non-extern function
+            mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
+            apply_func_decl->accept(&property_visitor);
+        }
     }
 
 
