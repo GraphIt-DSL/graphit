@@ -127,6 +127,8 @@ namespace graphit {
 	void generatePyBindWrapper(mir::FuncDecl::Ptr);
 
     	void generatePyBindModule();
+
+        std::string genFuncNameAsArgumentString(std::string func_name);
     };
 }
 

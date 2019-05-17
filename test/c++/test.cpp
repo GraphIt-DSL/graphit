@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
-//    ::testing::GTEST_FLAG(filter) = "FrontendTest.ExportFunction";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithPrint";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.EdgeSetExportFuncVectorInit";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInitWithReturn";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInputWithReturn";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.vertexsetApplyExtern";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.edgesetApplyExtern";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";

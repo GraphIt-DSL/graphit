@@ -36,15 +36,18 @@ namespace graphit {
     // Updates the function for Push, Pull, HybridDenseForward edge set apply (only one direction function)
     void ChangeTrackingLower::ApplyExprVisitor::processSingleFunctionApplyExpr(std::string apply_func_decl_name,
                                                                                std::string tracking_field) {
-        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
-        if (tracking_field != "") {
-            //TODO: another check to see if it is parallel
-            auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
-            apply_func_decl->accept(&tracking_var_gen_visitor);
-            insertSerialReturnStmtForTrackingChange(apply_func_decl,
-                                                    tracking_field,
-                                                    tracking_var_gen_visitor.getFieldTrackingVariableExpr(
-                                                            tracking_field));
+        if (!mir_context_->isExternFunction(apply_func_decl_name)){
+            //skip the analysis pass for extern functions
+            mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
+            if (tracking_field != "") {
+                //TODO: another check to see if it is parallel
+                auto tracking_var_gen_visitor = TrackingVariableGenVisitor(mir_context_);
+                apply_func_decl->accept(&tracking_var_gen_visitor);
+                insertSerialReturnStmtForTrackingChange(apply_func_decl,
+                                                        tracking_field,
+                                                        tracking_var_gen_visitor.getFieldTrackingVariableExpr(
+                                                                tracking_field));
+            }
         }
     }
 

@@ -79,8 +79,10 @@ class TestGraphitCompiler(unittest.TestCase):
         # check the return code of the call as a way to check if compilation happened correctly
         self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
         # check if g++ compilation succeeded
+        cpp_compile_cmd = [self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args
+        print cpp_compile_cmd
         self.assertEqual(
-            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
+            subprocess.call(cpp_compile_cmd),
             0)
         self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
 
@@ -188,8 +190,15 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_extern_function(self):
         self.basic_compile_test("simple_extern_function.gt")
 
-    def test_simple_extern_function_sum(self):
+    def test_simple_extern_functieon_sum(self):
         self.expect_output_val("simple_extern_function_sum.gt", 4950, [self.root_test_input_dir + "simple_extern_function_sum.cpp"])
+
+    def test_extern_vertexset_apply(self):
+        self.expect_output_val("extern_vertexset_apply.gt", 10, [self.root_test_input_dir + "extern_add_one.cpp"])
+
+    def test_extern_simple_edgeset_apply(self):
+        self.expect_output_val("extern_simple_edgeset_apply.gt", 7, [self.root_test_input_dir + "extern_src_add_one.cpp"])
+
 
     def test_astar_distance_loader(self):
 	self.expect_output_val("astar_distance_loader.gt", 203845, [self.root_test_input_dir + "astar_distance_loader.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"])
@@ -367,5 +376,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_export_edgeset_apply_function'))
+    # suite.addTest(TestGraphitCompiler('test_extern_simple_edgeset_apply'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
