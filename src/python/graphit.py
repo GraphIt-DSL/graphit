@@ -22,7 +22,7 @@ def compile_and_load(graphit_source_file):
 	
 	# now compile the file into .so
 	subprocess.check_call(CXX_COMPILER + " $(python3-config --includes) -c " + module_filename_cpp + " -I " + GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=c++11 -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden -o " + module_filename_object, shell=True)
-	subprocess.check_call(CXX_COMPILER + " -fPIC -shared -o " + module_filename_so + " " + module_filename_object + " -flto", shell=True)
+	subprocess.check_call(CXX_COMPILER + " -fPIC -shared -o " + module_filename_so + " " + module_filename_object + " -flto $(python3-config --ldflags)", shell=True)
 	spec = importlib.util.spec_from_file_location(module_name, module_filename_so)
 	module = importlib.util.module_from_spec(spec)
 	spec.loader.exec_module(module)
