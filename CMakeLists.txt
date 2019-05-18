@@ -71,8 +71,15 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python_tests/test.py
 )
 
 
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/graphit.py 
+	COMMAND sed -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/src/python/graphit.py > ${CMAKE_BINARY_DIR}/graphit.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/src/python/graphit.py
+	VERBATIM
+)
+
 add_custom_target(copy_graphitc_py ALL DEPENDS ${GRAPHITC_PY})
 add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py ${CMAKE_BINARY_DIR}/python_tests/test.py)
+add_custom_target(copy_graphit_py ALL DEPENDS ${CMAKE_BINARY_DIR}/graphit.py)
 
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 configure_file(src/library_test_driver_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver.cpp COPYONLY)

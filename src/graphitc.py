@@ -17,6 +17,7 @@ def parseArgs():
     parser.add_argument('-a', dest = 'input_algo_file_name')
     parser.add_argument('-i', dest = 'runtime_include_path', default = GRAPHIT_SOURCE_DIRECTORY+'/include/')
     parser.add_argument('-l', dest = 'graphitlib_path', default = GRAPHIT_BUILD_DIRECTORY+'/lib/libgraphitlib.a')
+    parser.add_argument('-m', dest = 'graphit_pybind_module_name', default = "")
     args = parser.parse_args()
     return vars(args)
 
@@ -26,6 +27,7 @@ if __name__ == '__main__':
     output_file_name = args['output_file_name']
     runtime_include_path = args['runtime_include_path']
     graphitlib_path = args['graphitlib_path']
+    graphit_pybind_module_name = args['graphit_pybind_module_name']
 
     #check if user supplied a separate algorithm file from the schedule file
     supplied_separate_algo_file = False
@@ -81,5 +83,8 @@ if __name__ == '__main__':
     #TODO: code here uses very fragile relavtive paths, figure out a better way
     # Maybe setting environment variables
     subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), shell=True)
-    subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name, shell=True)
+    if graphit_pybind_module_name == "":
+        subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name , shell=True)
+    else:
+        subprocess.check_call("./compile.o -f " + algo_file_name + " -o " + output_file_name + " -m " + graphit_pybind_module_name, shell=True)
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
