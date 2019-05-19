@@ -1,9 +1,9 @@
 os:
         - linux
 
+dist: xenial
 language: generic
-python:
-        - "3.6"
+python: "3.7"
 
 before_install:
         - sudo apt-get update
