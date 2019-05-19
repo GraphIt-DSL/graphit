@@ -5,7 +5,7 @@ language: generic
 
 before_install:
         - sudo apt-get update
-        - sudo apt-get install python-pip3
+        - sudo apt-get install python3-pip
         - pip3 install pybind11
         - pip3 install scipy
 
