@@ -4,10 +4,10 @@ os:
 language: generic
 
 before_install:
-	- sudo apt-get update
-	- sudo apt-get install pip3
-	- pip3 install pybind11
-	- pip3 install scipy
+        - sudo apt-get update
+        - sudo apt-get install pip3
+        - pip3 install pybind11
+        - pip3 install scipy
 
 install:
         - wget https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz -O cmake.tar.gz
