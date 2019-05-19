@@ -27,7 +27,7 @@
 
 #include <time.h>
 #include <chrono>
-
+#include "infra_gapbs/minimum_spanning_tree.h"
 
 
 template <typename T>
