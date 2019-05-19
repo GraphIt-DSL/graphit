@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
-//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.serialMSTTest";
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.serialMSTTest2";
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";

@@ -41,6 +41,21 @@ TEST_F(RuntimeLibTest, serialMSTTest) {
     EXPECT_EQ (4 , parent_vector[5]);
 }
 
+
+TEST_F(RuntimeLibTest, serialMSTTest2) {
+    WGraph wg = builtin_loadWeightedEdgesFromFile("../../test/graphs/test2.wel");
+    NodeID start = 1;
+    NodeID* parent_vector = minimum_spanning_tree(wg, start);
+
+    for (int i = 0; i < wg.num_nodes(); i++){
+        std::cout << "parent: " << parent_vector[i] << std::endl;
+    }
+
+    EXPECT_EQ (1 , parent_vector[2]);
+    EXPECT_EQ (1 , parent_vector[3]);
+    EXPECT_EQ (3 , parent_vector[4]);
+}
+
 TEST_F(RuntimeLibTest, SimpleLoadVerticesromEdges) {
     Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
     int num_vertices = builtin_getVertices(g);
