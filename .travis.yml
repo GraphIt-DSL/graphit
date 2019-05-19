@@ -23,7 +23,7 @@ script:
         - cd ..
         - python python_tests/test.py
         - python python_tests/test_with_schedules.py
-	- export PYTHONPATH=.
-	- python3 python_tests/pybind_test.py
+        - export PYTHONPATH=.
+        - python3 python_tests/pybind_test.py
 
 
