@@ -624,25 +624,39 @@ namespace graphit {
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
 			    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
 			    if (type->weight_type != NULL) {
-				    oss << "//Cannot generate code for weighted graph for now" << std::endl;
-				    continue;
-			    }	
-			    //Prepare the individual arrays from the object
+				   printIndent();
+				   oss << "py::array_t<";
+				   type->weight_type->accept(this);
+				   oss << "> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<"; 
+				   type->weight_type->accept(this);
+				   oss << ">>();" << std::endl;
 
-			    printIndent();
-			    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
-			    printIndent();
-			    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
-			    printIndent();
-			    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
-			    printIndent();
-			    arg.getType()->accept(this);
-			    oss << arg.getName() << " = builtin_loadEdgesFromCSR(";
-			    oss << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    arg.getType()->accept(this);
+				    oss << arg.getName() << " = builtin_loadWeightedEdgesFromCSR(";
+				    oss << arg.getName() << "__data.data(), " << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+			    } else {	
+				    //Prepare the individual arrays from the object
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    arg.getType()->accept(this);
+				    oss << arg.getName() << " = builtin_loadEdgesFromCSR(";
+				    oss << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+			    }
+			
 		    } else if (mir::isa<mir::VectorType>(arg.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
 			    printIndent();
-		            vector_type->accept(this);
+			    vector_type->accept(this);
 			    oss << " " << arg.getName() << " = (";
 			    vector_type->accept(this);
 			    oss << ")_" << arg.getName() << ".data();" << std::endl; 

@@ -60,6 +60,17 @@ class TestGraphitCompiler(unittest.TestCase):
         graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
         ranks = module.export_func(graph)
         self.assertEqual(np.sum(ranks), 1.0)		
+    
+    def test_pybind_sssp(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_sssp.gt")
+        graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        distances = module.export_func(graph)
+        self.assertEqual(len(distances), 4)
+        self.assertEqual(distances[0], 0)
+        self.assertEqual(distances[1], 4)
+        self.assertEqual(distances[2], 5)
+        self.assertEqual(distances[3], 6)
+	
 
 if __name__ == '__main__':
     unittest.main()

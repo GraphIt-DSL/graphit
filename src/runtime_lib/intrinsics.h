@@ -70,6 +70,20 @@ static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indic
 	BuilderBase<NodeID> bb(cli);
 	return bb.MakeGraphFromEL(el);
 }
+static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_t *indptr, const NodeID *indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, WNode> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++) {
+		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
+			el.push_back(Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y])));
+		}
+	}	
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID, WNode, WeightT> bb(cli);
+	bb.needs_weights_ = false;
+	return bb.MakeGraphFromEL(el);	
+}
 static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
