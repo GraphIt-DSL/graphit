@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 //
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRNestedSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportPRWithScheduleTest";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
