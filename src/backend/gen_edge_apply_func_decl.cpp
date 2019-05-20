@@ -588,13 +588,13 @@ namespace graphit {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
                 oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
             }
-            // OpenMP only, no need to use templated ligra::parallel_for
-            // else if (apply->is_parallel) {
-            //     for_type = "parallel_for";
-            // }
 
             //printIndent();
-            oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
+            if (apply->is_parallel) {
+              oss_ << "ligra::parallel_for((NodeID)0, (NodeID)" << outer_end << ", [&] (NodeID " << iter << ") {" << std::endl;
+            } else {
+              oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
+            }
             indent();
             if (cache_aware) {
                 printIndent();
@@ -639,7 +639,11 @@ namespace graphit {
             //end of outer for loop
             dedent();
             printIndent();
-            oss_ << "} //end of outer for loop" << std::endl;
+            if (apply->is_parallel) {
+              oss_ << "}); //end of outer for loop" << std::endl;
+            } else {
+              oss_ << "} //end of outer for loop" << std::endl;
+            }
         } else {
             dedent();
             printIndent();
