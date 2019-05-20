@@ -78,6 +78,18 @@ static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
+static int getRandomOutNgh(Graph &edges, NodeID v){
+    return edges.get_random_out_neigh(v);
+}
+
+static int getRandomInNgh(Graph &edges, NodeID v){
+    return edges.get_random_in_neigh(v);
+}
+
+static int* serialMinimumSpanningTree(WGraph &edges, NodeID start){
+    return minimum_spanning_tree(edges, start);
+}
+
 static int * builtin_getOutDegrees(Graph &edges){
     int * out_degrees  = new int [edges.num_nodes()];
     for (NodeID n=0; n < edges.num_nodes(); n++){

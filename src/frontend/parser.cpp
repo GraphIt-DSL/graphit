@@ -2561,7 +2561,10 @@ namespace graphit {
         decls.insert("startTimer", IdentType::FUNCTION);
         decls.insert("stopTimer", IdentType::FUNCTION);
         decls.insert("atoi", IdentType::FUNCTION);
-	
+	    decls.insert("getRandomOutNgh", IdentType::FUNCTION);
+        decls.insert("getRandomInNgh", IdentType::FUNCTION);
+        decls.insert("serialMinimumSpanningTree", IdentType::FUNCTION);
+
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {
