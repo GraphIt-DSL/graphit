@@ -1,0 +1,25 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex);
+const vertices : vertexset{Vertex};
+const vector_a : vector{Vertex}(float);
+extern func extern_src_add_one(src : Vertex, dst : Vertex);
+
+export func export_func(edges_arg: edgeset{Edge}(Vertex, Vertex)) -> output: int
+    edges = edges_arg;
+    vertices = edges.getVertices();
+    vector_a = new vector{Vertex}(float)();
+    
+    for i in 0:edges.getVertices()
+        vector_a[i] = 0;
+    end
+
+    edges.apply(extern_src_add_one);
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += vector_a[i];
+    end
+    print sum;
+    output = sum;
+end

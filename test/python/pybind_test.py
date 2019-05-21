@@ -70,7 +70,19 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(distances[1], 4)
         self.assertEqual(distances[2], 5)
         self.assertEqual(distances[3], 6)
-	
+
+    def test_pybind_extern_apply_src_add_one(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_extern_simple_edgeset_appply.gt", [self.root_test_input_dir + "extern_src_add_one.cpp"])
+        graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        sum_returned = module.export_func(graph)
+        self.assertEqual(sum_returned, 6)
+    
+    def test_pybind_pr_delta(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_pr_delta.gt")
+        graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        ranks = module.export_func(graph)
+        self.assertEqual(len(ranks), 4)
+        self.assertTrue(abs(np.sum(ranks)-1.0) < 0.001)
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,7 +10,7 @@ GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
 CXX_COMPILER="${CXX_COMPILER}".strip().rstrip("/")
 
 module_so_list = []
-def compile_and_load(graphit_source_file):
+def compile_and_load(graphit_source_file, extern_cpp_files=[]):
 	# Obtain a unique filename for the module
 	module_file = tempfile.NamedTemporaryFile()
 	module_filename_base = module_file.name
@@ -23,11 +23,19 @@ def compile_and_load(graphit_source_file):
 	module_name = os.path.basename(module_filename_base)	
 	
 	subprocess.check_call("python " + GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py -f " + graphit_source_file + " -o " + module_filename_cpp + " -m " + module_name, shell=True)
-	
-	# now compile the file into .so
-	subprocess.check_call(CXX_COMPILER + " -I" + pybind11.get_include() + " $(python3-config --includes) -c " + module_filename_cpp + " -I " + GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=c++11 -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden -o " + module_filename_object, shell=True)
 
-	cmd = CXX_COMPILER + " -fPIC -shared -o " + module_filename_so + " " + module_filename_object + " -flto "
+	compile_command = CXX_COMPILER + " -I" + pybind11.get_include() + " $(python3-config --includes) -c -I " +  GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=c++11 -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden "	
+	# now compile the file into .so
+
+	subprocess.check_call(compile_command + module_filename_cpp + " -o " + module_filename_object, shell=True)
+	extern_objects = []
+	for extern_file in extern_cpp_files:
+		object_filename = extern_file + ".o"
+		subprocess.check_call(compile_command + extern_file + " -o " + object_filename, shell=True)
+		extern_objects.append(object_filename)
+	
+	object_list = " " + " ".join(extern_objects) + " "
+	cmd = CXX_COMPILER + " -fPIC -shared -o " + module_filename_so + " " + module_filename_object + " -flto " + object_list
 
 
 	# append the python3 ldflag if it is macOS, don't need it for Linux
@@ -40,6 +48,8 @@ def compile_and_load(graphit_source_file):
 	spec.loader.exec_module(module)
 	os.unlink(module_filename_cpp)
 	os.unlink(module_filename_object)
+	for extern_object in extern_objects:
+		os.unlink(extern_object)
 	module_so_list.append(module_filename_so)
 
 	return module
