@@ -14,6 +14,12 @@ To use NUMA optimizations on multi-socket machines, libnuma needs to be installe
 
 If you are a mac user who recently upgraded to macOS Mojave, and are having issues with unable to find header files "string.h" or "wchar.h" when using cmake, c++ compiler, or the python scripts that uses the c++ compilers, maybe this [post](https://yunmingzhang.wordpress.com/2019/02/13/mojave-upgrade-c-compilation-and-header-files-missing-issue/) will help. As always, let us know if you have any issues with building and using GraphIt. 
 
+If you want to build and use the python bindings for GraphIt, you need to install the following packages - 
+ - python3 (version >= 3.5)
+ - scipy (can be installed using pip3)
+ - pybind11 (can be installed using pip3)
+ 
+
 Build Graphit
 ===========
 
@@ -51,6 +57,15 @@ Currently the project supports Python 2.x and not Python 3.x (the print syntax i
     python python_tests/test_with_schedules.py
     
 ```
+
+To test the python bindings, the following extra commands can be run from the GraphIt root directory
+
+```
+    cd build
+    export PYTHONPATH=.
+    python3 python_tests/pybind_test.py
+```
+
 
 When running `test_with_schedules.py`, commands used for compiling GraphIt files, compiling the generated C++ file, and running the compiled binary file are printed. You can reproduce each test and examine the generated C++ files by typing the printed commands in the shell (make sure you are in the build/bin directory). You can also selectively enable a specific test using the TestSuite commands. We provide examples of enabling a subset of Python tests in the comments of the main function in `test_with_schedules.py`. 
 

@@ -733,6 +733,25 @@ TEST_F(BackendTest, UninitializedVertexProperty) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, RandomNghTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main() var v : Vertex = getRandomOutNgh(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SerialMinimumSpanningTreeTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const parents : vector{Vertex}(int);"
+                     "func main() parents = serialMinimumSpanningTree(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, VectorVertexProperty) {
     istringstream is("element Vertex end\n"

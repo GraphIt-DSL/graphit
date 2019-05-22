@@ -1,7 +1,6 @@
 element Vertex end
 element Edge end
 
-%const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/4.wel");
 const edges : edgeset{Edge}(Vertex,Vertex, int);
 
 const vertices : vertexset{Vertex};

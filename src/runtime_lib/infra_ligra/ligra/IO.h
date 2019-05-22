@@ -75,7 +75,7 @@ inline bool isSpace(char c) {
   }
 }
 
-_seq<char> readStringFromFile(char *fileName) {
+static _seq<char> readStringFromFile(char *fileName) {
   ifstream file (fileName, ios::in | ios::binary | ios::ate);
   if (!file.is_open()) {
     std::cout << "Unable to open file: " << fileName << std::endl;
@@ -91,7 +91,7 @@ _seq<char> readStringFromFile(char *fileName) {
 }
 
 // parallel code for converting a string to words
-words stringToWords(char *Str, long n) {
+static words stringToWords(char *Str, long n) {
   {parallel_for (long i=0; i < n; i++) 
       if (isSpace(Str[i])) Str[i] = 0; }
 

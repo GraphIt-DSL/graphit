@@ -27,11 +27,11 @@
 
 #include <time.h>
 #include <chrono>
-
+#include "infra_gapbs/minimum_spanning_tree.h"
 
 
 template <typename T>
-T builtin_sum(T* input_vector, int num_elem){
+static T builtin_sum(T* input_vector, int num_elem){
     //Serial Code for summation
     //T output_sum = 0;
     //for (int i = 0; i < num_elem; i++){
@@ -45,29 +45,66 @@ T builtin_sum(T* input_vector, int num_elem){
 
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
-WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
+static WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     WeightedBuilder weighted_builder (cli);
     WGraph g = weighted_builder.MakeGraph();
     return g;
 }
 
-Graph builtin_loadEdgesFromFile(std::string file_name){
+static Graph builtin_loadEdgesFromFile(std::string file_name){
     CLBase cli (file_name);
     Builder builder (cli);
     Graph g = builder.MakeGraph();
     return g;
 }
 
-int builtin_getVertices(Graph &edges){
+static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, NodeID> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++)
+		for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++)
+			el.push_back(Edge(x, indices[_y]));
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID> bb(cli);
+	return bb.MakeGraphFromEL(el);
+}
+static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_t *indptr, const NodeID *indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, WNode> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++) {
+		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
+			el.push_back(Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y])));
+		}
+	}	
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID, WNode, WeightT> bb(cli);
+	bb.needs_weights_ = false;
+	return bb.MakeGraphFromEL(el);	
+}
+static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
 
-int builtin_getVertices(WGraph &edges){
+static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
-int * builtin_getOutDegrees(Graph &edges){
+static int getRandomOutNgh(Graph &edges, NodeID v){
+    return edges.get_random_out_neigh(v);
+}
+
+static int getRandomInNgh(Graph &edges, NodeID v){
+    return edges.get_random_in_neigh(v);
+}
+
+static int* serialMinimumSpanningTree(WGraph &edges, NodeID start){
+    return minimum_spanning_tree(edges, start);
+}
+
+static int * builtin_getOutDegrees(Graph &edges){
     int * out_degrees  = new int [edges.num_nodes()];
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
@@ -75,7 +112,7 @@ int * builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
-pvector<int> builtin_getOutDegreesPvec(Graph &edges){
+static pvector<int> builtin_getOutDegreesPvec(Graph &edges){
     pvector<int> out_degrees (edges.num_nodes(), 0);
     for (NodeID n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
@@ -83,19 +120,19 @@ pvector<int> builtin_getOutDegreesPvec(Graph &edges){
     return out_degrees;
 }
 
-int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
+static int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
     return vertex_subset->size();
 }
 
-void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
+static void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
 
-template <typename T> void builtin_append (std::vector<T>* vec, T element){
+template <typename T> static void builtin_append (std::vector<T>* vec, T element){
     vec->push_back(element);
 }
 
-template <typename T> T builtin_pop (std::vector<T>* vec){
+template <typename T> T static builtin_pop (std::vector<T>* vec){
     T last_element = vec->back();
     vec->pop_back();
     return last_element;
@@ -108,14 +145,14 @@ template <typename T> T builtin_pop (std::vector<T>* vec){
 //    return (float)(usec.time_since_epoch().count())/1000;
 //}
 
-struct timeval start_time_;
-struct timeval elapsed_time_;
+static struct timeval start_time_;
+static struct timeval elapsed_time_;
 
-void startTimer(){
+static void startTimer(){
     gettimeofday(&start_time_, NULL);
 }
 
-float stopTimer(){
+static float stopTimer(){
     gettimeofday(&elapsed_time_, NULL);
     elapsed_time_.tv_sec  -= start_time_.tv_sec;
     elapsed_time_.tv_usec -= start_time_.tv_usec;
@@ -123,7 +160,7 @@ float stopTimer(){
 
 }
 
-char* argv_safe(int index, char** argv, int argc ){
+static char* argv_safe(int index, char** argv, int argc ){
     // if index is less than or equal to argc than return argv[index]
     //else return false or break command
 
@@ -136,12 +173,14 @@ char* argv_safe(int index, char** argv, int argc ){
 
 }
 
-Graph builtin_transpose(Graph &graph){
-    return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
+static Graph builtin_transpose(Graph &graph){
+    // Changing this to use shared pointer instead
+    //return CSRGraph<NodeID>(graph.num_nodes(), graph.get_in_index_(), graph.get_in_neighbors_(), graph.get_out_index_(), graph.get_out_neighbors_(), true);
+      return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_shared_, graph.in_neighbors_shared_, graph.out_index_shared_, graph.out_neighbors_shared_, true);
 }
 
 
-template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
+template<typename APPLY_FUNC> static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
    if (vertex_subset->is_dense){
        parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
            if(vertex_subset->bool_map_[v]){
@@ -156,7 +195,7 @@ template<typename APPLY_FUNC> void builtin_vertexset_apply(VertexSubset<int>* ve
 }
 
 template<typename OBJECT_TYPE>
-void deleteObject(OBJECT_TYPE* object) {
+static void deleteObject(OBJECT_TYPE* object) {
    if(object)
        delete object;
 }

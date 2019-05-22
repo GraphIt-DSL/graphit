@@ -42,10 +42,10 @@ class BuilderBase {
 
   const CLBase &cli_;
   bool symmetrize_;
-  bool needs_weights_;
   int64_t num_nodes_ = -1;
 
  public:
+  bool needs_weights_;
   explicit BuilderBase(const CLBase &cli) : cli_(cli) {
     symmetrize_ = cli_.symmetrize();
     needs_weights_ = !std::is_same<NodeID_, DestID_>::value;

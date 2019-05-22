@@ -67,15 +67,41 @@ namespace graphit {
 	        it->get()->accept(this);
         }
 
+	generatePyBindModule();
         oss << std::endl;
         return 0;
     };
+    void CodeGenCPP::generatePyBindModule() {
+	oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
+	oss << "PYBIND11_MODULE(" << module_name << ", m) {" << std::endl;
+	indent();
 
+        std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+	for (auto it = functions.begin(); it != functions.end(); it++) {
+		mir::FuncDecl::Ptr func_decl = *it;
+		if (func_decl->type == mir::FuncDecl::Type::EXPORTED) {
+			oss << "m.def(\"" << func_decl->name << "\", &" << func_decl->name << "__wrapper, \"\");" << std::endl;
+		}
+	}
+	dedent();
+	oss << "}" << std::endl;		
+
+	oss << "#endif" << std::endl;
+    }
     void CodeGenCPP::genIncludeStmts() {
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
 	oss << "#include <algorithm>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
+	
+	oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
+	oss << "#include <pybind11/pybind11.h>" << std::endl;
+	oss << "#include <pybind11/stl.h>" << std::endl;
+	oss << "#include <pybind11/numpy.h>" << std::endl;
+	oss << "namespace py = pybind11;" << std::endl;
+	oss << "#endif" << std::endl;
+	
+	
     }
 
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
@@ -548,7 +574,148 @@ namespace graphit {
         printEndIndent();
         oss << ";";
         oss << std::endl;
+	if (func_decl-> type == mir::FuncDecl::Type::EXPORTED) {
+		generatePyBindWrapper(func_decl);
+	}
     };
+    void CodeGenCPP::generatePyBindWrapper(mir::FuncDecl::Ptr func_decl) {
+	    oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
+	    oss << "//PyBind Wrappers for function" << func_decl->name << std::endl;
+	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
+	    if (func_decl->result.isInitialized())
+		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
+			oss << "py::array_t<";
+			mir::to<mir::VectorType>(func_decl->result.getType())->vector_element_type->accept(this);
+			oss << "> ";
+		    }
+		    else 
+		        func_decl->result.getType()->accept(this);
+	    else
+		    oss << "void ";
+	    oss << func_decl->name << "__wrapper (";
+	    // For argument types we need to check if it is a graph, if it is, we need to expand it into 3 numpy arrays
+	    bool printDelimiter = false;
+	    for (auto arg : func_decl->args) {
+		    if (printDelimiter) {
+			    oss << ", ";
+		    }
+		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
+			    oss << "py::object _" << arg.getName();
+		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
+			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    oss << "py::array_t<";
+			    vector_type->vector_element_type->accept(this);
+			    oss << ">";	
+			    oss << " _" << arg.getName();
+		    }else {
+			    arg.getType()->accept(this);
+			    oss << arg.getName();
+		    }
+		    printDelimiter = true;
+	    }
+	    if (!printDelimiter)
+		    oss << "void";
+	    oss << ") ";	
+	    oss << "{ " << std::endl;
+	    indent();
+	    // Need to generate translation for graph arguments before the actual call
+
+	    for (auto arg : func_decl->args) {
+		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
+			    mir::EdgeSetType::Ptr type = mir::to<mir::EdgeSetType>(arg.getType());
+			    if (type->weight_type != NULL) {
+				   printIndent();
+				   oss << "py::array_t<";
+				   type->weight_type->accept(this);
+				   oss << "> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<"; 
+				   type->weight_type->accept(this);
+				   oss << ">>();" << std::endl;
+
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    arg.getType()->accept(this);
+				    oss << arg.getName() << " = builtin_loadWeightedEdgesFromCSR(";
+				    oss << arg.getName() << "__data.data(), " << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+			    } else {	
+				    //Prepare the individual arrays from the object
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indices = _" << arg.getName() << ".attr(\"indices\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    oss << "py::array_t<int> " << arg.getName() << "__indptr = _" << arg.getName() << ".attr(\"indptr\").cast<py::array_t<int>>();" << std::endl;
+				    printIndent();
+				    arg.getType()->accept(this);
+				    oss << arg.getName() << " = builtin_loadEdgesFromCSR(";
+				    oss << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+			    }
+			
+		    } else if (mir::isa<mir::VectorType>(arg.getType())) {
+			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    printIndent();
+			    vector_type->accept(this);
+			    oss << " " << arg.getName() << " = (";
+			    vector_type->accept(this);
+			    oss << ")_" << arg.getName() << ".data();" << std::endl; 
+		    }
+
+	    }
+	    printIndent();
+		
+	    if (func_decl->result.isInitialized()) {
+		    
+		    func_decl->result.getType()->accept(this);
+		    oss << "__" << func_decl->result.getName() << " = ";
+	    }
+	    oss << func_decl->name;
+	    if (func_decl->isFunctor)
+		    oss << "()";
+	    oss << "(";
+	    printDelimiter = false;
+	    for (auto arg : func_decl->args) {
+		    if (printDelimiter) {
+			    oss << ", ";
+		    }
+		    oss << arg.getName();
+		    printDelimiter = true;
+	    }
+	    oss << ");" << std::endl;
+	    // We do no support returning Graph types. But we can return still return vectors	    
+	    if (func_decl->result.isInitialized() ) { 
+		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
+			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
+			    // Create the return object
+			    printIndent();
+			    oss << "py::array_t<";
+			    vector_type->vector_element_type->accept(this);
+			    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+			    vector_type->vector_element_type->accept(this);
+			    oss << "> ( {";
+			    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+			    oss << "}, { sizeof(";	
+			    vector_type->vector_element_type->accept(this);
+			    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    
+		    } else {
+		            printIndent();
+			    func_decl->result.getType()->accept(this);
+			    oss << func_decl->result.getName() << " = __";
+			    oss << func_decl->result.getName() << ";" << std::endl;
+		    }
+	    }
+	    if (func_decl->result.isInitialized()) {
+		    printIndent();
+		    oss << "return " << func_decl->result.getName() << ";" << std::endl;
+	    }		
+	    dedent();
+	    printIndent();
+	    oss << "}" << std::endl;
+	    oss << "#endif" << std::endl;
+
+    }
 
     void CodeGenCPP::visit(mir::ScalarType::Ptr scalar_type) {
         switch (scalar_type->type) {
