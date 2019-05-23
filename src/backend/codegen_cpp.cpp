@@ -740,7 +740,14 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
-        vector_type->vector_element_type->accept(this);
+        if (mir::isa<mir::ScalarType>(vector_type->vector_element_type)){
+            vector_type->vector_element_type->accept(this);
+        } else if (mir::isa<mir::VectorType>(vector_type->vector_element_type)){
+            //nested vector type
+            mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(vector_type->vector_element_type);
+            // use the typedef type for the inner vector type
+            oss << inner_vector_type->toString();
+        }
         oss << " * ";
     }
 
