@@ -300,6 +300,7 @@ namespace graphit {
                 std::cout << "No main function declared" << std::endl;
                 return nullptr;
             }
+
         //private:
 
             // maps element type to an input file that reads the set from
@@ -358,6 +359,9 @@ namespace graphit {
 
             // used by numa optimization
             std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
+
+            std::set<std::string> defined_types;
+
         };
 
 }

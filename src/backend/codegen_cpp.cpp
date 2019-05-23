@@ -999,13 +999,20 @@ namespace graphit {
             assert(vector_vector_element_type->range_indexset != 0);
             int range = vector_vector_element_type->range_indexset;
 
-            //first generates a typedef for the vector type
-            oss << "typedef ";
-            vector_vector_element_type->vector_element_type->accept(this);
-            std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
-            oss << typedef_name <<  " ";
-            oss << "[ " << range << "]; " << std::endl;
+
+            //std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
+            std::string typedef_name = vector_vector_element_type->toString();
+            if (mir_context_->defined_types.find(typedef_name) == mir_context_->defined_types.end()){
+                mir_context_->defined_types.insert(typedef_name);
+                //first generates a typedef for the vector type
+                oss << "typedef ";
+                vector_vector_element_type->vector_element_type->accept(this);
+                oss << typedef_name <<  " ";
+                oss << "[ " << range << "]; " << std::endl;
+            }
+
             vector_vector_element_type->typedef_name_ = typedef_name;
+
 
             //use the typedef defined type to declare a new pointer
             oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
@@ -1375,7 +1382,12 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VectorAllocExpr::Ptr alloc_expr) {
         oss << "new ";
-        alloc_expr->scalar_type->accept(this);
+
+        if (alloc_expr->scalar_type != nullptr){
+            alloc_expr->scalar_type->accept(this);
+        } else if (alloc_expr->vector_type != nullptr){
+            oss << alloc_expr->vector_type->toString();
+        }
         oss << "[ ";
         //This is the current number of elements, but we need the range
         //alloc_expr->size_expr->accept(this);

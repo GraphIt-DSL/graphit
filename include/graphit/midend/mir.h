@@ -223,6 +223,22 @@ namespace graphit {
                 visitor->visit(self<ScalarType>());
             }
 
+            std::string toString(){
+                std::string output_str = "";
+                if (type == mir::ScalarType::Type::FLOAT){
+                    output_str = "float";
+                } else if (type == mir::ScalarType::Type::INT){
+                    output_str = "int";
+                } else if (type == mir::ScalarType::Type::BOOL){
+                    output_str = "bool";
+                } else if (type == mir::ScalarType::Type::DOUBLE){
+                    output_str = "double";
+                } else if (type == mir::ScalarType::Type::STRING){
+                    output_str = "string";
+                }
+                return output_str;
+            }
+
         protected:
             virtual void copy(MIRNode::Ptr);
 
@@ -251,6 +267,17 @@ namespace graphit {
             Type::Ptr vector_element_type;
             int range_indexset = 0;
             std::string typedef_name_ = "";
+
+            std::string toString(){
+                std::string output_str = "";
+                if (mir::isa<mir::ScalarType>(vector_element_type)){
+                    auto scalar_type = mir::to<mir::ScalarType>(vector_element_type);
+                    output_str = output_str + scalar_type->toString();
+                }
+
+                output_str = output_str + std::to_string(range_indexset);
+                return output_str;
+            }
 
             typedef std::shared_ptr<VectorType> Ptr;
 
@@ -957,6 +984,9 @@ namespace graphit {
         struct VectorAllocExpr : public NewExpr {
             Expr::Ptr size_expr;
             ScalarType::Ptr scalar_type;
+            // the element of the vector can potentially be a vector
+            // vector{Vertex}(vector[20])
+            VectorType::Ptr vector_type;
 
             typedef std::shared_ptr<VectorAllocExpr> Ptr;
 
