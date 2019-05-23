@@ -554,6 +554,8 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_sssp_with_return_verified(self):
         self.library_sssp_verified_test("export_sssp.gt", '/test/input/');
 
+    def test_library_cf_with_return_verified(self):
+        self.basic_library_compile("export_cf_vector_input_with_return.gt", '/test/input/', driver='library_test_driver_weighted.cpp')
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -571,7 +573,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_sssp_with_return_verified'))
+    # suite.addTest(TestGraphitCompiler('test_library_cf_with_return_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
