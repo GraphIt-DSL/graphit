@@ -82,9 +82,19 @@ if __name__ == '__main__':
     # compile and execute compile.cpp file to complete the compilation
     #TODO: code here uses very fragile relavtive paths, figure out a better way
     # Maybe setting environment variables
-    subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), shell=True)
-    if graphit_pybind_module_name == "":
-        subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name , shell=True)
-    else:
-        subprocess.check_call("./compile.o -f " + algo_file_name + " -o " + output_file_name + " -m " + graphit_pybind_module_name, shell=True)
+    try:
+        subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise
+
+
+    try:
+        if graphit_pybind_module_name == "":
+            subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name , stderr=subprocess.STDOUT, shell=True)
+        else:
+            subprocess.check_call("./compile.o -f " + algo_file_name + " -o " + output_file_name + " -m " + graphit_pybind_module_name, stderr=subprocess.STDOUT, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)

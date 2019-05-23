@@ -4,6 +4,7 @@ import subprocess
 import importlib.util
 import platform
 import pybind11
+import sys
 
 GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip("/")
 GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
@@ -21,13 +22,22 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[]):
 	module_filename_object = module_filename_base + ".o"
 	module_filename_so = module_filename_base + ".so"
 	module_name = os.path.basename(module_filename_base)	
-	
-	subprocess.check_call("python " + GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py -f " + graphit_source_file + " -o " + module_filename_cpp + " -m " + module_name, shell=True)
+
+	try:
+		subprocess.check_call("python " + GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py -f " + graphit_source_file + " -o " + module_filename_cpp + " -m " + module_name, stderr=subprocess.STDOUT, shell=True)
+	except subprocess.CalledProcessError as e:
+		print(e.output)
+		return
 
 	compile_command = CXX_COMPILER + " -I" + pybind11.get_include() + " $(python3-config --includes) -c -I " +  GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=c++11 -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden "	
 	# now compile the file into .so
 
-	subprocess.check_call(compile_command + module_filename_cpp + " -o " + module_filename_object, shell=True)
+	try:
+		subprocess.check_call(compile_command + module_filename_cpp + " -o " + module_filename_object, shell=True)
+	except subprocess.CalledProcessError as e:
+		print(e.output)
+		return
+
 	extern_objects = []
 	for extern_file in extern_cpp_files:
 		object_filename = extern_file + ".o"
