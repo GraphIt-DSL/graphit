@@ -128,6 +128,19 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
 
+    def library_cf_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory, driver='library_test_driver_cf.cpp')
+        os.chdir("..")
+        cmd = "bin/test.o"
+        print(cmd)
+
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        stdout_val = proc.communicate()[0]
+        stdout_str = str(stdout_val).rstrip()
+        print ("output : " + stdout_str)
+        self.assertEqual(float(stdout_str), 7.49039)
+
 
     def library_pr_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
         self.basic_library_compile(input_file_name, input_file_directory)
@@ -554,8 +567,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_sssp_with_return_verified(self):
         self.library_sssp_verified_test("export_sssp.gt", '/test/input/');
 
-    def test_library_cf_with_return_verified(self):
+    def test_library_cf_with_return_basic_compile(self):
         self.basic_library_compile("export_cf_vector_input_with_return.gt", '/test/input/', driver='library_test_driver_weighted.cpp')
+
+    def test_library_cf_with_return_verified(self):
+        self.library_cf_verified_test("export_cf_vector_input_with_return.gt", '/test/input/')
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:

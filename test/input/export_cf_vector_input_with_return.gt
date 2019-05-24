@@ -2,8 +2,8 @@ element Vertex end
 element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex, int);
 const vertices : vertexset{Vertex};
-const latent_vec : vector{Vertex}(vector[20](float));
-const error_vec : vector{Vertex}(vector[20](float));
+const latent_vec : vector{Vertex}(vector[1](float));
+const error_vec : vector{Vertex}(vector[1](float));
 const step : float = 0.35; %for testing
 const lambda : float = 0.001;
 const K : int = 1;
@@ -33,11 +33,11 @@ func initVertex (v : Vertex)
     end
 end
 
-export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, float)) -> output : vector{Vertex}(vector[20](float))
+export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, float)) -> output : vector{Vertex}(vector[1](float))
     edges = input_edges;
     vertices  = edges.getVertices();
-    latent_vec = new vector{Vertex}(vector[20](float))();
-    error_vec = new vector{Vertex}(vector[20](float))();
+    latent_vec = new vector{Vertex}(vector[1](float))();
+    error_vec = new vector{Vertex}(vector[1](float))();
     vertices.apply(initVertex);
     for i in 0:5
         #s1# edges.apply(updateEdge);
