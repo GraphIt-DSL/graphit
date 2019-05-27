@@ -302,7 +302,11 @@ namespace graphit {
         auto element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
         mir_vertexsetalloc_expr->size_expr = ctx->getElementCount(element_type);
         mir_vertexsetalloc_expr->element_type = element_type;
-        mir_vertexsetalloc_expr->scalar_type = mir::to<mir::ScalarType>(emitType(expr->vector_scalar_type));
+        if (expr->vector_scalar_type != nullptr)
+            mir_vertexsetalloc_expr->scalar_type = mir::to<mir::ScalarType>(emitType(expr->vector_scalar_type));
+        // if the vector element is also a vector, such as vector{Vertex}(vector[20])
+        else if (expr->general_element_type != nullptr)
+            mir_vertexsetalloc_expr->vector_type = mir::to<mir::VectorType>(emitType(expr->general_element_type));
         retExpr = mir_vertexsetalloc_expr;
     }
 

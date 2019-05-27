@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SerialMinimumSpanningTreeTest";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.CF";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.edgesetApplyExtern";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 //
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportPRWithScheduleTest";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportCFWithScheduleTest";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
