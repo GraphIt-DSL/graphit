@@ -1,0 +1,46 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex, int);
+
+const vertices : vertexset{Vertex};
+
+const SP : vector{Vertex}(int);
+
+func initSP(v : Vertex)
+    SP[v] = 2147483647;
+end
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int)
+     SP[dst] min= (SP[src] + weight);
+end
+
+func printSP(v : Vertex)
+    print SP[v];
+end
+
+export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, int)) -> output : vector{Vertex}(int)
+    edges = input_edges;
+    vertices = edges.getVertices();
+    SP = new vector{Vertex}(int)();
+    vertices.apply(initSP);
+    var n : int = edges.getVertices(); %this is a hack to get the number of nodes for now
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(0); %add source vertex
+    SP[0] = 0;
+    var rounds : int = 0;
+    while (frontier.getVertexSetSize() != 0)
+        #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,SP);
+        delete frontier;
+        frontier = output;
+	    rounds = rounds + 1;
+    	if rounds == n
+	        print "negative cycle";
+	        break;
+	    end
+    end
+    delete frontier;
+    #s2# vertices.apply(printSP);
+    %print rounds;
+    output = SP;
+end

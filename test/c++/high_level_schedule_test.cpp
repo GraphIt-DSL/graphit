@@ -100,7 +100,7 @@ protected:
                                 "   out_degrees = edges.getOutDegrees(); \n"
                                 "   beta_score = (1.0 - damp) / vertices.size(); \n"
                                 "   vertices.apply(initVectors); \n"
-                                "   #l1# for i in 1:10\n"
+                                "   for i in 1:10\n"
                                 "       #s1# edges.apply(updateEdge);\n"
                                 "       #s2# vertices.apply(updateVertex);\n"
                                 "   end\n"
@@ -1747,3 +1747,13 @@ TEST_F(HighLevelScheduleTest, ExportPRTest){
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+
+TEST_F(HighLevelScheduleTest, ExportPRWithScheduleTest){
+    istringstream is (export_pr_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}

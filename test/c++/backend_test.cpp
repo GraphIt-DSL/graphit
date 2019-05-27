@@ -733,6 +733,25 @@ TEST_F(BackendTest, UninitializedVertexProperty) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, RandomNghTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main() var v : Vertex = getRandomOutNgh(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SerialMinimumSpanningTreeTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const parents : vector{Vertex}(int);"
+                     "func main() parents = serialMinimumSpanningTree(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, VectorVertexProperty) {
     istringstream is("element Vertex end\n"
@@ -819,5 +838,31 @@ TEST_F(BackendTest, CF) {
                      "\n"
                      "end\n"
                      );
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
+TEST_F(BackendTest, vertexsetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateVertex(v : Vertex);\n"
+                     "func main() vertices.apply(UDF_updateVertex); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
+TEST_F(BackendTest, edgesetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateEdge(src : Vertex, dst : Vertex);\n"
+                     "func main() edges.apply(UDF_updateEdge); end");
     EXPECT_EQ (0, basicTest(is));
 }

@@ -55,6 +55,13 @@ namespace graphit {
             void addExternFunction(mir::FuncDecl::Ptr f) {
                 extern_functions_map_[f->name] = f;
                 extern_functions_list_.push_back(f);
+                //Also add the extern function to regular function map
+                //Hopefully this is not going to be an issue
+                addFunction(f);
+            }
+
+            bool isExternFunction(std::string function_name){
+                return extern_functions_map_.find(function_name) != extern_functions_map_.end();
             }
 
             bool isFunction(const std::string &name) const {
@@ -64,6 +71,11 @@ namespace graphit {
             mir::FuncDecl::Ptr getFunction(const std::string &name) {
                 assert(isFunction(name));
                 return functions_map_[name];
+            }
+
+            mir::FuncDecl::Ptr getExternFunction(const std::string &name) {
+                assert(isExternFunction(name));
+                return extern_functions_map_[name];
             }
 
             void addSymbol(mir::Var var) {
@@ -196,12 +208,29 @@ namespace graphit {
             }
 
             void setElementTypeWithVectorOrSetName(std::string vectorOrSetName, mir::ElementType::Ptr element_type){
+		// This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+		// So we will just use the symbol table to get the type and element type from there
+		// We will still do the insertion here, but this value will never be used
                 vector_set_element_type_map_[vectorOrSetName] = element_type;
 
             };
 
             mir::ElementType::Ptr getElementTypeFromVectorOrSetName(std::string vector_name){
-                return vector_set_element_type_map_[vector_name];
+		// This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+		// So we will just use the symbol table to get the type and element type from there
+                //return vector_set_element_type_map_[vector_name];
+		auto var = getSymbol(vector_name);
+		auto type = var.getType();
+		if (mir::isa<mir::VectorType>(type))
+			return mir::to<mir::VectorType>(type)->element_type;	
+		else if (mir::isa<mir::EdgeSetType>(type))
+			return mir::to<mir::EdgeSetType>(type)->element;
+		else if (mir::isa<mir::VertexSetType>(type))
+			return mir::to<mir::VertexSetType>(type)->element;
+		else {
+			assert(false && "Cannot indentify type of vector or set\n");
+		}
+		
             }
 
             bool updateElementInputFilename(mir::ElementType::Ptr  element_type, mir::Expr::Ptr file_name){

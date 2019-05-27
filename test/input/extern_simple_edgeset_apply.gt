@@ -1,0 +1,16 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const vector_a : vector{Vertex}(float) = 0.0;
+extern func extern_src_add_one(src : Vertex, dst : Vertex);
+
+func main()
+    edges.apply(extern_src_add_one);
+    var sum : float = 0;
+    for i in 0:edges.getVertices()
+        sum += vector_a[i];
+    end
+    print sum;
+end
