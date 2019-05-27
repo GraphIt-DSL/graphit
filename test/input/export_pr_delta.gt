@@ -8,7 +8,7 @@ const ngh_sum : vector{Vertex}(float);
 const delta : vector{Vertex}(float);
 const out_degree : vector {Vertex}(int);
 const damp : float = 0.85;
-const beta_score : float = (1.0 - damp) / edges.getVertices();
+const beta_score : float;
 const epsilon2 : float = 0.1;
 const epsilon : float = 0.0000001;
 const init_delta : float;

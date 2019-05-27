@@ -13,9 +13,10 @@ CXX_COMPILER="${CXX_COMPILER}".strip().rstrip("/")
 module_so_list = []
 def compile_and_load(graphit_source_file, extern_cpp_files=[]):
 	# Obtain a unique filename for the module
-	module_file = tempfile.NamedTemporaryFile()
-	module_filename_base = module_file.name
-	module_file.close()
+	#module_file = tempfile.NamedTemporaryFile()
+	#module_filename_base = module_file.name
+	#module_file.close()
+	module_filename_base = os.path.splitext(graphit_source_file)[0]
 
 	# compile the file into a cpp file
 	module_filename_cpp = module_filename_base + ".cpp"
@@ -68,6 +69,7 @@ import atexit
 def cleanup_module():
 	global module_so_list
 	for filename in module_so_list:
-		os.unlink(filename)
+		if os.path.exists(filename):
+			os.unlink(filename)
 	module_so_list = []
 atexit.register(cleanup_module)

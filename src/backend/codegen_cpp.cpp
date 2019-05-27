@@ -602,6 +602,9 @@ namespace graphit {
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
 			    oss << "py::object _" << arg.getName();
 		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
+			    // We want to support vectors of vectors of scalar types separately
+			    //mir::ElementType::Ptr elem_type = vector_type->vector_element_type;
+                            
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
 			    oss << "py::array_t<";
 			    vector_type->vector_element_type->accept(this);
