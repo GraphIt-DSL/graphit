@@ -117,89 +117,89 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
 
 } 
 
-TEST_F(RuntimeLibTest, IntersectHiroshiBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetHiroshiBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectHiroshi(A, B, 5, 5);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetHiroshi(A, B, 5, 5);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 
 }
 
 
-TEST_F(RuntimeLibTest, IntersectBinarySearchBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetBinarySearchBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectBinarySearch(A, B, 5, 5);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetBinarySearch(A, B, 5, 5);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 
 }
 
-TEST_F(RuntimeLibTest, IntersectMultipleSkipBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetMultipleSkipBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectMultipleSkip(A, B, 5, 5);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetMultipleSkip(A, B, 5, 5);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 }
 
-TEST_F(RuntimeLibTest, IntersectNaiveBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetNaiveBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectNaive(A, B, 5, 5);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetNaive(A, B, 5, 5);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 }
 
 
-TEST_F(RuntimeLibTest, IntersectBitsetBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetBitsetBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectBitset(A, B, 5, 5);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetBitset(A, B, 5, 5);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 }
 
-TEST_F(RuntimeLibTest, IntersectCombinedBasicTest){
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetCombinedBasicTest){
 
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectCombined(A, B, 5, 5, 0.2, 3);
-    delete A;
-    delete B;
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{1, 2, 4, 5, 6};
+    size_t count = intersectSortedNodeSetCombined(A, B, 5, 5, 3, 0.2);
+    delete[] A;
+    delete[] B;
     EXPECT_EQ(4, count);
 
 }
 
-TEST_F(RuntimeLibTest, IntersectEmpty) {
-    NodeID* A = new NodeID[5]{1, 2, 3, 4, 5};
-    NodeID* B = new NodeID[5]{6, 7, 8, 9, 10};
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetEmpty) {
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto B = new NodeID[5]{6, 7, 8, 9, 10};
 
-    size_t countHiroshi = intersectHiroshi(A, B, 5, 5);
-    size_t countBitset = intersectBitset(A, B, 5, 5);
-    size_t countCombined1 = intersectCombined(A, B, 5, 5, 0.1, 2);
-    size_t countCombined2 = intersectCombined(A, B, 5, 5, 0.2, 200);
-    size_t countMultiSkip = intersectMultipleSkip(A, B, 5, 5);
-    size_t countNaive = intersectNaive(A, B, 5, 5);
+    size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 5, 5);
+    size_t countBitset = intersectSortedNodeSetBitset(A, B, 5, 5);
+    size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 5, 5, 2, 0.1);
+    size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 5, 5, 200, 0.2);
+    size_t countMultiSkip = intersectSortedNodeSetMultipleSkip(A, B, 5, 5);
+    size_t countNaive = intersectSortedNodeSetNaive(A, B, 5, 5);
 
-    delete A;
-    delete B;
+    delete[] A;
+    delete[] B;
 
     EXPECT_EQ(0, countHiroshi);
     EXPECT_EQ(0, countBitset);
@@ -209,8 +209,8 @@ TEST_F(RuntimeLibTest, IntersectEmpty) {
     EXPECT_EQ(0, countNaive);
 }
 
-TEST_F(RuntimeLibTest, IntersectLongerSets){
-    NodeID* A = new NodeID[234]{4, 8, 9, 11, 15, 22, 30, 31, 35, 37, 
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetLongerSets){
+    auto A = new NodeID[234]{4, 8, 9, 11, 15, 22, 30, 31, 35, 37,
                             39, 44, 47, 66, 67, 69, 95, 112, 125, 
                             127, 131, 136, 139, 152, 155, 200, 234, 
                             237, 251, 269, 282, 286, 301, 302, 311, 
@@ -242,7 +242,7 @@ TEST_F(RuntimeLibTest, IntersectLongerSets){
                             1859, 1860, 1861, 1864, 1886, 1891, 1918, 
                             1926, 1931, 1934, 1951, 1958, 1966, 1982, 1999};
 
-    NodeID* B = new NodeID[240]{7, 14, 29, 34, 36, 68, 69, 78, 83, 107, 115, 
+    auto B = new NodeID[240]{7, 14, 29, 34, 36, 68, 69, 78, 83, 107, 115,
                                120, 130, 132, 146, 176, 180, 183, 192, 203, 
                                212, 215, 268, 274, 280, 285, 295, 302, 323, 
                                344, 352, 356, 387, 411, 435, 437, 450, 484, 
@@ -272,17 +272,17 @@ TEST_F(RuntimeLibTest, IntersectLongerSets){
                                2834, 2839, 2852, 2866, 2870, 2888, 2897, 2906, 
                                2908, 2932, 2938, 2972};
 
-    size_t countHiroshi = intersectHiroshi(A, B, 234, 240);
-    size_t countBitset = intersectBitset(A, B, 234, 240);
-    size_t countBinarySearch = intersectBinarySearch(B, A, 240, 234);
-    size_t countBinarySearch2 = intersectBinarySearch(A, B, 234, 240);
-    size_t countCombined1 = intersectCombined(A, B, 234, 240, 0.1, 20);
-    size_t countCombined2 = intersectCombined(A, B, 234, 240, 0.2, 5000);
-    size_t countMultiSkip = intersectMultipleSkip(A, B, 234, 240);
-    size_t countNaive = intersectNaive(A, B, 234, 240);
+    size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 234, 240);
+    size_t countBitset = intersectSortedNodeSetBitset(A, B, 234, 240);
+    size_t countBinarySearch = intersectSortedNodeSetBinarySearch(B, A, 240, 234);
+    size_t countBinarySearch2 = intersectSortedNodeSetBinarySearch(A, B, 234, 240);
+    size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 234, 240, 20, 0.1);
+    size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 234, 240, 5000, 0.2);
+    size_t countMultiSkip = intersectSortedNodeSetMultipleSkip(A, B, 234, 240);
+    size_t countNaive = intersectSortedNodeSetNaive(A, B, 234, 240);
 
-    delete A;
-    delete B;
+    delete[] A;
+    delete[] B;
 
     EXPECT_EQ(13, countHiroshi);
     EXPECT_EQ(13, countBitset);
@@ -296,21 +296,21 @@ TEST_F(RuntimeLibTest, IntersectLongerSets){
     
 }
 
-TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
-    NodeID* A = new NodeID[0]{};
-    NodeID* B = new NodeID[5]{3, 4, 23, 45, 56};
+TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
+    auto A = new NodeID[0]{};
+    auto B = new NodeID[5]{3, 4, 23, 45, 56};
 
-    ASSERT_DEATH(intersectHiroshi(A, B, 0, 5), ".*");
+    ASSERT_DEATH(intersectSortedNodeSetHiroshi(A, B, 0, 5), ".*");
 
-    size_t countBitset = intersectBitset(A, B, 0, 5);
-    size_t countBinarySearch = intersectBinarySearch(A, B, 0, 5);
-    size_t countCombined1 = intersectCombined(A, B, 0, 5, 0.1, 1);
-    size_t countCombined2 = intersectCombined(A, B, 0, 5, 0.2, 5000);
-    size_t countMultiSkip = intersectMultipleSkip(A, B, 0, 5);
-    size_t countNaive = intersectNaive(A, B, 0, 5);
+    size_t countBitset = intersectSortedNodeSetBitset(A, B, 0, 5);
+    size_t countBinarySearch = intersectSortedNodeSetBinarySearch(A, B, 0, 5);
+    size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 0, 5, 1, 0.1);
+    size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 0, 5, 5000, 0.2);
+    size_t countMultiSkip = intersectSortedNodeSetMultipleSkip(A, B, 0, 5);
+    size_t countNaive = intersectSortedNodeSetNaive(A, B, 0, 5);
     
-    delete A;
-    delete B;
+    delete[] A;
+    delete[] B;
 
     
     EXPECT_EQ(0, countBitset);
@@ -320,20 +320,20 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
     EXPECT_EQ(0, countMultiSkip);
     EXPECT_EQ(0, countNaive);
 
-    NodeID* A1 = new NodeID[5]{2, 3, 5, 6, 7};
-    NodeID* B1 = new NodeID[0]{};
+    auto A1 = new NodeID[5]{2, 3, 5, 6, 7};
+    auto B1 = new NodeID[0]{};
 
-    ASSERT_DEATH(intersectHiroshi(A1, B1, 5, 0), ".*");
+    ASSERT_DEATH(intersectSortedNodeSetHiroshi(A1, B1, 5, 0), ".*");
 
-    countBitset = intersectBitset(A1, B1, 5, 0);
-    countBinarySearch = intersectBinarySearch(A1, B1, 5, 0);
-    countCombined1 = intersectCombined(A1, B1, 5, 0, 0.1, 1);
-    countCombined2 = intersectCombined(A1, B1, 5, 0, 0.2, 5000);
-    countMultiSkip = intersectMultipleSkip(A1, B1, 5, 0);
-    countNaive = intersectNaive(A1, B1, 5, 0);
+    countBitset = intersectSortedNodeSetBitset(A1, B1, 5, 0);
+    countBinarySearch = intersectSortedNodeSetBinarySearch(A1, B1, 5, 0);
+    countCombined1 = intersectSortedNodeSetCombined(A1, B1, 5, 0, 1, 0.1);
+    countCombined2 = intersectSortedNodeSetCombined(A1, B1, 5, 0, 5000, 0.2);
+    countMultiSkip = intersectSortedNodeSetMultipleSkip(A1, B1, 5, 0);
+    countNaive = intersectSortedNodeSetNaive(A1, B1, 5, 0);
 
-    delete A1;
-    delete B1;
+    delete[] A1;
+    delete[] B1;
 
     
     EXPECT_EQ(0, countBitset);
@@ -344,6 +344,7 @@ TEST_F(RuntimeLibTest, IntersectOneSetEmpty){
     EXPECT_EQ(0, countNaive);
 
 }
+
 
 TEST_F(RuntimeLibTest, GetRandomOutNeighborTest) {
     Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");

@@ -28,7 +28,7 @@ size_t MAX_LIMIT = 61578415;
 
 
 //TODO: there might be some issues with the allocating space (for now I am just allocating big enough space)
-size_t intersectBitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+size_t intersectSortedNodeSetBitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
   
   size_t total = 0;
 
@@ -105,7 +105,7 @@ long int inline binarySearch(NodeID* A, long int start, size_t total, NodeID* B,
 }
 
 //set intersection by looking up smaller arrays in big arrays
-size_t intersectBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+size_t intersectSortedNodeSetBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
 
     size_t count = 0;
     long int start = 0;
@@ -149,7 +149,7 @@ size_t intersectBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB)
 }
 
 //set intersection based on Hiroshi method
-size_t intersectHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+size_t intersectSortedNodeSetHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 
     size_t begin_a = 0;
     size_t begin_b = 0;
@@ -232,10 +232,10 @@ size_t intersectHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 }
 
 //set intersection where it skips multiple element in batch
-size_t intersectMultipleSkip(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+size_t intersectSortedNodeSetMultipleSkip(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
 
-    size_t it_a = 0;
-    auto it_b = 0;
+    NodeID it_a = 0;
+
     size_t count = 0;
 
     for (NodeID i = 0; i < totalB; i++) {
@@ -277,7 +277,7 @@ size_t intersectMultipleSkip(NodeID* A, NodeID* B, size_t totalA, size_t totalB)
 }
 
 //Naive set intersection method. 
-size_t intersectNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+size_t intersectSortedNodeSetNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
 
     size_t begin_a = 0;
     size_t begin_b = 0;
@@ -302,19 +302,19 @@ size_t intersectNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
 
 }
 
-size_t intersectCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold) {
+size_t intersectSortedNodeSetCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold) {
 
     size_t count = 0;
 
     if (totalA > sizeThreshold && totalB > sizeThreshold && (totalA > ratioThreshold*totalB || totalB > ratioThreshold*totalA)){
-        count += intersectHiroshi(A, B, totalA, totalB);
+        count += intersectSortedNodeSetHiroshi(A, B, totalA, totalB);
 
     } 
     else if (totalA >= totalB){
-        count += intersectMultipleSkip(A, B, totalA, totalB);
+        count += intersectSortedNodeSetMultipleSkip(A, B, totalA, totalB);
     } 
     else if (totalA < totalB){
-        count += intersectMultipleSkip(B, A, totalB, totalA);
+        count += intersectSortedNodeSetMultipleSkip(B, A, totalB, totalA);
 
     } 
     else {
