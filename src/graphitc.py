@@ -102,3 +102,5 @@ if __name__ == '__main__':
         print(e.output)
         raise
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
+    os.unlink(algo_file_name)
+
