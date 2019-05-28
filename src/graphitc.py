@@ -102,6 +102,6 @@ if __name__ == '__main__':
         print(e.output)
         raise
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
-    if algo_file_name == "algo.gt" && os.path.exists(algo_file_name):
+    if algo_file_name == "algo.gt" and os.path.exists(algo_file_name):
         os.unlink(algo_file_name)
 
