@@ -31,6 +31,26 @@ struct VertexSubset {
 //        index_vector_[v] = true;
 //    }
 
+    VertexSubset(VertexSubset* input_vert_set)
+        : num_vertices_(input_vert_set->num_vertices_),
+            vertices_range_(input_vert_set->vertices_range_),
+            is_dense(input_vert_set->is_dense){
+            if (input_vert_set->dense_vertex_set_ != nullptr){
+                dense_vertex_set_ = newA(unsigned int, num_vertices_);
+                parallel_for (int i = 0; i < num_vertices_; i++){
+                    dense_vertex_set_[i] = input_vert_set->dense_vertex_set_[i];
+                }
+            }
+
+            if (bool_map_ != nullptr){
+                bool_map_ = newA(bool, vertices_range_);
+                parallel_for (int i = 0; i < vertices_range_; i++){
+                    bool_map_[i] = input_vert_set->bool_map_[i];
+                }
+            }
+
+    }
+
     //set every vertex to true in the vertex subset
     VertexSubset(int64_t vertices_range, int64_t num_vertices)
             : num_vertices_(num_vertices),
