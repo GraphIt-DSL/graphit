@@ -140,7 +140,7 @@ class TestGraphitCompiler(unittest.TestCase):
         stdout_str = str(stdout_val).rstrip()
         print ("output : " + stdout_str)
         self.assertEqual(float(stdout_str), 7.49039)
-
+        os.chdir("bin")
 
     def library_pr_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
         self.basic_library_compile(input_file_name, input_file_directory)
