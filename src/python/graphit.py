@@ -11,7 +11,8 @@ GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
 CXX_COMPILER="${CXX_COMPILER}".strip().rstrip("/")
 
 module_so_list = []
-def compile_and_load(graphit_source_file, extern_cpp_files=[]):
+def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[]):
+	graphit_source_file = os.path.expanduser(graphit_source_file.strip())
 	# Obtain a unique filename for the module
 	#module_file = tempfile.NamedTemporaryFile()
 	#module_filename_base = module_file.name
@@ -52,7 +53,9 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[]):
 	# append the python3 ldflag if it is macOS, don't need it for Linux
 	if platform.system() == "Darwin":
 		cmd = cmd + "-undefined dynamic_lookup"
-
+        
+	if len(linker_args) > 0:
+		cmd += " " + " ".join(linker_args) + " "
 	subprocess.check_call(cmd, shell=True)
 	spec = importlib.util.spec_from_file_location(module_name, module_filename_so)
 	module = importlib.util.module_from_spec(spec)

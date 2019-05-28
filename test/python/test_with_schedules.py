@@ -329,7 +329,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(output.strip()), 7.49039)
 
     def eigenvector_centrality_verified_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("eigenvector_centrality.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -342,7 +342,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(lines[0].strip()), 3.2)
 
     def closeness_centrality_unweighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -355,7 +355,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(lines[3].strip()), 3)
 
     def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)

@@ -99,7 +99,14 @@ class TestGraphitCompiler(unittest.TestCase):
         ranks = module.export_func(graph)
         self.assertEqual(len(ranks), graph.shape[0])
         self.assertTrue(abs(np.sum(ranks)-1.0) < 0.1)
-
+    
+    def test_pybind_cf(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_cf_vector_input_with_return.gt")
+        graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        cf_result = module.export_func(graph)
+        self.assertEqual(cf_result.shape, (4, 1))
+        
+        
 
     # def test_pybind_collaborative_filtering(self):
 

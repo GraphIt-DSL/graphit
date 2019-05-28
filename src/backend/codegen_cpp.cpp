@@ -584,8 +584,14 @@ namespace graphit {
 	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
 	    if (func_decl->result.isInitialized())
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
+
+		        mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
 			oss << "py::array_t<";
-			mir::to<mir::VectorType>(func_decl->result.getType())->vector_element_type->accept(this);
+
+			if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) 
+				mir::to<mir::VectorType>(vector_type->vector_element_type)->vector_element_type->accept(this);
+			else 
+				vector_type->vector_element_type->accept(this);
 			oss << "> ";
 		    }
 		    else 
@@ -603,13 +609,20 @@ namespace graphit {
 			    oss << "py::object _" << arg.getName();
 		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
 			    // We want to support vectors of vectors of scalar types separately
-			    //mir::ElementType::Ptr elem_type = vector_type->vector_element_type;
-                            
-			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << ">";	
-			    oss << " _" << arg.getName();
+		            mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    mir::Type::Ptr elem_type = vector_type->vector_element_type;
+			    if (mir::isa<mir::VectorType>(elem_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(elem_type);
+				    oss << "py::array_t<";
+                                    inner_vector_type->vector_element_type->accept(this);
+                                    oss << ">";
+                                    oss << " _" << arg.getName(); 
+			    }else { 
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << ">";	
+				    oss << " _" << arg.getName();
+			    }
 		    }else {
 			    arg.getType()->accept(this);
 			    oss << arg.getName();
@@ -690,17 +703,41 @@ namespace graphit {
 	    if (func_decl->result.isInitialized() ) { 
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
-			    // Create the return object
-			    printIndent();
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> " << func_decl->result.getName() << " = py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> ( {";
-			    mir_context_->getElementCount(vector_type->element_type)->accept(this);
-			    oss << "}, { sizeof(";	
-			    vector_type->vector_element_type->accept(this);
-			    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    // Handle separately if vector of vector
+			    if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType> (vector_type->vector_element_type);
+				    printIndent();
+				    oss << "py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> ( std::vector<size_t>{(size_t)";
+				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    oss << ", (size_t)";
+				    oss << inner_vector_type->range_indexset;
+				    oss << "}, std::vector<size_t>{ ";
+				    oss << "( " << inner_vector_type->range_indexset << " * " << "sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ")), sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ") }, (";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "*)__" << func_decl->result.getName() << ");" << std::endl;
+				
+				    
+			    } else   {
+				    // Create the return object
+				    printIndent();
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> ( {";
+				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    oss << "}, { sizeof(";	
+				    vector_type->vector_element_type->accept(this);
+				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    }
 			    
 		    } else {
 		            printIndent();

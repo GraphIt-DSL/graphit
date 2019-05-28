@@ -33,7 +33,7 @@ func initVertex (v : Vertex)
     end
 end
 
-export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, float)) -> output : vector{Vertex}(vector[1](float))
+export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, int)) -> output : vector{Vertex}(vector[1](float))
     edges = input_edges;
     vertices  = edges.getVertices();
     latent_vec = new vector{Vertex}(vector[1](float))();
