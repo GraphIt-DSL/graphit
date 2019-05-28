@@ -67,9 +67,19 @@ int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
 
-int * builtin_getOutDegrees(Graph &edges){
+template<typename NodeID_, typename DestID_ = NodeID_, bool MakeInverse = true>
+int * builtin_getInDegrees(CSRGraph<NodeID_, DestID_, MakeInverse> &edges){
+    int * in_degrees  = new int [edges.num_nodes()];
+    for (NodeID_ n=0; n < edges.num_nodes(); n++){
+        in_degrees[n] = edges.in_degree(n);
+    }
+    return in_degrees;
+}
+
+template<typename NodeID_, typename DestID_ = NodeID_, bool MakeInverse = true>
+int * builtin_getOutDegrees(CSRGraph<NodeID_, DestID_, MakeInverse> &edges){
     int * out_degrees  = new int [edges.num_nodes()];
-    for (NodeID n=0; n < edges.num_nodes(); n++){
+    for (NodeID_ n=0; n < edges.num_nodes(); n++){
         out_degrees[n] = edges.out_degree(n);
     }
     return out_degrees;

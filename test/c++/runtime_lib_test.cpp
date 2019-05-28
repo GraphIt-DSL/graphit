@@ -5,7 +5,7 @@
 #include <gtest.h>
 #include "intrinsics.h"
 #include "infra_gapbs/graph_verifier.h"
-
+#include "infra_gapbs/graph_relabel.h"
 
 
 
@@ -81,5 +81,24 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
     delete vertexSubset;
 
     EXPECT_EQ(true, test_flag);
+
+}
+
+
+TEST_F(RuntimeLibTest, RelabelByIndegree) {
+    WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel"); 
+    auto source = 1;
+    auto dst = 4;
+    auto indegrees_original = builtin_getInDegrees(g);
+    std::sort(indegrees_original, indegrees_original + g.num_nodes(), greater<int>());
+    auto relabeled_g = relabelByIndegree(g, &source, &dst);
+    auto indegrees_relabeled = builtin_getInDegrees(relabeled_g);
+    
+    EXPECT_EQ(indegrees_original[0], indegrees_relabeled[0]);
+    EXPECT_EQ(indegrees_original[1], indegrees_relabeled[1]);
+    EXPECT_EQ(indegrees_original[2], indegrees_relabeled[2]);
+    EXPECT_EQ(indegrees_original[3], indegrees_relabeled[3]);
+    EXPECT_EQ(source, 3);
+    EXPECT_EQ(dst, 0);
 
 }
