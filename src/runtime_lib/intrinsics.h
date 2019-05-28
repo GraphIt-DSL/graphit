@@ -20,6 +20,8 @@
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
 #include "edgeset_apply_functions.h"
+#include <unordered_map>
+#include <unordered_set>
 
 #include "infra_ligra/ligra/ligra.h"
 
@@ -90,6 +92,38 @@ static int builtin_getVertices(Graph &edges){
 
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
+}
+
+static VertexSubset<int>* serialSweepCut(VertexSubset<int> * vertices, double* val_array){
+    //create a copy of the vertex array
+    VertexSubset<int>* output_vertexset = new VertexSubset<int>(vertices->vertices_range_, vertices->num_vertices_);
+
+    //sort the vertex array based on the val_array
+    output_vertexset->toSparse();
+    auto dense_vertex_set = vertices->dense_vertex_set_;
+    sort(dense_vertex_set, dense_vertex_set + vertices->num_vertices_,
+         [&val_array](const int & a, const int & b) -> bool
+         {
+             return val_array[a] > val_array[b];
+         });
+
+    //find the maximum conductance partitioning
+
+    unordered_set<uintE> S;
+    long volS = 0;
+    long edgesCrossing = 0;
+
+    double best_conductance = 0;
+    int cut_index = 0;
+
+    for (int i = 0; i < vertices->num_vertices_; i++){
+
+    }
+
+
+    //reset the size of the vertex array, remove the boolean values
+
+    return output_vertexset;
 }
 
 static int getRandomOutNgh(Graph &edges, NodeID v){
