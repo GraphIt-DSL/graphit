@@ -20,6 +20,8 @@
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
 #include "edgeset_apply_functions.h"
+#include <unordered_map>
+#include <unordered_set>
 
 #include "infra_ligra/ligra/ligra.h"
 
@@ -28,6 +30,7 @@
 #include <time.h>
 #include <chrono>
 #include "infra_gapbs/minimum_spanning_tree.h"
+#include <float.h>
 
 
 template <typename T>
@@ -90,6 +93,60 @@ static int builtin_getVertices(Graph &edges){
 
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
+}
+
+static VertexSubset<int>* serialSweepCut(Graph& graph,  VertexSubset<int> * vertices, double* val_array){
+    //create a copy of the vertex array
+    VertexSubset<int>* output_vertexset = new VertexSubset<int>(vertices);
+
+    //sort the vertex array based on the val_array
+    output_vertexset->toSparse();
+    auto dense_vertex_set = vertices->dense_vertex_set_;
+    sort(dense_vertex_set, dense_vertex_set + vertices->num_vertices_,
+         [&val_array](const int & a, const int & b) -> bool
+         {
+             return val_array[a] > val_array[b];
+         });
+
+    //find the maximum conductance partitioning
+
+    unordered_set<uintE> S;
+    long volS = 0;
+    long edgesCrossing = 0;
+
+    double best_conductance = DBL_MAX;
+    int best_cut = -1;
+    long best_vol = -1;
+    long best_edge_cross = -1;
+
+    for (int i = 0; i < vertices->num_vertices_; i++){
+        NodeID v = dense_vertex_set[i];
+        S.insert(v);
+        volS += graph.out_degree(v);
+        long denom = (volS < graph.num_edges()-volS)? volS : graph.num_edges()-volS;
+
+        for (NodeID ngh : graph.out_neigh(v)){
+            if(S.find(ngh) != S.end()) edgesCrossing--;
+            else edgesCrossing++;
+        }
+
+        double conductance = (edgesCrossing == 0 || denom == 0) ? 1 : (double)edgesCrossing/denom;
+
+        if(conductance < best_conductance) {
+            best_conductance = conductance;
+            best_cut = i;
+            best_edge_cross = edgesCrossing;
+            best_vol = volS;
+        }
+
+    }
+
+
+    //reset the size of the vertex array to the best cut, remove the boolean values
+    output_vertexset->num_vertices_ = best_cut;
+    output_vertexset->bool_map_ = nullptr;
+
+    return output_vertexset;
 }
 
 static int getRandomOutNgh(Graph &edges, NodeID v){

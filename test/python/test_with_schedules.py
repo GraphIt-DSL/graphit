@@ -128,6 +128,19 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
 
+    def library_cf_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory, driver='library_test_driver_cf.cpp')
+        os.chdir("..")
+        cmd = "bin/test.o"
+        print(cmd)
+
+        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        #check the value printed to stdout is as expected
+        stdout_val = proc.communicate()[0]
+        stdout_str = str(stdout_val).rstrip()
+        print ("output : " + stdout_str)
+        self.assertEqual(float(stdout_str), 7.49039)
+        os.chdir("bin")
 
     def library_pr_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
         self.basic_library_compile(input_file_name, input_file_directory)
@@ -316,7 +329,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(output.strip()), 7.49039)
 
     def eigenvector_centrality_verified_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("eigenvector_centrality.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -329,7 +342,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(lines[0].strip()), 3.2)
 
     def closeness_centrality_unweighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -342,7 +355,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(float(lines[3].strip()), 3)
 
     def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -554,6 +567,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_sssp_with_return_verified(self):
         self.library_sssp_verified_test("export_sssp.gt", '/test/input/');
 
+    def test_library_cf_with_return_basic_compile(self):
+        self.basic_library_compile("export_cf_vector_input_with_return.gt", '/test/input/', driver='library_test_driver_weighted.cpp')
+
+    def test_library_cf_with_return_verified(self):
+        self.library_cf_verified_test("export_cf_vector_input_with_return.gt", '/test/input/')
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -571,7 +589,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_sssp_with_return_verified'))
+    # suite.addTest(TestGraphitCompiler('test_library_cf_with_return_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

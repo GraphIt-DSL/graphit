@@ -90,6 +90,7 @@ add_custom_target(copy_graphit_py ALL DEPENDS ${CMAKE_BINARY_DIR}/graphit.py)
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 configure_file(src/library_test_driver_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver.cpp COPYONLY)
 configure_file(src/library_test_driver_weighted_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver_weighted.cpp COPYONLY)
+configure_file(src/library_test_driver_cf_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver_cf.cpp COPYONLY)
 
 
 add_executable(bc_verifier ./test/verifiers/bc_verifier.cpp)

@@ -584,8 +584,14 @@ namespace graphit {
 	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
 	    if (func_decl->result.isInitialized())
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
+
+		        mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
 			oss << "py::array_t<";
-			mir::to<mir::VectorType>(func_decl->result.getType())->vector_element_type->accept(this);
+
+			if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) 
+				mir::to<mir::VectorType>(vector_type->vector_element_type)->vector_element_type->accept(this);
+			else 
+				vector_type->vector_element_type->accept(this);
 			oss << "> ";
 		    }
 		    else 
@@ -602,11 +608,21 @@ namespace graphit {
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
 			    oss << "py::object _" << arg.getName();
 		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
-			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << ">";	
-			    oss << " _" << arg.getName();
+			    // We want to support vectors of vectors of scalar types separately
+		            mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    mir::Type::Ptr elem_type = vector_type->vector_element_type;
+			    if (mir::isa<mir::VectorType>(elem_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(elem_type);
+				    oss << "py::array_t<";
+                                    inner_vector_type->vector_element_type->accept(this);
+                                    oss << ">";
+                                    oss << " _" << arg.getName(); 
+			    }else { 
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << ">";	
+				    oss << " _" << arg.getName();
+			    }
 		    }else {
 			    arg.getType()->accept(this);
 			    oss << arg.getName();
@@ -687,17 +703,41 @@ namespace graphit {
 	    if (func_decl->result.isInitialized() ) { 
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
-			    // Create the return object
-			    printIndent();
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> " << func_decl->result.getName() << " = py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> ( {";
-			    mir_context_->getElementCount(vector_type->element_type)->accept(this);
-			    oss << "}, { sizeof(";	
-			    vector_type->vector_element_type->accept(this);
-			    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    // Handle separately if vector of vector
+			    if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType> (vector_type->vector_element_type);
+				    printIndent();
+				    oss << "py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> ( std::vector<size_t>{(size_t)";
+				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    oss << ", (size_t)";
+				    oss << inner_vector_type->range_indexset;
+				    oss << "}, std::vector<size_t>{ ";
+				    oss << "( " << inner_vector_type->range_indexset << " * " << "sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ")), sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ") }, (";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "*)__" << func_decl->result.getName() << ");" << std::endl;
+				
+				    
+			    } else   {
+				    // Create the return object
+				    printIndent();
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> ( {";
+				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    oss << "}, { sizeof(";	
+				    vector_type->vector_element_type->accept(this);
+				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    }
 			    
 		    } else {
 		            printIndent();
@@ -740,7 +780,14 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
-        vector_type->vector_element_type->accept(this);
+        if (mir::isa<mir::ScalarType>(vector_type->vector_element_type)){
+            vector_type->vector_element_type->accept(this);
+        } else if (mir::isa<mir::VectorType>(vector_type->vector_element_type)){
+            //nested vector type
+            mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(vector_type->vector_element_type);
+            // use the typedef type for the inner vector type
+            oss << inner_vector_type->toString();
+        }
         oss << " * ";
     }
 
@@ -999,13 +1046,20 @@ namespace graphit {
             assert(vector_vector_element_type->range_indexset != 0);
             int range = vector_vector_element_type->range_indexset;
 
-            //first generates a typedef for the vector type
-            oss << "typedef ";
-            vector_vector_element_type->vector_element_type->accept(this);
-            std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
-            oss << typedef_name <<  " ";
-            oss << "[ " << range << "]; " << std::endl;
+
+            //std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
+            std::string typedef_name = vector_vector_element_type->toString();
+            if (mir_context_->defined_types.find(typedef_name) == mir_context_->defined_types.end()){
+                mir_context_->defined_types.insert(typedef_name);
+                //first generates a typedef for the vector type
+                oss << "typedef ";
+                vector_vector_element_type->vector_element_type->accept(this);
+                oss << typedef_name <<  " ";
+                oss << "[ " << range << "]; " << std::endl;
+            }
+
             vector_vector_element_type->typedef_name_ = typedef_name;
+
 
             //use the typedef defined type to declare a new pointer
             oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
@@ -1375,7 +1429,12 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VectorAllocExpr::Ptr alloc_expr) {
         oss << "new ";
-        alloc_expr->scalar_type->accept(this);
+
+        if (alloc_expr->scalar_type != nullptr){
+            alloc_expr->scalar_type->accept(this);
+        } else if (alloc_expr->vector_type != nullptr){
+            oss << alloc_expr->vector_type->toString();
+        }
         oss << "[ ";
         //This is the current number of elements, but we need the range
         //alloc_expr->size_expr->accept(this);

@@ -263,6 +263,10 @@ namespace graphit {
             const auto expr = mir::to<VectorAllocExpr>(node);
             size_expr = expr->size_expr->clone<Expr>();
             element_type = expr->element_type;
+            if (expr->scalar_type != nullptr)
+                scalar_type = expr->scalar_type->clone<ScalarType>();
+            if (expr->vector_type !=nullptr)
+                vector_type = expr->vector_type->clone<VectorType>();
         }
 
         MIRNode::Ptr VectorAllocExpr::cloneNode() {
