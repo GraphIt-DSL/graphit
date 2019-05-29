@@ -129,3 +129,20 @@ TEST_F(RuntimeLibTest, GetRandomInNeighborTest) {
     EXPECT_GE (ngh , 1);
 
 }
+
+
+TEST_F(RuntimeLibTest, SweepCutTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    auto vertexSubset = new VertexSubset<int>(g.num_nodes(), g.num_nodes());
+    double * val_array = new double[g.num_nodes()];
+    for (int i = 0; i < g.num_nodes(); i++){
+        val_array[i] = i;
+    }
+    VertexSubset<int>* vset_cut = serialSweepCut(g, vertexSubset, val_array);
+
+    for (int i = 0; i < vset_cut->size(); i++){
+        std::cout << "vertex: " << vset_cut->dense_vertex_set_[i] << std::endl;
+    }
+
+    EXPECT_EQ (vset_cut->size() , 2);
+}
