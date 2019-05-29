@@ -23,12 +23,13 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 	#module_filename_base = module_file.name
 	#module_file.close()
 	module_filename_base = os.path.splitext(graphit_source_file)[0]
+	module_name = os.path.basename(module_filename_base)	
+	module_filename_base = "/tmp/" + module_name
 
 	# compile the file into a cpp file
 	module_filename_cpp = module_filename_base + ".cpp"
 	module_filename_object = module_filename_base + ".o"
 	module_filename_so = module_filename_base + ".so"
-	module_name = os.path.basename(module_filename_base)	
 
 	try:
 		subprocess.check_call("python " + GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py -f " + graphit_source_file + " -o " + module_filename_cpp + " -m " + module_name, stderr=subprocess.STDOUT, shell=True)
@@ -75,7 +76,6 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 	spec = importlib.util.spec_from_file_location(module_name, module_filename_so)
 	module = importlib.util.module_from_spec(spec)
 	spec.loader.exec_module(module)
-	os.unlink(module_filename_cpp)
 	os.unlink(module_filename_object)
 	for extern_object in extern_objects:
 		os.unlink(extern_object)
