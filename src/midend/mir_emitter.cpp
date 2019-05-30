@@ -206,6 +206,12 @@ namespace graphit {
 
         //element of a vector can be a non-scalar (vector type)
         mir_vector_type->vector_element_type = emitType(ND_tensor_type->blockType);
+        if (mir::isa<mir::VectorType>(mir_vector_type->vector_element_type)){
+            //if each vector_element is a vector (nested vector type, such as vector{Vertex}(vector[5])
+            ctx->addTypeRequiringTypeDef(mir_vector_type->vector_element_type);
+        }
+
+
         if (ND_tensor_type->indexSets.size() == 1 &&
                 fir::isa<fir::RangeIndexSet>(ND_tensor_type->indexSets[0])){
             auto range_index_set = fir::to<fir::RangeIndexSet>(ND_tensor_type->indexSets[0]);
