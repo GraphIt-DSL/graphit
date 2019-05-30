@@ -866,3 +866,32 @@ TEST_F(BackendTest, edgesetApplyExtern) {
                      "func main() edges.apply(UDF_updateEdge); end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+
+TEST_F(BackendTest, vectorPerVertexTestNoConstDef) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func foo(v: vector{Vertex}(vector[20](int)))\n"
+                     "      for i in 0:20\n"
+                     "            print v[i][i];\n"
+                     "      end\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, vectorPerVertexTestWithConstDef) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const v: vector{Vertex}(vector[20](int));\n"
+                     "export func foo(v: vector{Vertex}(vector[20](int)))\n"
+                     "      for i in 0:20\n"
+                     "            print v[i][i];\n"
+                     "      end\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}

@@ -11,7 +11,7 @@ namespace graphit {
         genEdgeSets();
         //genElementData();
         genStructTypeDecls();
-
+        genTypesRequiringTypeDefs();
 
         //Processing the constants, generting declartions
         for (auto constant : mir_context_->getLoweredConstants()) {
@@ -1450,6 +1450,25 @@ namespace graphit {
         } else {
             //If it is a GraphIt generated function, then we need to instantiate the functor
             return func_name + "()";
+        }
+    }
+
+    void CodeGenCPP::genTypesRequiringTypeDefs() {
+
+        for (mir::Type::Ptr type : mir_context_->types_requiring_typedef){
+            if(mir::isa<mir::VectorType>(type)){
+                auto vector_type = mir::to<mir::VectorType>(type);
+                int range = vector_type->range_indexset;
+                std::string typedef_name = vector_type->toString();
+                if (mir_context_->defined_types.find(typedef_name) == mir_context_->defined_types.end()){
+                    mir_context_->defined_types.insert(typedef_name);
+                    //first generates a typedef for the vector type
+                    oss << "typedef ";
+                    vector_type->vector_element_type->accept(this);
+                    oss << typedef_name <<  " ";
+                    oss << "[ " << range << "]; " << std::endl;
+                }
+            }
         }
     }
 }
