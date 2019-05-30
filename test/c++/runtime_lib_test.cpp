@@ -171,12 +171,12 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetBitsetBasicTest){
     auto B = new NodeID[5]{1, 2, 4, 5, 6};
 
     //build bitmap
-    size_t MAX_LIMIT = 2000;
-    Bitmap bitarray(MAX_LIMIT);
-    bitarray.reset();
+    size_t MAX_LIMIT = 200;
+    Bitmap* bitarray = new Bitmap(MAX_LIMIT);
+    bitarray->reset();
 
     for(size_t i = 0; i < 5; i++){
-        bitarray.set_bit(*(A+i));
+        bitarray->set_bit(*(A+i));
     }
 
     size_t count = intersectSortedNodeSetBitset(bitarray, B, 5);
@@ -203,11 +203,11 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetEmpty) {
 
     //build bitmap
     size_t MAX_LIMIT = 20000;
-    Bitmap bitarray(MAX_LIMIT);
-    bitarray.reset();
+    Bitmap* bitarray = new Bitmap(MAX_LIMIT);
+    bitarray->reset();
 
     for(size_t i = 0; i < 5; i++){
-        bitarray.set_bit(*(A+i));
+        bitarray->set_bit(*(A+i));
     }
 
     size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 5, 5);
@@ -293,11 +293,11 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetLongerSets){
 
     //build bitmap
     size_t MAX_LIMIT = 20000;
-    Bitmap bitarray(MAX_LIMIT);
-    bitarray.reset();
+    Bitmap* bitarray = new Bitmap(MAX_LIMIT);
+    bitarray->reset();
 
     for(size_t i = 0; i < 240; i++){
-        bitarray.set_bit(*(B+i));
+        bitarray->set_bit(*(B+i));
     }
 
     size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 234, 240);
@@ -332,11 +332,11 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
 
     //build bitmap
     size_t MAX_LIMIT = 20000;
-    Bitmap bitarray(MAX_LIMIT);
-    bitarray.reset();
+    Bitmap* bitarray = new Bitmap(MAX_LIMIT);
+    bitarray->reset();
 
     for(size_t i = 0; i < 5; i++){
-        bitarray.set_bit(*(B+i));
+        bitarray->set_bit(*(B+i));
     }
 
     size_t countBitset = intersectSortedNodeSetBitset(bitarray, A, 0);
@@ -361,11 +361,11 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
     auto B1 = new NodeID[0]{};
 
     //build bitmap
-    Bitmap bitarray1(MAX_LIMIT);
-    bitarray1.reset();
+    Bitmap* bitarray1 = new Bitmap(MAX_LIMIT);
+    bitarray1->reset();
 
     for(size_t i = 0; i < 5; i++){
-        bitarray.set_bit(*(A1+i));
+        bitarray1->set_bit(*(A1+i));
     }
 
     ASSERT_DEATH(intersectSortedNodeSetHiroshi(A1, B1, 5, 0), ".*");
@@ -514,11 +514,11 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetLonger2) {
 
     //build bitmap
     size_t MAX_LIMIT = 20000;
-    Bitmap bitarray(MAX_LIMIT);
-    bitarray.reset();
+    Bitmap* bitarray = new Bitmap(MAX_LIMIT);
+    bitarray->reset();
 
     for(size_t i = 0; i < 612; i++){
-        bitarray.set_bit(*(B+i));
+        bitarray->set_bit(*(B+i));
     }
 
 

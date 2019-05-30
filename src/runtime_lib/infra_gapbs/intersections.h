@@ -22,12 +22,12 @@ using namespace std;
 Runtime library for various set intersection methods
 */
 
-size_t intersectSortedNodeSetBitset(Bitmap A, NodeID *B, size_t totalB) {
+size_t intersectSortedNodeSetBitset(Bitmap* A, NodeID *B, size_t totalB) {
 
     size_t total = 0;
 
     for (size_t j = 0; j < totalB; j++) {
-        if (A.get_bit(*(B + j))) {
+        if (A->get_bit(*(B + j))) {
             total++;
         }
     }
