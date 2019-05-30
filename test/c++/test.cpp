@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInit";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.vectorPerVertexTestWithConstDef";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
