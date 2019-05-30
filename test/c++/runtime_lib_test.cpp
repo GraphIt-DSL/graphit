@@ -7,7 +7,7 @@
 
 #include "infra_gapbs/graph_verifier.h"
 #include "infra_gapbs/intersections.h"
-
+#include "infra_gapbs/bitmap.h"
 
 
 
@@ -169,7 +169,17 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetBitsetBasicTest){
 
     auto A = new NodeID[5]{1, 2, 3, 4, 5};
     auto B = new NodeID[5]{1, 2, 4, 5, 6};
-    size_t count = intersectSortedNodeSetBitset(A, B, 5, 5);
+
+    //build bitmap
+    size_t MAX_LIMIT = 2000;
+    Bitmap bitarray(MAX_LIMIT);
+    bitarray.reset();
+
+    for(size_t i = 0; i < 5; i++){
+        bitarray.set_bit(*(A+i));
+    }
+
+    size_t count = intersectSortedNodeSetBitset(bitarray, B, 5);
     delete[] A;
     delete[] B;
     EXPECT_EQ(4, count);
@@ -191,8 +201,17 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetEmpty) {
     auto A = new NodeID[5]{1, 2, 3, 4, 5};
     auto B = new NodeID[5]{6, 7, 8, 9, 10};
 
+    //build bitmap
+    size_t MAX_LIMIT = 20000;
+    Bitmap bitarray(MAX_LIMIT);
+    bitarray.reset();
+
+    for(size_t i = 0; i < 5; i++){
+        bitarray.set_bit(*(A+i));
+    }
+
     size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 5, 5);
-    size_t countBitset = intersectSortedNodeSetBitset(A, B, 5, 5);
+    size_t countBitset = intersectSortedNodeSetBitset(bitarray, B, 5);
     size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 5, 5, 2, 0.1);
     size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 5, 5, 200, 0.2);
     size_t countMultiSkip = intersectSortedNodeSetMultipleSkip(A, B, 5, 5);
@@ -272,8 +291,17 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetLongerSets){
                                2834, 2839, 2852, 2866, 2870, 2888, 2897, 2906,
                                2908, 2932, 2938, 2972};
 
+    //build bitmap
+    size_t MAX_LIMIT = 20000;
+    Bitmap bitarray(MAX_LIMIT);
+    bitarray.reset();
+
+    for(size_t i = 0; i < 240; i++){
+        bitarray.set_bit(*(B+i));
+    }
+
     size_t countHiroshi = intersectSortedNodeSetHiroshi(A, B, 234, 240);
-    size_t countBitset = intersectSortedNodeSetBitset(A, B, 234, 240);
+    size_t countBitset = intersectSortedNodeSetBitset(bitarray, A, 234);
     size_t countBinarySearch = intersectSortedNodeSetBinarySearch(B, A, 240, 234);
     size_t countBinarySearch2 = intersectSortedNodeSetBinarySearch(A, B, 234, 240);
     size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 234, 240, 20, 0.1);
@@ -302,7 +330,16 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
 
     ASSERT_DEATH(intersectSortedNodeSetHiroshi(A, B, 0, 5), ".*");
 
-    size_t countBitset = intersectSortedNodeSetBitset(A, B, 0, 5);
+    //build bitmap
+    size_t MAX_LIMIT = 20000;
+    Bitmap bitarray(MAX_LIMIT);
+    bitarray.reset();
+
+    for(size_t i = 0; i < 5; i++){
+        bitarray.set_bit(*(B+i));
+    }
+
+    size_t countBitset = intersectSortedNodeSetBitset(bitarray, A, 0);
     size_t countBinarySearch = intersectSortedNodeSetBinarySearch(A, B, 0, 5);
     size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 0, 5, 1, 0.1);
     size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 0, 5, 5000, 0.2);
@@ -323,9 +360,17 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
     auto A1 = new NodeID[5]{2, 3, 5, 6, 7};
     auto B1 = new NodeID[0]{};
 
+    //build bitmap
+    Bitmap bitarray1(MAX_LIMIT);
+    bitarray1.reset();
+
+    for(size_t i = 0; i < 5; i++){
+        bitarray.set_bit(*(A1+i));
+    }
+
     ASSERT_DEATH(intersectSortedNodeSetHiroshi(A1, B1, 5, 0), ".*");
 
-    countBitset = intersectSortedNodeSetBitset(A1, B1, 5, 0);
+    countBitset = intersectSortedNodeSetBitset(bitarray1, B1, 0);
     countBinarySearch = intersectSortedNodeSetBinarySearch(A1, B1, 5, 0);
     countCombined1 = intersectSortedNodeSetCombined(A1, B1, 5, 0, 1, 0.1);
     countCombined2 = intersectSortedNodeSetCombined(A1, B1, 5, 0, 5000, 0.2);
@@ -467,8 +512,17 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetLonger2) {
                              677, 678, 679, 680, 681, 683, 684, 685, 686,
                              687, 688, 689, 690, 691, 692, 693, 694, 696};
 
+    //build bitmap
+    size_t MAX_LIMIT = 20000;
+    Bitmap bitarray(MAX_LIMIT);
+    bitarray.reset();
 
-    size_t countBitset = intersectSortedNodeSetBitset(A, B, 379, 612);
+    for(size_t i = 0; i < 612; i++){
+        bitarray.set_bit(*(B+i));
+    }
+
+
+    size_t countBitset = intersectSortedNodeSetBitset(bitarray, A, 379);
     size_t countBinarySearch = intersectSortedNodeSetBinarySearch(A, B, 379, 612);
     size_t countCombined1 = intersectSortedNodeSetCombined(A, B, 379, 612, 100, 0.3);
     size_t countCombined2 = intersectSortedNodeSetCombined(A, B, 379, 612, 5000, 0.9);

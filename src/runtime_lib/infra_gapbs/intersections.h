@@ -22,90 +22,50 @@ using namespace std;
 Runtime library for various set intersection methods
 */
 
+size_t intersectSortedNodeSetBitset(Bitmap A, NodeID *B, size_t totalB) {
 
+    size_t total = 0;
 
-size_t MAX_LIMIT = 61578415;
-
-
-//TODO: there might be some issues with the allocating space (for now I am just allocating big enough space)
-size_t intersectSortedNodeSetBitset(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
-  
-  size_t total = 0;
-
-  //we only want to build bitmap for bigger array
-  if (totalA > totalB) {
-
-    Bitmap a_array(MAX_LIMIT);
-    a_array.reset();
-
-    for(size_t i = 0; i < totalA; i++){
-        a_array.set_bit(*(A+i));
-    }
-
-    for(size_t j = 0; j < totalB; j++){
-        if (a_array.get_bit(*(B+j))){
+    for (size_t j = 0; j < totalB; j++) {
+        if (A.get_bit(*(B + j))) {
             total++;
         }
     }
 
-  } 
-  else {
-    Bitmap b_array(MAX_LIMIT);
-    b_array.reset();
-
-    for(size_t i = 0; i < totalB; i++){
-        b_array.set_bit(*(B+i));
-    }
-
-    for(size_t j = 0; j < totalA; j++){
-        if (b_array.get_bit(*(A+j))){
-            total++;
-        }
-    }
-  }
-
-  
-
-
-        
-  return total;
+    return total;
 }
 
 
+long int inline binarySearch(NodeID *A, long int start, size_t total, NodeID *B, size_t offset) {
+
+    long int left = start == -1 ? 0 : start;
+    long int right = total - 1;
+    NodeID target = *(B + offset);
+    while (left <= right) {
+
+        long int medium = left + ((right - left) >> 1);
+        NodeID current = *(A + medium);
 
 
-long int inline binarySearch(NodeID* A, long int start, size_t total, NodeID* B, size_t offset) {
+        if (current == target) {
+            return left;
+        }
 
-  long int left = start == -1? 0 : start;
-  long int right = total-1;
-  NodeID target = *(B+offset);
-  while(left <= right) {
+        if (current < target) {
+            left = medium + 1;
+        } else {
+            right = medium - 1;
+        }
 
-    long int medium = left + ((right - left) >> 1);
-    NodeID current = *(A + medium);
-    
-    
-    if (current == target){
-      return left;
     }
 
-    if (current < target){
-      left = medium + 1;
-    } 
-
-    else {
-      right = medium - 1;
-    }
-
-  }
-
-  return -1;
+    return -1;
 
 
 }
 
 //set intersection by looking up smaller arrays in big arrays
-size_t intersectSortedNodeSetBinarySearch(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+size_t intersectSortedNodeSetBinarySearch(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
 
     size_t count = 0;
     long int start = 0;
@@ -117,14 +77,13 @@ size_t intersectSortedNodeSetBinarySearch(NodeID* A, NodeID* B, size_t totalA, s
             start = binarySearch(A, start, totalA, B, j);
             if (start >= 0) {
                 prevStart = start;
-                count++;    
+                count++;
 
-            }
-            else {
+            } else {
                 start = prevStart;
             }
 
-        } 
+        }
 
     } else {
 
@@ -132,24 +91,23 @@ size_t intersectSortedNodeSetBinarySearch(NodeID* A, NodeID* B, size_t totalA, s
             start = binarySearch(B, start, totalB, A, j);
             if (start >= 0) {
                 prevStart = start;
-                count++;    
+                count++;
 
-            }
-            else {
+            } else {
                 start = prevStart;
             }
 
-        } 
+        }
 
     }
-    
+
     return count;
- 
+
 
 }
 
-//set intersection based on Hiroshi method
-size_t intersectSortedNodeSetHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+//set intersection based on Hiroshi method -> reference: https://dl.acm.org/citation.cfm?id=2735518
+size_t intersectSortedNodeSetHiroshi(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
 
     size_t begin_a = 0;
     size_t begin_b = 0;
@@ -169,70 +127,61 @@ size_t intersectSortedNodeSetHiroshi(NodeID* A, NodeID* B, size_t totalA, size_t
         if (Adat0 == Bdat2) {
             count++;
             goto advanceB; // no more pair
-        }
-        else if (Adat2 == Bdat0) {
+        } else if (Adat2 == Bdat0) {
             count++;
             goto advanceA; // no more pair
-        }
-
-        else if (Adat0 == Bdat0) {
+        } else if (Adat0 == Bdat0) {
             count++;
-        }
-        else if (Adat0 == Bdat1) {
+        } else if (Adat0 == Bdat1) {
             count++;
-        }
-        else if (Adat1 == Bdat0) {
+        } else if (Adat1 == Bdat0) {
             count++;
         }
         if (Adat1 == Bdat1) {
             count++;
-        }
-        else if (Adat1 == Bdat2) {
+        } else if (Adat1 == Bdat2) {
             count++;
             goto advanceB;
-        }
-        else if (Adat2 == Bdat1) {
+        } else if (Adat2 == Bdat1) {
             count++;
             goto advanceA;
         }
         if (Adat2 == Bdat2) {
             count++;
             goto advanceAB;
-        }
-        else if (Adat2 > Bdat2) goto advanceB;
+        } else if (Adat2 > Bdat2) goto advanceB;
         else goto advanceA;
         advanceA:
-            begin_a += 3;
-            if (begin_a >= totalA-2) { break; } else { continue; }
+        begin_a += 3;
+        if (begin_a >= totalA - 2) { break; } else { continue; }
         advanceB:
-            begin_b+=3;
-            if (begin_b >= totalB-2) { break; } else { continue; }
+        begin_b += 3;
+        if (begin_b >= totalB - 2) { break; } else { continue; }
         advanceAB:
-            begin_a+=3; begin_b+=3;
-            if (begin_a >= totalA-2 || begin_b >= totalB-2) { break; }
+        begin_a += 3;
+        begin_b += 3;
+        if (begin_a >= totalA - 2 || begin_b >= totalB - 2) { break; }
     }
 
     // intersect the tail using scalar intersection
-  while (begin_a < totalA && begin_b < totalB) {
+    while (begin_a < totalA && begin_b < totalB) {
 
-    if (*(A + begin_a) < *(B + begin_b)) {
-      begin_a++;
+        if (*(A + begin_a) < *(B + begin_b)) {
+            begin_a++;
+        } else if (*(A + begin_a) > *(B + begin_b)) {
+            begin_b++;
+        } else {
+            count++;
+            begin_a++;
+            begin_b++;
+        }
     }
-    else if (*(A + begin_a) > *(B + begin_b)) {
-      begin_b++;
-    }
-    else {
-      count++;
-      begin_a++;
-      begin_b++;
-    }
-  }
-  return count;
+    return count;
 
 }
 
 //set intersection where it skips multiple element in batch
-size_t intersectSortedNodeSetMultipleSkip(NodeID* A, NodeID* B, size_t totalA, size_t totalB) {
+size_t intersectSortedNodeSetMultipleSkip(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
 
     NodeID it_a = 0;
 
@@ -242,30 +191,29 @@ size_t intersectSortedNodeSetMultipleSkip(NodeID* A, NodeID* B, size_t totalA, s
 
         NodeID w = *(B + i);
 
-        while (it_a < totalA && *(A+it_a) < w){
+        while (it_a < totalA && *(A + it_a) < w) {
             it_a += 3;
         }
 
         //if exceeds the boundary, set it at the boundary
-        if (it_a >= totalA){
+        if (it_a >= totalA) {
             it_a = totalA - 1;
         }
 
 
-        if(*(A+it_a) == w){
+        if (*(A + it_a) == w) {
             count++;
-        }
-        else {
+        } else {
             //rollback by 2 to make sure we are not skipping any intersections
             it_a -= 2;
-            if(it_a >= 0){
-                if(*(A+it_a) == w){
+            if (it_a >= 0) {
+                if (*(A + it_a) == w) {
                     count++;
                 }
             }
             it_a++;
-            if(it_a >= 0){
-                if(*(A+it_a) == w){
+            if (it_a >= 0) {
+                if (*(A + it_a) == w) {
                     count++;
                 }
             }
@@ -277,7 +225,7 @@ size_t intersectSortedNodeSetMultipleSkip(NodeID* A, NodeID* B, size_t totalA, s
 }
 
 //Naive set intersection method. 
-size_t intersectSortedNodeSetNaive(NodeID* A, NodeID* B, size_t totalA, size_t totalB){
+size_t intersectSortedNodeSetNaive(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
 
     size_t begin_a = 0;
     size_t begin_b = 0;
@@ -288,11 +236,9 @@ size_t intersectSortedNodeSetNaive(NodeID* A, NodeID* B, size_t totalA, size_t t
 
         if (*(A + begin_a) < *(B + begin_b)) {
             begin_a++;
-        }
-        else if (*(A + begin_a) > *(B + begin_b)) {
+        } else if (*(A + begin_a) > *(B + begin_b)) {
             begin_b++;
-        }
-        else {
+        } else {
             count++;
             begin_a++;
             begin_b++;
@@ -302,22 +248,21 @@ size_t intersectSortedNodeSetNaive(NodeID* A, NodeID* B, size_t totalA, size_t t
 
 }
 
-size_t intersectSortedNodeSetCombined(NodeID* A, NodeID* B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold) {
+size_t intersectSortedNodeSetCombined(NodeID *A, NodeID *B, size_t totalA, size_t totalB, size_t sizeThreshold,
+                                      double ratioThreshold) {
 
     size_t count = 0;
 
-    if (totalA > sizeThreshold && totalB > sizeThreshold && (totalA > ratioThreshold*totalB || totalB > ratioThreshold*totalA)){
+    if (totalA > sizeThreshold && totalB > sizeThreshold &&
+        (totalA > ratioThreshold * totalB || totalB > ratioThreshold * totalA)) {
         count += intersectSortedNodeSetHiroshi(A, B, totalA, totalB);
 
-    } 
-    else if (totalA >= totalB){
+    } else if (totalA >= totalB) {
         count += intersectSortedNodeSetMultipleSkip(A, B, totalA, totalB);
-    } 
-    else if (totalA < totalB){
+    } else if (totalA < totalB) {
         count += intersectSortedNodeSetMultipleSkip(B, A, totalB, totalA);
 
-    } 
-    else {
+    } else {
         //shouldn't be here
         return 0;
 
@@ -325,7 +270,6 @@ size_t intersectSortedNodeSetCombined(NodeID* A, NodeID* B, size_t totalA, size_
 
     return count;
 
-    
 
 }
 
