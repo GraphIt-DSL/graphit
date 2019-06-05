@@ -189,7 +189,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
-
+        // Removing this special case because the filter is now handled by intrinsics
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -201,7 +202,9 @@ namespace graphit {
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; "  << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -317,7 +320,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
-
+        // Removing this special case because we want to generate intrinsics for filter
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -328,7 +332,9 @@ namespace graphit {
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << " = ";
@@ -1238,8 +1244,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
 
-
+	// Removing all this code to just generate calls to builtin
         //dense vertex set apply
+/*
         if (vertexset_where_expr->is_constant_set) {
             auto associated_element_type =
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
@@ -1284,7 +1291,25 @@ namespace graphit {
                     "____graphit_tmp_out->bool_map_ = ";
             oss << next_bool_map_name << ";\n";
         }
+*/
+        if (vertexset_where_expr->is_constant_set) {
 
+            auto associated_element_type =
+                    mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            oss << "builtin_const_vertexset_filter <";
+	    oss << vertexset_where_expr->input_func ;
+            oss << ">(";
+            oss << vertexset_where_expr->input_func << "(), ";
+            associated_element_type_size->accept(this);
+            oss << ")";
+        } else {
+            oss << "builtin_vertexset_filter <";
+            oss << vertexset_where_expr->input_func;
+            oss << ">(";
+            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "()";
+            oss << ")";
+        }
     }
 
     void CodeGenCPP::genEdgeSets() {

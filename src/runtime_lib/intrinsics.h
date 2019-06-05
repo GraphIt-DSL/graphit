@@ -245,8 +245,14 @@ template<typename APPLY_FUNC> static void builtin_vertexset_apply(VertexSubset<i
            }
        }
    } else {
-       parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
-           apply_func(vertex_subset->dense_vertex_set_[i]);
+       if(vertex_subset->dense_vertex_set_ == nullptr && vertex_subset->tmp.size() > 0) {
+           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+               apply_func(vertex_subset->tmp[i]);
+           }
+       }else  {
+           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+               apply_func(vertex_subset->dense_vertex_set_[i]);
+           }
        }
    }
 }
@@ -256,5 +262,55 @@ static void deleteObject(OBJECT_TYPE* object) {
    if(object)
        delete object;
 }
+template <typename T>
+static VertexSubset<int> * builtin_const_vertexset_filter(T func, int total_elements) {
+    VertexSubset<int> * output = new VertexSubset<NodeID>( total_elements, 0);
+    bool * next0 = newA(bool, total_elements);
+    parallel_for(int v = 0; v < total_elements; v++) {
+        next0[v] = 0;
+        if (func(v))
+            next0[v] = 1;
 
+    }
+    output->num_vertices_ = sequence::sum(next0, total_elements);
+    output->bool_map_ = next0;
+    output->is_dense = true;
+    return output;
+}
+template <typename T>
+static VertexSubset<int> * builtin_vertexset_filter(VertexSubset<int> * input, T func) {
+    int total_elements = input->vertices_range_;
+    //std::cout << "Filter range = " << total_elements << std::endl;
+    VertexSubset<int> * output = new VertexSubset<NodeID>( total_elements, 0);
+    bool * next0 = newA(bool, total_elements);
+    
+    if (input->is_dense) {
+        //std::cout << "Vertex subset is dense" << std::endl;
+        parallel_for(int v = 0; v < total_elements; v++) {
+	    next0[v] = 0;
+            if (input->bool_map_[v] && func(v))
+                next0[v] = 1;
+	}
+    } else {
+        //std::cout << "Vertex subset is sparse" << std::endl;
+        if(!(input->dense_vertex_set_ == nullptr && input->num_vertices_ > 0))
+            parallel_for(int v = 0; v < input->num_vertices_; v++) {
+                //std::cout << "Vertex subset iteration for dense vertex set" << std::endl;
+                next0[input->dense_vertex_set_[v]] = 0;
+                if (func(input->dense_vertex_set_[v]))
+                    next0[input->dense_vertex_set_[v]] = 1;
+            }
+	else 
+            parallel_for(int v = 0; v < input->num_vertices_; v++) {
+                //std::cout << "Vertex subset iteration for tmp" << std::endl;
+                next0[input->tmp[v]] = 0;
+                if (func(input->tmp[v]))
+                    next0[input->tmp[v]] = 1;
+            }
+    }
+    output->num_vertices_ = sequence::sum(next0, total_elements);
+    output->bool_map_ = next0;
+    output->is_dense = true;
+    return output;
+}
 #endif //GRAPHIT_INTRINSICS_H_H

@@ -556,14 +556,17 @@ namespace graphit {
         //we use the varexpr to determine whether this is vertexset filtering or edgeset filtering
 
         auto fir_target_var_name = fir::to<fir::VarExpr>(where_expr->target)->ident;
-
-        if (ctx->isConstVertexSet(fir_target_var_name)) {
-            auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
-            verteset_where_expr->target = fir_target_var_name;
-            verteset_where_expr->input_func = where_expr->input_func->ident;
+	// Removing the check for isConstVertexSet here because we wan't to generate filter for all vertex sets
+        //if (ctx->isConstVertexSet(fir_target_var_name)) {
+        auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
+        verteset_where_expr->target = fir_target_var_name;
+        verteset_where_expr->input_func = where_expr->input_func->ident;
+        if (ctx->isConstVertexSet(fir_target_var_name))
             verteset_where_expr->is_constant_set = true;
-            retExpr = verteset_where_expr;
-        }
+        else
+            verteset_where_expr->is_constant_set = false;
+        retExpr = verteset_where_expr;
+        //}
     }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
