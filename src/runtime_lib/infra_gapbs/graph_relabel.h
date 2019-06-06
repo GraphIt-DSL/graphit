@@ -7,6 +7,7 @@
 
 #include <cinttypes>
 #include <iostream>
+#include <assert.h>
 
 #include "builder.h"
 #include "graph.h"
@@ -19,11 +20,12 @@
 template <typename NodeID_ = int32_t, typename WeightT_ = NodeID_, typename DestID_ = NodeID_, bool invert = true>
 static
 CSRGraph<NodeID_, NodeWeight<DestID_, WeightT_>, invert> relabelByIndegree(
-    const CSRGraph<NodeID_, NodeWeight<DestID_, WeightT_>, invert> &g, NodeID_* source, NodeID_* dst) {
+    const CSRGraph<NodeID_, NodeWeight<DestID_, WeightT_>, invert> &g, pvector<NodeID_> &new_ids) {
   if (!g.directed()) {
     cout << "Cannot relabel undirected graph" << endl;
     std::exit(-11);
   }  
+  assert(new_ids.size() == g.num_nodes());
   Timer t;
   t.Start();
   typedef std::pair<int64_t, NodeID_> degree_node_p;
@@ -35,15 +37,12 @@ CSRGraph<NodeID_, NodeWeight<DestID_, WeightT_>, invert> relabelByIndegree(
             std::greater<degree_node_p>());
   pvector<NodeID_> out_degrees(g.num_nodes());
   pvector<NodeID_> in_degrees(g.num_nodes());
-  pvector<NodeID_> new_ids(g.num_nodes());
   #pragma omp parallel for
   for (NodeID_ n=0; n < g.num_nodes(); n++) {
     out_degrees[n] = g.out_degree(degree_id_pairs[n].second);
     in_degrees[n] = g.in_degree(degree_id_pairs[n].second);
     new_ids[degree_id_pairs[n].second] = n;
   }  
-  *source = new_ids[*source];
-  if (dst) { *dst = new_ids[*dst];}
   pvector<SGOffset> out_offsets = BuilderBase<NodeID_, DestID_, WeightT, invert>::ParallelPrefixSum(out_degrees);
   NodeWeight<DestID_, WeightT_>* outWeightedNeighs = new NodeWeight<DestID_, WeightT_>[out_offsets[g.num_nodes()]];
   NodeWeight<DestID_, WeightT_>** out_index = CSRGraph<NodeID_, NodeWeight<DestID_, WeightT_>>::GenIndex(out_offsets, outWeightedNeighs);

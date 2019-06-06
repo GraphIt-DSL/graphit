@@ -6,7 +6,7 @@
 #include "intrinsics.h"
 #include "infra_gapbs/graph_verifier.h"
 #include "infra_gapbs/graph_relabel.h"
-
+#include "relabel_verifier.h"
 
 
 class RuntimeLibTest : public ::testing::Test {
@@ -87,18 +87,32 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
 
 TEST_F(RuntimeLibTest, RelabelByIndegree) {
     WGraph g = builtin_loadWeightedEdgesFromFile("../../test/graphs/test.wel"); 
-    auto source = 1;
-    auto dst = 4;
+    pvector<NodeID> new_ids(g.num_nodes());
     auto indegrees_original = builtin_getInDegrees(g);
     std::sort(indegrees_original, indegrees_original + g.num_nodes(), greater<int>());
-    auto relabeled_g = relabelByIndegree(g, &source, &dst);
+    auto relabeled_g = relabelByIndegree(g, new_ids);
     auto indegrees_relabeled = builtin_getInDegrees(relabeled_g);
     
     EXPECT_EQ(indegrees_original[0], indegrees_relabeled[0]);
     EXPECT_EQ(indegrees_original[1], indegrees_relabeled[1]);
     EXPECT_EQ(indegrees_original[2], indegrees_relabeled[2]);
     EXPECT_EQ(indegrees_original[3], indegrees_relabeled[3]);
-    EXPECT_EQ(source, 3);
-    EXPECT_EQ(dst, 0);
+    EXPECT_EQ(new_ids[1], 3);
+    EXPECT_EQ(new_ids[4], 0);
+    EXPECT_EQ(new_ids[0], 4);
 
 }
+
+TEST_F(RuntimeLibTest, SSSPWithRelabel) {
+    WGraph original_g = builtin_loadWeightedEdgesFromFile("../../test/graphs/4.wel"); 
+    pvector<NodeID> new_ids(original_g.num_nodes());
+    auto relabeled_g = relabelByIndegree(original_g, new_ids);
+    auto source = 13;
+    auto relabeled_source = new_ids[source];
+    int64_t sum_original = GetShortestDistSum(original_g, source);
+    int64_t sum_relabeled = GetShortestDistSum(relabeled_g, relabeled_source);
+    bool test_flag = sum_original == sum_relabeled;
+    EXPECT_EQ(test_flag, true);
+
+}
+
