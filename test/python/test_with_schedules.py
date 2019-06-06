@@ -560,9 +560,6 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_basic_library(self):
         self.basic_library_compile_exec_test("export_simple_edgeset_apply.gt");
 
-    # def test_library_input_vector_of_vector(self):
-    #     self.basic_library_compile("export_vector_of_vector.gt", '/test/input/')
-
     def test_library_pagerank(self):
         self.basic_library_compile_exec_test("export_pr.gt", '/test/input/');
 

@@ -106,15 +106,17 @@ class TestGraphitCompiler(unittest.TestCase):
         cf_result = module.export_func(graph)
         self.assertEqual(cf_result.shape, (4, 1))
         
-        
-
-    # def test_pybind_collaborative_filtering(self):
-
+    def test_pybind_vector_of_vector_arg(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_vector_of_vector.gt")
+        graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        vector_of_vector = np.ones((5, 100))
+        output_data = module.export_func(graph, vector_of_vector)
+        self.assertEqual(output_data.sum(), 404)
 
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pybind_pr_with_vector_input'))
+    # suite.addTest(TestGraphitCompiler('test_pybind_vector_of_vector_arg'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
