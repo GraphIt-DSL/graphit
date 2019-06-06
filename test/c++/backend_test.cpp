@@ -895,3 +895,19 @@ TEST_F(BackendTest, vectorPerVertexTestWithConstDef) {
                      "end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+
+TEST_F(BackendTest, newVertexsetFilterTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func filter_func(v : Vertex) -> output : bool \n"
+                     "  output = true; \n"
+                     "end\n"
+                     "export func foo()\n"
+                     "  var vset : vertexset{Vertex} = new vertexset{Vertex}(0); \n"
+                     "  vset = vset.filter(filter_func); \n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}

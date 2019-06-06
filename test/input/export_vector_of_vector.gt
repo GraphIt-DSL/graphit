@@ -1,0 +1,10 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex);
+const vertices : vertexset{Vertex};
+const data : vector{Vertex}(vector[100](float));
+
+export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex), input_data : vector{Vertex}(vector[100](float)))
+    edges = input_edges;
+    data = input_data;
+end
