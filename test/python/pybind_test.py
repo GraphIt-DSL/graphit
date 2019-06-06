@@ -113,10 +113,23 @@ class TestGraphitCompiler(unittest.TestCase):
         output_data = module.export_func(graph, vector_of_vector)
         self.assertEqual(output_data.sum(), 404)
 
+    def test_pybind_vector_of_constant_size_arg(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_vector_of_constant_size_arg.gt")
+        graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        vector_of_constant_size = np.ones(100)
+        module.export_func(graph, vector_of_constant_size)
+
+    def test_pybind_various_type_vector_args(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_various_types_vector_arg.gt")
+        graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        vector_of_vector = np.ones((5, 100))
+        vector_of_constant_size = np.ones(100)
+        module.export_func(graph, vector_of_vector, vector_of_constant_size)
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pybind_vector_of_vector_arg'))
+    # suite.addTest(TestGraphitCompiler('test_pybind_vector_of_constant_size_arg'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
