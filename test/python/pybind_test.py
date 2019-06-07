@@ -56,6 +56,7 @@ class TestGraphitCompiler(unittest.TestCase):
             os.remove(self.executable_file_name)
 
     # utilities for setting up tests
+    # csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]) is a graph with 4 vertices
 
     def test_pybind_pr_with_return(self):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_pr_with_return.gt")
@@ -109,7 +110,7 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pybind_vector_of_vector_arg(self):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_vector_of_vector.gt")
         graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
-        vector_of_vector = np.ones((5, 100))
+        vector_of_vector = np.ones((4, 100))
         output_data = module.export_func(graph, vector_of_vector)
         self.assertEqual(output_data.sum(), 404)
 
@@ -122,14 +123,15 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_pybind_various_type_vector_args(self):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_various_types_vector_arg.gt")
         graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
-        vector_of_vector = np.ones((5, 100))
+        vector_of_vector = np.ones((4, 100))
         vector_of_constant_size = np.ones(100)
-        module.export_func(graph, vector_of_vector, vector_of_constant_size)
+        output = module.export_func(graph, vector_of_vector, vector_of_constant_size)
+        self.assertEqual(output.sum(), 800)
 
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_pybind_vector_of_constant_size_arg'))
+    # suite.addTest(TestGraphitCompiler('test_pybind_various_type_vector_args'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

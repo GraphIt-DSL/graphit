@@ -18,7 +18,7 @@ namespace graphit {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
                 // if the constant decl is a field property of an element (system vector)
-                if (type->element_type != nullptr) {
+                //if (type->element_type != nullptr) {
                     //genPropertyArrayImplementationWithInitialization(constant);
                     //NOTE: here we only generate the declaration, not the allocation and initialization
                     // even through we have all the information.
@@ -28,7 +28,7 @@ namespace graphit {
                     // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
                     // We first generate allocation, and then initialization (init_stmts) for global variables.
                     genPropertyArrayDecl(constant);
-                }
+                //}
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                 // if the constant is a vertex set  decl
                 // currently, no code is generated
