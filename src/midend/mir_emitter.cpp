@@ -750,6 +750,10 @@ namespace graphit {
                     ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
                         std::cout << "error in adding constant: " << mir_var_decl->name << std::endl;
+                } else {
+                    //this is a constantant vector
+                    ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
+                    ctx->addConstant(mir_var_decl);
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr) {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
