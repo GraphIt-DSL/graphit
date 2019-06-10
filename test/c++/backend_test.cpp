@@ -200,6 +200,16 @@ TEST_F(BackendTest, ExportSimpleVertexSetLoad) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, ExportReturnConstantSizeVector) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func process() -> output : vector[10](int) print 0; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"

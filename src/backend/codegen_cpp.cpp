@@ -739,8 +739,14 @@ namespace graphit {
 				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
 				    vector_type->vector_element_type->accept(this);
 				    oss << "> ( {";
-				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
-				    oss << "}, { sizeof(";	
+				    if (vector_type->element_type != nullptr){
+				        // get the size information of the output by looking up the count of the associated Element (e.g. Vertex) type
+                        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    } else if (vector_type->range_indexset > 0) {
+				        // the vector has range index associated with it
+				        oss << vector_type->range_indexset;
+				    }
+				    oss << "}, { sizeof(";
 				    vector_type->vector_element_type->accept(this);
 				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
 			    }
