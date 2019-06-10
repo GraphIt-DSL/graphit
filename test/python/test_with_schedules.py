@@ -594,7 +594,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_cf_with_return_basic_compile'))
+    # suite.addTest(TestGraphitCompiler('cc_hybrid_dense_parallel_bitvector'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 
