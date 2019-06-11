@@ -286,7 +286,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PULL,
+                        = {apply_label, ApplySchedule::DirectionType::PUSH,
                            ApplySchedule::ParType::Serial,
                            ApplySchedule::DeduplicationType::Enable,
                            ApplySchedule::OtherOpt::QUEUE,
@@ -333,7 +333,7 @@ namespace graphit {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
                         = (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PULL,
+                        = {apply_label, ApplySchedule::DirectionType::PUSH,
                            ApplySchedule::ParType::Serial,
                            ApplySchedule::DeduplicationType::Enable,
                            ApplySchedule::OtherOpt::QUEUE,

@@ -135,7 +135,8 @@ namespace graphit {
 
             return;
         } else {
-            node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
+            //setting the default direction to push if no schedule is specified
+            node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
             return;
         }
     }
