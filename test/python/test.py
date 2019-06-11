@@ -404,5 +404,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_extern_simple_edgeset_apply'))
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to_return_frontier'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
