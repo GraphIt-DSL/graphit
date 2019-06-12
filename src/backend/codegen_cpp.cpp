@@ -718,7 +718,10 @@ namespace graphit {
 				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
 				    inner_vector_type->vector_element_type->accept(this);
 				    oss << "> ( std::vector<size_t>{(size_t)";
-				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    if (vector_type->element_type != nullptr)
+				        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    else
+					oss << vector_type->range_indexset;
 				    oss << ", (size_t)";
 				    oss << inner_vector_type->range_indexset;
 				    oss << "}, std::vector<size_t>{ ";

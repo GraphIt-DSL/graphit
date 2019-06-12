@@ -134,6 +134,12 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(len(vector_return), 10)
         self.assertEqual(np.sum(vector_return), 55)
 
+    def test_pybind_constant_size_vector_of_vector_return(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_constant_size_vector_of_vector_return.gt")
+        vector_return = module.export_func()
+        self.assertEqual(vector_return.shape, (10, 10))
+        self.assertEqual(np.sum(vector_return), 550)
+
 
 if __name__ == '__main__':
     unittest.main()
