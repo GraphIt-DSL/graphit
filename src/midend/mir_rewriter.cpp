@@ -138,7 +138,8 @@ namespace graphit {
 
         void MIRRewriter::visit(std::shared_ptr<VectorAllocExpr> expr) {
             expr->size_expr = rewrite<Expr>(expr->size_expr);
-            expr->element_type = rewrite<ElementType>(expr->element_type);
+	    if (expr->element_type != nullptr)
+                expr->element_type = rewrite<ElementType>(expr->element_type);
             if (expr->scalar_type != nullptr)
                 expr->scalar_type = rewrite<ScalarType>(expr->scalar_type);
             else if (expr->vector_type != nullptr)

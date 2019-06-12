@@ -1470,7 +1470,12 @@ namespace graphit {
         //This is the current number of elements, but we need the range
         //alloc_expr->size_expr->accept(this);
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
-        size_expr->accept(this);
+        if (size_expr != nullptr)
+            size_expr->accept(this);
+	else {
+	    // This means it is a vector of constant size. The size_expr now directly holds the constant literal.
+	    alloc_expr->size_expr->accept(this);
+	}
         oss << "]";
     }
 
