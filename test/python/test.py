@@ -393,10 +393,16 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_export_edgeset_apply_function(self):
         self.basic_compile_as_library_test("export_simple_edgeset_apply.gt");
 
+    def test_vertexset_filter(self):
+        self.expect_output_val("vertexset_filter.gt", 2)
+        
+    def test_vertexset_filter_const(self):
+        self.expect_output_val("vertexset_filter_const.gt", 2)
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_extern_simple_edgeset_apply'))
+    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to_return_frontier'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -18,7 +18,7 @@ namespace graphit {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
                 // if the constant decl is a field property of an element (system vector)
-                if (type->element_type != nullptr) {
+                //if (type->element_type != nullptr) {
                     //genPropertyArrayImplementationWithInitialization(constant);
                     //NOTE: here we only generate the declaration, not the allocation and initialization
                     // even through we have all the information.
@@ -28,7 +28,7 @@ namespace graphit {
                     // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
                     // We first generate allocation, and then initialization (init_stmts) for global variables.
                     genPropertyArrayDecl(constant);
-                }
+                //}
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                 // if the constant is a vertex set  decl
                 // currently, no code is generated
@@ -189,7 +189,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
-
+        // Removing this special case because the filter is now handled by intrinsics
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -201,7 +202,9 @@ namespace graphit {
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; "  << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -317,7 +320,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
-
+        // Removing this special case because we want to generate intrinsics for filter
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -328,7 +332,9 @@ namespace graphit {
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << " = ";
@@ -733,8 +739,14 @@ namespace graphit {
 				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
 				    vector_type->vector_element_type->accept(this);
 				    oss << "> ( {";
-				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
-				    oss << "}, { sizeof(";	
+				    if (vector_type->element_type != nullptr){
+				        // get the size information of the output by looking up the count of the associated Element (e.g. Vertex) type
+                        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    } else if (vector_type->range_indexset > 0) {
+				        // the vector has range index associated with it
+				        oss << vector_type->range_indexset;
+				    }
+				    oss << "}, { sizeof(";
 				    vector_type->vector_element_type->accept(this);
 				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
 			    }
@@ -1238,8 +1250,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
 
-
+	// Removing all this code to just generate calls to builtin
         //dense vertex set apply
+/*
         if (vertexset_where_expr->is_constant_set) {
             auto associated_element_type =
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
@@ -1284,7 +1297,25 @@ namespace graphit {
                     "____graphit_tmp_out->bool_map_ = ";
             oss << next_bool_map_name << ";\n";
         }
+*/
+        if (vertexset_where_expr->is_constant_set) {
 
+            auto associated_element_type =
+                    mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            oss << "builtin_const_vertexset_filter <";
+	    oss << vertexset_where_expr->input_func ;
+            oss << ">(";
+            oss << vertexset_where_expr->input_func << "(), ";
+            associated_element_type_size->accept(this);
+            oss << ")";
+        } else {
+            oss << "builtin_vertexset_filter <";
+            oss << vertexset_where_expr->input_func;
+            oss << ">(";
+            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "()";
+            oss << ")";
+        }
     }
 
     void CodeGenCPP::genEdgeSets() {
@@ -1439,7 +1470,12 @@ namespace graphit {
         //This is the current number of elements, but we need the range
         //alloc_expr->size_expr->accept(this);
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
-        size_expr->accept(this);
+        if (size_expr != nullptr)
+            size_expr->accept(this);
+	else {
+	    // This means it is a vector of constant size. The size_expr now directly holds the constant literal.
+	    alloc_expr->size_expr->accept(this);
+	}
         oss << "]";
     }
 

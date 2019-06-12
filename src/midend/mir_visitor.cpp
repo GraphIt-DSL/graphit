@@ -135,7 +135,8 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<VectorAllocExpr> expr) {
-            expr->element_type->accept(this);
+            if (expr->element_type != nullptr)
+                expr->element_type->accept(this);
             expr->size_expr->accept(this);
             if (expr->scalar_type != nullptr)
                 expr->scalar_type->accept(this);

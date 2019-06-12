@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.CF";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportReturnConstantSizeVector";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.edgesetApplyExtern";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInit";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.GlobalConstantSizeVectorTest";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.vectorPerVertexTestWithConstDef";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";

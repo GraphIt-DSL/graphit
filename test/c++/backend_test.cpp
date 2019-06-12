@@ -200,6 +200,16 @@ TEST_F(BackendTest, ExportSimpleVertexSetLoad) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, ExportReturnConstantSizeVector) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func process() -> output : vector[10](int) print 0; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"
@@ -892,6 +902,35 @@ TEST_F(BackendTest, vectorPerVertexTestWithConstDef) {
                      "      for i in 0:20\n"
                      "            print v[i][i];\n"
                      "      end\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, newVertexsetFilterTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func filter_func(v : Vertex) -> output : bool \n"
+                     "  output = true; \n"
+                     "end\n"
+                     "export func foo()\n"
+                     "  var vset : vertexset{Vertex} = new vertexset{Vertex}(0); \n"
+                     "  vset = vset.filter(filter_func); \n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const float_vector : vector{Vertex}(float) = 0.0;\n"
+                     "const constant_vector : vector[100](float); \n "
+                     "export func foo(input_vector : vector[100](float))\n"
+                     "  constant_vector = input_vector;"
                      "end");
     EXPECT_EQ (0, basicTest(is));
 }

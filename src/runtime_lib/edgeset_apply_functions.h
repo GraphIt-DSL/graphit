@@ -23,8 +23,8 @@ template<typename APPLY_FUNC>
 VertexSubset<NodeID> * edgeset_apply_push_parallel_sliding_queue_weighted_deduplicatied_from_vertexset_with_frontier (
         WGraph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
-    next_frontier->sliding_queue_ = from_vertexset->sliding_queue_;
+    SlidingQueue<NodeID>* queue = from_vertexset->getSlidingQueue();
+    next_frontier->sliding_queue_ = queue;
     queue->slide_window();
 
     if (g.get_flags_() == nullptr){
@@ -72,7 +72,7 @@ template<typename APPLY_FUNC>
 VertexSubset<NodeID> *edgeset_apply_push_parallel_sliding_queue_from_vertexset_with_frontier
         (Graph &g, VertexSubset<NodeID> *from_vertexset, APPLY_FUNC apply_func) {
     VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);
-    SlidingQueue<NodeID>* queue = from_vertexset->sliding_queue_;
+    SlidingQueue<NodeID>* queue = from_vertexset->getSlidingQueue();
     next_frontier->sliding_queue_ = from_vertexset->sliding_queue_;
     queue->slide_window();
     //std::cout << "queue size: " << queue->size() << std::endl;

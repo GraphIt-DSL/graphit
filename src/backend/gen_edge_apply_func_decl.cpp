@@ -164,12 +164,15 @@ namespace graphit {
         if (apply_expr_gen_frontier) {
             // build an empty vertex subset if apply function returns
             //set up code for outputing frontier for push based edgeset apply operations
+            oss_ << "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n";
+            if (from_vertexset_specified){
+                oss_ << "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
+                        "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
+                        "        abort();\n"
+                        "    }\n";
+            }
+
             oss_ <<
-                 "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
-                         "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
-                         "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
-                         "        abort();\n"
-                         "    }\n"
                          "    if (outDegrees == 0) return next_frontier;\n"
                          "    uintT *offsets = degrees;\n"
                          "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n"
@@ -197,11 +200,15 @@ namespace graphit {
         indent();
 
         if (from_vertexset_specified){
-            oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n"
-                    "    int j = 0;\n";
-            if (apply_expr_gen_frontier){
-                oss_ <<  "    uintT offset = offsets[i];\n";
-            }
+            oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n";
+        }
+
+        if (apply_expr_gen_frontier){
+            oss_ <<  "    int j = 0;\n";
+            if (from_vertexset_specified)
+                oss_ << "    uintT offset = offsets[i];\n";
+            else
+                oss_ << "    uintT offset = offsets[s];\n";
         }
 
 
