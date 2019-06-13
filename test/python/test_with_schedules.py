@@ -130,7 +130,7 @@ class TestGraphitCompiler(unittest.TestCase):
         compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
         print (compile_cmd)
         subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=c++11 -I "+self.include_path+" " + " " + driver +  "  -o test.o"
+        cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I "+self.include_path+" " + " " + driver +  "  -o test.o"
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
     def basic_library_compile_exec_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
