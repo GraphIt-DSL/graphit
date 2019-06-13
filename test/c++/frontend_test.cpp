@@ -633,7 +633,7 @@ TEST_F(FrontendTest, KCoreFrontendTest) {
     istringstream is("element Vertex end\n"
 		     "element Edge end\n"
                      "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
-		     "const vertices : vertexset{Vertex} = edge.getVertices();\n"
+		     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
 		     "const D: vector{Vertex}(int) = edges.getOutDegrees();\n"
 		     "const pq: priority_queue{Vertex}(int);\n"
                      "func apply_f(src: Vertex, dst: Vertex)\n"

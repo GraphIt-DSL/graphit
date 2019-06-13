@@ -583,6 +583,31 @@ protected:
         );
 
 
+        const char* kcore_char =  ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const D: vector{Vertex}(int) = edges.getOutDegrees();\n"
+                                 "const pq: priority_queue{Vertex}(int);\n"
+                                 "func apply_f(src: Vertex, dst: Vertex)\n"
+                                 "    var k: int = pq.get_current_priority();\n"
+                                 "    pq.updatePrioritySum(dst, -1, k);\n"
+                                 "end \n"
+                                 "func main()\n"
+                                 "    pq = new priority_queue{Vertex}(int)(false, false, D, 1, 2, false, -1);\n"
+                                 "    var finished: int = 0; \n"
+                                 "    while (finished != vertices.size()) \n"
+                                 "        var frontier: vertexset{Vertex} = pq.dequeue_ready_set();\n"
+                                 "        finished += frontier.size();\n"
+                                 "        edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                                 "        delete frontier;\n"
+                                 "    end\n"
+                                 "    delete pq;\n"
+                                 "end\n"
+        );
+
+
+
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
@@ -599,6 +624,7 @@ protected:
         astar_str_ = string(astar_char);
         export_pr_str_ = string(export_pr_char);
         export_cf_str_ = string(export_cf_char);
+        kcore_str_ = string(kcore_char);
     }
 
     virtual void TearDown() {
@@ -671,6 +697,7 @@ protected:
     string astar_str_;
     string export_pr_str_;
     string export_cf_str_;
+    string kcore_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1882,6 +1909,14 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {
     istringstream is (delta_stepping_str_);
     fe_->parseStream(is, context_, errors_);
@@ -1973,6 +2008,15 @@ TEST_F(HighLevelScheduleTest, ExportCFWithScheduleTest){
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "DensePull")
             ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "constant_sum_reduce_before_update");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
