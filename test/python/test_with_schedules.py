@@ -182,9 +182,6 @@ class TestGraphitCompiler(unittest.TestCase):
         os.chdir("bin")
 
 
->>>>>>> 5370a5e192eb4ae29e7b469a2937365969b73219
-
-
     def astar_verified_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
         input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
         input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
@@ -689,5 +686,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('cc_hybrid_dense_parallel_bitvector'))
+    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
