@@ -39,7 +39,7 @@ def compile_and_myprint(input_schedule_file,  message, cpp_filename):
     subprocess.check_call(cat_cmd, shell=True)
 
     myprint ("Generated c++ file saved in: " + cpp_filename)
-    cpp_compile_cmd = "g++ -g -std=c++11 -I ../../src/runtime_lib/ " + cpp_filename +  " -o test.o"
+    cpp_compile_cmd = "g++ -g -std=gnu++1y -I ../../src/runtime_lib/ " + cpp_filename +  " -o test.o"
     
     myprint (cpp_compile_cmd)
     subprocess.check_call(cpp_compile_cmd, shell=True)

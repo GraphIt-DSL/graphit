@@ -175,13 +175,13 @@ class GraphItTuner(MeasurementInterface):
         if not self.use_NUMA:
             if not self.enable_parallel_tuning:
                 # if parallel icpc compiler is not needed (only tuning serial schedules)
-                compile_cpp_cmd = serial_compiler + ' -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = serial_compiler + ' -std=gnu++1y  -I ../src/runtime_lib/ -O3  test.cpp -o test'
             else:
                 # if parallel icpc compiler is supported and needed
-                compile_cpp_cmd = par_compiler + ' -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = par_compiler + ' -std=gnu++1y -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
-            compile_cpp_cmd = 'icpc -std=c++11 -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            compile_cpp_cmd = 'icpc -std=gnu++1y -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
 
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)

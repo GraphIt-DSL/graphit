@@ -36,7 +36,7 @@ class TestGraphitCompiler(unittest.TestCase):
         cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
         cls.root_test_graph_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/"
         cls.cpp_compiler = CXX_COMPILER
-        cls.compile_flags = "-std=c++11"
+        cls.compile_flags = "-std=gnu++1y"
         cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
