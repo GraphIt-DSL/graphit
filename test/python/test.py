@@ -402,9 +402,6 @@ class TestGraphitCompiler(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    if sys.version_info[0] >= 3:
-        raise Exception("Tests require Python 2")
-
     unittest.main()
     # used for enabling a specific test
 
