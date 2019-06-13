@@ -599,7 +599,7 @@ protected:
                                  "    while (finished != vertices.size()) \n"
                                  "        var frontier: vertexset{Vertex} = pq.dequeue_ready_set();\n"
                                  "        finished += frontier.size();\n"
-                                 "        edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                                   "        #s1# edges.from(frontier).applyUpdatePriority(apply_f);\n"
                                  "        delete frontier;\n"
                                  "    end\n"
                                  "    delete pq;\n"
@@ -2020,3 +2020,11 @@ TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+
+TEST_F(HighLevelScheduleTest, KCoreDefaultSchedule){
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
