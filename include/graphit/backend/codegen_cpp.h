@@ -15,8 +15,8 @@
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{
     public:
-        CodeGenCPP(std::ostream &input_oss, MIRContext *mir_context) :
-                oss(input_oss), mir_context_(mir_context) {
+        CodeGenCPP(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_):
+                oss(input_oss), mir_context_(mir_context), module_name(module_name_) {
             indentLevel = 0;
             edgeset_apply_func_gen_ = new EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
         }
@@ -48,6 +48,8 @@ namespace graphit {
 
         virtual void visit(mir::VertexSetAllocExpr::Ptr);
         virtual void visit(mir::ListAllocExpr::Ptr);
+        virtual void visit(mir::VectorAllocExpr::Ptr);
+
 
         //functional operators
         virtual void visit(mir::VertexSetApplyExpr::Ptr);
@@ -108,6 +110,7 @@ namespace graphit {
         void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" << std::endl; }
         void printEndIndent() { oss << std::string(2 * indentLevel, ' ') << "}"; }
         std::ostream &oss;
+	std::string module_name;
         unsigned      indentLevel;
 
         void genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr shared_ptr);
@@ -132,7 +135,15 @@ namespace graphit {
 
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
 
-	void get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call);
+        // creates the lambda function to apply the edgeMapCount operator
+	    void get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call);
+        void genTypesRequiringTypeDefs();
+	
+	    void generatePyBindWrapper(mir::FuncDecl::Ptr);
+
+    	void generatePyBindModule();
+
+        std::string genFuncNameAsArgumentString(std::string func_name);
     };
 }
 

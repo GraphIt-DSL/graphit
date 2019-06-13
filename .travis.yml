@@ -1,15 +1,9 @@
-branches:
-        only:
-                - master
-                - og
 os:
         - linux
-dist: trusty
 sudo: required
-language:
-        - cpp
-compiler:
-        - gcc
+dist: xenial
+
+
 addons:
         apt:
                 sources:
@@ -18,7 +12,15 @@ addons:
                         - gcc-5
                         - g++-5
                         - cmake
+
 language: generic
+python: "3.7"
+
+before_install:
+        - sudo apt-get update
+        - sudo apt-get install python3-pip
+        - sudo pip3 install pybind11
+        - sudo pip3 install scipy
 
 install:
         - wget https://cmake.org/files/v3.12/cmake-3.12.1-Linux-x86_64.tar.gz -O cmake.tar.gz
@@ -36,8 +38,13 @@ script:
         - cd bin 
         - ./graphit_test
         - cd ..
-        - python python_tests/test.py
-        - python python_tests/test_with_schedules.py
-
+        - python --version
+        - python3 --version
+        - python3 python_tests/test.py
+        - python3 python_tests/test_with_schedules.py
+        - python2 python_tests/test.py
+        - python2 python_tests/test_with_schedules.py
+        - export PYTHONPATH=.
+        - python3 python_tests/pybind_test.py
 
 

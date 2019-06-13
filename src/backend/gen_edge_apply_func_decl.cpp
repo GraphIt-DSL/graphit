@@ -153,9 +153,10 @@ namespace graphit {
 
         //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
-            oss_ << "    if (g.flags_ == nullptr){\n"
-                    "      g.flags_ = new int[numVertices]();\n"
-                    "      parallel_for(int i = 0; i < numVertices; i++) g.flags_[i]=0;\n"
+            oss_ << "    if (g.get_flags_() == nullptr){\n"
+//                    "      g.flags_ = new int[numVertices]();\n"
+                    "      g.set_flags_(new int[numVertices]());\n"
+                    "      parallel_for(int i = 0; i < numVertices; i++) g.get_flags_()[i]=0;\n"
                     "    }\n";
         }
 
@@ -163,12 +164,15 @@ namespace graphit {
         if (apply_expr_gen_frontier) {
             // build an empty vertex subset if apply function returns
             //set up code for outputing frontier for push based edgeset apply operations
+            oss_ << "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n";
+            if (from_vertexset_specified){
+                oss_ << "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
+                        "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
+                        "        abort();\n"
+                        "    }\n";
+            }
+
             oss_ <<
-                 "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
-                         "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
-                         "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
-                         "        abort();\n"
-                         "    }\n"
                          "    if (outDegrees == 0) return next_frontier;\n"
                          "    uintT *offsets = degrees;\n"
                          "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n"
@@ -196,11 +200,15 @@ namespace graphit {
         indent();
 
         if (from_vertexset_specified){
-            oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n"
-                    "    int j = 0;\n";
-            if (apply_expr_gen_frontier){
-                oss_ <<  "    uintT offset = offsets[i];\n";
-            }
+            oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n";
+        }
+
+        if (apply_expr_gen_frontier){
+            oss_ <<  "    int j = 0;\n";
+            if (from_vertexset_specified)
+                oss_ << "    uintT offset = offsets[i];\n";
+            else
+                oss_ << "    uintT offset = offsets[s];\n";
         }
 
 
@@ -255,7 +263,7 @@ namespace graphit {
 
             //need to return a frontier
             if (apply->enable_deduplication && apply_expr_gen_frontier) {
-                oss_ << " && CAS(&(g.flags_[" << dst_type << "]), 0, 1) ";
+                oss_ << " && CAS(&(g.get_flags_()[" << dst_type << "]), 0, 1) ";
             }
 
             indent();
@@ -327,7 +335,7 @@ namespace graphit {
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
                     oss_ << "  parallel_for(int i = 0; i < nextM; i++){\n"
-                            "     g.flags_[nextIndices[i]] = 0;\n"
+                            "     g.get_flags_()[nextIndices[i]] = 0;\n"
                             "  }\n";
             }
             oss_ << "  return next_frontier;\n";
@@ -594,8 +602,8 @@ namespace graphit {
             // recursive load balance scheme
 
             //set up the edge index (in in edge array) for estimating number of edges
-            oss_ << "  if (g.offsets_ == nullptr) g.SetUpOffsets(true);\n"
-                    "  SGOffset * edge_in_index = g.offsets_;\n";
+            oss_ << "  if (g.get_offsets_() == nullptr) g.SetUpOffsets(true);\n"
+                    "  SGOffset * edge_in_index = g.get_offsets_();\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
                     "    [" << (apply->to_func != "" ?  "&to_func, " : "")
@@ -981,7 +989,9 @@ namespace graphit {
         // Weighted: "" (unweighted) or "weighted"
 
         string output_name = "edgeset_apply";
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+        auto original_apply_func_name = apply->input_function_name;
+
+        mir::FuncDecl::Ptr apply_func = mir_context_->getFunction(apply->input_function_name);
 
         //check direction
         if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {

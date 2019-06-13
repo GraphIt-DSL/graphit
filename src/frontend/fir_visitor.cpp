@@ -419,6 +419,14 @@ namespace graphit {
                 expr->numElements->accept(this);
         }
 
+        void FIRVisitor::visit(std::shared_ptr<VectorAllocExpr> expr){
+            if (expr->general_element_type != nullptr) expr->general_element_type->accept(this);
+            if (expr->elementType != nullptr) expr->elementType->accept(this);
+            if (expr->numElements != nullptr)
+                expr->numElements->accept(this);
+        }
+
+
         void FIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> expr) {
             //expr->element_type->accept(this);
             expr->file_name->accept(this);

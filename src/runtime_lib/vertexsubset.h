@@ -31,6 +31,26 @@ struct VertexSubset {
 //        index_vector_[v] = true;
 //    }
 
+    VertexSubset(VertexSubset* input_vert_set)
+        : num_vertices_(input_vert_set->num_vertices_),
+            vertices_range_(input_vert_set->vertices_range_),
+            is_dense(input_vert_set->is_dense){
+            if (input_vert_set->dense_vertex_set_ != nullptr){
+                dense_vertex_set_ = newA(unsigned int, num_vertices_);
+                parallel_for (int i = 0; i < num_vertices_; i++){
+                    dense_vertex_set_[i] = input_vert_set->dense_vertex_set_[i];
+                }
+            }
+
+            if (bool_map_ != nullptr){
+                bool_map_ = newA(bool, vertices_range_);
+                parallel_for (int i = 0; i < vertices_range_; i++){
+                    bool_map_[i] = input_vert_set->bool_map_[i];
+                }
+            }
+
+    }
+
     //set every vertex to true in the vertex subset
     VertexSubset(int64_t vertices_range, int64_t num_vertices)
             : num_vertices_(num_vertices),
@@ -81,38 +101,64 @@ struct VertexSubset {
 		delete[] bool_map_;
     }
 
-    bool contains(NodeID_ v){
-        return bitmap_->get_bit(v);
-    }
-
-    void addVertex(NodeID_ v){
-        //only increment the count if the vertex is not already in the vertexset
-        if (bitmap_ == nullptr){
-            bitmap_ = new Bitmap(vertices_range_);
-            bitmap_->reset();
-        }
-
-        if (bool_map_ == nullptr){
-            bool_map_ = newA(bool, vertices_range_);
-            parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
-        }
-
+    SlidingQueue<NodeID> * getSlidingQueue(){
         if (sliding_queue_ == nullptr){
             // initialized to two times of vertices range
             // (one for the frontier to be read, the other for the frontier to be written to)
             sliding_queue_ = new SlidingQueue<NodeID>(2*vertices_range_);
         }
-        // TODO: this is a hack for now, need to solve it later. Sliding window needs to be called before usage
-        sliding_queue_->push_back(v);
-        //sliding_queue_->slide_window();
 
-        if (!bitmap_->get_bit(v)){
-            bitmap_->set_bit(v);
-            //dense_vertex_set_->push_back(v);
-            bool_map_[v] = 1;
+        // add nodes to the sliding queue if needed
+        if (tmp.size() != 0) {
+            for (NodeID node : tmp) {
+                //bitmap_->set_bit(node);
+                sliding_queue_->push_back(node);
+            }
+        }
+
+        return sliding_queue_;
+    }
+
+    bool contains(NodeID_ v){
+        if (bool_map_ != nullptr)
+            return bool_map_[v];
+        else {
+            toDense();
+            return bool_map_[v];
+        }
+    }
+
+    void addVertex(NodeID_ v){
+        //only increment the count if the vertex is not already in the vertexset
+//        if (bitmap_ == nullptr){
+//            bitmap_ = new Bitmap(vertices_range_);
+//            bitmap_->reset();
+//        }
+//
+//        if (bool_map_ == nullptr){
+//            bool_map_ = newA(bool, vertices_range_);
+//            parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
+//        }
+//
+//        if (sliding_queue_ == nullptr){
+//            // initialized to two times of vertices range
+//            // (one for the frontier to be read, the other for the frontier to be written to)
+//            sliding_queue_ = new SlidingQueue<NodeID>(2*vertices_range_);
+//        }
+//        // TODO: this is a hack for now, need to solve it later. Sliding window needs to be called before usage
+//        sliding_queue_->push_back(v);
+//        //sliding_queue_->slide_window();
+//
+//        if (!bitmap_->get_bit(v)){
+//            bitmap_->set_bit(v);
+//            //dense_vertex_set_->push_back(v);
+//            bool_map_[v] = 1;
+//            num_vertices_++;
+//            tmp.push_back(v);
+//        }
+
             num_vertices_++;
             tmp.push_back(v);
-        }
     }
 
     long getVerticesRange() { return vertices_range_; }

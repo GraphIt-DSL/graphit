@@ -34,10 +34,29 @@ namespace graphit {
     }
 
     void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
+
+
+
         auto mir_assign_stmt = std::make_shared<mir::AssignStmt>();
         //we only have one expression on the left hand size
         assert(assign_stmt->lhs.size() == 1);
         mir_assign_stmt->lhs = emitExpr(assign_stmt->lhs.front());
+
+        //check if this is assigning to a vertexset,
+        //if assigning to a vertexset, then we do not generate the assign statement
+        // but instead update the count of the global variable
+        if (mir::isa<mir::VarExpr>(mir_assign_stmt->lhs)){
+            auto var_expr = mir::to<mir::VarExpr>(mir_assign_stmt->lhs);
+            auto var_name = var_expr->var.getName();
+            if (ctx->isConstVertexSet(var_name)){
+                //update the count of the vertexset
+                ctx->updateElementCount(ctx->getElementTypeFromVectorOrSetName(var_name), emitExpr(assign_stmt->expr));
+                //returns a No OP statement
+                retStmt = makeNoOPStmt();
+                return;
+            }
+        }
+
         mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
         mir_assign_stmt->stmt_label = assign_stmt->stmt_label;
         retStmt = mir_assign_stmt;
@@ -187,6 +206,12 @@ namespace graphit {
 
         //element of a vector can be a non-scalar (vector type)
         mir_vector_type->vector_element_type = emitType(ND_tensor_type->blockType);
+        if (mir::isa<mir::VectorType>(mir_vector_type->vector_element_type)){
+            //if each vector_element is a vector (nested vector type, such as vector{Vertex}(vector[5])
+            ctx->addTypeRequiringTypeDef(mir_vector_type->vector_element_type);
+        }
+
+
         if (ND_tensor_type->indexSets.size() == 1 &&
             fir::isa<fir::RangeIndexSet>(ND_tensor_type->indexSets[0])) {
             auto range_index_set = fir::to<fir::RangeIndexSet>(ND_tensor_type->indexSets[0]);
@@ -276,6 +301,24 @@ namespace graphit {
         mir_vertexsetalloc_expr->element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
         retExpr = mir_vertexsetalloc_expr;
     }
+
+    void MIREmitter::visit(fir::VectorAllocExpr::Ptr expr) {
+        // Currently we only record a size information in the MIR::VertexSetAllocExpr
+        const auto mir_vertexsetalloc_expr = std::make_shared<mir::VectorAllocExpr>();
+	if (expr->elementType != nullptr) {
+            auto element_type = mir::to<mir::ElementType>(emitType(expr->elementType));
+            mir_vertexsetalloc_expr->size_expr = ctx->getElementCount(element_type);
+            mir_vertexsetalloc_expr->element_type = element_type;
+        }else
+	    mir_vertexsetalloc_expr->size_expr = emitExpr(expr->numElements);
+        if (expr->vector_scalar_type != nullptr)
+            mir_vertexsetalloc_expr->scalar_type = mir::to<mir::ScalarType>(emitType(expr->vector_scalar_type));
+        // if the vector element is also a vector, such as vector{Vertex}(vector[20])
+        else if (expr->general_element_type != nullptr)
+            mir_vertexsetalloc_expr->vector_type = mir::to<mir::VectorType>(emitType(expr->general_element_type));
+        retExpr = mir_vertexsetalloc_expr;
+    }
+
 
 
     void MIREmitter::visit(fir::ListAllocExpr::Ptr expr) {
@@ -437,6 +480,8 @@ namespace graphit {
             //adds an additional argument for Builtin Sum
             if (method_call_expr->method_name->ident == "builtin_sum") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
+		//assert(mir::isa<mir::VectorType>(mir_target_type));
+		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
                 const auto size_arg = ctx->getElementCount(vertex_element_type);
                 args.push_back(size_arg);
             }
@@ -539,14 +584,17 @@ namespace graphit {
         //we use the varexpr to determine whether this is vertexset filtering or edgeset filtering
 
         auto fir_target_var_name = fir::to<fir::VarExpr>(where_expr->target)->ident;
-
-        if (ctx->isConstVertexSet(fir_target_var_name)) {
-            auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
-            verteset_where_expr->target = fir_target_var_name;
-            verteset_where_expr->input_func = where_expr->input_func->ident;
+	// Removing the check for isConstVertexSet here because we wan't to generate filter for all vertex sets
+        //if (ctx->isConstVertexSet(fir_target_var_name)) {
+        auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
+        verteset_where_expr->target = fir_target_var_name;
+        verteset_where_expr->input_func = where_expr->input_func->ident;
+        if (ctx->isConstVertexSet(fir_target_var_name))
             verteset_where_expr->is_constant_set = true;
-            retExpr = verteset_where_expr;
-        }
+        else
+            verteset_where_expr->is_constant_set = false;
+        retExpr = verteset_where_expr;
+        //}
     }
 
     void MIREmitter::visit(fir::ElementTypeDecl::Ptr element_type_decl) {
@@ -604,12 +652,19 @@ namespace graphit {
         // Copy the type from the fir node to the mir node (for external/internal type) 
         mir_func_decl->type = getMirFuncDeclType(func_decl->type);
 
+
         if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {
             //add the constructed function decl to functions
             ctx->addFunction(mir_func_decl);
         } else if (mir_func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
             //add the constructed function decl to the list of external functions
             ctx->addExternFunction(mir_func_decl);
+        } else if (mir_func_decl->type == mir::FuncDecl::Type::EXPORTED) {
+            ctx->addFunction(mir_func_decl);
+            ctx->addExportedFunction(mir_func_decl);
+
+        } else {
+            std::cout << " Unsupported type of function: " << func_name << std::endl;
         }
 
     }
@@ -724,6 +779,10 @@ namespace graphit {
                     ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
                     if (!ctx->updateElementProperties(type->element_type, mir_var_decl))
                         std::cout << "error in adding constant: " << mir_var_decl->name << std::endl;
+                } else {
+                    //this is a constantant vector
+                    ctx->updateVectorItemType(mir_var_decl->name, type->vector_element_type);
+                    ctx->addConstant(mir_var_decl);
                 }
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type) != nullptr) {
                 mir::VertexSetType::Ptr type = std::dynamic_pointer_cast<mir::VertexSetType>(mir_var_decl->type);
@@ -749,10 +808,10 @@ namespace graphit {
                         const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
                         mir_var_decl->initVal = init_val;
                         ctx->updateElementInputFilename(type->element, init_val->file_name);
-                        ctx->addEdgeSet(mir_var_decl);
-                        ctx->addEdgesetType(mir_var_decl->name, type);
                     }
                 }
+                ctx->addEdgeSet(mir_var_decl);
+                ctx->addEdgesetType(mir_var_decl->name, type);
 
             } else {
                 mir_var_decl->modifier = "const";
@@ -850,4 +909,14 @@ namespace graphit {
         retExpr = mir_priority_queue_alloc_expr;
     }
     
+
+    mir::Stmt::Ptr MIREmitter::makeNoOPStmt() {
+        auto no_op_stmt = std::make_shared<mir::ExprStmt>();
+        auto true_expr = std::make_shared<mir::BoolLiteral>();
+        true_expr->val = true;
+        no_op_stmt->expr = true_expr;
+        return no_op_stmt;
+
+    }
+
 }

@@ -924,6 +924,22 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(VectorAllocExpr::Ptr expr) {
+            oss << "alloc vector {";
+            expr->elementType->accept(this);
+            oss << "}(";
+
+            if (expr->vector_scalar_type != nullptr){
+                expr->vector_scalar_type->accept(this);
+            } else if (expr->general_element_type != nullptr) {
+                expr->general_element_type->accept(this);
+            } else {
+                std::cout << "Error unsupported vector element type" << std::endl;
+            }
+
+            oss << ")";
+        }
+
         void FIRPrinter::visit(MethodCallExpr::Ptr expr) {
             expr->target->accept(this);
             oss << ".";

@@ -7,8 +7,11 @@
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
 
+
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.DeltaStepping";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.PointToPointShortestPath";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.MainFunctionWithPrint";
+//    ::testing::GTEST_FLAG(filter) = "FrontendTest.EdgeSetExportFuncVectorInit";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.SimpleApplyFromToFilterWithFromVertexsetExpression";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.VectorVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "FrontendTest.UninitializedVertexProperty";
@@ -21,20 +24,24 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleDoubleVarDecl";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVectorSum";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportReturnConstantSizeVector";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.edgesetApplyExtern";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.GlobalConstantSizeVectorTest";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.vectorPerVertexTestWithConstDef";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.AStar_load_graph";
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
+//
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SweepCutTest";
+
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
@@ -48,8 +55,11 @@ int main(int argc, char **argv) {
 //
 
 
+
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PPSPDeltaSteppingWithEagerPriorityUpdateWithMergeArgv";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdateArgv";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportCFWithScheduleTest";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
@@ -69,7 +79,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseTwoSegments";
-//      ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelDifferentSegments";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRCCPullParallelDifferentSegments";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 

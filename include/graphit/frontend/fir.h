@@ -1568,7 +1568,10 @@ namespace graphit {
 
         struct NewExpr : public Expr {
             typedef std::shared_ptr<NewExpr> Ptr;
+            //A more general type(can be nested). For example, Vertex in list{vertexset{Vertex}}
             Type::Ptr general_element_type;
+
+            //A simpler elementType, For example, vector{Vertex}(int)
             ElementType::Ptr elementType;
             Expr::Ptr numElements;
         };
@@ -1599,6 +1602,21 @@ namespace graphit {
         protected:
             virtual FIRNode::Ptr cloneNode();
 
+            virtual void copy(FIRNode::Ptr);
+        };
+
+
+        // Allocator expression for Vector
+        struct VectorAllocExpr : public NewExpr {
+            typedef std::shared_ptr<VectorAllocExpr> Ptr;
+            fir::ScalarType::Ptr vector_scalar_type;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<VectorAllocExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
             virtual void copy(FIRNode::Ptr);
         };
 

@@ -1,0 +1,19 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex);
+const vertices : vertexset{Vertex};
+const out_degrees : vector{Vertex}(int);
+
+export func test_export()
+
+    edges = load ("../test/graphs/test.el");
+    vertices =  edges.getVertices();
+    out_degrees = edges.getOutDegrees();
+
+    var sum : int = 0;
+    for i in 0:edges.getVertices()
+        sum += out_degrees[i];
+    end
+    print sum;
+end

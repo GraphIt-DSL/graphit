@@ -42,15 +42,36 @@ namespace graphit {
             functions_list_.push_back(f);
         }
 
-        void addFunctionFront(mir::FuncDecl::Ptr f) {
-            functions_map_[f->name] = f;
-            functions_list_.insert(functions_list_.begin(), f);
-        }
 
-        void addExternFunction(mir::FuncDecl::Ptr f) {
-            extern_functions_map_[f->name] = f;
-            extern_functions_list_.push_back(f);
-        }
+
+            void addExportedFunction(mir::FuncDecl::Ptr f) {
+                exported_functions_list_.push_back(f);
+            }
+
+
+            void addFunctionFront(mir::FuncDecl::Ptr f) {
+                functions_map_[f->name] = f;
+                functions_list_.insert(functions_list_.begin(), f);
+            }
+
+        // Maybe this would result in errors in the OG code
+//        void addExternFunction(mir::FuncDecl::Ptr f) {
+//            extern_functions_map_[f->name] = f;
+//            extern_functions_list_.push_back(f);
+//        }
+
+            void addExternFunction(mir::FuncDecl::Ptr f) {
+                extern_functions_map_[f->name] = f;
+                extern_functions_list_.push_back(f);
+                //Also add the extern function to regular function map
+                //Hopefully this is not going to be an issue
+                addFunction(f);
+            }
+
+            bool isExternFunction(std::string function_name){
+                return extern_functions_map_.find(function_name) != extern_functions_map_.end();
+            }
+
 
         bool isFunction(const std::string &name) const {
             return functions_map_.find(name) != functions_map_.end() ||
@@ -62,9 +83,20 @@ namespace graphit {
             return functions_map_[name];
         }
 
+
+        mir::FuncDecl::Ptr getExternFunction(const std::string &name) {
+            assert(isExternFunction(name));
+            return extern_functions_map_[name];
+        }
+
+        void addTypeRequiringTypeDef(mir::Type::Ptr type){
+            types_requiring_typedef.push_back(type);
+        }
+
         void addSymbol(mir::Var var) {
             symbol_table_.insert(var.getName(), var);
         }
+
 
         const std::map<std::string, mir::FuncDecl::Ptr> &getFunctionMap() {
             return functions_map_;
@@ -192,13 +224,31 @@ namespace graphit {
             }
         }
 
-        void setElementTypeWithVectorOrSetName(std::string vectorOrSetName, mir::ElementType::Ptr element_type) {
-            vector_set_element_type_map_[vectorOrSetName] = element_type;
 
+        void setElementTypeWithVectorOrSetName(std::string vectorOrSetName, mir::ElementType::Ptr element_type){
+		// This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+		// So we will just use the symbol table to get the type and element type from there
+		// We will still do the insertion here, but this value will never be used
+		    vector_set_element_type_map_[vectorOrSetName] = element_type;
         };
 
-        mir::ElementType::Ptr getElementTypeFromVectorOrSetName(std::string vector_name) {
-            return vector_set_element_type_map_[vector_name];
+
+        mir::ElementType::Ptr getElementTypeFromVectorOrSetName(std::string vector_name){
+            // This map is not complete right now. Elements are not being added always like arguments to functione etc. Also this is not scoped
+            // So we will just use the symbol table to get the type and element type from there
+                    //return vector_set_element_type_map_[vector_name];
+            auto var = getSymbol(vector_name);
+            auto type = var.getType();
+            if (mir::isa<mir::VectorType>(type))
+                return mir::to<mir::VectorType>(type)->element_type;
+            else if (mir::isa<mir::EdgeSetType>(type))
+                return mir::to<mir::EdgeSetType>(type)->element;
+            else if (mir::isa<mir::VertexSetType>(type))
+                return mir::to<mir::VertexSetType>(type)->element;
+            else {
+                assert(false && "Cannot indentify type of vector or set\n");
+            }
+		
         }
 
         bool updateElementInputFilename(mir::ElementType::Ptr element_type, mir::Expr::Ptr file_name) {
@@ -303,6 +353,8 @@ namespace graphit {
         //maps a edgeset name to its edgeset type
         std::map<std::string, mir::EdgeSetType::Ptr> edgeset_element_type_map_;
 
+        //private:
+
         std::vector<std::string> vertex_element_type_list_;
         std::vector<std::string> edge_element_type_list_;
 
@@ -331,11 +383,12 @@ namespace graphit {
         std::vector<mir::Stmt::Ptr> field_vector_alloc_stmts;
         std::vector<mir::Stmt::Ptr> field_vector_init_stmts;
 
+
         // used by cache/numa optimization
         std::map<std::string, std::map<std::string, int>> edgeset_to_label_to_num_segment;
 
-        // used by numa optimization
-        std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
+        std::vector<mir::FuncDecl::Ptr> exported_functions_list_;
+
 
 
         // Ordered GraphIt additions
@@ -345,10 +398,20 @@ namespace graphit {
         // By default, it is NoPriorityUpdate
         mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
 
+
         int delta_ = 1;
         int bucket_merge_threshold_ = 0;
         mir::Expr::Ptr optional_starting_source_node = nullptr;
         std::string eager_priority_update_edge_function_name = "";
+
+
+        // used by numa optimization
+        std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
+
+        std::set<std::string> defined_types;
+
+        std::vector<mir::Type::Ptr> types_requiring_typedef;
+
     };
 
 }

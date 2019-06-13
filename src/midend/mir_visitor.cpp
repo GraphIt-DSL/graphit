@@ -142,6 +142,16 @@ namespace graphit {
             expr->size_expr->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<VectorAllocExpr> expr) {
+            if (expr->element_type != nullptr)
+                expr->element_type->accept(this);
+            expr->size_expr->accept(this);
+            if (expr->scalar_type != nullptr)
+                expr->scalar_type->accept(this);
+            else if (expr->vector_type != nullptr)
+                expr->vector_type->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<ListAllocExpr> expr) {
             expr->element_type->accept(this);
             if (expr->size_expr != nullptr)

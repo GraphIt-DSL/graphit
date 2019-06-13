@@ -119,6 +119,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VectorType>);
 
+            virtual void visit(std::shared_ptr<VectorAllocExpr>);
+
 
             // OG Additions
             virtual void visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr>);

@@ -21,7 +21,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 
 file(GLOB_RECURSE SOURCE_FILES include/*.h include/graphit/midend/*.h src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/utils/*.h include/utils/*.h)
-add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp)
+add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp test/library_test_drivers/library_test_driver_cpp.txt)
 
 # build a front end library used for unit testing
 file(GLOB_RECURSE LIB_SOURCE_FILES include/*.h src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/main.cpp)
@@ -32,7 +32,7 @@ add_library(graphitlib ${HEADER_FILES} ${LIB_SOURCE_FILES})
 include_directories(./test/gtest/)
 add_subdirectory(test)
 set(GTEST_SOURCE ./test/gtest/gtest-all.cc)
-set(GTEST_HEADER ./test/gtest/gtest.h)
+set(GTEST_HEADER ./test/gtest/gtest.h test/input/extern_add_one.cpp src/runtime_lib/infra_gapbs/minimum_spanning_tree.h)
 add_library(gtest ${GTEST_HEADER} ${GTEST_SOURCE})
 
 
@@ -70,11 +70,28 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python_tests/test.py
 	VERBATIM
 )
 
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python_tests/pybind_test.py
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/python_tests
+	COMMAND sed -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/test/python/pybind_test.py > ${CMAKE_BINARY_DIR}/python_tests/pybind_test.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/test/python/pybind_test.py
+	VERBATIM
+)
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/graphit.py 
+	COMMAND sed -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/src/python/graphit.py > ${CMAKE_BINARY_DIR}/graphit.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/src/python/graphit.py
+	VERBATIM
+)
 
 add_custom_target(copy_graphitc_py ALL DEPENDS ${GRAPHITC_PY})
-add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py ${CMAKE_BINARY_DIR}/python_tests/test.py)
+add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py ${CMAKE_BINARY_DIR}/python_tests/test.py ${CMAKE_BINARY_DIR}/python_tests/pybind_test.py)
+add_custom_target(copy_graphit_py ALL DEPENDS ${CMAKE_BINARY_DIR}/graphit.py)
 
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
+configure_file(test/library_test_drivers/library_test_driver_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver.cpp COPYONLY)
+configure_file(test/library_test_drivers/library_test_driver_weighted_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver_weighted.cpp COPYONLY)
+configure_file(test/library_test_drivers/library_test_driver_cf_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver_cf.cpp COPYONLY)
+
 
 add_executable(bc_verifier ./test/verifiers/bc_verifier.cpp)
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)

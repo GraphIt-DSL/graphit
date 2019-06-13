@@ -190,6 +190,111 @@ TEST_F(BackendTest, SimpleVertexSetLoad) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+TEST_F(BackendTest, ExportSimpleVertexSetLoad) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func process() print 0; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, ExportReturnConstantSizeVector) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func process() -> output : vector[10](int) print 0; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, ExportSimpleVertexSetLoadInFunction) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "export func process() "
+                     "      edges = load (\"test.el\");"
+                     "      vertices = edges.getVertices();"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFunc) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInit) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)();"
+                     "      vertices.apply(update_vector);"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInitWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)();"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, EdgeSetExportFuncVectorInputWithReturn) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex), input_vector : vector{Vertex}(float)) -> output : vector{Vertex}(float) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = input_vector;"
+                     "      vertices.apply(update_vector); "
+                     "      output = vector_a;"
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
 TEST_F(BackendTest, SimpleEdgeSetApply) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -638,6 +743,25 @@ TEST_F(BackendTest, UninitializedVertexProperty) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+TEST_F(BackendTest, RandomNghTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main() var v : Vertex = getRandomOutNgh(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SerialMinimumSpanningTreeTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[0]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const parents : vector{Vertex}(int);"
+                     "func main() parents = serialMinimumSpanningTree(edges, 0);  end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, VectorVertexProperty) {
     istringstream is("element Vertex end\n"
@@ -667,5 +791,146 @@ TEST_F(BackendTest, FabsWithVectorRead) {
                              "const vec : vector{Vertex}(float);\n"
                              "func updateVertex(v : Vertex) var a : float = fabs(vec[v]); end\n"
                              "func main() vertices.apply(updateVertex); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, CF) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const latent_vec : vector{Vertex}(vector[1](float));\n"
+                     "const error_vec : vector{Vertex}(vector[1](float));\n"
+                     "const step : float = 0.35; %for testing\n"
+                     "const lambda : float = 0.001;\n"
+                     "const K : int = 1;\n"
+                     "\n"
+                     "func updateEdge (src : Vertex, dst : Vertex, rating : int)\n"
+                     "    var estimate : float = 0;\n"
+                     "    for i in 0:K\n"
+                     "        estimate  += latent_vec[src][i] * latent_vec[dst][i];\n"
+                     "    end\n"
+                     "    var err : float =  rating - estimate;\n"
+                     "    for i in 0:K\n"
+                     "        error_vec[dst][i] += latent_vec[src][i]*err;\n"
+                     "    end\n"
+                     "end\n"
+                     "\n"
+                     "func updateVertex (v : Vertex)\n"
+                     "     for i in 0:K\n"
+                     "        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);\n"
+                     "        error_vec[v][i] = 0;\n"
+                     "     end\n"
+                     "end\n"
+                     "\n"
+                     "func initVertex (v : Vertex)\n"
+                     "    for i in 0:K\n"
+                     "        latent_vec[v][i] = 0.5;\n"
+                     "        error_vec[v][i] = 0;\n"
+                     "    end\n"
+                     "end\n"
+                     "\n"
+                     "func main()\n"
+                     "    vertices.apply(initVertex);\n"
+                     "    for i in 0:5\n"
+                     "        #s1# edges.apply(updateEdge);\n"
+                     "        vertices.apply(updateVertex);\n"
+                     "    end\n"
+                     "\n"
+                     "    var sum : float = 0;\n"
+                     "    for i in 0:edges.getVertices()\n"
+                     "        for j in 0:K\n"
+                     "            sum += latent_vec[i][j];\n"
+                     "        end\n"
+                     "    end\n"
+                     "\n"
+                     "    print sum;\n"
+                     "\n"
+                     "end\n"
+                     );
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
+TEST_F(BackendTest, vertexsetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateVertex(v : Vertex);\n"
+                     "func main() vertices.apply(UDF_updateVertex); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+
+TEST_F(BackendTest, edgesetApplyExtern) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vec : vector{Vertex}(float);\n"
+                     "extern func UDF_updateEdge(src : Vertex, dst : Vertex);\n"
+                     "func main() edges.apply(UDF_updateEdge); end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, vectorPerVertexTestNoConstDef) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "export func foo(v: vector{Vertex}(vector[20](int)))\n"
+                     "      for i in 0:20\n"
+                     "            print v[i][i];\n"
+                     "      end\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, vectorPerVertexTestWithConstDef) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const v: vector{Vertex}(vector[20](int));\n"
+                     "export func foo(v: vector{Vertex}(vector[20](int)))\n"
+                     "      for i in 0:20\n"
+                     "            print v[i][i];\n"
+                     "      end\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, newVertexsetFilterTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func filter_func(v : Vertex) -> output : bool \n"
+                     "  output = true; \n"
+                     "end\n"
+                     "export func foo()\n"
+                     "  var vset : vertexset{Vertex} = new vertexset{Vertex}(0); \n"
+                     "  vset = vset.filter(filter_func); \n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const float_vector : vector{Vertex}(float) = 0.0;\n"
+                     "const constant_vector : vector[100](float); \n "
+                     "export func foo(input_vector : vector[100](float))\n"
+                     "  constant_vector = input_vector;"
+                     "end");
     EXPECT_EQ (0, basicTest(is));
 }

@@ -54,6 +54,9 @@ namespace graphit {
 
         virtual void visit(fir::ExprStmt::Ptr);
 
+        virtual void visit(fir::VectorAllocExpr::Ptr);
+
+
         virtual void visit(fir::AssignStmt::Ptr);
 
         virtual void visit(fir::ReduceStmt::Ptr);
@@ -154,6 +157,9 @@ namespace graphit {
         void addElementType(mir::ElementType::Ptr);
 
         mir::FuncDecl::Type getMirFuncDeclType(fir::FuncDecl::Type);
+
+        mir::Stmt::Ptr makeNoOPStmt();
+
 
     };
 

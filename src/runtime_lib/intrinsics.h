@@ -88,6 +88,8 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 #include "infra_gapbs/ordered_processing.h"
 
 #include "edgeset_apply_functions.h"
+#include <unordered_map>
+#include <unordered_set>
 
 #include "infra_ligra/ligra/ligra.h"
 
@@ -97,6 +99,12 @@ namespace julienne {
 #include "infra_julienne/IO.h"
 #include "infra_julienne/edgeMapReduce.h"
 }
+
+#include <time.h>
+#include <chrono>
+#include "infra_gapbs/minimum_spanning_tree.h"
+#include <float.h>
+
 
 template <typename T>
 static T builtin_sum(T* input_vector, int num_elem){
@@ -135,6 +143,33 @@ static Graph builtin_loadEdgesFromFile(std::string file_name){
     return g;
 }
 
+
+static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, NodeID> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++)
+		for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++)
+			el.push_back(Edge(x, indices[_y]));
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID> bb(cli);
+	return bb.MakeGraphFromEL(el);
+}
+static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_t *indptr, const NodeID *indices, int num_nodes, int num_edges) {
+	typedef EdgePair<NodeID, WNode> Edge;
+	typedef pvector<Edge> EdgeList;
+	EdgeList el;
+	for (NodeID x = 0; x < num_nodes; x++) {
+		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
+			el.push_back(Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y])));
+		}
+	}	
+	CLBase cli(0, NULL);
+	BuilderBase<NodeID, WNode, WeightT> bb(cli);
+	bb.needs_weights_ = false;
+	return bb.MakeGraphFromEL(el);	
+}
+
 static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
@@ -148,6 +183,71 @@ static int builtin_getVertices(julienne::graph<T> &edges) {
     return edges.n;
 }
 
+static VertexSubset<int>* serialSweepCut(Graph& graph,  VertexSubset<int> * vertices, double* val_array){
+    //create a copy of the vertex array
+    VertexSubset<int>* output_vertexset = new VertexSubset<int>(vertices);
+
+    //sort the vertex array based on the val_array
+    output_vertexset->toSparse();
+    auto dense_vertex_set = vertices->dense_vertex_set_;
+    sort(dense_vertex_set, dense_vertex_set + vertices->num_vertices_,
+         [&val_array](const int & a, const int & b) -> bool
+         {
+             return val_array[a] > val_array[b];
+         });
+
+    //find the maximum conductance partitioning
+
+    unordered_set<uintE> S;
+    long volS = 0;
+    long edgesCrossing = 0;
+
+    double best_conductance = DBL_MAX;
+    int best_cut = -1;
+    long best_vol = -1;
+    long best_edge_cross = -1;
+
+    for (int i = 0; i < vertices->num_vertices_; i++){
+        NodeID v = dense_vertex_set[i];
+        S.insert(v);
+        volS += graph.out_degree(v);
+        long denom = (volS < graph.num_edges()-volS)? volS : graph.num_edges()-volS;
+
+        for (NodeID ngh : graph.out_neigh(v)){
+            if(S.find(ngh) != S.end()) edgesCrossing--;
+            else edgesCrossing++;
+        }
+
+        double conductance = (edgesCrossing == 0 || denom == 0) ? 1 : (double)edgesCrossing/denom;
+
+        if(conductance < best_conductance) {
+            best_conductance = conductance;
+            best_cut = i;
+            best_edge_cross = edgesCrossing;
+            best_vol = volS;
+        }
+
+    }
+
+
+    //reset the size of the vertex array to the best cut, remove the boolean values
+    output_vertexset->num_vertices_ = best_cut;
+    output_vertexset->bool_map_ = nullptr;
+
+    return output_vertexset;
+}
+
+static int getRandomOutNgh(Graph &edges, NodeID v){
+    return edges.get_random_out_neigh(v);
+}
+
+static int getRandomInNgh(Graph &edges, NodeID v){
+    return edges.get_random_in_neigh(v);
+}
+
+static int* serialMinimumSpanningTree(WGraph &edges, NodeID start){
+    return minimum_spanning_tree(edges, start);
+}
 
 static int * builtin_getOutDegrees(Graph &edges){
     int * out_degrees  = new int [edges.num_nodes()];
@@ -186,13 +286,12 @@ static void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
 
-template <typename T> 
-static void builtin_append (std::vector<T>* vec, T element){
+
+template <typename T> static void builtin_append (std::vector<T>* vec, T element){
     vec->push_back(element);
 }
 
-template <typename T> 
-static T builtin_pop (std::vector<T>* vec){
+template <typename T> T static builtin_pop (std::vector<T>* vec){
     T last_element = vec->back();
     vec->pop_back();
     return last_element;
@@ -220,13 +319,28 @@ static float stopTimer(){
 
 }
 
+
+static char* argv_safe(int index, char** argv, int argc ){
+    // if index is less than or equal to argc than return argv[index]
+    //else return false or break command
+
+    if (index < argc) {
+        return argv[index];
+    } else {
+        std::cout << "Error: Did not provide argv[" << index << "] as part of the command line input" << std::endl;
+        throw std::invalid_argument( "Did not provide argument" );
+    }
+
+}
+
 static Graph builtin_transpose(Graph &graph){
-    return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_, graph.in_neighbors_, graph.out_index_, graph.out_neighbors_, true);
+    // Changing this to use shared pointer instead
+    //return CSRGraph<NodeID>(graph.num_nodes(), graph.get_in_index_(), graph.get_in_neighbors_(), graph.get_out_index_(), graph.get_out_neighbors_(), true);
+      return CSRGraph<NodeID>(graph.num_nodes(), graph.in_index_shared_, graph.in_neighbors_shared_, graph.out_index_shared_, graph.out_neighbors_shared_, true);
 }
 
 
-template<typename APPLY_FUNC> 
-static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
+template<typename APPLY_FUNC> static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
    if (vertex_subset->is_dense){
        parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
            if(vertex_subset->bool_map_[v]){
@@ -234,8 +348,14 @@ static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC
            }
        }
    } else {
-       parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
-           apply_func(vertex_subset->dense_vertex_set_[i]);
+       if(vertex_subset->dense_vertex_set_ == nullptr && vertex_subset->tmp.size() > 0) {
+           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+               apply_func(vertex_subset->tmp[i]);
+           }
+       }else  {
+           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+               apply_func(vertex_subset->dense_vertex_set_[i]);
+           }
        }
    }
 }
@@ -245,21 +365,69 @@ static void deleteObject(OBJECT_TYPE* object) {
    if(object)
        delete object;
 }
+template <typename T>
+static VertexSubset<int> * builtin_const_vertexset_filter(T func, int total_elements) {
+    VertexSubset<int> * output = new VertexSubset<NodeID>( total_elements, 0);
+    bool * next0 = newA(bool, total_elements);
+    parallel_for(int v = 0; v < total_elements; v++) {
+        next0[v] = 0;
+        if (func(v))
+            next0[v] = 1;
+    }
+    output->num_vertices_ = sequence::sum(next0, total_elements);
+    output->bool_map_ = next0;
+    output->is_dense = true;
+    return output;
+}
 
 typedef julienne::graph<julienne::symmetricVertex> julienne_graph_type;
 
 static inline julienne_graph_type builtin_loadJulienneEdgesFromFile(std::string filename) {
-	char * fname = (char*) filename.c_str();
-	return julienne::readGraph<julienne::symmetricVertex>(fname, false, true, false, false);
+    char * fname = (char*) filename.c_str();
+    return julienne::readGraph<julienne::symmetricVertex>(fname, false, true, false, false);
 }
 
 template <typename T>
 static inline double to_double(T t) {
-	return (double)t;
+    return (double)t;
 }
 
 static void deleteObject(julienne::vertexSubset set) {
-	set.del();
+    set.del();
 }
 
+template <typename T>
+static VertexSubset<int> * builtin_vertexset_filter(VertexSubset<int> * input, T func) {
+    int total_elements = input->vertices_range_;
+    //std::cout << "Filter range = " << total_elements << std::endl;
+    VertexSubset<int> * output = new VertexSubset<NodeID>( total_elements, 0);
+    bool * next0 = newA(bool, total_elements);
+    parallel_for(int v = 0; v < total_elements; v++)
+        next0[v] = 0;
+    if (input->is_dense) {
+        //std::cout << "Vertex subset is dense" << std::endl;
+        parallel_for(int v = 0; v < total_elements; v++) {
+            if (input->bool_map_[v] && func(v))
+                next0[v] = 1;
+	}
+    } else {
+        //std::cout << "Vertex subset is sparse" << std::endl;
+        if(!(input->dense_vertex_set_ == nullptr && input->num_vertices_ > 0))
+            parallel_for(int v = 0; v < input->num_vertices_; v++) {
+                //std::cout << "Vertex subset iteration for dense vertex set" << std::endl;
+                if (func(input->dense_vertex_set_[v]))
+                    next0[input->dense_vertex_set_[v]] = 1;
+            }
+	else 
+            parallel_for(int v = 0; v < input->num_vertices_; v++) {
+                //std::cout << "Vertex subset iteration for tmp" << std::endl;
+                if (func(input->tmp[v]))
+                    next0[input->tmp[v]] = 1;
+            }
+    }
+    output->num_vertices_ = sequence::sum(next0, total_elements);
+    output->bool_map_ = next0;
+    output->is_dense = true;
+    return output;
+}
 #endif //GRAPHIT_INTRINSICS_H_H

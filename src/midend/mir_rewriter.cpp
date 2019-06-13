@@ -145,6 +145,17 @@ namespace graphit {
             node = expr;
         }
 
+        void MIRRewriter::visit(std::shared_ptr<VectorAllocExpr> expr) {
+            expr->size_expr = rewrite<Expr>(expr->size_expr);
+	    if (expr->element_type != nullptr)
+                expr->element_type = rewrite<ElementType>(expr->element_type);
+            if (expr->scalar_type != nullptr)
+                expr->scalar_type = rewrite<ScalarType>(expr->scalar_type);
+            else if (expr->vector_type != nullptr)
+                expr->vector_type = rewrite<VectorType>(expr->vector_type);
+            node = expr;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ListAllocExpr> expr) {
             if (expr->size_expr != nullptr)
                 expr->size_expr = rewrite<Expr>(expr->size_expr);
@@ -266,7 +277,8 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<VectorType> vector_type) {
-            vector_type->element_type = rewrite<ElementType>(vector_type->element_type);
+            if (vector_type->element_type != nullptr)
+                vector_type->element_type = rewrite<ElementType>(vector_type->element_type);
             vector_type->vector_element_type = rewrite<Type>(vector_type->vector_element_type);
             node = vector_type;
         }

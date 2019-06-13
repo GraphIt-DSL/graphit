@@ -1,0 +1,16 @@
+element Vertex end
+const vector_a : vector{Vertex}(float) = 1.0;
+const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);
+
+
+
+extern func extern_add_one(v : int);
+
+func main()
+    vertices.apply(extern_add_one);
+    var sum : float = 0;
+    for i in 0:5
+        sum += vector_a[i];
+    end
+    print sum;
+end

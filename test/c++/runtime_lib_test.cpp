@@ -4,7 +4,7 @@
 
 #include <gtest.h>
 #include "intrinsics.h"
-#include "infra_gapbs/graph_verifier.h"
+//#include "infra_gapbs/graph_verifier.h"
 
 
 
@@ -111,6 +111,35 @@ protected:
 TEST_F(RuntimeLibTest, SimpleLoadGraphFromFileTest) {
     Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
     EXPECT_EQ (7 , g.num_edges());
+}
+
+TEST_F(RuntimeLibTest, serialMSTTest) {
+    WGraph wg = builtin_loadWeightedEdgesFromFile("../../test/graphs/mst_special_case.wel");
+    NodeID start = 1;
+    NodeID* parent_vector = minimum_spanning_tree(wg, start);
+
+    for (int i = 0; i < wg.num_nodes(); i++){
+        std::cout << "parent: " << parent_vector[i] << std::endl;
+    }
+
+    EXPECT_EQ (1 , parent_vector[1]);
+    EXPECT_EQ (3 , parent_vector[4]);
+    EXPECT_EQ (4 , parent_vector[5]);
+}
+
+
+TEST_F(RuntimeLibTest, serialMSTTest2) {
+    WGraph wg = builtin_loadWeightedEdgesFromFile("../../test/graphs/test2.wel");
+    NodeID start = 1;
+    NodeID* parent_vector = minimum_spanning_tree(wg, start);
+
+    for (int i = 0; i < wg.num_nodes(); i++){
+        std::cout << "parent: " << parent_vector[i] << std::endl;
+    }
+
+    EXPECT_EQ (1 , parent_vector[2]);
+    EXPECT_EQ (1 , parent_vector[3]);
+    EXPECT_EQ (3 , parent_vector[4]);
 }
 
 TEST_F(RuntimeLibTest, SimpleLoadVerticesromEdges) {
@@ -408,83 +437,99 @@ TEST_F(RuntimeLibTest, KCore_test){
 
 
 
-TEST_F(RuntimeLibTest, SetCover_test){
+TEST_F(RuntimeLibTest, SetCover_test) {
     char iFile[] = "../../test/graphs/rMatGraph_J_5_100";
     bool symmetric = true;
     bool compressed = false;
     bool binary = false;
     bool mmap = false;
-    julienne::graph<julienne::symmetricVertex> G = julienne::readGraph<julienne::symmetricVertex>(iFile, compressed, symmetric, binary, mmap);
-    
+    julienne::graph<julienne::symmetricVertex> G = julienne::readGraph<julienne::symmetricVertex>(iFile, compressed,
+                                                                                                  symmetric, binary,
+                                                                                                  mmap);
+
     // Compute
     auto GA = G;
     //auto D = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return G.V[i].getOutDegree(); });
     constexpr double epsilon = 0.01;
-    const double x = 1.0/log(1.0 + epsilon);
+    const double x = 1.0 / log(1.0 + epsilon);
 
-    auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
+    auto get_bucket_clamped = [&](size_t deg) -> julienne::uintE {
+        return (deg == 0) ? UINT_E_MAX : (julienne::uintE) floor(x * log((double) deg));
+    };
     auto D = new julienne::uintE[G.n];
-    parallel_for (int index = 0; index < G.n; index++)
-        D[index] = get_bucket_clamped(G.V[index].getOutDegree()); 
+    parallel_for (int index = 0; index < G.n; index++)D[index] = get_bucket_clamped(G.V[index].getOutDegree());
 
-    constexpr julienne::uintE COVERED = ((julienne::uintE)INT_E_MAX) - 1;
-    auto max_f = [] (julienne::uintE x, julienne::uintE y) { return std::max(x,y); };
-    
+    constexpr julienne::uintE COVERED = ((julienne::uintE) INT_E_MAX) - 1;
+    auto max_f = [](julienne::uintE x, julienne::uintE y) { return std::max(x, y); };
+
     size_t num_buckets = 128;
-    auto pq = new julienne::PriorityQueue<julienne::uintE>(G.n, D, julienne::decreasing, julienne::strictly_decreasing, num_buckets);
+    auto pq = new julienne::PriorityQueue<julienne::uintE>(G.n, D, julienne::decreasing, julienne::strictly_decreasing,
+                                                           num_buckets);
 
 
     /* Extern C++ code start */
     struct Visit_Elms {
-        julienne::uintE* elms;
-        Visit_Elms(julienne::uintE* _elms) : elms(_elms) { }
-        inline bool updateAtomic(const julienne::uintE& s, const julienne::uintE& d) {
+        julienne::uintE *elms;
+
+        Visit_Elms(julienne::uintE *_elms) : elms(_elms) {}
+
+        inline bool updateAtomic(const julienne::uintE &s, const julienne::uintE &d) {
             julienne::uintE oval = elms[d];
             julienne::writeMin(&(elms[d]), s);
             return false;
         }
-        inline bool update(const julienne::uintE& s, const julienne::uintE& d) { return updateAtomic(s, d); }
-        inline bool cond(const julienne::uintE& d) const { return elms[d] != COVERED; }
+
+        inline bool update(const julienne::uintE &s, const julienne::uintE &d) { return updateAtomic(s, d); }
+
+        inline bool cond(const julienne::uintE &d) const { return elms[d] != COVERED; }
     };
     julienne::dyn_arr<julienne::uintE> cover = julienne::dyn_arr<julienne::uintE>();
-    auto Elms = julienne::array_imap<julienne::uintE>(G.n, [&] (size_t i) { return UINT_E_MAX; });
-    auto ExternFunction = [&] (julienne::vertexSubset active) -> julienne::vertexSubset {
+    auto Elms = julienne::array_imap<julienne::uintE>(G.n, [&](size_t i) { return UINT_E_MAX; });
+    auto ExternFunction = [&](julienne::vertexSubset active) -> julienne::vertexSubset {
         // 1. sets -> elements (Pack out sets and update their degree)
-        auto pack_predicate = [&] (const julienne::uintE& u, const julienne::uintE& ngh) { return Elms[ngh] != COVERED; };
-        auto pack_apply = [&] (julienne::uintE v, size_t ct) { D[v] = get_bucket_clamped(ct); };
+        auto pack_predicate = [&](const julienne::uintE &u, const julienne::uintE &ngh) {
+            return Elms[ngh] != COVERED;
+        };
+        auto pack_apply = [&](julienne::uintE v, size_t ct) { D[v] = get_bucket_clamped(ct); };
         auto packed_vtxs = julienne::edgeMapFilter(G, active, pack_predicate, julienne::pack_edges);
         julienne::vertexMap(packed_vtxs, pack_apply);
         // Calculate the sets which still have sufficient degree (degree >= threshold)
-        size_t threshold = ceil(pow(1.0+epsilon, pq->get_current_priority()));
-        auto above_threshold = [&] (const julienne::uintE& v, const julienne::uintE& deg) { return deg >= threshold; };
+        size_t threshold = ceil(pow(1.0 + epsilon, pq->get_current_priority()));
+        auto above_threshold = [&](const julienne::uintE &v, const julienne::uintE &deg) { return deg >= threshold; };
         auto still_active = julienne::vertexFilter2<julienne::uintE>(packed_vtxs, above_threshold);
         packed_vtxs.del();
         // 2. sets -> elements (writeMin to acquire neighboring elements)
         julienne::edgeMap(G, still_active, Visit_Elms(Elms.s), -1, julienne::no_output | julienne::dense_forward);
         // 3. sets -> elements (count and add to cover if enough elms were won)
-        const size_t low_threshold = std::max((size_t)ceil(pow(1.0+epsilon,pq->get_current_priority()-1)), (size_t)1);
-        auto won_ngh_f = [&] (const julienne::uintE& u, const julienne::uintE& v) -> bool { return Elms[v] == u; };
-        auto threshold_f = [&] (const julienne::uintE& v, const julienne::uintE& numWon) {
-          if (numWon >= low_threshold) D[v] = UINT_E_MAX;
+        const size_t low_threshold = std::max((size_t) ceil(pow(1.0 + epsilon, pq->get_current_priority() - 1)),
+                                              (size_t) 1);
+        auto won_ngh_f = [&](const julienne::uintE &u, const julienne::uintE &v) -> bool { return Elms[v] == u; };
+        auto threshold_f = [&](const julienne::uintE &v, const julienne::uintE &numWon) {
+            if (numWon >= low_threshold) D[v] = UINT_E_MAX;
         };
         auto activeAndCts = julienne::edgeMapFilter(G, still_active, won_ngh_f);
         julienne::vertexMap(activeAndCts, threshold_f);
-        auto inCover = julienne::vertexFilter2(activeAndCts, [&] (const julienne::uintE& v, const julienne::uintE& numWon) {
-            return numWon >= low_threshold; });
-        cover.copyInF([&] (julienne::uintE i) { return inCover.vtx(i); }, inCover.size());
-        inCover.del(); activeAndCts.del();
+        auto inCover = julienne::vertexFilter2(activeAndCts,
+                                               [&](const julienne::uintE &v, const julienne::uintE &numWon) {
+                                                   return numWon >= low_threshold;
+                                               });
+        cover.copyInF([&](julienne::uintE i) { return inCover.vtx(i); }, inCover.size());
+        inCover.del();
+        activeAndCts.del();
         // 4. sets -> elements (Sets that joined the cover mark their neighboring
         // elements as covered. Sets that didn't reset any acquired elements)
-        auto reset_f = [&] (const julienne::uintE& u, const julienne::uintE& v) -> bool {
-          if (Elms[v] == u) {
-            if (D[u] == UINT_E_MAX) Elms[v] = COVERED;
-            else Elms[v] = UINT_E_MAX;
-          } return false;
+        auto reset_f = [&](const julienne::uintE &u, const julienne::uintE &v) -> bool {
+            if (Elms[v] == u) {
+                if (D[u] == UINT_E_MAX) Elms[v] = COVERED;
+                else Elms[v] = UINT_E_MAX;
+            }
+            return false;
         };
-        julienne::edgeMap(G, still_active, julienne::EdgeMap_F<decltype(reset_f)>(reset_f), -1, julienne::no_output | julienne::dense_forward);
+        julienne::edgeMap(G, still_active, julienne::EdgeMap_F<decltype(reset_f)>(reset_f), -1,
+                          julienne::no_output | julienne::dense_forward);
         still_active.del();
         return active;
-    }; 
+    };
 
     /* Extern C++ code ends */
     int rounds = 0;
@@ -496,23 +541,56 @@ TEST_F(RuntimeLibTest, SetCover_test){
         auto active = bucket.identifiers;
         auto modified = ExternFunction(active);
         modified.toSparse();
-        auto f = [&] (size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+        auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
             const julienne::uintE v = modified.vtx(i);
             const julienne::uintE bkt = pq->get_bucket(D[v]);
             return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
         };
         pq->update_buckets(f, modified.size());
-        
-        active.del();    
-        rounds+=1;
 
-    }  
-    
+        active.del();
+        rounds += 1;
+
+    }
+
     EXPECT_EQ(rounds, 24);
-    EXPECT_EQ(cover.size, 33); 
+    EXPECT_EQ(cover.size, 33);
 
     cover.del();
- 
-    G.del();
 
+    G.del();
+}
+
+TEST_F(RuntimeLibTest, GetRandomOutNeighborTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    NodeID ngh = g.get_random_out_neigh(1);
+    std::cout << ngh << std::endl;
+    EXPECT_LE (ngh , 5);
+    EXPECT_GE (ngh , 2);
+}
+
+TEST_F(RuntimeLibTest, GetRandomInNeighborTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    NodeID ngh = g.get_random_in_neigh(4);
+    std::cout << ngh << std::endl;
+    EXPECT_LE (ngh , 3);
+    EXPECT_GE (ngh , 1);
+
+}
+
+
+TEST_F(RuntimeLibTest, SweepCutTest) {
+    Graph g = builtin_loadEdgesFromFile("../../test/graphs/test.el");
+    auto vertexSubset = new VertexSubset<int>(g.num_nodes(), g.num_nodes());
+    double * val_array = new double[g.num_nodes()];
+    for (int i = 0; i < g.num_nodes(); i++){
+        val_array[i] = i;
+    }
+    VertexSubset<int>* vset_cut = serialSweepCut(g, vertexSubset, val_array);
+
+    for (int i = 0; i < vset_cut->size(); i++){
+        std::cout << "vertex: " << vset_cut->dense_vertex_set_[i] << std::endl;
+    }
+
+    EXPECT_EQ (vset_cut->size() , 2);
 }

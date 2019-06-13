@@ -2512,6 +2512,34 @@ namespace graphit {
             consume(Token::Type::COMMA);
             priority_queue_expr->starting_node = parseExpr();
             consume(Token::Type::RP);
+        } else if (peek().type == Token::Type::VECTOR){
+	    fir::NDTensorType::Ptr tensor_type = parseVectorBlockType();
+
+	    auto vector_alloc_expr = std::make_shared<fir::VectorAllocExpr>();
+	    auto element_type = tensor_type->element;
+            if (element_type != nullptr) {
+	        vector_alloc_expr->elementType = element_type;
+                
+            }else {
+                fir::IndexSet::Ptr set = tensor_type->indexSets[0];
+		fir::IntLiteral::Ptr numElements = std::make_shared<fir::IntLiteral>();
+		numElements->val = fir::to<fir::RangeIndexSet>(set)->range;
+		vector_alloc_expr->numElements = numElements;
+            }	 
+	    if (fir::isa<fir::ScalarType>(tensor_type->blockType)) {
+                vector_alloc_expr->vector_scalar_type = fir::to<fir::ScalarType>(tensor_type->blockType);
+	    } else if (fir::isa<fir::NDTensorType>(tensor_type->blockType)){
+                vector_alloc_expr->general_element_type = fir::to<fir::NDTensorType>(tensor_type->blockType);
+                vector_alloc_expr->vector_scalar_type = nullptr;
+            } else {
+                std::cout << "Unsupported Vector Element Type " << std::endl;
+	    }
+	    
+            output_new_expr = vector_alloc_expr;
+            consume(Token::Type::LP);
+            consume(Token::Type::RP);
+        } else {
+            reportError(peek(), "do not support this new expression");
         }
 
         output_new_expr->setBeginLoc(newToken);
@@ -2577,10 +2605,11 @@ namespace graphit {
         decls.insert("floor", IdentType::FUNCTION);
         decls.insert("log", IdentType::FUNCTION);
         decls.insert("to_double", IdentType::FUNCTION);
-
         decls.insert("max", IdentType::FUNCTION);
         decls.insert("writeMin", IdentType::FUNCTION);
-
+	    decls.insert("getRandomOutNgh", IdentType::FUNCTION);
+        decls.insert("getRandomInNgh", IdentType::FUNCTION);
+        decls.insert("serialMinimumSpanningTree", IdentType::FUNCTION);
     }
 
     fir::BreakStmt::Ptr Parser::parseBreakStmt() {

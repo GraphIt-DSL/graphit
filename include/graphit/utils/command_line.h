@@ -23,10 +23,12 @@ protected:
     char** argv_;
     std::string name_;
     // f: means -f flag requires a follow on name,
-    std::string get_args_ = "f:o:h";
+    std::string get_args_ = "f:o:p:m:h";
     std::vector<std::string> help_strings_;
     std::string input_filename_ = "";
     std::string output_filename_ = "";
+    std::string python_module_path_ = "";
+    std::string python_module_name_ = ""; 
 
 
     void AddHelpLine(char opt, std::string opt_arg, std::string text,
@@ -48,6 +50,8 @@ public:
         AddHelpLine('h', "", "print this help message");
         AddHelpLine('f', "file", "input file");
         AddHelpLine('o', "", "output file");
+	AddHelpLine('p', "", "Python module path");
+	AddHelpLine('m', "", "Python module name");
     }
 
     bool ParseArgs() {
@@ -72,6 +76,8 @@ public:
         switch (opt) {
             case 'f': input_filename_ = std::string(opt_arg);           break;
             case 'o': output_filename_ = std::string(opt_arg);                     break;
+	    case 'm': python_module_name_ = std::string(opt_arg); break;
+	    case 'p': python_module_path_ = std::string(opt_arg); break;
             case 'h': PrintUsage();                               break;
         }
     }
@@ -86,6 +92,8 @@ public:
 
     std::string input_filename() const { return input_filename_; }
     std::string output_filename() const { return output_filename_; }
+    std::string python_module_path() const { return python_module_path_; }
+    std::string python_module_name() const { return python_module_name_; }
 };
 
 

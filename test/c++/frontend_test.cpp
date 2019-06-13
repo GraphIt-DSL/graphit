@@ -94,6 +94,29 @@ TEST_F(FrontendTest, MainFunctionWithArgv) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, ExportFunction) {
+    istringstream is("export func export_func() print 4; end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, EdgeSetExportFuncVectorInit) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices : vertexset{Vertex};\n"
+                     "const vector_a : vector{Vertex}(float);\n"
+                     "func update_vector_a (v : Vertex ) "
+                     "  vector_a[v] = 0; "
+                     "end \n"
+                     "export func process(input_edges : edgeset{Edge}(Vertex,Vertex)) "
+                     "      edges = input_edges;"
+                     "      vertices = edges.getVertices();"
+                     "      vector_a = new vector{Vertex}(float)(); "
+                     "      vertices.apply(update_vector); "
+                     " end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 TEST_F(FrontendTest, MainFunctionWithCall) {
     istringstream is("func add(a : int, b: int) -> c:int c = a + b; end\n"
                              " func main() add(4, 5); end");

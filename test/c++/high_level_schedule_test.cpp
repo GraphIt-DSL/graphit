@@ -71,7 +71,40 @@ protected:
                                              "    end\n"
                                              "end");
 
-
+        const char*  export_pr_char = ("element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                "const vertices : vertexset{Vertex};\n"
+                                "const old_rank : vector{Vertex}(float);\n"
+                                "const new_rank : vector{Vertex}(float);\n"
+                                "const out_degrees : vector{Vertex}(int);\n"
+                                "const damp : float = 0.85;\n"
+                                "const beta_score : float;\n"
+                                "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                "    new_rank[dst] += old_rank[src] / out_degrees[src];\n"
+                                "end\n"
+                                "func updateVertex(v : Vertex)\n"
+                                "    new_rank[v] = beta_score + damp*(new_rank[v]);\n"
+                                "    old_rank[v] = new_rank[v];\n"
+                                "    new_rank[v] = 0.0;\n"
+                                "end\n"
+                                "func initVectors(v : Vertex) \n"
+                                "   old_rank[v] = 1.0; \n"
+                                "   new_rank[v] = 0.0; \n"
+                                "end\n"
+                                "export func export_func()\n"
+                                "   edges = load (\"test.el\"); \n"
+                                "   vertices = edges.getVertices(); \n"
+                                "   old_rank = new vector{Vertex}(float)(); \n"
+                                "   new_rank = new vector{Vertex}(float)(); \n"
+                                "   out_degrees = edges.getOutDegrees(); \n"
+                                "   beta_score = (1.0 - damp) / vertices.size(); \n"
+                                "   vertices.apply(initVectors); \n"
+                                "   for i in 1:10\n"
+                                "       #s1# edges.apply(updateEdge);\n"
+                                "       #s2# vertices.apply(updateVertex);\n"
+                                "   end\n"
+                                "end\n");
 
         const char * sssp_char =      "element Vertex end\n"
                                                          "element Edge end\n"
@@ -428,6 +461,7 @@ protected:
 
 
 
+
         const char* delta_stepping_char = ("element Vertex end\n"
                              "element Edge end\n"
                              "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
@@ -503,6 +537,51 @@ protected:
                                  "  end\n"
                                  "end");
 
+        const char* export_cf_char = ( "element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex, float);\n"
+                                "const vertices : vertexset{Vertex};\n"
+                                "const latent_vec : vector{Vertex}(vector[20](float));\n"
+                                "const error_vec : vector{Vertex}(vector[20](float));\n"
+                                "const step : float = 0.00000035;\n"
+                                "const lambda : float = 0.001;\n"
+                                "const K : int = 20;\n"
+                                "func updateEdge (src : Vertex, dst : Vertex, rating : int)\n"
+                                "    var estimate : float = 0;\n"
+                                "    for i in 0:K\n"
+                                "        estimate  += latent_vec[src][i] * latent_vec[dst][i];\n"
+                                "    end\n"
+                                "    var err : float = estimate - rating;\n"
+                                "    for i in 0:K\n"
+                                "        error_vec[dst][i] += latent_vec[src][i]*err;\n"
+                                "    end\n"
+                                "end\n"
+                                "func updateVertex (v : Vertex)\n"
+                                "     for i in 0:K\n"
+                                "        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);\n"
+                                "        error_vec[v][i] = 0;\n"
+                                "     end\n"
+                                "end\n"
+                                "func initVertex (v : Vertex)\n"
+                                "    for i in 0:K\n"
+                                "        latent_vec[v][i] = 0.5;\n"
+                                "        error_vec[v][i] = 0;\n"
+                                "    end\n"
+                                "end\n"
+                                "export func export_func(input_edges : edgeset{Edge}(Vertex,Vertex, float)) -> output : vector{Vertex}(vector[20](float))\n"
+                                "    edges = input_edges;\n"
+                                "    vertices  = edges.getVertices();\n"
+                                "    latent_vec = new vector{Vertex}(vector[20](float))();\n"
+                                "    error_vec = new vector{Vertex}(vector[20](float))();\n"
+                                "    vertices.apply(initVertex);\n"
+                                "    for i in 1:10\n"
+                                "        #s1# edges.apply(updateEdge);\n"
+                                "        vertices.apply(updateVertex);\n"
+                                "    end\n"
+                                "    output = latent_vec;\n"
+                                "end"
+        );
+
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -518,6 +597,8 @@ protected:
         delta_stepping_str_ = string(delta_stepping_char);
         ppsp_str_ = string(ppsp_char);
         astar_str_ = string(astar_char);
+        export_pr_str_ = string(export_pr_char);
+        export_cf_str_ = string(export_cf_char);
     }
 
     virtual void TearDown() {
@@ -588,7 +669,8 @@ protected:
     string delta_stepping_str_;
     string ppsp_str_;
     string astar_str_;
-
+    string export_pr_str_;
+    string export_cf_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1789,6 +1871,7 @@ TEST_F(HighLevelScheduleTest, ClosenessCentralityWeightedDefaultSchedule) {
 }
 
 
+
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
     istringstream is (delta_stepping_str_);
     fe_->parseStream(is, context_, errors_);
@@ -1863,3 +1946,33 @@ TEST_F(HighLevelScheduleTest, AStarDeltaSteppingWithEagerPriorityUpdateWithMerge
     program->configBucketMergeThreshold("s1", "argv[4]");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, ExportPRTest){
+    istringstream is (export_pr_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, ExportPRWithScheduleTest){
+    istringstream is (export_pr_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, ExportCFWithScheduleTest){
+    istringstream is (export_cf_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull")
+            ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+

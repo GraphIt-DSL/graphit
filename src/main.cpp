@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     //parse the arguments
     if (!cli.ParseArgs())
         return -1;
-
+    
     //read input file into buffer
     std::ifstream file(cli.input_filename());
     std::stringstream buffer;
@@ -55,10 +55,24 @@ int main(int argc, char* argv[]) {
     graphit::Midend* me = new graphit::Midend(context, program->getSchedule());
     me->emitMIR(mir_context);
     graphit::Backend* be = new graphit::Backend(mir_context);
-    be->emitCPP(output_file);
-
+    std::string python_module_name = cli.python_module_name();
+    std::string python_module_path = cli.python_module_path();
+    
+        
+    be->emitCPP(output_file, python_module_name);
     output_file.close();
-
+/*
+    if (python_module_name != "") {
+	if (python_module_path == "")
+		python_module_path = "/tmp";
+	std::ofstream python_output_file;
+	python_output_file.open(python_module_path + "/" + python_module_name + ".py");
+	be->emitPython(python_output_file, python_module_name, python_module_path) ;
+	python_output_file.close();
+	
+    }
+*/
+    delete be;
     return 0;
 
 }
