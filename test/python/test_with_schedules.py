@@ -202,15 +202,14 @@ class TestGraphitCompiler(unittest.TestCase):
             # invoke the PPSP verifier with starting point 0, end point 4
             verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin -t verifier_input -r 0 -u 4"
             print (verify_cmd)
-            proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
-            proc.wait()
+
+            output = self.get_command_output(verify_cmd)
             test_flag = False
-            for line in iter(proc.stdout.readline, ''):
+            for line in output.rstrip().split("\n"):
                 if line.rstrip().find("SUCCESSFUL") != -1:
                     test_flag = True
-                    break;
+                    break
             self.assertEqual(test_flag, True)
-
         else:
             print("not supporting default schedules with AStar yet")
 
@@ -219,7 +218,7 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test_with_separate_algo_schedule_files("bfs_with_filename_arg.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
-        os.chdir("..");
+        os.chdir("..")
         cmd = "OMP_PLACES=sockets ./bin/test.o " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.el" + " > verifier_input"
         print (cmd)
         subprocess.call(cmd, shell=True)
@@ -431,13 +430,12 @@ class TestGraphitCompiler(unittest.TestCase):
         # invoke the PPSP verifier with starting point 0, end point 4
         verify_cmd = "./ppsp_verifier -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.wel -t verifier_input -r 0 -u 4"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
-        proc.wait()
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline, ''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
-                break;
+                break
         self.assertEqual(test_flag, True)
 
     def test_simple_splitting(self):
@@ -686,5 +684,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_with_merge'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
