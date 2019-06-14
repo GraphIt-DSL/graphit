@@ -37,6 +37,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cwd = os.getcwd()
         cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
+        cls.root_test_input_with_schedules_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input_with_schedules/"
         cls.compile_flags = "-std=gnu++1y"
         cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
@@ -111,17 +112,35 @@ class TestGraphitCompiler(unittest.TestCase):
 
         subprocess.check_call(cpp_compile_cmd, shell=True)
 
-    def basic_compile_exec_test(self, input_file_name):
-        input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
-        print ("current directory: " + os.getcwd())
-        compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
-        print (compile_cmd)
-        subprocess.check_call(compile_cmd, shell=True)
-        cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I " + self.include_path + " " + self.numa_flags + " test.cpp -o test.o"
-        subprocess.check_call(cpp_compile_cmd, shell=True)
-        os.chdir("..")
-        subprocess.check_call("bin/test.o")
-        os.chdir("bin")
+    #def basic_compile_exec_test(self, input_file_name):
+    #    input_with_schedule_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
+    #    print ("current directory: " + os.getcwd())
+    #    compile_cmd = "python graphitc.py -f " + input_with_schedule_path + input_file_name + " -o test.cpp"
+    #    print (compile_cmd)
+    #    subprocess.check_call(compile_cmd, shell=True)
+    #    cpp_compile_cmd = self.cpp_compiler + " -g -std=gnu++1y -I " + self.include_path + " " + self.numa_flags + " test.cpp -o test.o"
+    #    subprocess.check_call(cpp_compile_cmd, shell=True)
+    #    os.chdir("..")
+    #    subprocess.check_call("bin/test.o")
+    #    os.chdir("bin")
+
+    def basic_compile_exec_test(self, input_file_name, extra_cpp_args=[], extra_exec_args=[]):
+        # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
+        graphit_compile_cmd = ["python", GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py", "-f", self.root_test_input_with_schedules_dir + input_file_name, "-o" , self.output_file_name]
+        # check the return code of the call as a way to check if compilation happened correctly
+        self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
+        # check if g++ compilation succeeded
+        cpp_compile_cmd = [self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args
+        self.assertEqual(
+            subprocess.call(cpp_compile_cmd),
+            0)
+        self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
+
+    def expect_output_val(self, input_file_name, expected_output_val, extra_cpp_args=[], extra_exec_args=[]):
+        self.basic_compile_exec_test(input_file_name, extra_cpp_args, extra_exec_args)
+        output = self.get_command_output(["./"+ self.executable_file_name]+extra_exec_args).split("\n")[0]
+        print ("output: " + str(output.strip()))
+        self.assertEqual(float(output.strip()), expected_output_val)
 
     def basic_library_compile(self, input_file_name, input_file_directory='/test/input_with_schedules/',
                               driver='library_test_driver.cpp'):
@@ -643,6 +662,9 @@ class TestGraphitCompiler(unittest.TestCase):
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
+    def test_k_core(self):
+        self.expect_output_val("k_core.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
+        
     def test_basic_library(self):
         self.basic_library_compile_exec_test("export_simple_edgeset_apply.gt");
 
@@ -668,15 +690,23 @@ class TestGraphitCompiler(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    while len(sys.argv) > 1:
-        if "parallel" in sys.argv:
+    #while len(sys.argv) > 1:
+    #    if "parallel" in sys.argv:
+    #        use_parallel = True
+    #        print ("using parallel")
+    #        del sys.argv[sys.argv.index("parallel")]
+    #    if "numa" in sys.argv:
+    #        use_numa = True
+    #        print ("using numa")
+    #        del sys.argv[sys.argv.index("numa")]
+    for arg in sys.argv:
+        if "parallel" == arg:
             use_parallel = True
             print ("using parallel")
-            del sys.argv[sys.argv.index("parallel")]
-        if "numa" in sys.argv:
+        elif "numa" == arg:
             use_numa = True
             print ("using numa")
-            del sys.argv[sys.argv.index("numa")]
+        
 
     # comment out if want to enable a specific test only
     unittest.main()
