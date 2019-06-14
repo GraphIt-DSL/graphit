@@ -665,6 +665,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_k_core(self):
         self.expect_output_val("k_core.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
         
+    def test_set_cover(self):
+        self.expect_output_val("set_cover.gt", 33, [GRAPHIT_SOURCE_DIRECTORY+"/test/input_with_schedules/set_cover_extern.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
+
     def test_basic_library(self):
         self.basic_library_compile_exec_test("export_simple_edgeset_apply.gt");
 
