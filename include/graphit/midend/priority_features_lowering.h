@@ -56,20 +56,21 @@ namespace graphit {
                 priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
                 priority_queue_alloc_expr->delta = mir_context_->delta_;
                 mir_context_->optional_starting_source_node = priority_queue_alloc_expr->starting_node;
-		mir_context_->priority_queue_alloc_list_.push_back(priority_queue_alloc_expr);
+                mir_context_->priority_queue_alloc_list_.push_back(priority_queue_alloc_expr);
             }
-            
+
             void visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
-	        edgeset_load_expr->priority_update_type = mir_context_->priority_update_type;
-	    }
-            
+                edgeset_load_expr->priority_update_type = mir_context_->priority_update_type;
+            }
+
             void visit(mir::VertexSetType::Ptr vertex_set_type) {
-		vertex_set_type->priority_update_type = mir_context_->priority_update_type;
-	    }
+                vertex_set_type->priority_update_type = mir_context_->priority_update_type;
+            }
+
             void visit(mir::EdgeSetType::Ptr edge_set_type) {
                 edge_set_type->priority_update_type = mir_context_->priority_update_type;
-	    }
-	    
+            }
+
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
         };
@@ -123,17 +124,19 @@ namespace graphit {
 
         };
 
-	struct LowerUpdatePriorityEdgeSetApplyExpr : public mir::MIRRewriter {
-		using mir::MIRRewriter::visit;
-		LowerUpdatePriorityEdgeSetApplyExpr(Schedule *schedule, MIRContext *mir_context) : 
-			schedule_(schedule), mir_context_(mir_context) {
-		}
-		//virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr expr);
-		virtual void visit(mir::ExprStmt::Ptr stmt);
-	
-		Schedule *schedule_;
-		MIRContext *mir_context_;
-	};
+        struct LowerUpdatePriorityEdgeSetApplyExpr : public mir::MIRRewriter {
+            using mir::MIRRewriter::visit;
+
+            LowerUpdatePriorityEdgeSetApplyExpr(Schedule *schedule, MIRContext *mir_context) :
+                    schedule_(schedule), mir_context_(mir_context) {
+            }
+
+            //virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr expr);
+            virtual void visit(mir::ExprStmt::Ptr stmt);
+
+            Schedule *schedule_;
+            MIRContext *mir_context_;
+        };
 
 
         void lower();
@@ -144,7 +147,6 @@ namespace graphit {
         MIRContext *mir_context_ = nullptr;
 
     };
-
 
 
 }

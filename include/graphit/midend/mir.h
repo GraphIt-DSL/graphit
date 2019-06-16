@@ -299,7 +299,7 @@ namespace graphit {
             EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
             ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
             ReduceBeforePriorityUpdate, //Julienne refactored runtime lib
-	    ExternPriorityUpdate, // Julienne refactored runtime lib
+	        ExternPriorityUpdate, // Julienne refactored runtime lib
         };
         struct VertexSetType : public Type {
             ElementType::Ptr element;
@@ -340,7 +340,7 @@ namespace graphit {
             ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr> *vertex_element_type_list;
 
-	    PriorityUpdateType priority_update_type = NoPriorityUpdate;
+	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetType> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
