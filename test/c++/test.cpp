@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
-//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SweepCutTest";
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpdatesTest";
 
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";

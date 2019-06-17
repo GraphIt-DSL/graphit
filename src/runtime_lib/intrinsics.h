@@ -430,4 +430,35 @@ static VertexSubset<int> * builtin_vertexset_filter(VertexSubset<int> * input, T
     output->is_dense = true;
     return output;
 }
+
+template <typename PriorityType>
+  VertexSubset<NodeID> * getBucketWithGraphItVertexSubset(julienne::PriorityQueue<PriorityType>* pq){
+    julienne::vertexSubset ready_set = pq->dequeue_ready_set();
+
+    auto vset =  new VertexSubset<NodeID> (ready_set);
+//    for (int i = 0; i < vset->num_vertices_; i++){
+//        std::cout << "vset[i] vertex: " << vset->dense_vertex_set_[i] << std::endl;
+//    }
+    return vset;
+}
+
+
+template <typename PriorityType>
+void updateBucektWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq){
+    vset->toSparse();
+    auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+        const julienne::uintE v = vset->dense_vertex_set_[i];
+        const julienne::uintE bkt = pq->get_bucket(pq->tracking_variable[v]);
+        return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
+    };
+
+//    for (int i = 0; i < 5; i++){
+//        std::cout << "f[i] vertex: " << std::get<0>(f(i).t) << std::endl;
+//        std::cout << "f[i] bkt ID: " << std::get<1>(f(i).t) << std::endl;
+//    }
+
+    pq->update_buckets(f, vset->num_vertices_);
+}
+
+
 #endif //GRAPHIT_INTRINSICS_H_H

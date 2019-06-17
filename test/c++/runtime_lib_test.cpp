@@ -543,7 +543,7 @@ TEST_F(RuntimeLibTest, SetCover_test) {
         modified.toSparse();
         auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
             const julienne::uintE v = modified.vtx(i);
-            const julienne::uintE bkt = pq->get_bucket(D[v]);
+            const julienne::uintE bkt = pq->get_bucket(pq->tracking_variable[v]);
             return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
         };
         pq->update_buckets(f, modified.size());
@@ -593,4 +593,57 @@ TEST_F(RuntimeLibTest, SweepCutTest) {
     }
 
     EXPECT_EQ (vset_cut->size() , 2);
+}
+
+
+TEST_F(RuntimeLibTest, UpdateAndGetGraphItVertexSubsetFromJulienneBucketsTest){
+
+    int num_vertices = 5;
+    int num_buckets = 5;
+    auto vertexSubset = new VertexSubset<int>(num_vertices, 0);
+    int * priority_array = new int[num_vertices];
+    for (int v = 0; v < num_vertices; v++){
+        vertexSubset->addVertex(v);
+        priority_array[v] = v % 2;
+    }
+
+    auto pq = new julienne::PriorityQueue<int>(num_vertices, priority_array, julienne::increasing, julienne::strictly_decreasing,
+                                                           8);
+
+
+///    updateBucektWithGraphItVertexSubset(vertexSubset, pq);
+
+    auto vset = getBucketWithGraphItVertexSubset(pq);
+    EXPECT_EQ(vset->num_vertices_, 3);
+}
+
+TEST_F(RuntimeLibTest, UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpdatesTest){
+
+    int num_vertices = 5;
+    int num_buckets = 5;
+    auto vertexSubset = new VertexSubset<int>(num_vertices, 0);
+    int * priority_array = new int[num_vertices];
+    for (int v = 0; v < num_vertices; v++){
+        vertexSubset->addVertex(v);
+        priority_array[v] = v % 2+1;
+    }
+
+    auto pq = new julienne::PriorityQueue<int>(num_vertices, priority_array, julienne::increasing, julienne::strictly_decreasing,
+                                               8);
+
+    for (int v = 0; v < num_vertices; v++){
+        priority_array[v] = v % 2;
+    }
+
+    updateBucektWithGraphItVertexSubset(vertexSubset, pq);
+
+    auto vset = getBucketWithGraphItVertexSubset(pq);
+    EXPECT_EQ(vset->num_vertices_, 3);
+
+    vset = getBucketWithGraphItVertexSubset(pq);
+    EXPECT_EQ(vset->num_vertices_, 2);
+
+    vset = getBucketWithGraphItVertexSubset(pq);
+    EXPECT_EQ(pq->finished(), true);
+
 }
