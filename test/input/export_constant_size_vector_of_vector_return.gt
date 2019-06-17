@@ -1,0 +1,9 @@
+export func export_func() -> output: vector[10](vector[10](int))
+	var vec: vector[10](vector[10](int)) = new vector[10](vector[10](int))();
+	for i in 0:10
+		for j in 0:10
+			vec[i][j] = i+1;
+		end
+	end
+	output = vec;
+end
