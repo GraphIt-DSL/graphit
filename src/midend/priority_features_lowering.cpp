@@ -62,10 +62,10 @@ namespace graphit {
         }
 
         //lowers for the ReduceBeforeUpdate default schedule
-        auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
-        for (auto function : functions) {
-            function->accept(&lower_reduce_before_update);
-        }
+//        auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
+//        for (auto function : functions) {
+//            function->accept(&lower_reduce_before_update);
+//        }
 
 
     }
