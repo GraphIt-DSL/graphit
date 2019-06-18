@@ -89,6 +89,25 @@ namespace graphit {
             MIRContext *mir_context_;
         };
 
+        // Do code lowering for reduce before priority update (the default schedule)
+        struct LowerReduceBeforePriorityUpdate : public mir::MIRRewriter {
+            using mir::MIRRewriter::visit;
+
+            LowerReduceBeforePriorityUpdate(Schedule *schedule, MIRContext *mir_context) : schedule_(
+                    schedule), mir_context_(mir_context) {
+
+            }
+
+            // rewrite the entire stmt to insert the update buckets call in the end
+            virtual void visit(mir::ExprStmt::Ptr);
+
+            //specialize the dequeue_ready_set call for the GraphIt VertexSubset
+            virtual void visit(mir::Call::Ptr);
+
+            Schedule *schedule_;
+            MIRContext *mir_context_;
+        };
+
 
         struct LowerIntoOrderedProcessingOperatorRewriter : public mir::MIRRewriter {
             using mir::MIRRewriter::visit;

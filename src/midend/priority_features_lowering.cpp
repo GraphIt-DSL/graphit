@@ -21,7 +21,6 @@ namespace graphit {
         }
 
 
-
         //this visitor sets the priorty update type, and delta in mir_context
         for (auto function : functions) {
             function->accept(&schedule_finder);
@@ -60,6 +59,12 @@ namespace graphit {
         auto lower_priority_update_rewriter = LowerPriorityUpdateOperatorRewriter(schedule_, mir_context_);
         for (auto function : functions) {
             lower_priority_update_rewriter.rewrite(function);
+        }
+
+        //lowers for the ReduceBeforeUpdate default schedule
+        auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
+        for (auto function : functions) {
+            function->accept(&lower_reduce_before_update);
         }
 
 
@@ -298,4 +303,11 @@ namespace graphit {
         }
     }
 
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr) {
+
+    }
+
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr) {
+
+    }
 }
