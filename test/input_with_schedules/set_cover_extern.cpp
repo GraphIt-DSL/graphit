@@ -21,9 +21,12 @@ julienne::dyn_arr<julienne::uintE> cover = julienne::dyn_arr<julienne::uintE>();
 
 constexpr double epsilon = 0.01;
 const double x = 1.0/log(1.0 + epsilon);
-auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
 
 julienne::vertexSubset extern_function(julienne::vertexSubset active) {
+
+    auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
+
+
     static julienne::array_imap<julienne::uintE> *Elms_p = NULL;
     if (Elms_p == NULL)
          Elms_p = new julienne::array_imap<julienne::uintE>(edges.julienne_graph.n, [&] (size_t i) { return UINT_E_MAX; });
