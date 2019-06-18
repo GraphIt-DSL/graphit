@@ -13,6 +13,11 @@ namespace graphit {
         // find the schedules specified for priority updates,
         // assuming we only have one priority queue at the moment
         auto schedule_finder = PriorityUpdateScheduleFinder(mir_context_, schedule_);
+        //this visitor sets the priorty update type, and delta in mir_context
+        for (auto function : functions) {
+            function->accept(&schedule_finder);
+        }
+
 
         // lowers the extern apply expression - This has to be done before lower_priority_queue_type_and_alloc_expr because this gathers some parameters into mir_context_ like the schedules
         auto lower_extern_apply_expr = LowerUpdatePriorityExternVertexSetApplyExpr(schedule_, mir_context_);
@@ -20,11 +25,6 @@ namespace graphit {
             lower_extern_apply_expr.rewrite(function);
         }
 
-
-        //this visitor sets the priorty update type, and delta in mir_context
-        for (auto function : functions) {
-            function->accept(&schedule_finder);
-        }
 
         // lowers the Priority Queue Type, and Alloc Expr based on the schedule
         auto lower_priority_queue_type_and_alloc_expr = LowerPriorityRelatedTypeAndExpr(mir_context_, schedule_);
@@ -62,12 +62,12 @@ namespace graphit {
         }
 
         //lowers for the ReduceBeforeUpdate default schedule
-//        auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
-//        for (auto function : functions) {
-//            function->accept(&lower_reduce_before_update);
-//        }
-
-
+        if (mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+            auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
+            for (auto function : functions) {
+                function->accept(&lower_reduce_before_update);
+            }
+        }
     }
 
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
@@ -250,8 +250,19 @@ namespace graphit {
             node = priority_update_min;
         } else if (call->name == "updatePrioritySum") {
 
-            node = call;
-
+            if (mir_context_->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate){
+                // we don't need to do any specialization for ConstSumReduceBeforePriorityUpdate
+                node = call;
+            } else {
+                mir::PriorityUpdateOperatorSum::Ptr priority_udpate_sum = std::make_shared<mir::PriorityUpdateOperatorSum>();
+                priority_udpate_sum->args = call->args;
+                priority_udpate_sum->name = call->name;
+                priority_udpate_sum->priority_queue = call_args[0];
+                priority_udpate_sum->destination_node_id = call_args[1];
+                priority_udpate_sum->delta = call_args[2];
+                priority_udpate_sum->minimum_val = call_args[3];
+                node = priority_udpate_sum;
+            }
         } else {
             node = call;
         }
@@ -303,11 +314,26 @@ namespace graphit {
         }
     }
 
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr) {
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr expr) {
+        // Locate the ExprStmt that has edgesetApplyUpdatePriority
+
+        // Replace the edgesetApplyUpdatePriority with edgesetApplyModified
+
+        // inserts BucketUpdateCall
+
+        // Replace the stmt with the stmtblock
+    }
+
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr expr) {
+
+        // Locates the dequeue_ready_set() call and replace with
+    }
+
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorSum) {
 
     }
 
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr) {
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorMin) {
 
     }
 }

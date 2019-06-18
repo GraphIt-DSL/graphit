@@ -717,5 +717,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_set_cover'))
+    # suite.addTest(TestGraphitCompiler('test_k_core'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
