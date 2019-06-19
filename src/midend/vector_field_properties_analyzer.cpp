@@ -42,6 +42,8 @@ namespace graphit {
         if (mir_context_->priority_update_type == mir::EagerPriorityUpdate ||
                 mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
             analyzeSingleFunctionEdgesetApplyExpr(priority_update_expr->input_function_name, "push");
+        } else {
+
         }
     }
 
@@ -59,7 +61,13 @@ namespace graphit {
         }
     }
 
-
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorSum::Ptr op) {
+        if (direction_ == "push") {
+            op->is_atomic = true;
+        } else {
+            op->is_atomic = false;
+        }
+    }
 
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
@@ -211,6 +219,8 @@ namespace graphit {
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
         return property;
     }
+
+
 
 }
 

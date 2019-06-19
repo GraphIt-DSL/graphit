@@ -28,6 +28,10 @@ namespace graphit {
         // needed for reading commandline arguments in the main function
         VertexEdgeSetLower(mir_context).lower();
 
+
+        //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
+        PriorityFeaturesLower(mir_context, schedule).lower();
+
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
         // deduplication: enable / disable
@@ -37,8 +41,7 @@ namespace graphit {
         //  sets the flags for other parts of the lowering process
         ApplyExprLower(mir_context, schedule).lower();
 
-        PriorityFeaturesLower(mir_context, schedule).lower();
-        
+
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)

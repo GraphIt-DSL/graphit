@@ -41,6 +41,8 @@ namespace graphit {
 
             virtual void visit(mir::TensorReadExpr::Ptr);
 
+            virtual void visit(mir::PriorityUpdateOperatorSum::Ptr);
+
         private:
             std::string direction_;
 

@@ -1953,6 +1953,20 @@ namespace graphit {
 	oss << ")";
     }
 
+    void CodeGenCPP::visit(mir::PriorityUpdateOperatorSum::Ptr update_op) {
+        update_op->priority_queue->accept(this);
+        if (update_op->is_atomic){
+            oss << ".updatePrioritySumAtomic(";
+        } else {
+            oss << ".updatePrioritySum(";
+        }
+        update_op->destination_node_id->accept(this);
+        oss << ", ";
+        update_op->delta->accept(this);
+        oss << ", ";
+        update_op->minimum_val->accept(this);
+        oss << ")";
+    }
 
 
 }

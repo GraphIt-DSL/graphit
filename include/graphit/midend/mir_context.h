@@ -393,10 +393,8 @@ namespace graphit {
 
         // Ordered GraphIt additions
 
-        // The type of priority update that the schedule has specified
-        // We assume that only one type of priority is happening right now
-        // By default, it is NoPriorityUpdate
-        mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
+        // By default the priority is ReduceBeforePriorityUpdate
+        mir::PriorityUpdateType priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
 
 
         int delta_ = 1;

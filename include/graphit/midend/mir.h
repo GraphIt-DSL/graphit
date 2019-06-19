@@ -764,6 +764,7 @@ namespace graphit {
             Expr::Ptr delta;
             // a minimum value for how low the priority can be reduced to (optional)
             Expr::Ptr minimum_val;
+            bool is_atomic = false;
 
             typedef std::shared_ptr<PriorityUpdateOperatorSum> Ptr;
 
@@ -883,6 +884,10 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetApplyExpr>());
+            }
+
+            void copyEdgesetApply(MIRNode::Ptr node){
+                copy(node);
             }
 
         protected:

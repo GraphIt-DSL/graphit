@@ -62,7 +62,7 @@ namespace graphit {
         }
 
         //lowers for the ReduceBeforeUpdate default schedule
-        if (mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+        if (mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) {
             auto lower_reduce_before_update = LowerReduceBeforePriorityUpdate(schedule_, mir_context_);
             for (auto function : functions) {
                 function->accept(&lower_reduce_before_update);
@@ -250,7 +250,7 @@ namespace graphit {
             node = priority_update_min;
         } else if (call->name == "updatePrioritySum") {
 
-            if (mir_context_->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate){
+            if (mir_context_->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate) {
                 // we don't need to do any specialization for ConstSumReduceBeforePriorityUpdate
                 node = call;
             } else {
@@ -306,31 +306,53 @@ namespace graphit {
 
                     node = stmt_block;
 
+                } else if (apply_schedule->second.priority_update_type ==
+                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE){
+                    lowerReduceBeforeUpdateEdgeSetApply(stmt);
                 }
             }
+        } else {
+            //The default priority update schedule is lower into ReduceBeforeUpdate
+            lowerReduceBeforeUpdateEdgeSetApply(stmt);
         }
         if (stmt->stmt_label != "") {
             label_scope_.scope(stmt->stmt_label);
         }
     }
 
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr expr) {
+    void PriorityFeaturesLower::LowerUpdatePriorityEdgeSetApplyExpr::lowerReduceBeforeUpdateEdgeSetApply(
+            mir::ExprStmt::Ptr stmt) {
+        // convert it back to a normal edgeset apply expression but with a tracking variable
+        assert (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr));
+        mir::EdgeSetApplyExpr::Ptr regular_edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
+        regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
+        stmt->expr = regular_edgeset_apply_expr;
+        node = stmt;
+
+    }
+
+    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr expr_stmt) {
         // Locate the ExprStmt that has edgesetApplyUpdatePriority
+//        if  (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(exprt_stmt->expr)
+//                && mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+//                // Replace the edgesetApplyUpdatePriority with edgesetApplyModified
+//                auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
+//
+//            // inserts BucketUpdateCall
+//
+//            // Replace the stmt with the stmtblock
+//        } else {
+//            //Don't do anything in this case
+//            node = exprt_stmt;
+//        }
+        node = expr_stmt;
 
-        // Replace the edgesetApplyUpdatePriority with edgesetApplyModified
-
-        // inserts BucketUpdateCall
-
-        // Replace the stmt with the stmtblock
     }
 
     void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr expr) {
 
         // Locates the dequeue_ready_set() call and replace with
-    }
-
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorSum) {
-
+        node = expr;
     }
 
     void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorMin) {
