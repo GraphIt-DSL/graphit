@@ -649,12 +649,11 @@ namespace graphit {
             printIndent();
             oss_ << " } //end of outer for loop" << std::endl;
             oss_ << "        } else { // end of if statement on grain size, recursive case next\n"
-                    "                 cilk_spawn recursive_lambda(start, start + ((end-start) >> 1), grain_size);\n"
-                    "                  recursive_lambda(start + ((end-start)>>1), end, grain_size);\n"
+                    "                  ligra::parallel_invoke([&] { recursive_lambda(start, start + ((end-start) >> 1), grain_size); },\n"
+                    "                                         [&] { recursive_lambda(start + ((end-start)>>1), end, grain_size); });\n"
                     "        } \n"
                     "    }; //end of lambda function\n";
-            oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
-                    "    cilk_sync; \n";
+            oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n";
         }
 
         if (numa_aware) {

@@ -62,6 +62,13 @@ void parallel_for_256(IterT start, IterT end, BodyT body) {
   _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
     body(i);
 }
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  cilk_spawn func0();
+  func1();
+  cilk_sync;
+}
 }
 #include <cilk/cilk_api.h>
 #include <sstream>
@@ -118,6 +125,13 @@ void parallel_for_256(IterT start, IterT end, BodyT body) {
   _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
     body(i);
 }
+
+template <typename Func0, typename Func1>
+void parallel_invoke( const Func0& func0, const Func1& func1 ) {
+  cilk_spawn func0();
+  func1();
+  cilk_sync;
+}
 }
 #define parallel_main main
 #include <cilk/cilk_api.h>
@@ -145,7 +159,7 @@ static void setWorkers(int n) {
 #define cilk_sync
 namespace ligra {
 using tbb::parallel_for;
-
+using tbb::parallel_invoke;
 // ignore grain size for now
 // c++14
 // template<typename IterT, typename BodyT>
@@ -223,6 +237,12 @@ void parallel_for_256(IterT start, IterT end, BodyT body) {
   _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; ++i)
     body(i);
 }
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  func0();
+  func1();
+}
 }
 //#define parallel_for _Pragma("omp parallel for ") for
 //#define parallel_for _Pragma("omp parallel for schedule (dynamic, 64)") for
@@ -268,6 +288,12 @@ template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
   for (IterT i = start; i < end; ++i)
     body(1);
+}
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  func0();
+  func1();
 }
 }
 #define cilk_for for
