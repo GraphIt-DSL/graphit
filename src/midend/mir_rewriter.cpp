@@ -107,6 +107,23 @@ namespace graphit {
             visitNaryExpr(expr);
         }
 
+        void MIRRewriter::visit(AndExpr::Ptr expr) {
+            visitBinaryExpr(expr);
+        }
+
+        void MIRRewriter::visit(OrExpr::Ptr expr) {
+            visitBinaryExpr(expr);
+        }
+
+        void MIRRewriter::visit(XorExpr::Ptr expr) {
+            visitBinaryExpr(expr);
+        }
+
+        void MIRRewriter::visit(NotExpr::Ptr expr) {
+            expr->operand = rewrite<mir::Expr>(expr->operand);
+            node = expr;
+        }
+
         void MIRRewriter::visit(AddExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }

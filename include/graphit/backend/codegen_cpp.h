@@ -65,6 +65,10 @@ namespace graphit {
         virtual void visit(mir::NegExpr::Ptr);
         virtual void visit(mir::EqExpr::Ptr);
 
+        virtual void visit(mir::AndExpr::Ptr);
+        virtual void visit(mir::OrExpr::Ptr);
+        virtual void visit(mir::XorExpr::Ptr);
+        virtual void visit(mir::NotExpr::Ptr);
 
         virtual void visit(mir::MulExpr::Ptr);
         virtual void visit(mir::DivExpr::Ptr);
@@ -125,7 +129,7 @@ namespace graphit {
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
 
         void genTypesRequiringTypeDefs();
-	
+
 	    void generatePyBindWrapper(mir::FuncDecl::Ptr);
 
     	void generatePyBindModule();

@@ -575,7 +575,7 @@ namespace graphit {
 
         struct FuncDecl : public MIRNode {
             enum class Type {INTERNAL, EXPORTED, EXTERNAL};
- 
+
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
@@ -1070,6 +1070,60 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EqExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct AndExpr : public BinaryExpr {
+            typedef std::shared_ptr<AndExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<AndExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct OrExpr : public BinaryExpr {
+            typedef std::shared_ptr<OrExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<OrExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct XorExpr : public BinaryExpr {
+            typedef std::shared_ptr<XorExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<XorExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct NotExpr : public Expr {
+            Expr::Ptr operand;
+
+            typedef std::shared_ptr<NotExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<NotExpr>());
             }
 
         protected:
