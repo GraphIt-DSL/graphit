@@ -248,7 +248,6 @@ namespace graphit {
             else {
                 assert(false && "Cannot indentify type of vector or set\n");
             }
-		
         }
 
         bool updateElementInputFilename(mir::ElementType::Ptr element_type, mir::Expr::Ptr file_name) {

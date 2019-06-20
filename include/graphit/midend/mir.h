@@ -304,7 +304,7 @@ namespace graphit {
         struct VertexSetType : public Type {
             ElementType::Ptr element;
 
-	    PriorityUpdateType priority_update_type = NoPriorityUpdate;
+	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
 
             typedef std::shared_ptr<VertexSetType> Ptr;
 
@@ -335,7 +335,7 @@ namespace graphit {
 
         };
 
-        struct EdgeSetType : public Type {
+        struct EdgeSetType : public ElementType {
             ElementType::Ptr element;
             ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr> *vertex_element_type_list;

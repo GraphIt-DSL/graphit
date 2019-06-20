@@ -1659,7 +1659,9 @@ namespace graphit {
             priority_queue_type->priority_type->accept(this);
             oss << " >* ";
 
-        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate) { // Add rest of the cases here as required
+        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) { // Add rest of the cases here as required
             oss << "julienne::PriorityQueue < ";
 	    priority_queue_type->priority_type->accept(this);
 	    oss << " >* ";
@@ -1688,26 +1690,29 @@ namespace graphit {
             }
             oss << "); ";
 
-        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate) {  // Add other types here 
-	    oss << "new julienne::PriorityQueue <";
-	    priority_queue_alloc_expr->priority_type->accept(this);
-	    oss << " > ( ";
-	    
-	    oss << mir_context_->getEdgeSets()[0]->name;
-	    oss << ".julienne_graph.n, ";
-	    
-	    oss << priority_queue_alloc_expr->vector_function;
+        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) {  // Add other types here
+
+            oss << "new julienne::PriorityQueue <";
+            priority_queue_alloc_expr->priority_type->accept(this);
+            oss << " > ( ";
+
+            oss << mir_context_->getEdgeSets()[0]->name;
+            oss << ".julienne_graph.n, ";
+
+            oss << priority_queue_alloc_expr->vector_function;
+                oss << ", ";
+
+            oss << "(julienne::bucket_order)";
+                oss << priority_queue_alloc_expr->bucket_ordering;
+                oss << ", ";
+
+            oss << "(julienne::priority_order)";
+            oss << priority_queue_alloc_expr->priority_ordering;
             oss << ", ";
 
-	    oss << "(julienne::bucket_order)";
-            oss << priority_queue_alloc_expr->bucket_ordering;
-            oss << ", ";
-            
-	    oss << "(julienne::priority_order)";
-	    oss << priority_queue_alloc_expr->priority_ordering;
-	    oss << ", ";
-
-	    oss << "128";
+            oss << "128";
             
             oss << ")";
 
@@ -1849,12 +1854,22 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::UpdatePriorityUpdateBucketsCall::Ptr update_call) {
         printIndent();
-	oss << update_call->priority_queue_name;
-	oss << "->update_buckets(";
-	oss << update_call->lambda_name;
-	oss << ", ";
-	oss << update_call->modified_vertexsubset_name;
-	oss << ".size());" << std::endl;
+
+        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate){
+            oss << update_call->priority_queue_name;
+            oss << "->update_buckets(";
+            oss << update_call->lambda_name;
+            oss << ", ";
+            oss << update_call->modified_vertexsubset_name;
+            oss << ".size());" << std::endl;
+        } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
+            oss << "updateBucektWithGraphItVertexSubset(";
+            oss << update_call->lambda_name << ", ";
+            oss << update_call->priority_queue_name << ");" << std::endl;
+        } else {
+            std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
+        }
+
     }
 
     void CodeGenCPP::get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {

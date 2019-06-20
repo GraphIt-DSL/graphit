@@ -329,13 +329,29 @@ namespace graphit {
         regular_edgeset_apply_expr->tracking_field = mir_context_->priority_queue_alloc_list_[0]->vector_function;
         stmt->expr = regular_edgeset_apply_expr;
 
+        // Create a new VarDecl statement that returns a frontier
+        mir::VarDecl::Ptr new_var_decl = std::make_shared<mir::VarDecl>();
+        std::string modified_vertexset_name = "modified_vertexsubset" + mir_context_->getUniqueNameCounterString();
+        new_var_decl->initVal = regular_edgeset_apply_expr;
+        new_var_decl->name = modified_vertexset_name;
+        mir::VertexSetType::Ptr vertexset_type = std::make_shared<mir::VertexSetType>();
+        vertexset_type->priority_update_type= mir::ReduceBeforePriorityUpdate;
+        mir::VarExpr::Ptr edgeset_target = mir::to<mir::VarExpr>(regular_edgeset_apply_expr->target);
 
+        auto var = mir_context_->getSymbol(edgeset_target->var.getName());
+        auto type = var.getType();
+        mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(type);
+        vertexset_type->element = edgeset_type->vertex_element_type_list->at(0);
+        new_var_decl->type = vertexset_type;
+
+        // Create a new call to update the buckets with the frontier
         mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = std::make_shared<mir::UpdatePriorityUpdateBucketsCall>();
-        update_call->modified_vertexsubset_name = "modified_vertexsubset" + mir_context_->getUniqueNameCounterString();
+        update_call->lambda_name = modified_vertexset_name;
+        update_call->modified_vertexsubset_name = modified_vertexset_name;
         update_call->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
         update_call->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
         mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
-        stmt_block->insertStmtEnd(stmt);
+        stmt_block->insertStmtEnd(new_var_decl);
         stmt_block->insertStmtEnd(update_call);
 
         node = stmt_block;
