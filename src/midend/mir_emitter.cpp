@@ -651,7 +651,7 @@ namespace graphit {
 
         const auto func_name = func_decl->name->ident;
         mir_func_decl->name = func_name;
-        // Copy the type from the fir node to the mir node (for external/internal type)
+        // Copy the type from the fir node to the mir node (for external/internal type) 
         mir_func_decl->type = getMirFuncDeclType(func_decl->type);
 
 	if (mir_func_decl->type == mir::FuncDecl::Type::INTERNAL) {

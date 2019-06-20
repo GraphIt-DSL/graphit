@@ -61,7 +61,7 @@ namespace graphit {
                 label_scope_.unscope();
             }
         }
-
+      
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }
@@ -103,7 +103,7 @@ namespace graphit {
             visitNaryExpr(expr);
         }
 
-        void MIRVisitor::visit(AndExpr::Ptr expr) {
+	void MIRVisitor::visit(AndExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
 

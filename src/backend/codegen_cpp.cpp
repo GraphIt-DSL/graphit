@@ -84,7 +84,7 @@ namespace graphit {
 		}
 	}
 	dedent();
-	oss << "}" << std::endl;
+	oss << "}" << std::endl;		
 
 	oss << "#endif" << std::endl;
     }
@@ -93,15 +93,15 @@ namespace graphit {
         oss << "#include <vector>" << std::endl;
 	oss << "#include <algorithm>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
-
+	
 	oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
 	oss << "#include <pybind11/pybind11.h>" << std::endl;
 	oss << "#include <pybind11/stl.h>" << std::endl;
 	oss << "#include <pybind11/numpy.h>" << std::endl;
 	oss << "namespace py = pybind11;" << std::endl;
 	oss << "#endif" << std::endl;
-
-
+	
+	
     }
 
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
@@ -202,7 +202,7 @@ namespace graphit {
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; "  << std::endl;
 
-        } else
+        } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
@@ -332,7 +332,7 @@ namespace graphit {
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
 
-        } else
+        } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
             printIndent();
@@ -366,7 +366,7 @@ namespace graphit {
             else
                 oss << "void ";
             oss << func_decl->name << " (";
-
+            
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -587,20 +587,20 @@ namespace graphit {
     void CodeGenCPP::generatePyBindWrapper(mir::FuncDecl::Ptr func_decl) {
 	    oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
 	    oss << "//PyBind Wrappers for function" << func_decl->name << std::endl;
-	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks
+	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
 	    if (func_decl->result.isInitialized())
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
 
 		        mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
 			oss << "py::array_t<";
 
-			if (mir::isa<mir::VectorType>(vector_type->vector_element_type))
+			if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) 
 				mir::to<mir::VectorType>(vector_type->vector_element_type)->vector_element_type->accept(this);
-			else
+			else 
 				vector_type->vector_element_type->accept(this);
 			oss << "> ";
 		    }
-		    else
+		    else 
 		        func_decl->result.getType()->accept(this);
 	    else
 		    oss << "void ";
@@ -622,11 +622,11 @@ namespace graphit {
 				    oss << "py::array_t<";
                                     inner_vector_type->vector_element_type->accept(this);
                                     oss << ">";
-                                    oss << " _" << arg.getName();
-			    }else {
+                                    oss << " _" << arg.getName(); 
+			    }else { 
 				    oss << "py::array_t<";
 				    vector_type->vector_element_type->accept(this);
-				    oss << ">";
+				    oss << ">";	
 				    oss << " _" << arg.getName();
 			    }
 		    }else {
@@ -637,7 +637,7 @@ namespace graphit {
 	    }
 	    if (!printDelimiter)
 		    oss << "void";
-	    oss << ") ";
+	    oss << ") ";	
 	    oss << "{ " << std::endl;
 	    indent();
 	    // Need to generate translation for graph arguments before the actual call
@@ -649,7 +649,7 @@ namespace graphit {
 				   printIndent();
 				   oss << "py::array_t<";
 				   type->weight_type->accept(this);
-				   oss << "> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<";
+				   oss << "> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<"; 
 				   type->weight_type->accept(this);
 				   oss << ">>();" << std::endl;
 
@@ -660,8 +660,8 @@ namespace graphit {
 				    printIndent();
 				    arg.getType()->accept(this);
 				    oss << arg.getName() << " = builtin_loadWeightedEdgesFromCSR(";
-				    oss << arg.getName() << "__data.data(), " << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl;
-			    } else {
+				    oss << arg.getName() << "__data.data(), " << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
+			    } else {	
 				    //Prepare the individual arrays from the object
 				    printIndent();
 				    oss << "py::array_t<int> " << arg.getName() << "__data = _" << arg.getName() << ".attr(\"data\").cast<py::array_t<int>>();" << std::endl;
@@ -672,23 +672,23 @@ namespace graphit {
 				    printIndent();
 				    arg.getType()->accept(this);
 				    oss << arg.getName() << " = builtin_loadEdgesFromCSR(";
-				    oss << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl;
+				    oss << arg.getName() << "__indptr.data(), " << arg.getName() << "__indices.data(), " << arg.getName() << "__indptr.size()-1, " << arg.getName() << "__indices.size());" << std::endl; 
 			    }
-
+			
 		    } else if (mir::isa<mir::VectorType>(arg.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
 			    printIndent();
 			    vector_type->accept(this);
 			    oss << " " << arg.getName() << " = (";
 			    vector_type->accept(this);
-			    oss << ")_" << arg.getName() << ".data();" << std::endl;
+			    oss << ")_" << arg.getName() << ".data();" << std::endl; 
 		    }
 
 	    }
 	    printIndent();
-
+		
 	    if (func_decl->result.isInitialized()) {
-
+		    
 		    func_decl->result.getType()->accept(this);
 		    oss << "__" << func_decl->result.getName() << " = ";
 	    }
@@ -705,8 +705,8 @@ namespace graphit {
 		    printDelimiter = true;
 	    }
 	    oss << ");" << std::endl;
-	    // We do no support returning Graph types. But we can return still return vectors
-	    if (func_decl->result.isInitialized() ) {
+	    // We do no support returning Graph types. But we can return still return vectors	    
+	    if (func_decl->result.isInitialized() ) { 
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
 			    // Handle separately if vector of vector
@@ -732,8 +732,8 @@ namespace graphit {
 				    oss << ") }, (";
 				    inner_vector_type->vector_element_type->accept(this);
 				    oss << "*)__" << func_decl->result.getName() << ");" << std::endl;
-
-
+				
+				    
 			    } else   {
 				    // Create the return object
 				    printIndent();
@@ -751,9 +751,9 @@ namespace graphit {
 				    }
 				    oss << "}, { sizeof(";
 				    vector_type->vector_element_type->accept(this);
-				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl;
+				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
 			    }
-
+			    
 		    } else {
 		            printIndent();
 			    func_decl->result.getType()->accept(this);
@@ -764,7 +764,7 @@ namespace graphit {
 	    if (func_decl->result.isInitialized()) {
 		    printIndent();
 		    oss << "return " << func_decl->result.getName() << ";" << std::endl;
-	    }
+	    }		
 	    dedent();
 	    printIndent();
 	    oss << "}" << std::endl;

@@ -575,7 +575,7 @@ namespace graphit {
 
         struct FuncDecl : public MIRNode {
             enum class Type {INTERNAL, EXPORTED, EXTERNAL};
-
+ 
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
@@ -1078,7 +1078,7 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
-        struct AndExpr : public BinaryExpr {
+	struct AndExpr : public BinaryExpr {
             typedef std::shared_ptr<AndExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
