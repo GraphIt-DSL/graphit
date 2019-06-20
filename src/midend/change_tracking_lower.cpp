@@ -111,6 +111,25 @@ namespace graphit {
         }
     }
 
+
+    void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::ExprStmt::Ptr stmt) {
+        // update priority operators also updates the vectors implicitly
+        if (mir::isa<mir::PriorityUpdateOperatorSum>(stmt->expr)){
+            auto priority_update_sum = mir::to<mir::PriorityUpdateOperatorSum>(stmt->expr);
+            auto field_vector_name = mir_context_->getPriorityVectorName();
+            auto field_vector_tracking_var_name = field_vector_name + "_trackving_var_" + mir_context_->getUniqueNameCounterString();
+            addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
+            priority_update_sum->tracking_var = field_vector_tracking_var_name;
+        } else if (mir::isa<mir::PriorityUpdateOperatorMin>(stmt->expr)){
+            auto priority_update_min = mir::to<mir::PriorityUpdateOperatorMin>(stmt->expr);
+            auto field_vector_name = mir_context_->getPriorityVectorName();
+            auto field_vector_tracking_var_name = field_vector_name + "_trackving_var_" + mir_context_->getUniqueNameCounterString();
+            addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
+            priority_update_min->tracking_var = field_vector_tracking_var_name;
+        }
+    }
+
+
     void ChangeTrackingLower::TrackingVariableGenVisitor::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
         //TODO: may be build another visitor for tensor read to figure out the field
         //For now, I am assuming that the left hand side of assign stmt is a tensor read expression
@@ -179,4 +198,6 @@ namespace graphit {
             return output_var_expr;
         }
     }
+
+
 }

@@ -179,15 +179,24 @@ namespace graphit {
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
 	
         if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
-	    if (mir::isa<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>(expr_stmt->expr)) {
+	        if (mir::isa<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>(expr_stmt->expr)) {
                 printIndent();
-		expr_stmt->expr->accept(this);
-		oss << ";" << std::endl;
-	    } else {
+		    expr_stmt->expr->accept(this);
+		    oss << ";" << std::endl;
+	        } else {
                 printIndent();
                 auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
                 genEdgesetApplyFunctionCall(edgeset_apply_expr);
-	    }
+	        }
+        } else if (mir::isa<mir::PriorityUpdateOperator>(expr_stmt->expr)
+                && mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+            //print an assignment to the tracking variable for PriorityUpdateOperatorSum
+            auto priority_update_operator = mir::to<mir::PriorityUpdateOperator>(expr_stmt->expr);
+            auto tracking_var = priority_update_operator->tracking_var;
+            printIndent();
+            oss << tracking_var << " = ";
+            priority_update_operator->accept(this);
+            oss << ";" << std::endl;
         } else {
             printIndent();
             expr_stmt->expr->accept(this);

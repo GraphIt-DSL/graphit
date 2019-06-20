@@ -723,6 +723,8 @@ namespace graphit {
             Expr::Ptr priority_queue;
             //the node whose priority is going to be updated
             Expr::Ptr destination_node_id;
+            std::string tracking_var;
+            bool is_atomic = false;
 
             typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
 
@@ -764,7 +766,7 @@ namespace graphit {
             Expr::Ptr delta;
             // a minimum value for how low the priority can be reduced to (optional)
             Expr::Ptr minimum_val;
-            bool is_atomic = false;
+
 
             typedef std::shared_ptr<PriorityUpdateOperatorSum> Ptr;
 
@@ -1346,6 +1348,7 @@ namespace graphit {
             std::string priority_queue_name;
             std::string lambda_name;
             std::string modified_vertexsubset_name;
+            mir::PriorityUpdateType priority_update_type;
 
             typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
 

@@ -51,7 +51,7 @@ namespace graphit {
             std::string function_name, std::string direction) {
 
         // The analysis only makes sense if it is a parallel apply expr
-        auto property_visitor = PropertyAnalyzingVisitor(direction);
+        auto property_visitor = PropertyAnalyzingVisitor(direction, mir_context_);
         auto apply_func_decl_name = function_name;
 
         if (!mir_context_->isExternFunction(apply_func_decl_name)){
@@ -67,6 +67,11 @@ namespace graphit {
         } else {
             op->is_atomic = false;
         }
+        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+    }
+
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr) {
+        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
 
@@ -219,6 +224,7 @@ namespace graphit {
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
         return property;
     }
+
 
 
 

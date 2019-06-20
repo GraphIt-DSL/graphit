@@ -98,9 +98,6 @@ namespace graphit {
 
             }
 
-            // rewrite the entire stmt to insert the update buckets call in the end
-            virtual void visit(mir::ExprStmt::Ptr);
-
             //specialize the dequeue_ready_set call for the GraphIt VertexSubset
             virtual void visit(mir::Call::Ptr);
 

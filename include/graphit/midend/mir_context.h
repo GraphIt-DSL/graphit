@@ -328,6 +328,10 @@ namespace graphit {
             return nullptr;
         }
 
+        std::string getPriorityVectorName(){
+            return priority_queue_alloc_list_[0]->vector_function;
+        }
+
 	std::vector<mir::PriorityQueueAllocExpr::Ptr> priority_queue_alloc_list_;
 
         //private:

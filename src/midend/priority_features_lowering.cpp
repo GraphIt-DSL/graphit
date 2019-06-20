@@ -292,13 +292,13 @@ namespace graphit {
                     new_expr->moved_object_name = "moved_object_" + mir_context_->getUniqueNameCounterString();
                     new_expr->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
                     stmt->expr = new_expr;
-                    node = stmt;
 
 
                     mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = std::make_shared<mir::UpdatePriorityUpdateBucketsCall>();
                     update_call->lambda_name = new_expr->moved_object_name + ".get_fn_repr()";
                     update_call->modified_vertexsubset_name = new_expr->moved_object_name;
                     update_call->priority_queue_name = new_expr->priority_queue_name;
+                    update_call->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
 
                     mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
                     stmt_block->insertStmtEnd(stmt);
@@ -326,28 +326,23 @@ namespace graphit {
         assert (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr));
         mir::EdgeSetApplyExpr::Ptr regular_edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
         regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
+        regular_edgeset_apply_expr->tracking_field = mir_context_->priority_queue_alloc_list_[0]->vector_function;
         stmt->expr = regular_edgeset_apply_expr;
-        node = stmt;
+
+
+        mir::UpdatePriorityUpdateBucketsCall::Ptr update_call = std::make_shared<mir::UpdatePriorityUpdateBucketsCall>();
+        update_call->modified_vertexsubset_name = "modified_vertexsubset" + mir_context_->getUniqueNameCounterString();
+        update_call->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+        update_call->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
+        mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+        stmt_block->insertStmtEnd(stmt);
+        stmt_block->insertStmtEnd(update_call);
+
+        node = stmt_block;
+
 
     }
 
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::ExprStmt::Ptr expr_stmt) {
-        // Locate the ExprStmt that has edgesetApplyUpdatePriority
-//        if  (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(exprt_stmt->expr)
-//                && mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
-//                // Replace the edgesetApplyUpdatePriority with edgesetApplyModified
-//                auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
-//
-//            // inserts BucketUpdateCall
-//
-//            // Replace the stmt with the stmtblock
-//        } else {
-//            //Don't do anything in this case
-//            node = exprt_stmt;
-//        }
-        node = expr_stmt;
-
-    }
 
     void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr expr) {
 
