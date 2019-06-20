@@ -123,8 +123,10 @@ namespace graphit {
         void genScalarDecl(mir::VarDecl::Ptr var_decl);
 
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
+
+        void genTypesRequiringTypeDefs();
 	
-	void generatePyBindWrapper(mir::FuncDecl::Ptr);
+	    void generatePyBindWrapper(mir::FuncDecl::Ptr);
 
     	void generatePyBindModule();
 

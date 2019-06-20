@@ -52,6 +52,19 @@ class TestGraphitCompiler(unittest.TestCase):
             cls.parallel_framework = "-DCILK"
 
 
+    def get_command_output(self, command):
+        output = ""
+        if isinstance(command, list):
+            proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+        else:
+            proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        proc.wait()
+        for line in proc.stdout.readlines():
+            if isinstance(line, bytes):
+                line = line.decode()
+            output += line.rstrip() + "\n"
+        proc.stdout.close()
+        return output
     def setUp(self):
         self.clean_up()
 
@@ -128,14 +141,24 @@ class TestGraphitCompiler(unittest.TestCase):
         subprocess.check_call("bin/test.o")
         os.chdir("bin")
 
+    def library_cf_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
+        self.basic_library_compile(input_file_name, input_file_directory, driver='library_test_driver_cf.cpp')
+        os.chdir("..")
+        cmd = "bin/test.o"
+        print(cmd)
+
+        #check the value printed to stdout is as expected
+        stdout_str = self.get_command_output(cmd).rstrip()
+        print ("output : " + stdout_str)
+        self.assertEqual(float(stdout_str), 7.49039)
+        os.chdir("bin")
 
     def library_pr_verified_test(self, input_file_name, input_file_directory='/test/input_with_schedules/'):
         self.basic_library_compile(input_file_name, input_file_directory)
         os.chdir("..")
         cmd = "bin/test.o"
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
-        output = proc.stdout.readline()
+        output = self.get_command_output(cmd)
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
         os.chdir("bin")
@@ -144,17 +167,16 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_library_compile(input_file_name, input_file_directory, driver='library_test_driver_weighted.cpp')
         os.chdir("..")
         cmd = "bin/test.o > verifier_input"
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-
+	
         print (cmd)
         subprocess.call(cmd, shell=True)
 
         # invoke the BFS verifier
         verify_cmd = "./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline,''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
                 break;
@@ -176,9 +198,9 @@ class TestGraphitCompiler(unittest.TestCase):
         # invoke the BFS verifier
         verify_cmd = "./bin/bfs_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 8"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline,''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
                 break;
@@ -199,9 +221,9 @@ class TestGraphitCompiler(unittest.TestCase):
         # invoke the BFS verifier
         verify_cmd = "./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline,''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
                 break;
@@ -221,9 +243,9 @@ class TestGraphitCompiler(unittest.TestCase):
         # invoke the BFS verifier
         verify_cmd = "./bin/bc_verifier -f ../test/graphs/4.el -t verifier_input -r 3"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline,''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
                 break;
@@ -243,9 +265,9 @@ class TestGraphitCompiler(unittest.TestCase):
         # invoke the BFS verifier
         verify_cmd = "./bin/sssp_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.wel -t verifier_input -r 0"
         print (verify_cmd)
-        proc = subprocess.Popen(verify_cmd, stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output(verify_cmd)
         test_flag = False
-        for line in iter(proc.stdout.readline,''):
+        for line in output.rstrip().split("\n"):
             if line.rstrip().find("SUCCESSFUL") != -1:
                 test_flag = True
                 break;
@@ -263,9 +285,8 @@ class TestGraphitCompiler(unittest.TestCase):
         else:
             cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el  2"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output = self.get_command_output(cmd).split("\n")[0]
         #check the value printed to stdout is as expected
-        output = proc.stdout.readline()
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 0.00289518)
 
@@ -283,9 +304,9 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        output = self.get_command_output(cmd)
         #check the value printed to stdout is as expected
-        lines = proc.stdout.readlines()
+        lines = output.strip().split("\n")
         print (lines)
         self.assertEqual(float(lines[0].strip()), 1)
         # first frontier has 5 vertices
@@ -309,48 +330,45 @@ class TestGraphitCompiler(unittest.TestCase):
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test_cf.wel"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
-        output = proc.stdout.readline()
+        output = self.get_command_output(cmd).strip().split("\n")[0]
         print ("output: " + output.strip())
         self.assertEqual(float(output.strip()), 7.49039)
 
     def eigenvector_centrality_verified_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("eigenvector_centrality.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
-        lines = proc.stdout.readlines()
+        lines = self.get_command_output(cmd).strip().split("\n")
         print (lines)
         self.assertEqual(float(lines[0].strip()), 3.2)
 
     def closeness_centrality_unweighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+
         #check the value printed to stdout is as expected
-        lines = proc.stdout.readlines()
+        lines = self.get_command_output(cmd).strip().split("\n")
         print (lines)
         self.assertEqual(float(lines[3].strip()), 3)
 
     def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
-	if use_separate_algo_file:
+        if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./"+ self.executable_file_name + " "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/test.el"
         print (cmd)
-        proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
         #check the value printed to stdout is as expected
-        lines = proc.stdout.readlines()
+        lines = self.get_command_output(cmd).strip().split("\n")
         print (lines)
         self.assertEqual(float(lines[1].strip()), 15)
 
@@ -554,6 +572,11 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_sssp_with_return_verified(self):
         self.library_sssp_verified_test("export_sssp.gt", '/test/input/');
 
+    def test_library_cf_with_return_basic_compile(self):
+        self.basic_library_compile("export_cf_vector_input_with_return.gt", '/test/input/', driver='library_test_driver_weighted.cpp')
+
+    def test_library_cf_with_return_verified(self):
+        self.library_cf_verified_test("export_cf_vector_input_with_return.gt", '/test/input/')
 
 if __name__ == '__main__':
     while len(sys.argv) > 1:
@@ -571,7 +594,7 @@ if __name__ == '__main__':
     #used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_sssp_with_return_verified'))
+    # suite.addTest(TestGraphitCompiler('cc_hybrid_dense_parallel_bitvector'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
 

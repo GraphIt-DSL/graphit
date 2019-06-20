@@ -78,6 +78,10 @@ namespace graphit {
                 return extern_functions_map_[name];
             }
 
+            void addTypeRequiringTypeDef(mir::Type::Ptr type){
+                types_requiring_typedef.push_back(type);
+            }
+
             void addSymbol(mir::Var var) {
                 symbol_table_.insert(var.getName(), var);
             }
@@ -300,6 +304,7 @@ namespace graphit {
                 std::cout << "No main function declared" << std::endl;
                 return nullptr;
             }
+
         //private:
 
             // maps element type to an input file that reads the set from
@@ -358,6 +363,11 @@ namespace graphit {
 
             // used by numa optimization
             std::map<std::string, std::map<std::string, mir::MergeReduceField::Ptr>> edgeset_to_label_to_merge_reduce;
+
+            std::set<std::string> defined_types;
+
+            std::vector<mir::Type::Ptr> types_requiring_typedef;
+
         };
 
 }

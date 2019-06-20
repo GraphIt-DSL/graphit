@@ -23,8 +23,12 @@ script:
         - cd bin 
         - ./graphit_test
         - cd ..
-        - python python_tests/test.py
-        - python python_tests/test_with_schedules.py
+        - python --version
+        - python3 --version
+        - python3 python_tests/test.py
+        - python3 python_tests/test_with_schedules.py
+        - python2 python_tests/test.py
+        - python2 python_tests/test_with_schedules.py
         - export PYTHONPATH=.
         - python3 python_tests/pybind_test.py
 

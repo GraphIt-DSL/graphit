@@ -65,26 +65,43 @@ if __name__ == '__main__':
     if not supplied_separate_algo_file:
         algo_file.close();
 
-    # generate the schedule file schedule.cpp
-    compile_file = open(compile_file_name, 'w')
-
-    compile_file.write("#include <graphit/frontend/high_level_schedule.h>\n")
-    compile_file.write("namespace graphit {\n")
-    compile_file.write("void user_defined_schedule (graphit::fir::high_level_schedule::ProgramScheduleNode::Ptr program) {\n")
-    for schedule_cmd in schedule_cmd_list:
-        compile_file.write(schedule_cmd)
-    compile_file.write("}\n")
-    compile_file.write("}")
-
-
-    compile_file.close();
-
-    # compile and execute compile.cpp file to complete the compilation
-    #TODO: code here uses very fragile relavtive paths, figure out a better way
-    # Maybe setting environment variables
-    subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), shell=True)
-    if graphit_pybind_module_name == "":
-        subprocess.check_call("./compile.o  -f " + algo_file_name +  " -o " + output_file_name , shell=True)
+    COMPILER_BINARY = ""
+    if len(schedule_cmd_list) == 0:
+        COMPILER_BINARY=GRAPHIT_BUILD_DIRECTORY+"/bin/graphitc"
     else:
-        subprocess.check_call("./compile.o -f " + algo_file_name + " -o " + output_file_name + " -m " + graphit_pybind_module_name, shell=True)
+        # generate the schedule file schedule.cpp
+        compile_file = open(compile_file_name, 'w')
+
+        compile_file.write("#include <graphit/frontend/high_level_schedule.h>\n")
+        compile_file.write("namespace graphit {\n")
+        compile_file.write("void user_defined_schedule (graphit::fir::high_level_schedule::ProgramScheduleNode::Ptr program) {\n")
+        for schedule_cmd in schedule_cmd_list:
+            compile_file.write(schedule_cmd)
+        compile_file.write("}\n")
+        compile_file.write("}")
+
+
+        compile_file.close();
+
+        # compile and execute compile.cpp file to complete the compilation
+        #TODO: code here uses very fragile relavtive paths, figure out a better way
+        # Maybe setting environment variables
+        try:
+            subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
+        except subprocess.CalledProcessError as e:
+            print(e.output)
+            raise
+        COMPILER_BINARY = "./compile.o"
+
+    try:
+        if graphit_pybind_module_name == "":
+            subprocess.check_call(COMPILER_BINARY + " -f " + algo_file_name +  " -o " + output_file_name , stderr=subprocess.STDOUT, shell=True)
+        else:
+            subprocess.check_call(COMPILER_BINARY + " -f " + algo_file_name + " -o " + output_file_name + " -m " + graphit_pybind_module_name, stderr=subprocess.STDOUT, shell=True)
+    except subprocess.CalledProcessError as e:
+        print(e.output)
+        raise
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
+    if algo_file_name == "algo.gt" and os.path.exists(algo_file_name):
+        os.unlink(algo_file_name)
+

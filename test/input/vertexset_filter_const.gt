@@ -1,0 +1,19 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+
+func filter_func(v: Vertex) -> output: bool
+	if (v < 2)
+		output = true;
+	else
+		output = false;
+	end
+end
+func main()
+	var frontier: vertexset{Vertex} = new vertexset{Vertex}(0);
+	frontier = vertices.filter(filter_func);
+	print frontier.getVertexSetSize();
+end

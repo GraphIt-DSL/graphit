@@ -2479,7 +2479,35 @@ namespace graphit {
                 output_new_expr->numElements = expr;
                 consume(Token::Type::RP);
             }
-        } else if (tryConsume(Token::Type::VECTOR)){
+        } else if (peek().type == Token::Type::VECTOR){
+	    fir::NDTensorType::Ptr tensor_type = parseVectorBlockType();
+
+	    auto vector_alloc_expr = std::make_shared<fir::VectorAllocExpr>();
+	    auto element_type = tensor_type->element;
+            if (element_type != nullptr) {
+	        vector_alloc_expr->elementType = element_type;
+                
+            }else {
+                fir::IndexSet::Ptr set = tensor_type->indexSets[0];
+		fir::IntLiteral::Ptr numElements = std::make_shared<fir::IntLiteral>();
+		numElements->val = fir::to<fir::RangeIndexSet>(set)->range;
+		vector_alloc_expr->numElements = numElements;
+            }	 
+	    if (fir::isa<fir::ScalarType>(tensor_type->blockType)) {
+                vector_alloc_expr->vector_scalar_type = fir::to<fir::ScalarType>(tensor_type->blockType);
+	    } else if (fir::isa<fir::NDTensorType>(tensor_type->blockType)){
+                vector_alloc_expr->general_element_type = fir::to<fir::NDTensorType>(tensor_type->blockType);
+                vector_alloc_expr->vector_scalar_type = nullptr;
+            } else {
+                std::cout << "Unsupported Vector Element Type " << std::endl;
+	    }
+	    
+            output_new_expr = vector_alloc_expr;
+            consume(Token::Type::LP);
+            consume(Token::Type::RP);
+
+
+/*
             //allocating a new vector
             auto vector_alloc_expr = std::make_shared<fir::VectorAllocExpr>();
             consume(Token::Type::LC);
@@ -2489,13 +2517,27 @@ namespace graphit {
 
             //this is int in vector{Vertex}(int)
             consume(Token::Type::LP);
-            fir::ScalarType::Ptr scalar_type = parseScalarType();
+            fir::Type::Ptr vector_element_type = parseType();
             consume(Token::Type::RP);
+
             vector_alloc_expr->elementType = element_type;
-            vector_alloc_expr->vector_scalar_type = scalar_type;
+
+            if (fir::isa<fir::ScalarType>(vector_element_type)){
+                vector_alloc_expr->vector_scalar_type = fir::to<fir::ScalarType>(vector_element_type);
+            } else if (fir::isa<fir::NDTensorType>(vector_element_type)){
+                //use the general element type for cases like vector{Vertex}(vector[20])
+                // general element type would be vector[20]
+                vector_alloc_expr->general_element_type = fir::to<fir::NDTensorType>(vector_element_type);
+                vector_alloc_expr->vector_scalar_type = nullptr;
+            } else {
+                std::cout << "Unsupported Vector Element Type " << std::endl;
+            }
+
+
             output_new_expr = vector_alloc_expr;
             consume(Token::Type::LP);
             consume(Token::Type::RP);
+*/
         } else {
             reportError(peek(), "do not support this new expression");
         }

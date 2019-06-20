@@ -11,14 +11,14 @@ namespace graphit {
         genEdgeSets();
         //genElementData();
         genStructTypeDecls();
-
+        genTypesRequiringTypeDefs();
 
         //Processing the constants, generting declartions
         for (auto constant : mir_context_->getLoweredConstants()) {
             if ((std::dynamic_pointer_cast<mir::VectorType>(constant->type)) != nullptr) {
                 mir::VectorType::Ptr type = std::dynamic_pointer_cast<mir::VectorType>(constant->type);
                 // if the constant decl is a field property of an element (system vector)
-                if (type->element_type != nullptr) {
+                //if (type->element_type != nullptr) {
                     //genPropertyArrayImplementationWithInitialization(constant);
                     //NOTE: here we only generate the declaration, not the allocation and initialization
                     // even through we have all the information.
@@ -28,7 +28,7 @@ namespace graphit {
                     // To support this feature, we have specialized the code generation of main function (see func_decl visit method).
                     // We first generate allocation, and then initialization (init_stmts) for global variables.
                     genPropertyArrayDecl(constant);
-                }
+                //}
             } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
                 // if the constant is a vertex set  decl
                 // currently, no code is generated
@@ -189,7 +189,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
-
+        // Removing this special case because the filter is now handled by intrinsics
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -201,7 +202,9 @@ namespace graphit {
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; "  << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -317,7 +320,8 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
-
+        // Removing this special case because we want to generate intrinsics for filter
+/*
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
             // declaring a new vertexset as output from where expression
             printIndent();
@@ -328,7 +332,9 @@ namespace graphit {
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
 
-        } else if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+        } else 
+*/
+        if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << " = ";
@@ -584,8 +590,14 @@ namespace graphit {
 	    //Currently we do no support, returning Graph Types. So return type can be directly emitted without extra checks	
 	    if (func_decl->result.isInitialized())
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
+
+		        mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
 			oss << "py::array_t<";
-			mir::to<mir::VectorType>(func_decl->result.getType())->vector_element_type->accept(this);
+
+			if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) 
+				mir::to<mir::VectorType>(vector_type->vector_element_type)->vector_element_type->accept(this);
+			else 
+				vector_type->vector_element_type->accept(this);
 			oss << "> ";
 		    }
 		    else 
@@ -602,11 +614,21 @@ namespace graphit {
 		    if (mir::isa<mir::EdgeSetType>(arg.getType())) {
 			    oss << "py::object _" << arg.getName();
 		    }else if (mir::isa<mir::VectorType>(arg.getType())) {
-			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << ">";	
-			    oss << " _" << arg.getName();
+			    // We want to support vectors of vectors of scalar types separately
+		            mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(arg.getType());
+			    mir::Type::Ptr elem_type = vector_type->vector_element_type;
+			    if (mir::isa<mir::VectorType>(elem_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(elem_type);
+				    oss << "py::array_t<";
+                                    inner_vector_type->vector_element_type->accept(this);
+                                    oss << ">";
+                                    oss << " _" << arg.getName(); 
+			    }else { 
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << ">";	
+				    oss << " _" << arg.getName();
+			    }
 		    }else {
 			    arg.getType()->accept(this);
 			    oss << arg.getName();
@@ -687,17 +709,50 @@ namespace graphit {
 	    if (func_decl->result.isInitialized() ) { 
 		    if (mir::isa<mir::VectorType>(func_decl->result.getType())) {
 			    mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(func_decl->result.getType());
-			    // Create the return object
-			    printIndent();
-			    oss << "py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> " << func_decl->result.getName() << " = py::array_t<";
-			    vector_type->vector_element_type->accept(this);
-			    oss << "> ( {";
-			    mir_context_->getElementCount(vector_type->element_type)->accept(this);
-			    oss << "}, { sizeof(";	
-			    vector_type->vector_element_type->accept(this);
-			    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    // Handle separately if vector of vector
+			    if (mir::isa<mir::VectorType>(vector_type->vector_element_type)) {
+				    mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType> (vector_type->vector_element_type);
+				    printIndent();
+				    oss << "py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "> ( std::vector<size_t>{(size_t)";
+				    if (vector_type->element_type != nullptr)
+				        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    else
+					oss << vector_type->range_indexset;
+				    oss << ", (size_t)";
+				    oss << inner_vector_type->range_indexset;
+				    oss << "}, std::vector<size_t>{ ";
+				    oss << "( " << inner_vector_type->range_indexset << " * " << "sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ")), sizeof(";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << ") }, (";
+				    inner_vector_type->vector_element_type->accept(this);
+				    oss << "*)__" << func_decl->result.getName() << ");" << std::endl;
+				
+				    
+			    } else   {
+				    // Create the return object
+				    printIndent();
+				    oss << "py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
+				    vector_type->vector_element_type->accept(this);
+				    oss << "> ( {";
+				    if (vector_type->element_type != nullptr){
+				        // get the size information of the output by looking up the count of the associated Element (e.g. Vertex) type
+                        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    } else if (vector_type->range_indexset > 0) {
+				        // the vector has range index associated with it
+				        oss << vector_type->range_indexset;
+				    }
+				    oss << "}, { sizeof(";
+				    vector_type->vector_element_type->accept(this);
+				    oss << ") }, __" << func_decl->result.getName() << ");" << std::endl; 
+			    }
 			    
 		    } else {
 		            printIndent();
@@ -740,7 +795,14 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VectorType::Ptr vector_type) {
-        vector_type->vector_element_type->accept(this);
+        if (mir::isa<mir::ScalarType>(vector_type->vector_element_type)){
+            vector_type->vector_element_type->accept(this);
+        } else if (mir::isa<mir::VectorType>(vector_type->vector_element_type)){
+            //nested vector type
+            mir::VectorType::Ptr inner_vector_type = mir::to<mir::VectorType>(vector_type->vector_element_type);
+            // use the typedef type for the inner vector type
+            oss << inner_vector_type->toString();
+        }
         oss << " * ";
     }
 
@@ -999,13 +1061,20 @@ namespace graphit {
             assert(vector_vector_element_type->range_indexset != 0);
             int range = vector_vector_element_type->range_indexset;
 
-            //first generates a typedef for the vector type
-            oss << "typedef ";
-            vector_vector_element_type->vector_element_type->accept(this);
-            std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
-            oss << typedef_name <<  " ";
-            oss << "[ " << range << "]; " << std::endl;
+
+            //std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
+            std::string typedef_name = vector_vector_element_type->toString();
+            if (mir_context_->defined_types.find(typedef_name) == mir_context_->defined_types.end()){
+                mir_context_->defined_types.insert(typedef_name);
+                //first generates a typedef for the vector type
+                oss << "typedef ";
+                vector_vector_element_type->vector_element_type->accept(this);
+                oss << typedef_name <<  " ";
+                oss << "[ " << range << "]; " << std::endl;
+            }
+
             vector_vector_element_type->typedef_name_ = typedef_name;
+
 
             //use the typedef defined type to declare a new pointer
             oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
@@ -1184,8 +1253,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VertexSetWhereExpr::Ptr vertexset_where_expr) {
 
-
+	// Removing all this code to just generate calls to builtin
         //dense vertex set apply
+/*
         if (vertexset_where_expr->is_constant_set) {
             auto associated_element_type =
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
@@ -1230,7 +1300,25 @@ namespace graphit {
                     "____graphit_tmp_out->bool_map_ = ";
             oss << next_bool_map_name << ";\n";
         }
+*/
+        if (vertexset_where_expr->is_constant_set) {
 
+            auto associated_element_type =
+                    mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
+            auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+            oss << "builtin_const_vertexset_filter <";
+	    oss << vertexset_where_expr->input_func ;
+            oss << ">(";
+            oss << vertexset_where_expr->input_func << "(), ";
+            associated_element_type_size->accept(this);
+            oss << ")";
+        } else {
+            oss << "builtin_vertexset_filter <";
+            oss << vertexset_where_expr->input_func;
+            oss << ">(";
+            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "()";
+            oss << ")";
+        }
     }
 
     void CodeGenCPP::genEdgeSets() {
@@ -1375,12 +1463,22 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::VectorAllocExpr::Ptr alloc_expr) {
         oss << "new ";
-        alloc_expr->scalar_type->accept(this);
+
+        if (alloc_expr->scalar_type != nullptr){
+            alloc_expr->scalar_type->accept(this);
+        } else if (alloc_expr->vector_type != nullptr){
+            oss << alloc_expr->vector_type->toString();
+        }
         oss << "[ ";
         //This is the current number of elements, but we need the range
         //alloc_expr->size_expr->accept(this);
         const auto size_expr = mir_context_->getElementCount(alloc_expr->element_type);
-        size_expr->accept(this);
+        if (size_expr != nullptr)
+            size_expr->accept(this);
+	else {
+	    // This means it is a vector of constant size. The size_expr now directly holds the constant literal.
+	    alloc_expr->size_expr->accept(this);
+	}
         oss << "]";
     }
 
@@ -1391,6 +1489,25 @@ namespace graphit {
         } else {
             //If it is a GraphIt generated function, then we need to instantiate the functor
             return func_name + "()";
+        }
+    }
+
+    void CodeGenCPP::genTypesRequiringTypeDefs() {
+
+        for (mir::Type::Ptr type : mir_context_->types_requiring_typedef){
+            if(mir::isa<mir::VectorType>(type)){
+                auto vector_type = mir::to<mir::VectorType>(type);
+                int range = vector_type->range_indexset;
+                std::string typedef_name = vector_type->toString();
+                if (mir_context_->defined_types.find(typedef_name) == mir_context_->defined_types.end()){
+                    mir_context_->defined_types.insert(typedef_name);
+                    //first generates a typedef for the vector type
+                    oss << "typedef ";
+                    vector_type->vector_element_type->accept(this);
+                    oss << typedef_name <<  " ";
+                    oss << "[ " << range << "]; " << std::endl;
+                }
+            }
         }
     }
 }

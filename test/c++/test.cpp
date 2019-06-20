@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 //
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest*";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SerialMinimumSpanningTreeTest";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.ExportReturnConstantSizeVector";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.edgesetApplyExtern";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexSetListPop";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
@@ -25,8 +25,8 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.EdgeSetExportFuncVectorInit";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleVertexsetFilterComplete";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.GlobalConstantSizeVectorTest";
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.vectorPerVertexTestWithConstDef";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 //   ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SanityTest";
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.serialMSTTest2";
-
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SweepCutTest";
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 //
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportPRWithScheduleTest";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.ExportCFWithScheduleTest";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelTwoSegments";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";
