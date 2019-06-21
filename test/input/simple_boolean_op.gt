@@ -1,0 +1,13 @@
+func main()
+    var x : bool = true;
+    var y : bool = false;
+    if x and (not y)
+       print "x is true and y is false";
+    end
+    if x xor y
+       print "either x or y is true";
+    end
+    if x or y
+       print "x or y or both are true";
+    end       
+end

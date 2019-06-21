@@ -399,6 +399,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_vertexset_filter_const(self):
         self.expect_output_val("vertexset_filter_const.gt", 2)
 
+    def test_simple_boolean_op(self):
+        self.basic_compile_test("simple_boolean_op.gt")
+
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
