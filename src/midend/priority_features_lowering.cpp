@@ -132,7 +132,7 @@ namespace graphit {
             mir::UpdatePriorityExternCall::Ptr call_stmt = std::make_shared<mir::UpdatePriorityExternCall>();
             call_stmt->input_set = expr->target;
             call_stmt->apply_function_name = expr->input_function_name;
-            call_stmt->lambda_name = "generate_lamda_function_" + mir_context_->getUniqueNameCounterString();
+            call_stmt->lambda_name = "generate_lambda_function_" + mir_context_->getUniqueNameCounterString();
             call_stmt->output_set_name = "generated_vertex_subset_" + mir_context_->getUniqueNameCounterString();
             call_stmt->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
 

@@ -1855,7 +1855,8 @@ namespace graphit {
     void CodeGenCPP::visit(mir::UpdatePriorityUpdateBucketsCall::Ptr update_call) {
         printIndent();
 
-        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate){
+        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate 
+        || mir_context_->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate){
             oss << update_call->priority_queue_name;
             oss << "->update_buckets(";
             oss << update_call->lambda_name;
