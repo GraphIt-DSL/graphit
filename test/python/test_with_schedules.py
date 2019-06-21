@@ -683,7 +683,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
 
     def test_k_core_sparsepush(self):
-        self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_sparsepush_parallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
+        self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_sparsepush_parallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
 
     def test_set_cover(self):

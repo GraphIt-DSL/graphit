@@ -1703,7 +1703,12 @@ namespace graphit {
             oss << " > ( ";
 
             oss << mir_context_->getEdgeSets()[0]->name;
-            oss << ".julienne_graph.n, ";
+
+            if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+                oss << ".num_nodes(), ";
+            } else {
+                oss << ".julienne_graph.n, ";
+            }
 
             oss << priority_queue_alloc_expr->vector_function;
                 oss << ", ";

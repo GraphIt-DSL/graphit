@@ -80,11 +80,22 @@ public:
 	return bucket.identifiers;
   }
 
-  bool updatePrioritySum(uintE dst, D delta, D minimum_val) {
-  
+  bool updatePrioritySum(uintE v, D delta, D minimum_val) {
+      if (tracking_variable[v] <= minimum_val)
+          return false;
+      D old_val = tracking_variable[v];
+      tracking_variable[v]= tracking_variable[v] + (delta);
+      if (tracking_variable[v] < minimum_val)
+          tracking_variable[v] = minimum_val;
+      return true;
   }
 
-  bool updatePrioritySumAtomic(uintE dst, D delta, D minimum_val){
+  bool updatePrioritySumAtomic(uintE v, D delta, D minimum_val){
+      if (tracking_variable[v] <= minimum_val )
+          return false;
+      writeAdd(&tracking_variable[v], delta);
+      if (tracking_variable[v] < minimum_val)
+          CAS(&tracking_variable[v], tracking_variable[v], minimum_val);
       return true;
   }
 
