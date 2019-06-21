@@ -80,9 +80,14 @@ public:
 	return bucket.identifiers;
   }
 
-  void updatePrioritySum(uintE a, int b, D c) {
+  bool updatePrioritySum(uintE dst, D delta, D minimum_val) {
   
   }
+
+  bool updatePrioritySumAtomic(uintE dst, D delta, D minimum_val){
+      return true;
+  }
+
   void updatePrioritySum(uintE a, int b) {
   }
   D* get_tracking_variable(void) {

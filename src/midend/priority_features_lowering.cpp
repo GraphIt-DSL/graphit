@@ -363,7 +363,13 @@ namespace graphit {
     void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::Call::Ptr expr) {
 
         // Locates the dequeue_ready_set() call and replace with
-        node = expr;
+        if (expr->name == "dequeue_ready_set"
+        && mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
+            expr->name = "getBucketWithGraphItVertexSubset";
+            node = expr;
+        } else {
+            node = expr;
+        }
     }
 
     void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorMin) {

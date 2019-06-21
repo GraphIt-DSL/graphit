@@ -136,8 +136,25 @@ class TestGraphitCompiler(unittest.TestCase):
             0)
         self.assertEqual(subprocess.call(["./"+ self.executable_file_name] + extra_exec_args), 0)
 
+    def basic_compile_with_schedules(self, algo_file, schedule_file, extra_cpp_args=[], extra_exec_args=[]):
+        # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
+        graphit_compile_cmd = ["python", GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py", "-a", self.root_test_input_dir + algo_file, "-f", self.root_test_input_with_schedules_dir + schedule_file, "-o" , self.output_file_name]
+        # check the return code of the call as a way to check if compilation happened correctly
+        self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
+        # check if g++ compilation succeeded
+        cpp_compile_cmd = [self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args
+        self.assertEqual(
+            subprocess.call(cpp_compile_cmd),
+            0)
+
     def expect_output_val(self, input_file_name, expected_output_val, extra_cpp_args=[], extra_exec_args=[]):
         self.basic_compile_exec_test(input_file_name, extra_cpp_args, extra_exec_args)
+        output = self.get_command_output(["./"+ self.executable_file_name]+extra_exec_args).split("\n")[0]
+        print ("output: " + str(output.strip()))
+        self.assertEqual(float(output.strip()), expected_output_val)
+
+    def expect_output_val_with_separate_schedule(self, algo_file, schedule_file, expected_output_val, extra_cpp_args=[], extra_exec_args=[]):
+        self.basic_compile_with_schedules(algo_file, schedule_file, extra_cpp_args, extra_exec_args)
         output = self.get_command_output(["./"+ self.executable_file_name]+extra_exec_args).split("\n")[0]
         print ("output: " + str(output.strip()))
         self.assertEqual(float(output.strip()), expected_output_val)
@@ -662,9 +679,13 @@ class TestGraphitCompiler(unittest.TestCase):
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
-    def test_k_core(self):
-        self.expect_output_val("k_core.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
-        
+    def test_k_core_const_sum_reduce(self):
+        self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
+
+    def test_k_core_sparsepush(self):
+        self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_sparsepush_parallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
+
+
     def test_set_cover(self):
         self.expect_output_val("set_cover.gt", 33, [GRAPHIT_SOURCE_DIRECTORY+"/test/input_with_schedules/set_cover_extern.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
 
@@ -712,10 +733,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    # unittest.main()
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_eager_with_merge'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_k_core_sparsepush'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

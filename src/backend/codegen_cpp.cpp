@@ -902,7 +902,8 @@ namespace graphit {
 
         //check if this is a call on priority queue
         if (mir_context_->getPriorityQueueDecl() != nullptr){
-            if (call_expr->args.size() > 0 && mir::isa<mir::VarExpr>(call_expr->args[0])) {
+            if (call_expr->args.size() > 0
+                && mir::isa<mir::VarExpr>(call_expr->args[0])) {
                 auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
                 auto target_name = target_name_expr->var.getName();
                 priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
@@ -911,7 +912,10 @@ namespace graphit {
                 }
             }
         }
-
+        // one exception is for dequeue_ready_set for ReduceBeforeUpdate schedule, we do not make the reformat
+        if (call_expr->name == "getBucketWithGraphItVertexSubset" && mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
+            call_on_built_in_priority_queue = false;
+        }
 
         if (call_on_built_in_priority_queue){
             oss << priority_queue_name << "->";
@@ -1855,7 +1859,7 @@ namespace graphit {
     void CodeGenCPP::visit(mir::UpdatePriorityUpdateBucketsCall::Ptr update_call) {
         printIndent();
 
-        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate 
+        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate
         || mir_context_->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate){
             oss << update_call->priority_queue_name;
             oss << "->update_buckets(";
@@ -1981,9 +1985,9 @@ namespace graphit {
     void CodeGenCPP::visit(mir::PriorityUpdateOperatorSum::Ptr update_op) {
         update_op->priority_queue->accept(this);
         if (update_op->is_atomic){
-            oss << ".updatePrioritySumAtomic(";
+            oss << "->updatePrioritySumAtomic(";
         } else {
-            oss << ".updatePrioritySum(";
+            oss << "->updatePrioritySum(";
         }
         update_op->destination_node_id->accept(this);
         oss << ", ";
