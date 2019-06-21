@@ -911,6 +911,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                enable_deduplication = edgeset_apply->enable_deduplication;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -936,6 +937,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                enable_deduplication = edgeset_apply->enable_deduplication;
             }
 
             virtual void accept(MIRVisitor *visitor) {
