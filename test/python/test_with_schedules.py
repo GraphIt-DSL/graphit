@@ -658,6 +658,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
+    def test_delta_stepping_SparsePush_schedule(self):
+        self.sssp_verified_test("sssp_deltastepping_sparsepush_parallel.gt", True, True)
+
     def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
 
@@ -733,10 +736,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    # unittest.main()
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_k_core_sparsepush'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePush_schedule'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

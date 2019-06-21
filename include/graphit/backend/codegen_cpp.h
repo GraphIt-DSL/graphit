@@ -103,6 +103,7 @@ namespace graphit {
 
 	    virtual void visit(mir::PriorityUpdateOperatorSum::Ptr);
 
+
     private:
         void genIncludeStmts();
 

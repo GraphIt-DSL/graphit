@@ -478,7 +478,7 @@ protected:
                              " dist[start_vertex] = 0;"
                              "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                              "  while (pq.finished() == false) "
-                             "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                             "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
                              "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                              "    delete frontier; "
                              "  end\n"

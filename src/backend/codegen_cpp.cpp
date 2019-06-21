@@ -1770,43 +1770,64 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::PriorityUpdateOperatorMin::Ptr priority_update_op) {
-        oss << priority_update_op->name;
+
+        if (mir_context_->priority_update_type == mir::EagerPriorityUpdate
+        || mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
+            oss << priority_update_op->name;
 
 
-        if (priority_update_op->generic_type != nullptr) {
-            oss << " < ";
-            priority_update_op->generic_type->accept(this);
-            oss << " > ";
-        }
-
-        oss << "()"; //this should be a functor
-        oss << "(";
-
-        auto priority_queue_name_expr = priority_update_op->args[0];
-        priority_queue_name_expr->accept(this);
-        oss << ", ";
-
-
-        if(mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
-                mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
-            // if this is a priority update edge function for EagerPriorityUpdate with and without merge
-            // Then we need to insert an extra argument local bins
-            oss << "local_bins, ";
-        }
-
-        bool printDelimiter = false;
-
-        //start from index 1, so printed the first argument of priority queue name earlier
-        for (int i = 1; i < priority_update_op->args.size(); i++) {
-            auto arg = priority_update_op->args[i];
-            if (printDelimiter) {
-                oss << ", ";
+            if (priority_update_op->generic_type != nullptr) {
+                oss << " < ";
+                priority_update_op->generic_type->accept(this);
+                oss << " > ";
             }
-            arg->accept(this);
-            printDelimiter = true;
+
+            oss << "()"; //this should be a functor
+            oss << "(";
+
+            auto priority_queue_name_expr = priority_update_op->args[0];
+            priority_queue_name_expr->accept(this);
+            oss << ", ";
+
+
+            if(mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
+               mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
+                // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+                // Then we need to insert an extra argument local bins
+                oss << "local_bins, ";
+            }
+
+            bool printDelimiter = false;
+
+            //start from index 1, so printed the first argument of priority queue name earlier
+            for (int i = 1; i < priority_update_op->args.size(); i++) {
+                auto arg = priority_update_op->args[i];
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << ") ";
+        } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate) {
+            priority_update_op->priority_queue->accept(this);
+            if (priority_update_op->is_atomic){
+                oss << "->updatePriorityMinAtomic(";
+            } else {
+                oss << "->updatePriorityMin(";
+            }
+            priority_update_op->destination_node_id->accept(this);
+            oss << ", ";
+            priority_update_op->old_val->accept(this);
+            oss << ", ";
+            priority_update_op->new_val->accept(this);
+            oss << ")";
+        } else {
+            std::cout << "updatePriorityMin not supported with this schedule"<< std::endl;
         }
 
-        oss << ") ";
+
     }
 
 

@@ -80,6 +80,8 @@ public:
 	return bucket.identifiers;
   }
 
+  // perform the update if the current value is greater than minimum_val
+  // the final value should also be no less than minimum_val
   bool updatePrioritySum(uintE v, D delta, D minimum_val) {
       if (tracking_variable[v] <= minimum_val)
           return false;
@@ -99,8 +101,17 @@ public:
       return true;
   }
 
+  bool updatePriorityMinAtomic(uintE v, D old_val, D new_val){
+      return true;
+  }
+
+  bool updatePriorityMin(uintE v, D old_val, D new_val){
+      return true;
+  }
+
   void updatePrioritySum(uintE a, int b) {
   }
+
   D* get_tracking_variable(void) {
     return tracking_variable;
   }
