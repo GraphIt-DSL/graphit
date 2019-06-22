@@ -102,11 +102,16 @@ public:
   }
 
   bool updatePriorityMinAtomic(uintE v, D old_val, D new_val){
-      return true;
+      return writeMin(&tracking_variable[v], new_val);
   }
 
   bool updatePriorityMin(uintE v, D old_val, D new_val){
-      return true;
+      if (tracking_variable[v] < new_val){
+          return false;
+      } else {
+          tracking_variable[v] = new_val;
+          return true;
+      }
   }
 
   void updatePrioritySum(uintE a, int b) {

@@ -17,7 +17,7 @@ end
 func main()
     var start_vertex : Vertex = 0;
     dist[start_vertex] = 0;
-    pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
+    pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 0, false, start_vertex);
     while (pq.finished() == false)
          var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue lowest priority nodes
          #s1# edges.from(frontier).applyUpdatePriority(updateEdge);

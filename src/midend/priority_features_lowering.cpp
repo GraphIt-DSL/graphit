@@ -238,8 +238,8 @@ namespace graphit {
 
             priority_update_min->priority_queue = call_args[0];
             priority_update_min->destination_node_id = call_args[1];
-            priority_update_min->new_val = call_args[2];
-            priority_update_min->old_val = call_args[3];
+            priority_update_min->old_val = call_args[2];
+            priority_update_min->new_val = call_args[3];
 
             mir::VarDecl::Ptr priority_queue_decl = mir_context_->getPriorityQueueDecl();
             mir::ScalarType::Ptr priority_value_type
