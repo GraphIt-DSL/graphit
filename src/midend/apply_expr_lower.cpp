@@ -129,7 +129,7 @@ namespace graphit {
                 }
             } else {
                 //There is a schedule, but nothing is specified for the current apply
-                node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
+                node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
                 return;
             }
 

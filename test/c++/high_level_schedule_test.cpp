@@ -1943,12 +1943,22 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
-TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultSchedule) {
+TEST_F(HighLevelScheduleTest, DeltaSteppingDensePullParallel) {
     istringstream is (delta_stepping_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultSchedule) {
+istringstream is (delta_stepping_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {
@@ -2055,12 +2065,50 @@ TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
 }
 
 
-TEST_F(HighLevelScheduleTest, KCoreDefaultSchedule){
+TEST_F(HighLevelScheduleTest, KCoreSparsePushSerial){
     istringstream is (kcore_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSparsePushParallel){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreDensePullSerial){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "DensePull");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreDensePullParallel){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "DensePull");
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSparsePushDensePullParallel){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "SparsePush-DensePull");
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 
@@ -2071,3 +2119,5 @@ fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+

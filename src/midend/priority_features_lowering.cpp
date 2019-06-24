@@ -327,7 +327,7 @@ namespace graphit {
         mir::EdgeSetApplyExpr::Ptr regular_edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
         regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
         regular_edgeset_apply_expr->enable_deduplication = true;
-        regular_edgeset_apply_expr->tracking_field = mir_context_->priority_queue_alloc_list_[0]->vector_function;
+        regular_edgeset_apply_expr->tracking_field = mir_context_->getPriorityVectorName();
 
         // Create a new VarDecl statement that returns a frontier
         mir::VarDecl::Ptr new_var_decl = std::make_shared<mir::VarDecl>();
@@ -337,6 +337,9 @@ namespace graphit {
         mir::VertexSetType::Ptr vertexset_type = std::make_shared<mir::VertexSetType>();
         vertexset_type->priority_update_type= mir::ReduceBeforePriorityUpdate;
         mir::VarExpr::Ptr edgeset_target = mir::to<mir::VarExpr>(regular_edgeset_apply_expr->target);
+        // The new variable declaration inherits the label from the original expr stmt (such as "s1")
+        // This allows the schedules to be assigned to the newly created vardecl stmt.
+        new_var_decl->stmt_label = stmt->stmt_label;
 
         auto var = mir_context_->getSymbol(edgeset_target->var.getName());
         auto type = var.getType();

@@ -659,7 +659,13 @@ class TestGraphitCompiler(unittest.TestCase):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
     def test_delta_stepping_SparsePush_schedule(self):
-        self.sssp_verified_test("sssp_deltastepping_sparsepush_parallel.gt", True, True)
+        self.sssp_verified_test("SparsePush_VertexParallel.gt", True, True)
+
+    def test_delta_stepping_DensePull_schedule(self):
+        self.sssp_verified_test("DensePull_VertexParallel.gt", True, True)
+
+    def test_delta_stepping_SparsePushDensePull_schedule(self):
+        self.sssp_verified_test("SparsePushDensePull_VertexParallel.gt", True, True)
 
     def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
@@ -686,8 +692,13 @@ class TestGraphitCompiler(unittest.TestCase):
         self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
 
     def test_k_core_sparsepush(self):
-        self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_sparsepush_parallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+        self.expect_output_val_with_separate_schedule("k_core.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
+    def test_k_core_sparsepush_densepull(self):
+        self.expect_output_val_with_separate_schedule("k_core.gt", "SparsePushDensePull_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+
+    def test_k_core_densepull_parallel(self):
+        self.expect_output_val_with_separate_schedule("k_core.gt", "DensePull_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
     def test_set_cover(self):
         self.expect_output_val("set_cover.gt", 33, [GRAPHIT_SOURCE_DIRECTORY+"/test/input_with_schedules/set_cover_extern.cpp"], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"]) 
@@ -741,5 +752,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_set_cover'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePushDensePull_schedule'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

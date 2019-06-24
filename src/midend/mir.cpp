@@ -71,7 +71,10 @@ namespace graphit {
             for (const auto &arg: expr->args) {
                 args.push_back(arg);
             }
-            generic_type = expr->generic_type->clone<Type>();
+
+            if (generic_type != nullptr){
+                generic_type = expr->generic_type->clone<Type>();
+            }
         }
 
 
@@ -189,6 +192,7 @@ namespace graphit {
             is_parallel = expr->is_parallel;
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;
+            scope_label_name = expr->scope_label_name;
         }
 
 

@@ -49,20 +49,20 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 //
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.AStarDeltaSteppingWithEagerPriorityUpdateWithMergeArgv";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushParallel";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushSerial";
 //
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
 
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreDefaultSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdate";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SetCoverUintDefaultSchedule";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSPushParallelSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCHybridDenseBitvectorFrontierScheduleNewAPI";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
