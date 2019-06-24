@@ -57,6 +57,8 @@ template< class Priority, class EdgeApplyFunc , class WhileCond>
 
 
   frontier[0] = optional_source_node;
+
+//  int round = 0;
   
   #pragma omp parallel
   {
@@ -72,10 +74,21 @@ template< class Priority, class EdgeApplyFunc , class WhileCond>
 //       size_t &next_frontier_tail = frontier_tails[(iter+1)&1];
 
 
+
       size_t &curr_bin_index = pq->shared_indexes[iter&1];
       size_t &next_bin_index = pq->shared_indexes[(iter+1)&1];
       size_t &curr_frontier_tail = pq->frontier_tails[iter&1];
       size_t &next_frontier_tail = pq->frontier_tails[(iter+1)&1];
+
+// Used for debugging
+//      round++;
+//      std::cout << " round: " << round << std::endl;
+//      std::cout << " frontier size: " << curr_frontier_tail << std::endl;
+//      for (size_t i=0; i < curr_frontier_tail; i++) {
+//          NodeID u = frontier[i];
+//          std::cout << u << " ";
+//      }
+//      std::cout << std::endl;
 
       #pragma omp for nowait schedule(dynamic, 64)
       for (size_t i=0; i < curr_frontier_tail; i++) {

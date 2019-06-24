@@ -446,6 +446,11 @@ template <typename PriorityType>
 template <typename PriorityType>
 void updateBucektWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, int delta = 1){
     vset->toSparse();
+
+    if (vset->size() == 0){
+        return;
+    }
+
     auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
         const julienne::uintE v = vset->dense_vertex_set_[i];
         const julienne::uintE bkt = pq->get_bucket(pq->tracking_variable[v]/delta);

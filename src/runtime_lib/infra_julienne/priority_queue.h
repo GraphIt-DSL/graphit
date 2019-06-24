@@ -34,13 +34,15 @@ class PriorityQueue {
 
 public:
   D* tracking_variable;
-  explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
-    
-    //cout << "constructing a priority map from array" << endl;
-    buckets_ = new buckets<D*>(n, priority_array, bkt_order, pri_order, total_buckets);
-    tracking_variable = priority_array;
-    cur_priority_ = 0;
+
+  explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128, uintE optional_starting_node=-1, int delta = 1) {
+
+      //cout << "constructing a priority map from array" << endl;
+      buckets_ = new buckets<D>(n, priority_array, bkt_order, pri_order, total_buckets);
+      tracking_variable = priority_array;
+      cur_priority_ = 0;
   }
+
 
 
   // get the prioirty of the current iteration (each iter has a priority)
@@ -68,7 +70,7 @@ public:
     delete buckets_;
   }
   
-  buckets<D*>* buckets_;
+  buckets<D>* buckets_;
   uintE cur_priority_ = 0;
   
   inline bool finished(void) {
@@ -106,7 +108,7 @@ public:
   }
 
   bool updatePriorityMin(uintE v, D old_val, D new_val){
-      if (tracking_variable[v] < new_val){
+      if (tracking_variable[v] <= new_val){
           return false;
       } else {
           tracking_variable[v] = new_val;

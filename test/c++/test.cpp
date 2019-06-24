@@ -32,7 +32,6 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
 //
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.GlobalConstantSizeVectorTest";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.vectorPerVertexTestWithConstDef";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.AStar_load_graph";
@@ -40,6 +39,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
 //
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpdatesTest";
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SetCover_test";
 
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
-    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdate";
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BCDensePullSparsePushCacheOptimizedSchedule";

@@ -40,7 +40,7 @@ struct buckets {
   public:
     using id_dyn_arr = dyn_arr<uintE>;
 
-    const uintE null_bkt = std::numeric_limits<uintE>::max();
+    const uintE null_bkt = std::numeric_limits<D>::max();
 
     // Create a bucketing structure.
     //   n : the number of identifiers
@@ -53,7 +53,7 @@ struct buckets {
     //   d[i] is the bucket currently containing i
     //   d[i] = UINT_E_MAX if i is not in any bucket
     buckets(size_t _n,
-            D _d,
+            D* _d,
             bucket_order _bkt_order,
             priority_order _pri_order,
             size_t _total_buckets) :
@@ -226,7 +226,7 @@ struct buckets {
     size_t cur_bkt;
     size_t max_bkt;
     size_t cur_range;
-    D d;
+    D* d;
     size_t n; // total number of identifiers in the system
     size_t num_elms;
     size_t open_buckets;
@@ -353,6 +353,6 @@ struct buckets {
 };
 
 template <class D>
-buckets<D> make_buckets(size_t n, D d, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
+buckets<D> make_buckets(size_t n, D* d, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128) {
   return buckets<D>(n, d, bkt_order, pri_order, total_buckets);
 }
