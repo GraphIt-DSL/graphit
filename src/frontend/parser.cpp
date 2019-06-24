@@ -1769,6 +1769,7 @@ namespace graphit {
         fir::NDTensorType::Ptr tensorType;
         switch (peek().type) {
             case Token::Type::INT:
+            case Token::Type::UINT:
             case Token::Type::FLOAT:
             case Token::Type::DOUBLE:
             case Token::Type::BOOL:
@@ -1900,6 +1901,10 @@ namespace graphit {
             case Token::Type::INT:
                 consume(Token::Type::INT);
                 scalarType->type = fir::ScalarType::Type::INT;
+                break;
+            case Token::Type::UINT:
+                consume(Token::Type::UINT);
+                scalarType->type = fir::ScalarType::Type::UINT;
                 break;
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);

@@ -123,6 +123,9 @@ namespace graphit {
                 case ScalarType::Type::INT:
                     oss << "int";
                     break;
+                case ScalarType::Type::UINT:
+                    oss << "uint";
+                    break;
                 case ScalarType::Type::FLOAT:
                     oss << "float";
                     break;

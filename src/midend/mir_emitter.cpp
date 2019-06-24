@@ -169,6 +169,10 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::INT;
                 retType = output;
                 break;
+            case fir::ScalarType::Type::UINT:
+                output->type = mir::ScalarType::Type::UINT;
+                retType = output;
+                break;
             case fir::ScalarType::Type::FLOAT:
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;

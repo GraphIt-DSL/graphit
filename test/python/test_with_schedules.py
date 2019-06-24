@@ -741,5 +741,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePush_schedule'))
+    # suite.addTest(TestGraphitCompiler('test_set_cover'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

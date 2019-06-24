@@ -607,6 +607,38 @@ protected:
         );
 
 
+        const char* setcover_uint_char = ("element Vertex end\n"
+                                     "element Edge end\n"
+                                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                     "const degrees: vector{Vertex}(int) = edges.getOutDegrees();\n"
+                                     "const D: vector{Vertex}(uint);\n"
+                                     "const pq: priority_queue{Vertex}(uint);\n"
+                                     "const epsilon: double = 0.01;\n"
+                                     "const x: double = 1.0/log(1.0 + epsilon);\n"
+                                     "func init_udf(v: Vertex) \n"
+                                     "var deg: int = degrees[v];\n"
+                                     "    if deg == 0\n"
+                                     "        D[v] = 4294967295;\n"
+                                     "    else\n"
+                                     "        D[v] = floor(x*log(to_double(deg)));\n"
+                                     "    end\n"
+                                     "end\n"
+                                     "extern func extern_function(active: vertexset{Vertex}) -> output: vertexset{Vertex};\n"
+                                     "func main() \n"
+                                     "    vertices.apply(init_udf);\n"
+                                     "            pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 2, false, -1);\n"
+                                     "     while (1) \n"
+                                     "        var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                                     "        if frontier.is_null()\n"
+                                     "            break;\n"
+                                     "        end\n"
+                                     "        frontier.applyUpdatePriorityExtern(extern_function);\n"
+                                     "        delete frontier;\n"
+                                     "    end\n"
+                                     "end\n");
+
+
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -625,6 +657,7 @@ protected:
         export_pr_str_ = string(export_pr_char);
         export_cf_str_ = string(export_cf_char);
         kcore_str_ = string(kcore_char);
+        setcover_uint_str_ = string(setcover_uint_char);
     }
 
     virtual void TearDown() {
@@ -698,6 +731,7 @@ protected:
     string export_pr_str_;
     string export_cf_str_;
     string kcore_str_;
+    string setcover_uint_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -2027,4 +2061,13 @@ TEST_F(HighLevelScheduleTest, KCoreDefaultSchedule){
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
+istringstream is (setcover_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+EXPECT_EQ (0, basicTestWithSchedule(program));
 }

@@ -23,6 +23,7 @@ namespace graphit {
             OR,
             NEG,
             INT,
+            UINT,
             FLOAT,
             BOOL,
             COMPLEX,
