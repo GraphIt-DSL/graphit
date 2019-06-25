@@ -89,24 +89,25 @@ namespace graphit {
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::setPrioritySchedule(std::string current_label) {
         auto apply_schedule = schedule_->apply_schedules->find(current_label);
         if (apply_schedule != schedule_->apply_schedules->end()) { //a schedule is found
+
+            if (apply_schedule->second.delta != 1) {
+                mir_context_->delta_ = apply_schedule->second.delta;
+            }
+
+
             if (apply_schedule->second.priority_update_type
                 == ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
-                if (apply_schedule->second.delta != 1) {
-                    mir_context_->delta_ = apply_schedule->second.delta;
-                }
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
-                if (apply_schedule->second.delta != 1) {
-                    mir_context_->delta_ = apply_schedule->second.delta;
-                }
+
                 if (apply_schedule->second.merge_threshold != 0) {
                     mir_context_->bucket_merge_threshold_ = apply_schedule->second.merge_threshold;
                 }
@@ -353,6 +354,7 @@ namespace graphit {
         update_call->modified_vertexsubset_name = modified_vertexset_name;
         update_call->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
         update_call->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
+        update_call->delta = mir_context_->delta_;
         mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
         stmt_block->insertStmtEnd(new_var_decl);
         stmt_block->insertStmtEnd(update_call);
@@ -375,7 +377,4 @@ namespace graphit {
         }
     }
 
-    void PriorityFeaturesLower::LowerReduceBeforePriorityUpdate::visit(mir::PriorityUpdateOperatorMin) {
-
-    }
 }

@@ -101,8 +101,6 @@ namespace graphit {
             //specialize the dequeue_ready_set call for the GraphIt VertexSubset
             virtual void visit(mir::Call::Ptr);
 
-            virtual void visit(mir::PriorityUpdateOperatorMin);
-
             Schedule *schedule_;
             MIRContext *mir_context_;
         };

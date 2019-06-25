@@ -1954,11 +1954,22 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingDensePullParallel) {
 }
 
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultSchedule) {
-istringstream is (delta_stepping_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
-        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDeltaSparsePushSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {

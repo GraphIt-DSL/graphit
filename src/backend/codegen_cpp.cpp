@@ -1899,7 +1899,8 @@ namespace graphit {
         } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
             oss << "updateBucektWithGraphItVertexSubset(";
             oss << update_call->lambda_name << ", ";
-            oss << update_call->priority_queue_name << ");" << std::endl;
+            oss << update_call->priority_queue_name << ", ";
+            oss << update_call->delta << ");" << std::endl;
         } else {
             std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
         }

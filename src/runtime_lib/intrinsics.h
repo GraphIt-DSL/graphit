@@ -453,7 +453,9 @@ void updateBucektWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::P
 
     auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
         const julienne::uintE v = vset->dense_vertex_set_[i];
-        const julienne::uintE bkt = pq->get_bucket(pq->tracking_variable[v]/delta);
+        PriorityType null_bkt = pq->get_null_bkt();
+        PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
+        const julienne::uintE bkt = pq->get_bucket(priority);
         return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
     };
 

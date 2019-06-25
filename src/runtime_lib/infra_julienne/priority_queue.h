@@ -32,8 +32,11 @@ class PriorityFunctor {
 template<class D>
 class PriorityQueue {
 
+
 public:
   D* tracking_variable;
+  D null_bkt = std::numeric_limits<D>::max();
+
 
   explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128, uintE optional_starting_node=-1, int delta = 1) {
 
@@ -49,6 +52,12 @@ public:
   D get_current_priority(){
     return cur_priority_;
   }
+
+  D get_null_bkt(){
+    return null_bkt;
+
+  }
+
 
   inline bucket next_bucket() {
     auto next_bkt =  buckets_->next_bucket();

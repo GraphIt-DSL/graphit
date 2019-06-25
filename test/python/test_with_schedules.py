@@ -667,6 +667,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_delta_stepping_SparsePushDensePull_schedule(self):
         self.sssp_verified_test("SparsePushDensePull_VertexParallel.gt", True, True)
 
+    def test_delta_stepping_SparsePush_delta2_schedule(self):
+        self.sssp_verified_test("sssp_sparsepush_vertexparallel_delta_2.gt", True, True)
+
     def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
 
@@ -752,5 +755,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePushDensePull_schedule'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePush_delta2_schedule'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
