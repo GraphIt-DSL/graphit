@@ -36,6 +36,7 @@ class PriorityQueue {
 public:
   D* tracking_variable;
   D null_bkt = std::numeric_limits<D>::max();
+  int delta_;
 
 
   explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128, uintE optional_starting_node=-1, int delta = 1) {
@@ -44,6 +45,7 @@ public:
       buckets_ = new buckets<D>(n, priority_array, bkt_order, pri_order, total_buckets);
       tracking_variable = priority_array;
       cur_priority_ = 0;
+      delta_ = delta;
   }
 
 
@@ -84,6 +86,10 @@ public:
   
   inline bool finished(void) {
       return cur_priority_ == buckets_->null_bkt;
+  }
+
+  inline bool finishedNode(uintE node){
+      return cur_priority_ == tracking_variable[node]/delta_;
   }
 
   inline julienne::vertexSubset dequeue_ready_set() {

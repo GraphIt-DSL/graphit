@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDeltaSparsePushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSWithPullParallelSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PPSPDeltaSteppingWithSparsePushParallelSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaPullParallelFuseFields";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CFPullParallelLoadBalance";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CFPullParallelLoadBalanceWithGrainSize";

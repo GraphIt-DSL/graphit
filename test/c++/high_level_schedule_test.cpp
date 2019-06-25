@@ -501,7 +501,7 @@ protected:
                                             " dist[start_vertex] = 0;"
                                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                                            "  while (pq.finishedNode(dst_vertex) == false) "
-                                           "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                           "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
                                            "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                                            "    delete frontier; "
                                            "  end\n"
@@ -531,7 +531,7 @@ protected:
                                  "  load_coords(argv[1]);"
                                  "  pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);"
                                  "  while (pq.finishedNode(dst_vertex) == false) "
-                                 "    var frontier : vertexsubset = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                 "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
                                  "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                                  "    delete frontier; "
                                  "  end\n"
@@ -2003,6 +2003,25 @@ TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMergeArgv)
     program->configBucketMergeThreshold("s1", "argv[3]");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithDefaultSchedule) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithSparsePushParallelSchedule) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 
 TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateArgv) {
     istringstream is (ppsp_str_);

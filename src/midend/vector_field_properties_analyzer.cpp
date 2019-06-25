@@ -70,7 +70,12 @@ namespace graphit {
         enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
-    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr) {
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr op) {
+        if (direction_ == "push") {
+            op->is_atomic = true;
+        } else {
+            op->is_atomic = false;
+        }
         enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 

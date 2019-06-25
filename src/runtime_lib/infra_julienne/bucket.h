@@ -115,7 +115,7 @@ struct buckets {
       if (bkt_order == increasing) {
         // case for strictly_decreasing priorities, assuming elements start out
         // in the structure.
-        if (nb != null_bkt && nb != open_buckets) {
+        if (nb != null_bkt ) {
           return nb;
         } // case for strictly_increasing elided
       } else { // bkt_order == decreasing
