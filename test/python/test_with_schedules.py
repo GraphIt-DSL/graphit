@@ -668,7 +668,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.sssp_verified_test("SparsePushDensePull_VertexParallel.gt", True, True)
 
     def test_delta_stepping_SparsePush_delta2_schedule(self):
-        self.sssp_verified_test("sssp_sparsepush_vertexparallel_delta_2.gt", True, True)
+        self.sssp_verified_test("SparsePush_VertexParallel_Delta2.gt", True, True)
 
     def test_delta_stepping_eager_no_merge(self):
         self.sssp_verified_test("priority_update_eager_no_merge.gt", True, True);
@@ -685,6 +685,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_ppsp_delta_stepping_SparsePush_parallel(self):
         self.ppsp_verified_test("SparsePushDensePull_VertexParallel.gt", True);
 
+    def test_ppsp_delta_stepping_SparsePush_parallel_delta2(self):
+        self.ppsp_verified_test("SparsePush_VertexParallel_Delta2.gt", True);
+
     def test_delta_stepping_eager_with_merge(self):
         self.ppsp_verified_test("priority_update_eager_with_merge.gt", True);
 
@@ -696,6 +699,12 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_astar_sparsepush_parallel(self):
         self.astar_verified_test("SparsePush_VertexParallel.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_sparsepush_parallel_delta2(self):
+        self.astar_verified_test("SparsePush_VertexParallel_Delta2.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
@@ -764,5 +773,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_set_cover'))
+    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePush_delta2_schedule'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

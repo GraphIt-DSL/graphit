@@ -41,6 +41,7 @@ struct buckets {
     using id_dyn_arr = dyn_arr<uintE>;
 
     const uintE null_bkt = std::numeric_limits<D>::max();
+    int delta_ = 1;
 
     // Create a bucketing structure.
     //   n : the number of identifiers
@@ -56,22 +57,23 @@ struct buckets {
             D* _d,
             bucket_order _bkt_order,
             priority_order _pri_order,
-            size_t _total_buckets) :
+            size_t _total_buckets, int delta=1) :
         n(_n), d(_d), bkt_order(_bkt_order), pri_order(_pri_order),
         open_buckets(_total_buckets-1), total_buckets(_total_buckets),
-        cur_bkt(0), max_bkt(_total_buckets), num_elms(0) {
+        cur_bkt(0), max_bkt(_total_buckets), num_elms(0), delta_(delta) {
       // Initialize array consisting of the materialized buckets.
       bkts = pbbso::new_array<id_dyn_arr>(total_buckets);
 
       // Set the current range being processed based on the order.
       if (bkt_order == increasing) {
-        auto imap = make_in_imap<uintE>(n, [&] (size_t i) { return d[i]; });
+//        auto imap = make_in_imap<uintE>(n, [&] (size_t i) { return d[i]; });
+        auto imap = make_in_imap<uintE>(n, [&] (size_t i) { return (d[i] == null_bkt) ? null_bkt : d[i]/delta_; });
         auto min = [] (uintE x, uintE y) { return std::min(x, y); };
         size_t min_b = pbbso::reduce(imap, min);
         cur_range = min_b / open_buckets;
       } else if (bkt_order == decreasing) {
         auto imap = make_in_imap<uintE>(n, [&] (size_t i) {
-            return (d[i] == null_bkt) ? 0 : d[i]; });
+            return (d[i] == null_bkt) ? 0 : d[i]/delta; });
         auto max = [] (uintE x, uintE y) { return std::max(x,y); };
         size_t max_b = pbbso::reduce(imap, max);
         cur_range = (max_b + open_buckets) / open_buckets;
@@ -84,7 +86,8 @@ struct buckets {
       // Update buckets with all (id, bucket) pairs. Identifiers with bkt =
       // null_bkt are ignored by update_buckets.
       auto get_id_and_bkt = [&] (uintE i) -> Maybe<tuple<uintE, uintE> > {
-        uintE bkt = d[i];
+          //updated with delta
+        uintE bkt = (d[i] == null_bkt) ? null_bkt : d[i]/delta_;
         if (bkt != null_bkt) {
           bkt = to_range(bkt);
         }
@@ -274,8 +277,10 @@ struct buckets {
 
       auto g = [&] (uintE i) -> Maybe<tuple<uintE, uintE> > {
         uintE v = tmp[i];
-        uintE bkt = to_range(d[v]);
-        return Maybe<tuple<uintE, uintE> >(make_tuple(v, bkt));
+        //uintE bkt = to_range(d[v]);
+        D priority = (d[v] == null_bkt)? null_bkt : d[v]/delta_;
+        uintE bkt = to_range(priority);
+          return Maybe<tuple<uintE, uintE> >(make_tuple(v, bkt));
       };
 
       if (m != num_elms) {
@@ -338,7 +343,7 @@ struct buckets {
       num_elms -= size;
       uintE* out = newA(uintE, size);
       size_t cur_bkt_num = get_cur_bucket_num();
-      auto p = [&] (size_t i) { return d[i] == cur_bkt_num; };
+      auto p = [&] (size_t i) { return ((d[i] == null_bkt)? null_bkt : d[i]/delta_) == cur_bkt_num; };
       size_t m = pbbso::filterf(bkt.A, out, size, p);
       bkts[cur_bkt].size = 0;
       if (m == 0) {

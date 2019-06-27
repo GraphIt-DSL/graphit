@@ -1725,7 +1725,11 @@ namespace graphit {
             oss << ", ";
 
             oss << "128";
-            
+
+            if (mir_context_->delta_ != 1){
+                oss << ", " << mir_context_->delta_;
+            }
+
             oss << ")";
 
 	} else {

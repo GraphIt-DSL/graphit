@@ -39,10 +39,10 @@ public:
   int delta_;
 
 
-  explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128, uintE optional_starting_node=-1, int delta = 1) {
+  explicit PriorityQueue(size_t n, D* priority_array, bucket_order bkt_order, priority_order pri_order, size_t total_buckets=128, int delta = 1) {
 
       //cout << "constructing a priority map from array" << endl;
-      buckets_ = new buckets<D>(n, priority_array, bkt_order, pri_order, total_buckets);
+      buckets_ = new buckets<D>(n, priority_array, bkt_order, pri_order, total_buckets, delta);
       tracking_variable = priority_array;
       cur_priority_ = 0;
       delta_ = delta;
@@ -89,7 +89,7 @@ public:
   }
 
   inline bool finishedNode(uintE node){
-      return cur_priority_ == tracking_variable[node]/delta_;
+      return cur_priority_ >= tracking_variable[node]/delta_;
   }
 
   inline julienne::vertexSubset dequeue_ready_set() {
