@@ -57,6 +57,7 @@ namespace graphit {
                 priority_queue_alloc_expr->delta = mir_context_->delta_;
                 mir_context_->optional_starting_source_node = priority_queue_alloc_expr->starting_node;
                 mir_context_->priority_queue_alloc_list_.push_back(priority_queue_alloc_expr);
+                mir_context_->nodes_init_in_buckets = priority_queue_alloc_expr->init_bucket;
             }
 
             void visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {

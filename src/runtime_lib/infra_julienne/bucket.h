@@ -111,14 +111,15 @@ struct buckets {
     }
 
     // Computes a bucket_dest for an identifier moving to bucket_id next.
-    inline bucket_dest get_bucket(const bucket_id& next) const {
+    inline bucket_dest get_bucket_no_overflow_insertion(const bucket_id& next) const {
       uintE nb = to_range(next);
       // Note that the interface currently only implements strictly_decreasing 
       // priority, which is why the code below does not check pri_order.
       if (bkt_order == increasing) {
         // case for strictly_decreasing priorities, assuming elements start out
         // in the structure.
-        if (nb != null_bkt ) {
+        // nb != open_buckets prevent it from returning the overflow bucket (open_buckets) as a target
+        if (nb != null_bkt && nb != open_buckets) {
           return nb;
         } // case for strictly_increasing elided
       } else { // bkt_order == decreasing
@@ -129,6 +130,27 @@ struct buckets {
       }
       return null_bkt;
     }
+
+    // Computes a bucket_dest for an identifier moving to bucket_id next.
+    inline bucket_dest get_bucket_with_overflow_insertion(const bucket_id& next) const {
+        uintE nb = to_range(next);
+        // Note that the interface currently only implements strictly_decreasing
+        // priority, which is why the code below does not check pri_order.
+        if (bkt_order == increasing) {
+            // case for strictly_decreasing priorities, assuming elements start out
+            // in the structure.
+            if (nb != null_bkt ) {
+                return nb;
+            } // case for strictly_increasing elided
+        } else { // bkt_order == decreasing
+            if (nb != null_bkt) {
+                // strictly_decreasing priorities, assuming elements start out in the structure.
+                return nb;
+            }
+        }
+        return null_bkt;
+    }
+
 
     // Updates k identifiers in the bucket structure. The i'th identifier and
     // its bucket_dest are given by F(i).

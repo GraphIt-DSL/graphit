@@ -1872,8 +1872,14 @@ namespace graphit {
 	printIndent();
 	oss << "const julienne::uintE bkt = ";
 	oss << extern_call->priority_queue_name;
-	oss << "->get_bucket(";
-	oss << mir_context_->priority_queue_alloc_list_[0]->vector_function;	
+
+	if (mir_context_->nodes_init_in_buckets){
+        oss << "->get_bucket_no_overflow_insertion(";
+	} else {
+        oss << "->get_bucket_with_overflow_insertion(";
+    }
+
+	oss << mir_context_->priority_queue_alloc_list_[0]->vector_function;
 	oss << "[v]);" << std::endl;
 
 	printIndent();
@@ -1904,6 +1910,7 @@ namespace graphit {
             oss << "updateBucketWithGraphItVertexSubset(";
             oss << update_call->lambda_name << ", ";
             oss << update_call->priority_queue_name << ", ";
+            oss << update_call->nodes_init_in_bucket << ", ";
             oss << update_call->delta << ");" << std::endl;
         } else {
             std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
@@ -1969,7 +1976,11 @@ namespace graphit {
 		printIndent();
 		oss << "return julienne::wrap(std::get<0>(__p), ";
 		oss << call->priority_queue_name;
-		oss << "->get_bucket(__new_pri));" << std::endl;
+		if (mir_context_->nodes_init_in_buckets){
+            oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+		} else {
+            oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+        }
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;

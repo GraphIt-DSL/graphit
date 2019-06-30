@@ -357,6 +357,7 @@ namespace graphit {
         update_call->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
         update_call->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
         update_call->delta = mir_context_->delta_;
+        update_call->nodes_init_in_bucket = mir_context_->nodes_init_in_buckets;
         mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
         stmt_block->insertStmtEnd(new_var_decl);
         stmt_block->insertStmtEnd(update_call);

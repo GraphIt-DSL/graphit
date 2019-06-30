@@ -850,6 +850,7 @@ namespace graphit {
             priority_queue_name = expr->priority_queue_name;
             lambda_name = expr->lambda_name;
             modified_vertexsubset_name = expr->modified_vertexsubset_name;
+            nodes_init_in_bucket = expr->nodes_init_in_bucket;
         }
 
         MIRNode::Ptr UpdatePriorityUpdateBucketsCall::cloneNode() {

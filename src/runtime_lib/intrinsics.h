@@ -461,28 +461,48 @@ template <typename PriorityType>
 
 
 template <typename PriorityType>
-void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, int delta = 1){
+void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, bool nodes_init_in_bucket, int delta = 1){
     vset->toSparse();
 
     if (vset->size() == 0){
         return;
     }
 
-    auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
-        const julienne::uintE v = vset->dense_vertex_set_[i];
-        PriorityType null_bkt = pq->get_null_bkt();
-        PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
+    // Do not insert into overflow bucket since all nodes are in the bucket initially
+    if (nodes_init_in_bucket){
+        auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+            const julienne::uintE v = vset->dense_vertex_set_[i];
+            PriorityType null_bkt = pq->get_null_bkt();
+            PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
 //        std::cout << "node: " << v << " priority: " << priority << " tracking val[v]: " << pq->tracking_variable[v] << " bucket: " << pq->get_bucket(priority) << std::endl;
-        const julienne::uintE bkt = pq->get_bucket(priority);
-        return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
-    };
+            const julienne::uintE bkt = pq->get_bucket_no_overflow_insertion(priority);
+            return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
+        };
 
 //    for (int i = 0; i < 5; i++){
 //        std::cout << "f[i] vertex: " << std::get<0>(f(i).t) << std::endl;
 //        std::cout << "f[i] bkt ID: " << std::get<1>(f(i).t) << std::endl;
 //    }
 
-    pq->update_buckets(f, vset->num_vertices_);
+        pq->update_buckets(f, vset->num_vertices_);
+    } else {
+        auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+            const julienne::uintE v = vset->dense_vertex_set_[i];
+            PriorityType null_bkt = pq->get_null_bkt();
+            PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
+//        std::cout << "node: " << v << " priority: " << priority << " tracking val[v]: " << pq->tracking_variable[v] << " bucket: " << pq->get_bucket(priority) << std::endl;
+            const julienne::uintE bkt = pq->get_bucket_with_overflow_insertion(priority);
+            return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
+        };
+
+//    for (int i = 0; i < 5; i++){
+//        std::cout << "f[i] vertex: " << std::get<0>(f(i).t) << std::endl;
+//        std::cout << "f[i] bkt ID: " << std::get<1>(f(i).t) << std::endl;
+//    }
+
+        pq->update_buckets(f, vset->num_vertices_);
+    }
+
 }
 
 

@@ -1351,6 +1351,7 @@ namespace graphit {
             std::string lambda_name;
             std::string modified_vertexsubset_name;
             mir::PriorityUpdateType priority_update_type;
+            bool nodes_init_in_bucket;
             int delta = 1;
 
             typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;

@@ -72,8 +72,14 @@ public:
     return buckets_->update_buckets(f, k);
   }
 
-  inline bucket_dest get_bucket(const bucket_id& next) const {
-    return buckets_->get_bucket(next);
+  // Do not return the overflow bucket as a possible bucket for insertion (because all nodes are inserted in overflow initially)
+  inline bucket_dest get_bucket_no_overflow_insertion(const bucket_id& next) const {
+    return buckets_->get_bucket_no_overflow_insertion(next);
+  }
+
+  // Allow returning overflow bucket as a possible bucket for insertion (nodes are not initially inserted in the bucket)
+  inline bucket_dest get_bucket_with_overflow_insertion(const bucket_id& next) const {
+      return buckets_->get_bucket_with_overflow_insertion(next);
   }
 
   ~PriorityQueue(){

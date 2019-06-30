@@ -406,7 +406,7 @@ TEST_F(RuntimeLibTest, KCore_test){
         if (deg > k) {
             julienne::uintE new_deg = std::max(deg - edgesRemoved, k);
             updated_degree[v] = new_deg;
-            julienne::uintE bkt = pq->get_bucket(new_deg);
+            julienne::uintE bkt = pq->get_bucket_no_overflow_insertion(new_deg);
             return julienne::wrap(v, bkt);
         }
         return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE> >();
@@ -543,7 +543,7 @@ TEST_F(RuntimeLibTest, SetCover_test) {
         modified.toSparse();
         auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
             const julienne::uintE v = modified.vtx(i);
-            const julienne::uintE bkt = pq->get_bucket(pq->tracking_variable[v]);
+            const julienne::uintE bkt = pq->get_bucket_no_overflow_insertion(pq->tracking_variable[v]);
             return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
         };
         pq->update_buckets(f, modified.size());
@@ -635,7 +635,7 @@ TEST_F(RuntimeLibTest, UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpd
         priority_array[v] = v % 2;
     }
 
-    updateBucketWithGraphItVertexSubset(vertexSubset, pq);
+    updateBucketWithGraphItVertexSubset(vertexSubset, pq, true);
 
     auto vset = getBucketWithGraphItVertexSubset(pq);
     EXPECT_EQ(vset->num_vertices_, 3);

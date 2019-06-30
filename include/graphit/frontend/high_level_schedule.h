@@ -167,6 +167,7 @@ namespace graphit {
                 configBucketMergeThreshold(std::string apply_label, int threshold);
 
                 //configures the parameter for number of materialized buckets used in lazy priority queue
+                // number of open buckets need to be a power of 2
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configNumOpenBuckets(std::string apply_label, int num_open_buckets);
 
