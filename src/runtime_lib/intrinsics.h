@@ -257,11 +257,28 @@ static int * builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
+static uintE * builtin_getOutDegreesUint(Graph &edges){
+    uintE * out_degrees  = new uintE [edges.num_nodes()];
+    for (NodeID n=0; n < edges.num_nodes(); n++){
+        out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
 template <typename T>
 static int * builtin_getOutDegrees(julienne::graph<T> &edges) {
     int * out_degrees = new int [edges.n];
-    for (unsigned int n = 0; n < edges.n; n++) {
-	out_degrees[n] = edges.V[n].degree;
+    for (uintE n = 0; n < edges.n; n++) {
+	    out_degrees[n] = edges.V[n].degree;
+    }
+    return out_degrees;
+}
+
+template <typename T>
+static uintE * builtin_getOutDegreesUint(julienne::graph<T> &edges) {
+    uintE * out_degrees = new uintE [edges.n];
+    for (uintE n = 0; n < edges.n; n++) {
+        out_degrees[n] = edges.V[n].degree;
     }
     return out_degrees;
 }

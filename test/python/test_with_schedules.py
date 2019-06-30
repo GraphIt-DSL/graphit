@@ -709,11 +709,17 @@ class TestGraphitCompiler(unittest.TestCase):
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
+    def test_k_core_uint_const_sum_reduce(self):
+        self.expect_output_val_with_separate_schedule("k_core_uint.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
+
     def test_k_core_const_sum_reduce(self):
         self.expect_output_val_with_separate_schedule("k_core.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
 
     def test_k_core_sparsepush(self):
         self.expect_output_val_with_separate_schedule("k_core.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+
+    def test_k_core_uint_sparsepush(self):
+        self.expect_output_val_with_separate_schedule("k_core_uint.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
     def test_k_core_sparsepush_densepull(self):
         self.expect_output_val_with_separate_schedule("k_core.gt", "SparsePushDensePull_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
@@ -773,5 +779,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_delta_stepping_SparsePush_delta2_schedule'))
+    # suite.addTest(TestGraphitCompiler('test_k_core_uint_const_sum_reduce'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -607,6 +607,29 @@ protected:
         );
 
 
+        const char* kcore_uint_char =  ("element Vertex end\n"
+                                   "element Edge end\n"
+                                   "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                   "const D: vector{Vertex}(uint) = edges.getOutDegreesUint();\n"
+                                   "const pq: priority_queue{Vertex}(uint);\n"
+                                   "func apply_f(src: Vertex, dst: Vertex)\n"
+                                   "    var k: int = pq.get_current_priority();\n"
+                                   "    pq.updatePrioritySum(dst, -1, k);\n"
+                                   "end \n"
+                                   "func main()\n"
+                                   "    pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 2, false, -1);\n"
+                                   "    var finished: int = 0; \n"
+                                   "    while (finished != vertices.size()) \n"
+                                   "        var frontier: vertexset{Vertex} = pq.dequeue_ready_set();\n"
+                                   "        finished += frontier.size();\n"
+                                   "        #s1# edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                                   "        delete frontier;\n"
+                                   "    end\n"
+                                   "    delete pq;\n"
+                                   "end\n"
+        );
+
         const char* setcover_uint_char = ("element Vertex end\n"
                                      "element Edge end\n"
                                      "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
@@ -657,6 +680,7 @@ protected:
         export_pr_str_ = string(export_pr_char);
         export_cf_str_ = string(export_cf_char);
         kcore_str_ = string(kcore_char);
+        kcore_uint_str_ = string(kcore_uint_char);
         setcover_uint_str_ = string(setcover_uint_char);
     }
 
@@ -731,6 +755,7 @@ protected:
     string export_pr_str_;
     string export_cf_str_;
     string kcore_str_;
+    string kcore_uint_str_;
     string setcover_uint_str_;
 };
 
@@ -2109,6 +2134,24 @@ fe_->parseStream(is, context_, errors_);
 fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreUintSparsePushParallel){
+istringstream is (kcore_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreUintSumReduceBeforeUpdate){
+istringstream is (kcore_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyPriorityUpdate("s1", "constant_sum_reduce_before_update");
 EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 

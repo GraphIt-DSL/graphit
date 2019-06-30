@@ -2592,6 +2592,8 @@ namespace graphit {
         //library functions for edgeset
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
+        intrinsics_.push_back("getOutDegreesUint");
+
 
         // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");

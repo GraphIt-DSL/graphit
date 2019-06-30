@@ -48,7 +48,11 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopIndexSplit";
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
-//
+
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreUintSparsePushParallel";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreUintSumReduceBeforeUpdate";
+
+
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushSerial";
 //
