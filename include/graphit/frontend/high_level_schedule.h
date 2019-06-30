@@ -162,9 +162,13 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyPriorityUpdateDelta(std::string apply_label, string delta_argv);
 
-                //configures the parameter for merge threshold for buckets
+                //configures the parameter for merge threshold for buckets used in eager merge priority queue
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configBucketMergeThreshold(std::string apply_label, int threshold);
+
+                //configures the parameter for number of materialized buckets used in lazy priority queue
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configNumOpenBuckets(std::string apply_label, int num_open_buckets);
 
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configBucketMergeThreshold(std::string apply_label, string threshold);
@@ -201,6 +205,7 @@ namespace graphit {
                 void initGraphIterationSpaceIfNeeded(string label);
                 int extractIntegerFromString(string input_string);
                 int extractArgvNumFromStringArg(string argv_str);
+                ApplySchedule createDefaultSchedule(string apply_label);
             };
 
 

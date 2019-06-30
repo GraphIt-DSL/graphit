@@ -98,12 +98,14 @@ namespace graphit {
             if (apply_schedule->second.priority_update_type
                 == ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
+                mir_context_->num_open_buckets = apply_schedule->second.num_open_buckets;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
+                mir_context_->num_open_buckets = apply_schedule->second.num_open_buckets;
             } else if (apply_schedule->second.priority_update_type
                        == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
                 mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;

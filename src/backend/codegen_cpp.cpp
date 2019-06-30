@@ -1724,7 +1724,7 @@ namespace graphit {
             oss << priority_queue_alloc_expr->priority_ordering;
             oss << ", ";
 
-            oss << "128";
+            oss << mir_context_->num_open_buckets;
 
             if (mir_context_->delta_ != 1){
                 oss << ", " << mir_context_->delta_;

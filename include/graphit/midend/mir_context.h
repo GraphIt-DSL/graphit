@@ -402,6 +402,7 @@ namespace graphit {
 
         int delta_ = 1;
         int bucket_merge_threshold_ = 0;
+        int num_open_buckets = 128;
         mir::Expr::Ptr optional_starting_source_node = nullptr;
         std::string eager_priority_update_edge_function_name = "";
 

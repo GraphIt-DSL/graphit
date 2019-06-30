@@ -199,6 +199,7 @@ namespace graphit {
             int delta;
             bool numa_aware;
             int merge_threshold;
+            int num_open_buckets;
         };
 
         /**

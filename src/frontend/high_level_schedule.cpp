@@ -286,14 +286,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PUSH,
-                           ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable,
-                           ApplySchedule::OtherOpt::QUEUE,
-                           ApplySchedule::PullFrontierType::BOOL_MAP,
-                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 1000};
+                        = createDefaultSchedule(apply_label);
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -310,6 +303,8 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].delta = parameter;
             } else if (apply_schedule_str == "bucket_merge_threshold"){
                 (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
+            } else if (apply_schedule_str == "num_open_buckets"){
+                (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -337,14 +332,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PUSH,
-                           ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable,
-                           ApplySchedule::OtherOpt::QUEUE,
-                           ApplySchedule::PullFrontierType::BOOL_MAP,
-                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
-                           0, -100, 1, false, 1000};
+                        = createDefaultSchedule(apply_label);
             }
 
 
@@ -876,6 +864,29 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, string threshold_argv) {
             int argv_num = extractArgvNumFromStringArg(threshold_argv);
             return setApply(apply_label, "bucket_merge_threshold", argv_num);
+        }
+
+        // Create a default schedule parameters
+        ApplySchedule high_level_schedule::ProgramScheduleNode::createDefaultSchedule(std::string apply_label) {
+            return {apply_label, ApplySchedule::DirectionType::PUSH, // default direction is push
+                    ApplySchedule::ParType::Serial,
+                    ApplySchedule::DeduplicationType::Enable,
+                    ApplySchedule::OtherOpt::QUEUE,
+                    ApplySchedule::PullFrontierType::BOOL_MAP,
+                    ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                    ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
+                    0, // pull_load_balance_edge_grain_size
+                    -100, // num_segment
+                    1, // default delta
+                    false, // enable_numa_aware?
+                    1000, // merge threshold for eager prioirty queue
+                    128   // default number of open buckets for lazy priority queue
+            };
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configNumOpenBuckets(std::string apply_label, int num_open_buckets) {
+            return setApply(apply_label, "num_open_buckets", num_open_buckets);
         }
 
     }

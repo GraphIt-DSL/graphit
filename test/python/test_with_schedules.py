@@ -721,6 +721,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_k_core_uint_sparsepush(self):
         self.expect_output_val_with_separate_schedule("k_core_uint.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
+    def test_k_core_uint_sparsepush_16_open_buckets(self):
+        self.expect_output_val_with_separate_schedule("k_core_uint.gt", "KCore_SparsePush_VertexParallel_16_Open.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+
     def test_k_core_sparsepush_densepull(self):
         self.expect_output_val_with_separate_schedule("k_core.gt", "SparsePushDensePull_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
@@ -779,5 +782,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_k_core_uint_const_sum_reduce'))
+    # suite.addTest(TestGraphitCompiler('test_k_core_uint_sparsepush_16_open_buckets'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
