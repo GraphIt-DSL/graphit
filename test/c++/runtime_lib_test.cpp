@@ -635,7 +635,7 @@ TEST_F(RuntimeLibTest, UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpd
         priority_array[v] = v % 2;
     }
 
-    updateBucektWithGraphItVertexSubset(vertexSubset, pq);
+    updateBucketWithGraphItVertexSubset(vertexSubset, pq);
 
     auto vset = getBucketWithGraphItVertexSubset(pq);
     EXPECT_EQ(vset->num_vertices_, 3);

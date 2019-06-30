@@ -1901,7 +1901,7 @@ namespace graphit {
             oss << update_call->modified_vertexsubset_name;
             oss << ".size());" << std::endl;
         } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
-            oss << "updateBucektWithGraphItVertexSubset(";
+            oss << "updateBucketWithGraphItVertexSubset(";
             oss << update_call->lambda_name << ", ";
             oss << update_call->priority_queue_name << ", ";
             oss << update_call->delta << ");" << std::endl;

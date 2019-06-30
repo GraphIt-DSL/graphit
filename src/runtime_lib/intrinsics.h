@@ -461,7 +461,7 @@ template <typename PriorityType>
 
 
 template <typename PriorityType>
-void updateBucektWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, int delta = 1){
+void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, int delta = 1){
     vset->toSparse();
 
     if (vset->size() == 0){
