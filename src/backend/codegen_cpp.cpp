@@ -2001,7 +2001,12 @@ namespace graphit {
 		printIndent();
 		oss << "return julienne::wrap(std::get<0>(__p), ";
 		oss << call->priority_queue_name;
-		oss << "->get_bucket(__new_pri));" << std::endl;
+        if (mir_context_->nodes_init_in_buckets){
+            oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+        } else {
+            oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+        }
+
 	}
 	
 

@@ -14,10 +14,17 @@ struct Maybe {
   Maybe() : exists(false) {}
 };
 
-inline const Maybe<tuple<uintE, uintE> > wrap(const uintE& l, const uintE& r) {
-  auto t = Maybe<tuple<uintE, uintE> >(make_tuple(l, r));
-  t.exists = (l != UINT_E_MAX) && (r != UINT_E_MAX);
-  return t;
+//inline const Maybe<tuple<uintE, uintE> > wrap(const uintE& l, const uintE& r) {
+//    auto t = Maybe<tuple<uintE, uintE> >(make_tuple(l, r));
+//    t.exists = (l != UINT_E_MAX) && (r != UINT_E_MAX);
+//    return t;
+//}
+
+template <class D>
+inline const Maybe<tuple<uintE, D> > wrap(const uintE& l, const D& r) {
+    auto t = Maybe<tuple<uintE, D> >(make_tuple(l, r));
+    t.exists = (l != UINT_E_MAX) && (r != std::numeric_limits<D>::max());
+    return t;
 }
 
 template <class L, class R>

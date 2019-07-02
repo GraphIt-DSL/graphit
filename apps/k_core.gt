@@ -21,10 +21,10 @@ func main()
 	    pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 0, true, -1);
 	    var finished: int = 0; 
 	    while (finished != vertices.size()) 
-		var frontier: vertexset{Vertex} = pq.dequeue_ready_set();
-		finished += frontier.getVertexSetSize();
-		#s1# edges.from(frontier).applyUpdatePriority(apply_f);
-		delete frontier;
+            var frontier: vertexset{Vertex} = pq.dequeue_ready_set();
+            finished += frontier.getVertexSetSize();
+            #s1# edges.from(frontier).applyUpdatePriority(apply_f);
+            delete frontier;
 	    end
 	    delete pq;
 	    var elapsed_time: float = stopTimer();
