@@ -1,0 +1,49 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+% flag = 0 means undecided, flag = 1 means conditionally in MIS, flag
+%  = 2 means not in MIS and flag = 3 means in MIS
+
+const flags : vector{Vertex}(int) = 1;
+
+func MIS_Update(src : Vertex, dst : Vertex) -> output : bool
+     output = true;
+     if (flags[dst] == 3)
+     	if(flags[src] != 2) flags[src] = 2; end;
+     elif (dst < src and flags[src] == 1 and flags[dst] < 2)
+     	    flags[src] = 0;
+     end
+end
+
+func MIS_Filter(v : Vertex) -> output : bool
+     if (flags[v] == 1)
+     	flags[v] = 3;
+	output = 0;
+     elif (flags[v] == 2)
+     	    output = 0;
+     else 
+     	  flags[v] = 1;
+	  output = 1;
+     end
+end
+
+func main()
+
+    startTimer();
+    var n : int = edges.getVertices();
+     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+
+        while (frontier.getVertexSetSize() != 0) 
+	   edges.from(frontier).apply(MIS_Update);
+	    frontier = frontier.where(MIS_Filter);
+	end
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end
