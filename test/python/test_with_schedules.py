@@ -785,10 +785,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    # unittest.main()
+    unittest.main()
 
     # used for enabling a specific test
 
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)

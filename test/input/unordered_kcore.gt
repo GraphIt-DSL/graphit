@@ -49,8 +49,8 @@ func main()
 
     var mc: int = 0;
     for i in 0 : edges.getVertices()
-        if Degrees[i] > mc
-           mc = Degrees[i];
+        if coreNumbers[i] > mc
+           mc = coreNumbers[i];
         end
     end
     print mc;
