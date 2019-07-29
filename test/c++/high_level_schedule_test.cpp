@@ -661,7 +661,58 @@ protected:
                                      "    end\n"
                                      "end\n");
 
-
+        const char* unordered_kcore_char = ("element Vertex end\n"
+                                            "element Edge end\n"
+                                            "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                                            "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                            "const Degrees : vector {Vertex}(int) = edges.getOutDegrees();\n"
+                                            "const coreNumbers : vector {Vertex}(int) = 0;\n"
+                                            "const k : int;\n"
+                                            "\n"
+                                            "func updateDegrees(src : Vertex, dst : Vertex) -> output : bool\n"
+                                            "     output = true;\n"
+                                            "     if (Degrees[dst] > 0)\n"
+                                            "     \tDegrees[dst] = Degrees[dst] - 1;\n"
+                                            "     end\n"
+                                            "end\n"
+                                            "\n"
+                                            "func filter1(v: Vertex) -> output : bool \n"
+                                            "     if Degrees[v] < k\n"
+                                            "       coreNumbers[v] = k-1;\n"
+                                            "       Degrees[v] = 0;\n"
+                                            "       output = true;\n"
+                                            "     else\n"
+                                            "       output = false;\n"
+                                            "     end\n"
+                                            "end\n"
+                                            "\n"
+                                            "func filter2(v: Vertex) -> output : bool output = (Degrees[v] >= k); end\n"
+                                            "\n"
+                                            "func main()\n"
+                                            "    startTimer();\n"
+                                            "    var n : int = edges.getVertices();\n"
+                                            "    var largestCore : int = -1;\n"
+                                            "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                            "    for iter in 1:n;\n"
+                                            "        k = iter;\n"
+                                            "        while(1) \n"
+                                            "          var toRemove : vertexset{Vertex} = frontier.where(filter1);\n"
+                                            "          frontier = frontier.where(filter2); %remaining vertices\n"
+                                            "          if (0 == toRemove.getVertexSetSize())\n"
+                                            "             break;\t\n"
+                                            "          else\n"
+                                            "             edges.from(toRemove).apply(updateDegrees);\n"
+                                            "          end \n"
+                                            "        end\n"
+                                            "        if (0 == frontier.getVertexSetSize())\n"
+                                            "          largestCore = k-1;\n"
+                                            "          break;\n"
+                                            "        end\n"
+                                            "    end\n"
+                                            "    var elapsed_time : float = stopTimer();\n"
+                                            "    print \"elapsed time: \";\n"
+                                            "    print elapsed_time;\n"
+                                            "end");
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -681,6 +732,7 @@ protected:
         export_cf_str_ = string(export_cf_char);
         kcore_str_ = string(kcore_char);
         kcore_uint_str_ = string(kcore_uint_char);
+        unordered_kcore_str_ = string (unordered_kcore_char);
         setcover_uint_str_ = string(setcover_uint_char);
     }
 
@@ -757,6 +809,7 @@ protected:
     string kcore_str_;
     string kcore_uint_str_;
     string setcover_uint_str_;
+    string unordered_kcore_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -2107,6 +2160,14 @@ TEST_F(HighLevelScheduleTest, ExportCFWithScheduleTest){
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "DensePull")
             ->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, UnorderedKCoreDefault){
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
