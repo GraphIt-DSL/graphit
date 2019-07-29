@@ -701,7 +701,7 @@ protected:
                                             "          if (0 == toRemove.getVertexSetSize())\n"
                                             "             break;\t\n"
                                             "          else\n"
-                                            "             edges.from(toRemove).apply(updateDegrees);\n"
+                                            "             #s1# edges.from(toRemove).apply(updateDegrees);\n"
                                             "          end \n"
                                             "        end\n"
                                             "        if (0 == frontier.getVertexSetSize())\n"
@@ -2171,6 +2171,16 @@ TEST_F(HighLevelScheduleTest, UnorderedKCoreDefault){
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushParallel){
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
     istringstream is (kcore_str_);
     fe_->parseStream(is, context_, errors_);
@@ -2186,16 +2196,18 @@ TEST_F(HighLevelScheduleTest, KCoreSparsePushSerial){
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSparsePushParallel){
 istringstream is (kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreUintSparsePushParallel){

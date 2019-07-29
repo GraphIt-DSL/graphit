@@ -709,6 +709,10 @@ class TestGraphitCompiler(unittest.TestCase):
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
+    def test_k_core_unordered_sparsepush(self):
+        self.expect_output_val_with_separate_schedule("unordered_kcore.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+
+
     def test_k_core_uint_const_sum_reduce(self):
         self.expect_output_val_with_separate_schedule("k_core_uint.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
 
@@ -781,10 +785,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    # unittest.main()
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_k_core_uint_const_sum_reduce'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

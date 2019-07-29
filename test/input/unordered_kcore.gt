@@ -1,6 +1,6 @@
 element Vertex end
 element Edge end
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 const Degrees : vector {Vertex}(int) = edges.getOutDegrees();
 const coreNumbers : vector {Vertex}(int) = 0;
@@ -38,7 +38,7 @@ func main()
 		  if (0 == toRemove.getVertexSetSize())
 		      break;	
 		  else
-			edges.from(toRemove).apply(updateDegrees);
+			#s1# edges.from(toRemove).apply(updateDegrees);
 		  end
 	    end
 	    if (0 == frontier.getVertexSetSize())
@@ -46,7 +46,16 @@ func main()
 	      break;
 	    end
     end
+
+    var mc: int = 0;
+    for i in 0 : edges.getVertices()
+        if Degrees[i] > mc
+           mc = Degrees[i];
+        end
+    end
+    print mc;
+
     var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
+    %print "elapsed time: ";
+    %print elapsed_time;
 end
