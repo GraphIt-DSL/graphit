@@ -9,7 +9,7 @@ const k : int;
 func updateDegrees(src : Vertex, dst : Vertex) -> output : bool
      output = true;
      if (Degrees[dst] > 0)
-     	Degrees[dst] = Degrees[dst] - 1;
+     	Degrees[dst] +=  -1;
      end
 end
 
