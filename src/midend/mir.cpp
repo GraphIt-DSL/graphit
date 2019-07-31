@@ -716,7 +716,8 @@ namespace graphit {
             auto stmt = to<mir::IfStmt>(node);
             cond = stmt->cond->clone<Expr>();
             ifBody = stmt->ifBody->clone<Stmt>();
-            elseBody = stmt->elseBody->clone<Stmt>();
+            if (stmt->elseBody != nullptr)
+                elseBody = stmt->elseBody->clone<Stmt>();
 
         }
 

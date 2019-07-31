@@ -712,6 +712,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_k_core_unordered_sparsepush(self):
         self.expect_output_val_with_separate_schedule("unordered_kcore.gt", "SparsePush_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
 
+    def test_k_core_unordered_sparsepush_densepull(self):
+        self.expect_output_val_with_separate_schedule("unordered_kcore.gt", "SparsePushDensePull_VertexParallel.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100.el"])
+
 
     def test_k_core_uint_const_sum_reduce(self):
         self.expect_output_val_with_separate_schedule("k_core_uint.gt", "k_core_const_sum_reduce.gt", 4, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/rMatGraph_J_5_100"])
@@ -790,5 +793,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush'))
+    # suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush_densepull'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
