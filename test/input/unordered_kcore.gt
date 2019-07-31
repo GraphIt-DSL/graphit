@@ -6,11 +6,8 @@ const Degrees : vector {Vertex}(int) = edges.getOutDegrees();
 const coreNumbers : vector {Vertex}(int) = 0;
 const k : int;
 
-func updateDegrees(src : Vertex, dst : Vertex) -> output : bool
-     output = true;
-     if (Degrees[dst] > 0)
-     	Degrees[dst] +=  -1;
-     end
+func updateDegrees(src : Vertex, dst : Vertex)
+     Degrees[dst] +=  -1;
 end
 
 func filter1(v: Vertex) -> output : bool
@@ -34,11 +31,14 @@ func main()
         k = iter;
         while(1)
 		  var toRemove : vertexset{Vertex} = frontier.where(filter1);
-		  frontier = frontier.where(filter2); %remaining vertices
+		  var remaining : vertexset{Vertex} = frontier.where(filter2); %remaining vertices
+		  delete frontier;
+		  frontier = remaining;
 		  if (0 == toRemove.getVertexSetSize())
 		      break;	
 		  else
 			#s1# edges.from(toRemove).apply(updateDegrees);
+			delete toRemove;
 		  end
 	    end
 	    if (0 == frontier.getVertexSetSize())
@@ -46,6 +46,10 @@ func main()
 	      break;
 	    end
     end
+
+    var elapsed_time : float = stopTimer();
+    %print "elapsed time: ";
+    %print elapsed_time;
 
     var mc: int = 0;
     for i in 0 : edges.getVertices()
@@ -55,7 +59,5 @@ func main()
     end
     print mc;
 
-    var elapsed_time : float = stopTimer();
-    %print "elapsed time: ";
-    %print elapsed_time;
+
 end
