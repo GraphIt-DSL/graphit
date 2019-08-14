@@ -171,6 +171,10 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configNumOpenBuckets(std::string apply_label, int num_open_buckets);
 
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configNumOpenBuckets(std::string apply_label, std::string num_open_buckets);
+
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configBucketMergeThreshold(std::string apply_label, string threshold);
 

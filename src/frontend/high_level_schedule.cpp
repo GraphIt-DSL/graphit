@@ -889,5 +889,13 @@ namespace graphit {
             return setApply(apply_label, "num_open_buckets", num_open_buckets);
         }
 
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configNumOpenBuckets(std::string apply_label,
+                                                                                 std::string num_open_buckets) {
+
+            int argv_num = extractArgvNumFromStringArg(num_open_buckets);
+            return setApply(apply_label, "num_open_buckets", argv_num);
+        }
+
     }
 }

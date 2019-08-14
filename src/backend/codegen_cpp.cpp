@@ -1724,11 +1724,24 @@ namespace graphit {
             oss << priority_queue_alloc_expr->priority_ordering;
             oss << ", ";
 
-            oss << mir_context_->num_open_buckets;
 
-            if (mir_context_->delta_ != 1){
-                oss << ", " << mir_context_->delta_;
+            if (mir_context_->num_open_buckets < 0){
+                oss << " stoi(argv[" << -1*mir_context_->num_open_buckets << "]), ";
+            } else {
+                oss << mir_context_->num_open_buckets << " , ";
             }
+
+
+            if (mir_context_->num_open_buckets < 0){
+                oss << " stoi(argv[" << -1*mir_context_->delta_ << "]), ";
+            } else {
+                if (mir_context_->delta_ != 1){
+                    oss << ", " << mir_context_->delta_;
+                }
+            }
+
+
+
 
             oss << ")";
 
