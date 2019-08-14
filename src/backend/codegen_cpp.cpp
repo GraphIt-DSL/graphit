@@ -1688,12 +1688,12 @@ namespace graphit {
             priority_queue_alloc_expr->priority_type->accept(this);
             oss << "> ( ";
             oss << priority_queue_alloc_expr->vector_function;
-            oss << ", ";
+
 
             if (priority_queue_alloc_expr->delta < 0 ){
-                oss << " stoi(argv[" << -1*priority_queue_alloc_expr->delta << "])";
+                oss << ", stoi(argv[" << -1*priority_queue_alloc_expr->delta << "])";
             } else {
-                oss << priority_queue_alloc_expr->delta;
+                oss << ", " << priority_queue_alloc_expr->delta;
             }
             oss << "); ";
 
