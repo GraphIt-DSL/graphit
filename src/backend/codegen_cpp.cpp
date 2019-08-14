@@ -1927,7 +1927,7 @@ namespace graphit {
             if (update_call->delta > 0){
                 oss << update_call->delta << ");" << std::endl;
             } else {
-                oss << "stoi(argv[" << -1*update_call->delta << "]);" << std::endl;
+                oss << "stoi(argv[" << -1*update_call->delta << "]));" << std::endl;
             }
 
         } else {
