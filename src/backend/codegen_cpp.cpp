@@ -1726,14 +1726,14 @@ namespace graphit {
 
 
             if (mir_context_->num_open_buckets < 0){
-                oss << " stoi(argv[" << -1*mir_context_->num_open_buckets << "]), ";
+                oss << " stoi(argv[" << -1*mir_context_->num_open_buckets << "]) ";
             } else {
-                oss << mir_context_->num_open_buckets << " , ";
+                oss << mir_context_->num_open_buckets ;
             }
 
 
-            if (mir_context_->num_open_buckets < 0){
-                oss << " stoi(argv[" << -1*mir_context_->delta_ << "]), ";
+            if (mir_context_->delta_ < 0){
+                oss << ", stoi(argv[" << -1*mir_context_->delta_ << "]) ";
             } else {
                 if (mir_context_->delta_ != 1){
                     oss << ", " << mir_context_->delta_;
@@ -1924,7 +1924,12 @@ namespace graphit {
             oss << update_call->lambda_name << ", ";
             oss << update_call->priority_queue_name << ", ";
             oss << update_call->nodes_init_in_bucket << ", ";
-            oss << update_call->delta << ");" << std::endl;
+            if (update_call->delta > 0){
+                oss << update_call->delta << ");" << std::endl;
+            } else {
+                oss << "stoi(argv[" << -1*update_call->delta << ");" << std::endl;
+            }
+
         } else {
             std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
         }
