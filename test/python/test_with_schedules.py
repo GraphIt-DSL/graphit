@@ -484,6 +484,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_filter_sum_parallel(self):
         self.basic_compile_test_with_separate_algo_schedule_files("simple_apply_sum.gt", "simple_vector_sum.gt")
 
+    def test_sssp_compile_runtime_delta_parameter(self):
+        self.basic_compile_test_with_separate_algo_schedule_files("delta_stepping.gt", "SparsePush_VertexParallel_Delta_argv.gt")
+
     def test_eigenvector_pagerank_fusion(self):
         self.basic_compile_test("eigenvector_pr_fusion.gt")
 
@@ -793,5 +796,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_k_core_unordered_sparsepush_densepull'))
+    # suite.addTest(TestGraphitCompiler('test_sssp_compile_runtime_delta_parameter'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

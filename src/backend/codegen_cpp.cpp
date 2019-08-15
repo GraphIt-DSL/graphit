@@ -1925,11 +1925,11 @@ namespace graphit {
             oss << update_call->priority_queue_name << ", ";
             oss << update_call->nodes_init_in_bucket << ", ";
             if (update_call->delta > 0){
-                oss << update_call->delta << ");" << std::endl;
+                oss << update_call->delta;
             } else {
-                oss << "stoi(argv[" << -1*update_call->delta << "]));" << std::endl;
+                oss << "stoi(argv[" << -1*update_call->delta << "])";
             }
-
+            oss << ");" << std::endl;
         } else {
             std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
         }
