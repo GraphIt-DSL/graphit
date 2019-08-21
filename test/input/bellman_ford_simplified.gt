@@ -1,0 +1,21 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int)=load(argv[1]);
+const dist : vector{Vertex}(int) = 2147483647; 
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int) 
+    var new_dist : int = dist[src] + weight;
+    dist[dst] min= new_dist;
+end 
+
+func main()
+    var start_vertex : int = atoi(argv[2]);
+    dist[start_vertex] = 0;
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(start_vertex);
+    while (frontier.getVertexSetSize() != 0)
+        #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, dist);
+        delete frontier;
+        frontier = output;
+    end
+end
