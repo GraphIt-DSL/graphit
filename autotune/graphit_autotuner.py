@@ -14,7 +14,7 @@ from sys import exit
 import argparse
 
 py_graphitc_file = "../build/bin/graphitc.py"
-serial_compiler = "icc"
+serial_compiler = "g++"
 par_compiler = "icpc"
 
 class GraphItTuner(MeasurementInterface):
@@ -66,6 +66,9 @@ class GraphItTuner(MeasurementInterface):
         if self.enable_denseVertexSet_tuning:
             manipulator.add_parameter(EnumParameter('DenseVertexSet', ['boolean-array', 'bitvector']))
 
+        # adding new parameters for PriorityGraph (Ordered GraphIt) 
+            manipulator.add_parameter(IntegerParameter('delta', 1, self.args.max_delta))
+
         return manipulator
 
     #configures parallelization commands
@@ -112,6 +115,13 @@ class GraphItTuner(MeasurementInterface):
             new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
         return new_schedule
 
+    def write_delta_schedule(self, delta, new_schedule):
+        new_schedule = new_schedule + "\n    program->configApplyPriorityUpdateDelta(\"s1\", " + str(delta) + " );"
+        return new_schedule
+
+    def write_bucket_update_schedule(self, bucket_update_strategy, new_schedule):
+        new_schedules = new_schedule + "\n    program->configApplyPriorityUpdate(\"s1\", " + bucket_update_strategy + " );"
+
     def write_NUMA_schedule(self,  new_schedule, direction):
         # configuring NUMA optimization for DensePull direction
         if self.use_NUMA:
@@ -130,6 +140,7 @@ class GraphItTuner(MeasurementInterface):
         #write into a schedule file the configuration
         direction = cfg['direction']
         numSSG = cfg['numSSG']
+        delta = cfg['delta']
         
 
         new_schedule = ""
@@ -147,6 +158,7 @@ class GraphItTuner(MeasurementInterface):
         new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
         new_schedule = self.write_NUMA_schedule(new_schedule, direction)
+        new_schedule = self.write_delta_schedule(delta, new_schedule)
 
         use_bitvector = False
         if cfg['DenseVertexSet'] == 'bitvector':
@@ -317,6 +329,7 @@ if __name__ == '__main__':
     parser.add_argument('--default_schedule_file', type=str, required=False, default="", help='default schedule file')
     parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
     parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
+    parser.add_argument('--max_delta', type=int, default=800000, help='maximum delta used for priority coarsening')
     parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
     parser.add_argument('--killed_process_report_runtime_limit', type=int, default=0, help='reports runtime_limit when a process is killed by the shell. 0 for disable (default), 1 for enable')
     args = parser.parse_args()
