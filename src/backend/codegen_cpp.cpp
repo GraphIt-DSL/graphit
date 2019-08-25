@@ -806,7 +806,10 @@ namespace graphit {
 				    oss << "> " << func_decl->result.getName() << " = py::array_t<";
 				    inner_vector_type->vector_element_type->accept(this);
 				    oss << "> ( std::vector<size_t>{(size_t)";
-				    mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    if (vector_type->element_type != nullptr)
+				        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+				    else
+					oss << vector_type->range_indexset;
 				    oss << ", (size_t)";
 				    oss << inner_vector_type->range_indexset;
 				    oss << "}, std::vector<size_t>{ ";
@@ -1080,6 +1083,36 @@ namespace graphit {
             expr->operands[i + 1]->accept(this);
             oss << ")";
         }
+    }
+
+    void CodeGenCPP::visit(mir::AndExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " && ";
+        expr->rhs->accept(this);
+        oss << ')';
+    };
+
+    void CodeGenCPP::visit(mir::OrExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " || ";
+        expr->rhs->accept(this);
+        oss << ')';
+    };
+
+    void CodeGenCPP::visit(mir::XorExpr::Ptr expr) {
+        oss << '(';
+        expr->lhs->accept(this);
+        oss << " ^ ";
+        expr->rhs->accept(this);
+        oss << ')';
+    };
+
+    void CodeGenCPP::visit(mir::NotExpr::Ptr not_expr) {
+        oss << " !(";
+        not_expr->operand->accept(this);
+        oss << ')';
     }
 
     void CodeGenCPP::visit(mir::MulExpr::Ptr expr) {

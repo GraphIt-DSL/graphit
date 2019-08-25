@@ -88,7 +88,7 @@ if __name__ == '__main__':
         #TODO: code here uses very fragile relavtive paths, figure out a better way
         # Maybe setting environment variables
         try:
-            subprocess.check_call(CXX_COMPILER + " -g -std=gnu++1y -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
+            subprocess.check_call(CXX_COMPILER + " -g -std=c++14 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
         except subprocess.CalledProcessError as e:
             print(e.output)
             raise

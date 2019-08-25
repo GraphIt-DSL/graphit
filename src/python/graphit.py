@@ -37,7 +37,8 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 		print(e.output)
 		return
 
-	compile_command = CXX_COMPILER + " -I" + pybind11.get_include() + " $(python3-config --includes) -c -I " +  GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=gnu++1y -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden "
+
+	compile_command = CXX_COMPILER + " -I" + pybind11.get_include() + " $(python3-config --includes) -c -I " +  GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -std=c++14 -DGEN_PYBIND_WRAPPERS -flto -fno-fat-lto-objects -fPIC -fvisibility=hidden -O3 "
 	# now compile the file into .so
 
 	if parallelization_type == PARALLEL_CILK:

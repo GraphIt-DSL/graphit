@@ -41,6 +41,13 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.UpdateAndGetGraphItVertexSubsetFromJulienneBucketsWithUpdatesTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SetCover_test";
 
+
+
+//   ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SanityTest";
+
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.serialMSTTest2";
+//    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SweepCutTest";
+
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";

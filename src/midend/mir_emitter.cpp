@@ -348,6 +348,33 @@ namespace graphit {
         retExpr = mir_var_expr;
     }
 
+    void MIREmitter::visit(fir::AndExpr::Ptr fir_expr) {
+        auto mir_expr = std::make_shared<mir::AndExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
+    void MIREmitter::visit(fir::OrExpr::Ptr fir_expr) {
+        auto mir_expr = std::make_shared<mir::OrExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
+    void MIREmitter::visit(fir::XorExpr::Ptr fir_expr) {
+        auto mir_expr = std::make_shared<mir::XorExpr>();
+        mir_expr->lhs = emitExpr(fir_expr->lhs);
+        mir_expr->rhs = emitExpr(fir_expr->rhs);
+        retExpr = mir_expr;
+    };
+
+    void MIREmitter::visit(fir::NotExpr::Ptr not_expr) {
+        auto mir_expr = std::make_shared<mir::NotExpr>();
+        mir_expr->operand = emitExpr(not_expr->operand);
+        retExpr = mir_expr;
+    }
+
     void MIREmitter::visit(fir::AddExpr::Ptr fir_expr) {
         auto mir_expr = std::make_shared<mir::AddExpr>();
         mir_expr->lhs = emitExpr(fir_expr->lhs);
