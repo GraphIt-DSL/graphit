@@ -15,12 +15,13 @@ import argparse
 
 py_graphitc_file = "../build/bin/graphitc.py"
 serial_compiler = "g++"
-par_compiler = "icpc"
+par_compiler = "g++"
 
 class GraphItTuner(MeasurementInterface):
     new_schedule_file_name = ''
     # a flag for testing if NUMA-aware schedule is specified
     use_NUMA = False
+    use_eager_update = False
     
     # this flag is for testing on machine without NUMA library support
     # this would simply not tune NUMA-aware schedules
@@ -204,7 +205,11 @@ class GraphItTuner(MeasurementInterface):
                 compile_cpp_cmd = par_compiler + ' -std=gnu++1y -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
-            compile_cpp_cmd = 'icpc -std=gnu++1y -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            compile_cpp_cmd = 'g++ -std=gnu++1y -DOPENMP -lnuma -DNUMA -fopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+
+        if self.use_eager_update:
+            compile_cpp_cmd = 'g++ -std=gnu++1y -DOPENMP -fopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+        
 
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
@@ -313,6 +318,9 @@ class GraphItTuner(MeasurementInterface):
                 if int(cfg['numSSG']) > 1:
                     self.use_NUMA = True;
 
+
+        if cfg['bucket_update_strategy'] == "eager_priority_update" or cfg['bucket_update_strategy'] == "eager_priority_update_with_merge":
+            self.use_eager_update = True
         # converts the configuration into a schedule
         self.write_cfg_to_schedule(cfg)
         
