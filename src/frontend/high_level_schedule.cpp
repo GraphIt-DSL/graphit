@@ -361,6 +361,9 @@ namespace graphit {
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
                 (*schedule_->apply_schedules)[apply_label].numa_aware = true;
+            } else if (apply_schedule_str == "lazy_priority_update"){
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                        = ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE;
             } else if (apply_schedule_str == "eager_priority_update") {
                 (*schedule_->apply_schedules)[apply_label].priority_update_type
                         = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;

@@ -67,15 +67,20 @@ class GraphItTuner(MeasurementInterface):
             manipulator.add_parameter(EnumParameter('DenseVertexSet', ['boolean-array', 'bitvector']))
 
         # adding new parameters for PriorityGraph (Ordered GraphIt) 
-            manipulator.add_parameter(IntegerParameter('delta', 1, self.args.max_delta))
+        manipulator.add_parameter(IntegerParameter('delta', 1, self.args.max_delta))
+
+        manipulator.add_parameter(
+            EnumParameter('bucket_update_strategy', 
+                          ['eager_priority_update','eager_priority_update_with_merge', 'lazy_priority_update']))
 
         return manipulator
 
     #configures parallelization commands
     def write_par_schedule(self, cfg, new_schedule, direction):
         use_evp = False;
+
         if cfg['parallelization'] == 'edge-aware-dynamic-vertex-parallel':
-            use_evp = True;
+            use_evp = True   
 
         if use_evp == False or self.use_NUMA == True:
             # if don't use edge-aware parallel (vertex-parallel)
@@ -120,7 +125,8 @@ class GraphItTuner(MeasurementInterface):
         return new_schedule
 
     def write_bucket_update_schedule(self, bucket_update_strategy, new_schedule):
-        new_schedules = new_schedule + "\n    program->configApplyPriorityUpdate(\"s1\", " + bucket_update_strategy + " );"
+        new_schedules = new_schedule + "\n    program->configApplyPriorityUpdate(\"s1\", \"" + bucket_update_strategy + "\" );"
+        return new_schedules
 
     def write_NUMA_schedule(self,  new_schedule, direction):
         # configuring NUMA optimization for DensePull direction
@@ -141,7 +147,7 @@ class GraphItTuner(MeasurementInterface):
         direction = cfg['direction']
         numSSG = cfg['numSSG']
         delta = cfg['delta']
-        
+        bucket_update_strategy = cfg['bucket_update_strategy']
 
         new_schedule = ""
         direction_schedule_str = "\n    program->configApplyDirection(\"s1\", \"$direction\");" 
@@ -152,13 +158,18 @@ class GraphItTuner(MeasurementInterface):
         else:
             default_schedule_str = "schedule: "
         
-        new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', cfg['direction'])
-        
+            
+        #eager only works with SparsePush for now
+        if bucket_update_strategy == 'eager_priority_update':
+            new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', 'SparsePush')
+        else:
+            new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', cfg['direction'])
 
         new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
         new_schedule = self.write_NUMA_schedule(new_schedule, direction)
         new_schedule = self.write_delta_schedule(delta, new_schedule)
+        new_schedule = self.write_bucket_update_schedule(bucket_update_strategy, new_schedule)
 
         use_bitvector = False
         if cfg['DenseVertexSet'] == 'bitvector':
