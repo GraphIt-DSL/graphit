@@ -15,6 +15,8 @@ import argparse
 
 py_graphitc_file = "../build/bin/graphitc.py"
 serial_compiler = "g++"
+
+#if using icpc for par_compiler, the compilation flags for CILK and OpenMP needs to be changed
 par_compiler = "g++"
 
 class GraphItTuner(MeasurementInterface):
