@@ -53,9 +53,10 @@ class GraphItTuner(MeasurementInterface):
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
-        
+
+        #'edge-aware-dynamic-vertex-parallel' not supported with the latest g++ cilk implementation
         if self.enable_parallel_tuning:
-            manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
+            manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel'])) 
         else:
             manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
 
@@ -202,7 +203,7 @@ class GraphItTuner(MeasurementInterface):
                 compile_cpp_cmd = serial_compiler + ' -std=gnu++1y  -I ../src/runtime_lib/ -O3  test.cpp -o test'
             else:
                 # if parallel icpc compiler is supported and needed
-                compile_cpp_cmd = par_compiler + ' -std=gnu++1y -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = par_compiler + ' -std=gnu++1y -DCILK -fcilkplus  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
             compile_cpp_cmd = 'g++ -std=gnu++1y -DOPENMP -lnuma -DNUMA -fopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
