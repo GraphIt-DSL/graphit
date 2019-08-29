@@ -93,11 +93,11 @@ The example below compiles the algorithm file (../../test/input/pagerank.gt), wi
 
 Compile and Run Generated C++ Programs
 ===========
-To compile a serial version, you can use reguar g++ with support of c++11 standard to compile the generated C++ file (assuming it is named test.cpp).
+To compile a serial version, you can use reguar g++ with support of c++14 standard to compile the generated C++ file (assuming it is named test.cpp).
  
 ```
     # assuming you are still in the bin directory under build/bin. If not, just do cd build/bin from the root of the directory
-    g++ -std=c++11 -I ../../src/runtime_lib/ -O3 test.cpp  -o test
+    g++ -std=c++14 -I ../../src/runtime_lib/ -O3 test.cpp  -o test
     ./test ../../test/graphs/4.el
     
 ```
@@ -109,20 +109,20 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
 
     # compile and run with CILK
       # icpc
-      icpc -std=c++11 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
+      icpc -std=c++14 -I ../../src/runtime_lib/ -DCILK -O3 test.cpp -o test
     
       # g++ (gcc) with cilk support
-      g++ -std=c++11 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
+      g++ -std=c++14 -I ../../src/runtime_lib/ -DCILK -fcilkplus -lcilkrts -O3 test.cpp -o test
     
       # to run the compiled binary on a small test graph, 4.el
       numactl -i all ./test ../../test/graphs/4.el
     
     # compile and run with OPENMP
       # icpc
-      icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
+      icpc -std=c++14 -I ../../src/runtime_lib/ -DOPENMP -qopenmp -O3 test.cpp -o test
     
       # g++ (gcc) with openmp support
-      g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
+      g++ -std=c++14 -I ../../src/runtime_lib/ -DOPENMP -fopenmp -O3 test.cpp -o test
     
       # to run the compiled binary on a small test graph, 4.el
       numactl -i all ./test ../../test/graphs/4.el
@@ -130,10 +130,10 @@ To compile a parallel version of the c++ program, you will need both CILK and OP
     # compile and run with NUMA optimizations (only works with OPENMP and needs libnuma). 
       # Sometimes -lnuma will have to come after the test.cpp file
       # icpc
-      icpc -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
+      icpc -std=c++14 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -qopenmp  -O3 test.cpp -lnuma -o test
     
       # g++ (gcc)
-      g++ -std=c++11 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
+      g++ -std=c++14 -I ../../src/runtime_lib/ -DOPENMP -DNUMA -fopenmp -O3 test.cpp -lnuma -o test
       
       # to run with NUMA enabled on a small test graph, 4.el
       OMP_PLACES=sockets ./test ../../test/graphs/4.el

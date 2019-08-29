@@ -1097,6 +1097,8 @@ namespace graphit {
             Expr::copy(apply_expr);
             target = apply_expr->target->clone<Expr>();
             input_function = apply_expr->input_function->clone<Identifier>();
+            type = apply_expr->type;
+
             if (apply_expr->from_expr){
                 from_expr = apply_expr->from_expr->clone<FromExpr>();
             }
@@ -1175,6 +1177,46 @@ namespace graphit {
 
             return retType;
         }
+
+	// OG Additions
+
+        void PriorityQueueType::copy(FIRNode::Ptr node) {
+            const auto priorityQueueType = to<PriorityQueueType>(node);
+            Type::copy(priorityQueueType);
+            element = priorityQueueType->element->clone<ElementType>();
+            priority_type = priorityQueueType->element->clone<ScalarType>();
+
+        }
+        FIRNode::Ptr PriorityQueueType::cloneNode() {
+            const auto node = std::make_shared<PriorityQueueType>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void PriorityQueueAllocExpr::copy(FIRNode::Ptr node) {
+            //TODO: figure out what the copy operator should do
+            const auto priority_queue_alloc_expr = to<PriorityQueueAllocExpr>(node);
+            Expr::copy(priority_queue_alloc_expr);
+            elementType = priority_queue_alloc_expr->elementType->clone<ElementType>();
+            numElements = priority_queue_alloc_expr->numElements->clone<Expr>();
+	    
+            dup_within_bucket = priority_queue_alloc_expr->dup_within_bucket->clone<Expr>();
+            dup_across_bucket = priority_queue_alloc_expr->dup_across_bucket->clone<Expr>();
+            vector_function = priority_queue_alloc_expr->vector_function->clone<Identifier>(); 
+            bucket_ordering = priority_queue_alloc_expr->bucket_ordering->clone<Expr>();
+            priority_ordering = priority_queue_alloc_expr->priority_ordering->clone<Expr>();
+            init_bucket = priority_queue_alloc_expr->init_bucket->clone<Expr>();
+            starting_node = priority_queue_alloc_expr->starting_node->clone<Expr>();
+
+
+        }
+
+        FIRNode::Ptr PriorityQueueAllocExpr::cloneNode() {
+            const auto node = std::make_shared<PriorityQueueAllocExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
 
     }
 }

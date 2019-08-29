@@ -14,13 +14,16 @@ from sys import exit
 import argparse
 
 py_graphitc_file = "../build/bin/graphitc.py"
-serial_compiler = "icc"
-par_compiler = "icpc"
+serial_compiler = "g++"
+
+#if using icpc for par_compiler, the compilation flags for CILK and OpenMP needs to be changed
+par_compiler = "g++"
 
 class GraphItTuner(MeasurementInterface):
     new_schedule_file_name = ''
     # a flag for testing if NUMA-aware schedule is specified
     use_NUMA = False
+    use_eager_update = False
     
     # this flag is for testing on machine without NUMA library support
     # this would simply not tune NUMA-aware schedules
@@ -52,9 +55,10 @@ class GraphItTuner(MeasurementInterface):
         manipulator.add_parameter(
             EnumParameter('direction', 
                           ['SparsePush','DensePull', 'SparsePush-DensePull', 'DensePush-SparsePush']))
-        
+
+        #'edge-aware-dynamic-vertex-parallel' not supported with the latest g++ cilk implementation
         if self.enable_parallel_tuning:
-            manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel','edge-aware-dynamic-vertex-parallel']))
+            manipulator.add_parameter(EnumParameter('parallelization',['dynamic-vertex-parallel'])) 
         else:
             manipulator.add_parameter(EnumParameter('parallelization', ['serial']))
 
@@ -66,13 +70,21 @@ class GraphItTuner(MeasurementInterface):
         if self.enable_denseVertexSet_tuning:
             manipulator.add_parameter(EnumParameter('DenseVertexSet', ['boolean-array', 'bitvector']))
 
+        # adding new parameters for PriorityGraph (Ordered GraphIt) 
+        manipulator.add_parameter(IntegerParameter('delta', 1, self.args.max_delta))
+
+        manipulator.add_parameter(
+            EnumParameter('bucket_update_strategy', 
+                          ['eager_priority_update','eager_priority_update_with_merge', 'lazy_priority_update']))
+
         return manipulator
 
     #configures parallelization commands
     def write_par_schedule(self, cfg, new_schedule, direction):
         use_evp = False;
+
         if cfg['parallelization'] == 'edge-aware-dynamic-vertex-parallel':
-            use_evp = True;
+            use_evp = True   
 
         if use_evp == False or self.use_NUMA == True:
             # if don't use edge-aware parallel (vertex-parallel)
@@ -112,6 +124,14 @@ class GraphItTuner(MeasurementInterface):
             new_schedule = new_schedule + "\n    program->configApplyNumSSG(\"s1\", \"fixed-vertex-count\", " + str(numSSG) + ", \"DensePull\");"
         return new_schedule
 
+    def write_delta_schedule(self, delta, new_schedule):
+        new_schedule = new_schedule + "\n    program->configApplyPriorityUpdateDelta(\"s1\", " + str(delta) + " );"
+        return new_schedule
+
+    def write_bucket_update_schedule(self, bucket_update_strategy, new_schedule):
+        new_schedules = new_schedule + "\n    program->configApplyPriorityUpdate(\"s1\", \"" + bucket_update_strategy + "\" );"
+        return new_schedules
+
     def write_NUMA_schedule(self,  new_schedule, direction):
         # configuring NUMA optimization for DensePull direction
         if self.use_NUMA:
@@ -130,7 +150,8 @@ class GraphItTuner(MeasurementInterface):
         #write into a schedule file the configuration
         direction = cfg['direction']
         numSSG = cfg['numSSG']
-        
+        delta = cfg['delta']
+        bucket_update_strategy = cfg['bucket_update_strategy']
 
         new_schedule = ""
         direction_schedule_str = "\n    program->configApplyDirection(\"s1\", \"$direction\");" 
@@ -141,12 +162,18 @@ class GraphItTuner(MeasurementInterface):
         else:
             default_schedule_str = "schedule: "
         
-        new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', cfg['direction'])
-        
+            
+        #eager only works with SparsePush for now
+        if bucket_update_strategy == 'eager_priority_update':
+            new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', 'SparsePush')
+        else:
+            new_schedule = default_schedule_str + direction_schedule_str.replace('$direction', cfg['direction'])
 
         new_schedule = self.write_par_schedule(cfg, new_schedule, direction)
         new_schedule = self.write_numSSG_schedule(numSSG, new_schedule, direction)
         new_schedule = self.write_NUMA_schedule(new_schedule, direction)
+        new_schedule = self.write_delta_schedule(delta, new_schedule)
+        new_schedule = self.write_bucket_update_schedule(bucket_update_strategy, new_schedule)
 
         use_bitvector = False
         if cfg['DenseVertexSet'] == 'bitvector':
@@ -175,13 +202,17 @@ class GraphItTuner(MeasurementInterface):
         if not self.use_NUMA:
             if not self.enable_parallel_tuning:
                 # if parallel icpc compiler is not needed (only tuning serial schedules)
-                compile_cpp_cmd = serial_compiler + ' -std=c++11  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = serial_compiler + ' -std=gnu++1y  -I ../src/runtime_lib/ -O3  test.cpp -o test'
             else:
                 # if parallel icpc compiler is supported and needed
-                compile_cpp_cmd = par_compiler + ' -std=c++11 -DCILK  -I ../src/runtime_lib/ -O3  test.cpp -o test'
+                compile_cpp_cmd = par_compiler + ' -std=gnu++1y -DCILK -fcilkplus  -I ../src/runtime_lib/ -O3  test.cpp -o test'
         else:
             #add the additional flags for NUMA
-            compile_cpp_cmd = 'icpc -std=c++11 -DOPENMP -lnuma -DNUMA -qopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+            compile_cpp_cmd = 'g++ -std=gnu++1y -DOPENMP -lnuma -DNUMA -fopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+
+        if self.use_eager_update:
+            compile_cpp_cmd = 'g++ -std=gnu++1y -DOPENMP -fopenmp -I ../src/runtime_lib/ -O3  test.cpp -o test'
+        
 
         print(compile_graphit_cmd)
         print(compile_cpp_cmd)
@@ -290,6 +321,9 @@ class GraphItTuner(MeasurementInterface):
                 if int(cfg['numSSG']) > 1:
                     self.use_NUMA = True;
 
+
+        if cfg['bucket_update_strategy'] == "eager_priority_update" or cfg['bucket_update_strategy'] == "eager_priority_update_with_merge":
+            self.use_eager_update = True
         # converts the configuration into a schedule
         self.write_cfg_to_schedule(cfg)
         
@@ -317,6 +351,7 @@ if __name__ == '__main__':
     parser.add_argument('--default_schedule_file', type=str, required=False, default="", help='default schedule file')
     parser.add_argument('--runtime_limit', type=float, default=300, help='a limit on the running time of each program')
     parser.add_argument('--max_num_segments', type=int, default=24, help='maximum number of segments to try for cache and NUMA optimizations')
+    parser.add_argument('--max_delta', type=int, default=800000, help='maximum delta used for priority coarsening')
     parser.add_argument('--memory_limit', type=int, default=-1,help='set memory limit on unix based systems [does not quite work yet]')    
     parser.add_argument('--killed_process_report_runtime_limit', type=int, default=0, help='reports runtime_limit when a process is killed by the shell. 0 for disable (default), 1 for enable')
     args = parser.parse_args()

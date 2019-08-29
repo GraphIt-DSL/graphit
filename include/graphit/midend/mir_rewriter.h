@@ -131,6 +131,29 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VectorAllocExpr>);
 
 
+            // OG Additions
+            virtual void visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr>);
+
+            virtual void visit(std::shared_ptr<PriorityQueueType>);
+
+            virtual void visit(std::shared_ptr<PriorityQueueAllocExpr>);
+
+            virtual void visit(std::shared_ptr<UpdatePriorityUpdateBucketsCall>);
+
+            virtual void visit(std::shared_ptr<UpdatePriorityExternCall>);
+
+            virtual void visit(std::shared_ptr<OrderedProcessingOperator>);
+
+            virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
+
+            virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
+
+            virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
+
+	    virtual void visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr>);
+
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {
                 auto tmp = node;
@@ -146,6 +169,9 @@ namespace graphit {
             virtual void visitBinaryExpr(std::shared_ptr<BinaryExpr>);
 
             virtual void visitNaryExpr(std::shared_ptr<NaryExpr>);
+
+            void rewrite_call_args(Call::Ptr expr);
+            void rewrite_priority_update_operator(PriorityUpdateOperator::Ptr expr);
 
         };
     }

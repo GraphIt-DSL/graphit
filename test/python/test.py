@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import os
 import shutil
+import sys
 
 GRAPHIT_BUILD_DIRECTORY="${GRAPHIT_BUILD_DIRECTORY}".strip().rstrip("/")
 GRAPHIT_SOURCE_DIRECTORY="${GRAPHIT_SOURCE_DIRECTORY}".strip().rstrip("/")
@@ -31,7 +32,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
         cls.root_test_input_dir = GRAPHIT_SOURCE_DIRECTORY + "/test/input/"
         cls.cpp_compiler = CXX_COMPILER
-        cls.compile_flags = "-std=c++11"
+        cls.compile_flags = "-std=gnu++1y"
         cls.include_path = GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/"
         cls.output_file_name = "test.cpp"
         cls.executable_file_name = "test.o"
@@ -65,14 +66,14 @@ class TestGraphitCompiler(unittest.TestCase):
         proc.stdout.close()
         return output
 
-    def basic_compile_test(self, input_file_name):
+    def basic_compile_test(self, input_file_name, extra_cpp_args=[]):
         # "-f" and "-o" must not have space in the string, otherwise it doesn't read correctly
         graphit_compile_cmd = ["bin/graphitc", "-f", self.root_test_input_dir + input_file_name, "-o" , self.output_file_name]
         # check the return code of the call as a way to check if compilation happened correctly
         self.assertEqual(subprocess.call(graphit_compile_cmd), 0)
         # check if g++ compilation succeeded
         self.assertEqual(
-            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name]),
+            subprocess.call([self.cpp_compiler, self.compile_flags, "-I", self.include_path , self.output_file_name, "-o", self.executable_file_name] + extra_cpp_args),
             0)
 
     # does not compile with a main function
@@ -200,7 +201,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_exec_test("simple_for_loop.gt")
 
     def test_simple_extern_function(self):
-        self.basic_compile_test("simple_extern_function.gt")
+        self.basic_compile_test("simple_extern_function.gt", [self.root_test_input_dir + "simple_extern_function.cpp"])
 
     def test_simple_extern_functieon_sum(self):
         self.expect_output_val("simple_extern_function_sum.gt", 4950, [self.root_test_input_dir + "simple_extern_function_sum.cpp"])
@@ -403,6 +404,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("simple_boolean_op.gt")
 
 if __name__ == '__main__':
+
     unittest.main()
     # used for enabling a specific test
 

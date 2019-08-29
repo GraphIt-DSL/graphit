@@ -1,0 +1,63 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const Degrees : vector {Vertex}(int) = edges.getOutDegrees();
+const coreNumbers : vector {Vertex}(int) = 0;
+const k : int;
+
+func updateDegrees(src : Vertex, dst : Vertex)
+     Degrees[dst] +=  -1;
+end
+
+func filter1(v: Vertex) -> output : bool
+     if (Degrees[v] < k)
+     	coreNumbers[v] = k-1;
+	    Degrees[v] = 0;
+	    output = true;
+     else
+	    output = false;
+     end
+end
+
+func filter2(v: Vertex) -> output : bool output = (Degrees[v] >= k); end
+
+func main()
+    startTimer();
+    var n : int = edges.getVertices();
+    var largestCore : int = -1;
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+    for iter in 1:n;
+        k = iter;
+        while(1)
+		  var toRemove : vertexset{Vertex} = frontier.where(filter1);
+		  var remaining : vertexset{Vertex} = frontier.where(filter2); %remaining vertices
+		  delete frontier;
+		  frontier = remaining;
+		  if (0 == toRemove.getVertexSetSize())
+		      break;	
+		  else
+			#s1# edges.from(toRemove).apply(updateDegrees);
+			delete toRemove;
+		  end
+	    end
+	    if (0 == frontier.getVertexSetSize())
+	      largestCore = k-1;
+	      break;
+	    end
+    end
+
+    var elapsed_time : float = stopTimer();
+    %print "elapsed time: ";
+    %print elapsed_time;
+
+    var mc: int = 0;
+    for i in 0 : edges.getVertices()
+        if coreNumbers[i] > mc
+           mc = coreNumbers[i];
+        end
+    end
+    print mc;
+
+
+end

@@ -8,6 +8,7 @@ namespace graphit {
 
     Token::Type Scanner::getTokenType(const std::string token) {
         if (token == "int") return Token::Type::INT;
+        if (token == "uint") return Token::Type::UINT;
         if (token == "float") return Token::Type::FLOAT;
         if (token == "double") return Token::Type::DOUBLE;
         if (token == "bool") return Token::Type::BOOL;
@@ -68,6 +69,11 @@ namespace graphit {
         if (token == "asyncMax=") return Token::Type::ASYNC_MAX_REDUCE;
         if (token == "asyncMin=") return Token::Type::ASYNC_MIN_REDUCE;
         if (token == "list") return Token::Type::LIST;
+
+        // OG Additions
+        if (token == "priority_queue") return Token::Type::PRIORITY_QUEUE;
+	if (token == "applyUpdatePriority") return Token::Type::APPLY_UPDATE_PRIORITY;
+	if (token == "applyUpdatePriorityExtern") return Token::Type::APPLY_UPDATE_PRIORITY_EXTERN;
 
         // If string does not correspond to a keyword, assume it is an identifier.
         return Token::Type::IDENT;

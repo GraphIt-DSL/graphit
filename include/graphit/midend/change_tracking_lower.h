@@ -27,7 +27,7 @@ namespace graphit {
             virtual void visit(mir::AssignStmt::Ptr assign_stmt);
             virtual void visit(mir::ReduceStmt::Ptr reduce_stmt);
             virtual void visit(mir::CompareAndSwapStmt::Ptr assign_stmt);
-
+            virtual void visit(mir::ExprStmt::Ptr);
 
             mir::Expr::Ptr getFieldTrackingVariableExpr(std::string field_vector_name);
 

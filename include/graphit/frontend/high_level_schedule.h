@@ -150,6 +150,34 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyNUMA(std::string apply_label, std::string config, std::string direction = "all");
 
+                // configures the type of priority update
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyPriorityUpdate(std::string apply_label, std::string config);
+
+                //configures the delta parameter for delta-stepping
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyPriorityUpdateDelta(std::string apply_label, int delta);
+
+                //configures the delta parameter for delta-stepping
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configApplyPriorityUpdateDelta(std::string apply_label, string delta_argv);
+
+                //configures the parameter for merge threshold for buckets used in eager merge priority queue
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configBucketMergeThreshold(std::string apply_label, int threshold);
+
+                //configures the parameter for number of materialized buckets used in lazy priority queue
+                // number of open buckets need to be a power of 2
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configNumOpenBuckets(std::string apply_label, int num_open_buckets);
+
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configNumOpenBuckets(std::string apply_label, std::string num_open_buckets);
+
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configBucketMergeThreshold(std::string apply_label, string threshold);
+
                 // High lvel API for speicifying scheduling options for apply
                 // Scheduling Options include push, pull, hybrid, enable_deduplication, disable_deduplication, parallel, serial
                 high_level_schedule::ProgramScheduleNode::Ptr
@@ -181,7 +209,8 @@ namespace graphit {
 
                 void initGraphIterationSpaceIfNeeded(string label);
                 int extractIntegerFromString(string input_string);
-
+                int extractArgvNumFromStringArg(string argv_str);
+                ApplySchedule createDefaultSchedule(string apply_label);
             };
 
 

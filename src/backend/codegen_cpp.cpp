@@ -65,6 +65,7 @@ namespace graphit {
 
         for (auto it = functions.begin(); it != functions.end(); it++) {
 	        it->get()->accept(this);
+
         }
 
 	generatePyBindModule();
@@ -91,7 +92,7 @@ namespace graphit {
     void CodeGenCPP::genIncludeStmts() {
         oss << "#include <iostream> " << std::endl;
         oss << "#include <vector>" << std::endl;
-	oss << "#include <algorithm>" << std::endl;
+        oss << "#include <algorithm>" << std::endl;
         oss << "#include \"intrinsics.h\"" << std::endl;
 	
 	oss << "#ifdef GEN_PYBIND_WRAPPERS" << std::endl;
@@ -176,11 +177,26 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
-
+	
         if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
+	        if (mir::isa<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>(expr_stmt->expr)) {
+                printIndent();
+		    expr_stmt->expr->accept(this);
+		    oss << ";" << std::endl;
+	        } else {
+                printIndent();
+                auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
+                genEdgesetApplyFunctionCall(edgeset_apply_expr);
+	        }
+        } else if (mir::isa<mir::PriorityUpdateOperator>(expr_stmt->expr)
+                && mir_context_->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+            //print an assignment to the tracking variable for PriorityUpdateOperatorSum
+            auto priority_update_operator = mir::to<mir::PriorityUpdateOperator>(expr_stmt->expr);
+            auto tracking_var = priority_update_operator->tracking_var;
             printIndent();
-            auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
-            genEdgesetApplyFunctionCall(edgeset_apply_expr);
+            oss << tracking_var << " = ";
+            priority_update_operator->accept(this);
+            oss << ";" << std::endl;
         } else {
             printIndent();
             expr_stmt->expr->accept(this);
@@ -200,7 +216,7 @@ namespace graphit {
             printIndent();
 
             assign_stmt->lhs->accept(this);
-            oss << "  = ____graphit_tmp_out; "  << std::endl;
+            oss << "  = ____graphit_tmp_out; " << std::endl;
 
         } else 
 */
@@ -211,7 +227,53 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else {
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
+	    printIndent();
+	    oss << "{" << std::endl;
+            indent();
+	    printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << " = ";
+	    //assign_stmt->expr->accept(this);
+	    auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
+            // DO no load the infra_gapbs format 
+            /*
+	    if (edgeset_load_expr->is_weighted_) {
+                oss << "builtin_loadWeightedEdgesFromFile ( ";
+                edgeset_load_expr->file_name->accept(this);
+		oss << " + std::string(\".wel\")"; 
+                oss << ") ";
+            } else {
+                oss << "builtin_loadEdgesFromFile ( ";
+                edgeset_load_expr->file_name->accept(this);
+		oss << " + std::string(\".el\")"; 
+                oss << ") ";
+            }
+	
+	    oss << ";" << std::endl;
+            */
+            // Now load the Julienne type graph
+	    printIndent();
+	    assign_stmt->lhs->accept(this);
+	    //oss << ".julienne_graph";
+            oss << " = ";
+            oss << "builtin_loadJulienneEdgesFromFile(";	    
+	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
+	    oss << ");" << std::endl;
+           
+            printIndent();
+            assign_stmt->lhs->accept(this);
+	    oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
+            assign_stmt->lhs->accept(this);
+            oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
+            assign_stmt->lhs->accept(this);
+            oss << ".m/5);" << std::endl;
+	 
+	    dedent();
+	    printIndent();
+	    oss << "}" << std::endl;
+	    
+	} else {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -340,6 +402,16 @@ namespace graphit {
             oss << var_decl->name << " = ";
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
+/*	} else if (mir::isa<mir::VertexSetType>(var_decl->type) && mir::to<mir::VertexSetType>(var_decl->type)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {
+	    printIndent();
+	    oss << "julienne::vertexSubset ";
+	    oss << var_decl->name << " ";
+	    if (var_decl->initVal != nullptr) {
+	        oss << "= ";
+	        var_decl->initVal->accept(this);
+	    }
+	    oss << ";" <<std::endl;
+*/
         } else {
             printIndent();
 
@@ -359,14 +431,14 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
 
-	if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
-	    oss << "extern ";
+        if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
+            oss << "extern ";
             if (func_decl->result.isInitialized())
-	        func_decl->result.getType()->accept(this);
+                func_decl->result.getType()->accept(this);
             else
                 oss << "void ";
             oss << func_decl->name << " (";
-            
+
             bool printDelimiter = false;
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -382,7 +454,7 @@ namespace graphit {
             oss << "); ";
             oss << std::endl;
             return;
-	}
+        }
 
         // Generate function signature
         if (func_decl->name == "main") {
@@ -413,7 +485,17 @@ namespace graphit {
             }
 
             oss << "operator() (";
+
+            if (mir_context_->eager_priority_update_edge_function_name == func_decl->name){
+
+
+                // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+                // Then we need to insert an extra argument local bins
+                oss << "vector<vector<NodeID>>& local_bins, ";
+            }
+
             bool printDelimiter = false;
+
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
                     oss << ", ";
@@ -457,7 +539,7 @@ namespace graphit {
                         // in the case of negative integer, we use the number as argument to runtimve argument argv
                         // this is the only place in the generated code that we set the number of segments
                         oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
-                            << "\", " << "atoi(argv[" << -1*label_iter_second << "])"
+                            << "\", " << "atoi(argv[" << -1 * label_iter_second << "])"
                             << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
                     } else {
                         // just use the positive integer as argument to number of segments
@@ -476,16 +558,20 @@ namespace graphit {
                     if (type->element_type != nullptr) {
                         //genPropertyArrayImplementationWithInitialization(constant);
                         //genPropertyArrayDecl(constant);
-			if (constant->needs_allocation)
-	                        genPropertyArrayAlloc(constant);
+                        if (constant->needs_allocation)
+                            genPropertyArrayAlloc(constant);
                     }
-                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type)) {
+                } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type) ||
+                        std::dynamic_pointer_cast<mir::PriorityQueueType>(constant->type)){
                     // if the constant is a vertex set  decl
-                    // currently, no code is generated
-                } else {
+                    //if it is a priorty queue type, then don't do anything
+
+                }else {
                     // regular constant declaration
                     //constant->accept(this);
-                    genScalarAlloc(constant);
+                    if(constant->initVal != nullptr){
+                        genScalarAlloc(constant);
+                    }
                 }
             }
 
@@ -554,10 +640,10 @@ namespace graphit {
         }
 
         if (func_decl->isFunctor) {
-          dedent();
-          printEndIndent();
-          oss << ";";
-          oss << std::endl;
+            dedent();
+            printEndIndent();
+            oss << ";";
+            oss << std::endl;
         }
 
         if (func_decl->name == "main") {
@@ -569,7 +655,9 @@ namespace graphit {
                         oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
                         merge_reduce->scalar_type->accept(this);
                         oss << ") * ";
-                        mir_context_->getElementCount(mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(this);
+                        mir_context_->getElementCount(
+                                mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(
+                                this);
                         oss << ");\n  }\n";
                     }
                 }
@@ -777,6 +865,9 @@ namespace graphit {
             case mir::ScalarType::Type::INT:
                 oss << "int ";
                 break;
+            case mir::ScalarType::Type::UINT:
+                oss << "uintE ";
+                break;
             case mir::ScalarType::Type::FLOAT:
                 oss << "float ";
                 break;
@@ -811,6 +902,30 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::Call::Ptr call_expr) {
+
+        bool call_on_built_in_priority_queue = false;
+        std::string priority_queue_name = "";
+
+        //check if this is a call on priority queue
+        if (mir_context_->getPriorityQueueDecl() != nullptr){
+            if (call_expr->args.size() > 0
+                && mir::isa<mir::VarExpr>(call_expr->args[0])) {
+                auto target_name_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
+                auto target_name = target_name_expr->var.getName();
+                priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
+                if (target_name == priority_queue_name){
+                    call_on_built_in_priority_queue = true;
+                }
+            }
+        }
+        // one exception is for dequeue_ready_set for ReduceBeforeUpdate schedule, we do not make the reformat
+        if (call_expr->name == "getBucketWithGraphItVertexSubset" && mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
+            call_on_built_in_priority_queue = false;
+        }
+
+        if (call_on_built_in_priority_queue){
+            oss << priority_queue_name << "->";
+        }
         oss << call_expr->name;
 
 
@@ -820,7 +935,7 @@ namespace graphit {
             oss << " > ";
         }
 
-	    if (mir_context_->isFunction(call_expr->name)) {
+        if (mir_context_->isFunction(call_expr->name)) {
             auto mir_func_decl = mir_context_->getFunction(call_expr->name);
             if (mir_func_decl->isFunctor)
                 oss << "()";
@@ -828,17 +943,36 @@ namespace graphit {
 
         oss << "(";
 
-        bool printDelimiter = false;
 
-        for (auto arg : call_expr->args) {
-            if (printDelimiter) {
-                oss << ", ";
+        if (!call_on_built_in_priority_queue){
+            bool printDelimiter = false;
+
+            for (auto arg : call_expr->args) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
             }
-            arg->accept(this);
-            printDelimiter = true;
+
+            oss << ") ";
+        } else {
+            //ignore the first argument if it is working on a priority queue
+            // generate pq.finished() style code for priority queue
+
+            bool printDelimiter = false;
+
+            for (int i = 1; i < call_expr->args.size(); i++){
+                auto arg = call_expr->args[i];
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
+            }
+	    oss << ") ";
         }
 
-        oss << ") ";
     };
 
     /**
@@ -904,6 +1038,15 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr) {
+        if (mir::isa<mir::EdgeSetType>(expr->var.getType())) {  
+            mir::PriorityUpdateType update_type = mir::to<mir::EdgeSetType>(expr->var.getType())->priority_update_type;
+            if (update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate || update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {
+                oss << expr->var.getName() << ".julienne_graph";
+                return;
+            }
+
+        }
+           
         oss << expr->var.getName();
     };
 
@@ -1042,7 +1185,7 @@ namespace graphit {
 
     };
 
-    void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl){
+    void CodeGenCPP::genScalarDecl(mir::VarDecl::Ptr var_decl) {
         //the declaration and the value are separate. The value is generated as a separate assign statement in the main function
         var_decl->type->accept(this);
         oss << var_decl->name << "; " << std::endl;
@@ -1082,7 +1225,7 @@ namespace graphit {
         oss << ";" << std::endl;
          **/
 
-        if (!mir::isa<mir::VectorType>(vector_element_type)){
+        if (!mir::isa<mir::VectorType>(vector_element_type)) {
             vector_element_type->accept(this);
             oss << " * __restrict " << name << ";" << std::endl;
         } else if (mir::isa<mir::VectorType>(vector_element_type)) {
@@ -1090,6 +1233,7 @@ namespace graphit {
             auto vector_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
             assert(vector_vector_element_type->range_indexset != 0);
             int range = vector_vector_element_type->range_indexset;
+
 
 
             //std::string typedef_name = "defined_type_" + mir_context_->getUniqueNameCounterString();
@@ -1138,7 +1282,7 @@ namespace graphit {
 
         oss << " = new ";
 
-        if (mir::isa<mir::VectorType>(vector_element_type)){
+        if (mir::isa<mir::VectorType>(vector_element_type)) {
             //for vector type, we use the name from typedef
             auto vector_type_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
             assert(vector_type_vector_element_type->typedef_name_ != "");
@@ -1148,7 +1292,7 @@ namespace graphit {
         }
 
         oss << "[ ";
-        size_expr -> accept(this);
+        size_expr->accept(this);
         oss << "];" << std::endl;
     }
 
@@ -1228,7 +1372,7 @@ namespace graphit {
         //vertexset apply
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply_expr->target);
 
-        if (mir_context_->isConstVertexSet(mir_var->var.getName())){
+        if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
             //if the verstexset is a const / global vertexset, then we can get size easily
             auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
             assert(associated_element_type);
@@ -1324,10 +1468,10 @@ namespace graphit {
             printIndent();
             oss << "} //end of loop\n";
             oss << "____graphit_tmp_out->num_vertices_ = sequence::sum( "
-                <<  next_bool_map_name << ", " ;
+                << next_bool_map_name << ", ";
             vertices_range_expr->accept(this);
             oss << " );\n"
-                    "____graphit_tmp_out->bool_map_ = ";
+                   "____graphit_tmp_out->bool_map_ = ";
             oss << next_bool_map_name << ";\n";
         }
 */
@@ -1397,7 +1541,10 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
-        oss << "VertexSubset<int> *  ";
+	if (vertexset_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || vertexset_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
+	    oss << "julienne::vertexSubset ";
+	else 
+	    oss << "VertexSubset<int> *  ";
     }
 
     void CodeGenCPP::visit(mir::ListType::Ptr list_type) {
@@ -1414,6 +1561,7 @@ namespace graphit {
     void CodeGenCPP::genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply) {
         // the arguments order here has to be consistent with genEdgeApplyFunctionSignature in gen_edge_apply_func_decl.cpp
 
+	
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
@@ -1446,15 +1594,17 @@ namespace graphit {
         arguments.push_back(genFuncNameAsArgumentString(apply->input_function_name));
 
         // a filter function for the push direction in hybrid code
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
+
             if (apply_expr->push_to_function_ != ""){
                 arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
+
             }
         }
 
         // the push direction apply function for hybrid schedule
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)){
+        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
         }
@@ -1469,7 +1619,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
-        if (edgeset_load_expr->is_weighted_){
+        if (edgeset_load_expr->is_weighted_) {
             oss << "builtin_loadWeightedEdgesFromFile ( ";
             edgeset_load_expr->file_name->accept(this);
             oss << ") ";
@@ -1540,4 +1690,413 @@ namespace graphit {
             }
         }
     }
+
+    void CodeGenCPP::visit(mir::PriorityQueueType::Ptr priority_queue_type) {
+        if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
+            || priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+
+            oss << "EagerPriorityQueue < ";
+            priority_queue_type->priority_type->accept(this);
+            oss << " >* ";
+
+        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) { // Add rest of the cases here as required
+            oss << "julienne::PriorityQueue < ";
+	    priority_queue_type->priority_type->accept(this);
+	    oss << " >* ";
+	} else {
+           std::cout << "PriorityQueue type not supported yet" << std::endl;
+        }
+    }
+
+    void CodeGenCPP::visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
+
+        if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
+            ||
+            priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+
+
+            oss << "new EagerPriorityQueue <";
+            priority_queue_alloc_expr->priority_type->accept(this);
+            oss << "> ( ";
+            oss << priority_queue_alloc_expr->vector_function;
+
+
+            if (priority_queue_alloc_expr->delta < 0 ){
+                oss << ", stoi(argv[" << -1*priority_queue_alloc_expr->delta << "])";
+            } else {
+                oss << ", " << priority_queue_alloc_expr->delta;
+            }
+            oss << "); ";
+
+        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) {  // Add other types here
+
+            oss << "new julienne::PriorityQueue <";
+            priority_queue_alloc_expr->priority_type->accept(this);
+            oss << " > ( ";
+
+            oss << mir_context_->getEdgeSets()[0]->name;
+
+            if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+                oss << ".num_nodes(), ";
+            } else {
+                oss << ".julienne_graph.n, ";
+            }
+
+            oss << priority_queue_alloc_expr->vector_function;
+                oss << ", ";
+
+            oss << "(julienne::bucket_order)";
+                oss << priority_queue_alloc_expr->bucket_ordering;
+                oss << ", ";
+
+            oss << "(julienne::priority_order)";
+            oss << priority_queue_alloc_expr->priority_ordering;
+            oss << ", ";
+
+
+            if (mir_context_->num_open_buckets < 0){
+                oss << " stoi(argv[" << -1*mir_context_->num_open_buckets << "]) ";
+            } else {
+                oss << mir_context_->num_open_buckets ;
+            }
+
+
+            if (mir_context_->delta_ < 0){
+                oss << ", stoi(argv[" << -1*mir_context_->delta_ << "]) ";
+            } else {
+                if (mir_context_->delta_ != 1){
+                    oss << ", " << mir_context_->delta_;
+                }
+            }
+
+
+
+
+            oss << ")";
+
+	} else {
+            std::cout << "PriorityQueue constructor not supported yet" << std::endl;
+        }
+
+    }
+
+    void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
+        printIndent();
+        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdate){
+            oss << "OrderedProcessingOperatorNoMerge(";
+        } else if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+            oss << "OrderedProcessingOperatorWithMerge(";
+        } else {
+            std::cout << "Error: Unsupported Schedule for OrderedProcessingOperator" << std::endl;
+        }
+        oss << ordered_op->priority_queue_name << ", ";
+        ordered_op->graph_name->accept(this);
+        oss << ", ";
+
+        //lambda function for while condition
+        oss << "[&]()->bool{return (";
+        ordered_op->while_cond_expr->accept(this);
+        oss << ");}, ";
+
+        //the user defined edge update function, instantiated with a functor
+        // augmented with local_bins argument,
+        oss << ordered_op->edge_update_func  << "(), ";
+
+
+        // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
+        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+
+            if (ordered_op->bucket_merge_threshold < 0){
+                oss << " stoi(argv[" << -1*ordered_op->bucket_merge_threshold << "]), ";
+            } else {
+                oss << ordered_op->bucket_merge_threshold << ", ";
+            }
+        }
+
+        ordered_op->optional_source_node->accept(this);
+
+        oss << ");" << std::endl;
+    }
+
+    void CodeGenCPP::visit(mir::PriorityUpdateOperatorMin::Ptr priority_update_op) {
+
+        if (mir_context_->priority_update_type == mir::EagerPriorityUpdate
+        || mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
+            oss << priority_update_op->name;
+
+
+            if (priority_update_op->generic_type != nullptr) {
+                oss << " < ";
+                priority_update_op->generic_type->accept(this);
+                oss << " > ";
+            }
+
+            oss << "()"; //this should be a functor
+            oss << "(";
+
+            auto priority_queue_name_expr = priority_update_op->args[0];
+            priority_queue_name_expr->accept(this);
+            oss << ", ";
+
+
+            if(mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
+               mir_context_->priority_update_type ==  mir::PriorityUpdateType::EagerPriorityUpdate){
+                // if this is a priority update edge function for EagerPriorityUpdate with and without merge
+                // Then we need to insert an extra argument local bins
+                oss << "local_bins, ";
+            }
+
+            bool printDelimiter = false;
+
+            //start from index 1, so printed the first argument of priority queue name earlier
+            for (int i = 1; i < priority_update_op->args.size(); i++) {
+                auto arg = priority_update_op->args[i];
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                arg->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << ") ";
+        } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate) {
+            priority_update_op->priority_queue->accept(this);
+            if (priority_update_op->is_atomic){
+                oss << "->updatePriorityMinAtomic(";
+            } else {
+                oss << "->updatePriorityMin(";
+            }
+            priority_update_op->destination_node_id->accept(this);
+            oss << ", ";
+            priority_update_op->old_val->accept(this);
+            oss << ", ";
+            priority_update_op->new_val->accept(this);
+            oss << ")";
+        } else {
+            std::cout << "updatePriorityMin not supported with this schedule"<< std::endl;
+        }
+
+
+    }
+
+
+    void CodeGenCPP::visit(mir::UpdatePriorityExternCall::Ptr extern_call) {
+//        printIndent();
+//	oss << "{" << std::endl;
+//	indent();
+        printIndent();
+	oss << "julienne::vertexSubset ";
+	oss << extern_call->output_set_name; 
+	oss << " = ";
+	oss << extern_call->apply_function_name;
+	oss << "( ";
+	extern_call->input_set->accept(this);
+	oss << ");" << std::endl;
+	
+	printIndent();
+	oss << "auto ";
+	oss << extern_call->lambda_name;
+	oss << " = ";
+
+	oss << "[&] (size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, ";
+	//mir::to<mir::PriorityQueueType>(mir_context_->getPriorityQueueDecl()->type)->priority_type->accept(this);
+
+	oss << "julienne::uintE";
+	oss << ">> {" << std::endl;
+	
+	indent();
+
+	printIndent();
+	oss << "const julienne::uintE v = ";
+	extern_call->input_set->accept(this);
+	oss << ".vtx(i);" << std::endl;
+	
+	printIndent();
+	oss << "const julienne::uintE bkt = ";
+	oss << extern_call->priority_queue_name;
+
+	if (mir_context_->nodes_init_in_buckets){
+        oss << "->get_bucket_no_overflow_insertion(";
+	} else {
+        oss << "->get_bucket_with_overflow_insertion(";
+    }
+
+	oss << mir_context_->priority_queue_alloc_list_[0]->vector_function;
+	oss << "[v]);" << std::endl;
+
+	printIndent();
+	oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));" << std::endl;
+	
+	dedent();
+	printIndent();
+	oss << "};" << std::endl;
+	
+	
+//	dedent();
+//	printIndent();
+//	oss << "}" << std::endl;
+    }
+
+    void CodeGenCPP::visit(mir::UpdatePriorityUpdateBucketsCall::Ptr update_call) {
+        printIndent();
+
+        if (mir_context_->priority_update_type == mir::ConstSumReduceBeforePriorityUpdate
+        || mir_context_->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate){
+            oss << update_call->priority_queue_name;
+            oss << "->update_buckets(";
+            oss << update_call->lambda_name;
+            oss << ", ";
+            oss << update_call->modified_vertexsubset_name;
+            oss << ".size());" << std::endl;
+        } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
+            oss << "updateBucketWithGraphItVertexSubset(";
+            oss << update_call->lambda_name << ", ";
+            oss << update_call->priority_queue_name << ", ";
+            oss << update_call->nodes_init_in_bucket << ", ";
+            if (update_call->delta > 0){
+                oss << update_call->delta;
+            } else {
+                oss << "stoi(argv[" << -1*update_call->delta << "])";
+            }
+            oss << ");" << std::endl;
+        } else {
+            std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
+        }
+
+    }
+
+    void CodeGenCPP::get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {
+        //oss <<  "place_holder_edge_count_lambda";
+	oss << "[&] (const tuple<julienne::uintE, julienne::uintE> &__p) {" << std::endl;
+	indent();
+	//printIndent();
+
+	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function_name);
+	//udf->accept(this);
+
+		
+        //for (auto stmt : *(udf->body->stmts)) {
+	for (auto stmt = udf->body->stmts->begin(); stmt != (udf->body->stmts->end()-1); stmt++){ 
+		(*stmt)->accept(this);
+	}
+
+	mir::Stmt::Ptr stmt = *(udf->body->stmts->end()-1);
+	assert(mir::isa<mir::ExprStmt>(stmt));
+	mir::Expr::Ptr expr = mir::to<mir::ExprStmt>(stmt)->expr;
+	
+	assert(mir::to<mir::Call>(expr));
+	mir::Call::Ptr call_expr = mir::to<mir::Call>(expr);
+	
+	mir::Expr::Ptr arg1 = call_expr->args[0];
+	mir::Expr::Ptr arg2 = call_expr->args[1];
+	mir::Expr::Ptr arg3 = call_expr->args[2];
+
+	
+	//arg3->accept(this);
+	
+	//if (call_expr->args.size() > 3)
+	//	call_expr->args[3]->accept(this);
+
+
+	if (call_expr->args.size() > 3) {
+		mir::Expr::Ptr arg4 = call_expr->args[3];
+		printIndent();			
+		oss << "if ( ";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)]";
+		oss << " > ";
+		arg4->accept(this);
+		oss << ") {" << std::endl;
+		indent();
+		printIndent();
+		oss << "auto __new_pri = std::max(";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] + ";
+		arg3->accept(this);
+		oss << "  * std::get<1>(__p), (unsigned int)(";
+		arg4->accept(this);
+		oss << "));" << std::endl;
+		printIndent();
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		//oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		printIndent();
+		oss << "return julienne::wrap(std::get<0>(__p), ";
+		oss << call->priority_queue_name;
+		if (mir_context_->nodes_init_in_buckets){
+            oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+		} else {
+            oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+        }
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+		printIndent();
+		oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>();" << std::endl;
+	} else {
+		printIndent();
+		
+		oss << "auto __new_pri = ";
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] + ";
+		arg3->accept(this);
+		oss << "  * std::get<1>(__p);" << std::endl;
+		printIndent();
+		oss << call->priority_queue_name;
+		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		//oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+		printIndent();
+		oss << "return julienne::wrap(std::get<0>(__p), ";
+		oss << call->priority_queue_name;
+        if (mir_context_->nodes_init_in_buckets){
+            oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+        } else {
+            oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+        }
+
+	}
+	
+
+	oss << std::endl;
+	dedent();
+	printIndent();
+	oss << "}";
+	
+    }
+
+    void CodeGenCPP::visit(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {
+	//oss << "< UpdatePriorityEdgeCountEdgeSetApplyExpr > ";
+
+
+	oss << "julienne::vertexSubsetData<julienne::uintE> ";
+	oss << call->moved_object_name;
+	oss << " = ";
+	call->target->accept(this);
+	oss << ".em->edgeMapCount<julienne::uintE> (";
+	oss << call->from_func;
+	oss << ", ";
+	get_edge_count_lambda(call);
+	oss << ")";
+    }
+
+    void CodeGenCPP::visit(mir::PriorityUpdateOperatorSum::Ptr update_op) {
+        update_op->priority_queue->accept(this);
+        if (update_op->is_atomic){
+            oss << "->updatePrioritySumAtomic(";
+        } else {
+            oss << "->updatePrioritySum(";
+        }
+        update_op->destination_node_id->accept(this);
+        oss << ", ";
+        update_op->delta->accept(this);
+        oss << ", ";
+        update_op->minimum_val->accept(this);
+        oss << ")";
+    }
+
+
 }

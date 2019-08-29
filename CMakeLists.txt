@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(graphit)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 
@@ -96,4 +96,5 @@ configure_file(test/library_test_drivers/library_test_driver_cf_cpp.txt ${CMAKE_
 add_executable(bc_verifier ./test/verifiers/bc_verifier.cpp)
 add_executable(bfs_verifier ./test/verifiers/bfs_verifier.cpp)
 add_executable(sssp_verifier ./test/verifiers/sssp_verifier.cpp)
+add_executable(ppsp_verifier ./test/verifiers/ppsp_verifier.cpp)
 add_executable(cc_verifier ./test/verifiers/cc_verifier.cpp)

@@ -209,8 +209,10 @@ class BuilderBase {
     t.Start();
     if (num_nodes_ == -1)
       num_nodes_ = FindMaxNodeID(el)+1;
-    if (needs_weights_)
-      Generator<NodeID_, DestID_, WeightT_>::InsertWeights(el);
+
+    //we never generate random weights for user supplied graph (not an option exposed)
+    //if (needs_weights_)
+      //Generator<NodeID_, DestID_, WeightT_>::InsertWeights(el);
     MakeCSR(el, false, &index, &neighs);
     if (!symmetrize_ && invert)
       MakeCSR(el, true, &inv_index, &inv_neighs);

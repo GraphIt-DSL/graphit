@@ -11,6 +11,7 @@
 #include <graphit/midend/atomics_op_lower.h>
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
+#include <graphit/midend/priority_features_lowering.h>
 
 namespace graphit {
     /**
@@ -27,13 +28,20 @@ namespace graphit {
         // needed for reading commandline arguments in the main function
         VertexEdgeSetLower(mir_context).lower();
 
+
+        //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
+        PriorityFeaturesLower(mir_context, schedule).lower();
+
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
         // deduplication: enable / disable
         // parallelization: enable / disable
         // frontier data structure: regular / sliding queue
-
+        // This pass usually needs to be executed earlier to specialize edgeset apply operators,
+        //  sets the flags for other parts of the lowering process
         ApplyExprLower(mir_context, schedule).lower();
+
+
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)

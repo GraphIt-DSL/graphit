@@ -286,13 +286,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PUSH,
-                           ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable,
-                           ApplySchedule::OtherOpt::QUEUE,
-                           ApplySchedule::PullFrontierType::BOOL_MAP,
-                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, -100, false};
+                        = createDefaultSchedule(apply_label);
             }
 
             if (apply_schedule_str == "pull_edge_based_load_balance") {
@@ -305,6 +299,12 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "num_segment") {
                 (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
+            } else if (apply_schedule_str == "delta") {
+                (*schedule_->apply_schedules)[apply_label].delta = parameter;
+            } else if (apply_schedule_str == "bucket_merge_threshold"){
+                (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
+            } else if (apply_schedule_str == "num_open_buckets"){
+                (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -332,14 +332,7 @@ namespace graphit {
             if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
                 //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
                 (*schedule_->apply_schedules)[apply_label]
-                        = (*schedule_->apply_schedules)[apply_label]
-                        = {apply_label, ApplySchedule::DirectionType::PUSH,
-                           ApplySchedule::ParType::Serial,
-                           ApplySchedule::DeduplicationType::Enable,
-                           ApplySchedule::OtherOpt::QUEUE,
-                           ApplySchedule::PullFrontierType::BOOL_MAP,
-                           ApplySchedule::PullLoadBalance::VERTEX_BASED,
-                           0, -100, false};
+                        = createDefaultSchedule(apply_label);
             }
 
 
@@ -368,6 +361,18 @@ namespace graphit {
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
                 (*schedule_->apply_schedules)[apply_label].numa_aware = true;
+            } else if (apply_schedule_str == "lazy_priority_update"){
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                        = ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE;
+            } else if (apply_schedule_str == "eager_priority_update") {
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
+            } else if (apply_schedule_str == "eager_priority_update_with_merge") {
+                (*schedule_->apply_schedules)[apply_label].priority_update_type
+                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE;
+	    } else if (apply_schedule_str == "constant_sum_reduce_before_update") {
+	        (*schedule_->apply_schedules)[apply_label].priority_update_type
+		        = ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -695,6 +700,36 @@ namespace graphit {
         }
 
 
+        // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
+        //regex argv_regex ("argv\\[(\\d)\\]");
+
+        // here we do a hack and uses a negative integer to denote the integer argument to argv
+        // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
+        // to use as number of segments
+        // the user input argv string has to match a pattern argv[integer]
+        //if (regex_match(num_segment_argv, argv_regex)){
+        int high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(string argv_str) {
+            int argv_number;
+            if (argv_str.rfind("argv[", 0) == 0){
+                argv_number = -1*extractIntegerFromString(argv_str);
+            } else {
+                std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
+                throw "Unsupported Schedule!";
+            }
+            return argv_number;
+        }
+
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdate(std::string apply_label, std::string config) {
+            initGraphIterationSpaceIfNeeded(apply_label);
+
+            // for now, we still use the old setApply API. We will probably switch to full graph iteration space soon
+            return setApply(apply_label, config);
+        }
+
+
+
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
                                                                     string num_segment_argv, std::string direction) {
@@ -720,20 +755,7 @@ namespace graphit {
                         throw "Unsupported Schedule!";
                     }
 
-                    // use string rfind insted of regular expression because gcc older than 4.9.0 does not support regular expression
-                    //regex argv_regex ("argv\\[(\\d)\\]");
-
-                    // here we do a hack and uses a negative integer to denote the integer argument to argv
-                    // the code generation will treat negative numbers differently by generating a argv[negative_integer) run time argument
-                    // to use as number of segments
-                    // the user input argv string has to match a pattern argv[integer]
-                    //if (regex_match(num_segment_argv, argv_regex)){
-                    if (num_segment_argv.rfind("argv[", 0) == 0){
-                        argv_number = -1*extractIntegerFromString(num_segment_argv);
-                    } else {
-                        std::cerr <<  "Invalid string argument. It has to be of form argv[integer]" << std::endl;
-                        throw "Unsupported Schedule!";
-                    }
+                    argv_number = extractArgvNumFromStringArg(num_segment_argv);
 
                     //gis is not really used right now
                     gis.num_ssg = argv_number;
@@ -821,6 +843,61 @@ namespace graphit {
                 return setApply(apply_label, "numa_aware");
             else
                 return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label, int delta) {
+            return setApply(apply_label, "delta", delta);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, int threshold) {
+            return setApply(apply_label, "bucket_merge_threshold", threshold);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label,
+                                                                                 std::string delta_argv) {
+
+            int argv_num = extractArgvNumFromStringArg(delta_argv);
+            return setApply(apply_label, "delta", argv_num);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, string threshold_argv) {
+            int argv_num = extractArgvNumFromStringArg(threshold_argv);
+            return setApply(apply_label, "bucket_merge_threshold", argv_num);
+        }
+
+        // Create a default schedule parameters
+        ApplySchedule high_level_schedule::ProgramScheduleNode::createDefaultSchedule(std::string apply_label) {
+            return {apply_label, ApplySchedule::DirectionType::PUSH, // default direction is push
+                    ApplySchedule::ParType::Serial,
+                    ApplySchedule::DeduplicationType::Enable,
+                    ApplySchedule::OtherOpt::QUEUE,
+                    ApplySchedule::PullFrontierType::BOOL_MAP,
+                    ApplySchedule::PullLoadBalance::VERTEX_BASED,
+                    ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE,
+                    0, // pull_load_balance_edge_grain_size
+                    -100, // num_segment
+                    1, // default delta
+                    false, // enable_numa_aware?
+                    1000, // merge threshold for eager prioirty queue
+                    128   // default number of open buckets for lazy priority queue
+            };
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configNumOpenBuckets(std::string apply_label, int num_open_buckets) {
+            return setApply(apply_label, "num_open_buckets", num_open_buckets);
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configNumOpenBuckets(std::string apply_label,
+                                                                                 std::string num_open_buckets) {
+
+            int argv_num = extractArgvNumFromStringArg(num_open_buckets);
+            return setApply(apply_label, "num_open_buckets", argv_num);
         }
 
     }

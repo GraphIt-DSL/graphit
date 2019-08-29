@@ -13,55 +13,60 @@
 namespace graphit {
     namespace mir {
 
+	void MIRVisitor::visit(Var* var) {
+		if (var->getType())
+			var->getType()->accept(this);
+	}
+
         void MIRVisitor::visit(Expr::Ptr expr) {
             expr->accept(this);
         };
 
 
         void MIRVisitor::visit(ExprStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->expr->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRVisitor::visit(AssignStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs->accept(this);
             stmt->expr->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRVisitor::visit(ReduceStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs->accept(this);
             stmt->expr->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRVisitor::visit(CompareAndSwapStmt::Ptr stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->lhs->accept(this);
             stmt->expr->accept(this);
             stmt->compare_val_expr->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
-      
+
         void MIRVisitor::visit(PrintStmt::Ptr stmt) {
             stmt->expr->accept(this);
         }
@@ -74,10 +79,10 @@ namespace graphit {
 
         void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
 
-//            for (auto arg : func_decl->args) {
-//                arg->accept(this);
-//            }
-//            func_decl->result->accept(this);
+            for (auto arg : func_decl->args) {
+                arg.accept(this);
+            }
+            func_decl->result.accept(this);
 
             enclosing_func_decl_ = func_decl;
             if (func_decl->body && func_decl->body->stmts) {
@@ -87,10 +92,11 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(Call::Ptr expr) {
-            for (auto arg : expr->args){
+            for (auto arg : expr->args) {
                 arg->accept(this);
             }
         };
+
         void MIRVisitor::visit(MulExpr::Ptr expr) {
             visitBinaryExpr(expr);
         }
@@ -133,7 +139,9 @@ namespace graphit {
                 label_scope_.scope(var_decl->stmt_label);
             }
             if (var_decl->initVal != nullptr)
-            	var_decl->initVal->accept(this);
+                var_decl->initVal->accept(this);
+
+            var_decl->type->accept(this);
 
             if (var_decl->stmt_label != "") {
                 label_scope_.unscope();
@@ -221,22 +229,22 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<ForStmt> stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->domain->accept(this);
             stmt->body->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
 
         void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->body->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
@@ -262,7 +270,7 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetType> edgeset_type) {
             edgeset_type->element->accept(this);
-            for (auto element_type : *edgeset_type->vertex_element_type_list){
+            for (auto element_type : *edgeset_type->vertex_element_type_list) {
                 element_type->accept(this);
             }
         }
@@ -282,12 +290,12 @@ namespace graphit {
         }
 
         void MIRVisitor::visit(std::shared_ptr<WhileStmt> stmt) {
-            if(stmt->stmt_label != ""){
+            if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
             }
             stmt->cond->accept(this);
             stmt->body->accept(this);
-            if(stmt->stmt_label != "") {
+            if (stmt->stmt_label != "") {
                 label_scope_.unscope();
             }
         }
@@ -308,7 +316,62 @@ namespace graphit {
             load_expr->file_name->accept(this);
         }
 
+        // OG Additions
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> apply_expr) {
+            apply_expr->target->accept(this);
+        }
 
+        void MIRVisitor::visit(std::shared_ptr<PriorityQueueType> type) {
+            type->element->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityQueueAllocExpr> expr) {
+            expr->starting_node->accept(this);
+            expr->element_type->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr> apply_expr) {
+            apply_expr->target->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityUpdateBucketsCall> call_expr) {
+            //call_expr->priority_queue->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<UpdatePriorityExternCall> call_expr) {
+            call_expr->input_set->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<OrderedProcessingOperator> op) {
+            op->while_cond_expr->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperator> op) {
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperatorMin> op) {
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+
+            op->old_val->accept(this);
+            op->new_val->accept(this);
+
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
+            op->priority_queue->accept(this);
+            op->destination_node_id->accept(this);
+
+            op->minimum_val->accept(this);
+            op->delta->accept(this);
+
+        }
+
+	void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> op) {
+		visit(std::static_pointer_cast<EdgeSetApplyExpr>(op));
+	}
 
     }
 }

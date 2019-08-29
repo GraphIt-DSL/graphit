@@ -34,11 +34,24 @@ namespace graphit {
         analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
     }
 
+    // Analyze the read / write properties for the priority update edgeset apply function
+    // For now, only push direction is supported for EagerUpdates
+    // TODO figure out how this would interact with the original edgeset apply
+    void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(
+            mir::UpdatePriorityEdgeSetApplyExpr::Ptr priority_update_expr) {
+        if (mir_context_->priority_update_type == mir::EagerPriorityUpdate ||
+                mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
+            analyzeSingleFunctionEdgesetApplyExpr(priority_update_expr->input_function_name, "push");
+        } else {
+
+        }
+    }
+
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::analyzeSingleFunctionEdgesetApplyExpr(
             std::string function_name, std::string direction) {
 
         // The analysis only makes sense if it is a parallel apply expr
-        auto property_visitor = PropertyAnalyzingVisitor(direction);
+        auto property_visitor = PropertyAnalyzingVisitor(direction, mir_context_);
         auto apply_func_decl_name = function_name;
 
         if (!mir_context_->isExternFunction(apply_func_decl_name)){
@@ -46,6 +59,24 @@ namespace graphit {
             mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
             apply_func_decl->accept(&property_visitor);
         }
+    }
+
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorSum::Ptr op) {
+        if (direction_ == "push") {
+            op->is_atomic = true;
+        } else {
+            op->is_atomic = false;
+        }
+        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+    }
+
+    void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr op) {
+        if (direction_ == "push") {
+            op->is_atomic = true;
+        } else {
+            op->is_atomic = false;
+        }
+        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
 
@@ -198,6 +229,9 @@ namespace graphit {
         property.read_write_type = FieldVectorProperty::ReadWriteType::READ_AND_WRITE;
         return property;
     }
+
+
+
 
 }
 

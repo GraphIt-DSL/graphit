@@ -123,6 +123,9 @@ namespace graphit {
                 case ScalarType::Type::INT:
                     oss << "int";
                     break;
+                case ScalarType::Type::UINT:
+                    oss << "uint";
+                    break;
                 case ScalarType::Type::FLOAT:
                     oss << "float";
                     break;
@@ -898,6 +901,22 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(PriorityQueueType::Ptr type) {
+            oss << "PriorityQueue {";
+            type->element->accept(this);
+            oss << "}(";
+            type->priority_type->accept(this);
+            oss << ")";
+        }
+        void FIRPrinter::visit(PriorityQueueAllocExpr::Ptr expr) {
+            oss << "alloc PriorityQueue {";
+            expr->elementType->accept(this);
+            oss << "}(";
+            expr->priority_type->accept(this);
+            oss << ")";
+        }
+
+
         void FIRPrinter::visit(ListAllocExpr::Ptr expr) {
             oss << "alloc list {";
             expr->general_element_type->accept(this);
@@ -943,7 +962,17 @@ namespace graphit {
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
 
-            oss << ".APPLY(";
+            if (expr->type == ApplyExpr::Type::REGULAR_APPLY){
+                oss << ".APPLY(";
+            } else if (expr->change_tracking_field != nullptr){
+                oss << ".APPLY_MODIFY(";
+            } else if (expr->type == ApplyExpr::Type::UPDATE_PRIORITY_APPLY){
+                oss << ".APPLY_MODIFY_PRIORITY_UPDATE(";
+            } else {
+                oss << ".APPLY_MODIFY_PRIORITY_EXTERN(";
+            }
+
+
             expr->input_function->accept(this);
             oss << ")";
 

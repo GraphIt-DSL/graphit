@@ -16,6 +16,11 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseF
     singleFunctionEdgeSetApplyExprAtomicsLower(apply_expr);
 }
 
+void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::UpdatePriorityEdgeSetApplyExpr::Ptr apply_expr) {
+    singleFunctionEdgeSetApplyExprAtomicsLower(apply_expr);
+}
+
+
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
     if (apply_expr->is_parallel){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
@@ -197,6 +202,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
     return false;
 
 }
+
 
 
 void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::Ptr reduce_stmt) {

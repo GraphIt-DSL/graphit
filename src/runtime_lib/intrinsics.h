@@ -6,6 +6,71 @@
 #define GRAPHIT_INTRINSICS_H_H
 
 
+
+/* Julinne requirements -- should be in this order only */
+#include <algorithm>
+
+#ifdef CILK
+#include <cilk/cilk.h>
+#include <cilk/cilk_api.h>
+#endif
+#include <cinttypes>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits.h>
+#include <limits>
+
+#if !defined __APPLE__ && !defined LOWMEM
+#include <malloc.h>
+#endif
+
+#include <math.h>
+
+#if defined(OPENMP)
+#include <omp.h>
+#endif
+
+#include <sstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <tuple>
+#include <type_traits>
+#include <unistd.h>
+
+
+#define ulong unsigned long
+namespace julienne {
+#include "infra_julienne/priority_queue.h"
+#include "infra_julienne/parallel.h"
+template <typename X, typename Y>
+struct EdgeMap;
+#include "infra_julienne/graph.h"
+}
+namespace julienne {
+}
+
+static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0, 0, NULL);
+
+#undef INT_T_MAX
+#undef UINT_T_MAX
+
+/* Julienne requirements end */
+
+
 #include <vector>
 
 #include "infra_gapbs/builder.h"
@@ -15,10 +80,13 @@
 #include "infra_gapbs/graph.h"
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
+#include "infra_gapbs/eager_priority_queue.h"
 #include <queue>
 #include <curses.h>
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
+#include "infra_gapbs/ordered_processing.h"
+
 #include "edgeset_apply_functions.h"
 #include <unordered_map>
 #include <unordered_set>
@@ -26,6 +94,11 @@
 #include "infra_ligra/ligra/ligra.h"
 
 #include "vertexsubset.h"
+
+namespace julienne {
+#include "infra_julienne/IO.h"
+#include "infra_julienne/edgeMapReduce.h"
+}
 
 #include <time.h>
 #include <chrono>
@@ -46,6 +119,14 @@ static T builtin_sum(T* input_vector, int num_elem){
     return reduce_sum;
 }
 
+static int max(double val1, int val2){
+    return max(int(val1), val2);
+}
+
+static bool writeMin(int * val_array, int index, int new_val){
+    return writeMin(&val_array[index], new_val);
+}
+
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
 static WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){
@@ -61,6 +142,7 @@ static Graph builtin_loadEdgesFromFile(std::string file_name){
     Graph g = builder.MakeGraph();
     return g;
 }
+
 
 static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
 	typedef EdgePair<NodeID, NodeID> Edge;
@@ -87,12 +169,18 @@ static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_
 	bb.needs_weights_ = false;
 	return bb.MakeGraphFromEL(el);	
 }
+
 static int builtin_getVertices(Graph &edges){
     return edges.num_nodes();
 }
 
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
+}
+
+template <typename T>
+static int builtin_getVertices(julienne::graph<T> &edges) {
+    return edges.n;
 }
 
 static VertexSubset<int>* serialSweepCut(Graph& graph,  VertexSubset<int> * vertices, double* val_array){
@@ -169,6 +257,32 @@ static int * builtin_getOutDegrees(Graph &edges){
     return out_degrees;
 }
 
+static uintE * builtin_getOutDegreesUint(Graph &edges){
+    uintE * out_degrees  = new uintE [edges.num_nodes()];
+    for (NodeID n=0; n < edges.num_nodes(); n++){
+        out_degrees[n] = edges.out_degree(n);
+    }
+    return out_degrees;
+}
+
+template <typename T>
+static int * builtin_getOutDegrees(julienne::graph<T> &edges) {
+    int * out_degrees = new int [edges.n];
+    for (uintE n = 0; n < edges.n; n++) {
+	    out_degrees[n] = edges.V[n].degree;
+    }
+    return out_degrees;
+}
+
+template <typename T>
+static uintE * builtin_getOutDegreesUint(julienne::graph<T> &edges) {
+    uintE * out_degrees = new uintE [edges.n];
+    for (uintE n = 0; n < edges.n; n++) {
+        out_degrees[n] = edges.V[n].degree;
+    }
+    return out_degrees;
+}
+
 static pvector<int> builtin_getOutDegreesPvec(Graph &edges){
     pvector<int> out_degrees (edges.num_nodes(), 0);
     for (NodeID n=0; n < edges.num_nodes(); n++){
@@ -181,9 +295,14 @@ static int builtin_getVertexSetSize(VertexSubset<int>* vertex_subset){
     return vertex_subset->size();
 }
 
+static int builtin_getVertexSetSize(julienne::vertexSubset vs) {
+    return vs.size();
+}
+
 static void builtin_addVertex(VertexSubset<int>* vertexset, int vertex_id){
     vertexset->addVertex(vertex_id);
 }
+
 
 template <typename T> static void builtin_append (std::vector<T>* vec, T element){
     vec->push_back(element);
@@ -216,6 +335,7 @@ static float stopTimer(){
     return elapsed_time_.tv_sec + elapsed_time_.tv_usec/1e6;
 
 }
+
 
 static char* argv_safe(int index, char** argv, int argc ){
     // if index is less than or equal to argc than return argv[index]
@@ -270,13 +390,29 @@ static VertexSubset<int> * builtin_const_vertexset_filter(T func, int total_elem
         next0[v] = 0;
         if (func(v))
             next0[v] = 1;
-
     }
     output->num_vertices_ = sequence::sum(next0, total_elements);
     output->bool_map_ = next0;
     output->is_dense = true;
     return output;
 }
+
+typedef julienne::graph<julienne::symmetricVertex> julienne_graph_type;
+
+static inline julienne_graph_type builtin_loadJulienneEdgesFromFile(std::string filename) {
+    char * fname = (char*) filename.c_str();
+    return julienne::readGraph<julienne::symmetricVertex>(fname, false, true, false, false);
+}
+
+template <typename T>
+static inline double to_double(T t) {
+    return (double)t;
+}
+
+static void deleteObject(julienne::vertexSubset set) {
+    set.del();
+}
+
 template <typename T>
 static VertexSubset<int> * builtin_vertexset_filter(VertexSubset<int> * input, T func) {
     int total_elements = input->vertices_range_;
@@ -311,4 +447,63 @@ static VertexSubset<int> * builtin_vertexset_filter(VertexSubset<int> * input, T
     output->is_dense = true;
     return output;
 }
+
+template <typename PriorityType>
+  VertexSubset<NodeID> * getBucketWithGraphItVertexSubset(julienne::PriorityQueue<PriorityType>* pq){
+    julienne::vertexSubset ready_set = pq->dequeue_ready_set();
+
+    auto vset =  new VertexSubset<NodeID> (ready_set);
+//    for (int i = 0; i < vset->num_vertices_; i++){
+//        std::cout << "vset[i] vertex: " << vset->dense_vertex_set_[i] << std::endl;
+//    }
+    return vset;
+}
+
+
+template <typename PriorityType>
+void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::PriorityQueue<PriorityType>* pq, bool nodes_init_in_bucket, int delta = 1){
+    vset->toSparse();
+
+    if (vset->size() == 0){
+        return;
+    }
+
+    // Do not insert into overflow bucket since all nodes are in the bucket initially
+    if (nodes_init_in_bucket){
+        auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+            const julienne::uintE v = vset->dense_vertex_set_[i];
+            PriorityType null_bkt = pq->get_null_bkt();
+            PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
+//        std::cout << "node: " << v << " priority: " << priority << " tracking val[v]: " << pq->tracking_variable[v] << " bucket: " << pq->get_bucket(priority) << std::endl;
+            const julienne::uintE bkt = pq->get_bucket_no_overflow_insertion(priority);
+            return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
+        };
+
+//    for (int i = 0; i < 5; i++){
+//        std::cout << "f[i] vertex: " << std::get<0>(f(i).t) << std::endl;
+//        std::cout << "f[i] bkt ID: " << std::get<1>(f(i).t) << std::endl;
+//    }
+
+        pq->update_buckets(f, vset->num_vertices_);
+    } else {
+        auto f = [&](size_t i) -> julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>> {
+            const julienne::uintE v = vset->dense_vertex_set_[i];
+            PriorityType null_bkt = pq->get_null_bkt();
+            PriorityType priority = (pq->tracking_variable[v] == null_bkt) ? null_bkt : pq->tracking_variable[v]/delta;
+//        std::cout << "node: " << v << " priority: " << priority << " tracking val[v]: " << pq->tracking_variable[v] << " bucket: " << pq->get_bucket(priority) << std::endl;
+            const julienne::uintE bkt = pq->get_bucket_with_overflow_insertion(priority);
+            return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));
+        };
+
+//    for (int i = 0; i < 5; i++){
+//        std::cout << "f[i] vertex: " << std::get<0>(f(i).t) << std::endl;
+//        std::cout << "f[i] bkt ID: " << std::get<1>(f(i).t) << std::endl;
+//    }
+
+        pq->update_buckets(f, vset->num_vertices_);
+    }
+
+}
+
+
 #endif //GRAPHIT_INTRINSICS_H_H

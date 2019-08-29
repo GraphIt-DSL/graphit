@@ -23,6 +23,7 @@ namespace graphit {
             OR,
             NEG,
             INT,
+            UINT,
             FLOAT,
             BOOL,
             COMPLEX,
@@ -110,7 +111,12 @@ namespace graphit {
             SRC_FILTER,
             ASYNC_MAX_REDUCE,
             ASYNC_MIN_REDUCE,
-            LIST
+            LIST,
+
+	    //OG Additions
+            PRIORITY_QUEUE,
+	    APPLY_UPDATE_PRIORITY,
+            APPLY_UPDATE_PRIORITY_EXTERN,
         };
 
         Type        type;

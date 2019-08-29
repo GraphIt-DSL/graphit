@@ -94,6 +94,20 @@ namespace graphit {
 
         virtual void visit(mir::EdgeSetType::Ptr edgeset_type);
 
+        virtual void visit(mir::PriorityQueueType::Ptr priority_queue_type);
+        virtual void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr);
+
+        virtual void visit(mir::OrderedProcessingOperator::Ptr ordered_op);
+        virtual void visit(mir::PriorityUpdateOperatorMin::Ptr min_update_op);
+
+        virtual void visit(mir::UpdatePriorityExternCall::Ptr);
+	    virtual void visit(mir::UpdatePriorityUpdateBucketsCall::Ptr);
+
+	    virtual void visit(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr);
+
+	    virtual void visit(mir::PriorityUpdateOperatorSum::Ptr);
+
+
     private:
         void genIncludeStmts();
 
@@ -128,6 +142,8 @@ namespace graphit {
 
         void genScalarAlloc(mir::VarDecl::Ptr shared_ptr);
 
+        // creates the lambda function to apply the edgeMapCount operator
+	    void get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call);
         void genTypesRequiringTypeDefs();
 	
 	    void generatePyBindWrapper(mir::FuncDecl::Ptr);

@@ -214,7 +214,7 @@ namespace graphit {
 
         struct ScalarType : public Type {
             enum class Type {
-                INT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
+                INT, UINT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
             };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
@@ -292,8 +292,19 @@ namespace graphit {
 
         };
 
+        // OG Additions - moved here because VertexSetType needs it too
+        enum PriorityUpdateType {
+            NoPriorityUpdate, //default type
+            EagerPriorityUpdate, // GAPBS refactored runtime lib
+            EagerPriorityUpdateWithMerge, // GAPBS refactored runtime lib
+            ConstSumReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+            ReduceBeforePriorityUpdate, //Julienne refactored runtime lib
+	        ExternPriorityUpdate, // Julienne refactored runtime lib
+        };
         struct VertexSetType : public Type {
             ElementType::Ptr element;
+
+	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
 
             typedef std::shared_ptr<VertexSetType> Ptr;
 
@@ -324,11 +335,12 @@ namespace graphit {
 
         };
 
-        struct EdgeSetType : public Type {
+        struct EdgeSetType : public ElementType {
             ElementType::Ptr element;
             ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr> *vertex_element_type_list;
 
+	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetType> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -470,6 +482,9 @@ namespace graphit {
         };
 
 
+
+
+
         struct CompareAndSwapStmt : public AssignStmt {
             Expr::Ptr compare_val_expr;
             std::string tracking_var_;
@@ -574,8 +589,10 @@ namespace graphit {
 
 
         struct FuncDecl : public MIRNode {
-            enum class Type {INTERNAL, EXPORTED, EXTERNAL};
- 
+            enum class Type {
+                INTERNAL, EXPORTED, EXTERNAL
+            };
+
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
@@ -700,6 +717,73 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
+
+        // this can be either a PriorityUpdateSum or PriorityUpdateMin
+        struct PriorityUpdateOperator : public Call {
+            Expr::Ptr priority_queue;
+            //the node whose priority is going to be updated
+            Expr::Ptr destination_node_id;
+            std::string tracking_var;
+            bool is_atomic = false;
+
+            typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperator>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
+
+        struct PriorityUpdateOperatorMin : public PriorityUpdateOperator {
+            Expr::Ptr new_val;
+            //old priority value (could be optional)
+            Expr::Ptr old_val;
+
+            typedef std::shared_ptr<PriorityUpdateOperatorMin> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperatorMin>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
+
+        struct PriorityUpdateOperatorSum : public PriorityUpdateOperator {
+            Expr::Ptr delta;
+            // a minimum value for how low the priority can be reduced to (optional)
+            Expr::Ptr minimum_val;
+
+
+            typedef std::shared_ptr<PriorityUpdateOperatorSum> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityUpdateOperatorSum>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+
+        };
+
+
+
         struct LoadExpr : public Expr {
             Expr::Ptr file_name;
             typedef std::shared_ptr<LoadExpr> Ptr;
@@ -713,11 +797,15 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+        
 
+        
         struct EdgeSetLoadExpr : public Expr {
             Expr::Ptr file_name;
             bool is_weighted_ = false;
+            PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
+     
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetLoadExpr>());
@@ -792,11 +880,16 @@ namespace graphit {
             //hard coded default value for grain size
             int pull_edge_based_load_balance_grain_size = 4096;
             std::string scope_label_name;
-	        MergeReduceField::Ptr merge_reduce;
+            MergeReduceField::Ptr merge_reduce;
+
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<EdgeSetApplyExpr>());
+            }
+
+            void copyEdgesetApply(MIRNode::Ptr node){
+                copy(node);
             }
 
         protected:
@@ -808,7 +901,7 @@ namespace graphit {
         struct PushEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PushEdgeSetApplyExpr> Ptr;
 
-            PushEdgeSetApplyExpr(){}
+            PushEdgeSetApplyExpr() {}
 
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -818,6 +911,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                enable_deduplication = edgeset_apply->enable_deduplication;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -833,7 +927,7 @@ namespace graphit {
         struct PullEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<PullEdgeSetApplyExpr> Ptr;
 
-            PullEdgeSetApplyExpr(){}
+            PullEdgeSetApplyExpr() {}
 
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -843,6 +937,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                enable_deduplication = edgeset_apply->enable_deduplication;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -859,7 +954,7 @@ namespace graphit {
         struct HybridDenseForwardEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseForwardEdgeSetApplyExpr> Ptr;
 
-            HybridDenseForwardEdgeSetApplyExpr(){}
+            HybridDenseForwardEdgeSetApplyExpr() {}
 
 
             HybridDenseForwardEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
@@ -889,7 +984,7 @@ namespace graphit {
             std::string push_function_;
             std::string push_to_function_;
 
-            HybridDenseEdgeSetApplyExpr(){}
+            HybridDenseEdgeSetApplyExpr() {}
 
             HybridDenseEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -1214,6 +1309,190 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+
+        struct PriorityQueueType : public Type {
+            ElementType::Ptr element;
+            PriorityUpdateType priority_update_type;
+            ScalarType::Ptr priority_type;
+
+            typedef std::shared_ptr<PriorityQueueType> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityQueueType>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+        struct PriorityQueueAllocExpr : public NewExpr {
+            typedef std::shared_ptr<PriorityQueueAllocExpr> Ptr;
+
+            bool dup_within_bucket;
+            bool dup_across_bucket;
+            std::string vector_function;
+            int bucket_ordering;
+            int priority_ordering;
+            bool init_bucket;
+            Expr::Ptr starting_node;
+            int delta;
+
+            PriorityUpdateType priority_update_type;
+            mir::ScalarType::Ptr priority_type;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<PriorityQueueAllocExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+        struct UpdatePriorityEdgeSetApplyExpr : EdgeSetApplyExpr {
+            typedef std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> Ptr;
+
+            UpdatePriorityEdgeSetApplyExpr() {}
+
+            UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
+                target = edgeset_apply->target;
+                input_function_name = edgeset_apply->input_function_name;
+                from_func = edgeset_apply->from_func;
+                to_func = edgeset_apply->to_func;
+                tracking_field = edgeset_apply->tracking_field;
+                is_weighted = edgeset_apply->is_weighted;
+                is_parallel = edgeset_apply->is_parallel;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityEdgeSetApplyExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct UpdatePriorityExternVertexSetApplyExpr : VertexSetApplyExpr {
+            typedef std::shared_ptr<UpdatePriorityExternVertexSetApplyExpr> Ptr;
+
+            UpdatePriorityExternVertexSetApplyExpr() {}
+
+            UpdatePriorityExternVertexSetApplyExpr(VertexSetApplyExpr::Ptr vertexset_apply) {
+                target = vertexset_apply->target;
+                input_function_name = vertexset_apply->input_function_name;
+                tracking_field = vertexset_apply->tracking_field;
+            }
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityExternVertexSetApplyExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct UpdatePriorityUpdateBucketsCall : Stmt {
+            std::string priority_queue_name;
+            std::string lambda_name;
+            std::string modified_vertexsubset_name;
+            mir::PriorityUpdateType priority_update_type;
+            bool nodes_init_in_bucket;
+            int delta = 1;
+
+            typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
+
+            UpdatePriorityUpdateBucketsCall() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityUpdateBucketsCall>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct UpdatePriorityExternCall : Stmt {
+            Expr::Ptr input_set;
+            std::string priority_queue_name;
+            std::string output_set_name;
+            std::string lambda_name;
+            std::string apply_function_name;
+
+            typedef std::shared_ptr<UpdatePriorityExternCall> Ptr;
+
+            UpdatePriorityExternCall() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<UpdatePriorityExternCall>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
+	struct UpdatePriorityEdgeCountEdgeSetApplyExpr: public UpdatePriorityEdgeSetApplyExpr {
+		std::string lambda_name;
+		std::string moved_object_name;
+		
+		std::string priority_queue_name;
+	
+		typedef std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> Ptr;
+		UpdatePriorityEdgeCountEdgeSetApplyExpr() {}
+		
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<UpdatePriorityEdgeCountEdgeSetApplyExpr>());
+		}
+                void copyFrom(UpdatePriorityEdgeSetApplyExpr::Ptr op) {
+			UpdatePriorityEdgeSetApplyExpr::copy(op);
+		}
+		protected:	
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
+
+        struct OrderedProcessingOperator : Stmt {
+            Expr::Ptr while_cond_expr;
+            std::string edge_update_func;
+            std::string priority_queue_name;
+            Expr::Ptr optional_source_node;
+            Expr::Ptr graph_name;
+            int bucket_merge_threshold;
+
+            //need to know if the merge optimization is needed or not
+            PriorityUpdateType priority_udpate_type;
+
+            //the threshold used for merging buckets
+            int merge_threshold = 0;
+
+            typedef std::shared_ptr<OrderedProcessingOperator> Ptr;
+
+            OrderedProcessingOperator() {}
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<OrderedProcessingOperator>());
+            }
+
+            protected:
+                virtual void copy(MIRNode::Ptr);
+
+                virtual MIRNode::Ptr cloneNode();
+
+        };
+
     }
 
 }

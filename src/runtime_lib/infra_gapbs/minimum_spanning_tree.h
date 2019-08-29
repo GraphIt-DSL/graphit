@@ -19,7 +19,7 @@
 //Takes as input a weighted graph, a starting point
 //Returns a parent array
 
-NodeID * minimum_spanning_tree(WGraph g, NodeID start){
+static NodeID * minimum_spanning_tree(WGraph g, NodeID start){
     // Serial Dijkstra implementation to get oracle distances
     //pvector<WeightT> oracle_dist(g.num_nodes(), kDistInf);
     //pvector<WeightT> oracle_dist(g.num_nodes(), 2147483647);

@@ -459,6 +459,84 @@ protected:
                 "  sum = sum + amountNotConnected;\n"
                 "end");
 
+
+
+
+        const char* delta_stepping_char = ("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                             "const pq: priority_queue{Vertex}(int);"
+
+                             "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                             "  var new_dist : int = dist[src] + weight; "
+                             "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
+                             "end\n"
+                             "func main() "
+                             "  var start_vertex : int = atoi(argv[2]);"
+                             " dist[start_vertex] = 0;"
+                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
+                             "  while (pq.finished() == false) "
+                             "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                             "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                             "    delete frontier; "
+                             "  end\n"
+                             "end");
+
+        const char* ppsp_char = ("element Vertex end\n"
+                                           "element Edge end\n"
+                                           "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                                           "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                           "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                           "const pq: priority_queue{Vertex}(int);"
+
+                                           "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                                           "  var new_dist : int = dist[src] + weight; "
+                                           "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
+                                           "end\n"
+                                           "func main() "
+                                           "  var start_vertex : int = atoi(argv[2]);"
+                                            "  var dst_vertex : int = atoi(argv[3]);"
+                                            " dist[start_vertex] = 0;"
+                                            "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
+                                           "  while (pq.finishedNode(dst_vertex) == false) "
+                                           "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                           "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                                           "    delete frontier; "
+                                           "  end\n"
+                                           "end");
+
+        const char* astar_char = ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "extern func load_coords(filename: string, num_nodes: int);\n"
+                                 "extern func calculate_distance(source: Vertex, destination: Vertex) -> output: double;\n"
+                                 "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                 "const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                                 "const pq: priority_queue{Vertex}(int);"
+
+                                 "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                                 "  var new_f_score : int = f_score[src] + weight; "
+                                 "  var changed : bool = writeMin(f_score[dst], new_f_score);"
+                                 "  if changed \n"
+                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst), g_score[src]);"
+                                 "    pq.updatePriorityMin(dst, g_score[dst], new_g_score); "
+                                 "  end\n"
+                                 "end\n"
+                                 "func main() "
+                                 "  var start_vertex : int = atoi(argv[2]);"
+                                 "  var dst_vertex : int = atoi(argv[3]);"
+                                 "  load_coords(argv[1]);"
+                                 "  pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);"
+                                 "  while (pq.finishedNode(dst_vertex) == false) "
+                                 "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                                 "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                                 "    delete frontier; "
+                                 "  end\n"
+                                 "end");
+
         const char* export_cf_char = ( "element Vertex end\n"
                                 "element Edge end\n"
                                 "const edges : edgeset{Edge}(Vertex,Vertex, float);\n"
@@ -505,6 +583,137 @@ protected:
         );
 
 
+        const char* kcore_char =  ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const D: vector{Vertex}(int) = edges.getOutDegrees();\n"
+                                 "const pq: priority_queue{Vertex}(int);\n"
+                                 "func apply_f(src: Vertex, dst: Vertex)\n"
+                                 "    var k: int = pq.get_current_priority();\n"
+                                 "    pq.updatePrioritySum(dst, -1, k);\n"
+                                 "end \n"
+                                 "func main()\n"
+                                 "    pq = new priority_queue{Vertex}(int)(false, false, D, 1, 2, true, -1);\n"
+                                 "    var finished: int = 0; \n"
+                                 "    while (finished != vertices.size()) \n"
+                                 "        var frontier: vertexset{Vertex} = pq.dequeue_ready_set();\n"
+                                 "        finished += frontier.size();\n"
+                                   "        #s1# edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                                 "        delete frontier;\n"
+                                 "    end\n"
+                                 "    delete pq;\n"
+                                 "end\n"
+        );
+
+
+        const char* kcore_uint_char =  ("element Vertex end\n"
+                                   "element Edge end\n"
+                                   "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                   "const D: vector{Vertex}(uint) = edges.getOutDegreesUint();\n"
+                                   "const pq: priority_queue{Vertex}(uint);\n"
+                                   "func apply_f(src: Vertex, dst: Vertex)\n"
+                                   "    var k: int = pq.get_current_priority();\n"
+                                   "    pq.updatePrioritySum(dst, -1, k);\n"
+                                   "end \n"
+                                   "func main()\n"
+                                   "    pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 2, true, -1);\n"
+                                   "    var finished: int = 0; \n"
+                                   "    while (finished != vertices.size()) \n"
+                                   "        var frontier: vertexset{Vertex} = pq.dequeue_ready_set();\n"
+                                   "        finished += frontier.size();\n"
+                                   "        #s1# edges.from(frontier).applyUpdatePriority(apply_f);\n"
+                                   "        delete frontier;\n"
+                                   "    end\n"
+                                   "    delete pq;\n"
+                                   "end\n"
+        );
+
+        const char* setcover_uint_char = ("element Vertex end\n"
+                                     "element Edge end\n"
+                                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                     "const degrees: vector{Vertex}(int) = edges.getOutDegrees();\n"
+                                     "const D: vector{Vertex}(uint);\n"
+                                     "const pq: priority_queue{Vertex}(uint);\n"
+                                     "const epsilon: double = 0.01;\n"
+                                     "const x: double = 1.0/log(1.0 + epsilon);\n"
+                                     "func init_udf(v: Vertex) \n"
+                                     "var deg: int = degrees[v];\n"
+                                     "    if deg == 0\n"
+                                     "        D[v] = 4294967295;\n"
+                                     "    else\n"
+                                     "        D[v] = floor(x*log(to_double(deg)));\n"
+                                     "    end\n"
+                                     "end\n"
+                                     "extern func extern_function(active: vertexset{Vertex}) -> output: vertexset{Vertex};\n"
+                                     "func main() \n"
+                                     "    vertices.apply(init_udf);\n"
+                                     "            pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 2, false, -1);\n"
+                                     "     while (1) \n"
+                                     "        var frontier: vertexset{Vertex} = pq.get_min_bucket();\n"
+                                     "        if frontier.is_null()\n"
+                                     "            break;\n"
+                                     "        end\n"
+                                     "        frontier.applyUpdatePriorityExtern(extern_function);\n"
+                                     "        delete frontier;\n"
+                                     "    end\n"
+                                     "end\n");
+
+        const char* unordered_kcore_char = ("element Vertex end\n"
+                                            "element Edge end\n"
+                                            "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/test.el\");\n"
+                                            "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                            "const Degrees : vector {Vertex}(int) = edges.getOutDegrees();\n"
+                                            "const coreNumbers : vector {Vertex}(int) = 0;\n"
+                                            "const k : int;\n"
+                                            "\n"
+                                            "func updateDegrees(src : Vertex, dst : Vertex)\n"
+                                            "    Degrees[dst] += -1;\n"
+                                            "end\n"
+                                            "\n"
+                                            "func filter1(v: Vertex) -> output : bool \n"
+                                            "     if Degrees[v] < k\n"
+                                            "       coreNumbers[v] = k-1;\n"
+                                            "       Degrees[v] = 0;\n"
+                                            "       output = true;\n"
+                                            "     else\n"
+                                            "       output = false;\n"
+                                            "     end\n"
+                                            "end\n"
+                                            "\n"
+                                            "func filter2(v: Vertex) -> output : bool output = (Degrees[v] >= k); end\n"
+                                            "\n"
+                                            "func main()\n"
+                                            "    startTimer();\n"
+                                            "    var n : int = edges.getVertices();\n"
+                                            "    var largestCore : int = -1;\n"
+                                            "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                            "    for iter in 1:n;\n"
+                                            "        k = iter;\n"
+                                            "        while(1) \n"
+                                            "          var toRemove : vertexset{Vertex} = frontier.where(filter1);\n"
+                                            "          var remaining : vertexset{Vertex}  = frontier.where(filter2); %remaining vertices\n"
+                                            "          delete frontier; \n"
+                                            "          frontier = remaining; \n"
+                                            "          if (0 == toRemove.getVertexSetSize())\n"
+                                            "             break;\t\n"
+                                            "          else\n"
+                                            "             #s1# edges.from(toRemove).apply(updateDegrees);\n"
+                                            "             delete toRemove; \n"
+                                            "          end \n"
+                                            "        end\n"
+                                            "        if (0 == frontier.getVertexSetSize())\n"
+                                            "          largestCore = k-1;\n"
+                                            "          break;\n"
+                                            "        end\n"
+                                            "    end\n"
+                                            "    var elapsed_time : float = stopTimer();\n"
+                                            "    print \"elapsed time: \";\n"
+                                            "    print elapsed_time;\n"
+                                            "end");
+
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
@@ -516,8 +725,15 @@ protected:
         pr_cc_str_ = string(pr_cc_char);
         bc_str_ = string(bc_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
+        delta_stepping_str_ = string(delta_stepping_char);
+        ppsp_str_ = string(ppsp_char);
+        astar_str_ = string(astar_char);
         export_pr_str_ = string(export_pr_char);
         export_cf_str_ = string(export_cf_char);
+        kcore_str_ = string(kcore_char);
+        kcore_uint_str_ = string(kcore_uint_char);
+        unordered_kcore_str_ = string (unordered_kcore_char);
+        setcover_uint_str_ = string(setcover_uint_char);
     }
 
     virtual void TearDown() {
@@ -585,8 +801,15 @@ protected:
     string pr_cc_str_;
     string bc_str_;
     string closeness_centrality_weighted_str_;
+    string delta_stepping_str_;
+    string ppsp_str_;
+    string astar_str_;
     string export_pr_str_;
     string export_cf_str_;
+    string kcore_str_;
+    string kcore_uint_str_;
+    string setcover_uint_str_;
+    string unordered_kcore_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1787,6 +2010,130 @@ TEST_F(HighLevelScheduleTest, ClosenessCentralityWeightedDefaultSchedule) {
 }
 
 
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingDensePullParallel) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDeltaSparsePushSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateArgv) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    program->configApplyPriorityUpdateDelta("s1", "argv[3]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMerge) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", 1000);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[3]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithDefaultSchedule) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithSparsePushParallelSchedule) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateArgv) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update");
+    program->configApplyPriorityUpdateDelta("s1", "argv[4]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (ppsp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[4]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, AStarDeltaSteppingWithEagerPriorityUpdateWithMergeArgv) {
+    istringstream is (astar_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+    program->configApplyPriorityUpdateDelta("s1", 2);
+    program->configBucketMergeThreshold("s1", "argv[4]");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, ExportPRTest){
     istringstream is (export_pr_str_);
     fe_->parseStream(is, context_, errors_);
@@ -1815,3 +2162,118 @@ TEST_F(HighLevelScheduleTest, ExportCFWithScheduleTest){
             ->configApplyParallelization("s1", "dynamic-vertex-parallel");
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, UnorderedKCoreDefault){
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushParallel){
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushDensePullParallel){
+istringstream is (unordered_kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "SparsePush-DensePull");
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyPriorityUpdate("s1", "constant_sum_reduce_before_update");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, KCoreSparsePushSerial){
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSparsePushParallel){
+istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreUintSparsePushParallel){
+istringstream is (kcore_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreUintSumReduceBeforeUpdate){
+istringstream is (kcore_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyPriorityUpdate("s1", "constant_sum_reduce_before_update");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreDensePullSerial){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "DensePull");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreDensePullParallel){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "DensePull");
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, KCoreSparsePushDensePullParallel){
+istringstream is (kcore_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+program->configApplyDirection("s1", "SparsePush-DensePull");
+program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+
+TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
+istringstream is (setcover_uint_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+

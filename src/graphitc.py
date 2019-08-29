@@ -65,6 +65,7 @@ if __name__ == '__main__':
     if not supplied_separate_algo_file:
         algo_file.close();
 
+
     COMPILER_BINARY = ""
     if len(schedule_cmd_list) == 0:
         COMPILER_BINARY=GRAPHIT_BUILD_DIRECTORY+"/bin/graphitc"
@@ -87,7 +88,7 @@ if __name__ == '__main__':
         #TODO: code here uses very fragile relavtive paths, figure out a better way
         # Maybe setting environment variables
         try:
-            subprocess.check_call(CXX_COMPILER + " -g -std=c++11 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
+            subprocess.check_call(CXX_COMPILER + " -g -std=c++14 -I {0} {1} -o compile.o {2}".format(runtime_include_path, compile_file_name, graphitlib_path), stderr=subprocess.STDOUT, shell=True)
         except subprocess.CalledProcessError as e:
             print(e.output)
             raise
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     except subprocess.CalledProcessError as e:
         print(e.output)
         raise
+
     #subprocess.check_call("g++ -g -std=c++11 -I ../../src/runtime_lib/  " + output_file_name + " -o test.o", shell=True)
     if algo_file_name == "algo.gt" and os.path.exists(algo_file_name):
         os.unlink(algo_file_name)

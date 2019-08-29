@@ -1,0 +1,31 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX
+const pq: priority_queue{Vertex}(int);
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int)
+    var new_dist : int = dist[src] + weight;
+    pq.updatePriorityMin(dst, dist[dst], new_dist);
+end
+
+func printDist(v : Vertex)
+    print dist[v];
+end
+
+func main()
+    var start_vertex : Vertex = 0;
+    var dst_vertex : Vertex = 4;
+
+    dist[start_vertex] = 0;
+    pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
+    while (pq.finishedNode(dst_vertex) == false)
+         var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue lowest priority nodes
+         #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
+         delete frontier;
+    end
+
+    #s2# vertices.apply(printDist);
+
+end

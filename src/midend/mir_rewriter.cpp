@@ -67,8 +67,9 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(StmtBlock::Ptr stmt_block) {
-            for (auto stmt : *(stmt_block->stmts)) {
-                stmt = rewrite<Stmt>(stmt);
+            for (int i = 0; i < (stmt_block->stmts)->size(); i++){
+                auto tmp = rewrite<Stmt>(stmt_block->stmts->at(i));
+                stmt_block->stmts->at(i) = tmp;
             }
             node = stmt_block;
         }
@@ -82,11 +83,15 @@ namespace graphit {
             node = func_decl;
         }
 
-        void MIRRewriter::visit(Call::Ptr expr) {
-            // need to use & to actually modify the argument (with reference), not a copy of it
+        void MIRRewriter::rewrite_call_args(Call::Ptr expr){
             for (auto &arg : expr->args) {
                 arg = rewrite<Expr>(arg);
             }
+        }
+
+        void MIRRewriter::visit(Call::Ptr expr) {
+            // need to use & to actually modify the argument (with reference), not a copy of it
+            rewrite_call_args(expr);
             node = expr;
         };
 
@@ -137,8 +142,12 @@ namespace graphit {
             if (var_decl->stmt_label != "") {
                 label_scope_.scope(var_decl->stmt_label);
             }
-            if (var_decl->initVal != nullptr)
-	            var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            if (var_decl->initVal != nullptr) {
+                var_decl->initVal = rewrite<Expr>(var_decl->initVal);
+            }
+
+            var_decl->type = rewrite<Type>(var_decl->type);
+
             node = var_decl;
 
             if (var_decl->stmt_label != "") {
@@ -187,6 +196,11 @@ namespace graphit {
         }
 
         void MIRRewriter::visit(std::shared_ptr<PullEdgeSetApplyExpr> expr) {
+            expr->target = rewrite<Expr>(expr->target);
+            node = expr;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             node = expr;
         }
@@ -326,6 +340,76 @@ namespace graphit {
             load_expr->file_name = rewrite<Expr>(load_expr->file_name);
             node = load_expr;
         }
+
+        // OG Additions
+        void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {
+            apply_expr->target = rewrite<Expr>(apply_expr->target);
+            node = apply_expr;
+        }
+
+        void MIRRewriter::visit(PriorityQueueType::Ptr queue_type) {
+            queue_type->element = rewrite<ElementType>(queue_type->element);
+            queue_type->priority_type = rewrite<ScalarType>(queue_type->priority_type);
+            node = queue_type;
+        }
+
+        void MIRRewriter::visit(PriorityQueueAllocExpr::Ptr expr) {
+            expr->element_type = rewrite<ElementType>(expr->element_type);
+            expr->starting_node = rewrite<Expr>(expr->starting_node);
+            expr->priority_type = rewrite<ScalarType>(expr->priority_type);
+            node = expr;
+        }
+
+
+        void MIRRewriter::visit(UpdatePriorityUpdateBucketsCall::Ptr stmt) {
+            //stmt->priority_queue = rewrite<Expr>(stmt->priority_queue);
+            node = stmt;
+        }
+
+        void MIRRewriter::visit(UpdatePriorityExternCall::Ptr stmt) {
+            stmt->input_set = rewrite<Expr>(stmt->input_set);
+            node = stmt;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<OrderedProcessingOperator> op) {
+            assert(op->while_cond_expr != nullptr);
+            op->while_cond_expr = rewrite<Expr>(op->while_cond_expr);
+            node = op;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperator> op) {
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
+            node = op;
+        }
+
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorMin> op) {
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
+            op->old_val = rewrite<Expr>(op->old_val);
+            op->new_val = rewrite<Expr>(op->new_val);
+            node = op;
+        }
+
+
+        void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
+            rewrite_call_args(op);
+            rewrite_priority_update_operator(op);
+            op->delta = rewrite<Expr>(op->delta);
+            op->minimum_val = rewrite<Expr>(op->minimum_val);
+            node = op;
+        }
+
+        void MIRRewriter::rewrite_priority_update_operator(PriorityUpdateOperator::Ptr op) {
+            op->destination_node_id = rewrite<Expr>(op->destination_node_id);
+            op->priority_queue = rewrite<Expr>(op->priority_queue);
+        }
+	
+	void MIRRewriter::visit(UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr ptr) {
+	    //visit(std::static_pointer_cast<EdgeSetApplyExpr>(ptr));
+            ptr->target = rewrite<Expr>(ptr->target);
+            node = ptr;
+	}
 
     }
 }

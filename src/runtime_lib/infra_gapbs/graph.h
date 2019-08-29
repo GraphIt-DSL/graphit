@@ -132,6 +132,8 @@ class CSRGraph {
 
 
  public:
+  julienne::graph<julienne::symmetricVertex> julienne_graph = __julienne_null_graph;
+  //julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex> *em;
   CSRGraph() : directed_(false), num_nodes_(-1), num_edges_(-1),
     out_index_(nullptr), out_neighbors_(nullptr),
   in_index_(nullptr), in_neighbors_(nullptr), flags_(nullptr), is_transpose_(false) {}
@@ -161,8 +163,6 @@ class CSRGraph {
     out_index_(out_index), out_neighbors_(out_neighs),
     in_index_(in_index), in_neighbors_(in_neighs), is_transpose_(false){
       num_edges_ = out_index_[num_nodes_] - out_index_[0];
-
-
       out_index_shared_.reset(out_index);
       out_neighbors_shared_.reset(out_neighs);
       in_index_shared_.reset(in_index);
@@ -173,7 +173,7 @@ class CSRGraph {
 
       //Set this up for getting random neighbors
       srand(time(NULL));
-  }
+    }
 
     CSRGraph(int64_t num_nodes, DestID_** out_index, DestID_* out_neighs,
         DestID_** in_index, DestID_* in_neighs, bool is_transpose) :
@@ -188,11 +188,12 @@ class CSRGraph {
       in_neighbors_shared_.reset(in_neighs);
       flags_ = new int[num_nodes_];
       flags_shared_.reset(flags_);
-    SetUpOffsets(true);
+      SetUpOffsets(true);
 
         //Set this up for getting random neighbors
         srand(time(NULL));
-  }
+    }
+
     CSRGraph(int64_t num_nodes, std::shared_ptr<DestID_*> out_index, std::shared_ptr<DestID_> out_neighs,
         shared_ptr<DestID_*> in_index, shared_ptr<DestID_> in_neighs, bool is_transpose) :
     directed_(true), num_nodes_(num_nodes),
@@ -264,18 +265,12 @@ class CSRGraph {
       //Set this up for getting random neighbors
       srand(time(NULL));
   }
- 
-        
-        
 
 
-
-
-
-  ~CSRGraph() {
-    if (!is_transpose_)
-        ReleaseResources();
-  }
+      ~CSRGraph() {
+        if (!is_transpose_)
+            ReleaseResources();
+      }
 
     CSRGraph& operator=(CSRGraph& other) {
         if (this != &other) {
@@ -515,11 +510,12 @@ class CSRGraph {
     }
 #endif
   }
+
 private:
   // Making private so cannot be modified from outside
   //useful for deduplication
   int* flags_;
-    SGOffset * offsets_;
+  SGOffset * offsets_;
 
   bool is_transpose_;
   bool directed_;
@@ -529,6 +525,7 @@ private:
   DestID_*  out_neighbors_;
   DestID_** in_index_;
   DestID_*  in_neighbors_;
+
 public:
   std::shared_ptr<int> flags_shared_;
   std::shared_ptr<SGOffset> offsets_shared_;

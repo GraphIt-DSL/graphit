@@ -175,6 +175,13 @@ namespace graphit {
                 EDGE_BASED
             };
 
+            enum class PriorityUpdateType {
+                EAGER_PRIORITY_UPDATE,
+                EAGER_PRIORITY_UPDATE_WITH_MERGE,
+                CONST_SUM_REDUCTION_BEFORE_UPDATE,
+                REDUCTION_BEFORE_UPDATE
+            };
+
             std::string scope_label_name;
             DirectionType direction_type;
             ParType parallel_type;
@@ -183,12 +190,16 @@ namespace graphit {
             OtherOpt opt;
             PullFrontierType pull_frontier_type;
             PullLoadBalance pull_load_balance_type;
+            PriorityUpdateType priority_update_type;
 
             // the grain size for edge based load balance scheme
             // with the default grain size set to 4096
             int pull_load_balance_edge_grain_size;
             int num_segment;
+            int delta;
             bool numa_aware;
+            int merge_threshold;
+            int num_open_buckets;
         };
 
         /**

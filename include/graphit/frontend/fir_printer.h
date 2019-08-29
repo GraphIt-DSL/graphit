@@ -99,6 +99,9 @@ namespace graphit {
             virtual void visit(ListAllocExpr::Ptr);
             virtual void visit(VectorAllocExpr::Ptr);
 
+            virtual void visit(PriorityQueueType::Ptr);
+            virtual void visit(PriorityQueueAllocExpr::Ptr);
+
             virtual void visit(MethodCallExpr::Ptr);
             virtual void visit(ApplyExpr::Ptr);
             virtual void visit(WhereExpr::Ptr);

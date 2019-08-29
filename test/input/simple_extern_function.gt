@@ -1,5 +1,5 @@
-extern func pow(base: float, exponent: float) -> output: float;
+extern func my_pow(base: float, exponent: float) -> output: float;
 
 func main() 
-	pow(2, 10);
+	my_pow(2, 10);
 end

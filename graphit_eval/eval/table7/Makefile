@@ -1,6 +1,6 @@
 
 
-COMMON_FLAGS = -std=c++11 -g -I ../../../src/runtime_lib/ 
+COMMON_FLAGS = -std=gnu++1y -g -I ../../../src/runtime_lib/
 CILK_FLAGS = $(COMMON_FLAGS)
 OPENMP_FLAGS = $(COMMON_FLAGS)
 GRAPHITC_PY = ../../../build/bin/graphitc.py

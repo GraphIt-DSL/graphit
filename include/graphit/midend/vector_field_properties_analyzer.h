@@ -29,7 +29,8 @@ namespace graphit {
 
         struct PropertyAnalyzingVisitor : public mir::MIRVisitor {
 
-            PropertyAnalyzingVisitor(std::string direction) : direction_(direction) {
+            PropertyAnalyzingVisitor(std::string direction, MIRContext* mir_context)
+            : direction_(direction), mir_context_(mir_context) {
                 in_write_phase = false;
                 in_read_phase = false;
                 in_read_write_phase = false;
@@ -41,8 +42,14 @@ namespace graphit {
 
             virtual void visit(mir::TensorReadExpr::Ptr);
 
+            virtual void visit(mir::PriorityUpdateOperatorSum::Ptr);
+
+            virtual void visit(mir::PriorityUpdateOperatorMin::Ptr);
+
+
         private:
             std::string direction_;
+            MIRContext * mir_context_;
 
         private:
             bool in_write_phase;
@@ -80,6 +87,8 @@ namespace graphit {
             virtual void visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr);
 
             virtual void visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr);
+
+            virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr priority_update_expr);
 
         private:
             Schedule *schedule_ = nullptr;
