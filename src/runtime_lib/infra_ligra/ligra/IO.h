@@ -1,5 +1,5 @@
 // This code is part of the project "Ligra: A Lightweight Graph Processing
-// Framework for Shared Memory", presented at Principles and Practice of 
+// Framework for Shared Memory", presented at Principles and Practice of
 // Parallel Programming, 2013.
 // Copyright (c) 2013 Julian Shun and Guy Blelloch
 //
@@ -63,12 +63,12 @@ words(char* C, long nn, char** S, long mm)
 : Chars(C), n(nn), Strings(S), m(mm) {}
   void del() {free(Chars); free(Strings);}
 };
- 
+
 inline bool isSpace(char c) {
   switch (c)  {
-  case '\r': 
-  case '\t': 
-  case '\n': 
+  case '\r':
+  case '\t':
+  case '\n':
   case 0:
   case ' ' : return true;
   default : return false;
@@ -98,8 +98,8 @@ static words stringToWords(char *Str, long n) {
   // mark start of words
   bool *FL = newA(bool,n);
   FL[0] = Str[0];
-  {parallel_for (long i=1; i < n; i++) FL[i] = Str[i] && !Str[i-1];}
-    
+  ligra::parallel_for((long)1, n, [&] (long i) { FL[i] = Str[i] && !Str[i-1]; });
+
   // offset for each start of word
   _seq<long> Off = sequence::packIndex<long>(FL, n);
   long m = Off.n;
@@ -107,7 +107,7 @@ static words stringToWords(char *Str, long n) {
 
   // pointer to each start of word
   char **SA = newA(char*, m);
-  {parallel_for (long j=0; j < m; j++) SA[j] = Str+offsets[j];}
+  ligra::parallel_for((long)0, m, [&] (long j) { SA[j] = Str+offsets[j]; });
 
   free(offsets); free(FL);
   return words(Str,n,SA,m);
@@ -123,12 +123,12 @@ public:
   void* allocatedInplace, * inEdges;
   uintE* flags;
 
-  Uncompressed_Mem(vertex* VV, long nn, long mm, void* ai, void* _inEdges = NULL) 
+  Uncompressed_Mem(vertex* VV, long nn, long mm, void* ai, void* _inEdges = NULL)
   : V(VV), n(nn), m(mm), allocatedInplace(ai), inEdges(_inEdges),  flags(NULL) {}
 
   void del() {
     if (flags != NULL) free(flags);
-    if (allocatedInplace == NULL) 
+    if (allocatedInplace == NULL)
       for (long i=0; i < n; i++) V[i].del();
     else free(allocatedInplace);
     free(V);
@@ -168,48 +168,48 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric) {
   intE* edges = newA(intE,2*m);
 #endif
 
-  {parallel_for(long i=0; i < n; i++) offsets[i] = atol(W.Strings[i + 3]);}
-  {parallel_for(long i=0; i<m; i++) {
+  ligra::parallel_for((long)0, n, [&] (long i) { offsets[i] = atol(W.Strings[i + 3]); });
+  ligra::parallel_for((long)0, m, [&] (long i) {
 #ifndef WEIGHTED
-      edges[i] = atol(W.Strings[i+n+3]); 
+      edges[i] = atol(W.Strings[i+n+3]);
 #else
-      edges[2*i] = atol(W.Strings[i+n+3]); 
+      edges[2*i] = atol(W.Strings[i+n+3]);
       edges[2*i+1] = atol(W.Strings[i+n+m+3]);
 #endif
-    }}
+    });
   //W.del(); // to deal with performance bug in malloc
-    
+
   vertex* v = newA(vertex,n);
 
-  {parallel_for (uintT i=0; i < n; i++) {
+  ligra::parallel_for((uintT)0, (uintT)n, [&] (uintT i) {
     uintT o = offsets[i];
     uintT l = ((i == n-1) ? m : offsets[i+1])-offsets[i];
-    v[i].setOutDegree(l); 
+    v[i].setOutDegree(l);
 #ifndef WEIGHTED
-    v[i].setOutNeighbors(edges+o);     
+    v[i].setOutNeighbors(edges+o);
 #else
     v[i].setOutNeighbors(edges+2*o);
 #endif
-    }}
+    });
 
   if(!isSymmetric) {
     uintT* tOffsets = newA(uintT,n);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = INT_T_MAX;}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { tOffsets[i] = INT_T_MAX; });
 #ifndef WEIGHTED
     intPair* temp = newA(intPair,m);
 #else
     intTriple* temp = newA(intTriple,m);
 #endif
-    {parallel_for(long i=0;i<n;i++){
-      uintT o = offsets[i];
-      for(uintT j=0;j<v[i].getOutDegree();j++){	  
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        uintT o = offsets[i];
+        for(uintT j=0; j<v[i].getOutDegree(); j++) {
 #ifndef WEIGHTED
-	temp[o+j] = make_pair(v[i].getOutNeighbor(j),i);
+          temp[o+j] = make_pair(v[i].getOutNeighbor(j),i);
 #else
-	temp[o+j] = make_pair(v[i].getOutNeighbor(j),make_pair(i,v[i].getOutWeight(j)));
+          temp[o+j] = make_pair(v[i].getOutNeighbor(j),make_pair(i,v[i].getOutWeight(j)));
 #endif
-      }
-      }}
+        }
+      });
     free(offsets);
 
 #ifndef WEIGHTED
@@ -218,7 +218,7 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric) {
     intSort::iSort(temp,m,n+1,getFirst<intPair>());
 #endif
 
-    tOffsets[temp[0].first] = 0; 
+    tOffsets[temp[0].first] = 0;
 #ifndef WEIGHTED
     uintE* inEdges = newA(uintE,m);
     inEdges[0] = temp[0].second;
@@ -227,34 +227,34 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric) {
     inEdges[0] = temp[0].second.first;
     inEdges[1] = temp[0].second.second;
 #endif
-    {parallel_for(long i=1;i<m;i++) {
+    ligra::parallel_for((long)1, (long)m, [&] (long i) {
 #ifndef WEIGHTED
-      inEdges[i] = temp[i].second;
+        inEdges[i] = temp[i].second;
 #else
-      inEdges[2*i] = temp[i].second.first; 
-      inEdges[2*i+1] = temp[i].second.second;
+        inEdges[2*i] = temp[i].second.first;
+        inEdges[2*i+1] = temp[i].second.second;
 #endif
-      if(temp[i].first != temp[i-1].first) {
-	tOffsets[temp[i].first] = i;
-      }
-      }}
+        if(temp[i].first != temp[i-1].first) {
+          tOffsets[temp[i].first] = i;
+        }
+      });
 
     free(temp);
- 
+
     //fill in offsets of degree 0 vertices by taking closest non-zero
     //offset to the right
     sequence::scanIBack(tOffsets,tOffsets,n,minF<uintT>(),(uintT)m);
 
-    {parallel_for(long i=0;i<n;i++){
-      uintT o = tOffsets[i];
-      uintT l = ((i == n-1) ? m : tOffsets[i+1])-tOffsets[i];
-      v[i].setInDegree(l);
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        uintT o = tOffsets[i];
+        uintT l = ((i == n-1) ? m : tOffsets[i+1])-tOffsets[i];
+        v[i].setInDegree(l);
 #ifndef WEIGHTED
-      v[i].setInNeighbors(inEdges+o);
+        v[i].setInNeighbors(inEdges+o);
 #else
-      v[i].setInNeighbors(inEdges+2*o);
+        v[i].setInNeighbors(inEdges+2*o);
 #endif
-      }}    
+      });
 
     free(tOffsets);
     Uncompressed_Mem<vertex>* mem = new Uncompressed_Mem<vertex>(v,n,m,edges,inEdges);
@@ -275,7 +275,7 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
   char configFile[strlen(iFile)+strlen(config)+1];
   char adjFile[strlen(iFile)+strlen(adj)+1];
   char idxFile[strlen(iFile)+strlen(idx)+1];
-  *configFile = *adjFile = *idxFile = '\0'; 
+  *configFile = *adjFile = *idxFile = '\0';
   strcat(configFile,iFile);
   strcat(adjFile,iFile);
   strcat(idxFile,iFile);
@@ -316,48 +316,48 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
   vertex* v = newA(vertex,n);
 #ifdef WEIGHTED
   intE* edgesAndWeights = newA(intE,2*m);
-  {parallel_for(long i=0;i<m;i++) {
-    edgesAndWeights[2*i] = edges[i];
-    edgesAndWeights[2*i+1] = edges[i+m]; 
-    }}
+  ligra::parallel_for((long)0, (long)m, [&] (long i) {
+      edgesAndWeights[2*i] = edges[i];
+      edgesAndWeights[2*i+1] = edges[i+m];
+    });
   //free(edges);
 #endif
-  {parallel_for(long i=0;i<n;i++) {
-    uintT o = offsets[i];
-    uintT l = ((i==n-1) ? m : offsets[i+1])-offsets[i];
-      v[i].setOutDegree(l); 
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      uintT o = offsets[i];
+      uintT l = ((i==n-1) ? m : offsets[i+1])-offsets[i];
+      v[i].setOutDegree(l);
 #ifndef WEIGHTED
-      v[i].setOutNeighbors((uintE*)edges+o); 
+      v[i].setOutNeighbors((uintE*)edges+o);
 #else
       v[i].setOutNeighbors(edgesAndWeights+2*o);
 #endif
-    }}
+    });
 
   if(!isSymmetric) {
     uintT* tOffsets = newA(uintT,n);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = INT_T_MAX;}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { tOffsets[i] = INT_T_MAX; });
 #ifndef WEIGHTED
     intPair* temp = newA(intPair,m);
 #else
     intTriple* temp = newA(intTriple,m);
 #endif
-    {parallel_for(intT i=0;i<n;i++){
-      uintT o = offsets[i];
-      for(uintT j=0;j<v[i].getOutDegree();j++){
+    ligra::parallel_for((intT)0, (intT)n, [&] (intT i) {
+        uintT o = offsets[i];
+        for(uintT j=0; j<v[i].getOutDegree(); j++){
 #ifndef WEIGHTED
-	temp[o+j] = make_pair(v[i].getOutNeighbor(j),i);
+          temp[o+j] = make_pair(v[i].getOutNeighbor(j),i);
 #else
-	temp[o+j] = make_pair(v[i].getOutNeighbor(j),make_pair(i,v[i].getOutWeight(j)));
+          temp[o+j] = make_pair(v[i].getOutNeighbor(j),make_pair(i,v[i].getOutWeight(j)));
 #endif
-      }
-      }}
+        }
+      });
     free(offsets);
 #ifndef WEIGHTED
     intSort::iSort(temp,m,n+1,getFirst<uintE>());
 #else
     intSort::iSort(temp,m,n+1,getFirst<intPair>());
 #endif
-    tOffsets[temp[0].first] = 0; 
+    tOffsets[temp[0].first] = 0;
 #ifndef WEIGHTED
     uintE* inEdges = newA(uintE,m);
     inEdges[0] = temp[0].second;
@@ -366,31 +366,31 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
     inEdges[0] = temp[0].second.first;
     inEdges[1] = temp[0].second.second;
 #endif
-    {parallel_for(long i=1;i<m;i++) {
+    ligra::parallel_for((long)1, (long)m, [&] (long i) {
 #ifndef WEIGHTED
-      inEdges[i] = temp[i].second;
+        inEdges[i] = temp[i].second;
 #else
-      inEdges[2*i] = temp[i].second.first;
-      inEdges[2*i+1] = temp[i].second.second;
+        inEdges[2*i] = temp[i].second.first;
+        inEdges[2*i+1] = temp[i].second.second;
 #endif
-      if(temp[i].first != temp[i-1].first) {
-	tOffsets[temp[i].first] = i;
-      }
-      }}
+        if(temp[i].first != temp[i-1].first) {
+          tOffsets[temp[i].first] = i;
+        }
+      });
     free(temp);
     //fill in offsets of degree 0 vertices by taking closest non-zero
     //offset to the right
     sequence::scanIBack(tOffsets,tOffsets,n,minF<uintT>(),(uintT)m);
-    {parallel_for(long i=0;i<n;i++){
-      uintT o = tOffsets[i];
-      uintT l = ((i == n-1) ? m : tOffsets[i+1])-tOffsets[i];
-      v[i].setInDegree(l);
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        uintT o = tOffsets[i];
+        uintT l = ((i == n-1) ? m : tOffsets[i+1])-tOffsets[i];
+        v[i].setInDegree(l);
 #ifndef WEIGHTED
-      v[i].setInNeighbors((uintE*)inEdges+o);
+        v[i].setInNeighbors((uintE*)inEdges+o);
 #else
-      v[i].setInNeighbors((intE*)(inEdges+2*o));
+        v[i].setInNeighbors((intE*)(inEdges+2*o));
 #endif
-      }}
+      });
     free(tOffsets);
 #ifndef WEIGHTED
     Uncompressed_Mem<vertex>* mem = new Uncompressed_Mem<vertex>(v,n,m,edges,inEdges);
@@ -401,7 +401,7 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
 #endif
   }
   free(offsets);
-#ifndef WEIGHTED  
+#ifndef WEIGHTED
   Uncompressed_Mem<vertex>* mem = new Uncompressed_Mem<vertex>(v,n,m,edges);
   return graph<vertex>(v,n,m,mem);
 #else
@@ -412,7 +412,7 @@ graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
 
 template <class vertex>
 graph<vertex> readGraph(char* iFile, bool compressed, bool symmetric, bool binary) {
-  if(binary) return readGraphFromBinary<vertex>(iFile,symmetric); 
+  if(binary) return readGraphFromBinary<vertex>(iFile,symmetric);
   else return readGraphFromFile<vertex>(iFile,symmetric);
 }
 
@@ -430,8 +430,8 @@ public:
   uintE* Degrees;
   char* s;
 
-  Compressed_Mem(vertex* _V, long _n, long _m, uintT* _inOffsets, uintT* _offsets, uchar* _inEdges, 
-                 uchar* _edges, uintE* _inDegrees, uintE* _Degrees, char* _s) : 
+  Compressed_Mem(vertex* _V, long _n, long _m, uintT* _inOffsets, uintT* _offsets, uchar* _inEdges,
+                 uchar* _edges, uintE* _inDegrees, uintE* _Degrees, char* _s) :
                  V(_V), inOffsets(_inOffsets), offsets(_offsets), inEdges(_inEdges),
                  edges(_edges), inDegrees(_inDegrees), Degrees(_Degrees), s(_s) {}
 
@@ -485,24 +485,24 @@ graph<vertex> readCompressedGraph(char* fname, bool isSymmetric) {
   in.close();
 
   vertex *V = newA(vertex,n);
-  parallel_for(long i=0;i<n;i++) {
-    long o = offsets[i];
-    uintT d = Degrees[i];
-    V[i].setOutDegree(d);
-    V[i].setOutNeighbors(edges+o);
-  }
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      long o = offsets[i];
+      uintT d = Degrees[i];
+      V[i].setOutDegree(d);
+      V[i].setOutNeighbors(edges+o);
+    });
 
   if(sizeof(vertex) == sizeof(compressedAsymmetricVertex)){
-    parallel_for(long i=0;i<n;i++) {
-      long o = inOffsets[i];
-      uintT d = inDegrees[i];
-      V[i].setInDegree(d);
-      V[i].setInNeighbors(inEdges+o);
-    }
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        long o = inOffsets[i];
+        uintT d = inDegrees[i];
+        V[i].setInDegree(d);
+        V[i].setInNeighbors(inEdges+o);
+      });
   }
 
   cout << "creating graph..."<<endl;
-  Compressed_Mem<vertex>* mem = new Compressed_Mem<vertex>(V, n, m, inOffsets, offsets, 
+  Compressed_Mem<vertex>* mem = new Compressed_Mem<vertex>(V, n, m, inOffsets, offsets,
                                   inEdges, edges, inDegrees, Degrees, s);
 
   graph<vertex> G(V,n,m,mem);

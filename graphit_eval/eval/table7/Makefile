@@ -16,7 +16,13 @@ OPENMP_FLAGS += -DOPENMP -fopenmp -O3
 else ifdef ICPC_PAR
 # compiling with Intel icpc compiler
 PCC = icpc
-CILK_FLAGS += -DCILK -O3
+CILK_FLAGS += -qopenmp -DCILK -O3
+OPENMP_FLAGS += -DOPENMP -qopenmp -O3
+
+else ifdef ICPC_TBB
+# compiling with Intel icpc compiler
+PCC = icpc
+CILK_FLAGS += -qopenmp -DTBB -O3 -ltbb
 OPENMP_FLAGS += -DOPENMP -qopenmp -O3
 
 else

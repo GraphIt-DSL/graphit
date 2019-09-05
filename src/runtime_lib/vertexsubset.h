@@ -49,16 +49,18 @@ struct VertexSubset {
             is_dense(input_vert_set->is_dense){
             if (input_vert_set->dense_vertex_set_ != nullptr){
                 dense_vertex_set_ = newA(unsigned int, num_vertices_);
-                parallel_for (int i = 0; i < num_vertices_; i++){
+                //TODO maybe use ligra here too
+                ligra::parallel_for((int)0, (int)vertices_range, [&] (int i) {
                     dense_vertex_set_[i] = input_vert_set->dense_vertex_set_[i];
-                }
+                })
             }
 
             if (bool_map_ != nullptr){
                 bool_map_ = newA(bool, vertices_range_);
-                parallel_for (int i = 0; i < vertices_range_; i++){
+                //TODO maybe use ligra here too
+                ligra::parallel_for((int)0, (int)vertices_range, [&] (int i) {
                     bool_map_[i] = input_vert_set->bool_map_[i];
-                }
+                })
             }
 
     }
@@ -76,16 +78,16 @@ struct VertexSubset {
             bitmap_ = new Bitmap(vertices_range);
             bitmap_->set_all();
             bool_map_ = newA(bool, vertices_range);
-            parallel_for(int i = 0; i < vertices_range; i++) bool_map_[i] = 1;
+            ligra::parallel_for((int)0, (int)vertices_range, [&] (int i) { bool_map_[i] = 1; });
 
             dense_vertex_set_ = new unsigned int[vertices_range];
 // don't need this for now
 //            sliding_queue_ = new SlidingQueue<NodeID>(vertices_range);
-            parallel_for (NodeID i = 0; i< vertices_range; i++){
+            ligra::parallel_for_lambda((NodeID)0, (NodeID)vertices_range, [&] (NodeID i) {
                 dense_vertex_set_[i] = i;
                 //hopefully we will only need to use one of the two in the futuer (dense_set or sliding queue)
                 //sliding_queue_->push_back(i);
-            }
+            });
             sliding_queue_ = nullptr;
 
         } else {
@@ -149,7 +151,7 @@ struct VertexSubset {
 //
 //        if (bool_map_ == nullptr){
 //            bool_map_ = newA(bool, vertices_range_);
-//            parallel_for(int i = 0; i < vertices_range_; i++) bool_map_[i] = 0;
+//            ligra::parallel_for((long)0, (long)vertices_range_, [&] (long i) { bool_map_[i] = 0; });
 //        }
 //
 //        if (sliding_queue_ == nullptr){
@@ -187,7 +189,7 @@ struct VertexSubset {
 
         if (bool_map_ == NULL) {
             bool_map_ = newA(bool,vertices_range_);
-            {parallel_for(long i=0;i<vertices_range_;i++) bool_map_[i] = 0;}
+            ligra::parallel_for((long)0, (long)vertices_range_, [&] (long i) { bool_map_[i] = 0; });
 
             if (tmp.size() != 0){
                 for (NodeID node : tmp){
@@ -195,7 +197,7 @@ struct VertexSubset {
                     bool_map_[node] = 1;
                 }
             } else if (num_vertices_ > 0){
-                {parallel_for(long i=0;i<num_vertices_;i++) bool_map_[dense_vertex_set_[i]] = 1;}
+                ligra::parallel_for((long)0, (long)num_vertices_, [&] (long i) { bool_map_[dense_vertex_set_[i]] = 1; });
             }
         }
 

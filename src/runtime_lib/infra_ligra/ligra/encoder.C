@@ -23,7 +23,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //include the code for the desired compression scheme
-#ifndef PD 
+#ifndef PD
 #ifdef BYTE
 #include "byte.h"
 #elif defined NIBBLE
@@ -66,14 +66,14 @@ struct tripleCmp {
 
 void logCost(uintT* offsets, uintE* edges, long n, long m, uintE* Degrees){
   double* logs = newA(double,n);
-  parallel_for(long i=0;i<n;i++) logs[i] = 0.0;
-  parallel_for(long i=0;i<n;i++) {
-    long o = offsets[i];
-    for(long j=0;j<Degrees[i];j++) {
-      logs[i] += log((double) abs(edges[o+j]-i) + 1);
-    }
-  }
-  cout << "log cost = " << 
+  ligra::parallel_for((long)0, (long)n, [&] (long i) { logs[i] = 0.0; });
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      long o = offsets[i];
+      for(long j=0;j<Degrees[i];j++) {
+        logs[i] += log((double) abs(edges[o+j]-i) + 1);
+      }
+    });
+  cout << "log cost = " <<
     sequence::plusReduce(logs,n)/(m*log(2.0)) << endl;
   free(logs);
 }
@@ -81,18 +81,18 @@ void logCost(uintT* offsets, uintE* edges, long n, long m, uintE* Degrees){
 
 void gapCost(uintT* offsets, uintE* edges, long n, long m, uintE* Degrees){
   double* logs = newA(double,n);
-  parallel_for(long i=0;i<n;i++) logs[i] = 0.0;
-  parallel_for(long i=0;i<n;i++) {
-    long o = offsets[i];
-    long d = Degrees[i];
-    if(d > 0) {
-      logs[i] += log((double) abs(i-edges[o]) + 1);
-      for(long j=1;j<d;j++) {
-	logs[i] += log((double) abs((long)edges[o+j]-(long)edges[o+j-1]) + 1);
+  ligra::parallel_for((long)0, (long)n, [&] (long i) { logs[i] = 0.0; });
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      long o = offsets[i];
+      long d = Degrees[i];
+      if(d > 0) {
+        logs[i] += log((double) abs(i-edges[o]) + 1);
+        for(long j=1;j<d;j++) {
+          logs[i] += log((double) abs((long)edges[o+j]-(long)edges[o+j-1]) + 1);
+        }
       }
-    }
-  }
-  cout << "log gap cost = " << 
+    });
+  cout << "log gap cost = " <<
     sequence::plusReduce(logs,n)/(m*log(2.0)) << endl;
   free(logs);
 }
@@ -108,7 +108,7 @@ void encodeGraphFromFile(char* fname, bool isSymmetric, char* outFile, bool bina
     char configFile[strlen(fname)+strlen(config)+1];
     char adjFile[strlen(fname)+strlen(adj)+1];
     char idxFile[strlen(fname)+strlen(idx)+1];
-    *configFile = *adjFile = *idxFile = '\0'; 
+    *configFile = *adjFile = *idxFile = '\0';
     strcat(configFile,fname);
     strcat(adjFile,fname);
     strcat(idxFile,fname);
@@ -162,67 +162,67 @@ void encodeGraphFromFile(char* fname, bool isSymmetric, char* outFile, bool bina
     edges = newA(uintE,m);
 
     offsets[n] = m;
-    {parallel_for(long i=0; i < n; i++) offsets[i] = atol(W.Strings[i + 3]);}
-    {parallel_for(long i=0; i<m; i++) {
-	edges[i] = atol(W.Strings[i+n+3]);
-	if(atol(W.Strings[i+n+3]) < 0 || atol(W.Strings[i+n+3]) >= n) 
-	  { cout << "Out of bounds: edge at index "<<
-	      i<< " is "<<atol(W.Strings[i+n+3])<<endl;
-	    abort();}
-      }
-    }
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { offsets[i] = atol(W.Strings[i + 3]); });
+    ligra::parallel_for((long)0, (long)m, [&] (long i) {
+        edges[i] = atol(W.Strings[i+n+3]);
+        if (atol(W.Strings[i+n+3]) < 0 || atol(W.Strings[i+n+3]) >= n) {
+          cout << "Out of bounds: edge at index "<<
+            i<< " is "<<atol(W.Strings[i+n+3])<<endl;
+          abort();
+        }
+      });
     W.del();
   }
 
   long* sizes = newA(long,3);
-  sizes[0] = n; 
+  sizes[0] = n;
 
   uintE* Degrees = newA(uintE,n);
   uintT* DegreesT = newA(uintT,n+1);
 
-  /* Steps : 
-      1. Sort within each in-edge/out-edge segment 
-      2. sequentially compress edges using difference coding  
+  /* Steps :
+      1. Sort within each in-edge/out-edge segment
+      2. sequentially compress edges using difference coding
   */
-  {parallel_for (long i=0; i < n; i++) {
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       uintT o = offsets[i];
       intT d = offsets[i+1] - o;
-    if(d < 0 || d > n) { 
-      cout << "degree out of bounds: vertex "<<i<< " has degree "<< d<<endl; 
-      abort(); }
-    Degrees[i] = DegreesT[i] = d;
-    if(d > 0) {
-      quickSort(edges+o, d, less<intE>());
-      uintT k = 0;
-      uintE lastRead = UINT_E_MAX;
-      //remove self-edges and duplicate edges
-      for(long j=0;j<d;j++) {
-	uintE e = edges[o+j];
-	if(e != i && e != lastRead) 
-	  edges[o+k++] = lastRead = e;
+      if(d < 0 || d > n) {
+        cout << "degree out of bounds: vertex "<<i<< " has degree "<< d<<endl;
+        abort(); }
+      Degrees[i] = DegreesT[i] = d;
+      if(d > 0) {
+        quickSort(edges+o, d, less<intE>());
+        uintT k = 0;
+        uintE lastRead = UINT_E_MAX;
+        //remove self-edges and duplicate edges
+        for(long j=0;j<d;j++) {
+          uintE e = edges[o+j];
+          if(e != i && e != lastRead)
+            edges[o+k++] = lastRead = e;
+        }
+        Degrees[i] = DegreesT[i] = k;
       }
-      Degrees[i] = DegreesT[i] = k;
-    }
-   }}
+    });
 
   DegreesT[n] = 0;
   //compute new m after duplicate edge removal
   m = sequence::plusScan(DegreesT,DegreesT,n+1);
-  sizes[1] = m; 
+  sizes[1] = m;
 
   if (!isSymmetric) {
     uintT* tOffsets = newA(uintT,n+1);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = UINT_T_MAX;}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { tOffsets[i] = UINT_T_MAX; });
     uintE* inEdges = newA(uintE,m);
     intPair* temp = newA(intPair,m);
     // Create m many new intPairs.
-    {parallel_for(long i=0;i<n;i++){
-	uintT o = DegreesT[i];
-	intT d = DegreesT[i+1] - o;
-      for(long j=0;j<d;j++){
-  	temp[o+j] = make_pair(edges[offsets[i]+j],i);
-      }
-    }}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        uintT o = DegreesT[i];
+        intT d = DegreesT[i+1] - o;
+        for(long j=0;j<d;j++){
+          temp[o+j] = make_pair(edges[offsets[i]+j],i);
+        }
+      });
     cout << "out edges: ";
     gapCost(offsets,edges,n,m,Degrees);
 
@@ -252,22 +252,24 @@ void encodeGraphFromFile(char* fname, bool isSymmetric, char* outFile, bool bina
     // Use pairBothCmp because when encoding we need monotonicity
     // within an edge list.
     quickSort(temp,m,pairBothCmp<uintE>());
-    
+
     tOffsets[temp[0].first] = 0; tOffsets[n] = m; inEdges[0] = temp[0].second;
-    {parallel_for(long i=1;i<m;i++) {
-      inEdges[i] = temp[i].second;
-      if(temp[i].first != temp[i-1].first) {
-      	tOffsets[temp[i].first] = i;
-      }
-    }}
+
+    ligra::parallel_for((long)1, (long)m, [&] (long i) {
+        inEdges[i] = temp[i].second;
+        if(temp[i].first != temp[i-1].first) {
+          tOffsets[temp[i].first] = i;
+        }
+      });
     free(temp);
 
     //fill in offsets of degree 0 vertices by taking closest non-zero
     //offset to the right
     sequence::scanIBack(tOffsets,tOffsets,n,minF<uintT>(),(uintT) m);
 
-    parallel_for(long i=0;i<n;i++) 
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
       Degrees[i] = tOffsets[i+1]-tOffsets[i];
+      });
 
     cout << "in edges: ";
     gapCost(tOffsets,inEdges,n,m,Degrees);
@@ -328,7 +330,7 @@ void encodeWeightedGraphFromFile
     char configFile[strlen(fname)+strlen(config)+1];
     char adjFile[strlen(fname)+strlen(adj)+1];
     char idxFile[strlen(fname)+strlen(idx)+1];
-    *configFile = *adjFile = *idxFile = '\0'; 
+    *configFile = *adjFile = *idxFile = '\0';
     strcat(configFile,fname);
     strcat(adjFile,fname);
     strcat(idxFile,fname);
@@ -351,10 +353,10 @@ void encodeWeightedGraphFromFile
     in2.close();
     uintE* edges1 = (uintE*) s;
     edges = newA(intEPair,m);
-    parallel_for(long i=0;i<m;i++) {
-      edges[i].first = edges1[i];
-      edges[i].second = 1; //default weight
-    }
+    ligra::parallel_for((long)0, (long)m, [&] (long i) {
+        edges[i].first = edges1[i];
+        edges[i].second = 1; //default weight
+      });
     free(edges1);
 
     ifstream in3(idxFile,ifstream::in | ios::binary); //stored as longs
@@ -388,76 +390,76 @@ void encodeWeightedGraphFromFile
     edges = newA(intEPair,m);
 
     offsets[n] = m;
-    {parallel_for(long i=0; i < n; i++) offsets[i] = atol(W.Strings[i + 3]);}
-    {parallel_for(long i=0; i<m; i++) {
-	edges[i].first = atol(W.Strings[i+n+3]);
-	if(atol(W.Strings[i+n+3]) < 0 || atol(W.Strings[i+n+3]) >= n) 
-	  { cout << "Out of bounds: edge at index "<<i
-		 << " is "<<atol(W.Strings[i+n+3])<<endl; 
-	    abort();}
-	edges[i].second = atol(W.Strings[i+n+m+3]);
-      }
-    }
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { offsets[i] = atol(W.Strings[i + 3]); });
+    ligra::parallel_for((long)0, (long)m, [&] (long i) {
+        edges[i].first = atol(W.Strings[i+n+3]);
+        if(atol(W.Strings[i+n+3]) < 0 || atol(W.Strings[i+n+3]) >= n)
+        { cout << "Out of bounds: edge at index "<<i
+               << " is "<<atol(W.Strings[i+n+3])<<endl;
+          abort();}
+        edges[i].second = atol(W.Strings[i+n+m+3]);
+      });
 
     W.del(); // to deal with performance bug in malloc
   }
-  
+
   long* sizes = newA(long,3);
-  sizes[0] = n; 
+  sizes[0] = n;
 
   uintE* Degrees = newA(uintE,n);
   uintT* DegreesT = newA(uintT,n+1);
 
-  /* Steps : 
-      1. Sort within each in-edge/out-edge segment 
-      2. sequentially compress edges using difference coding  
+  /* Steps :
+      1. Sort within each in-edge/out-edge segment
+      2. sequentially compress edges using difference coding
   */
 
-  {parallel_for (long i=0; i < n; i++) {
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       uintT o = offsets[i];
       intT d = offsets[i+1] - o;
-      if(d < 0 || d > n) { 
-	cout << "degree out of bounds: vertex "<<
-	  i<< " has degree "<< d<<endl; 
-	abort(); }
+      if(d < 0 || d > n) {
+        cout << "degree out of bounds: vertex "<<
+          i<< " has degree "<< d<<endl;
+        abort();
+      }
       Degrees[i] = DegreesT[i] = d;
       if(d > 0) {
-	quickSort(edges+o, d, pairFirstCmp<uintE>());
-	uintT k = 0;
-	uintE lastRead = UINT_E_MAX;
-	//remove self-edges and duplicate edges
-	for(long j=0;j<d;j++) {
-	  intEPair e = edges[o+j];
-	  if(e.first != i && e.first != lastRead) {
-	    lastRead = e.first;
-	    edges[o+k++] = e;
-	  }}
-	Degrees[i] = DegreesT[i] = k;
+        quickSort(edges+o, d, pairFirstCmp<uintE>());
+        uintT k = 0;
+        uintE lastRead = UINT_E_MAX;
+        //remove self-edges and duplicate edges
+        for(long j=0;j<d;j++) {
+          intEPair e = edges[o+j];
+          if(e.first != i && e.first != lastRead) {
+            lastRead = e.first;
+            edges[o+k++] = e;
+          }}
+        Degrees[i] = DegreesT[i] = k;
       }
-    }}
+    });
 
   DegreesT[n] = 0;
   cout << "m = "<<m << endl;
   //compute new m after duplicate edge removal
   m = sequence::plusScan(DegreesT,DegreesT,n+1);
-  sizes[1] = m; 
+  sizes[1] = m;
 
   cout << "new m = "<<m<<endl;
 
   if (!isSymmetric) {
     uintT* tOffsets = newA(uintT,n+1);
-    {parallel_for(long i=0;i<n;i++) tOffsets[i] = UINT_T_MAX;}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) { tOffsets[i] = UINT_T_MAX; });
     intEPair* inEdges = newA(intEPair,m);
     intTriple2* temp = newA(intTriple2,m);
 
     // Create m many new intPairs.
-    {parallel_for(long i=0;i<n;i++){
-	uintT o = DegreesT[i];
-	intT d = DegreesT[i+1]-o;
-      for(long j=0;j<d;j++){
-  	temp[o+j] = make_pair(make_pair(edges[offsets[i]+j].first,i),edges[offsets[i]+j].second);
-      }
-    }}
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        uintT o = DegreesT[i];
+        intT d = DegreesT[i+1]-o;
+        for(long j=0;j<d;j++){
+          temp[o+j] = make_pair(make_pair(edges[offsets[i]+j].first,i),edges[offsets[i]+j].second);
+        }
+      });
 
     cout << "compressing out edges..."<<endl;
     // Compress the out-edges.
@@ -482,23 +484,24 @@ void encodeWeightedGraphFromFile
     // an edge list.
 
     quickSort(temp,m,tripleCmp());
- 
-    tOffsets[temp[0].first.first] = 0; tOffsets[n] = m; 
+
+    tOffsets[temp[0].first.first] = 0; tOffsets[n] = m;
     inEdges[0] = make_pair(temp[0].first.second,temp[0].second);
-    {parallel_for(long i=1;i<m;i++) {
-	inEdges[i] = make_pair(temp[i].first.second,temp[i].second);
-      if(temp[i].first.first != temp[i-1].first.first) {
-      	tOffsets[temp[i].first.first] = i;
-      }
-    }}
+    ligra::parallel_for((long)1, (long)m, [&] (long i) {
+        inEdges[i] = make_pair(temp[i].first.second,temp[i].second);
+        if(temp[i].first.first != temp[i-1].first.first) {
+          tOffsets[temp[i].first.first] = i;
+        }
+      });
     free(temp);
 
     //fill in offsets of degree 0 vertices by taking closest non-zero
     //offset to the right
     sequence::scanIBack(tOffsets,tOffsets,n,minF<uintT>(),(uintT) m);
 
-    parallel_for(long i=0;i<n;i++) 
-      Degrees[i] = tOffsets[i+1]-tOffsets[i];
+    ligra::parallel_for((long)0, (long)n, [&] (long i) {
+        Degrees[i] = tOffsets[i+1]-tOffsets[i];
+      });
     cout << "compressing in edges..."<<endl;
     uchar *ninEdges = parallelCompressWeightedEdges(inEdges, tOffsets, n, m,Degrees);
     long tTotalSpace[0];
@@ -510,7 +513,7 @@ void encodeWeightedGraphFromFile
     out.write((char*)tOffsets,sizeof(uintT)*(n+1)); //write offsets
     out.write((char*)Degrees,sizeof(uintE)*n); //write degrees
     out.write((char*)ninEdges,tTotalSpace[0]); //write edges
-    
+
     out.close();
     free(sizes);
     free(tOffsets);
@@ -538,7 +541,7 @@ void encodeWeightedGraphFromFile
   }
 }
 
-int parallel_main(int argc, char* argv[]) {  
+int parallel_main(int argc, char* argv[]) {
   commandLine P(argc,argv," [-b] [-s] [-w] <inFile> <outFile>");
   char* iFile = P.getArgument(1);
   char* outFile = P.getArgument(0);

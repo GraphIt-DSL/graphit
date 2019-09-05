@@ -39,7 +39,7 @@
 typedef unsigned char uchar;
 
 /* Reads the first edge of an out-edge list, which is the signed
-   difference between the target and source. 
+   difference between the target and source.
 */
 
 inline intE eatWeight(uchar* &start) {
@@ -53,7 +53,7 @@ inline intE eatWeight(uchar* &start) {
       start++;
       if (LAST_BIT_SET(b))
         shiftAmount += EDGE_SIZE_PER_BYTE;
-      else 
+      else
         break;
     }
   }
@@ -71,7 +71,7 @@ inline intE eatFirstEdge(uchar* &start, uintE source) {
       start++;
       if (LAST_BIT_SET(b))
         shiftAmount += EDGE_SIZE_PER_BYTE;
-      else 
+      else
         break;
     }
   }
@@ -79,7 +79,7 @@ inline intE eatFirstEdge(uchar* &start, uintE source) {
 }
 
 /*
-  Reads any edge of an out-edge list after the first edge. 
+  Reads any edge of an out-edge list after the first edge.
 */
 inline uintE eatEdge(uchar* &start) {
   uintE edgeRead = 0;
@@ -90,22 +90,22 @@ inline uintE eatEdge(uchar* &start) {
     edgeRead += ((b & 0x7f) << shiftAmount);
     if (LAST_BIT_SET(b))
       shiftAmount += EDGE_SIZE_PER_BYTE;
-    else 
+    else
       break;
-  } 
+  }
   return edgeRead;
 }
 
 /*
-  The main decoding work-horse. First eats the specially coded first 
+  The main decoding work-horse. First eats the specially coded first
   edge, and then eats the remaining |d-1| many edges that are normally
-  coded. 
+  coded.
 */
 template <class T, class F>
   inline void decode(T t, F &f, uchar* edgeStart, const uintE &source, const uintT &degree) {
   uintE edgesRead = 0;
   if (degree > 0) {
-    // Eat first edge, which is compressed specially 
+    // Eat first edge, which is compressed specially
     uintE startEdge = eatFirstEdge(edgeStart,source);
     if (!t.srcTarg(f, source,startEdge,edgesRead)) {
       return;
@@ -116,7 +116,7 @@ template <class T, class F>
       uintE edge = startEdge + edgeRead;
       startEdge = edge;
       if (!t.srcTarg(f, source, edge, edgesRead)) {
-        break; 
+        break;
       }
     }
   }
@@ -127,7 +127,7 @@ template <class T, class F>
   inline void decodeWgh(T t, F &f, uchar* edgeStart, const uintE &source, const uintT &degree) {
   uintT edgesRead = 0;
   if (degree > 0) {
-    // Eat first edge, which is compressed specially 
+    // Eat first edge, which is compressed specially
     uintE startEdge = eatFirstEdge(edgeStart,source);
     intE weight = eatWeight(edgeStart);
     if (!t.srcTarg(f, source,startEdge, weight, edgesRead)) {
@@ -139,7 +139,7 @@ template <class T, class F>
       startEdge = edge;
       intE weight = eatWeight(edgeStart);
       if (!t.srcTarg(f, source, edge, weight, edgesRead)) {
-        break; 
+        break;
       }
     }
   }
@@ -147,7 +147,7 @@ template <class T, class F>
 
 
 /*
-  Compresses the first edge, writing target-source and a sign bit. 
+  Compresses the first edge, writing target-source and a sign bit.
 */
 static long compressFirstEdge(uchar *start, long offset, uintE source, uintE target) {
   uchar* saveStart = start;
@@ -176,7 +176,7 @@ static long compressFirstEdge(uchar *start, long offset, uintE source, uintE tar
     // Check to see if there's any bits left to represent
     curByte = toCompress & 0x7f;
     if (toCompress > 0) {
-      toWrite |= 0x80; 
+      toWrite |= 0x80;
     }
     start[offset] = toWrite;
     offset++;
@@ -198,7 +198,7 @@ long compressEdge(uchar *start, long curOffset, uintE e) {
     // Check to see if there's any bits left to represent
     curByte = e & 0x7f;
     if (e > 0) {
-      toWrite |= 0x80; 
+      toWrite |= 0x80;
     }
     start[curOffset] = toWrite;
     curOffset++;
@@ -207,7 +207,7 @@ long compressEdge(uchar *start, long curOffset, uintE e) {
 }
 
 /*
-  Takes: 
+  Takes:
     1. The edge array of chars to write into
     2. The current offset into this array
     3. The vertices degree
@@ -216,15 +216,19 @@ long compressEdge(uchar *start, long curOffset, uintE e) {
   Returns:
     The new offset into the edge array
 */
+<<<<<<< HEAD
 static long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, 
+=======
+long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree,
+>>>>>>> a903707a446090b4d992269fbbbd22c099f06b28
                                 uintE vertexNum, uintE *savedEdges) {
   if (degree > 0) {
     // Compress the first edge whole, which is signed difference coded
-    currentOffset = compressFirstEdge(edgeArray, currentOffset, 
+    currentOffset = compressFirstEdge(edgeArray, currentOffset,
                                        vertexNum, savedEdges[0]);
     for (uintT edgeI=1; edgeI < degree; edgeI++) {
-      // Store difference between cur and prev edge. 
-      uintE difference = savedEdges[edgeI] - 
+      // Store difference between cur and prev edge.
+      uintE difference = savedEdges[edgeI] -
                         savedEdges[edgeI - 1];
       currentOffset = compressEdge(edgeArray, currentOffset, difference);
     }
@@ -234,7 +238,7 @@ static long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uint
 }
 
 /*
-  Compresses the edge set in parallel. 
+  Compresses the edge set in parallel.
 */
 static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
@@ -242,40 +246,40 @@ static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m
   uintT *degrees = newA(uintT, n+1);
   long *charsUsedArr = newA(long, n);
   long *compressionStarts = newA(long, n+1);
-  {parallel_for(long i=0; i<n; i++) { 
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       degrees[i] = Degrees[i];
-    charsUsedArr[i] = ceil((degrees[i] * 9) / 8) + 4;
-  }}
+      charsUsedArr[i] = ceil((degrees[i] * 9) / 8) + 4;
+    });
   degrees[n] = 0;
   sequence::plusScan(degrees,degrees, n+1);
   long toAlloc = sequence::plusScan(charsUsedArr,charsUsedArr,n);
   uintE* iEdges = newA(uintE,toAlloc);
 
-  {parallel_for(long i=0; i<n; i++) {
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       edgePts[i] = iEdges+charsUsedArr[i];
-      long charsUsed = 
-	sequentialCompressEdgeSet((uchar *)(iEdges+charsUsedArr[i]), 
-				  0, degrees[i+1]-degrees[i],
-				  i, edges + offsets[i]);
+      long charsUsed =
+        sequentialCompressEdgeSet((uchar *)(iEdges+charsUsedArr[i]),
+                                  0, degrees[i+1]-degrees[i],
+                                  i, edges + offsets[i]);
       charsUsedArr[i] = charsUsed;
-  }}
+    });
 
-  // produce the total space needed for all compressed lists in chars. 
+  // produce the total space needed for all compressed lists in chars.
   long totalSpace = sequence::plusScan(charsUsedArr, compressionStarts, n);
   compressionStarts[n] = totalSpace;
   free(degrees);
   free(charsUsedArr);
-  
+
   uchar *finalArr = newA(uchar, totalSpace);
   cout << "total space requested is : " << totalSpace << endl;
-  float avgBitsPerEdge = (float)totalSpace*8 / (float)m; 
+  float avgBitsPerEdge = (float)totalSpace*8 / (float)m;
   cout << "Average bits per edge: " << avgBitsPerEdge << endl;
 
-  {parallel_for(long i=0; i<n; i++) {
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       long o = compressionStarts[i];
-    memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
-    offsets[i] = o;
-  }}
+      memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
+      offsets[i] = o;
+    });
   offsets[n] = totalSpace;
   free(iEdges);
   free(edgePts);
@@ -288,7 +292,7 @@ static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m
 typedef pair<uintE,intE> intEPair;
 
 /*
-  Takes: 
+  Takes:
     1. The edge array of chars to write into
     2. The current offset into this array
     3. The vertices degree
@@ -303,22 +307,22 @@ static long sequentialCompressWeightedEdgeSet
   if (degree > 0) {
     // Compress the first edge whole, which is signed difference coded
     //target ID
-    currentOffset = compressFirstEdge(edgeArray, currentOffset, 
-                                       vertexNum, savedEdges[0].first);
+    currentOffset = compressFirstEdge(edgeArray, currentOffset,
+                                      vertexNum, savedEdges[0].first);
     //weight
-    currentOffset = compressFirstEdge(edgeArray, currentOffset, 
-				      0,savedEdges[0].second);
+    currentOffset = compressFirstEdge(edgeArray, currentOffset,
+                                      0,savedEdges[0].second);
 
     for (uintT edgeI=1; edgeI < degree; edgeI++) {
-      // Store difference between cur and prev edge. 
-      uintE difference = savedEdges[edgeI].first - 
-                        savedEdges[edgeI - 1].first;
+      // Store difference between cur and prev edge.
+      uintE difference = savedEdges[edgeI].first -
+        savedEdges[edgeI - 1].first;
 
       //compress difference
       currentOffset = compressEdge(edgeArray, currentOffset, difference);
 
       //compress weight
-      currentOffset = compressFirstEdge(edgeArray, currentOffset, 0, savedEdges[edgeI].second);      
+      currentOffset = compressFirstEdge(edgeArray, currentOffset, 0, savedEdges[edgeI].second);
     }
     // Increment nWritten after all of vertex n's neighbors are written
   }
@@ -326,7 +330,7 @@ static long sequentialCompressWeightedEdgeSet
 }
 
 /*
-  Compresses the weighted edge set in parallel. 
+  Compresses the weighted edge set in parallel.
 */
 static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, long n, long m, uintE* Degrees) {
   cout << "parallel compressing, (n,m) = (" << n << "," << m << ")" << endl;
@@ -334,23 +338,23 @@ static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, lon
   uintT *degrees = newA(uintT, n+1);
   long *charsUsedArr = newA(long, n);
   long *compressionStarts = newA(long, n+1);
-  {parallel_for(long i=0; i<n; i++) { 
-    degrees[i] = Degrees[i];
-    charsUsedArr[i] = 2*(ceil((degrees[i] * 9) / 8) + 4); //to change
-  }}
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      degrees[i] = Degrees[i];
+      charsUsedArr[i] = 2*(ceil((degrees[i] * 9) / 8) + 4); //to change
+    });
   degrees[n] = 0;
   sequence::plusScan(degrees,degrees, n+1);
   long toAlloc = sequence::plusScan(charsUsedArr,charsUsedArr,n);
   uintE* iEdges = newA(uintE,toAlloc);
 
-  {parallel_for(long i=0; i<n; i++) {
-    edgePts[i] = iEdges+charsUsedArr[i];
-    long charsUsed = 
-      sequentialCompressWeightedEdgeSet((uchar *)(iEdges+charsUsedArr[i]), 0, degrees[i+1]-degrees[i],i, edges + offsets[i]);
-    charsUsedArr[i] = charsUsed;
-  }}
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      edgePts[i] = iEdges+charsUsedArr[i];
+      long charsUsed =
+        sequentialCompressWeightedEdgeSet((uchar *)(iEdges+charsUsedArr[i]), 0, degrees[i+1]-degrees[i],i, edges + offsets[i]);
+      charsUsedArr[i] = charsUsed;
+    });
 
-  // produce the total space needed for all compressed lists in chars. 
+  // produce the total space needed for all compressed lists in chars.
   long totalSpace = sequence::plusScan(charsUsedArr, compressionStarts, n);
   compressionStarts[n] = totalSpace;
   free(degrees);
@@ -358,14 +362,14 @@ static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, lon
 
   uchar *finalArr = newA(uchar, totalSpace);
   cout << "total space requested is : " << totalSpace << endl;
-  float avgBitsPerEdge = (float)totalSpace*8 / (float)m; 
+  float avgBitsPerEdge = (float)totalSpace*8 / (float)m;
   cout << "Average bits per edge: " << avgBitsPerEdge << endl;
 
-  {parallel_for(long i=0; i<n; i++) {
+  ligra::parallel_for((long)0, (long)n, [&] (long i) {
       long o = compressionStarts[i];
-    memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
-    offsets[i] = o;
-  }}
+      memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
+      offsets[i] = o;
+    });
   offsets[n] = totalSpace;
   free(iEdges);
   free(edgePts);
