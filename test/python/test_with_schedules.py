@@ -796,5 +796,5 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_sssp_compile_runtime_delta_parameter'))
+    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
