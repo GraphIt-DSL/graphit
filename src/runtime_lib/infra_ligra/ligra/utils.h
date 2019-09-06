@@ -105,7 +105,7 @@ namespace sequence {
     intT _ee = _e;                                          \
     intT _n = _ee-_ss;                                      \
     intT _l = nblocks(_n,_bsize);                           \
-    ligra::parallel_for((intT)0,  (intT)_l, [&] (intT _i) { \
+    ligra::parallel_for_lambda((intT)0,  (intT)_l, [&] (intT _i) { \
         intT _s = _ss + _i * (_bsize);                      \
         intT _e = min(_s + (_bsize), _ee);                  \
         _body                                               \
@@ -276,7 +276,7 @@ _seq<intT> packIndex(bool* Fl, intT n) {
 template <class ET, class intT, class PRED>
 intT filter(ET* In, ET* Out, intT n, PRED p) {
   bool *Fl = newA(bool,n);
-  ligra::parallel_for((intT)0, (intT)n, [&] (intT i) { Fl[i] = (bool) p(In[i]); });
+  ligra::parallel_for_lambda((intT)0, (intT)n, [&] (intT i) { Fl[i] = (bool) p(In[i]); });
   intT  m = pack(In, Out, Fl, n);
   free(Fl);
   return m;
@@ -337,13 +337,13 @@ inline ulong hashInt(ulong a) {
 static void remDuplicates(uintE* indices, uintE* flags, long m, long n) {
   //make flags for first time
   if(flags == NULL) {flags = newA(uintE,n);
-    ligra::parallel_for((long)0, (long)n, [&] (long i) { flags[i]=UINT_E_MAX; });
-    ligra::parallel_for((uintE)0, (uintE)m, [&] (uintE i) {
+    ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) { flags[i]=UINT_E_MAX; });
+    ligra::parallel_for_lambda((uintE)0, (uintE)m, [&] (uintE i) {
         if(indices[i] != UINT_E_MAX && flags[indices[i]] == UINT_E_MAX)
           CAS(&flags[indices[i]],(uintE)UINT_E_MAX,i);
       });
     //reset flags
-    ligra::parallel_for((long)0, (long)m, [&] (long i) {
+    ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {
         if(indices[i] != UINT_E_MAX){
           if(flags[indices[i]] == i){ //win
             flags[indices[i]] = UINT_E_MAX; //reset

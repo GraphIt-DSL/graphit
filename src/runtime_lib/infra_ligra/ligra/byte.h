@@ -216,11 +216,7 @@ long compressEdge(uchar *start, long curOffset, uintE e) {
   Returns:
     The new offset into the edge array
 */
-<<<<<<< HEAD
 static long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, 
-=======
-long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree,
->>>>>>> a903707a446090b4d992269fbbbd22c099f06b28
                                 uintE vertexNum, uintE *savedEdges) {
   if (degree > 0) {
     // Compress the first edge whole, which is signed difference coded
@@ -246,7 +242,7 @@ static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m
   uintT *degrees = newA(uintT, n+1);
   long *charsUsedArr = newA(long, n);
   long *compressionStarts = newA(long, n+1);
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       degrees[i] = Degrees[i];
       charsUsedArr[i] = ceil((degrees[i] * 9) / 8) + 4;
     });
@@ -255,7 +251,7 @@ static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m
   long toAlloc = sequence::plusScan(charsUsedArr,charsUsedArr,n);
   uintE* iEdges = newA(uintE,toAlloc);
 
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       edgePts[i] = iEdges+charsUsedArr[i];
       long charsUsed =
         sequentialCompressEdgeSet((uchar *)(iEdges+charsUsedArr[i]),
@@ -275,7 +271,7 @@ static uintE *parallelCompressEdges(uintE *edges, uintT *offsets, long n, long m
   float avgBitsPerEdge = (float)totalSpace*8 / (float)m;
   cout << "Average bits per edge: " << avgBitsPerEdge << endl;
 
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       long o = compressionStarts[i];
       memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
       offsets[i] = o;
@@ -338,7 +334,7 @@ static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, lon
   uintT *degrees = newA(uintT, n+1);
   long *charsUsedArr = newA(long, n);
   long *compressionStarts = newA(long, n+1);
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       degrees[i] = Degrees[i];
       charsUsedArr[i] = 2*(ceil((degrees[i] * 9) / 8) + 4); //to change
     });
@@ -347,7 +343,7 @@ static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, lon
   long toAlloc = sequence::plusScan(charsUsedArr,charsUsedArr,n);
   uintE* iEdges = newA(uintE,toAlloc);
 
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       edgePts[i] = iEdges+charsUsedArr[i];
       long charsUsed =
         sequentialCompressWeightedEdgeSet((uchar *)(iEdges+charsUsedArr[i]), 0, degrees[i+1]-degrees[i],i, edges + offsets[i]);
@@ -365,7 +361,7 @@ static uchar *parallelCompressWeightedEdges(intEPair *edges, uintT *offsets, lon
   float avgBitsPerEdge = (float)totalSpace*8 / (float)m;
   cout << "Average bits per edge: " << avgBitsPerEdge << endl;
 
-  ligra::parallel_for((long)0, (long)n, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
       long o = compressionStarts[i];
       memcpy(finalArr + o, (uchar *)(edgePts[i]), compressionStarts[i+1]-o);
       offsets[i] = o;

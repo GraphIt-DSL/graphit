@@ -596,7 +596,7 @@ namespace graphit {
                         count_expr->accept(this);
                         oss << ", socketId);\n";
 
-                        oss << "    ligra::parallel_for((int)0, (int)";
+                        oss << "    ligra::parallel_for_lambda((int)0, (int)";
                         count_expr->accept(this);
                         oss << ", [&] (int n) {\n";
                         oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
@@ -1374,7 +1374,7 @@ namespace graphit {
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
             if (apply_expr->is_parallel) {
-                oss << "ligra::parallel_for((int)0, (int)";
+                oss << "ligra::parallel_for_lambda((int)0, (int)";
                 associated_element_type_size->accept(this);
                 oss << ", [&] (int vertexsetapply_iter) {" << std::endl;
             } else {

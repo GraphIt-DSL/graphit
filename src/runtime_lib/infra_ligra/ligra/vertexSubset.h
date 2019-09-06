@@ -42,8 +42,8 @@ struct vertexSubset {
   void toDense() {
     if (d == NULL) {
       d = newA(bool,n);
-      ligra::parallel_for((long)0, (long)n, [&] (long i) { d[i] = 0; });
-      ligra::parallel_for((long)0, (long)m, [&] (long i) { d[s[i]] = 1; });
+      ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) { d[i] = 0; });
+      ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) { d[s[i]] = 1; });
     }
     isDense = true;
   }
@@ -65,7 +65,7 @@ struct vertexSubset {
     toDense();
     b.toDense();
     bool* c = newA(bool,n);
-    ligra::parallel_for((long)0, (long)b.n, [&] (long i) {
+    ligra::parallel_for_lambda((long)0, (long)b.n, [&] (long i) {
         c[i] = (d[i] != b.d[i]);
       });
     bool equal = (sequence::sum(c,n) == 0);

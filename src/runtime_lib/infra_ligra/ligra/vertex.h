@@ -19,7 +19,7 @@ inline void decodeInNghBreakEarly(V* v, long i, bool* vertexSubset, F &f, bool* 
       if(!f.cond(i)) break;
     }
   } else {
-    ligra::parallel_for((uintE)0, (uintE)d, [&] (uintE j) {
+    ligra::parallel_for_lambda((uintE)0, (uintE)d, [&] (uintE j) {
         uintE ngh = v->getInNeighbor(j);
 #ifndef WEIGHTED
         if (vertexSubset[ngh] && f.updateAtomic(ngh,i))
@@ -45,7 +45,7 @@ inline void decodeOutNgh(V* v, long i, bool* vertexSubset, F &f, bool* next) {
         next[ngh] = 1;
     }
   } else {
-    ligra::parallel_for((uintE)0, (uintE)d, [&] (uintE j) {
+    ligra::parallel_for_lambda((uintE)0, (uintE)d, [&] (uintE j) {
         uintE ngh = v->getOutNeighbor(j);
 #ifndef WEIGHTED
         if (f.cond(ngh) && f.updateAtomic(i,ngh))
@@ -72,7 +72,7 @@ inline void decodeOutNghSparse(V* v, long i, uintT o, F &f, uintE* outEdges) {
       else outEdges[o+j] = UINT_E_MAX;
     }
   } else {
-    ligra::parallel_for((uintE)0, (uintE)d, [&] (uintE j) {
+    ligra::parallel_for_lambda((uintE)0, (uintE)d, [&] (uintE j) {
         uintE ngh = v->getOutNeighbor(j);
 #ifndef WEIGHTED
         if(f.cond(ngh) && f.updateAtomic(i,ngh))

@@ -111,14 +111,14 @@ namespace graphit {
                         "    {\n";
 
                 if (from_vertexset_specified){
-                    oss_ <<  "        ligra::parallel_for((long)0, (long)m, [&] (long i) {\n"
+                    oss_ <<  "        ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {\n"
                             "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
                             "            degrees[i] = g.out_degree(v);\n"
                             "         });\n"
                             "    }\n"
                             "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
                 } else {
-                    oss_ << "        ligra::parallel_for((long)0, (long)numVertices, [&] (long i) {\n"
+                    oss_ << "        ligra::parallel_for_lambda((long)0, (long)numVertices, [&] (long i) {\n"
                             "            degrees[i] = g.out_degree(i);\n"
                             "        });\n"
                             "    }\n"
@@ -156,7 +156,7 @@ namespace graphit {
             oss_ << "    if (g.get_flags_() == nullptr){\n"
 //                    "      g.flags_ = new int[numVertices]();\n"
                     "      g.set_flags_(new int[numVertices]());\n"
-                    "      ligra::parallel_for(0, (int)numVertices, [&] (int i) { g.get_flags_()[i]=0; });\n"
+                    "      ligra::parallel_for_lambda(0, (int)numVertices, [&] (int i) { g.get_flags_()[i]=0; });\n"
                     "    }\n";
         }
 
@@ -193,9 +193,9 @@ namespace graphit {
 
         if (apply->is_parallel) {
             if (from_vertexset_specified)
-                oss_ << "ligra::parallel_for((long)0, (long)m, [&] (long i) {" << std::endl;
+                oss_ << "ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {" << std::endl;
             else
-                oss_ << "ligra::parallel_for ((NodeID)0, g.num_nodes(), [&] (NodeID s) {" << std::endl;
+                oss_ << "ligra::parallel_for_lambda ((NodeID)0, g.num_nodes(), [&] (NodeID s) {" << std::endl;
         } else {
 
             if (from_vertexset_specified)
@@ -343,7 +343,7 @@ namespace graphit {
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
-                oss_ << "  ligra::parallel_for((int)0, (int)nextM, [&] (int i) {\n"
+                oss_ << "  ligra::parallel_for_lambda((int)0, (int)nextM, [&] (int i) {\n"
                         "     g.get_flags_()[nextIndices[i]] = 0;\n"
                         "  });\n";
             }
@@ -468,7 +468,7 @@ namespace graphit {
         oss_ << "}// end of per-socket parallel region\n\n";
         auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
         auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
-        oss_ << "  ligra::parallel_for ((int)0, (int)numVertices, [&] (int n) {\n";
+        oss_ << "  ligra::parallel_for_lambda ((int)0, (int)numVertices, [&] (int n) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
         oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
         switch (apply->merge_reduce->reduce_op) {
@@ -487,7 +487,7 @@ namespace graphit {
     }
 
     void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
-        oss_ << "ligra::parallel_for((int)0, (int)numVertices, [&] (int n) {\n";
+        oss_ << "ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int n) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
         oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
              << apply->merge_reduce->field_name << "[n];\n";
@@ -511,7 +511,7 @@ namespace graphit {
 
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
-                    "  ligra::parallel_for((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
+                    "  ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
         }
 
         indent();
@@ -528,7 +528,7 @@ namespace graphit {
         if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
             oss_ << "  Bitmap bitmap(numVertices);\n"
                     "  bitmap.reset();\n"
-                    "  ligra::parallel_for((int) 0, (int)numVertices, 64, [&] (int i){\n"
+                    "  ligra::parallel_for_lambda((int) 0, (int)numVertices, 64, [&] (int i){\n"
                     "     int start = i;\n"
                     "     int end = (((i + 64) < numVertices)? (i+64):numVertices);\n"
                     "     for(int j = start; j < end; j++){\n"
@@ -599,7 +599,7 @@ namespace graphit {
 
             //printIndent();
             if (apply->is_parallel) {
-              oss_ << "ligra::parallel_for((NodeID)0, (NodeID)" << outer_end << ", [&] (NodeID " << iter << ") {" << std::endl;
+              oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)" << outer_end << ", [&] (NodeID " << iter << ") {" << std::endl;
             } else {
               oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
             }
@@ -723,7 +723,7 @@ namespace graphit {
 
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
-                    "  ligra::parallel_for((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
+                    "  ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
         }
 
         indent();
@@ -743,7 +743,7 @@ namespace graphit {
         if (apply->is_weighted) node_id_type = "WNode";
 
         if (apply->is_parallel) {
-            oss_ << "ligra::parallel_for((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+            oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
         } else {
             oss_ << "for ( NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
         }

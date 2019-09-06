@@ -38,7 +38,7 @@ graph(vertex* VV, long nn, long mm, Deletable* DD, uintE* _flags) : V(VV), n(nn)
   void transpose() {
     if ((sizeof(vertex) == sizeof(asymmetricVertex)) ||
         (sizeof(vertex) == sizeof(compressedAsymmetricVertex))) {
-      ligra::parallel_for((long)0, (long)n, [&] (long i) {
+      ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
           V[i].flipEdges();
         });
       transposed = !transposed;

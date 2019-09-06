@@ -107,7 +107,7 @@ void radixStep(E* A, E* B, bIndexT *Tmp, bint (*BK)[BUCKETS],
   bint* oA = (bint*) (BK+blocks);
   bint* oB = (bint*) (BK+2*blocks);
 
-  ligra::parallel_for((long)0, (long)blocks, [&] (long i) {
+  ligra::parallel_for_lambda((long)0, (long)blocks, [&] (long i) {
       bint od = i*nn;
       long nni = min(max<long>(n-od,0),nn);
       radixBlock(A+od, B, Tmp+od, cnts + m*i, oB + m*i, od, nni, m, extract);
@@ -166,7 +166,7 @@ void radixLoopTopDown(E *A, E *B, bIndexT *Tmp, bint (*BK)[BUCKETS],
     bint* offsets = BK[0];
     long remain = numBK - BUCKETS - 1;
     float y = remain / (float) n;
-    ligra::parallel_for((int)0, (int)BUCKETS, [&] (int i) {
+    ligra::parallel_for_lambda((int)0, (int)BUCKETS, [&] (int i) {
         long segOffset = offsets[i];
         long segNextOffset = (i == BUCKETS-1) ? n : offsets[i+1];
         long segLen = segNextOffset - segOffset;
@@ -213,7 +213,7 @@ void iSortX(E *A, oint* bucketOffsets, long n, long m, bool bottomUp,
     radixStep(A, B, Tmp, BK, numBK, n, (long) 1 << bits, true,
               eBits<E,F>(bits,0,f));
     if (bucketOffsets != NULL) {
-      ligra::parallel_for((long)0, (long)m, [&] (long i) {
+      ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {
           bucketOffsets[i] = BK[0][i];
         });
     }
@@ -223,8 +223,8 @@ void iSortX(E *A, oint* bucketOffsets, long n, long m, bool bottomUp,
   else
     radixLoopTopDown(A, B, Tmp, BK, numBK, n, bits, f);
   if (bucketOffsets != NULL) {
-    ligra::parallel_for((long)0, (long)m, [&] (long i) { bucketOffsets[i] = n; });
-    ligra::parallel_for((long)0, (long)(n-1), [&] (long i) {
+    ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) { bucketOffsets[i] = n; });
+    ligra::parallel_for_lambda((long)0, (long)(n-1), [&] (long i) {
         long v = f(A[i]);
         long vn = f(A[i+1]);
         if (v != vn) bucketOffsets[vn] = i+1;
