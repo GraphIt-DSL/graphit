@@ -275,19 +275,19 @@ void parallel_for_256(IterT start, IterT end, IterT step, BodyT body) {
 template<typename IterT, typename BodyT>
 void parallel_for(IterT start, IterT end, BodyT body) {
   for (IterT i = start; i < end; ++i)
-    body(1);
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_1(IterT start, IterT end, BodyT body) {
   for (IterT i = start; i < end; ++i)
-    body(1);
+    body(i);
 }
 
 template<typename IterT, typename BodyT>
 void parallel_for_256(IterT start, IterT end, BodyT body) {
   for (IterT i = start; i < end; ++i)
-    body(1);
+    body(i);
 }
 
 template <typename Func0, typename Func1>
