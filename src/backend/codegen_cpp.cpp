@@ -1394,7 +1394,11 @@ namespace graphit {
             }
             dedent();
             printIndent();
-            oss << "}";
+            if (apply_expr->is_parallel) {
+                oss << "});";
+            } else {
+                oss << "}";
+            }
         } else {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
