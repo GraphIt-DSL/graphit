@@ -195,7 +195,7 @@ namespace graphit {
             if (from_vertexset_specified)
                 oss_ << "ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {" << std::endl;
             else
-                oss_ << "ligra::parallel_for_lambda ((NodeID)0, g.num_nodes(), [&] (NodeID s) {" << std::endl;
+                oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
         } else {
 
             if (from_vertexset_specified)
