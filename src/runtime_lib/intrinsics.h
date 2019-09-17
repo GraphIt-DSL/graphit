@@ -359,20 +359,20 @@ static Graph builtin_transpose(Graph &graph){
 
 template<typename APPLY_FUNC> static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
    if (vertex_subset->is_dense){
-       parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
-           if(vertex_subset->bool_map_[v]){
-               apply_func(v);
-           }
-       }
+       ligra::parallel_for_lambda((int)0, (int)vertex_subset->vertices_range_, [&] (int v) {
+               if(vertex_subset->bool_map_[v]){
+                   apply_func(v);
+               }
+           });
    } else {
        if(vertex_subset->dense_vertex_set_ == nullptr && vertex_subset->tmp.size() > 0) {
-           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+            ligra::parallel_for_lambda((int)0, (int)vertex_subset->num_vertices_, [&] (int i){
                apply_func(vertex_subset->tmp[i]);
-           }
+           });
        }else  {
-           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+           ligra::parallel_for_lambda((int)0, (int)vertex_subset->num_vertices_, [&] (int i){
                apply_func(vertex_subset->dense_vertex_set_[i]);
-           }
+           });
        }
    }
 }

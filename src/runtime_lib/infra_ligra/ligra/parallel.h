@@ -27,9 +27,49 @@
 #if defined(CILK)
 #include <cilk/cilk.h>
 #define parallel_main main
-#define parallel_for cilk_for
-#define parallel_for_1 _Pragma("cilk_grainsize = 1") cilk_for
-#define parallel_for_256 _Pragma("cilk_grainsize = 256") cilk_for
+namespace ligra {
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, BodyT body) {
+  cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  cilk_spawn func0();
+  func1();
+  cilk_sync;
+}
+}
 #include <cilk/cilk_api.h>
 #include <sstream>
 #include <iostream>
@@ -50,10 +90,50 @@ static void setWorkers(int n) {
 // intel cilk+
 #elif defined(CILKP)
 #include <cilk/cilk.h>
-#define parallel_for cilk_for
+namespace ligra {
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; i += step)
+    body(i);
+}
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, BodyT body) {
+  cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template <typename Func0, typename Func1>
+void parallel_invoke( const Func0& func0, const Func1& func1 ) {
+  cilk_spawn func0();
+  func1();
+  cilk_sync;
+}
+}
 #define parallel_main main
-#define parallel_for_1 _Pragma("cilk grainsize = 1") cilk_for
-#define parallel_for_256 _Pragma("cilk grainsize = 256") cilk_for
 #include <cilk/cilk_api.h>
 #include <sstream>
 #include <iostream>
@@ -71,20 +151,125 @@ static void setWorkers(int n) {
   }
 }
 
+// intel TBB
+#elif defined(TBB)
+#pragma push_macro("parallel_for")
+#undef parallel_for
+#include "tbb/tbb.h"
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include "tbb/task_scheduler_init.h"
+#define cilk_spawn
+#define cilk_sync
+namespace ligra {
+
+
+using tbb::parallel_for;
+using tbb::parallel_invoke;
+// ignore grain size for now
+// c++14
+// template<typename IterT, typename BodyT>
+// const auto parallel_for_1 = tbb::parallel_for<IterT, BodyT>;
+
+//TODO I don't know why it is not necessary
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  // ignore grain size for now
+  tbb::parallel_for(start, end, step, body);
+
+}
+
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  // ignore grain size for now
+tbb::parallel_for(start, end, step, body);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+tbb::parallel_for(start, end, step, body);
+}
+
+//TODO I don't know why it is not necessary
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, BodyT body) {
+  // ignore grain size for now
+tbb::parallel_for(start, end, body);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
+tbb::parallel_for(start, end, body);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
+tbb::parallel_for(start, end, body);
+}
+}
+#define parallel_main main
+static int s_nthreads;
+static int getWorkers() {
+  return s_nthreads;
+}
+static void setWorkers(int n) {
+  tbb::task_scheduler_init init(n);
+  s_nthreads = n;
+}
+
+#pragma pop_macro("parallel_for")
+
 // openmp
 #elif defined(OPENMP)
 #include <omp.h>
 #define cilk_spawn
 #define cilk_sync
 #define parallel_main main
+namespace ligra {
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("omp parallel for ") for (IterT i = start; i < end; i += step)
+    body(i);
+}
 
-//#define parallel_for _Pragma("omp parallel for ") for
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("omp parallel for schedule (static,1)") for (IterT i = start; i < end; i += step)
+    body(i);
+}
 
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; i += step)
+    body(i);
+}
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("omp parallel for ") for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("omp parallel for schedule (static,1)") for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  func0();
+  func1();
+}
+}
 //#define parallel_for _Pragma("omp parallel for ") for
 //#define parallel_for _Pragma("omp parallel for schedule (dynamic, 64)") for
-
-#define parallel_for_1 _Pragma("omp parallel for schedule (static,1)") for
-#define parallel_for_256 _Pragma("omp parallel for schedule (static,256)") for
 static int getWorkers() { return omp_get_max_threads(); }
 static void setWorkers(int n) { omp_set_num_threads(n); }
 
@@ -93,9 +278,48 @@ static void setWorkers(int n) { omp_set_num_threads(n); }
 #define cilk_spawn
 #define cilk_sync
 #define parallel_main main
-#define parallel_for for
-#define parallel_for_1 for
-#define parallel_for_256 for
+namespace ligra {
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  for (IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  for (IterT i = start; i < end; i += step)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+  for (IterT i = start; i < end; i += step)
+    body(i);
+}
+template<typename IterT, typename BodyT>
+void parallel_for_lambda(IterT start, IterT end, BodyT body) {
+  for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
+  for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
+  for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template <typename Func0, typename Func1>
+void parallel_invoke(const Func0& func0, const Func1& func1) {
+  func0();
+  func1();
+}
+}
 #define cilk_for for
 static int getWorkers() { return 1; }
 static void setWorkers(int n) { }

@@ -193,7 +193,7 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
         if (!vertexSubset->contains(v))
             test_flag = false;
     }
-
+  
     EXPECT_EQ(builtin_getVertexSetSize(vertexSubset), 3);
 
 
@@ -202,8 +202,6 @@ TEST_F(RuntimeLibTest, VertexSubsetSimpleTest) {
     EXPECT_EQ(true, test_flag);
 
 }
-
-
 
 //test init of the eager priority queue based on GAPBS
 TEST_F(RuntimeLibTest, EagerPriorityQueueInit) {

@@ -162,6 +162,8 @@ def main():
                     try:
                         timer.start()
                         (output, err) = out.communicate()
+                        if err:
+                          print "Failed with error", err
                     finally:
                         timer.cancel()
 

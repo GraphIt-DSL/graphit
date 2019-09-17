@@ -212,12 +212,9 @@ namespace graphit {
             printIndent();
             assign_stmt->expr->accept(this);
             oss << std::endl;
-
             printIndent();
-
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; " << std::endl;
-
         } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
@@ -389,11 +386,9 @@ namespace graphit {
             printIndent();
             var_decl->initVal->accept(this);
             oss << std::endl;
-
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
-
         } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
@@ -601,11 +596,11 @@ namespace graphit {
                         count_expr->accept(this);
                         oss << ", socketId);\n";
 
-                        oss << "    parallel_for (int n = 0; n < ";
+                        oss << "    ligra::parallel_for_lambda((int)0, (int)";
                         count_expr->accept(this);
-                        oss << "; n++) {\n";
+                        oss << ", [&] (int n) {\n";
                         oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
-                        oss << "    }\n  }\n";
+                        oss << "    });\n  }\n";
 
                         oss << "  omp_set_nested(1);" << std::endl;
                     }
@@ -1378,10 +1373,15 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
-            std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-            oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
-            associated_element_type_size->accept(this);
-            oss << "; vertexsetapply_iter++) {" << std::endl;
+            if (apply_expr->is_parallel) {
+                oss << "ligra::parallel_for_lambda((int)0, (int)";
+                associated_element_type_size->accept(this);
+                oss << ", [&] (int vertexsetapply_iter) {" << std::endl;
+            } else {
+                oss << "for" << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
+                associated_element_type_size->accept(this);
+                oss << "; vertexsetapply_iter++) {" << std::endl;
+            }
             indent();
             printIndent();
             if (mir_context_->isExternFunction(apply_expr->input_function_name)){
@@ -1394,7 +1394,11 @@ namespace graphit {
             }
             dedent();
             printIndent();
-            oss << "}";
+            if (apply_expr->is_parallel) {
+                oss << "});";
+            } else {
+                oss << "}";
+            }
         } else {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
@@ -1437,7 +1441,6 @@ namespace graphit {
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-
             //get the total number of vertices in the vertex set
             auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
             auto vertices_range_expr =

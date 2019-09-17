@@ -10,14 +10,25 @@ GRAPHIT_SCHEDULE_DIR= ../../../test/input_with_schedules
 ifdef GCC_PAR
 # compiling with gcc CILK and OPENMP
 PCC = g++
-CILK_FLAGS +=  -fcilkplus -lcilkrts -O2 -DCILK
+CILK_FLAGS +=  -fcilkplus -lcilkrts -O3 -DCILK
 OPENMP_FLAGS += -DOPENMP -fopenmp -O3 
 
 else ifdef ICPC_PAR
 # compiling with Intel icpc compiler
 PCC = icpc
-CILK_FLAGS += -DCILK -O3
+CILK_FLAGS += -qopenmp -DCILK -O3
 OPENMP_FLAGS += -DOPENMP -qopenmp -O3
+
+else ifdef ICPC_TBB
+# compiling with Intel icpc compiler
+PCC = icpc
+CILK_FLAGS += -qopenmp -DTBB -O3 -ltbb
+OPENMP_FLAGS += -DOPENMP -qopenmp -O3
+
+else ifdef TBB 
+PCC = g++
+CILK_FLAGS += -I /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/include/ -L /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/lib/intel64/gcc4.7/ -fopenmp -DTBB -O3 -ltbb 
+OPENMP_FLAGS += -DOPENMP -fopenmp -O3
 
 else
 # compiling serial programs
@@ -64,7 +75,7 @@ openmp_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
 % : cpps/%.cpp
-	$(PCC) $(CILK_FLAGS) -o bin/$@ $<
+	$(PCC) -o bin/$@ $< $(CILK_FLAGS)
 
 clean:
 	rm cpps/*.cpp
