@@ -68,7 +68,7 @@ private:
 	}
 
 	void generateBinaryExpr(mir::BinaryExpr::Ptr, std::string);
-
+protected:
 	virtual void visit(mir::EdgeSetType::Ptr) override;
 	virtual void visit(mir::VertexSetType::Ptr) override;
 	virtual void visit(mir::ScalarType::Ptr) override;
@@ -99,22 +99,26 @@ private:
 	virtual void visit(mir::IfStmt::Ptr) override;
 	virtual void visit(mir::PrintStmt::Ptr) override;
 	virtual void visit(mir::Call::Ptr) override;	
-	
+
 	virtual void visit(mir::BreakStmt::Ptr) override;
-	
+
 	virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
 	virtual void visit(mir::VertexSetAllocExpr::Ptr) override;
-	
+
 
 };
 class CodeGenGPUHost: public CodeGenGPU {
 public:
 	using CodeGenGPU::CodeGenGPU;
+	using CodeGenGPU::visit;
 private:
 	virtual std::string getBackendFunctionLabel(void) {
 		return "__host__";
 	}
 	virtual void visit(mir::TensorArrayReadExpr::Ptr);
+	virtual void visit(mir::StmtBlock::Ptr);
+	void generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare);
+	void generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare);
 };
 
 }

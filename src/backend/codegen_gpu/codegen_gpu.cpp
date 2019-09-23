@@ -4,6 +4,7 @@
 
 #include <graphit/backend/codegen_gpu/codegen_gpu.h>
 #include <graphit/backend/codegen_gpu/assign_function_context.h>
+#include "graphit/backend/codegen_gpu/extract_read_write_set.h"
 #include <graphit/midend/mir.h>
 #include <cstring>
 
@@ -57,6 +58,9 @@ void CodeGenGPU::genPropertyArrayDecl(mir::VarDecl::Ptr constant) {
 	// Also generate the host versions of these arrays 
 	vector_type->vector_element_type->accept(this);
 	oss << " " << "*__host_" << constant->name << ";" << std::endl;
+	// Also generate the device pointer for easy copy
+	vector_type->vector_element_type->accept(this);
+	oss << " " << "*__device_" << constant->name << ";" << std::endl;
 }
 
 void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
@@ -66,24 +70,20 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 	auto size_expr = mir_context_->getElementCount(vector_type->element_type);
 	assert(size_expr != nullptr);
 	
-	printIndent();
-	oss << "{" << std::endl;
-	indent();
-	printIndent();
-	vector_type->vector_element_type->accept(this);
-	oss << " __tmp;" << std::endl;
 
 	printIndent();
-	oss << "cudaMalloc((void**)&__tmp, ";
+	oss << "cudaMalloc(&__device_" << var_decl->name << ", ";
 	size_expr->accept(this);
-	oss << "  * sizeof(";
+	oss << " * sizeof(";
 	vector_type->vector_element_type->accept(this);
 	oss << "));" << std::endl;
 	
 	printIndent();
-	oss << "cudaMemcpyToSymbol(\"";
+	oss << "cudaMemcpyToSymbol(";
 	oss << var_decl->name;
-	oss << "\", &__tmp, sizeof(void*));" << std::endl;
+	oss << ", &__device_" << var_decl->name << ", sizeof(";
+	vector_type->vector_element_type->accept(this);	
+	oss << "*), 0);" << std::endl;
 
 	printIndent();
 	oss << "__host_" << var_decl->name << " = new ";
@@ -92,9 +92,6 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 	size_expr->accept(this);
 	oss << "];" << std::endl;
 	
-	dedent();
-	printIndent();
-	oss << "}" << std::endl;
 		
 }
 // Disabling this for now because we are handling all vertex operations in library
@@ -515,6 +512,10 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 			oss << esae->kernel_function << "<<<num_cta, cta_size>>>" << "(";
 			esae->target->accept(this);
 			oss << ", " << esae->from_func << ", " << var_decl->name << ");" << std::endl;
+			printIndent();
+			oss << "cudaDeviceSynchronize();" << std::endl;
+			printIndent();
+			oss << "gpu_runtime::swap_queues(" << var_decl->name << ");" << std::endl;
 			dedent();
 			printIndent();
 			oss << "}" << std::endl;
@@ -579,7 +580,7 @@ void CodeGenGPU::visit(mir::PrintStmt::Ptr print_stmt) {
 	printIndent();
 	oss << "std::cout << ";
 	print_stmt->expr->accept(this);
-	oss << ";" << std::endl;
+	oss << " << std::endl;" << std::endl;
 }
 void CodeGenGPU::visit(mir::Call::Ptr call_expr) {
 	if (call_expr->name == "deleteObject" || call_expr->name.substr(0, strlen("builtin_")) == "builtin_")	
@@ -658,5 +659,43 @@ void CodeGenGPU::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 	oss << "gpu_runtime::create_new_vertex_set(";
 	size_expr->accept(this);
 	oss << ")" << std::endl;
+}
+void CodeGenGPUHost::generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare) {
+	printIndent();
+	mir::Var target = mir::to<mir::VarExpr>(tare->target)->var;
+	std::string var_name = target.getName();
+	oss << "cudaMemcpy(__host_" << var_name << " + ";
+	tare->index->accept(this);
+	oss << ", __device_" << var_name << " + ";
+	tare->index->accept(this);
+	oss << ", sizeof(";
+	mir::to<mir::VectorType>(target.getType())->element_type->accept(this);
+	oss << "), cudaMemcpyDeviceToHost);" << std::endl;	
+	
+}
+void CodeGenGPUHost::generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare) {
+	printIndent();
+	mir::Var target = mir::to<mir::VarExpr>(tare->target)->var;
+	std::string var_name = target.getName();
+	oss << "cudaMemcpy(__device_" << var_name << " + ";
+	tare->index->accept(this);
+	oss << ", __host_" << var_name << " + ";
+	tare->index->accept(this);
+	oss << ", sizeof(";
+	mir::to<mir::VectorType>(target.getType())->element_type->accept(this);
+	oss << "), cudaMemcpyHostToDevice);" << std::endl;	
+}
+void CodeGenGPUHost::visit(mir::StmtBlock::Ptr stmt_block) {
+	for (auto stmt: *(stmt_block->stmts)) {
+		ExtractReadWriteSet extractor(mir_context_);
+		stmt->accept(&extractor);
+		for (auto tare: extractor.read_set) {
+			generateDeviceToHostCopy(tare);
+		}			
+		stmt->accept(this);
+		for (auto tare: extractor.write_set) {
+			generateHostToDeviceCopy(tare);
+		}
+	}
 }
 }

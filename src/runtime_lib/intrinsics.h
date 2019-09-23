@@ -321,7 +321,7 @@ template <typename T> T static builtin_pop (std::vector<T>* vec){
 //    return (float)(usec.time_since_epoch().count())/1000;
 //}
 
-#include "timer.h"
+#include "graphit_timer.h"
 
 static char* argv_safe(int index, char** argv, int argc ){
     // if index is less than or equal to argc than return argv[index]
@@ -492,7 +492,6 @@ void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::P
 }
 
 
-#include "infra_gpu/graph.h"
 
 
 
