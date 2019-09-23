@@ -50,6 +50,28 @@ namespace graphit {
             edgeset_apply->is_weighted = true;
         }
 
+
+
+	// First check if the program has a GPU Schedule, if yes, the defaults are different
+	if (schedule_ != nullptr && !schedule_->apply_gpu_schedules.empty()) {
+		// Always parallelize all operators for GPU schedules
+		edgeset_apply->is_parallel = true;
+		// Check if there is a GPU schedule attached to this statement - 
+            	auto current_scope_name = label_scope_.getCurrentScope();
+		auto apply_schedule_iter = schedule_->apply_gpu_schedules.find(current_scope_name);
+		if (apply_schedule_iter != schedule_->apply_gpu_schedules.end()) {
+			auto apply_schedule = apply_schedule_iter->second;
+			
+			
+		} else {
+			// No schedule is attached, lower using default schedule
+			
+			node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
+			
+			
+		}
+	}
+
         // check if the schedule contains entry for the current edgeset apply expressions
 
         if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {

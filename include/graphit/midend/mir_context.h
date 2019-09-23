@@ -168,6 +168,13 @@ namespace graphit {
             }
             return false;
         }
+        bool isLoweredConstTensor(std::string var_name) {
+            for (auto tensor: lowered_constants_) {
+		if (tensor->name == var_name) 
+			return true;
+	    }
+	    return false;
+	}
 
         void addConstVertexSet(mir::VarDecl::Ptr vertexset) {
             const_vertex_sets_.push_back(vertexset);
