@@ -62,12 +62,29 @@ class TestGraphitCompiler(unittest.TestCase):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_pr_with_return.gt")
         graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
         ranks = module.export_func(graph)
-        self.assertEqual(np.sum(ranks), 1.0)		
+        self.assertEqual(np.sum(ranks), 1.0)	
+    
+    # make sure compile_and_load_cache function still gives correct answer
+    def test_pybind_pr_with_cache_return(self):
+        module = graphit.compile_and_load_cache(self.root_test_input_dir + "export_pr_with_return.gt")
+        graph = csr_matrix(([0, 0, 0, 0, 0, 0], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        ranks = module.export_func(graph)
+        self.assertEqual(np.sum(ranks), 1.0)	
     
     def test_pybind_sssp(self):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_sssp.gt")
         graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
         distances = module.export_func(graph)
+        self.assertEqual(len(distances), 4)
+        self.assertEqual(distances[0], 0)
+        self.assertEqual(distances[1], 4)
+        self.assertEqual(distances[2], 5)
+        self.assertEqual(distances[3], 6)
+
+    def test_pybind_sssp_UW(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_sssp_UW.gt")
+        graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        distances = module.do_sssp(graph, 0)
         self.assertEqual(len(distances), 4)
         self.assertEqual(distances[0], 0)
         self.assertEqual(distances[1], 4)
@@ -84,6 +101,14 @@ class TestGraphitCompiler(unittest.TestCase):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_pr_delta.gt")
         graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
         ranks = module.export_func(graph)
+        self.assertEqual(len(ranks), 4)
+        self.assertTrue(abs(np.sum(ranks)-1.0) < 0.001)
+
+    def test_pybind_pr_delta_UW(self):
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_pagerank_delta_UW.gt")
+        graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
+        module.set_graph(graph)
+        ranks = module.do_pagerank_delta()
         self.assertEqual(len(ranks), 4)
         self.assertTrue(abs(np.sum(ranks)-1.0) < 0.001)
 
@@ -139,6 +164,8 @@ class TestGraphitCompiler(unittest.TestCase):
         vector_return = module.export_func()
         self.assertEqual(vector_return.shape, (10, 10))
         self.assertEqual(np.sum(vector_return), 550)
+
+    #TODO test examples in python_bindings directory (currently includes pagerank_delta, sssp) 
 
 
 if __name__ == '__main__':
