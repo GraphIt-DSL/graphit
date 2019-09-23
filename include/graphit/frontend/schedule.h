@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <graphit/frontend/gpu_schedule.h>
 
 namespace graphit {
 
@@ -218,6 +219,9 @@ namespace graphit {
             ~Schedule() {
                 delete physical_data_layouts;
                 delete apply_schedules;
+		for (auto s = apply_gpu_schedules.begin(); s != apply_gpu_schedules.end(); s++) {
+			delete s->second;
+		}
             }
 
             //TODO: what does it mean??
@@ -230,8 +234,8 @@ namespace graphit {
             std::map<std::string, VertexsetPhysicalLayout> vertexset_data_layout;
 
 
+	    std::map <std::string, graphit::fir::gpu_schedule::GPUSchedule*> apply_gpu_schedules;
         };
     }
-
 
 #endif //GRAPHIT_SCHEDULE_H

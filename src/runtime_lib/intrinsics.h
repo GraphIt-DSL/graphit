@@ -321,21 +321,7 @@ template <typename T> T static builtin_pop (std::vector<T>* vec){
 //    return (float)(usec.time_since_epoch().count())/1000;
 //}
 
-static struct timeval start_time_;
-static struct timeval elapsed_time_;
-
-static void startTimer(){
-    gettimeofday(&start_time_, NULL);
-}
-
-static float stopTimer(){
-    gettimeofday(&elapsed_time_, NULL);
-    elapsed_time_.tv_sec  -= start_time_.tv_sec;
-    elapsed_time_.tv_usec -= start_time_.tv_usec;
-    return elapsed_time_.tv_sec + elapsed_time_.tv_usec/1e6;
-
-}
-
+#include "timer.h"
 
 static char* argv_safe(int index, char** argv, int argc ){
     // if index is less than or equal to argc than return argv[index]
@@ -504,6 +490,10 @@ void updateBucketWithGraphItVertexSubset(VertexSubset<NodeID>* vset, julienne::P
     }
 
 }
+
+
+#include "infra_gpu/graph.h"
+
 
 
 #endif //GRAPHIT_INTRINSICS_H_H

@@ -2276,4 +2276,37 @@ fir::high_level_schedule::ProgramScheduleNode::Ptr program
 EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, GPUScheduleBasicSimpleGPUScheduleTest) {
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
+    // Now apply the GPU Schedule
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    s1.configDeduplication(fir::gpu_schedule::DISABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+
+    program->applyGPUSchedule("s1", s1);
+}
+
+TEST_F(HighLevelScheduleTest, GPUScheduleBasicHybridGPUScheduleTest) {
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    // Now apply the GPU Schedule
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    fir::gpu_schedule::SimpleGPUSchedule s2;
+    s1.configDeduplication(fir::gpu_schedule::DISABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+	
+    s2 = s1;
+    s2.configDirection(fir::gpu_schedule::PULL);
+
+    fir::gpu_schedule::HybridGPUSchedule h1 (fir::gpu_schedule::HybridGPUSchedule::INPUT_VERTEXSET_SIZE, 0.2, s1, s2);
+     
+
+    program->applyGPUSchedule("s1", h1);
+}

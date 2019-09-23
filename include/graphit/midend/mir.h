@@ -592,6 +592,14 @@ namespace graphit {
             enum class Type {
                 INTERNAL, EXPORTED, EXTERNAL
             };
+	    enum function_context_type {
+		CONTEXT_NONE = 0x0,
+		CONTEXT_HOST = 0x1,
+		CONTEXT_DEVICE = 0x2,
+		CONTEXT_BOTH = 0x3,
+	    };
+
+	    enum function_context_type function_context = function_context_type::CONTEXT_HOST;
 
             std::string name;
             std::vector<mir::Var> args;
@@ -615,6 +623,17 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+	static inline FuncDecl::function_context_type operator | (FuncDecl::function_context_type a, FuncDecl::function_context_type b) {
+		return static_cast<FuncDecl::function_context_type>((int)a | (int)b);
+	}
+	static inline FuncDecl::function_context_type operator & (FuncDecl::function_context_type a, FuncDecl::function_context_type b) {
+		return static_cast<FuncDecl::function_context_type>((int)a & (int)b);
+	}
+	static inline FuncDecl::function_context_type& operator |= (FuncDecl::function_context_type &a, FuncDecl::function_context_type b) {
+		a = a | b;
+		return a;
+	}
+	
 
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
@@ -822,6 +841,9 @@ namespace graphit {
             std::string input_function_name = "";
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
+
+	    std::string device_function;
+	    std::string kernel_function;
 
         protected:
             virtual void copy(MIRNode::Ptr);
