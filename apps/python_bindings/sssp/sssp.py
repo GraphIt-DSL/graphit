@@ -1,3 +1,6 @@
+# This file is copied from a repo - (https://github.com/bespoke-silicon-group/hb_starlite/tree/master/py-graphit-example)
+# author: mrutt92
+ 
 import graphit
 from scipy.sparse import csr_matrix
 
