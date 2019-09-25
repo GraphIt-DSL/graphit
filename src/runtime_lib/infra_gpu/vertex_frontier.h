@@ -22,6 +22,13 @@ struct VertexFrontier {
 	int32_t curr_dedup_counter;
 
 	// Extend this to check the current representation
+	enum format_ready_type {
+		SPARSE,
+		BITMAP,
+		BYTEMAP		
+	};
+
+	format_ready_type format_ready;
 };
 static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 	VertexFrontier frontier;
@@ -52,6 +59,10 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 	cudaMalloc(&frontier.d_dedup_counters, sizeof(int32_t) * num_vertices);
 	cudaMemset(frontier.d_dedup_counters, 0, sizeof(int32_t) * num_vertices);
 
+	frontier.format_ready = VertexFrontier::SPARSE;
+
+	cudaCheckLastError();
+
 	return frontier;
 }
 
@@ -68,14 +79,20 @@ static void __device__ enqueueVertexSparseQueue(int32_t *sparse_queue, int32_t *
 	// Each thread adds on it's own
 	// TODO: Optimize with warp reduce
 
-	int32_t pos = atomicAdd(sparse_queue_size, 1);
+	//int32_t pos = atomicAdd(sparse_queue_size, 1);
+	int32_t pos = atomicAggInc(sparse_queue_size);
 	sparse_queue[pos] = vertex_id;
+	
+}
+static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *byte_map_size, int32_t vertex_id) {
+	// We are not using atomic operation here because races are benign here
+	byte_map[vertex_id] = 1;
+	atomicAggInc(byte_map_size);
 }
 static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
 	int32_t curr_size = 0;
 	cudaMemcpy(&curr_size, frontier.d_num_elems_input, sizeof(int32_t), cudaMemcpyDeviceToHost);
-	return curr_size;
-	
+	return curr_size;	
 }
 static void swap_queues(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;
@@ -87,6 +104,19 @@ static void swap_queues(VertexFrontier &frontier) {
 	frontier.d_sparse_queue_output = temp;
 
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
+}
+static void swap_bytemaps(VertexFrontier &frontier) {
+	int32_t *temp = frontier.d_num_elems_input;
+	frontier.d_num_elems_input = frontier.d_num_elems_output;
+	frontier.d_num_elems_output = temp;
+	
+	unsigned char* temp2;
+	temp2 = frontier.d_byte_map_input;
+	frontier.d_byte_map_input = frontier.d_byte_map_output;
+	frontier.d_byte_map_output = temp2;
+
+	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
+	cudaMemset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);
 }
 static void __device__ dedup_frontier_device(VertexFrontier &frontier) {
 	for(int32_t vidx = threadIdx.x + blockDim.x * blockIdx.x; vidx < frontier.d_num_elems_input[0]; vidx += blockDim.x * gridDim.x) {
@@ -104,6 +134,30 @@ static void dedup_frontier(VertexFrontier &frontier) {
 	frontier.curr_dedup_counter++;
 	dedup_frontier_kernel<<<NUM_CTA, CTA_SIZE>>>(frontier);
 	swap_queues(frontier);
+}
+
+static void __global__ prepare_sparse_from_bytemap(VertexFrontier frontier) {
+	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
+		if (frontier.d_byte_map_input[node_id] == 1) {
+			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
+		}
+	}
+}
+static void __global__ prepare_sparse_from_bitmap(VertexFrontier &frontier) {
+}
+
+static void vertex_set_prepare_sparse(VertexFrontier &frontier) {
+	if (frontier.format_ready == VertexFrontier::SPARSE)
+		return;
+	else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
+		prepare_sparse_from_bytemap<<<NUM_CTA, CTA_SIZE>>>(frontier);	
+		swap_queues(frontier);
+		return;
+	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
+		prepare_sparse_from_bitmap<<<NUM_CTA, CTA_SIZE>>>(frontier);
+		swap_queues(frontier);	
+		return;	
+	}	
 }
 }
 

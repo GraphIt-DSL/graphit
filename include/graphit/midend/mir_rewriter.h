@@ -153,6 +153,9 @@ namespace graphit {
             virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
 
 	    virtual void visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr>);
+	
+	    // GPU Additions
+	    virtual void visit(std::shared_ptr<VertexSetDedupExpr>);
 
             template<typename T = Program>
             std::shared_ptr<T> rewrite(std::shared_ptr<T> ptr) {

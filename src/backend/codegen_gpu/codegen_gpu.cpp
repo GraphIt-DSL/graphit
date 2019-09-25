@@ -163,6 +163,10 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	// First we generate the function that is passed to the load balancing function
 
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
+	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
+	if (apply_expr->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+		load_balance_function = "gpu_runtime::TWCE_load_balance";
+	}
 
 	oss << "template <typename EdgeWeightType>" << std::endl;
 	oss << "void __device__ " << load_balancing_arg << "(gpu_runtime::GraphT<EdgeWeightType> graph, int32_t src, int32_t dst, int32_t edge_id, gpu_runtime::VertexFrontier output_frontier) {" << std::endl;
@@ -175,7 +179,12 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	oss << "if (" << apply_expr->input_function_name << "(src, dst, weight)) {" << std::endl;
 	indent();
 	printIndent();
-	oss << "gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, dst);" << std::endl;
+	if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED)
+		oss << "gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, dst);" << std::endl;
+	else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP)
+		oss << "gpu_runtime::enqueueVertexBytemap(output_frontier.d_byte_map_output, output_frontier.d_num_elems_output, dst);" << std::endl;
+	else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP)
+		oss << "gpu_runtime::enqueueVertexBitmap(output_frontier.d_bit_map_output, output_frontier.d_num_elems_output, dst);" << std::endl;
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;
@@ -189,9 +198,9 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	oss << "void __global__ " << kernel_function_name << " (gpu_runtime::GraphT<EdgeWeightType> graph, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {" << std::endl;
 	indent();
 	printIndent();
-	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
 	oss << load_balance_function << "<EdgeWeightType, " << load_balancing_arg << "<EdgeWeightType>> (";
 	oss << "graph, input_frontier, output_frontier);" << std::endl;
+	
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;
@@ -502,10 +511,22 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 			
 			oss << "{" << std::endl;
 			indent();
+			std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
+			if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+				load_balance_function = "gpu_runtime::TWCE_load_balance";
+			}
+			
+			if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+				printIndent();
+				oss << "gpu_runtime::vertex_set_prepare_sparse(";
+				oss << esae->from_func;
+				oss << ");" << std::endl;
+			}
+
 			printIndent();
 			oss << "int32_t num_cta, cta_size;" << std::endl;
 			printIndent();		
-			oss << "gpu_runtime::vertex_based_load_balance_info(";
+			oss << load_balance_function << "_info(";
 			oss << esae->from_func;
 			oss << ", num_cta, cta_size);" << std::endl;
 			printIndent();
@@ -514,8 +535,23 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 			oss << ", " << esae->from_func << ", " << var_decl->name << ");" << std::endl;
 			printIndent();
 			oss << "cudaDeviceSynchronize();" << std::endl;
-			printIndent();
-			oss << "gpu_runtime::swap_queues(" << var_decl->name << ");" << std::endl;
+			if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+				printIndent();
+				oss << "gpu_runtime::swap_queues(" << var_decl->name << ");" << std::endl;
+				printIndent();
+				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
+			
+			} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+				printIndent();
+				oss << "gpu_runtime::swap_bitmaps(" << var_decl->name << ");" << std::endl;
+				printIndent();
+				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
+			} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+				printIndent();
+				oss << "gpu_runtime::swap_bytemaps(" << var_decl->name << ");" << std::endl;
+				printIndent();
+				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
+			}
 			dedent();
 			printIndent();
 			oss << "}" << std::endl;
@@ -528,6 +564,11 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 		oss << ";" << std::endl;
 		
 	
+}
+void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
+	oss << "gpu_runtime::dedup_frontier(";
+	vsde->target->accept(this);
+	oss << ")";
 }
 void CodeGenGPU::visit(mir::BoolLiteral::Ptr bool_literal) {
 	oss << bool_literal->val?"true":"false";

@@ -35,7 +35,42 @@ namespace graphit {
 
         node = vertexset_apply;
     }
-
+    void ApplyExprLower::LowerApplyExpr::visit(mir::StmtBlock::Ptr stmt_block) {
+	std::vector<mir::Stmt::Ptr> new_stmts;
+	for (auto stmt: *(stmt_block->stmts)) {
+		new_stmts.push_back(rewrite<mir::Stmt>(stmt));
+		if (insert_after_stmt != nullptr)
+			new_stmts.push_back(insert_after_stmt);
+		insert_after_stmt = nullptr;	
+	}
+	* (stmt_block->stmts) = new_stmts;
+	node = stmt_block;
+    }
+    void ApplyExprLower::LowerApplyExpr::visit(mir::VarDecl::Ptr var_decl) {
+	MIRRewriter::visit(var_decl);
+	var_decl = mir::to<mir::VarDecl>(node);
+	if (mir::isa<mir::EdgeSetApplyExpr> (var_decl->initVal)) {
+		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
+		
+		if (edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+			mir::VertexSetDedupExpr::Ptr dedup_expr = std::make_shared<mir::VertexSetDedupExpr>();
+			mir::ExprStmt::Ptr expr_stmt = std::make_shared<mir::ExprStmt>();
+			mir::Var var(var_decl->name, var_decl->type);
+			mir::VarExpr::Ptr var_expr = std::make_shared<mir::VarExpr>();
+			var_expr->var = var;
+			dedup_expr->target = var_expr;
+			
+			expr_stmt->expr = dedup_expr;
+			insert_after_stmt = expr_stmt;
+		}
+	}
+	node = var_decl;
+    }    
+    void ApplyExprLower::LowerApplyExpr::visit(mir::AssignStmt::Ptr assign_stmt) {
+        MIRRewriter::visit(assign_stmt);
+	assign_stmt = mir::to<mir::AssignStmt>(node);
+	node = assign_stmt;
+    }
     void ApplyExprLower::LowerApplyExpr::visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply) {
 
         // use the target var expressionto figure out the edgeset type
@@ -61,15 +96,17 @@ namespace graphit {
 		auto apply_schedule_iter = schedule_->apply_gpu_schedules.find(current_scope_name);
 		if (apply_schedule_iter != schedule_->apply_gpu_schedules.end()) {
 			auto apply_schedule = apply_schedule_iter->second;
-			
-			
-		} else {
-			// No schedule is attached, lower using default schedule
-			
+			if (dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule) != nullptr) {	
+				edgeset_apply->applied_schedule = *dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule);
+			}
+			// First we create a stmt block to return
 			node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
-			
-			
+						
+		} else {
+			// No schedule is attached, lower using default schedule	
+			node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);			
 		}
+		return;
 	}
 
         // check if the schedule contains entry for the current edgeset apply expressions

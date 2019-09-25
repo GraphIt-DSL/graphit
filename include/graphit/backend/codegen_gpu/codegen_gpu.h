@@ -105,6 +105,8 @@ protected:
 	virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
 	virtual void visit(mir::VertexSetAllocExpr::Ptr) override;
 
+	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
+
 
 };
 class CodeGenGPUHost: public CodeGenGPU {

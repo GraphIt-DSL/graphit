@@ -947,5 +947,15 @@ namespace graphit {
 		return node;
 	}
 
+	void VertexSetDedupExpr::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<VertexSetDedupExpr>(node);
+		target = op->target;	
+	}
+	MIRNode::Ptr VertexSetDedupExpr::cloneNode() {
+		const auto node = std::make_shared<VertexSetDedupExpr>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
     }
 }

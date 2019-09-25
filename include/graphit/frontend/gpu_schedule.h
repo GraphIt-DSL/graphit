@@ -31,6 +31,9 @@ enum gpu_schedule_options {
 
 class GPUSchedule {
 	// Abstract class has no functions for now
+public:
+	// Virtual destructor to make the class polymorphic
+	virtual ~GPUSchedule() = default;
 };
 
 class SimpleGPUSchedule: public GPUSchedule {
@@ -67,6 +70,7 @@ public:
 	};
 
 private:
+public:
 	direction_type direction;
 	frontier_creation_type frontier_creation;
 	deduplication_type deduplication;

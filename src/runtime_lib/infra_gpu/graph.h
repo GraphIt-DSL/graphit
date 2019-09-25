@@ -29,7 +29,7 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t h_get_degree(int32_t vertex_id) {
 		return h_src_offsets[vertex_id + 1] - h_src_offsets[vertex_id];
 	}
-	int32_t d_get_degree(int32_t vertex_id) {
+	int32_t __device__ d_get_degree(int32_t vertex_id) {
 		return d_src_offsets[vertex_id + 1] - d_src_offsets[vertex_id];
 	}
 };

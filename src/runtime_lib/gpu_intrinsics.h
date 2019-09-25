@@ -12,6 +12,8 @@
 namespace gpu_runtime {
 template <typename T>
 static bool __device__ writeMin(T *dst, T src) {
+	if (*dst <= src)
+		return false;
 	T old_value = atomicMin(dst, src);
 	bool ret = (old_value > src);
 	return ret;

@@ -103,15 +103,18 @@ namespace graphit {
         struct UpdatePriorityEdgeSetApplyExpr;
         struct UpdatePriorityExternVertexSetApplyExpr;
         struct UpdatePriorityUpdateBucketsCall;
-	    struct UpdatePriorityExternCall;
+	struct UpdatePriorityExternCall;
 
-	    struct OrderedProcessingOperator;
+	struct OrderedProcessingOperator;
 
-	    struct PriorityUpdateOperator;
-	    struct PriorityUpdateOperatorMin;
-	    struct PriorityUpdateOperatorSum;
-		struct UpdatePriorityEdgeCountEdgeSetApplyExpr;
-
+	struct PriorityUpdateOperator;
+	struct PriorityUpdateOperatorMin;
+	struct PriorityUpdateOperatorSum;
+	struct UpdatePriorityEdgeCountEdgeSetApplyExpr;
+	
+	// GPU Additions
+	struct VertexSetDedupExpr;
+	
 
         struct MIRVisitor {
             virtual void visit(Var*);
@@ -248,17 +251,20 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<OrderedProcessingOperator>);
 
-			virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
+	    virtual void visit(std::shared_ptr<PriorityUpdateOperator>);
 
-			virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
+	    virtual void visit(std::shared_ptr<PriorityUpdateOperatorMin>);
 
-			virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
+	    virtual void visit(std::shared_ptr<PriorityUpdateOperatorSum>);
 
 
             virtual void visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr>);
-	    
+	   
+	    // GPU Additions
+	    virtual void visit(std::shared_ptr<VertexSetDedupExpr>); 
 
-		protected:
+       	    protected:
+
             std::shared_ptr<MIRNode> node;
             LabelScope label_scope_;
             std::shared_ptr<FuncDecl> enclosing_func_decl_ = nullptr;
