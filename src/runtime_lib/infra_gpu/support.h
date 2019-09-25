@@ -23,6 +23,14 @@ __device__ inline int32_t atomicAggInc(int32_t *ctr) {
 
         return (res + __popc(mask & ((1 << lane_id) - 1)));
 }
+template <typename T>
+static bool __device__ writeMin(T *dst, T src) {
+	if (*dst <= src)
+		return false;
+	T old_value = atomicMin(dst, src);
+	bool ret = (old_value > src);
+	return ret;
+}
 }
 
 #endif

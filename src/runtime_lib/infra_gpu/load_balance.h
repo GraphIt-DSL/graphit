@@ -17,7 +17,7 @@ static void __global__ vertex_set_apply_kernel(int32_t num_vertices) {
 	vertex_set_apply<body>(num_vertices);
 } 
 
-template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier)>
+template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier)>
 void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t vid = threadIdx.x + blockDim.x * blockIdx.x;
 	if (vid >= input_frontier.d_num_elems_input[0])
@@ -25,7 +25,7 @@ void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> graph, VertexFr
 	int32_t src = input_frontier.d_sparse_queue_input[vid];
 	for (int32_t eid = graph.d_src_offsets[src]; eid < graph.d_src_offsets[src+1]; eid++) {
 		int32_t dst = graph.d_edge_dst[eid];
-		load_balance_payload(graph, src, dst, eid, output_frontier);
+		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
 	}
 }
 
@@ -36,7 +36,7 @@ void __host__ vertex_based_load_balance_info(VertexFrontier &frontier, int32_t &
 }
 #define STAGE_1_SIZE (8)
 #define WARP_SIZE (32)
-template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier)>
+template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier)>
 static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t thread_id = blockDim.x * blockIdx.x + threadIdx.x;
 	
@@ -99,7 +99,7 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 		// STAGE 1
 		for (int32_t neigh_id = s1_offset + (lane_id % STAGE_1_SIZE); neigh_id < degree + s1_offset; neigh_id += STAGE_1_SIZE) {
 			int32_t dst = graph.d_edge_dst[neigh_id];
-			load_balance_payload(graph, local_vertex, dst, neigh_id, output_frontier);	
+			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);	
 		}
 
 	}
@@ -118,7 +118,7 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 		int32_t s2_offset = stage2_offset[to_process];
 		for (int32_t neigh_id = s2_offset + (lane_id); neigh_id < degree + s2_offset; neigh_id += WARP_SIZE) {
 			int32_t dst = graph.d_edge_dst[neigh_id];
-			load_balance_payload(graph, local_vertex, dst, neigh_id, output_frontier);	
+			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);	
 		}
 		
 	}	
@@ -129,7 +129,7 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 		int32_t s3_offset = stage3_offset[wid];
 		for (int32_t neigh_id = s3_offset + (threadIdx.x); neigh_id < degree + s3_offset; neigh_id += CTA_SIZE) {
 			int32_t dst = graph.d_edge_dst[neigh_id];
-			load_balance_payload(graph, local_vertex, dst, neigh_id, output_frontier);	
+			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);	
 		}	
 	}
 }

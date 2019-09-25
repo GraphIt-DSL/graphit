@@ -25,8 +25,9 @@ public:
 	MIRContext * mir_context_;
 
 	void visit(mir::PushEdgeSetApplyExpr::Ptr);
-	//void visit(mir::VertexSetApplyExpr::Ptr);
+	void visit(mir::PullEdgeSetApplyExpr::Ptr);
 
+	void genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr);
 
 };
 class CodeGenGPU : public mir::MIRVisitor{

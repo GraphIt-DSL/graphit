@@ -114,6 +114,10 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
 
 }
+template <typename EdgeWeightType>
+static int32_t builtin_getVertices(GraphT<EdgeWeightType> &graph) {
+	return graph.num_vertices;
+}
 
 
 }

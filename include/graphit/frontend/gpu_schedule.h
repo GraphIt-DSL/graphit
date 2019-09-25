@@ -26,7 +26,8 @@ enum gpu_schedule_options {
 	WM,
 	CM,
 	STRICT,
-	EDGE_ONLY
+	EDGE_ONLY,
+	VERTEX_BASED
 };
 
 class GPUSchedule {
@@ -51,11 +52,12 @@ public:
 	};
 
 	enum class deduplication_type {
-		DEDUP_ENABLED, 
-		DEDUP_DISABLED
+		DEDUP_DISABLED,
+		DEDUP_ENABLED
 	};
 
 	enum class load_balancing_type {
+		VERTEX_BASED,	
 		TWC, 
 		TWCE, 
 		WM, 
@@ -65,8 +67,8 @@ public:
 	};
 
 	enum class kernel_fusion_type {
-		FUSION_ENABLED,
-		FUSION_DISABLED
+		FUSION_DISABLED,
+		FUSION_ENABLED
 	};
 
 private:
@@ -76,6 +78,14 @@ public:
 	deduplication_type deduplication;
 	load_balancing_type load_balancing;
 	kernel_fusion_type kernel_fusion;
+	
+	SimpleGPUSchedule () {
+		direction = direction_type::DIR_PUSH;
+		frontier_creation = frontier_creation_type::FRONTIER_FUSED;
+		deduplication = deduplication_type::DEDUP_DISABLED;
+		load_balancing = load_balancing_type::VERTEX_BASED;
+		kernel_fusion = kernel_fusion_type::FUSION_DISABLED;
+	}	
 
 public:	
 	void configDirection(enum gpu_schedule_options o) {
@@ -125,6 +135,9 @@ public:
 
 	void configLoadBalance(enum gpu_schedule_options o) {
 		switch(o) {
+			case VERTEX_BASED:
+				load_balancing = load_balancing_type::VERTEX_BASED;
+				break;
 			case TWC:
 				load_balancing = load_balancing_type::TWC;
 				break;

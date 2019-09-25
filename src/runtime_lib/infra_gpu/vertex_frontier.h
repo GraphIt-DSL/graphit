@@ -143,9 +143,17 @@ static void __global__ prepare_sparse_from_bytemap(VertexFrontier frontier) {
 		}
 	}
 }
-static void __global__ prepare_sparse_from_bitmap(VertexFrontier &frontier) {
+static void __global__ prepare_sparse_from_bitmap(VertexFrontier frontier) {
 }
 
+static void __global__ prepare_bytemap_from_sparse(VertexFrontier frontier) {
+	for (int32_t node_idx = blockDim.x * blockIdx.x + threadIdx.x; node_idx < frontier.d_num_elems_input[0]; node_idx += blockDim.x * gridDim.x) {
+		int32_t node_id = frontier.d_sparse_queue_input[node_idx];
+		enqueueVertexBytemap(frontier.d_byte_map_output, frontier.d_num_elems_output, node_id);
+	}
+}
+static void __global__ prepare_bytemap_from_bitmap(VertexFrontier frontier) {
+}
 static void vertex_set_prepare_sparse(VertexFrontier &frontier) {
 	if (frontier.format_ready == VertexFrontier::SPARSE)
 		return;
@@ -159,6 +167,36 @@ static void vertex_set_prepare_sparse(VertexFrontier &frontier) {
 		return;	
 	}	
 }
+static void vertex_set_prepare_boolmap(VertexFrontier &frontier) {
+	if (frontier.format_ready == VertexFrontier::SPARSE) {
+		prepare_bytemap_from_sparse<<<NUM_CTA, CTA_SIZE>>>(frontier);
+		swap_bytemaps(frontier);
+		return;
+	} else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
+		return;
+	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
+		prepare_bytemap_from_bitmap<<<NUM_CTA, CTA_SIZE>>>(frontier);
+		swap_bytemaps(frontier);
+		return;
+	}
+}
+bool __device__ true_function(int32_t _) {
+	return true;
+}
+template <bool to_func(int32_t)>
+static void __global__ vertex_set_create_reverse_sparse_queue_kernel(VertexFrontier frontier) {
+	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
+		if ((to_func(node_id)))
+			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
+	}	
+}
+
+template <bool to_func(int32_t)>
+static void vertex_set_create_reverse_sparse_queue(VertexFrontier &frontier) {
+	vertex_set_create_reverse_sparse_queue_kernel<to_func><<<NUM_CTA, CTA_SIZE>>>(frontier);
+	swap_queues(frontier);	
+}
+
 }
 
 #endif

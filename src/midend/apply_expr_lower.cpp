@@ -99,8 +99,12 @@ namespace graphit {
 			if (dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule) != nullptr) {	
 				edgeset_apply->applied_schedule = *dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule);
 			}
-			// First we create a stmt block to return
-			node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
+			if (edgeset_apply->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH)
+				node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
+			else if (edgeset_apply->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL)
+				node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
+			else 
+				assert(false && "Invalid option for direction\n");
 						
 		} else {
 			// No schedule is attached, lower using default schedule	

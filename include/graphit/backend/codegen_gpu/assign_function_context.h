@@ -17,6 +17,7 @@ class AssignFunctionContext : mir::MIRVisitor {
 		int assign_function_context(void);
 	protected:
 		void visit(mir::PushEdgeSetApplyExpr::Ptr);
+		void visit(mir::PullEdgeSetApplyExpr::Ptr);
 		void visit(mir::VertexSetApplyExpr::Ptr);
 	private:
 		MIRContext *mir_context_;
