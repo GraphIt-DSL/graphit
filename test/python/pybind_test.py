@@ -105,7 +105,7 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertTrue(abs(np.sum(ranks)-1.0) < 0.001)
 
     def test_pybind_pr_delta_UW(self):
-        module = graphit.compile_and_load(self.root_test_input_dir + "export_pagerank_delta_UW.gt")
+        module = graphit.compile_and_load(self.root_test_input_dir + "export_pagerank_delta.gt")
         graph = csr_matrix(([4, 5, 6, 4, 5, 6], [1, 2, 3, 0, 0, 0], [0, 3, 4, 5, 6]))
         module.set_graph(graph)
         ranks = module.do_pagerank_delta()
