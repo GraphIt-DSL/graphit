@@ -30,6 +30,35 @@ struct VertexFrontier {
 
 	format_ready_type format_ready;
 };
+static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
+	int32_t curr_size = 0;
+	cudaMemcpy(&curr_size, frontier.d_num_elems_input, sizeof(int32_t), cudaMemcpyDeviceToHost);
+	return curr_size;	
+}
+class AccessorSparse {
+public:
+	static int32_t __device__ getSize(VertexFrontier &frontier) {
+		return frontier.d_num_elems_input[0];
+	}
+	static int32_t __device__ getElement(VertexFrontier &frontier, int32_t index) {
+		return frontier.d_sparse_queue_input[index];
+	}
+	static int32_t getSizeHost(VertexFrontier &frontier) {
+		return builtin_getVertexSetSize(frontier);
+	}
+};
+class AccessorAll {
+public:
+	static int32_t __device__ getSize(VertexFrontier &frontier) {
+		return frontier.max_num_elems;
+	}
+	static int32_t __device__ getElement(VertexFrontier &frontier, int32_t index) {
+		return index;
+	}
+	static int32_t getSizeHost(VertexFrontier &frontier) {
+		return frontier.max_num_elems;
+	}
+};
 static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 	VertexFrontier frontier;
 	cudaMalloc(&frontier.d_num_elems_input, sizeof(int32_t));
@@ -88,11 +117,6 @@ static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *by
 	// We are not using atomic operation here because races are benign here
 	byte_map[vertex_id] = 1;
 	atomicAggInc(byte_map_size);
-}
-static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
-	int32_t curr_size = 0;
-	cudaMemcpy(&curr_size, frontier.d_num_elems_input, sizeof(int32_t), cudaMemcpyDeviceToHost);
-	return curr_size;	
 }
 static void swap_queues(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;

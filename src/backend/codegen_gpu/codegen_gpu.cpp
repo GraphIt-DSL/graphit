@@ -100,13 +100,21 @@ void CodeGenGPUKernelEmitter::genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr 
 	if (apply_expr->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
 	}
+	std::string accessor_type = "gpu_runtime::AccessorSparse";
+	if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && apply_expr->to_func == "")
+		accessor_type = "gpu_runtime::AccessorAll";
+
+	std::string src_filter = "gpu_runtime::true_function";
+	if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && apply_expr->to_func != "")
+		src_filter = apply_expr->to_func;
+
 	std::string kernel_function_name = "gpu_operator_kernel_" + mir_context_->getUniqueNameCounterString();
 
 	oss << "template <typename EdgeWeightType>" << std::endl;
 	oss << "void __global__ " << kernel_function_name << " (gpu_runtime::GraphT<EdgeWeightType> graph, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {" << std::endl;
 	indent();
 	printIndent();
-	oss << load_balance_function << "<EdgeWeightType, " << apply_expr->device_function << "<EdgeWeightType>> (";
+	oss << load_balance_function << "<EdgeWeightType, " << apply_expr->device_function << "<EdgeWeightType>, " << accessor_type << ", " << src_filter << "> (";
 	oss << "graph, input_frontier, output_frontier);" << std::endl;
 	
 	dedent();
@@ -512,11 +520,11 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 				oss << ");" << std::endl;
 
 				std::string to_func = esae->to_func;
-				if (to_func == "")
-					to_func = "gpu_runtime::true_function";
-				printIndent();
-				oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
-				oss << esae->from_func << ");" << std::endl;
+				if (to_func != "") {
+					printIndent();
+					oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
+					oss << esae->from_func << ");" << std::endl;
+				}
 				
 			}
 			printIndent();
@@ -525,8 +533,13 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 
 			printIndent();
 			oss << "int32_t num_cta, cta_size;" << std::endl;
+
+			std::string accessor_type = "gpu_runtime::AccessorSparse";
+			if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+				accessor_type = "gpu_runtime::AccessorAll";
+
 			printIndent();		
-			oss << load_balance_function << "_info(";
+			oss << load_balance_function << "_info<" << accessor_type << ">(";
 			oss << esae->from_func;
 			oss << ", num_cta, cta_size);" << std::endl;
 			printIndent();
