@@ -165,9 +165,6 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(vector_return.shape, (10, 10))
         self.assertEqual(np.sum(vector_return), 550)
 
-    #TODO test examples in python_bindings directory (currently includes pagerank_delta, sssp) 
-
-
 if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
