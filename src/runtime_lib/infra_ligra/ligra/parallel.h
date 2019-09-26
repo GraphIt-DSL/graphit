@@ -151,7 +151,7 @@ static void setWorkers(int n) {
   }
 }
 
-// intel TBB
+// intel TBB support is added by Moyang Wang and Christopher Batten
 #elif defined(TBB)
 #pragma push_macro("parallel_for")
 #undef parallel_for
