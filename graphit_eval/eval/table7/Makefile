@@ -3,6 +3,7 @@
 COMMON_FLAGS = -std=gnu++1y -g -I ../../../src/runtime_lib/
 CILK_FLAGS = $(COMMON_FLAGS)
 OPENMP_FLAGS = $(COMMON_FLAGS)
+TBB_FLAGS = $(COMMON_FLAGS)
 GRAPHITC_PY = ../../../build/bin/graphitc.py
 GRAPHIT_APP_DIR = ../../../apps
 GRAPHIT_SCHEDULE_DIR= ../../../test/input_with_schedules
@@ -22,13 +23,13 @@ OPENMP_FLAGS += -DOPENMP -qopenmp -O3
 else ifdef ICPC_TBB
 # compiling with Intel icpc compiler
 PCC = icpc
-CILK_FLAGS += -qopenmp -DTBB -O3 -ltbb
+TBB_FLAGS += -qopenmp -DTBB -O3 -ltbb
 OPENMP_FLAGS += -DOPENMP -qopenmp -O3
 
 else ifdef TBB 
 PCC = g++
-CILK_FLAGS += -I /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/include/ -L /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/lib/intel64/gcc4.7/ -fopenmp -DTBB -O3 -ltbb 
-OPENMP_FLAGS += -DOPENMP -fopenmp -O3
+TBB_FLAGS += -I /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/include/ -L /data/scratch/yunming/intel_parallel_studio_cluster/parallel_studio_xe_2017/install/compilers_and_libraries_2017.2.174/linux/tbb/lib/intel64/gcc4.7/ -fopenmp -DTBB -O3 -ltbb 
+OPENMP_FLAGS += -DOPENMP -qopenmp -O3
 
 else
 # compiling serial programs
@@ -75,7 +76,7 @@ openmp_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bfs_push_slq cpps/bfs_push_slq.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
 % : cpps/%.cpp
-	$(PCC) -o bin/$@ $< $(CILK_FLAGS)
+	$(PCC) -o bin/$@ $< $(CILK_FLAGS) $(TBB_FLAGS)
 
 clean:
 	rm cpps/*.cpp
