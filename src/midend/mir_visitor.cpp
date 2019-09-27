@@ -372,6 +372,9 @@ namespace graphit {
 	void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> op) {
 		visit(std::static_pointer_cast<EdgeSetApplyExpr>(op));
 	}
-
+	
+	void MIRVisitor::visit(std::shared_ptr<VertexSetDedupExpr> op) {
+		op->target->accept(this);
+	}
     }
 }

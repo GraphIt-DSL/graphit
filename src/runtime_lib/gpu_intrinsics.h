@@ -8,19 +8,9 @@
 #include "infra_gpu/vertex_frontier.h"
 #include "infra_gpu/load_balance.h"
 #include "graphit_timer.h"
+#include "infra_gpu/support.h"
 
 namespace gpu_runtime {
-template <typename T>
-static bool __device__ writeMin(T *dst, T src) {
-	T old_value = atomicMin(dst, src);
-	bool ret = (old_value > src);
-	return ret;
-}
-template <typename EdgeWeightType>
-static int32_t builtin_getVertices(GraphT<EdgeWeightType> &graph) {
-	return graph.num_vertices;
-}
-
 
 template <typename T>
 static void deleteObject(T &t) {

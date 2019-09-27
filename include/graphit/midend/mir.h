@@ -15,6 +15,8 @@
 #include <assert.h>
 #include <graphit/midend/field_vector_property.h>
 #include <unordered_map>
+#include <graphit/frontend/gpu_schedule.h>
+
 
 namespace graphit {
     namespace mir {
@@ -844,6 +846,8 @@ namespace graphit {
 
 	    std::string device_function;
 	    std::string kernel_function;
+	
+	    fir::gpu_schedule::SimpleGPUSchedule applied_schedule;
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -934,6 +938,8 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
+		
+		applied_schedule = edgeset_apply->applied_schedule;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -960,6 +966,7 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
+		applied_schedule = edgeset_apply->applied_schedule;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1515,6 +1522,18 @@ namespace graphit {
 
         };
 
+
+	// GPU Specific operators
+	struct VertexSetDedupExpr: Expr {
+		Expr::Ptr target;
+		typedef std::shared_ptr<VertexSetDedupExpr> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<VertexSetDedupExpr>());
+		}
+		protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();		
+	};
     }
 
 }

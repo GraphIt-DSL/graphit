@@ -29,7 +29,7 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t h_get_degree(int32_t vertex_id) {
 		return h_src_offsets[vertex_id + 1] - h_src_offsets[vertex_id];
 	}
-	int32_t d_get_degree(int32_t vertex_id) {
+	int32_t __device__ d_get_degree(int32_t vertex_id) {
 		return d_src_offsets[vertex_id + 1] - d_src_offsets[vertex_id];
 	}
 };
@@ -113,6 +113,10 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMemcpy(graph.d_src_offsets, graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
 	std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
 
+}
+template <typename EdgeWeightType>
+static int32_t builtin_getVertices(GraphT<EdgeWeightType> &graph) {
+	return graph.num_vertices;
 }
 
 

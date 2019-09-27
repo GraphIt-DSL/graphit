@@ -410,6 +410,11 @@ namespace graphit {
             ptr->target = rewrite<Expr>(ptr->target);
             node = ptr;
 	}
+	
+	void MIRRewriter::visit(VertexSetDedupExpr::Ptr ptr) {
+		ptr->target = rewrite<Expr>(ptr->target);
+		node = ptr;
+	}
 
     }
 }
