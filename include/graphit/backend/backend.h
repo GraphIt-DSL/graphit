@@ -19,7 +19,7 @@ namespace graphit {
 
         int emitCPP(std::ostream &oss = std::cout, std::string module_name="");
     	int emitPython(std::ostream &oss = std::cout, std::string module_name="", std::string module_path="");
-	int emitGPU(std::ostream &oss = std::cout, std::string module_name="", std::string module_path="");
+	    int emitGPU(std::ostream &oss = std::cout, std::string module_name="", std::string module_path="");
 
     private:
         MIRContext* mir_context_;

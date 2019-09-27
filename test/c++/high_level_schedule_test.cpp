@@ -315,13 +315,13 @@ protected:
                                                               "        end\n"
                                                               "\n"
                                                               "    end\n"
-                                                              "end");	
-	
+                                                              "end");
+
         const char*  pr_cc_char = ("element Vertex end\n"
                                              "element Edge end\n"
                                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
                                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-                                             "const IDs : vector{Vertex}(int) = 1;\n"				   
+                                             "const IDs : vector{Vertex}(int) = 1;\n"
                                              "const old_rank : vector{Vertex}(float) = 1.0;\n"
                                              "const new_rank : vector{Vertex}(float) = 0.0;\n"
                                              "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
@@ -783,6 +783,20 @@ protected:
         me->emitMIR(mir_context_);
         graphit::Backend *be = new graphit::Backend(mir_context_);
         return be->emitCPP();
+    }
+
+
+    int basicTestWithGPUSchedule(
+            fir::high_level_schedule::ProgramScheduleNode::Ptr program) {
+
+        graphit::Midend *me = new graphit::Midend(context_, program->getSchedule());
+        std::cout << "fir: " << std::endl;
+        std::cout << *(context_->getProgram());
+        std::cout << std::endl;
+
+        me->emitMIR(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
+        return be->emitGPU();
     }
 
     std::vector<ParseError> *errors_;
@@ -2182,13 +2196,13 @@ TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushParallel){
 }
 
 TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushDensePullParallel){
-istringstream is (unordered_kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "SparsePush-DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    program->configApplyDirection("s1", "SparsePush-DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
@@ -2248,65 +2262,72 @@ EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreDensePullParallel){
-istringstream is (kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
-        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSparsePushDensePullParallel){
-istringstream is (kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
-        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "SparsePush-DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush-DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 
 TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
-istringstream is (setcover_uint_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    istringstream is (setcover_uint_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
-TEST_F(HighLevelScheduleTest, GPUScheduleBasicSimpleGPUScheduleTest) {
+TEST_F(HighLevelScheduleTest, BFSBasicSimpleGPUScheduleTest) {
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
     // Now apply the GPU Schedule
     fir::gpu_schedule::SimpleGPUSchedule s1;
     s1.configDeduplication(fir::gpu_schedule::DISABLED);
     s1.configDirection(fir::gpu_schedule::PUSH);
-
     program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
 }
 
-TEST_F(HighLevelScheduleTest, GPUScheduleBasicHybridGPUScheduleTest) {
+TEST_F(HighLevelScheduleTest, BFSBasicHybridGPUScheduleTest) {
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
     // Now apply the GPU Schedule
     fir::gpu_schedule::SimpleGPUSchedule s1;
     fir::gpu_schedule::SimpleGPUSchedule s2;
     s1.configDeduplication(fir::gpu_schedule::DISABLED);
     s1.configDirection(fir::gpu_schedule::PUSH);
-	
     s2 = s1;
     s2.configDirection(fir::gpu_schedule::PULL);
-
     fir::gpu_schedule::HybridGPUSchedule h1 (fir::gpu_schedule::HybridGPUSchedule::INPUT_VERTEXSET_SIZE, 0.2, s1, s2);
-     
-
     program->applyGPUSchedule("s1", h1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
+    istringstream is (sssp_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    s1.configDeduplication(fir::gpu_schedule::ENABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+    program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
 }

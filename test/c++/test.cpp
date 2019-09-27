@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
 
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreDensePullParallel";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSP_LabelProp_GPUScheduleTest";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdate";
