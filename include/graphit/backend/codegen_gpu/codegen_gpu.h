@@ -107,6 +107,7 @@ protected:
 	virtual void visit(mir::VertexSetAllocExpr::Ptr) override;
 
 	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
+	virtual void visit(mir::HybridGPUStmt::Ptr) override;
 
 
 };

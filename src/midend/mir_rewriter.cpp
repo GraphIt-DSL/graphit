@@ -416,5 +416,11 @@ namespace graphit {
 		node = ptr;
 	}
 
+	void MIRRewriter::visit(HybridGPUStmt::Ptr stmt) {
+		stmt->stmt1 = rewrite<StmtBlock>(stmt->stmt1);
+		stmt->stmt2 = rewrite<StmtBlock>(stmt->stmt2);
+		node = stmt;
+	}
+
     }
 }

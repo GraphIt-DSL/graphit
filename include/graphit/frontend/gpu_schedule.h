@@ -27,7 +27,8 @@ enum gpu_schedule_options {
 	CM,
 	STRICT,
 	EDGE_ONLY,
-	VERTEX_BASED
+	VERTEX_BASED,
+	INPUT_VERTEXSET_SIZE
 };
 
 class GPUSchedule {
@@ -180,20 +181,27 @@ public:
 
 class HybridGPUSchedule: public GPUSchedule {
 private:
+	// TODO: have separate alpha beta
+public:	
 	SimpleGPUSchedule s1;
 	SimpleGPUSchedule s2;
 	
 	float threshold;
-	// TODO: have separate alpha beta
-public:	
-	enum hybrid_criteria {
+	enum class hybrid_criteria {
 		INPUT_VERTEXSET_SIZE
 	};
-private:	
 	hybrid_criteria _hybrid_criteria;
+private:	
 public:	
-	HybridGPUSchedule (hybrid_criteria h, float t, SimpleGPUSchedule &_s1, SimpleGPUSchedule &_s2) {
-		_hybrid_criteria = h;
+	HybridGPUSchedule (enum gpu_schedule_options o, float t, SimpleGPUSchedule &_s1, SimpleGPUSchedule &_s2) {
+		switch(o) {
+			case INPUT_VERTEXSET_SIZE:
+				_hybrid_criteria = hybrid_criteria::INPUT_VERTEXSET_SIZE;
+				break;
+			default:
+				assert(false && "Invalid option for HybridGPUScheduleCriteria\n");
+				break;
+		}	
 		threshold = t;
 		s1 = _s1;
 		s2 = _s2;

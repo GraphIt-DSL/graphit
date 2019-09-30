@@ -957,5 +957,17 @@ namespace graphit {
 		return node;
 	}
 
+
+	void HybridGPUStmt::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<HybridGPUStmt>(node);
+		stmt1 = op->stmt1;
+		stmt2 = op->stmt2;
+	}
+	MIRNode::Ptr HybridGPUStmt::cloneNode() {
+		const auto node = std::make_shared<HybridGPUStmt>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
     }
 }

@@ -344,11 +344,100 @@ void CodeGenGPU::visit(mir::VarExpr::Ptr var_expr) {
 	oss << var_expr->var.getName();
 }
 void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
-	printIndent();
-	assign_stmt->lhs->accept(this);
-	oss << " = ";
-	assign_stmt->expr->accept(this);
-	oss << ";" << std::endl;
+	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
+		if (esae->from_func == "") {
+			assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
+		}		
+		// We will assume that the output frontier can reuse the input frontier. 
+		// TOOD: Add liveness analysis for this
+		printIndent();	
+		oss << "{" << std::endl;
+		indent();
+		std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
+		if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+			load_balance_function = "gpu_runtime::TWCE_load_balance";
+		}
+		
+		if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_prepare_sparse(";
+			oss << esae->from_func;
+			oss << ");" << std::endl;
+		} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_prepare_boolmap(";
+			oss << esae->from_func;
+			oss << ");" << std::endl;
+
+			std::string to_func = esae->to_func;
+			if (to_func != "") {
+				printIndent();
+				oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
+				oss << esae->from_func << ");" << std::endl;
+			}
+			
+		}
+		printIndent();
+		assign_stmt->lhs->accept(this);
+		oss << " = " << esae->from_func << ";" << std::endl;
+		
+
+		printIndent();
+		oss << "int32_t num_cta, cta_size;" << std::endl;
+
+		std::string accessor_type = "gpu_runtime::AccessorSparse";
+		if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+			accessor_type = "gpu_runtime::AccessorAll";
+
+		printIndent();		
+		oss << load_balance_function << "_info<" << accessor_type << ">(";
+		oss << esae->from_func;
+		oss << ", num_cta, cta_size);" << std::endl;
+		printIndent();
+		oss << esae->kernel_function << "<<<num_cta, cta_size>>>" << "(";
+		esae->target->accept(this);
+		oss << ", " << esae->from_func << ", ";
+		assign_stmt->lhs->accept(this);
+		oss << ");" << std::endl;
+		printIndent();
+		oss << "cudaDeviceSynchronize();" << std::endl;
+		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+			printIndent();
+			oss << "gpu_runtime::swap_queues(";
+			assign_stmt->lhs->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			assign_stmt->lhs->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
+		
+		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+			printIndent();
+			oss << "gpu_runtime::swap_bitmaps(";
+			assign_stmt->lhs->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			assign_stmt->lhs->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
+		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+			printIndent();
+			oss << "gpu_runtime::swap_bytemaps(";
+			assign_stmt->lhs->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			assign_stmt->lhs->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
+		}
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+	} else {
+		printIndent();
+		assign_stmt->lhs->accept(this);
+		oss << " = ";
+		assign_stmt->expr->accept(this);
+		oss << ";" << std::endl;
+	}
 }
 
 void CodeGenGPU::generateBinaryExpr(mir::BinaryExpr::Ptr expr, std::string token) {
@@ -490,89 +579,10 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 	
 	if (var_decl->initVal != nullptr) {
 		// Special case if RHS is a EdgeSetApplyExpr
-		if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
-			mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
-			if (esae->from_func == "") {
-				assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
-			}		
-			// We will assume that the output frontier can reuse the input frontier. 
-			// TOOD: Add liveness analysis for this
-			oss << " = " << esae->from_func;
-			oss << ";" << std::endl;
-			printIndent();
-			
-			oss << "{" << std::endl;
-			indent();
-			std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-			if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
-				load_balance_function = "gpu_runtime::TWCE_load_balance";
-			}
-			
-			if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
-				printIndent();
-				oss << "gpu_runtime::vertex_set_prepare_sparse(";
-				oss << esae->from_func;
-				oss << ");" << std::endl;
-			} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
-				printIndent();
-				oss << "gpu_runtime::vertex_set_prepare_boolmap(";
-				oss << esae->from_func;
-				oss << ");" << std::endl;
-
-				std::string to_func = esae->to_func;
-				if (to_func != "") {
-					printIndent();
-					oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
-					oss << esae->from_func << ");" << std::endl;
-				}
-				
-			}
-			printIndent();
-			oss << var_decl->name << " = " << esae->from_func << ";" << std::endl;
-			
-
-			printIndent();
-			oss << "int32_t num_cta, cta_size;" << std::endl;
-
-			std::string accessor_type = "gpu_runtime::AccessorSparse";
-			if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
-				accessor_type = "gpu_runtime::AccessorAll";
-
-			printIndent();		
-			oss << load_balance_function << "_info<" << accessor_type << ">(";
-			oss << esae->from_func;
-			oss << ", num_cta, cta_size);" << std::endl;
-			printIndent();
-			oss << esae->kernel_function << "<<<num_cta, cta_size>>>" << "(";
-			esae->target->accept(this);
-			oss << ", " << esae->from_func << ", " << var_decl->name << ");" << std::endl;
-			printIndent();
-			oss << "cudaDeviceSynchronize();" << std::endl;
-			if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-				printIndent();
-				oss << "gpu_runtime::swap_queues(" << var_decl->name << ");" << std::endl;
-				printIndent();
-				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
-			
-			} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-				printIndent();
-				oss << "gpu_runtime::swap_bitmaps(" << var_decl->name << ");" << std::endl;
-				printIndent();
-				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
-			} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-				printIndent();
-				oss << "gpu_runtime::swap_bytemaps(" << var_decl->name << ");" << std::endl;
-				printIndent();
-				oss << var_decl->name << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
-			}
-			dedent();
-			printIndent();
-			oss << "}" << std::endl;
-		} else {
-			oss << " = ";
-			var_decl->initVal->accept(this);
-			oss << ";" << std::endl;
-		}
+		oss << " = ";
+		var_decl->initVal->accept(this);
+		oss << ";" << std::endl;
+		
 	} else 
 		oss << ";" << std::endl;
 		
@@ -750,6 +760,24 @@ void CodeGenGPUHost::visit(mir::StmtBlock::Ptr stmt_block) {
 		for (auto tare: extractor.write_set) {
 			generateHostToDeviceCopy(tare);
 		}
+	}
+}
+void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
+	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
+		printIndent();
+		oss << "if (builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
+		indent();
+		stmt->stmt1->accept(this);
+		dedent();
+		printIndent();
+		oss << "} else {" << std::endl;
+		indent();	
+		stmt->stmt2->accept(this);
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;	
+	} else {
+		assert(false && "Invalid criteria for Hybrid Statement\n");
 	}
 }
 }

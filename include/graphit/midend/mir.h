@@ -1534,6 +1534,22 @@ namespace graphit {
 		virtual void copy(MIRNode::Ptr);
 		virtual MIRNode::Ptr cloneNode();		
 	};
+	struct HybridGPUStmt: Stmt {
+		StmtBlock::Ptr stmt1;
+		StmtBlock::Ptr stmt2;
+		float threshold;
+		fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria criteria;
+			
+		std::string input_frontier_name;
+
+		typedef std::shared_ptr<HybridGPUStmt> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<HybridGPUStmt>());
+		}
+	protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
     }
 
 }

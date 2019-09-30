@@ -8,8 +8,8 @@ void cudaCheckLastError(void) {
 		exit(-1);
 	}
 }
-__device__ inline int32_t warp_bcast(int32_t v, int32_t leader) {
-	return __shfl_sync((uint32_t)-1, v, leader); 
+__device__ inline int32_t warp_bcast(int32_t mask, int32_t v, int32_t leader) {
+	return __shfl_sync((uint32_t)mask, v, leader); 
 }
 __device__ inline int32_t atomicAggInc(int32_t *ctr) {
 	int32_t lane_id = threadIdx.x % 32;
@@ -19,7 +19,7 @@ __device__ inline int32_t atomicAggInc(int32_t *ctr) {
         int res;
         if(lane_id == leader)
                 res = atomicAdd(ctr, __popc(mask));
-        res = warp_bcast(res, leader);
+        res = warp_bcast(mask, res, leader);
 
         return (res + __popc(mask & ((1 << lane_id) - 1)));
 }

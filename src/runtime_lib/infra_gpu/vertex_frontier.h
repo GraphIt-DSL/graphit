@@ -115,6 +115,8 @@ static void __device__ enqueueVertexSparseQueue(int32_t *sparse_queue, int32_t *
 }
 static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *byte_map_size, int32_t vertex_id) {
 	// We are not using atomic operation here because races are benign here
+	if (byte_map[vertex_id] == 1)
+		return;
 	byte_map[vertex_id] = 1;
 	atomicAggInc(byte_map_size);
 }

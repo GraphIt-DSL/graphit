@@ -376,5 +376,9 @@ namespace graphit {
 	void MIRVisitor::visit(std::shared_ptr<VertexSetDedupExpr> op) {
 		op->target->accept(this);
 	}
+	void MIRVisitor::visit(std::shared_ptr<HybridGPUStmt> op) {
+		op->stmt1->accept(this);
+		op->stmt2->accept(this);		
+	}
     }
 }

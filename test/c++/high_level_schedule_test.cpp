@@ -2315,7 +2315,7 @@ TEST_F(HighLevelScheduleTest, BFSBasicHybridGPUScheduleTest) {
     s1.configDirection(fir::gpu_schedule::PUSH);
     s2 = s1;
     s2.configDirection(fir::gpu_schedule::PULL);
-    fir::gpu_schedule::HybridGPUSchedule h1 (fir::gpu_schedule::HybridGPUSchedule::INPUT_VERTEXSET_SIZE, 0.2, s1, s2);
+    fir::gpu_schedule::HybridGPUSchedule h1 (fir::gpu_schedule::INPUT_VERTEXSET_SIZE, 0.2, s1, s2);
     program->applyGPUSchedule("s1", h1);
     EXPECT_EQ (0, basicTestWithGPUSchedule(program));
 }
