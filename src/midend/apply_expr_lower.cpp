@@ -50,19 +50,21 @@ namespace graphit {
 	node = stmt_block;
     }
     void ApplyExprLower::LowerApplyExpr::visit(mir::VarDecl::Ptr var_decl) {
-	if (mir::isa<mir::EdgeSetApplyExpr> (var_decl->initVal)) {
-		auto init_val = var_decl->initVal;
-		var_decl->initVal = nullptr;
-		mir::AssignStmt::Ptr assign_stmt = std::make_shared<mir::AssignStmt>();
-		assign_stmt->expr = init_val;
-		mir::VarExpr::Ptr var_expr = std::make_shared<mir::VarExpr>();
-		mir::Var var (var_decl->name, var_decl->type);
-		var_expr->var = var;
-		assign_stmt->lhs = var_expr;
-		assign_stmt->stmt_label = var_decl->stmt_label;
-		insert_after_stmt = assign_stmt;
-		node = var_decl;
-		return;	
+	if (schedule_ != nullptr && !schedule_->apply_gpu_schedules.empty()) {
+		if (mir::isa<mir::EdgeSetApplyExpr> (var_decl->initVal)) {
+			auto init_val = var_decl->initVal;
+			var_decl->initVal = nullptr;
+			mir::AssignStmt::Ptr assign_stmt = std::make_shared<mir::AssignStmt>();
+			assign_stmt->expr = init_val;
+			mir::VarExpr::Ptr var_expr = std::make_shared<mir::VarExpr>();
+			mir::Var var (var_decl->name, var_decl->type);
+			var_expr->var = var;
+			assign_stmt->lhs = var_expr;
+			assign_stmt->stmt_label = var_decl->stmt_label;
+			insert_after_stmt = assign_stmt;
+			node = var_decl;
+			return;	
+		}
 	}
 	MIRRewriter::visit(var_decl);
 	var_decl = mir::to<mir::VarDecl>(node);
