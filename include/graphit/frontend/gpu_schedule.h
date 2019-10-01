@@ -28,7 +28,9 @@ enum gpu_schedule_options {
 	STRICT,
 	EDGE_ONLY,
 	VERTEX_BASED,
-	INPUT_VERTEXSET_SIZE
+	INPUT_VERTEXSET_SIZE,
+	BITMAP,
+	BOOLMAP
 };
 
 class GPUSchedule {
@@ -41,6 +43,10 @@ public:
 class SimpleGPUSchedule: public GPUSchedule {
 
 public:
+	enum class pull_frontier_rep_type {
+		BITMAP, 
+		BOOLMAP
+	};
 	enum class direction_type {
 		DIR_PUSH, 
 		DIR_PULL
@@ -75,6 +81,7 @@ public:
 private:
 public:
 	direction_type direction;
+	pull_frontier_rep_type pull_frontier_rep;
 	frontier_creation_type frontier_creation;
 	deduplication_type deduplication;
 	load_balancing_type load_balancing;
@@ -82,6 +89,7 @@ public:
 	
 	SimpleGPUSchedule () {
 		direction = direction_type::DIR_PUSH;
+		pull_frontier_rep = pull_frontier_rep_type::BOOLMAP;
 		frontier_creation = frontier_creation_type::FRONTIER_FUSED;
 		deduplication = deduplication_type::DEDUP_DISABLED;
 		load_balancing = load_balancing_type::VERTEX_BASED;
@@ -89,13 +97,24 @@ public:
 	}	
 
 public:	
-	void configDirection(enum gpu_schedule_options o) {
+	void configDirection(enum gpu_schedule_options o, enum gpu_schedule_options r = BOOLMAP) {
 		switch(o) {
 			case PUSH:
 				direction = direction_type::DIR_PUSH;
 				break;
 			case PULL:
 				direction = direction_type::DIR_PULL;
+				switch (r) {
+					case BITMAP:
+						pull_frontier_rep = pull_frontier_rep_type::BITMAP;
+						break;
+					case BOOLMAP:
+						pull_frontier_rep = pull_frontier_rep_type::BOOLMAP;
+						break;
+					default:
+						assert(false && "Invalid option for Pull Frontier representation\n");
+						break;
+				}
 				break;
 			default:
 				assert(false && "Invalid option for configDirection");

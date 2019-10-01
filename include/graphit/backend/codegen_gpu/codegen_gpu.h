@@ -84,6 +84,7 @@ protected:
 	virtual void visit(mir::DivExpr::Ptr) override;
 	virtual void visit(mir::SubExpr::Ptr) override;
 	virtual void visit(mir::EqExpr::Ptr) override;
+	virtual void visit(mir::NegExpr::Ptr) override;
 
 	virtual void visit(mir::TensorArrayReadExpr::Ptr) override;
 	virtual void visit(mir::IntLiteral::Ptr) override;
@@ -93,6 +94,7 @@ protected:
 
 
 	virtual void visit(mir::ReduceStmt::Ptr) override;
+	virtual void visit(mir::CompareAndSwapStmt::Ptr) override;
 	virtual void visit(mir::VarDecl::Ptr) override;
 
 	virtual void visit(mir::ForStmt::Ptr) override;

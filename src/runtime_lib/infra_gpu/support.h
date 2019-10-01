@@ -31,6 +31,10 @@ static bool __device__ writeMin(T *dst, T src) {
 	bool ret = (old_value > src);
 	return ret;
 }
+template <typename T>
+static bool __device__ CAS(T *dst, T old_val, const T &new_val) {
+	return old_val == atomicCAS(dst, old_val, new_val);
+}
 }
 
 #endif

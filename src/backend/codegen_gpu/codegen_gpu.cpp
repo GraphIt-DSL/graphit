@@ -171,12 +171,21 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	oss << "// Body of the actual operator" << std::endl;
 	// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
 	
-	printIndent();
-	oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
-	indent();
-	printIndent();
-	oss << "return;" << std::endl;
-	dedent();
+	if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+		printIndent();
+		oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
+		indent();
+		printIndent();
+		oss << "return;" << std::endl;
+		dedent();
+	} else if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+		printIndent();
+		oss << "if (!gpu_runtime::checkBit(input_frontier.d_bit_map_input, dst))" << std::endl;
+		indent();
+		printIndent();
+		oss << "return;" << std::endl;
+		dedent();
+	}
 
 	printIndent();
 	oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
@@ -365,10 +374,17 @@ void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
 			oss << esae->from_func;
 			oss << ");" << std::endl;
 		} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
-			printIndent();
-			oss << "gpu_runtime::vertex_set_prepare_boolmap(";
-			oss << esae->from_func;
-			oss << ");" << std::endl;
+			if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+				printIndent();
+				oss << "gpu_runtime::vertex_set_prepare_boolmap(";
+				oss << esae->from_func;
+				oss << ");" << std::endl;
+			} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+				printIndent();
+				oss << "gpu_runtime::vertex_set_prepare_bitmap(";
+				oss << esae->from_func;
+				oss << ");" << std::endl;
+			}
 
 			std::string to_func = esae->to_func;
 			if (to_func != "") {
@@ -458,6 +474,13 @@ void CodeGenGPU::visit(mir::DivExpr::Ptr expr) {
 }
 void CodeGenGPU::visit(mir::SubExpr::Ptr expr) {
 	generateBinaryExpr(expr, "-");
+}
+void CodeGenGPU::visit(mir::NegExpr::Ptr expr) {
+	if (expr->negate)
+		oss << "-";
+	oss << "(";
+	expr->operand->accept(this);
+	oss << ")";
 }
 
 
@@ -569,6 +592,16 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			oss << ");" << std::endl;
 			break;
 	}	
+}
+void CodeGenGPU::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
+	printIndent();
+	oss << cas_stmt->tracking_var_ << " = gpu_runtime::CAS(&";
+	cas_stmt->lhs->accept(this);
+	oss << ", ";
+	cas_stmt->compare_val_expr->accept(this);
+	oss << ", ";
+	cas_stmt->expr->accept(this);
+	oss << ");" << std::endl;
 }
 void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 	
