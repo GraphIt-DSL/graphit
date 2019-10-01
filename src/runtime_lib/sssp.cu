@@ -112,11 +112,12 @@ int __host__ main(int argc, char* argv[]) {
 				tmp[0] = 0;
 				for(int i=1; i<=f_size;i++) {
 					tmp[i] = tmp[i] + tmp[i-1];
-					//printf("%d\n", tmp[i]);
-				}
+					//printf("%d ", tmp[i]);
+				} //printf("\n");
+
 				cudaMemcpy(&frontier.d_sparse_queue_input[edges.num_vertices], tmp, sizeof(int32_t)*(f_size+1), cudaMemcpyHostToDevice);
 				num_cta = (tmp[f_size]+CTA_SIZE-1)/CTA_SIZE;
-				gpu_operator_kernel_4<<<num_cta*2, cta_size>>>(edges, frontier, output);
+				gpu_operator_kernel_4<<<num_cta, cta_size>>>(edges, frontier, output);
 				free(tmp);
 #endif
 #ifdef TWC
@@ -139,7 +140,7 @@ int __host__ main(int argc, char* argv[]) {
 				cudaDeviceSynchronize();
 				gpu_runtime::swap_bytemaps(output);
 				output.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
-exit(0);
+
 			}
 			gpu_runtime::deleteObject(frontier);
 			frontier = output;
@@ -148,6 +149,7 @@ exit(0);
 				std::cout << "negative cycle" << std::endl;
 				break;
 			}
+//if(rounds == 21) break;
 		}
 
 		
