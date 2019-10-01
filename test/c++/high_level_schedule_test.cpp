@@ -2331,3 +2331,26 @@ TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
     program->applyGPUSchedule("s1", s1);
     EXPECT_EQ (0, basicTestWithGPUSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (bfs_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Now apply the GPU Schedule
+    SimpleGPUSchedule s1;
+    s1.configDeduplication(ENABLED);
+    s1.configFrontierCreation(UNFUSED_BITMAP);
+    s1.configLoadBalance(TWCE);
+    s1.configDirection(PUSH);
+    
+    SimpleGPUSchedule s2 = s1;
+    s2.configLoadBalance(VERTEX_BASED);
+    s2.configDirection(PULL, BITMAP);
+    
+    HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
+    program->applyGPUSchedule("s1", h1);
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+}
