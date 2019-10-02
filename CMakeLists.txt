@@ -85,17 +85,17 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/graphit.py
 
 find_package(CUDA QUIET)
 
-add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/gpu_tests/runtime_lib_tests.py
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/gpu_tests/all_gpu_tests.py
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/gpu_tests
-	COMMAND sed -e s?\$\{NVCC_COMPILER\}?${CUDA_NVCC_EXECUTABLE}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/test/gpu_tests/runtime_lib_tests.py > ${CMAKE_BINARY_DIR}/gpu_tests/runtime_lib_tests.py
-	DEPENDS ${CMAKE_SOURCE_DIR}/test/gpu_tests/runtime_lib_tests.py
+	COMMAND sed -e s?\$\{NVCC_COMPILER\}?${CUDA_NVCC_EXECUTABLE}?g -e s?\$\{GRAPHIT_SOURCE_DIRECTORY\}?${CMAKE_SOURCE_DIR}?g -e s?\$\{CXX_COMPILER\}?${CMAKE_CXX_COMPILER}?g -e s?\$\{GRAPHIT_BUILD_DIRECTORY\}?${CMAKE_BINARY_DIR}?g ${CMAKE_SOURCE_DIR}/test/gpu_tests/all_gpu_tests.py > ${CMAKE_BINARY_DIR}/gpu_tests/all_gpu_tests.py
+	DEPENDS ${CMAKE_SOURCE_DIR}/test/gpu_tests/all_gpu_tests.py
 	VERBATIM
 )
 	
 add_custom_target(copy_graphitc_py ALL DEPENDS ${GRAPHITC_PY})
 add_custom_target(copy_python_tests ALL DEPENDS ${CMAKE_BINARY_DIR}/python_tests/test_with_schedules.py ${CMAKE_BINARY_DIR}/python_tests/test.py ${CMAKE_BINARY_DIR}/python_tests/pybind_test.py)
 add_custom_target(copy_graphit_py ALL DEPENDS ${CMAKE_BINARY_DIR}/graphit.py)
-add_custom_target(copy_gpu_runtime_lib_tests_py ALL DEPENDS ${CMAKE_BINARY_DIR}/gpu_tests/runtime_lib_tests.py)
+add_custom_target(copy_all_gpu_tests_py ALL DEPENDS ${CMAKE_BINARY_DIR}/gpu_tests/all_gpu_tests.py)
 
 configure_file(src/main.cpp ${CMAKE_BINARY_DIR}/bin/main.cpp COPYONLY)
 configure_file(test/library_test_drivers/library_test_driver_cpp.txt ${CMAKE_BINARY_DIR}/bin/library_test_driver.cpp COPYONLY)

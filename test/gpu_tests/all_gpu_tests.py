@@ -34,7 +34,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 
 	@classmethod	
 	def setUpClass(cls):
-		if NVCC_COMPILER == "":
+		if NVCC_COMPILER == "CUDA_NVCC_EXECUTABLE-NOTFOUND":
 			print ("Cannot find CUDA compiler")
 			exit(-1)	
 
@@ -79,6 +79,8 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		output = output.split("\n")
 		self.assertEqual(len(output), 3)
 		self.assertEqual(output[1], "14, 106")
+	def test_runtime_library(self):
+		print (self.cpp_exec_test("runtime_lib_tests.cu", ["-I", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest/gtest-all.cc"], [self.graph_directory]))
 
 if __name__ == '__main__':
 	unittest.main()
