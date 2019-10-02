@@ -11,6 +11,7 @@ namespace gpu_runtime {
 
 template <typename EdgeWeightType>
 struct GraphT { // Field names are according to CSR, reuse for CSC
+	typedef EdgeWeightType EdgeWeightT;
 	int32_t num_vertices;
 	int32_t num_edges;
 

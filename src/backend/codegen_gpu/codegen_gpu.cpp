@@ -95,33 +95,6 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 		
 }
 
-void CodeGenGPUKernelEmitter::genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr apply_expr) {
-	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-	if (apply_expr->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
-		load_balance_function = "gpu_runtime::TWCE_load_balance";
-	}
-	std::string accessor_type = "gpu_runtime::AccessorSparse";
-	if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && apply_expr->to_func == "")
-		accessor_type = "gpu_runtime::AccessorAll";
-
-	std::string src_filter = "gpu_runtime::true_function";
-	if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && apply_expr->to_func != "")
-		src_filter = apply_expr->to_func;
-
-	std::string kernel_function_name = "gpu_operator_kernel_" + mir_context_->getUniqueNameCounterString();
-
-	oss << "template <typename EdgeWeightType>" << std::endl;
-	oss << "void __global__ " << kernel_function_name << " (gpu_runtime::GraphT<EdgeWeightType> graph, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {" << std::endl;
-	indent();
-	printIndent();
-	oss << load_balance_function << "<EdgeWeightType, " << apply_expr->device_function << "<EdgeWeightType>, " << accessor_type << ", " << src_filter << "> (";
-	oss << "graph, input_frontier, output_frontier);" << std::endl;
-	
-	dedent();
-	printIndent();
-	oss << "}" << std::endl;
-	apply_expr->kernel_function = kernel_function_name;
-}
 void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
 	// First we generate the function that is passed to the load balancing function
@@ -152,7 +125,10 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	printIndent();
 	oss << "}" << std::endl;	
 	apply_expr->device_function = load_balancing_arg;
+	// We are not generating the kernel now because we are directly using the host wrappers from the library
+/*
 	genEdgeSetGlobalKernel(apply_expr);
+*/
 	
 }
 
@@ -207,7 +183,11 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	printIndent();
 	oss << "}" << std::endl;	
 	apply_expr->device_function = load_balancing_arg;
+
+	// We are not generating the kernel now because we are directly using the host wrappers from the library
+/*
 	genEdgeSetGlobalKernel(apply_expr);
+*/
 }
 
 void CodeGenGPU::genIncludeStmts(void) {
@@ -229,7 +209,7 @@ void CodeGenGPU::visit(mir::EdgeSetType::Ptr edgeset_type) {
 		edgeset_type->weight_type->accept(this);
 		oss << ">";	
 	} else {
-		oss << "gpu_runtime::GraphT<int>";
+		oss << "gpu_runtime::GraphT<int32_t>";
 	}
 }
 
@@ -397,25 +377,31 @@ void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
 		printIndent();
 		assign_stmt->lhs->accept(this);
 		oss << " = " << esae->from_func << ";" << std::endl;
-		
 
 		printIndent();
-		oss << "int32_t num_cta, cta_size;" << std::endl;
-
+		oss << load_balance_function << "_host<";
+		
+		mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
+		mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
+		if (target_type->weight_type == nullptr)
+			oss << "int32_t";
+		else
+			target_type->weight_type->accept(this);
+		
 		std::string accessor_type = "gpu_runtime::AccessorSparse";
 		if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
 			accessor_type = "gpu_runtime::AccessorAll";
-
-		printIndent();		
-		oss << load_balance_function << "_info<" << accessor_type << ">(";
-		oss << esae->from_func;
-		oss << ", num_cta, cta_size);" << std::endl;
-		printIndent();
-		oss << esae->kernel_function << "<<<num_cta, cta_size>>>" << "(";
+		std::string src_filter = "gpu_runtime::true_function";
+		if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
+			src_filter = esae->to_func;
+		
+		oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
 		esae->target->accept(this);
 		oss << ", " << esae->from_func << ", ";
 		assign_stmt->lhs->accept(this);
 		oss << ");" << std::endl;
+			
+
 		printIndent();
 		oss << "cudaDeviceSynchronize();" << std::endl;
 		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
