@@ -9,6 +9,7 @@ namespace graphit {
     Token::Type Scanner::getTokenType(const std::string token) {
         if (token == "int") return Token::Type::INT;
         if (token == "uint") return Token::Type::UINT;
+        if (token == "uint_64") return Token::Type::UINT_64;
         if (token == "float") return Token::Type::FLOAT;
         if (token == "double") return Token::Type::DOUBLE;
         if (token == "bool") return Token::Type::BOOL;

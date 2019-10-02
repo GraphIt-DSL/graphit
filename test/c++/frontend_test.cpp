@@ -55,6 +55,11 @@ TEST_F(FrontendTest, UINTVarDecl ) {
     istringstream is("const a : uint = 3 + 4;");
     EXPECT_EQ (0,  basicTest(is));
 }
+
+TEST_F(FrontendTest, UINT64VarDecl ) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
 TEST_F(FrontendTest, SimpleFunctionDecl ) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
     EXPECT_EQ (0,  basicTest(is));

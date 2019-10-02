@@ -1580,6 +1580,7 @@ namespace graphit {
             case Token::Type::DOUBLE:
             case Token::Type::INT:
             case Token::Type::UINT:
+            case Token::Type::UINT_64:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:
@@ -1771,6 +1772,7 @@ namespace graphit {
         switch (peek().type) {
             case Token::Type::INT:
             case Token::Type::UINT:
+            case Token::Type::UINT_64:
             case Token::Type::FLOAT:
             case Token::Type::DOUBLE:
             case Token::Type::BOOL:
@@ -1906,6 +1908,10 @@ namespace graphit {
             case Token::Type::UINT:
                 consume(Token::Type::UINT);
                 scalarType->type = fir::ScalarType::Type::UINT;
+                break;
+            case Token::Type::UINT_64:
+                consume(Token::Type::UINT_64);
+                scalarType->type = fir::ScalarType::Type::UINT_64;
                 break;
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);
