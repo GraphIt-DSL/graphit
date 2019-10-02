@@ -1579,6 +1579,7 @@ namespace graphit {
                 break;
             case Token::Type::DOUBLE:
             case Token::Type::INT:
+            case Token::Type::UINT:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:

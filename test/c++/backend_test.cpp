@@ -60,6 +60,11 @@ TEST_F(BackendTest, SimpleVarDecl) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+TEST_F(BackendTest, UINTDecl ) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
 TEST_F(BackendTest, SimpleDoubleVarDecl) {
     istringstream is("const a : double = 3; \n func main()  end");
     EXPECT_EQ (0, basicTest(is));

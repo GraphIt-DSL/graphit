@@ -54,6 +54,10 @@ TEST_F(MidendTest, SimpleVarDecl ) {
 }
 
 
+TEST_F(MidendTest, UINTDecl ) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0 , basicTest(is));
+}
 //tests mid end
 TEST_F(MidendTest, SimpleFunctionDecl) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
