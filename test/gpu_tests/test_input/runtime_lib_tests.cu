@@ -1,7 +1,6 @@
 #include <gtest.h>
 #include "gpu_intrinsics.h"
 
-
 std::string graph_directory;
 
 class GPURuntimeLibTest: public ::testing::Test {
@@ -16,7 +15,16 @@ TEST_F(GPURuntimeLibTest, SimpleLoadGraphFromFileTest) {
 	gpu_runtime::GraphT<int32_t> edges;
 	gpu_runtime::load_graph(edges, graph_directory + "/4.mtx", false);
 	EXPECT_EQ (14, edges.num_vertices);
-}	
+}
+
+TEST_F(GPURuntimeLibTest, SimplePriorityQueueTest){
+	gpu_runtime::GraphT<int32_t> edges;
+	gpu_runtime::load_graph(edges, graph_directory + "/4.mtx", false);
+	int num_vertices = gpu_runtime::builtin_getVertices(edges);
+	int* priorities = new int[num_vertices]; 
+	gpu_runtime::GPUPriorityQueue<int> pq = gpu_runtime::GPUPriorityQueue<int>(priorities);
+	EXPECT_EQ (14, num_vertices);
+}
 
 int main(int argc, char* argv[]) {
 	if (argc < 2) {
