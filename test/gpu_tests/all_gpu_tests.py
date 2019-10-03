@@ -17,6 +17,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		if isinstance(command, list):
 			proc = subprocess.Popen(command, stdout=subprocess.PIPE)
 		else:
+                        print(command)
 			proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
 		exitcode = proc.wait()
 		for line in proc.stdout.readlines():
