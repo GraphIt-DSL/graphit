@@ -39,6 +39,10 @@ int CodeGenGPU::genGPU() {
 	CodeGenGPUKernelEmitter kernel_emitter(oss, mir_context_);
 	for (auto function: functions)
 		function->accept(&kernel_emitter);		
+	
+	// All the fused kernels need to generated before we can acutally generate the functions
+	for (auto while_loop: mir_context_->fused_while_loops) 
+		genFusedWhileLoop(while_loop);
 
 	for (auto function: functions) {
 		if (function->function_context & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
@@ -94,7 +98,63 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 	
 		
 }
+void KernelVariableExtractor::visit(mir::VarExpr::Ptr var_expr) {
+	insertVar(var_expr->var);
+}
+void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
+	// First we generate a unique function name for this fused kernel
+	std::string fused_kernel_name = "fused_kernel_body_" + mir_context_->getUniqueNameCounterString();
+	while_stmt->fused_kernel_name = fused_kernel_name;
 
+	// Now we extract the list of variables that are used in the kernel that are not const 
+	// So we can hoist them
+	KernelVariableExtractor extractor;
+	while_stmt->accept(&extractor);
+	
+	CodeGenGPUFusedKernel codegen (oss, mir_context_, module_name, "");
+	
+	oss << "// ";
+	for (auto var: extractor.hoisted_vars) 
+		oss << var.getName() << " ";
+	oss << std::endl;
+	
+	for (auto var: extractor.hoisted_vars) {	
+		var.getType()->accept(this);	
+		oss << " __device__ " << fused_kernel_name << "_" << var.getName() << ";" << std::endl;
+	}
+	codegen.kernel_hoisted_vars = extractor.hoisted_vars;
+	codegen.current_kernel_name = fused_kernel_name;
+
+	oss << "void __global__ " << fused_kernel_name << "(void) {" << std::endl;	
+	codegen.indent();
+	codegen.printIndent();
+	oss << "grid_group _grid = this_grid();" << std::endl;
+	codegen.printIndent();
+	oss << "int32_t _thread_id = threadIdx.x + blockIdx.x * blockDim.x;" << std::endl;
+	codegen.printIndent();
+	oss << "while (";
+	while_stmt->cond->accept(&codegen);
+	oss << ") {" << std::endl;
+	codegen.indent();
+	while_stmt->body->accept(&codegen);
+	codegen.dedent();
+	codegen.printIndent();
+	oss << "}" << std::endl;
+	codegen.dedent();
+	codegen.printIndent();
+	oss << "}" << std::endl;			
+
+	codegen.kernel_hoisted_vars.clear();
+}
+void CodeGenGPUFusedKernel::visit(mir::StmtBlock::Ptr stmt_block) {
+	for (auto stmt : *(stmt_block->stmts)) {
+		stmt->accept(this);
+		if (!mir::isa<mir::BreakStmt>(stmt)) {
+			printIndent();
+			oss << "_grid.sync();" << std::endl;
+		}
+	}
+}
 void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
 	// First we generate the function that is passed to the load balancing function
@@ -106,10 +166,16 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	indent();
 	printIndent();
 	oss << "// Body of the actual operator code" << std::endl;
-	printIndent();
-	oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
-	printIndent();
-	oss << "if (" << apply_expr->input_function_name << "(src, dst, weight)) {" << std::endl;
+	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+	if (input_function->args.size() == 3) {	
+		printIndent();
+		oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
+		printIndent();
+		oss << "if (" << apply_expr->input_function_name << "(src, dst, weight)) {" << std::endl;
+	} else {
+		printIndent();
+		oss << "if (" << apply_expr->input_function_name << "(src, dst)) {" << std::endl;
+	}
 	indent();
 	printIndent();
 	if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED)
@@ -163,11 +229,17 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 		dedent();
 	}
 
-	printIndent();
-	oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
-	printIndent();
-	// Order is reversed here because PULL direction
-	oss << "if (" << apply_expr->input_function_name << "(dst, src, weight)) {" << std::endl;
+	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+	if (input_function->args.size() == 3) {	
+		printIndent();
+		oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
+		printIndent();
+		oss << "if (" << apply_expr->input_function_name << "(dst, src, weight)) {" << std::endl;
+	} else {
+		printIndent();
+		oss << "if (" << apply_expr->input_function_name << "(dst, src)) {" << std::endl;
+	}
+
 	indent();
 	printIndent();
 	if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED)
@@ -192,6 +264,8 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 
 void CodeGenGPU::genIncludeStmts(void) {
 	oss << "#include \"gpu_intrinsics.h\"" << std::endl;
+	oss << "#include <cooperative_groups.h>" << std::endl;
+	oss << "using namespace cooperative_groups;" << std::endl;
 
 }
 
@@ -330,6 +404,10 @@ void CodeGenGPU::visit(mir::ExprStmt::Ptr expr_stmt) {
 	oss << ";" << std::endl;
 }
 void CodeGenGPU::visit(mir::VarExpr::Ptr var_expr) {
+	if (is_hoisted_var(var_expr->var)) {
+		oss << current_kernel_name << "_" << var_expr->var.getName();
+		return;
+	}
 	oss << var_expr->var.getName();
 }
 void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
@@ -440,6 +518,22 @@ void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
 		assign_stmt->expr->accept(this);
 		oss << ";" << std::endl;
 	}
+}
+
+void CodeGenGPUFusedKernel::visit(mir::AssignStmt::Ptr assign_stmt) {
+	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+		// Will be handled later
+	} else {
+		printIndent();
+		oss << "if (_thread_id == 0) " << std::endl;
+		indent();
+		printIndent();
+		assign_stmt->lhs->accept(this);
+		oss << " = ";
+		assign_stmt->expr->accept(this);
+		oss << ";" << std::endl;	
+		dedent();
+	}	
 }
 
 void CodeGenGPU::generateBinaryExpr(mir::BinaryExpr::Ptr expr, std::string token) {
@@ -607,6 +701,9 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 		
 	
 }
+void CodeGenGPUFusedKernel::visit(mir::VarDecl::Ptr var_decl) {
+	// Do nothing for variable declarations on kernel	
+}
 void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
 	oss << "gpu_runtime::dedup_frontier(";
 	vsde->target->accept(this);
@@ -629,6 +726,11 @@ void CodeGenGPU::visit(mir::ForStmt::Ptr for_stmt) {
 	oss << "}" << std::endl;
 }
 void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
+	if (while_stmt->is_fused == true) {
+		printIndent();
+		oss << "cudaLaunchCooperativeKernel((void*)" << while_stmt->fused_kernel_name << ", NUM_CTA, CTA_SIZE, gpu_runtime::no_args);" << std::endl;
+		return;
+	}
 	printIndent();
 	oss << "while (";
 	while_stmt->cond->accept(this);
@@ -659,13 +761,24 @@ void CodeGenGPU::visit(mir::IfStmt::Ptr if_stmt) {
 	}	
 	oss << std::endl;
 }
-void CodeGenGPU::visit(mir::PrintStmt::Ptr print_stmt) {
+void CodeGenGPUHost::visit(mir::PrintStmt::Ptr print_stmt) {
 	printIndent();
 	oss << "std::cout << ";
 	print_stmt->expr->accept(this);
 	oss << " << std::endl;" << std::endl;
 }
-void CodeGenGPU::visit(mir::Call::Ptr call_expr) {
+void CodeGenGPU::visit(mir::PrintStmt::Ptr print_stmt) {
+	assert(false && "Cannot print from device function\n");
+}
+void CodeGenGPUFusedKernel::visit(mir::PrintStmt::Ptr print_stmt) {
+	printIndent();
+	oss << "if (_thread_id == 0)" << std::endl;
+	indent();
+	printIndent();
+	oss << "printf(\"There is supposed to be a print here\\n\");" << std::endl;
+	dedent();
+}
+void CodeGenGPUHost::visit(mir::Call::Ptr call_expr) {
 	if (call_expr->name == "deleteObject" || call_expr->name.substr(0, strlen("builtin_")) == "builtin_")	
 		oss << "gpu_runtime::" << call_expr->name << "(";
 	else
@@ -680,6 +793,23 @@ void CodeGenGPU::visit(mir::Call::Ptr call_expr) {
 	}	
 	oss << ")";
 }
+
+void CodeGenGPU::visit(mir::Call::Ptr call_expr) {
+	if (call_expr->name == "deleteObject" || call_expr->name.substr(0, strlen("builtin_")) == "builtin_")	
+		oss << "gpu_runtime::device_" << call_expr->name << "(";
+	else
+		oss << call_expr->name << "(";
+	
+	bool printDelimeter = false;
+	for (auto arg: call_expr->args) {
+		if (printDelimeter) 
+			oss << ", ";
+		arg->accept(this);
+		printDelimeter = true;
+	}	
+	oss << ")";
+}
+
 void CodeGenGPU::visit(mir::EqExpr::Ptr eq_expr) {
 	oss << "(";
 	eq_expr->operands[0]->accept(this);
@@ -741,7 +871,7 @@ void CodeGenGPU::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 	mir::Expr::Ptr size_expr = mir_context_->getElementCount(vsae->element_type);
 	oss << "gpu_runtime::create_new_vertex_set(";
 	size_expr->accept(this);
-	oss << ")" << std::endl;
+	oss << ")";
 }
 void CodeGenGPUHost::generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare) {
 	printIndent();

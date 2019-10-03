@@ -17,6 +17,11 @@ static void deleteObject(T &t) {
 	// Currently deleteObject is empty
 
 }
+template <typename T>
+static __device__ void device_deleteObject(T &t) {
+	// Currently deleteObject is empty
+}
 
+static void * no_args[1];
 }
 #endif

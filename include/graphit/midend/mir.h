@@ -414,6 +414,9 @@ namespace graphit {
 
             typedef std::shared_ptr<WhileStmt> Ptr;
 
+	    bool is_fused;
+	    std::string fused_kernel_name;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());
             }

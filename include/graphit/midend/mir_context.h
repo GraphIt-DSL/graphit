@@ -422,6 +422,10 @@ namespace graphit {
 
         std::vector<mir::Type::Ptr> types_requiring_typedef;
 
+
+	// Used by kernel fusion optimization
+	std::vector<mir::WhileStmt::Ptr> fused_while_loops;
+
     };
 
 }
