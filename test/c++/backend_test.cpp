@@ -61,14 +61,48 @@ TEST_F(BackendTest, SimpleVarDecl) {
 }
 
 
-TEST_F(BackendTest, UINTDecl) {
+TEST_F(BackendTest, UINTGlobalDecl) {
     istringstream is("const a : uint = 3 + 4;");
     EXPECT_EQ (0,  basicTest(is));
 }
 
-TEST_F(BackendTest, UINT64Decl) {
+TEST_F(BackendTest, UINT64GlobalDecl) {
     istringstream is("const a : uint_64 = 3 + 4;");
     EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, UINTGlobalLocalIncr) {
+    istringstream is("const a : uint = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64GlobalLocalIncr) {
+    istringstream is("const a : uint_64 = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTReassign) {
+    istringstream is("const a : uint;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64Reassign) {
+    istringstream is("const a : uint_64;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTLocalDec) {
+    istringstream is("func main() const a : uint = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64LocalDec) {
+    istringstream is("func main() const a : uint_64 = 1; end");
+    EXPECT_EQ (0, basicTest(is));
 }
 
 TEST_F(BackendTest, SimpleDoubleVarDecl) {
@@ -129,6 +163,19 @@ TEST_F(BackendTest, SimpleVertexSetDeclAlloc) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleUINTVector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleUINT64Vector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint_64) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, SimpleVertexSetDeclAllocWithMain) {
     istringstream is("element Vertex end\n"
