@@ -863,6 +863,9 @@ namespace graphit {
             case mir::ScalarType::Type::UINT:
                 oss << "uintE ";
                 break;
+            case mir::ScalarType::Type::UINT_64:
+                oss << "uint64_t ";
+                break;
             case mir::ScalarType::Type::FLOAT:
                 oss << "float ";
                 break;

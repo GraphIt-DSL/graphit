@@ -34,6 +34,10 @@ namespace graphit {
                 return "'-'";
             case Token::Type::INT:
                 return "'int'";
+            case Token::Type::UINT:
+                return "'uint'";
+            case Token::Type::UINT_64:
+                return "'uint64_t'";
             case Token::Type::FLOAT:
                 return "'float'";
             case Token::Type::DOUBLE:

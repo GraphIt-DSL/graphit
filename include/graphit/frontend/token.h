@@ -24,6 +24,7 @@ namespace graphit {
             NEG,
             INT,
             UINT,
+            UINT_64,
             FLOAT,
             BOOL,
             COMPLEX,

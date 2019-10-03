@@ -401,7 +401,7 @@ namespace graphit {
 
         struct ScalarType : public TensorType {
             enum class Type {
-                INT, UINT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
+                INT, UINT, UINT_64, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
             };
 
             Type type;
