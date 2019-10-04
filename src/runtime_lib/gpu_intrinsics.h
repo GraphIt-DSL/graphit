@@ -9,6 +9,7 @@
 #include "infra_gpu/load_balance.h"
 #include "graphit_timer.h"
 #include "infra_gpu/support.h"
+#include "infra_gpu/printer.h"
 #include "infra_gpu/gpu_priority_queue.h"
 
 namespace gpu_runtime {

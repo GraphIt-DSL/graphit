@@ -416,6 +416,8 @@ namespace graphit {
 
 	    bool is_fused;
 	    std::string fused_kernel_name;
+	    std::vector<mir::Var> hoisted_vars;
+	    std::vector<std::shared_ptr<mir::VarDecl>> hoisted_decls;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());

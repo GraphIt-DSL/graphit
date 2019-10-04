@@ -162,6 +162,7 @@ class KernelVariableExtractor: public mir::MIRVisitor {
 public:
 	using mir::MIRVisitor::visit;
 	std::vector<mir::Var> hoisted_vars; 
+	std::vector<mir::VarDecl::Ptr> hoisted_decls;
 
 	void insertVar(mir::Var var_to_insert) {
 		for (auto var: hoisted_vars)
@@ -169,8 +170,12 @@ public:
 				return;
 		hoisted_vars.push_back(var_to_insert);
 	}
+	void insertDecl(mir::VarDecl::Ptr decl_to_insert) {
+		hoisted_decls.push_back(decl_to_insert);
+	}
 
 	virtual void visit(mir::VarExpr::Ptr);
+	virtual void visit(mir::VarDecl::Ptr);
 };
 
 }

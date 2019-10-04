@@ -101,6 +101,9 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 void KernelVariableExtractor::visit(mir::VarExpr::Ptr var_expr) {
 	insertVar(var_expr->var);
 }
+void KernelVariableExtractor::visit(mir::VarDecl::Ptr var_decl) {
+	insertDecl(var_decl);
+}
 void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	// First we generate a unique function name for this fused kernel
 	std::string fused_kernel_name = "fused_kernel_body_" + mir_context_->getUniqueNameCounterString();
@@ -110,6 +113,9 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	// So we can hoist them
 	KernelVariableExtractor extractor;
 	while_stmt->accept(&extractor);
+
+	while_stmt->hoisted_vars = extractor.hoisted_vars;
+	while_stmt->hoisted_decls = extractor.hoisted_decls;
 	
 	CodeGenGPUFusedKernel codegen (oss, mir_context_, module_name, "");
 	
@@ -702,7 +708,15 @@ void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 	
 }
 void CodeGenGPUFusedKernel::visit(mir::VarDecl::Ptr var_decl) {
-	// Do nothing for variable declarations on kernel	
+	// Do nothing for variable declarations on kernel only lower the initialization as assignment
+	if (var_decl->initVal != nullptr) {
+		printIndent();
+		oss << "if (_thread_id == 0)" << std::endl;
+		indent();
+		printIndent();
+		oss << var_decl->name << " = ";
+		var_decl->initVal->accept(this);
+	}
 }
 void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
 	oss << "gpu_runtime::dedup_frontier(";
@@ -727,8 +741,41 @@ void CodeGenGPU::visit(mir::ForStmt::Ptr for_stmt) {
 }
 void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
 	if (while_stmt->is_fused == true) {
+		/*
+		for (auto decl: while_stmt->hoisted_decls) {
+			printIndent();
+			decl->type->accept(this);	
+			oss << " " << decl->name << ";" << std::endl;
+		}
+		*/
+		for (auto var: while_stmt->hoisted_vars) {
+			bool to_copy = true;
+			for (auto decl: while_stmt->hoisted_decls) {
+				if (decl->name == var.getName()) {
+					to_copy = false;
+					break;
+				}
+			}
+			if (!to_copy)
+				continue;
+			printIndent();
+			oss << "cudaMemcpyToSymbol(" << while_stmt->fused_kernel_name << "_" << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName() << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+		}
 		printIndent();
 		oss << "cudaLaunchCooperativeKernel((void*)" << while_stmt->fused_kernel_name << ", NUM_CTA, CTA_SIZE, gpu_runtime::no_args);" << std::endl;
+		for (auto var: while_stmt->hoisted_vars) {
+			bool to_copy = true;
+			for (auto decl: while_stmt->hoisted_decls) {
+				if (decl->name == var.getName()) {
+					to_copy = false;
+					break;
+				}
+			}
+			if (!to_copy)
+				continue;
+			printIndent();
+			oss << "cudaMemcpyFromSymbol(&" << var.getName() << ", " << while_stmt->fused_kernel_name << "_" << var.getName() << ", sizeof(" << var.getName() << "), 0, cudaMemcpyDeviceToHost);" << std::endl;
+		}
 		return;
 	}
 	printIndent();
@@ -775,7 +822,10 @@ void CodeGenGPUFusedKernel::visit(mir::PrintStmt::Ptr print_stmt) {
 	oss << "if (_thread_id == 0)" << std::endl;
 	indent();
 	printIndent();
-	oss << "printf(\"There is supposed to be a print here\\n\");" << std::endl;
+	//oss << "printf(\"There is supposed to be a print here\\n\");" << std::endl;
+	oss << "gpu_runtime::print(";
+	print_stmt->expr->accept(this);
+	oss << ");" << std::endl;
 	dedent();
 }
 void CodeGenGPUHost::visit(mir::Call::Ptr call_expr) {
