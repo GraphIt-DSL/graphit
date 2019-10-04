@@ -881,6 +881,8 @@ namespace graphit {
                 return parseNewExpr();
             case Token::Type::LOAD:
                 return parseLoadExpr();
+            case Token::Type::INTERSECTION:
+                return parseIntersectionExpr();
             default:
                 return parseOrExpr();
         }
@@ -2588,6 +2590,33 @@ namespace graphit {
         consume(Token::Type::RP);
         load_expr->file_name = file_name;
         return load_expr;
+    }
+
+    // intersection_expr: ('intersection') '(' 'expr', 'expr', 'expr', 'expr' ')' ';'
+    fir::IntersectionExpr::Ptr Parser::parseIntersectionExpr() {
+
+        const auto intersectionExpr = std::make_shared<fir::IntersectionExpr>();
+
+        const Token intersectionToken = consume(Token::Type::INTERSECTION);
+        consume(Token::Type::LP);
+
+        //TODO we need to parse the optional parameter later
+        const auto vertexA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexB = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numB = parseExpr();
+
+        consume(Token::Type::RP);
+
+        intersectionExpr->vertex_a = vertexA;
+        intersectionExpr->vertex_b = vertexB;
+        intersectionExpr->numA = numA;
+        intersectionExpr->numB = numB;
+
+        return intersectionExpr;
     }
 
     void Parser::initIntrinsics() {

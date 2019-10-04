@@ -426,6 +426,13 @@ namespace graphit {
                 expr->numElements->accept(this);
         }
 
+        void FIRVisitor::visit(std::shared_ptr<IntersectionExpr> expr) {
+
+            expr->vertex_a->accept(this);
+            expr->vertex_b->accept(this);
+            expr->numA->accept(this);
+            expr->numB->accept(this);
+        }
 
         void FIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> expr) {
             //expr->element_type->accept(this);

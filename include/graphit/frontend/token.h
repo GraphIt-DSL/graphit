@@ -63,6 +63,7 @@ namespace graphit {
             PRINTLN,
             NEW,
             DELETE,
+            INTERSECTION,
             RARROW,
             LP,
             RP,
