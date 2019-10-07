@@ -33,6 +33,12 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		self.assertEqual(exitcode, 0)
 		return output
 
+        def sssp_verified_test(self, input_file_name):
+                self.cpp_compile_test(input_file_name, [])
+                self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")
+                self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")
+                
+        
 	@classmethod	
 	def setUpClass(cls):
 		if NVCC_COMPILER == "CUDA_NVCC_EXECUTABLE-NOTFOUND":
@@ -41,6 +47,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 
 		cls.build_directory = GRAPHIT_BUILD_DIRECTORY
 		cls.scratch_directory = GRAPHIT_BUILD_DIRECTORY + "/scratch"
+                cls.verifier_directory = cls.build_directory + "/bin"        
 		if os.path.isdir(cls.scratch_directory):
 			shutil.rmtree(cls.scratch_directory)
 		os.mkdir(cls.scratch_directory)
@@ -62,9 +69,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		
 		shutil.copytree(GRAPHIT_SOURCE_DIRECTORY + "/test/graphs", cls.scratch_directory + "/graphs")
 		cls.graph_directory = cls.scratch_directory + "/graphs"
-		
-		cls.executable_name = cls.scratch_directory + "/test_exectuable"
-	
+		cls.executable_name = cls.scratch_directory + "/test_exectuable"	
 	def cpp_compile_test(self, input_file_name, extra_cpp_args=[]):
 		compile_command = self.nvcc_command + self.test_input_directory + "/" + input_file_name + " -o " + self.executable_name + " " + " ".join(extra_cpp_args)
 		self.get_command_output(compile_command)
@@ -78,14 +83,16 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 	def test_basic_load_graph(self):
 		output = self.cpp_exec_test("basic_load_graph.cu", [], [self.graph_directory + "/4.mtx"])
 		output = output.split("\n")
-		self.assertEqual(len(output), 3)
-		self.assertEqual(output[1], "14, 106")
+		self.assertEqual(len(output), 2)
+		self.assertEqual(output[0], "14, 106")
 	def test_runtime_library(self):
 		print (self.cpp_exec_test("runtime_lib_tests.cu", ["-I", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest/gtest-all.cc"], [self.graph_directory]))
 
         def test_sssp_delta_stepping(self):
-                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.mtx", "2"])
+                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.mtx", "v"])
 
+        def test_sssp_delta_stepping_verified(self):
+                self.sssp_verified_test("sssp_delta_stepping.cu")
                 
 if __name__ == '__main__':
 	unittest.main()

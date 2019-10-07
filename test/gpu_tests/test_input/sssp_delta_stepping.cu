@@ -72,6 +72,7 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
         }
 	if (thread_id == 0) {
 		device_state.SP[0] = 0;
+		//starting point is set to 0 
 		device_state.frontier1[0] = 0;	
 		*device_state.frontier1_size = 1;
 		*device_state.frontier2_size = 0;
@@ -293,7 +294,7 @@ int main(int argc, char *argv[]) {
 		int iters = 0;	
 		cudaDeviceSynchronize();
 		float t = stopTimer();
-		printf("Init time = %f\n", t);
+		//printf("Init time = %f\n", t);
 		iter_total+=t;
 
 		host_state.frontier1_size[0] = 1;
@@ -314,22 +315,23 @@ int main(int argc, char *argv[]) {
 			cudaMemcpy(host_state.frontier1_size, device_state.frontier1_size, sizeof(int32_t), cudaMemcpyDeviceToHost);
 
 			t = stopTimer();
-			printf("Iter %d time = %f, output_size = %d <%d, %d>\n", iters, t, *host_state.frontier1_size, num_cta, CTA_SIZE);
+			//printf("Iter %d time = %f, output_size = %d <%d, %d>\n", iters, t, *host_state.frontier1_size, num_cta, CTA_SIZE);
 			iter_total += t;
 		}
 		
-		printf("Num iters = %d\n", iters);
-		printf("Time elapsed = %f\n", iter_total);
+		//printf("Num iters = %d\n", iters);
+		//printf("Time elapsed = %f\n", iter_total);
 		total_time += iter_total;
 
 	}
-	printf("Total time = %f\n", total_time);
+	//printf("Total time = %f\n", total_time);
 	if (argc > 2)
-		if (argv[2][0] == 'o'){ 
-			FILE *output = fopen("output.txt", "w");
+		if (argv[2][0] == 'v'){ 
+			//FILE *output = fopen("output.txt", "w");
 			cudaMemcpy(host_state.SP, device_state.SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
 			for (int i = 0; i < graph.num_vertices; i++)
-				fprintf(output, "%d, %d\n", i, host_state.SP[i]);
+				//fprintf(output, "%d, %d\n", i, host_state.SP[i]);
+				printf("%d\n", host_state.SP[i]);
 		}else if (argv[2][0] == 'c'){
 			/*
 			for (int i = 0; i < NUM_BLOCKS * NUM_THREADS; i++)

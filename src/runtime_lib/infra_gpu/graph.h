@@ -112,7 +112,7 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMemcpy(graph.d_edge_dst, graph.h_edge_dst, sizeof(int32_t) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(graph.d_edge_weight, graph.h_edge_weight, sizeof(EdgeWeightType) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(graph.d_src_offsets, graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
-	std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
+	//std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
 
 }
 template <typename EdgeWeightType>
