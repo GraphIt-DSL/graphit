@@ -21,12 +21,7 @@ struct VertexFrontier {
 	int32_t *d_dedup_counters;
 	int32_t curr_dedup_counter;
 
-	int32_t *d_workspace;
-
-	//int32_t *;
-
-	//TWC, STRICT
-	//
+	//int32_t *d_workspace;
 
 	// Extend this to check the current representation
 	enum format_ready_type {
@@ -97,8 +92,8 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 
 	frontier.format_ready = VertexFrontier::SPARSE;
 
-	int32_t workspace_size = num_vertices * 3; // assume num_vertices * 3000 > num_edges
-	cudaMalloc(&frontier.d_workspace, sizeof(int32_t) * workspace_size);
+	//int32_t workspace_size = num_vertices * 3; // assume num_vertices * 3000 > num_edges
+	//cudaMalloc(&frontier.d_workspace, sizeof(int32_t) * workspace_size);
 
 	cudaCheckLastError();
 

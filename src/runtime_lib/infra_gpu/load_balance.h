@@ -19,27 +19,9 @@ __device__ inline int32_t upperbound(int32_t *array, int32_t len, int32_t key){
 			s = mid+1;
 			len = len-half-1;
 		}
-//if(threadIdx.x == 0) printf("%d %d %d %d\n", key, array[s], s, blockIdx.x);
 	}
 	return s;
 }
-
-__device__ inline int32_t upperbound2(int32_t *array, int32_t len, int32_t key){
-	int32_t s = 0;
-	while(len>0){
-		int32_t half = len>>1;
-		int32_t mid = s + half;
-		if(array[mid] > key){
-			len = half;
-		}else{
-			s = mid+1;
-			len = len-half-1;
-		}
-if(threadIdx.x == 0) printf("x %d %d %d %d x\n", key, array[s], s, blockIdx.x);
-	}
-	return s;
-}
-
 
 template <void body(int32_t vid)>
 static void __device__ vertex_set_apply(int32_t num_vertices) {
@@ -114,7 +96,6 @@ void __device__ warp_based_load_balance(GraphT<EdgeWeightType> graph, VertexFron
         for(int32_t i=lane; i<tot_deg; i+=32) {
                 int32_t id = upperbound(&sm_deg[offset], width, i)-1;
 
-                ///if(blockIdx.x*blockDim.x + offset + id >= tot_size) continue;
                 src_idx = sm_idx[offset + id];
 
                 int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
@@ -232,8 +213,6 @@ void __host__ tb_based_load_balance_info(VertexFrontier &frontier, int32_t &num_
 }
 
 #define NNZ_PER_BLOCK (CTA_SIZE)
-//#define SM_MEM_WORD (1024*24) // pascal 24K, volta = 16K
-//#define STRICT_SM_SIZE (SM_MEM_WORD / 3 / 2048 * CTA_SIZE)
 #define STRICT_SM_SIZE (CTA_SIZE)
 
 
@@ -242,7 +221,6 @@ template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightT
 void __device__ STRICT_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 
 	__shared__ int32_t sm_idx[STRICT_SM_SIZE], sm_deg[STRICT_SM_SIZE], sm_loc[STRICT_SM_SIZE];
-	__shared__ int32_t adjust; // # of elts excluded
 	int32_t thread_id = threadIdx.x + blockDim.x * blockIdx.x;
 	int32_t tot_size = AccessorType::getSize(input_frontier);
 
@@ -252,126 +230,50 @@ void __device__ STRICT_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier
 	bool last_tb = (blockIdx.x == (input_frontier.d_sparse_queue_input[graph.num_vertices+tot_size]+NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
 	int32_t start_row = upperbound(&input_frontier.d_sparse_queue_input[graph.num_vertices], tot_size, NNZ_PER_BLOCK*blockIdx.x)-1;
 	int32_t end_row = upperbound(&input_frontier.d_sparse_queue_input[graph.num_vertices], tot_size, NNZ_PER_BLOCK*(blockIdx.x+1))-1;
-	//if(last_tb) end_row = tot_size;
-
-//	if(threadIdx.x == 0) { printf("(%d %d %d %d)\n", blockIdx.x, start_row, end_row, tot_size);
-//		if(blockIdx.x == 0) {for(int i=0;i<=tot_size;i++) printf("%d ", input_frontier.d_sparse_queue_input[graph.num_vertices+i]); printf("\n"); }
-//	}
-
-//	if(input_frontier.d_sparse_queue_input[graph.num_vertices+tot_size] >= 1024) return;
 
 	int32_t row_size = end_row - start_row + 1;
 	int32_t start_idx;
 
-//if(threadIdx.x == 0) printf("(((%d %d %d %d)))\n", start_row, input_frontier.d_sparse_queue_input[graph.num_vertices+start_row], end_row, input_frontier.d_sparse_queue_input[graph.num_vertices+end_row]);
-
-//if(threadIdx.x == 0) printf("(%d %d)\n", start_row, end_row);
+	// row_size <= STRICT_SM_SIZE 
 	if(threadIdx.x < row_size) {
 		index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
-                deg = graph.d_get_degree(index);
+		deg = graph.d_get_degree(index);
 
 		sm_idx[threadIdx.x] = index;
 		int32_t tmp_deg = input_frontier.d_sparse_queue_input[graph.num_vertices + start_row + threadIdx.x] - blockIdx.x * NNZ_PER_BLOCK;
-		if(tmp_deg < 0) {
-			sm_deg[threadIdx.x] = 0;
-			sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
-//printf("%d %d\n", tmp_deg, sm_loc[threadIdx.x]);
-		} else {
+		if(tmp_deg >= 0) {
 			sm_deg[threadIdx.x] = tmp_deg;
 			sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+		} else {
+			sm_deg[threadIdx.x] = 0;
+			sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
 		}
 	} else {
-                deg = 0;
-                sm_deg[threadIdx.x] = 1073742418;
-        }
+		deg = 0;
+		sm_deg[threadIdx.x] = 1073742418;
+	}
 	__syncthreads();
 
-//if(threadIdx.x == 0) printf("((%d %d %d))\n", blockIdx.x, sm_deg[0], sm_deg[1]);
-
-        int32_t lane = (threadIdx.x&31);
-        int32_t offset = 0;
+	int32_t lane = (threadIdx.x&31);
+	int32_t offset = 0;
 	
-	// prefix sum
-	int32_t cosize = blockDim.x;
-	//int32_t tot_deg = input_frontier.d_sparse_queue_input[graph.num_vertices + end_row] - 
-	//		input_frontier.d_sparse_queue_input[graph.num_vertices + start_row];
 	int32_t tot_deg;
 	if(!last_tb) tot_deg = NNZ_PER_BLOCK;
 	else tot_deg = (input_frontier.d_sparse_queue_input[graph.num_vertices + tot_size] - 1) % NNZ_PER_BLOCK + 1;
 
-//if(threadIdx.x == 0) printf("xx: %d\n", tot_deg);
 	int32_t phase = threadIdx.x;
 	int32_t off=32;
 
-	/*
-	for(int32_t d=2; d<=32; d<<=1) {
-		int32_t temp = __shfl_up_sync(-1, deg, d/2);
-		if (lane % d == d - 1) deg += temp;
-	}
-	sm_deg[threadIdx.x] = deg;
-
-	for(int32_t d=cosize>>(1+5); d>0; d>>=1){
-		__syncthreads();
-		if(phase<d){
-			int32_t ai = off*(2*phase+1)-1;
-			int32_t bi = off*(2*phase+2)-1;
-			sm_deg[bi] += sm_deg[ai];
-		}
-		off<<=1;
-	}
-
-	__syncthreads();
-	tot_deg = sm_deg[cosize-1];
-	__syncthreads();
-	if(!phase) sm_deg[cosize-1]=0;
-	__syncthreads();
-
-	for(int32_t d=1; d<(cosize>>5); d<<=1){
-		off >>=1;
-		__syncthreads();
-		if(phase<d){
-			int32_t ai = off*(2*phase+1)-1;
-			int32_t bi = off*(2*phase+2)-1;
-
-			int32_t t = sm_deg[ai];
-			sm_deg[ai]  = sm_deg[bi];
-			sm_deg[bi] += t;
-		}
-	}
-	__syncthreads();
-	deg = sm_deg[threadIdx.x];
-	__syncthreads();
-	for(int32_t d=32; d>1; d>>=1) {
-		int32_t temp_big = __shfl_down_sync(-1, deg, d/2);
-		int32_t temp_small = __shfl_up_sync(-1, deg, d/2);
-		if (lane % d == d/2 - 1) deg = temp_big;
-		else if(lane % d == d - 1) deg += temp_small;
-	}
-	sm_deg[threadIdx.x] = deg;*/
-	__syncthreads();
-	
-
-	// compute
-	/*
-	int32_t width = thread_id - threadIdx.x + blockDim.x;
-        if(tot_size < width) width = tot_size;
-        width -= thread_id - threadIdx.x;
-	*/
 	int32_t width = row_size;
-//if(threadIdx.x == 0) printf("*(%d %d %d)*\n", start_row, end_row, tot_deg);
-        for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
-                int32_t id = upperbound(&sm_deg[offset], width, i)-1;
-//if(id < 0) printf("ERR %d\n", id);
-                if(id >= width) continue;
-                src_idx = sm_idx[offset + id];
-//if(i - sm_deg[offset + id] < 0) printf("ERR %d %d\n", i, sm_deg[offset+id]);
-                int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
-                int32_t dst_idx = graph.d_edge_dst[ei];
+	for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
+		int32_t id = upperbound(&sm_deg[offset], width, i)-1;
+		if(id >= width) continue;
+		src_idx = sm_idx[offset + id];
+		int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+		int32_t dst_idx = graph.d_edge_dst[ei];
 		load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
-        }
+	}
 }
-
-///////////////////////////
 
 template <typename AccessorType, typename EdgeWeightType>
 void __global__ STRICT_gather(GraphT<EdgeWeightType> g, VertexFrontier frontier)
@@ -379,11 +281,9 @@ void __global__ STRICT_gather(GraphT<EdgeWeightType> g, VertexFrontier frontier)
         int32_t thread_id = threadIdx.x + blockDim.x * blockIdx.x;
         int32_t tot_size = AccessorType::getSize(frontier);
 	int32_t idx, deg;
-	//printf("%d\n", thread_id);
 	if(thread_id < tot_size) {
 		idx = AccessorType::getElement(frontier, thread_id);
 		frontier.d_sparse_queue_input[thread_id+g.num_vertices] = g.d_get_degree(idx);
-//printf("((%d))\n", g.d_src_offsets[idx]);
 	}
 }
 
@@ -404,7 +304,6 @@ void __global__ split_frontier(GraphT<EdgeWeightType> g, VertexFrontier frontier
         int32_t thread_id = threadIdx.x + blockDim.x * blockIdx.x;
         int32_t tot_size = AccessorType::getSize(frontier);
 	int32_t idx, deg;
-	//printf("%d\n", thread_id);
 	if(thread_id < tot_size) {
 		idx = AccessorType::getElement(frontier, thread_id);
 		deg = g.d_get_degree(idx);
@@ -425,11 +324,9 @@ void __global__ split_frontier(GraphT<EdgeWeightType> g, VertexFrontier frontier
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
 void __device__ TWC_load_balance_mid(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t vid = (threadIdx.x + blockDim.x * blockIdx.x)/MID_BIN;
-	//if (vid >= AccessorType::getSize(input_frontier))
 	if (vid >= input_frontier.d_num_elems_input[1])
 		return;
 
-	//int32_t src = AccessorType::getElement(input_frontier, vid);
 	int32_t src = input_frontier.d_sparse_queue_input[vid+graph.num_vertices];
 	for (int32_t eid = graph.d_src_offsets[src]+(threadIdx.x%MID_BIN); eid < graph.d_src_offsets[src+1]; eid+=MID_BIN) {
 		if (src_filter(src) == false)
@@ -442,10 +339,8 @@ void __device__ TWC_load_balance_mid(GraphT<EdgeWeightType> graph, VertexFrontie
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
 void __device__ TWC_load_balance_large(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t vid = (threadIdx.x + blockDim.x * blockIdx.x)/LARGE_BIN;
-	//if (vid >= AccessorType::getSize(input_frontier))
 	if (vid >= input_frontier.d_num_elems_input[2])
 		return;
-	//int32_t src = AccessorType::getElement(input_frontier, vid);
 	int32_t src = input_frontier.d_sparse_queue_input[vid+graph.num_vertices*2];
 	for (int32_t eid = graph.d_src_offsets[src]+(threadIdx.x%LARGE_BIN); eid < graph.d_src_offsets[src+1]; eid+=LARGE_BIN) {
 		if (src_filter(src) == false)

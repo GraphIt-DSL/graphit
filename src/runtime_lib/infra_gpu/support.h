@@ -32,23 +32,5 @@ static bool __device__ writeMin(T *dst, T src) {
 	return ret;
 }
 
-/*
-__device__ inline int32_t upperbound(int32_t *array, int32_t len, int32_t key){
-  int32_t s = 0;
-  while(len>0){
-    int32_t half = len>>1;
-    int32_t mid = s + half;
-    if(array[mid] > key){
-      len = half;
-    }else{
-      s = mid+1;
-      len = len-half-1;
-    }
-  }
-  return s;
-}*/
-
-
-
 }
 #endif
