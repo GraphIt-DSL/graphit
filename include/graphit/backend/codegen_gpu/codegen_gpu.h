@@ -65,13 +65,14 @@ private:
 	void genPropertyArrayAlloca(mir::VarDecl::Ptr);
 	
 	void genFusedWhileLoop(mir::WhileStmt::Ptr);
+	void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
 
 	EdgesetApplyFunctionDeclGenerator* edgeset_apply_func_gen_;
 
 	virtual std::string getBackendFunctionLabel(void) {
 		return "__device__";
 	}
-
+protected:
 	std::vector<mir::Var> kernel_hoisted_vars;
 	std::string current_kernel_name;
 	bool is_hoisted_var (mir::Var var) {
@@ -152,10 +153,15 @@ class CodeGenGPUFusedKernel: public CodeGenGPU {
 public:
 	using CodeGenGPU::CodeGenGPU;
 	using CodeGenGPU::visit;
+	void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
 	virtual void visit(mir::StmtBlock::Ptr) override;
 	virtual void visit(mir::AssignStmt::Ptr) override;
 	virtual void visit(mir::VarDecl::Ptr) override;
 	virtual void visit(mir::PrintStmt::Ptr) override;
+	
+	std::string var_name (std::string var) {
+		return current_kernel_name + "_" + var;
+	}
 };
 
 class KernelVariableExtractor: public mir::MIRVisitor {

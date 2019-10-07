@@ -2,6 +2,8 @@
 #define GPU_VERTEX_FRONTIER_H
 
 #include "infra_gpu/support.h"
+#include <cooperative_groups.h>
+using namespace cooperative_groups;
 namespace gpu_runtime {
 struct VertexFrontier {
 	int32_t max_num_elems; 
@@ -108,14 +110,8 @@ static void builtin_addVertex(VertexFrontier &frontier, int32_t vid) {
 	cudaMemcpy(frontier.d_num_elems_input, &curr_size, sizeof(int32_t), cudaMemcpyHostToDevice);
 }
 static void __device__ enqueueVertexSparseQueue(int32_t *sparse_queue, int32_t *sparse_queue_size, int32_t vertex_id) {
-	// Simple enqueuVertex implementation 
-	// Each thread adds on it's own
-	// TODO: Optimize with warp reduce
-
-	//int32_t pos = atomicAdd(sparse_queue_size, 1);
 	int32_t pos = atomicAggInc(sparse_queue_size);
 	sparse_queue[pos] = vertex_id;
-	
 }
 static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *byte_map_size, int32_t vertex_id) {
 	// We are not using atomic operation here because races are benign here
@@ -150,6 +146,20 @@ static void swap_queues(VertexFrontier &frontier) {
 
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
 }
+static void __device__ swap_queues_device(VertexFrontier &frontier) {	
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		int32_t *temp = frontier.d_num_elems_input;
+		frontier.d_num_elems_input = frontier.d_num_elems_output;
+		frontier.d_num_elems_output = temp;
+		
+		temp = frontier.d_sparse_queue_input;
+		frontier.d_sparse_queue_input = frontier.d_sparse_queue_output;
+		frontier.d_sparse_queue_output = temp;
+
+		frontier.d_num_elems_output[0] = 0;
+	}
+}
+
 static void swap_bytemaps(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;
 	frontier.d_num_elems_input = frontier.d_num_elems_output;
@@ -162,6 +172,23 @@ static void swap_bytemaps(VertexFrontier &frontier) {
 
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
 	cudaMemset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);
+}
+
+static void __device__ swap_bytemaps_device(VertexFrontier &frontier) {
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		int32_t *temp = frontier.d_num_elems_input;
+		frontier.d_num_elems_input = frontier.d_num_elems_output;
+		frontier.d_num_elems_output = temp;
+		
+		unsigned char* temp2;
+		temp2 = frontier.d_byte_map_input;
+		frontier.d_byte_map_input = frontier.d_byte_map_output;
+		frontier.d_byte_map_output = temp2;
+
+		frontier.d_num_elems_output[0] = 0;
+	}
+	this_grid().sync();
+	parallel_memset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);		
 }
 static void swap_bitmaps(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;
@@ -194,87 +221,6 @@ static void dedup_frontier(VertexFrontier &frontier) {
 	frontier.curr_dedup_counter++;
 	dedup_frontier_kernel<<<NUM_CTA, CTA_SIZE>>>(frontier);
 	swap_queues(frontier);
-}
-static void __global__ prepare_sparse_from_bytemap(VertexFrontier frontier) {
-	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
-		if (frontier.d_byte_map_input[node_id] == 1) {
-			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
-		}
-	}
-}
-static void __global__ prepare_sparse_from_bitmap(VertexFrontier frontier) {
-	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
-		if (checkBit(frontier.d_bit_map_input, node_id)) {
-			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
-		}
-	}
-}
-
-static void __global__ prepare_bytemap_from_sparse(VertexFrontier frontier) {
-	for (int32_t node_idx = blockDim.x * blockIdx.x + threadIdx.x; node_idx < frontier.d_num_elems_input[0]; node_idx += blockDim.x * gridDim.x) {
-		int32_t node_id = frontier.d_sparse_queue_input[node_idx];
-		enqueueVertexBytemap(frontier.d_byte_map_output, frontier.d_num_elems_output, node_id);
-	}
-}
-static void __global__ prepare_bytemap_from_bitmap(VertexFrontier frontier) {
-	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
-		if (checkBit(frontier.d_bit_map_input, node_id)) {
-			enqueueVertexBytemap(frontier.d_byte_map_output, frontier.d_num_elems_output, node_id);
-		}
-	}
-}
-
-static void __global__ prepare_bitmap_from_sparse(VertexFrontier frontier) {
-	for (int32_t node_idx = blockDim.x * blockIdx.x + threadIdx.x; node_idx < frontier.d_num_elems_input[0]; node_idx += blockDim.x * gridDim.x) {
-		int32_t node_id = frontier.d_sparse_queue_input[node_idx];
-		enqueueVertexBitmap(frontier.d_bit_map_output, frontier.d_num_elems_output, node_id);
-	}
-}
-static void __global__ prepare_bitmap_from_bytemap(VertexFrontier frontier) {
-	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
-		if (frontier.d_byte_map_input[node_id] == 1) {
-			enqueueVertexBitmap(frontier.d_bit_map_output, frontier.d_num_elems_output, node_id);
-		}
-	}
-}
-static void vertex_set_prepare_sparse(VertexFrontier &frontier) {
-	if (frontier.format_ready == VertexFrontier::SPARSE)
-		return;
-	else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
-		prepare_sparse_from_bytemap<<<NUM_CTA, CTA_SIZE>>>(frontier);	
-		swap_queues(frontier);
-		return;
-	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
-		prepare_sparse_from_bitmap<<<NUM_CTA, CTA_SIZE>>>(frontier);
-		swap_queues(frontier);	
-		return;	
-	}	
-}
-static void vertex_set_prepare_boolmap(VertexFrontier &frontier) {
-	if (frontier.format_ready == VertexFrontier::SPARSE) {
-		prepare_bytemap_from_sparse<<<NUM_CTA, CTA_SIZE>>>(frontier);
-		swap_bytemaps(frontier);
-		return;
-	} else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
-		return;
-	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
-		prepare_bytemap_from_bitmap<<<NUM_CTA, CTA_SIZE>>>(frontier);
-		swap_bytemaps(frontier);
-		return;
-	}
-}
-static void vertex_set_prepare_bitmap(VertexFrontier &frontier) {
-	if (frontier.format_ready == VertexFrontier::SPARSE) {
-		prepare_bitmap_from_sparse<<<NUM_CTA, CTA_SIZE>>>(frontier);
-		swap_bitmaps(frontier);
-		return;
-	} else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
-		prepare_bitmap_from_bytemap<<<NUM_CTA, CTA_SIZE>>>(frontier);
-		swap_bitmaps(frontier);
-		return;
-	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
-		return;
-	}
 }
 bool __device__ true_function(int32_t _) {
 	return true;

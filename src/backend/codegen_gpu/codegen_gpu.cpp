@@ -416,107 +416,246 @@ void CodeGenGPU::visit(mir::VarExpr::Ptr var_expr) {
 	}
 	oss << var_expr->var.getName();
 }
-void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
-	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
-		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (esae->from_func == "") {
-			assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
-		}		
-		// We will assume that the output frontier can reuse the input frontier. 
-		// TOOD: Add liveness analysis for this
-		printIndent();	
-		oss << "{" << std::endl;
-		indent();
-		std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-		if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
-			load_balance_function = "gpu_runtime::TWCE_load_balance";
-		}
-		
-		if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr::Ptr target) {
+	if (target != nullptr && esae->from_func == "") {
+		assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
+	}		
+	// We will assume that the output frontier can reuse the input frontier. 
+	// TOOD: Add liveness analysis for this
+	printIndent();	
+	oss << "{" << std::endl;
+	indent();
+	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
+	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+		load_balance_function = "gpu_runtime::TWCE_load_balance";
+	}
+
+	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+		printIndent();
+		oss << "gpu_runtime::vertex_set_prepare_sparse(";
+		oss << esae->from_func;
+		oss << ");" << std::endl;
+	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
+		if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
 			printIndent();
-			oss << "gpu_runtime::vertex_set_prepare_sparse(";
+			oss << "gpu_runtime::vertex_set_prepare_boolmap(";
 			oss << esae->from_func;
 			oss << ");" << std::endl;
-		} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
-			if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
-				printIndent();
-				oss << "gpu_runtime::vertex_set_prepare_boolmap(";
-				oss << esae->from_func;
-				oss << ");" << std::endl;
-			} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
-				printIndent();
-				oss << "gpu_runtime::vertex_set_prepare_bitmap(";
-				oss << esae->from_func;
-				oss << ");" << std::endl;
-			}
-
-			std::string to_func = esae->to_func;
-			if (to_func != "") {
-				printIndent();
-				oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
-				oss << esae->from_func << ");" << std::endl;
-			}
-			
+		} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_prepare_bitmap(";
+			oss << esae->from_func;
+			oss << ");" << std::endl;
 		}
+
+		std::string to_func = esae->to_func;
+		if (to_func != "") {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
+			oss << esae->from_func << ");" << std::endl;
+		}
+
+	}
+	if (target != nullptr) {
 		printIndent();
-		assign_stmt->lhs->accept(this);
+		target->accept(this);
 		oss << " = " << esae->from_func << ";" << std::endl;
+	}
 
-		printIndent();
-		oss << load_balance_function << "_host<";
-		
-		mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
-		mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
-		if (target_type->weight_type == nullptr)
-			oss << "int32_t";
-		else
-			target_type->weight_type->accept(this);
-		
-		std::string accessor_type = "gpu_runtime::AccessorSparse";
-		if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
-			accessor_type = "gpu_runtime::AccessorAll";
-		std::string src_filter = "gpu_runtime::true_function";
-		if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
-			src_filter = esae->to_func;
-		
-		oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
-		esae->target->accept(this);
-		oss << ", " << esae->from_func << ", ";
-		assign_stmt->lhs->accept(this);
-		oss << ");" << std::endl;
-			
+	printIndent();
+	oss << load_balance_function << "_host<";
 
-		printIndent();
-		oss << "cudaDeviceSynchronize();" << std::endl;
+	mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
+	mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
+	if (target_type->weight_type == nullptr)
+		oss << "int32_t";
+	else
+		target_type->weight_type->accept(this);
+
+	std::string accessor_type = "gpu_runtime::AccessorSparse";
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+		accessor_type = "gpu_runtime::AccessorAll";
+	std::string src_filter = "gpu_runtime::true_function";
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
+		src_filter = esae->to_func;
+
+	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
+	esae->target->accept(this);
+	oss << ", " << esae->from_func << ", ";
+	if (target != nullptr)
+		target->accept(this);
+	else 
+		oss << "gpu_runtime::sentinel_frontier";
+	oss << ");" << std::endl;
+
+
+	printIndent();
+	oss << "cudaDeviceSynchronize();" << std::endl;
+	if (target != nullptr) {
 		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			printIndent();
 			oss << "gpu_runtime::swap_queues(";
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
-		
+
 		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bitmaps(";
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
 		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bytemaps(";
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			assign_stmt->lhs->accept(this);
+			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
 		}
+	}
+	dedent();
+	printIndent();
+	oss << "}" << std::endl;
+
+}
+void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr::Ptr target) {
+	if (target != nullptr && esae->from_func == "") {
+		assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
+	}
+	printIndent();
+	oss << "{" << std::endl;
+	indent();
+	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
+	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+		load_balance_function = "gpu_runtime::TWCE_load_balance";
+	}
+	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+		printIndent();
+		oss << "gpu_runtime::vertex_set_prepare_sparse_device(";
+		oss << var_name(esae->from_func);
+		oss << ");" << std::endl;
+	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae)) {
+		if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_prepare_boolmap_device(";
+			oss << var_name(esae->from_func);
+			oss << ");" << std::endl;
+		} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_prepare_bitmap_device(";
+			oss << var_name(esae->from_func);
+			oss << ");" << std::endl;
+		}
+		std::string to_func = esae->to_func;
+		if (to_func != "") {
+			printIndent();
+			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_device<" << to_func << ">(";
+			oss << var_name(esae->from_func) << ");" << std::endl;
+		}
+	}
+	printIndent();
+	oss << "_grid.sync();" << std::endl;
+	if (target != nullptr) {
+		printIndent();
+		oss << "if (_thread_id == 0)" << std::endl;
+		indent();
+		printIndent();
+		target->accept(this);
+		oss << " = " << var_name(esae->from_func) << ";" << std::endl;
 		dedent();
 		printIndent();
-		oss << "}" << std::endl;
+		oss << "_grid.sync();" << std::endl;
+	}
+	printIndent();
+	oss << load_balance_function << "_device<";
+	
+	mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
+	mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
+	if (target_type->weight_type == nullptr)
+		oss << "int32_t";
+	else
+		target_type->weight_type->accept(this);
+	
+	std::string accessor_type = "gpu_runtime::AccessorSparse";
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+		accessor_type = "gpu_runtime::AcessorAll";
+	std::string src_filter = "gpu_runtime::true_function";
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
+		src_filter = esae->to_func;
+
+	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
+	esae->target->accept(this);
+	oss << ", " << var_name(esae->from_func) << ", ";
+	if (target != nullptr) 
+		target->accept(this);
+	else 
+		oss << "gpu_runtime::sentinel_frontier";
+	oss << ");" << std::endl;
+	printIndent();
+	oss << "_grid.sync();" << std::endl;
+	
+	if (target != nullptr) {
+		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+			printIndent();
+			oss << "gpu_runtime::swap_queues_device(";
+			target->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			oss << "_grid.sync();" << std::endl;
+			printIndent();
+			oss << "if (_thread_id == 0)" << std::endl;
+			indent();
+			printIndent();
+			target->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
+			dedent();
+		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+			printIndent();
+			oss << "gpu_runtime::swap_bitmaps_device(";
+			target->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			oss << "_grid.sync();" << std::endl;
+			printIndent();
+			oss << "if (_thread_id == 0)" << std::endl;
+			indent();
+			printIndent();
+			target->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
+			dedent();
+		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+			printIndent();
+			oss << "gpu_runtime::swap_bytemaps_device(";
+			target->accept(this);
+			oss << ");" << std::endl;
+			printIndent();
+			oss << "_grid.sync();" << std::endl;
+			printIndent();
+			oss << "if (_thread_id == 0)" << std::endl;
+			indent();
+			printIndent();
+			target->accept(this);
+			oss << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
+			dedent();
+		}
+		printIndent();
+		oss << "_grid.sync();" << std::endl;
+	}
+	dedent();
+	printIndent();
+	oss << "}" << std::endl;
+	
+}
+void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
+	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
+		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
+		genEdgeSetApplyExpr(esae, assign_stmt->lhs);
 	} else {
 		printIndent();
 		assign_stmt->lhs->accept(this);
@@ -528,7 +667,8 @@ void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
 
 void CodeGenGPUFusedKernel::visit(mir::AssignStmt::Ptr assign_stmt) {
 	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
-		// Will be handled later
+		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
+		genEdgeSetApplyExpr(esae, assign_stmt->lhs);
 	} else {
 		printIndent();
 		oss << "if (_thread_id == 0) " << std::endl;
@@ -822,7 +962,6 @@ void CodeGenGPUFusedKernel::visit(mir::PrintStmt::Ptr print_stmt) {
 	oss << "if (_thread_id == 0)" << std::endl;
 	indent();
 	printIndent();
-	//oss << "printf(\"There is supposed to be a print here\\n\");" << std::endl;
 	oss << "gpu_runtime::print(";
 	print_stmt->expr->accept(this);
 	oss << ");" << std::endl;

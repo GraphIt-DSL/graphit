@@ -35,6 +35,10 @@ template <typename T>
 static bool __device__ CAS(T *dst, T old_val, const T &new_val) {
 	return old_val == atomicCAS(dst, old_val, new_val);
 }
+static void __device__ parallel_memset(unsigned char* dst, unsigned char val, size_t total_bytes) {
+	for (size_t index = threadIdx.x + blockDim.x * blockIdx.x; index < total_bytes; index += blockDim.x * gridDim.x)
+		dst[index] = val;
+}
 }
 
 #endif
