@@ -12,6 +12,7 @@
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/priority_features_lowering.h>
+#include <graphit/midend/while_loop_fusion.h>
 
 namespace graphit {
     /**
@@ -64,6 +65,9 @@ namespace graphit {
         // This pass extracts the merge field and reduce operator. If numa_aware is set to true in
         // the schedule for the corresponding label, it also adds NUMA optimization
         MergeReduceLower(mir_context, schedule).lower();
+
+	// This pass lowers while loops that have fusion schedule attached to them 
+	WhileLoopFusion(mir_context, schedule).lower();	
     }
 }
 

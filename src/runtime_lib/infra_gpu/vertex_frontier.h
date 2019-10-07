@@ -35,6 +35,9 @@ static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
 	cudaMemcpy(&curr_size, frontier.d_num_elems_input, sizeof(int32_t), cudaMemcpyDeviceToHost);
 	return curr_size;	
 }
+static int32_t __device__ device_builtin_getVertexSetSize(VertexFrontier &frontier) {
+	return frontier.d_num_elems_input[0];
+}
 class AccessorSparse {
 public:
 	static int32_t __device__ getSize(VertexFrontier &frontier) {

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <graphit/backend/gen_edge_apply_func_decl.h>
+#include <unordered_set>
 
 namespace graphit {
 class CodeGenGPUKernelEmitter: public mir::MIRVisitor {
@@ -30,6 +31,7 @@ public:
 	void genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr);
 
 };
+
 class CodeGenGPU : public mir::MIRVisitor{
 public:
 	CodeGenGPU(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_, std::string module_path):
@@ -61,12 +63,24 @@ private:
 
 	void genPropertyArrayDecl(mir::VarDecl::Ptr);
 	void genPropertyArrayAlloca(mir::VarDecl::Ptr);
+	
+	void genFusedWhileLoop(mir::WhileStmt::Ptr);
 
 	EdgesetApplyFunctionDeclGenerator* edgeset_apply_func_gen_;
 
 	virtual std::string getBackendFunctionLabel(void) {
 		return "__device__";
 	}
+
+	std::vector<mir::Var> kernel_hoisted_vars;
+	std::string current_kernel_name;
+	bool is_hoisted_var (mir::Var var) {
+		for (auto h_var: kernel_hoisted_vars)
+			if (h_var.getName() == var.getName())
+				return true;
+		return false;
+	}
+	
 
 	void generateBinaryExpr(mir::BinaryExpr::Ptr, std::string);
 protected:
@@ -121,10 +135,47 @@ private:
 	virtual std::string getBackendFunctionLabel(void) {
 		return "__host__";
 	}
-	virtual void visit(mir::TensorArrayReadExpr::Ptr);
-	virtual void visit(mir::StmtBlock::Ptr);
+	virtual void visit(mir::TensorArrayReadExpr::Ptr) override;
+	virtual void visit(mir::StmtBlock::Ptr) override;
+
+	virtual void visit(mir::Call::Ptr) override;	
+	virtual void visit(mir::PrintStmt::Ptr) override;
+
+
+
 	void generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare);
 	void generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare);
+};
+
+
+class CodeGenGPUFusedKernel: public CodeGenGPU {
+public:
+	using CodeGenGPU::CodeGenGPU;
+	using CodeGenGPU::visit;
+	virtual void visit(mir::StmtBlock::Ptr) override;
+	virtual void visit(mir::AssignStmt::Ptr) override;
+	virtual void visit(mir::VarDecl::Ptr) override;
+	virtual void visit(mir::PrintStmt::Ptr) override;
+};
+
+class KernelVariableExtractor: public mir::MIRVisitor {
+public:
+	using mir::MIRVisitor::visit;
+	std::vector<mir::Var> hoisted_vars; 
+	std::vector<mir::VarDecl::Ptr> hoisted_decls;
+
+	void insertVar(mir::Var var_to_insert) {
+		for (auto var: hoisted_vars)
+			if (var.getName() == var_to_insert.getName())
+				return;
+		hoisted_vars.push_back(var_to_insert);
+	}
+	void insertDecl(mir::VarDecl::Ptr decl_to_insert) {
+		hoisted_decls.push_back(decl_to_insert);
+	}
+
+	virtual void visit(mir::VarExpr::Ptr);
+	virtual void visit(mir::VarDecl::Ptr);
 };
 
 }
