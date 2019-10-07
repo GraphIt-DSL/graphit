@@ -96,7 +96,7 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_pybind_pr_load_file(self):
         module = graphit.compile_and_load(self.root_test_input_dir + "export_pr_with_return.gt")
-        graph = csr_matrix(scipy.io.mmread(self.root_test_graph_dir+"4.mtx"))
+        graph = csr_matrix(scipy.io.mmread(self.root_test_graph_dir+"simple_mtx.mtx"))
         ranks = module.export_func(graph)
         self.assertEqual(len(ranks), graph.shape[0])
         self.assertTrue(abs(np.sum(ranks)-1.0) < 0.1)
