@@ -29,6 +29,7 @@ public:
 	void visit(mir::PullEdgeSetApplyExpr::Ptr);
 
 	void genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr);
+	void genFuncDecl(mir::FuncDecl::Ptr);
 
 };
 

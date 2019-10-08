@@ -161,8 +161,35 @@ void CodeGenGPUFusedKernel::visit(mir::StmtBlock::Ptr stmt_block) {
 		}
 	}
 }
+void CodeGenGPUKernelEmitter::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
+	if (func_decl->result.isInitialized()) {
+		func_decl->result.getType()->accept(this);
+		assert(mir::isa<mir::ScalarType>(func_decl->result.getType()));
+		assert(mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL);
+		oss << "bool";
+	} else {
+		oss << "void";
+	}
+	oss << " " << "__device__" << " " << func_decl->name << "(";
+	bool printDelimeter = false;
+	for (auto arg: func_decl->args) {
+		if (printDelimeter)
+			oss << ", ";
+		assert(mir::isa<mir::ElementType>(arg.getType()) || mir::isa<mir::ScalarType>(arg.getType()));
+		if (mir::isa<mir::ScalarType>(arg.getType()))
+			assert(mir::to<mir::ScalarType>(arg.getType())->type == mir::ScalarType::Type::INT);
+		oss << "int32_t";
+		oss << " " << arg.getName();
+		printDelimeter = true;
+	}
+	oss << ");" << std::endl;
+}
 void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
+
+	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
+	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
+	genFuncDecl(input_function_decl);
 	// First we generate the function that is passed to the load balancing function
 
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -205,6 +232,10 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 }
 
 void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
+	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
+	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
+	genFuncDecl(input_function_decl);
+
 	// First we generate the function that is passed to the load balancing function
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
 	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";

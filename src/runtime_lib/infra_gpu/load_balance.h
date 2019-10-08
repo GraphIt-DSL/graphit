@@ -26,7 +26,7 @@ static void __global__ vertex_set_apply_kernel(int32_t num_vertices) {
 
 // VERTEX BASED LOAD BALANCE FUNCTIONS
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
-void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
 	int32_t vid = threadIdx.x + blockDim.x * blockIdx.x;
 	if (vid >= AccessorType::getSize(input_frontier))
 		return;
@@ -67,7 +67,7 @@ void __device__ vertex_based_load_balance_device(GraphT<EdgeWeightType> &graph, 
 #define STAGE_1_SIZE (8)
 #define WARP_SIZE (32)
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
-static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier, int32_t cta_id, int32_t total_cta) {
+static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier input_frontier, VertexFrontier output_frontier, unsigned int cta_id, unsigned int total_cta) {
 	int32_t thread_id = blockDim.x * cta_id + threadIdx.x;
 	
 	int32_t lane_id = thread_id % 32;
@@ -183,14 +183,14 @@ void __device__ TWCE_load_balance_info_device(VertexFrontier &frontier, int32_t 
 }
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
 void __global__ TWCE_load_balance_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
-	TWCE_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier);
+	TWCE_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
 }
 
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
 void __host__ TWCE_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
 	int32_t num_cta, cta_size;
 	TWCE_load_balance_info<AccessorType>(input_frontier, num_cta, cta_size);
-	TWCE_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+	TWCE_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);
 }
 
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
