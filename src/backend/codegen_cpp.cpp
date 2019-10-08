@@ -1624,6 +1624,32 @@ namespace graphit {
         oss << "); " << std::endl;
     }
 
+
+    void CodeGenCPP::visit(mir::IntersectionExpr::Ptr intersection_exp){
+        if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
+            oss << "intersectSortedNodeSetHiroshi(";
+            intersection_exp->vertex_a->accept(this);
+            oss << ", ";
+            intersection_exp->vertex_b->accept(this);
+            oss << ", ";
+            intersection_exp->numA->accept(this);
+            oss << ", ";
+            intersection_exp->numB->accept(this);
+            oss << ") ";
+        } else {
+            oss << "intersectSortedNodeSetNaive(";
+            intersection_exp->vertex_a->accept(this);
+            oss << ", ";
+            intersection_exp->vertex_b->accept(this);
+            oss << ", ";
+            intersection_exp->numA->accept(this);
+            oss << ", ";
+            intersection_exp->numB->accept(this);
+            oss << ") ";
+        }
+
+    }
+
     void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
         if (edgeset_load_expr->is_weighted_) {
             oss << "builtin_loadWeightedEdgesFromFile ( ";

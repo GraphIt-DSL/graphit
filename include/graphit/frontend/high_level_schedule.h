@@ -92,6 +92,12 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyDirection(std::string apply_label, std::string apply_direction);
 
+                // High level API for specifying which intersection method to use
+                // TODO add more spec here
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configIntersection(std::string apply_label, std::string intersection_option);
+
+
 
                 // High lvel API for speicifying parallelization scheduling options for apply
                 // A wrapper around setApply for now.

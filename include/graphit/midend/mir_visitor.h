@@ -57,6 +57,8 @@ namespace graphit {
         struct TensorArrayReadExpr;
         struct TensorStructReadExpr;
 
+        struct IntersectionExpr;
+
         struct LoadExpr;
         struct EdgeSetLoadExpr;
 
@@ -185,6 +187,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ListAllocExpr>);
 
             virtual void visit(std::shared_ptr<VarExpr>) {};
+
+            virtual void visit(std::shared_ptr<IntersectionExpr>);
 
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 

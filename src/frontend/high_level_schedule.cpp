@@ -589,6 +589,40 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configIntersection(std::string intersection_label,
+                                                                       std::string intersection_option) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no intersection schedule has been constructed, construct a new one
+            if (schedule_->intersection_schedules == nullptr) {
+                schedule_->intersection_schedules = new std::map<std::string, IntersectionSchedule>();
+            }
+
+            if (schedule_->intersection_schedules->find(intersection_label) == schedule_->intersection_schedules->end()) {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule{.intersection_option = IntersectionSchedule::IntersectionType::NAIVE};
+            }
+
+
+            if (intersection_option == "HiroshiIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label].intersection_option = IntersectionSchedule::IntersectionType::HIROSHI;
+
+            }
+
+            else {
+                std::cout << "unsupported intersection: " << intersection_option << std::endl;
+                throw "Unsupported Schedule!";
+
+            }
+
+            return this->shared_from_this();
+
+
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyParallelization(std::string apply_label,
                                                                              std::string apply_parallel, int grain_size,
                                                                              std::string direction) {
