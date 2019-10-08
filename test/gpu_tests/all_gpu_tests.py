@@ -88,6 +88,12 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 	def test_runtime_library(self):
 		print (self.cpp_exec_test("runtime_lib_tests.cu", ["-I", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest/gtest-all.cc"], [self.graph_directory]))
 
+        def test_sssp_lp_runtime_lib(self):
+                self.cpp_exec_test("sssp_lp.cu", [], [self.graph_directory + "/4.mtx", "v"])
+
+        def test_sssp_lp_verified(self):
+                self.sssp_verified_test("sssp_lp.cu")
+                
         def test_sssp_delta_stepping(self):
                 self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.mtx", "v"])
 
