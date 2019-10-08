@@ -190,6 +190,10 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
 	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
 	genFuncDecl(input_function_decl);
+	if (apply_expr->to_func != "") {
+		mir::FuncDecl::Ptr to_function_decl = mir_context_->getFunction(apply_expr->to_func);
+		genFuncDecl(to_function_decl);
+	}
 	// First we generate the function that is passed to the load balancing function
 
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -199,6 +203,14 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	indent();
 	printIndent();
 	oss << "// Body of the actual operator code" << std::endl;
+	if (apply_expr->to_func != "") {
+		printIndent();
+		oss << "if (!" << apply_expr->to_func << "(dst))" << std::endl;
+		indent();
+		printIndent();
+		oss << "return;" << std::endl;
+		dedent();
+	}
 	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
 	if (input_function->args.size() == 3) {	
 		printIndent();

@@ -80,7 +80,7 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 	cudaMemset(frontier.d_byte_map_input, 0, sizeof(unsigned char) * num_vertices);
 	cudaMemset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * num_vertices);
 	
-	int32_t num_byte_for_bitmap = (num_vertices + sizeof(uint32_t) - 1)/sizeof(uint32_t);
+	int32_t num_byte_for_bitmap = (num_vertices + sizeof(uint32_t) * 8 - 1)/(sizeof(uint32_t) * 8);
 	cudaMalloc(&frontier.d_bit_map_input, sizeof(uint32_t) * num_byte_for_bitmap);
 	cudaMalloc(&frontier.d_bit_map_output, sizeof(uint32_t) * num_byte_for_bitmap);
 	
@@ -121,12 +121,12 @@ static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *by
 	atomicAggInc(byte_map_size);
 }
 static bool __device__ checkBit(uint32_t* array, int32_t index) {	
-	uint32_t * address = array + index / sizeof(uint32_t);
-	return (*address & (1 << (index % sizeof(uint32_t))));
+	uint32_t * address = array + index / (8 * sizeof(uint32_t));
+	return (*address & (1 << (index % (8 * sizeof(uint32_t)))));
 }
 static bool __device__ setBit(uint32_t* array, int32_t index) {
-	uint32_t * address = array + index / sizeof(uint32_t);	
-	return atomicOr(address, (1 << (index % sizeof(uint32_t)))) & (1 << (index % sizeof(uint32_t)));
+	uint32_t * address = array + index / (8 * sizeof(uint32_t));
+	return atomicOr(address, (1 << (index % (8 * sizeof(uint32_t))))) & (1 << (index % (8 * sizeof(uint32_t))));
 }
 static void __device__ enqueueVertexBitmap(uint32_t* bit_map, int32_t * bit_map_size, int32_t vertex_id) {
 	// We need atomics here because of bit manipulations
@@ -201,7 +201,7 @@ static void swap_bitmaps(VertexFrontier &frontier) {
 	frontier.d_bit_map_output = temp2;
 
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));		
-	int32_t num_byte_for_bitmap = (frontier.max_num_elems + sizeof(uint32_t) - 1)/sizeof(uint32_t);
+	int32_t num_byte_for_bitmap = (frontier.max_num_elems + 8 * sizeof(uint32_t) - 1)/(sizeof(uint32_t) * 8);
 	cudaMemset(frontier.d_bit_map_output, 0, sizeof(uint32_t) * num_byte_for_bitmap);
 	cudaCheckLastError();
 }
