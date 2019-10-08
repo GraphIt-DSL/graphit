@@ -33,9 +33,12 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		self.assertEqual(exitcode, 0)
 		return output
 
-        def sssp_verified_test(self, input_file_name):
+        def sssp_verified_test(self, input_file_name, use_delta=False):
                 self.cpp_compile_test(input_file_name, [])
-                self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")
+                if use_delta:
+                        self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 2 v > verifier_input ")
+                else:
+                        self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")             
                 self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")
                 
         
@@ -95,10 +98,10 @@ class TestGPURuntimeLibrary(unittest.TestCase):
                 self.sssp_verified_test("sssp_lp.cu")
                 
         def test_sssp_delta_stepping(self):
-                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.mtx", "v"])
+                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.wel", "v"])
 
         def test_sssp_delta_stepping_verified(self):
-                self.sssp_verified_test("sssp_delta_stepping.cu")
+                self.sssp_verified_test("sssp_delta_stepping.cu", True)
                 
 if __name__ == '__main__':
 	unittest.main()
