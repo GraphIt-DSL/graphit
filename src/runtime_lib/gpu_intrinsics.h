@@ -6,6 +6,7 @@
 
 #include "infra_gpu/graph.h"
 #include "infra_gpu/vertex_frontier.h"
+#include "infra_gpu/vertex_representation.h"
 #include "infra_gpu/load_balance.h"
 #include "graphit_timer.h"
 #include "infra_gpu/support.h"

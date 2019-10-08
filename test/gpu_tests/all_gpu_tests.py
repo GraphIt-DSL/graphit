@@ -17,7 +17,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		if isinstance(command, list):
 			proc = subprocess.Popen(command, stdout=subprocess.PIPE)
 		else:
-                        print(command)
+			print(command)
 			proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
 		exitcode = proc.wait()
 		for line in proc.stdout.readlines():
@@ -39,8 +39,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
                         self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 2 v > verifier_input ")
                 else:
                         self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")             
-                self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")
-                
+                self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")                
         
 	@classmethod	
 	def setUpClass(cls):
@@ -50,7 +49,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 
 		cls.build_directory = GRAPHIT_BUILD_DIRECTORY
 		cls.scratch_directory = GRAPHIT_BUILD_DIRECTORY + "/scratch"
-                cls.verifier_directory = cls.build_directory + "/bin"        
+		cls.verifier_directory = cls.build_directory + "/bin"        
 		if os.path.isdir(cls.scratch_directory):
 			shutil.rmtree(cls.scratch_directory)
 		os.mkdir(cls.scratch_directory)
@@ -84,21 +83,21 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 	def test_basic_compile(self):
 		self.cpp_compile_test("basic_compile.cu")
 	def test_basic_load_graph(self):
-		output = self.cpp_exec_test("basic_load_graph.cu", [], [self.graph_directory + "/4.mtx"])
+		output = self.cpp_exec_test("basic_load_graph.cu", [], [self.graph_directory + "/simple_mtx.mtx"])
 		output = output.split("\n")
 		self.assertEqual(len(output), 2)
 		self.assertEqual(output[0], "14, 106")
 	def test_runtime_library(self):
 		print (self.cpp_exec_test("runtime_lib_tests.cu", ["-I", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest", GRAPHIT_SOURCE_DIRECTORY+"/test/gtest/gtest-all.cc"], [self.graph_directory]))
-
+                
         def test_sssp_lp_runtime_lib(self):
-                self.cpp_exec_test("sssp_lp.cu", [], [self.graph_directory + "/4.mtx", "v"])
+                self.cpp_exec_test("sssp_lp.cu", [], [self.graph_directory + "/simple_mtx.mtx", "v"])
 
         def test_sssp_lp_verified(self):
                 self.sssp_verified_test("sssp_lp.cu")
                 
         def test_sssp_delta_stepping(self):
-                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/4.wel", "v"])
+                self.cpp_exec_test("sssp_delta_stepping.cu", [], [self.graph_directory + "/simple_mtx.mtx", "v"])
 
         def test_sssp_delta_stepping_verified(self):
                 self.sssp_verified_test("sssp_delta_stepping.cu", True)
