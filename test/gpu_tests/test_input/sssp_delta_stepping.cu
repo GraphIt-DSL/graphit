@@ -354,7 +354,7 @@ int main(int argc, char *argv[]) {
 	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
 	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
 	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
-	gpu_runtime::vertex_set_apply_kernel<SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(gpu_runtime::builtin_getVertices(graph));
+	gpu_runtime::vertex_set_apply_kernel<gpu_runtime::AccessorAll, SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(graph.getFullFrontier());
 	
 
 	algo_state host_state, device_state;	
