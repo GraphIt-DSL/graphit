@@ -7,6 +7,7 @@
 // GraphT data structure 
 #define IGNORE_JULIENNE_TYPES
 #include "infra_gapbs/benchmark.h"
+#include "infra_gpu/vertex_frontier.h"
 namespace gpu_runtime {
 
 template <typename EdgeWeightType>
@@ -32,6 +33,11 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	}
 	int32_t __device__ d_get_degree(int32_t vertex_id) {
 		return d_src_offsets[vertex_id + 1] - d_src_offsets[vertex_id];
+	}
+	VertexFrontier getFullFrontier(void) {
+		VertexFrontier frontier;
+		frontier.max_num_elems = num_vertices;
+		return frontier;
 	}
 };
 void consume(int32_t _) {
