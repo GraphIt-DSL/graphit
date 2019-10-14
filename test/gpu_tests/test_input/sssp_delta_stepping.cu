@@ -71,6 +71,9 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
                 }
         }
 	if (thread_id == 0) {
+		//reset with the new data structure
+		SP[0] = 0;
+		
 		device_state.SP[0] = 0;
 		device_state.frontier1[graph.num_vertices] = 0;	
 		device_state.frontier1_size[0] = 1;
@@ -194,13 +197,19 @@ void __global__ update_edges (gpu_runtime::GraphT<int32_t> graph, algo_state dev
 	if (my_vertex_idx < total_vertices) {
 		// STAGE 1	
 		//my_vertex = device_state.frontier1[my_vertex_idx];
-		src_distance = device_state.SP[my_vertex];
+
+		//src_distance = device_state.SP[my_vertex];
+		src_distance = SP[my_vertex];
+
 		for (int32_t neigh_id = s1_offset + (lane_id % STAGE_1_SIZE); neigh_id < d + s1_offset; neigh_id += STAGE_1_SIZE) {
 			// DO ACTUAL SSSP
 			int32_t dst = graph.d_edge_dst[neigh_id];
 			int32_t new_dst = graph.d_edge_weight[neigh_id] + src_distance;
-			if (new_dst < device_state.SP[dst]) {
-				atomicMin(&device_state.SP[dst], new_dst);
+
+			//if (new_dst < device_state.SP[dst]) {
+			if (new_dst < SP[dst]) {
+				//atomicMin(&device_state.SP[dst], new_dst);
+				atomicMin(&SP[dst], new_dst);
 				enqueueVertex(dst, device_state, new_dst);
 			}	
 		}		
@@ -218,14 +227,17 @@ void __global__ update_edges (gpu_runtime::GraphT<int32_t> graph, algo_state dev
 		my_vertex = stage2_queue[to_process];
 		d = stage2_size[to_process];
 		int32_t s2_offset = stage2_offset[to_process];	
-		src_distance = device_state.SP[my_vertex];
+
+		//src_distance = device_state.SP[my_vertex];
+		src_distance = SP[my_vertex];
 		
 		for (int32_t neigh_id = s2_offset + (lane_id); neigh_id < d + s2_offset; neigh_id += WARP_SIZE) {
 			// DO ACTUAL SSSP
 			int dst = graph.d_edge_dst[neigh_id];
 			int new_dst = graph.d_edge_weight[neigh_id] + src_distance;
-			if (new_dst < device_state.SP[dst]) {
-				atomicMin(&device_state.SP[dst], new_dst);
+			//if (new_dst < device_state.SP[dst]) {
+			if (new_dst < SP[dst]) {
+				atomicMin(&SP[dst], new_dst);
 				enqueueVertex(dst, device_state, new_dst);
 			}	
 		}
@@ -236,14 +248,14 @@ void __global__ update_edges (gpu_runtime::GraphT<int32_t> graph, algo_state dev
 		my_vertex = stage3_queue[wid];
 		d = stage3_size[wid];
 		int32_t s3_offset = stage3_offset[wid];
-		src_distance = device_state.SP[my_vertex];
+		src_distance = SP[my_vertex];
 		
 		for (int32_t neigh_id = s3_offset + (threadIdx.x); neigh_id < d + s3_offset; neigh_id += CTA_SIZE) {
 			// DO ACTUAL SSSP
 			int dst = graph.d_edge_dst[neigh_id];
 			int new_dst = graph.d_edge_weight[neigh_id] + src_distance;
-			if (new_dst < device_state.SP[dst]) {
-				atomicMin(&device_state.SP[dst], new_dst);
+			if (new_dst < SP[dst]) {
+				atomicMin(&SP[dst], new_dst);
 				enqueueVertex(dst, device_state, new_dst);
 			}	
 		}
@@ -277,8 +289,8 @@ void __global__ update_nodes_identify_min(gpu_runtime::GraphT<int32_t> graph, al
 	for (int i = 0; i < work_per_thread; i++) {
 		int32_t node_id = thread_id + i * num_threads;
 		if (node_id < graph.num_vertices) {
-			if (device_state.SP[node_id] >= device_state.window_upper && device_state.SP[node_id] != INT_MAX && device_state.SP[node_id] < my_minimum) {
-				my_minimum = device_state.SP[node_id];
+			if (SP[node_id] >= device_state.window_upper && SP[node_id] != INT_MAX && SP[node_id] < my_minimum) {
+				my_minimum = SP[node_id];
 			}
 		}
 	}
@@ -296,7 +308,7 @@ void __global__ update_nodes_special(gpu_runtime::GraphT<int32_t> graph, algo_st
 	for (int i = 0; i < work_per_thread; i++) {
 		int32_t node_id = thread_id + i * num_threads;
 		if (node_id < graph.num_vertices) {
-			if(device_state.SP[node_id] >= device_state.window_lower && device_state.SP[node_id] < device_state.window_upper) {
+			if(SP[node_id] >= device_state.window_lower && SP[node_id] < device_state.window_upper) {
 				int pos = atomicAggInc(device_state.frontier1_size + 1 + (warp_id % 4));
 				device_state.frontier1[pos + (warp_id % 4 + 1) * graph.num_vertices] = node_id;
 			}	
@@ -453,7 +465,7 @@ int main(int argc, char *argv[]) {
 	if (argc > 3)
 		if (argv[3][0] == 'v'){ 
 			//FILE *output = fopen("output.txt", "w");
-			cudaMemcpy(host_state.SP, device_state.SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
+			cudaMemcpy(host_state.SP, __device_SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
 			for (int i = 0; i < graph.num_vertices; i++)
 				printf("%d\n", host_state.SP[i]);
 		}else if (argv[2][0] == 'c'){

@@ -39,8 +39,14 @@ class TestGPURuntimeLibrary(unittest.TestCase):
                         self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 2 v > verifier_input ")
                 else:
                         self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")             
-                self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")                
-        
+                output = self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")                
+                test_flag = False
+                for line in output.rstrip().split("\n"):
+                        if line.rstrip().find("SUCCESSFUL") != -1:
+                                test_flag = True
+                                break;
+                self.assertEqual(test_flag, True)
+                
 	@classmethod	
 	def setUpClass(cls):
 		if NVCC_COMPILER == "CUDA_NVCC_EXECUTABLE-NOTFOUND":
