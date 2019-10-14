@@ -338,16 +338,26 @@ void swap_queues(algo_state &device_state) {
 	//swap_pointers(&device_state.frontier1, &device_state.frontier2);
 	//swap_pointers(&device_state.frontier1_size, &device_state.frontier2_size);
 }
+
+void __device__ SP_generated_vector_op_apply_func_0(int32_t v) {
+	SP[v] = 2147483647;
+}
+
+
 int main(int argc, char *argv[]) {
 	cudaSetDevice(0);
 	cudaThreadSetCacheConfig(cudaFuncCachePreferShared);
 	gpu_runtime::GraphT<int32_t> graph;
-
 	gpu_runtime::load_graph(graph, argv[1], false);
 	int32_t delta = atoi(argv[2]);
 
-	algo_state host_state, device_state;
+	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
+	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
+	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
+	gpu_runtime::vertex_set_apply_kernel<SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(gpu_runtime::builtin_getVertices(graph));
+	
 
+	algo_state host_state, device_state;	
 	allocate_state(host_state, device_state, graph);
 
 	host_state.window_lower = 0;
@@ -357,8 +367,6 @@ int main(int argc, char *argv[]) {
 
 	gpu_runtime::VertexFrontier frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
 	gpu_runtime::builtin_addVertex(frontier, 0);
-	
-	
 
 	cudaDeviceSynchronize();
 		
@@ -386,7 +394,7 @@ int main(int argc, char *argv[]) {
 			
 			update_edges<<<num_cta, CTA_SIZE>>>(graph, device_state, iters);
 			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(edges, frontier, frontier);  
-			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
+			gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
 			
 			host_state.frontier1_size[0] = 0;
 			host_state.frontier1_size[1] = 0;
