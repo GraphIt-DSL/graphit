@@ -152,6 +152,7 @@ namespace graphit {
         std::vector<mir::VarDecl::Ptr> getEdgeSets() {
             return const_edge_sets_;
         }
+	
 
         mir::VarDecl::Ptr getConstEdgeSetByName(std::string var_name) {
 
@@ -256,6 +257,17 @@ namespace graphit {
                 assert(false && "Cannot indentify type of vector or set\n");
             }
         }
+
+	mir::VarDecl::Ptr getEdgeSetFromElementType(mir::ElementType::Ptr element_type) {
+		for (auto decl: getEdgeSets()) {
+			mir::Type::Ptr type = decl->type;
+			assert(mir::isa<mir::EdgeSetType>(type));
+			mir::EdgeSetType::Ptr edge_set_type = mir::to<mir::EdgeSetType>(type);
+			if (edge_set_type->element == element_type)
+				return decl; 
+		}
+		return nullptr;	
+	}
 
         bool updateElementInputFilename(mir::ElementType::Ptr element_type, mir::Expr::Ptr file_name) {
             input_filename_map_[element_type->ident] = file_name;

@@ -13,15 +13,17 @@ using load_balance_payload_type = void (GraphT<EdgeWeightType>, int32_t, int32_t
 
 
 // VERTEX SET APPLY FUNCTIONS
-template <void body(int32_t vid)>
-static void __device__ vertex_set_apply(int32_t num_vertices) {
-	for(int32_t vid = threadIdx.x + blockDim.x * blockIdx.x; vid < num_vertices; vid+= blockDim.x * gridDim.x) {
+template <typename AccessorType, void body(int32_t vid)>
+static void __device__ vertex_set_apply(VertexFrontier &frontier) {
+	int32_t total_vertices = AccessorType::getSize(frontier);
+	for(int32_t vidx = threadIdx.x + blockDim.x * blockIdx.x; vidx < total_vertices; vidx += blockDim.x * gridDim.x) {
+		int32_t vid = AccessorType::getElement(frontier, vidx);
 		body(vid);
 	}
 }
-template <void body(int32_t vid)>
-static void __global__ vertex_set_apply_kernel(int32_t num_vertices) {
-	vertex_set_apply<body>(num_vertices);
+template <typename AccessorType, void body(int32_t vid)>
+static void __global__ vertex_set_apply_kernel(VertexFrontier frontier) {
+	vertex_set_apply<AccessorType, body>(frontier);
 } 
 
 // VERTEX BASED LOAD BALANCE FUNCTIONS

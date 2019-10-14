@@ -1081,17 +1081,26 @@ void CodeGenGPU::visit(mir::BreakStmt::Ptr break_stmt) {
 	oss << "break;" << std::endl;
 }
 void CodeGenGPU::visit(mir::VertexSetApplyExpr::Ptr vsae) {
-	oss << "gpu_runtime::vertex_set_apply_kernel"; 
-	oss << "<" << vsae->input_function_name << ">";
-	oss << "<<<NUM_CTA, CTA_SIZE>>>";
+	oss << "gpu_runtime::vertex_set_apply_kernel<"; 
 	auto mir_var = mir::to<mir::VarExpr> (vsae->target);
+	if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
+		oss << "gpu_runtime::AccessorAll";
+	} else {
+		oss << "gpu_runtime::AccessorSparse";
+	}
+	oss << ", ";
+	oss << vsae->input_function_name << ">";
+	oss << "<<<NUM_CTA, CTA_SIZE>>>";
 	if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
 		auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
 		assert(associated_element_type != nullptr);
-		auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-		assert(associated_element_type_size != nullptr);
+		//auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+		//assert(associated_element_type_size != nullptr);
+		auto associated_edge_set = mir_context_->getEdgeSetFromElementType(associated_element_type);
+		assert(associated_edge_set != nullptr);
 		oss << "(";
-		associated_element_type_size->accept(this);
+		//associated_element_type_size->accept(this);
+		oss << associated_edge_set->name << ".getFullFrontier()";
 		oss << ")";	
 	} else {
 		oss << "(";
