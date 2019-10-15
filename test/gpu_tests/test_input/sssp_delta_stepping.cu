@@ -43,6 +43,8 @@ int32_t __device__ *SP;
 int32_t *__host_SP;
 int32_t *__device_SP;
 
+int32_t __device__ window_lower;
+int32_t __device__ window_upper;
 
 void cudaCheckLastError(void) {
 	cudaError_t err = cudaGetLastError();
@@ -106,6 +108,12 @@ bool __device__ updateEdge(int32_t src, int32_t dst, int32_t weight) {
 	bool SP_trackving_var_1 = 0;
 	SP_trackving_var_1 = gpu_runtime::writeMin(&SP[dst], (SP[src] + weight));
 	output2 = SP_trackving_var_1;
+
+	//do not output this if it is not within the current window
+	if (SP[dst] >= window_upper) return false;
+	//output2 = true;
+		//}
+	
 	return output2;
 }
 
@@ -113,8 +121,9 @@ template <typename EdgeWeightType>
 void __device__ gpu_operator_body_3(gpu_runtime::GraphT<EdgeWeightType> graph, int32_t src, int32_t dst, int32_t edge_id, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {
 	// Body of the actual operator code
 	EdgeWeightType weight = graph.d_edge_weight[edge_id];
-	if (updateEdge(src, dst, weight)) {
-		gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, dst);
+	if (updateEdge(src, dst, weight)){
+		//gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, dst);
+		gpu_runtime::enqueueVertexBytemap(output_frontier.d_byte_map_output, output_frontier.d_num_elems_output, dst);
 	}
 }
 
@@ -298,10 +307,10 @@ void __global__ update_nodes_identify_min(gpu_runtime::GraphT<int32_t> graph, al
 		atomicMin(device_state.new_window_start, my_minimum);
 	}	
 }
-void __global__ update_nodes_special(gpu_runtime::GraphT<int32_t> graph, algo_state device_state) {
+void __global__ update_nodes_special(gpu_runtime::GraphT<int32_t> graph, algo_state device_state,  gpu_runtime::VertexFrontier output_frontier) {
 	int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
 	int num_threads = blockDim.x * gridDim.x;
-	int warp_id = thread_id / 32;	
+	//int warp_id = thread_id / 32;	
 	
 	int total_work = graph.num_vertices;
 	int work_per_thread = (total_work + num_threads - 1)/num_threads;
@@ -309,8 +318,9 @@ void __global__ update_nodes_special(gpu_runtime::GraphT<int32_t> graph, algo_st
 		int32_t node_id = thread_id + i * num_threads;
 		if (node_id < graph.num_vertices) {
 			if(SP[node_id] >= device_state.window_lower && SP[node_id] < device_state.window_upper) {
-				int pos = atomicAggInc(device_state.frontier1_size + 1 + (warp_id % 4));
-				device_state.frontier1[pos + (warp_id % 4 + 1) * graph.num_vertices] = node_id;
+				gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, node_id);
+				//int pos = atomicAggInc(device_state.frontier1_size + 1 + (warp_id % 4));
+				//device_state.frontier1[pos + (warp_id % 4 + 1) * graph.num_vertices] = node_id;
 			}	
 		}
 	}
@@ -377,11 +387,13 @@ int main(int argc, char *argv[]) {
 	device_state.window_lower = 0;
 	device_state.window_upper = delta;
 
+	//this sets it to Sparse
 	gpu_runtime::VertexFrontier frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
 	gpu_runtime::builtin_addVertex(frontier, 0);
 
 	cudaDeviceSynchronize();
-		
+
+	
 	float total_time = 0;
 	for (int outer = 0; outer < ITER_COUNT; outer++) {
 		float iter_total = 0;
@@ -396,59 +408,85 @@ int main(int argc, char *argv[]) {
 
 		host_state.frontier1_size[0] = 1;
 
-
-
-		while(*host_state.frontier1_size) {
+		//while(*host_state.frontier1_size) {
+		while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
 			startTimer();
 			iters++;
-			int num_threads = *host_state.frontier1_size *(STAGE_1_SIZE);
-			int num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+			//int num_threads = *host_state.frontier1_size *(STAGE_1_SIZE);
+			//int num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
 			
-			update_edges<<<num_cta, CTA_SIZE>>>(graph, device_state, iters);
-			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(edges, frontier, frontier);  
+			//update_edges<<<num_cta, CTA_SIZE>>>(graph, device_state, iters);
+			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(edges, frontier, frontier);
+
+			gpu_runtime::vertex_set_prepare_sparse(frontier);
+
+
+			cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t*), 0);
 			gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
 			
-			host_state.frontier1_size[0] = 0;
-			host_state.frontier1_size[1] = 0;
-			host_state.frontier1_size[2] = 0;
-			host_state.frontier1_size[3] = 0;
-			host_state.frontier1_size[4] = 0;
-			cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, 5*sizeof(int32_t), cudaMemcpyHostToDevice);
+			// host_state.frontier1_size[0] = 0;
+			// host_state.frontier1_size[1] = 0;
+			// host_state.frontier1_size[2] = 0;
+			// host_state.frontier1_size[3] = 0;
+			// host_state.frontier1_size[4] = 0;
+			// cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, 5*sizeof(int32_t), cudaMemcpyHostToDevice);
 			
-			update_nodes<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);
-			cudaMemcpy(host_state.frontier1_size, device_state.frontier1_size, sizeof(int32_t)*5, cudaMemcpyDeviceToHost);
-			host_state.frontier1_size[0] = host_state.frontier1_size[1];
-			host_state.frontier1_size[0] += host_state.frontier1_size[2];
-			host_state.frontier1_size[0] += host_state.frontier1_size[3];
-			host_state.frontier1_size[0] += host_state.frontier1_size[4];
-			cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, sizeof(int32_t), cudaMemcpyHostToDevice);
+			//update_nodes<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);
 
 
-			if (host_state.frontier1_size[0] == 0) {
+			gpu_runtime::swap_bytemaps(frontier);
+			// set the input to the prepare function
+			frontier.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
+			
+			
+			
+			// cudaMemcpy(host_state.frontier1_size, device_state.frontier1_size, sizeof(int32_t)*5, cudaMemcpyDeviceToHost);
+			// host_state.frontier1_size[0] = host_state.frontier1_size[1];
+			// host_state.frontier1_size[0] += host_state.frontier1_size[2];
+			// host_state.frontier1_size[0] += host_state.frontier1_size[3];
+			// host_state.frontier1_size[0] += host_state.frontier1_size[4];
+			// cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, sizeof(int32_t), cudaMemcpyHostToDevice);
+
+
+			//if (host_state.frontier1_size[0] == 0) {
+			if (gpu_runtime::builtin_getVertexSetSize(frontier) == (0)) {
 				host_state.new_window_start[0] = INT_MAX;
 				cudaMemcpy(device_state.new_window_start, host_state.new_window_start, sizeof(int32_t), cudaMemcpyHostToDevice);
+
+				//should not need to change 
 				update_nodes_identify_min<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);	
 				cudaMemcpy(host_state.new_window_start, device_state.new_window_start, sizeof(int32_t), cudaMemcpyDeviceToHost);
+
+				//this is for termination when it is all finished
 				if (host_state.new_window_start[0] == INT_MAX) {
 					break;
-				}	
-				device_state.window_lower = host_state.new_window_start[0];
-				device_state.window_upper = host_state.new_window_start[0] + delta; 
-				host_state.frontier1_size[0] = 0;
+				}
 
-				host_state.frontier1_size[0] = 0;
-				host_state.frontier1_size[1] = 0;
-				host_state.frontier1_size[2] = 0;
-				host_state.frontier1_size[3] = 0;
-				host_state.frontier1_size[4] = 0;
-				cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, 5*sizeof(int32_t), cudaMemcpyHostToDevice);
-				update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state);	
-				cudaMemcpy(host_state.frontier1_size, device_state.frontier1_size, sizeof(int32_t)*5, cudaMemcpyDeviceToHost);
-				host_state.frontier1_size[0] = host_state.frontier1_size[1];
-				host_state.frontier1_size[0] += host_state.frontier1_size[2];
-				host_state.frontier1_size[0] += host_state.frontier1_size[3];
-				host_state.frontier1_size[0] += host_state.frontier1_size[4];
-				cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, sizeof(int32_t), cudaMemcpyHostToDevice);
+				//if it is not a pointer, then you can set by value directly
+				device_state.window_lower = host_state.new_window_start[0];
+				device_state.window_upper = host_state.new_window_start[0] + delta;
+				
+				// host_state.frontier1_size[0] = 0;
+
+				// host_state.frontier1_size[0] = 0;
+				// host_state.frontier1_size[1] = 0;
+				// host_state.frontier1_size[2] = 0;
+				// host_state.frontier1_size[3] = 0;
+				// host_state.frontier1_size[4] = 0;
+				// cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, 5*sizeof(int32_t), cudaMemcpyHostToDevice);
+
+
+				update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state, frontier);
+				gpu_runtime::swap_queues(frontier);
+				frontier.format_ready = gpu_runtime::VertexFrontier::SPARSE; 
+				
+				
+				// cudaMemcpy(host_state.frontier1_size, device_state.frontier1_size, sizeof(int32_t)*5, cudaMemcpyDeviceToHost);
+				// host_state.frontier1_size[0] = host_state.frontier1_size[1];
+				// host_state.frontier1_size[0] += host_state.frontier1_size[2];
+				// host_state.frontier1_size[0] += host_state.frontier1_size[3];
+				// host_state.frontier1_size[0] += host_state.frontier1_size[4];
+				// cudaMemcpy(device_state.frontier1_size, host_state.frontier1_size, sizeof(int32_t), cudaMemcpyHostToDevice);
 			}
 
 			t = stopTimer();
