@@ -26,5 +26,6 @@ static __device__ void device_deleteObject(T &t) {
 }
 
 static void * no_args[1];
+
 }
 #endif

@@ -112,5 +112,21 @@ static void vertex_set_prepare_bitmap(VertexFrontier &frontier) {
 		return;
 	}
 }
+static void __device__ vertex_set_prepare_bitmap_device(VertexFrontier &frontier) {
+	if (frontier.format_ready == VertexFrontier::SPARSE) {
+		generalized_prepare_from_to<AccessorSparse, condition_sparse, update_bitmap>(frontier);
+		this_grid().sync();
+		swap_bitmaps_device(frontier);
+		return;
+	} else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
+		generalized_prepare_from_to<AccessorAll, condition_bytemap, update_bitmap>(frontier);
+		this_grid().sync();
+		swap_bitmaps_device(frontier);
+		return;	
+	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
+		return;
+	}
+
+}
 }
 #endif

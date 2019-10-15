@@ -33,6 +33,11 @@ int CodeGenGPU::genGPU() {
 	}	
 		
 	std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
+	// Before we generate any functions or kernels, we generate the function declarations
+	for (auto function: functions) {
+		if (function->name != "main")
+			genFuncDecl(function);
+	}
 	
 	// Every operator requires a kernel to be generated
 	// Create that first because all the actual functions will be calling these kernels
@@ -175,24 +180,23 @@ void CodeGenGPUFusedKernel::visit(mir::StmtBlock::Ptr stmt_block) {
 		stmt->accept(this);
 	}
 }
-void CodeGenGPUKernelEmitter::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
+void CodeGenGPU::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
 	if (func_decl->result.isInitialized()) {
 		func_decl->result.getType()->accept(this);
-		assert(mir::isa<mir::ScalarType>(func_decl->result.getType()));
-		assert(mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL);
-		oss << "bool";
 	} else {
 		oss << "void";
 	}
-	oss << " " << "__device__" << " " << func_decl->name << "(";
+
+	if (func_decl->function_context & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
+		oss << " " << "__device__" << " " << func_decl->name << "(";
+	else
+		oss << " " << func_decl->name << "(";
+
 	bool printDelimeter = false;
 	for (auto arg: func_decl->args) {
 		if (printDelimeter)
 			oss << ", ";
-		assert(mir::isa<mir::ElementType>(arg.getType()) || mir::isa<mir::ScalarType>(arg.getType()));
-		if (mir::isa<mir::ScalarType>(arg.getType()))
-			assert(mir::to<mir::ScalarType>(arg.getType())->type == mir::ScalarType::Type::INT);
-		oss << "int32_t";
+		arg.getType()->accept(this);
 		oss << " " << arg.getName();
 		printDelimeter = true;
 	}
@@ -200,7 +204,7 @@ void CodeGenGPUKernelEmitter::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
 }
 void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
-
+	/*
 	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
 	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
 	genFuncDecl(input_function_decl);
@@ -208,6 +212,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 		mir::FuncDecl::Ptr to_function_decl = mir_context_->getFunction(apply_expr->to_func);
 		genFuncDecl(to_function_decl);
 	}
+	*/
 	// First we generate the function that is passed to the load balancing function
 
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -258,9 +263,11 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 }
 
 void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
+	/*
 	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
 	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
 	genFuncDecl(input_function_decl);
+	*/
 
 	// First we generate the function that is passed to the load balancing function
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -508,7 +515,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		std::string to_func = esae->to_func;
 		if (to_func != "") {
 			printIndent();
-			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue<" << to_func << ">(";
+			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_host<" << to_func << ">(";
 			oss << esae->from_func << ");" << std::endl;
 		}
 
@@ -1144,7 +1151,25 @@ void CodeGenGPUHost::visit(mir::StmtBlock::Ptr stmt_block) {
 void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
 	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
-		oss << "if (builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
+		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
+		indent();
+		stmt->stmt1->accept(this);
+		dedent();
+		printIndent();
+		oss << "} else {" << std::endl;
+		indent();	
+		stmt->stmt2->accept(this);
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;	
+	} else {
+		assert(false && "Invalid criteria for Hybrid Statement\n");
+	}
+}
+void CodeGenGPUFusedKernel::visit(mir::HybridGPUStmt::Ptr stmt) {
+	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
+		printIndent();
+		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->input_frontier_name) << ") < " << var_name(stmt->input_frontier_name) << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
 		indent();
 		stmt->stmt1->accept(this);
 		dedent();

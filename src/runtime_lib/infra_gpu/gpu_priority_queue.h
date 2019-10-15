@@ -7,35 +7,35 @@
 
 namespace gpu_runtime {
 
-  template<typename PriorityT_>
-    class GPUPriorityQueue {
-    
-  public:
-    explicit GPUPriorityQueue(PriorityT_* priorities, PriorityT_ delta=1)
-      : priorities_(priorities), delta_(delta){
-    }
-    
-    size_t get_current_priority(){
-      return current_priority_;
-    }
+template<typename PriorityT_>
+	class GPUPriorityQueue {
 
-	void update_current_priority(PriorityT_ priority_change_){
+	public:
+		explicit GPUPriorityQueue(PriorityT_* priorities, PriorityT_ delta=1)
+			: priorities_(priorities), delta_(delta){
+			}
 
-	}
-    
-    bool finished() {
-      //TODO
-      return true;
-    }
-    
-    bool finishedNode(NodeID v){
-		return priorities_[v]/delta_ < get_current_priority();;
-    }
-    
-    PriorityT_* priorities_;
-    PriorityT_ delta_;
-	PriorityT_ current_priority_;
-  };
+		size_t get_current_priority(){
+			return current_priority_;
+		}
+
+		void update_current_priority(PriorityT_ priority_change_){
+
+		}
+
+		bool finished() {
+			//TODO
+			return true;
+		}
+
+		bool finishedNode(NodeID v){
+			return priorities_[v]/delta_ < get_current_priority();;
+		}
+
+		PriorityT_* priorities_;
+		PriorityT_ delta_;
+		PriorityT_ current_priority_;
+	};
 }
 
 

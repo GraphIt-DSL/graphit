@@ -29,7 +29,6 @@ public:
 	void visit(mir::PullEdgeSetApplyExpr::Ptr);
 
 	void genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr);
-	void genFuncDecl(mir::FuncDecl::Ptr);
 
 };
 
@@ -57,6 +56,7 @@ protected:
 private:
 	void genIncludeStmts(void);
 	void genEdgeSets(void);
+	void genFuncDecl(mir::FuncDecl::Ptr);
 
 
 	void genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr shared_ptr);
@@ -159,6 +159,7 @@ public:
 	virtual void visit(mir::AssignStmt::Ptr) override;
 	virtual void visit(mir::VarDecl::Ptr) override;
 	virtual void visit(mir::PrintStmt::Ptr) override;
+	virtual void visit(mir::HybridGPUStmt::Ptr) override;
 	
 	std::string var_name (std::string var) {
 		//return current_kernel_name + "_" + var;

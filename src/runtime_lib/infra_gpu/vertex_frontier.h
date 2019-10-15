@@ -203,6 +203,23 @@ static void swap_bitmaps(VertexFrontier &frontier) {
 	cudaMemset(frontier.d_bit_map_output, 0, sizeof(uint32_t) * num_byte_for_bitmap);
 	cudaCheckLastError();
 }
+static void __device__ swap_bitmaps_device(VertexFrontier &frontier) {
+	int32_t *temp = frontier.d_num_elems_input;
+	frontier.d_num_elems_input = frontier.d_num_elems_output;
+	frontier.d_num_elems_output = temp;
+	
+	uint32_t* temp2;
+	temp2 = frontier.d_bit_map_input;
+	frontier.d_bit_map_input = frontier.d_bit_map_output;
+	frontier.d_bit_map_output = temp2;
+
+	int32_t num_byte_for_bitmap = (frontier.max_num_elems + 8 * sizeof(uint32_t) - 1)/(sizeof(uint32_t) * 8);
+
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
+		frontier.d_num_elems_output[0] = 0;
+	parallel_memset((unsigned char*)frontier.d_bit_map_output, 0, sizeof(uint32_t) * num_byte_for_bitmap);		
+	this_grid().sync();
+}
 static void __device__ dedup_frontier_device(VertexFrontier &frontier) {
 	for(int32_t vidx = threadIdx.x + blockDim.x * blockIdx.x; vidx < frontier.d_num_elems_input[0]; vidx += blockDim.x * gridDim.x) {
 		int32_t vid = frontier.d_sparse_queue_input[vidx];
@@ -224,17 +241,28 @@ bool __device__ true_function(int32_t _) {
 	return true;
 }
 template <bool to_func(int32_t)>
-static void __global__ vertex_set_create_reverse_sparse_queue_kernel(VertexFrontier frontier) {
+static void __device__ vertex_set_create_reverse_sparse_queue(VertexFrontier &frontier) {
 	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < frontier.max_num_elems; node_id += blockDim.x * gridDim.x) {
 		if ((to_func(node_id)))
 			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
 	}	
 }
+template <bool to_func(int32_t)>
+static void __global__ vertex_set_create_reverse_sparse_queue_kernel(VertexFrontier &frontier) {
+	vertex_set_create_reverse_sparse_queue<to_func>(frontier);
+}
 
 template <bool to_func(int32_t)>
-static void vertex_set_create_reverse_sparse_queue(VertexFrontier &frontier) {
+static void vertex_set_create_reverse_sparse_queue_host(VertexFrontier &frontier) {
 	vertex_set_create_reverse_sparse_queue_kernel<to_func><<<NUM_CTA, CTA_SIZE>>>(frontier);
 	swap_queues(frontier);	
+}
+
+template <bool to_func(int32_t)>
+static void __device__ vertex_set_create_reverse_sparse_queue_device(VertexFrontier &frontier) {
+	vertex_set_create_reverse_sparse_queue<to_func>(frontier);
+	this_grid().sync();
+	swap_queues_device(frontier);	
 }
 
 }
