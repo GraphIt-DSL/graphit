@@ -63,13 +63,11 @@ static void __device__ vertex_set_prepare_sparse_device(VertexFrontier &frontier
 		generalized_prepare_from_to<AccessorAll, condition_bytemap, update_sparse>(frontier);
 		this_grid().sync();
 		swap_queues_device(frontier);
-		this_grid().sync();
 		return;
 	} else if (frontier.format_ready == VertexFrontier::BITMAP) {
 		generalized_prepare_from_to<AccessorAll, condition_bitmap, update_sparse>(frontier);
 		this_grid().sync();
 		swap_queues_device(frontier);
-		this_grid().sync();
 		return;
 	}
 }
@@ -91,7 +89,6 @@ static void __device__ vertex_set_prepare_boolmap_device(VertexFrontier &frontie
 		generalized_prepare_from_to<AccessorSparse, condition_sparse, update_bytemap>(frontier);
 		this_grid().sync();
 		swap_bytemaps_device(frontier);
-		this_grid().sync();
 		return;
 	} else if (frontier.format_ready == VertexFrontier::BYTEMAP) {
 		return;
@@ -99,7 +96,6 @@ static void __device__ vertex_set_prepare_boolmap_device(VertexFrontier &frontie
 		generalized_prepare_from_to<AccessorAll, condition_bitmap, update_bytemap>(frontier);
 		this_grid().sync();
 		swap_bytemaps_device(frontier);
-		this_grid().sync();
 		return;
 	}
 }

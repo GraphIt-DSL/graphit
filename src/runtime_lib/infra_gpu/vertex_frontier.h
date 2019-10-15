@@ -38,6 +38,7 @@ static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
 	return curr_size;	
 }
 static int32_t __device__ device_builtin_getVertexSetSize(VertexFrontier &frontier) {
+	this_grid().sync();
 	return frontier.d_num_elems_input[0];
 }
 class AccessorSparse {
@@ -147,17 +148,16 @@ static void swap_queues(VertexFrontier &frontier) {
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
 }
 static void __device__ swap_queues_device(VertexFrontier &frontier) {	
-	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
-		int32_t *temp = frontier.d_num_elems_input;
-		frontier.d_num_elems_input = frontier.d_num_elems_output;
-		frontier.d_num_elems_output = temp;
-		
-		temp = frontier.d_sparse_queue_input;
-		frontier.d_sparse_queue_input = frontier.d_sparse_queue_output;
-		frontier.d_sparse_queue_output = temp;
-
+	int32_t *temp = frontier.d_num_elems_input;
+	frontier.d_num_elems_input = frontier.d_num_elems_output;
+	frontier.d_num_elems_output = temp;
+	
+	temp = frontier.d_sparse_queue_input;
+	frontier.d_sparse_queue_input = frontier.d_sparse_queue_output;
+	frontier.d_sparse_queue_output = temp;
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
 		frontier.d_num_elems_output[0] = 0;
-	}
+	this_grid().sync();
 }
 
 static void swap_bytemaps(VertexFrontier &frontier) {
@@ -175,20 +175,18 @@ static void swap_bytemaps(VertexFrontier &frontier) {
 }
 
 static void __device__ swap_bytemaps_device(VertexFrontier &frontier) {
-	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
-		int32_t *temp = frontier.d_num_elems_input;
-		frontier.d_num_elems_input = frontier.d_num_elems_output;
-		frontier.d_num_elems_output = temp;
-		
-		unsigned char* temp2;
-		temp2 = frontier.d_byte_map_input;
-		frontier.d_byte_map_input = frontier.d_byte_map_output;
-		frontier.d_byte_map_output = temp2;
-
+	int32_t *temp = frontier.d_num_elems_input;
+	frontier.d_num_elems_input = frontier.d_num_elems_output;
+	frontier.d_num_elems_output = temp;
+	
+	unsigned char* temp2;
+	temp2 = frontier.d_byte_map_input;
+	frontier.d_byte_map_input = frontier.d_byte_map_output;
+	frontier.d_byte_map_output = temp2;
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
 		frontier.d_num_elems_output[0] = 0;
-	}
-	this_grid().sync();
 	parallel_memset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);		
+	this_grid().sync();
 }
 static void swap_bitmaps(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;

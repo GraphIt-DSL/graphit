@@ -161,7 +161,8 @@ public:
 	virtual void visit(mir::PrintStmt::Ptr) override;
 	
 	std::string var_name (std::string var) {
-		return current_kernel_name + "_" + var;
+		//return current_kernel_name + "_" + var;
+		return "__local_" + var;
 	}
 };
 

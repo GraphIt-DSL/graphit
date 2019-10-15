@@ -137,6 +137,12 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	oss << "grid_group _grid = this_grid();" << std::endl;
 	codegen.printIndent();
 	oss << "int32_t _thread_id = threadIdx.x + blockIdx.x * blockDim.x;" << std::endl;
+	// For all the variables we would also generate local copies in each thread
+	for (auto var: extractor.hoisted_vars) {	
+		codegen.printIndent();
+		oss << "auto __local_" << var.getName() << " = " << fused_kernel_name << "_" << var.getName() << ";" << std::endl;
+	}
+	
 	codegen.printIndent();
 	oss << "while (";
 	while_stmt->cond->accept(&codegen);
@@ -146,6 +152,18 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	codegen.dedent();
 	codegen.printIndent();
 	oss << "}" << std::endl;
+
+	// After the kernel has ended, we should copy back all the variables
+	codegen.printIndent();
+	oss << "if (_thread_id == 0) {" << std::endl;
+	codegen.indent();
+	for (auto var: extractor.hoisted_vars) {	
+		codegen.printIndent();
+		oss << fused_kernel_name << "_" << var.getName() << " = " << "__local_" << var.getName() << ";" << std::endl;
+	}
+	codegen.dedent();
+	codegen.printIndent();
+	oss << "}" << std::endl;	
 	codegen.dedent();
 	codegen.printIndent();
 	oss << "}" << std::endl;			
@@ -155,10 +173,6 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 void CodeGenGPUFusedKernel::visit(mir::StmtBlock::Ptr stmt_block) {
 	for (auto stmt : *(stmt_block->stmts)) {
 		stmt->accept(this);
-		if (!mir::isa<mir::BreakStmt>(stmt)) {
-			printIndent();
-			oss << "_grid.sync();" << std::endl;
-		}
 	}
 }
 void CodeGenGPUKernelEmitter::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
@@ -454,7 +468,7 @@ void CodeGenGPU::visit(mir::ExprStmt::Ptr expr_stmt) {
 }
 void CodeGenGPU::visit(mir::VarExpr::Ptr var_expr) {
 	if (is_hoisted_var(var_expr->var)) {
-		oss << current_kernel_name << "_" << var_expr->var.getName();
+		oss << "__local_" << var_expr->var.getName();
 		return;
 	}
 	oss << var_expr->var.getName();
@@ -602,18 +616,10 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 			oss << var_name(esae->from_func) << ");" << std::endl;
 		}
 	}
-	printIndent();
-	oss << "_grid.sync();" << std::endl;
 	if (target != nullptr) {
 		printIndent();
-		oss << "if (_thread_id == 0)" << std::endl;
-		indent();
-		printIndent();
-		target->accept(this);
+		target->accept(this);	
 		oss << " = " << var_name(esae->from_func) << ";" << std::endl;
-		dedent();
-		printIndent();
-		oss << "_grid.sync();" << std::endl;
 	}
 	printIndent();
 	oss << load_balance_function << "_device<";
@@ -640,8 +646,6 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	else 
 		oss << "gpu_runtime::sentinel_frontier";
 	oss << ");" << std::endl;
-	printIndent();
-	oss << "_grid.sync();" << std::endl;
 	
 	if (target != nullptr) {
 		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
@@ -650,45 +654,25 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			oss << "_grid.sync();" << std::endl;
-			printIndent();
-			oss << "if (_thread_id == 0)" << std::endl;
-			indent();
-			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
-			dedent();
 		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bitmaps_device(";
 			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			oss << "_grid.sync();" << std::endl;
-			printIndent();
-			oss << "if (_thread_id == 0)" << std::endl;
-			indent();
-			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
-			dedent();
 		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bytemaps_device(";
 			target->accept(this);
 			oss << ");" << std::endl;
 			printIndent();
-			oss << "_grid.sync();" << std::endl;
-			printIndent();
-			oss << "if (_thread_id == 0)" << std::endl;
-			indent();
-			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BYTEMAP;" << std::endl;
-			dedent();
 		}
-		printIndent();
-		oss << "_grid.sync();" << std::endl;
 	}
 	dedent();
 	printIndent();
@@ -713,15 +697,25 @@ void CodeGenGPUFusedKernel::visit(mir::AssignStmt::Ptr assign_stmt) {
 		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
 		genEdgeSetApplyExpr(esae, assign_stmt->lhs);
 	} else {
-		printIndent();
-		oss << "if (_thread_id == 0) " << std::endl;
-		indent();
-		printIndent();
-		assign_stmt->lhs->accept(this);
-		oss << " = ";
-		assign_stmt->expr->accept(this);
-		oss << ";" << std::endl;	
-		dedent();
+		if (mir::isa<mir::VarExpr>(assign_stmt->lhs) && is_hoisted_var(mir::to<mir::VarExpr>(assign_stmt->lhs)->var)) {
+			printIndent();
+			assign_stmt->lhs->accept(this);
+			oss << " = ";
+			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;
+		} else {
+			printIndent();
+			oss << "if (_thread_id == 0) " << std::endl;
+			indent();
+			printIndent();
+			assign_stmt->lhs->accept(this);
+			oss << " = ";
+			assign_stmt->expr->accept(this);
+			oss << ";" << std::endl;	
+			dedent();
+			printIndent();
+			oss << "_grid.sync();" << std::endl;
+		}
 	}	
 }
 
@@ -924,13 +918,6 @@ void CodeGenGPU::visit(mir::ForStmt::Ptr for_stmt) {
 }
 void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
 	if (while_stmt->is_fused == true) {
-		/*
-		for (auto decl: while_stmt->hoisted_decls) {
-			printIndent();
-			decl->type->accept(this);	
-			oss << " " << decl->name << ";" << std::endl;
-		}
-		*/
 		for (auto var: while_stmt->hoisted_vars) {
 			bool to_copy = true;
 			for (auto decl: while_stmt->hoisted_decls) {
@@ -1009,6 +996,8 @@ void CodeGenGPUFusedKernel::visit(mir::PrintStmt::Ptr print_stmt) {
 	print_stmt->expr->accept(this);
 	oss << ");" << std::endl;
 	dedent();
+	printIndent();
+	oss << "_grid.sync();" << std::endl;
 }
 void CodeGenGPUHost::visit(mir::Call::Ptr call_expr) {
 	if (call_expr->name == "deleteObject" || call_expr->name.substr(0, strlen("builtin_")) == "builtin_")	
