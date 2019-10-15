@@ -73,10 +73,11 @@ namespace graphit {
     struct IntersectionSchedule {
         enum class IntersectionType {
             HIROSHI,
+            MULTISKIP,
+            COMBINED,
             NAIVE
         };
 
-        IntersectionType intersection_option;
     };
 
     struct GraphIterationSpace {

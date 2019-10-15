@@ -1046,7 +1046,7 @@ TEST_F(HighLevelScheduleTest, SimpleLabelForVarDecl) {
 
 }
 
-TEST_F(HighLevelScheduleTest, SimpleIntersection) {
+TEST_F(HighLevelScheduleTest, SimpleIntersectionHiroshi) {
     istringstream is(simple_intersection_str_);
 
     fe_->parseStream(is, context_, errors_);
@@ -1055,6 +1055,32 @@ TEST_F(HighLevelScheduleTest, SimpleIntersection) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionMultiskip) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "MultiskipIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionCombined) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "CombinedIntersection");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }

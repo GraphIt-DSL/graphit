@@ -608,13 +608,19 @@ namespace graphit {
 
             if (intersection_option == "HiroshiIntersection") {
                 (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::HIROSHI;
+            }
 
+            else if (intersection_option == "MultiskipIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::MULTISKIP;
+            }
+
+            else if (intersection_option == "CombinedIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::COMBINED;
             }
 
             else {
                 std::cout << "unsupported intersection: " << intersection_option << std::endl;
-                throw "Unsupported Schedule!";
-
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
             }
 
             return this->shared_from_this();

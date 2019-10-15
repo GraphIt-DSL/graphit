@@ -1629,33 +1629,33 @@ namespace graphit {
 
         if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
             oss << "intersectSortedNodeSetHiroshi(";
-            intersection_exp->vertex_a->accept(this);
-            oss << ", ";
-            intersection_exp->vertex_b->accept(this);
-            oss << ", ";
-            intersection_exp->numA->accept(this);
-            oss << ", ";
-            intersection_exp->numB->accept(this);
-            if (intersection_exp->reference != nullptr){
-                oss << ", ";
-                intersection_exp->reference->accept(this);
-            }
-            oss << ") ";
-        } else {
-            oss << "intersectSortedNodeSetNaive(";
-            intersection_exp->vertex_a->accept(this);
-            oss << ", ";
-            intersection_exp->vertex_b->accept(this);
-            oss << ", ";
-            intersection_exp->numA->accept(this);
-            oss << ", ";
-            intersection_exp->numB->accept(this);
-            if (intersection_exp->reference != nullptr){
-                oss << ", ";
-                intersection_exp->reference->accept(this);
-            }
-            oss << ") ";
         }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::MULTISKIP) {
+            oss << "intersectSortedNodeSetMultipleSkip(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::COMBINED) {
+            oss << "intersectSortedNodeSetCombined(";
+        }
+
+        else {
+            oss << "intersectSortedNodeSetNaive(";
+        }
+
+        intersection_exp->vertex_a->accept(this);
+        oss << ", ";
+        intersection_exp->vertex_b->accept(this);
+        oss << ", ";
+        intersection_exp->numA->accept(this);
+        oss << ", ";
+        intersection_exp->numB->accept(this);
+        // reference is an optional parameter only used for Triangular Counting
+        if (intersection_exp->reference != nullptr){
+            oss << ", ";
+            intersection_exp->reference->accept(this);
+        }
+        oss << ") ";
 
     }
 
