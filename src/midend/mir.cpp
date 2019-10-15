@@ -142,8 +142,6 @@ namespace graphit {
             return node;
         }
 
-
-        //TODO this is weird??
         void IntersectionExpr::copy(MIRNode::Ptr node) {
             auto expr = to<mir::IntersectionExpr>(node);
             vertex_a = expr->vertex_a->clone<Expr>();

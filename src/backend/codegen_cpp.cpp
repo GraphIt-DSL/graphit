@@ -1626,6 +1626,7 @@ namespace graphit {
 
 
     void CodeGenCPP::visit(mir::IntersectionExpr::Ptr intersection_exp){
+
         if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
             oss << "intersectSortedNodeSetHiroshi(";
             intersection_exp->vertex_a->accept(this);

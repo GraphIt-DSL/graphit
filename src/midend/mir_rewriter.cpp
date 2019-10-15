@@ -346,6 +346,7 @@ namespace graphit {
             inter_expr->vertex_b = rewrite<Expr>(inter_expr->vertex_b);
             inter_expr->numA = rewrite<Expr>(inter_expr->numA);
             inter_expr->numB = rewrite<Expr>(inter_expr->numB);
+            inter_expr->intersectionType = inter_expr->intersectionType;
             node = inter_expr;
         }
 

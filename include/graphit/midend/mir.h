@@ -804,7 +804,7 @@ namespace graphit {
             Expr::Ptr vertex_b;
             Expr::Ptr numA;
             Expr::Ptr numB;
-            IntersectionSchedule::IntersectionType intersectionType = IntersectionSchedule::IntersectionType::NAIVE;
+            IntersectionSchedule::IntersectionType intersectionType;
 
             typedef std::shared_ptr<IntersectionExpr> Ptr;
 

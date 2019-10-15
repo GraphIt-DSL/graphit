@@ -317,8 +317,6 @@ namespace graphit {
             inter_expr->vertex_b->accept(this);
             inter_expr->numA->accept(this);
             inter_expr->numB->accept(this);
-            //TODO what to do with this?
-            //inter_expr->intersectionType
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {

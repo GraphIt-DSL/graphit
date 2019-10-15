@@ -5,6 +5,7 @@
 #include <graphit/midend/mir_lower.h>
 #include <graphit/midend/physical_data_layout_lower.h>
 #include <graphit/midend/apply_expr_lower.h>
+#include <graphit/midend/intersection_expr_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
@@ -41,7 +42,8 @@ namespace graphit {
         //  sets the flags for other parts of the lowering process
         ApplyExprLower(mir_context, schedule).lower();
 
-
+        // TODO more context after getting it to work
+        IntersectionExprLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)

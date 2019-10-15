@@ -598,16 +598,16 @@ namespace graphit {
 
             // If no intersection schedule has been constructed, construct a new one
             if (schedule_->intersection_schedules == nullptr) {
-                schedule_->intersection_schedules = new std::map<std::string, IntersectionSchedule>();
+                schedule_->intersection_schedules = new std::map<std::string, IntersectionSchedule::IntersectionType>();
             }
 
             if (schedule_->intersection_schedules->find(intersection_label) == schedule_->intersection_schedules->end()) {
-                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule{.intersection_option = IntersectionSchedule::IntersectionType::NAIVE};
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
             }
 
 
             if (intersection_option == "HiroshiIntersection") {
-                (*schedule_->intersection_schedules)[intersection_label].intersection_option = IntersectionSchedule::IntersectionType::HIROSHI;
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::HIROSHI;
 
             }
 
