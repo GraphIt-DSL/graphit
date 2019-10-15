@@ -72,13 +72,39 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		shutil.copytree(GRAPHIT_SOURCE_DIRECTORY + "/test/graphs", cls.scratch_directory + "/graphs")
 		cls.graph_directory = cls.scratch_directory + "/graphs"
 		cls.executable_name = cls.scratch_directory + "/test_exectuable"	
+		cls.cuda_filename = cls.scratch_directory + "/test_cpp.cu"
+		
+		cls.graphitc_py = GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py"
+
 	def cpp_compile_test(self, input_file_name, extra_cpp_args=[]):
-		compile_command = self.nvcc_command + self.test_input_directory + "/" + input_file_name + " -o " + self.executable_name + " " + " ".join(extra_cpp_args)
+		if input_file_name[0] == "/":
+			compile_command = self.nvcc_command + input_file_name + " -o " + self.executable_name + " " + " ".join(extra_cpp_args)
+		else:
+			compile_command = self.nvcc_command + self.test_input_directory + "/" + input_file_name + " -o " + self.executable_name + " " + " ".join(extra_cpp_args)
 		self.get_command_output(compile_command)
 	
 	def cpp_exec_test(self, input_file_name, extra_cpp_args=[], extra_exec_args=[]):
 		self.cpp_compile_test(input_file_name, extra_cpp_args)
 		return self.get_command_output(self.executable_name + " " + " ".join(extra_exec_args))
+
+	def graphit_generate_test(self, input_file_name, input_schedule_name=""):
+		if input_file_name[0] != "/":
+			input_file_name = self.test_input_directory + "/" + input_file_name
+		if input_schedule_name != "" and input_schedule_name[0] != "/":
+			input_schedule_name = self.test_input_directory + "/" + input_schedule_name
+
+		if input_schedule_name != "":
+			self.get_command_output("python " + self.graphitc_py + " -a " + input_file_name + " -f " + input_schedule_name + " -o " + self.cuda_filename)
+		else:
+			self.get_command_output("python " + self.graphitc_py + " -f " + input_file_name + " -o " + self.cuda_filename)
+		
+	def graphit_compile_test(self, input_file_name, input_schedule_name="", extra_cpp_args=[]):	
+		self.graphit_generate_test(input_file_name, input_schedule_name)
+		self.cpp_compile_test(self.cuda_filename, extra_cpp_args)
+
+	def graphit_exec_test(self, input_file_name, input_schedule_name="", extra_cpp_args=[], extra_exec_args=[]):
+		self.graphit_generate_test(input_file_name, input_schedule_name)
+		return self.cpp_exec_test(self.cuda_filename, extra_cpp_args, extra_exec_args)
 			
 	def test_basic_compile(self):
 		self.cpp_compile_test("basic_compile.cu")
@@ -101,6 +127,13 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 
         def test_sssp_delta_stepping_verified(self):
                 self.sssp_verified_test("sssp_delta_stepping.cu", True)
+
+	def test_simple_graphit_exec(self):
+		output = self.graphit_exec_test("simple_graph_load.gt", "default_gpu_schedule.gt", [], [self.graph_directory + "/simple_mtx.mtx"])
+		output = output.split("\n")
+		self.assertEqual(len(output), 2)
+		self.assertEqual(output[0], "14")
+
                 
 if __name__ == '__main__':
 	unittest.main()

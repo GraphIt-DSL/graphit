@@ -263,7 +263,11 @@ namespace graphit {
 			mir::Type::Ptr type = decl->type;
 			assert(mir::isa<mir::EdgeSetType>(type));
 			mir::EdgeSetType::Ptr edge_set_type = mir::to<mir::EdgeSetType>(type);
-			if (edge_set_type->element == element_type)
+			if (edge_set_type->vertex_element_type_list == nullptr)
+				continue;
+			if (edge_set_type->vertex_element_type_list->size() !=2)
+				continue;
+			if ((*(edge_set_type->vertex_element_type_list))[0]->ident == element_type->ident && (*(edge_set_type->vertex_element_type_list))[1]->ident == element_type->ident)
 				return decl; 
 		}
 		return nullptr;	
