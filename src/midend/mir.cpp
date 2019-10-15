@@ -148,6 +148,9 @@ namespace graphit {
             vertex_b = expr->vertex_b->clone<Expr>();
             numA = expr->numA->clone<Expr>();
             numB = expr->numB->clone<Expr>();
+            if (expr->reference != nullptr){
+                reference = expr->reference->clone<Expr>();
+            }
             intersectionType = expr->intersectionType;
 
         }

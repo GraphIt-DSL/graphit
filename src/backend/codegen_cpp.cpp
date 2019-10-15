@@ -1636,6 +1636,10 @@ namespace graphit {
             intersection_exp->numA->accept(this);
             oss << ", ";
             intersection_exp->numB->accept(this);
+            if (intersection_exp->reference != nullptr){
+                oss << ", ";
+                intersection_exp->reference->accept(this);
+            }
             oss << ") ";
         } else {
             oss << "intersectSortedNodeSetNaive(";
@@ -1646,6 +1650,10 @@ namespace graphit {
             intersection_exp->numA->accept(this);
             oss << ", ";
             intersection_exp->numB->accept(this);
+            if (intersection_exp->reference != nullptr){
+                oss << ", ";
+                intersection_exp->reference->accept(this);
+            }
             oss << ") ";
         }
 

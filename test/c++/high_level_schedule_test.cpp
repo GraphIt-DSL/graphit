@@ -723,6 +723,14 @@ protected:
                                            "#s1# const inter: uint_64 = intersection(vertices1, vertices2, 0, 0);\n"
                                            "end\n");
 
+        const char* simple_intersection_opt = ("element Vertex end\n"
+                                           "element Edge end\n"
+                                           "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                           "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "func main() "
+                                           "#s1# const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n"
+                                           "end\n");
 
 
         bfs_str_ =  string (bfs_char);
@@ -746,6 +754,7 @@ protected:
         unordered_kcore_str_ = string (unordered_kcore_char);
         setcover_uint_str_ = string(setcover_uint_char);
         simple_intersection_str_ = string(simple_intersection);
+        simple_intersection_opt_str_ = string(simple_intersection_opt);
     }
 
     virtual void TearDown() {
@@ -823,6 +832,7 @@ protected:
     string setcover_uint_str_;
     string unordered_kcore_str_;
     string simple_intersection_str_;
+    string simple_intersection_opt_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1038,6 +1048,19 @@ TEST_F(HighLevelScheduleTest, SimpleLabelForVarDecl) {
 
 TEST_F(HighLevelScheduleTest, SimpleIntersection) {
     istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionWithOptional) {
+    istringstream is(simple_intersection_opt_str_);
 
     fe_->parseStream(is, context_, errors_);
 

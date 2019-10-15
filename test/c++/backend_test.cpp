@@ -992,3 +992,25 @@ TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
                      "end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, vertices2);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperatorWithOptional) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}

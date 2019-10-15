@@ -344,6 +344,9 @@ namespace graphit {
         mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
         mir_inter_expr->numA = emitExpr(intersection_expr->numA);
         mir_inter_expr->numB = emitExpr(intersection_expr->numB);
+        if (intersection_expr->reference != nullptr) {
+            mir_inter_expr->reference = emitExpr(intersection_expr->reference);
+        }
         retExpr = mir_inter_expr;
     }
 

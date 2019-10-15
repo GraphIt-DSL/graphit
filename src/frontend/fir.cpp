@@ -1036,6 +1036,7 @@ namespace graphit {
             vertex_b = intersection_expr->vertex_b->clone<Expr>();
             numA = intersection_expr->numA->clone<Expr>();
             numB = intersection_expr->numB->clone<Expr>();
+            reference = intersection_expr->reference->clone<Expr>();
         }
 
 

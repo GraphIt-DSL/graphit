@@ -1626,6 +1626,7 @@ namespace graphit {
             Expr::Ptr vertex_b;
             Expr::Ptr numA;
             Expr::Ptr numB;
+            Expr::Ptr reference;
 
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<IntersectionExpr>());

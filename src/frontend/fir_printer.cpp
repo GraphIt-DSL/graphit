@@ -1007,6 +1007,10 @@ namespace graphit {
             expr->numA->accept(this);
             oss << ", ";
             expr->numB->accept(this);
+            if (expr->reference != nullptr) {
+                oss << ", ";
+                expr->reference->accept(this);
+            }
             oss << ") ";
         }
 

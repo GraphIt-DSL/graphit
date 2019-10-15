@@ -2600,7 +2600,6 @@ namespace graphit {
         const Token intersectionToken = consume(Token::Type::INTERSECTION);
         consume(Token::Type::LP);
 
-        //TODO we need to parse the optional parameter later
         const auto vertexA = parseExpr();
         consume(Token::Type::COMMA);
         const auto vertexB = parseExpr();
@@ -2609,13 +2608,17 @@ namespace graphit {
         consume(Token::Type::COMMA);
         const auto numB = parseExpr();
 
-        consume(Token::Type::RP);
-
         intersectionExpr->vertex_a = vertexA;
         intersectionExpr->vertex_b = vertexB;
         intersectionExpr->numA = numA;
         intersectionExpr->numB = numB;
 
+        if (tryConsume(Token::Type::COMMA)) {
+            const auto reference = parseExpr();
+            intersectionExpr->reference = reference;
+        }
+
+        consume(Token::Type::RP);
         return intersectionExpr;
     }
 
