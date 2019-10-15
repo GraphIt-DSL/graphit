@@ -43,6 +43,8 @@ int32_t __device__ *SP;
 int32_t *__host_SP;
 int32_t *__device_SP;
 
+int32_t __device__ window_lower;
+int32_t __device__ window_upper;
 
 void cudaCheckLastError(void) {
 	cudaError_t err = cudaGetLastError();
@@ -107,7 +109,8 @@ bool __device__ updateEdge(int32_t src, int32_t dst, int32_t weight) {
 	SP_trackving_var_1 = gpu_runtime::writeMin(&SP[dst], (SP[src] + weight));
 	output2 = SP_trackving_var_1;
 
-	//if (SP[dst] < device_state.window_upper){
+	//do not output this if it is not within the current window
+	if (SP[dst] >= window_upper) return false;
 	//output2 = true;
 		//}
 	
@@ -416,7 +419,9 @@ int main(int argc, char *argv[]) {
 			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(edges, frontier, frontier);
 
 			gpu_runtime::vertex_set_prepare_sparse(frontier);
-			
+
+
+			cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t*), 0);
 			gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
 			
 			// host_state.frontier1_size[0] = 0;
@@ -456,9 +461,11 @@ int main(int argc, char *argv[]) {
 				if (host_state.new_window_start[0] == INT_MAX) {
 					break;
 				}
-				
+
+				//if it is not a pointer, then you can set by value directly
 				device_state.window_lower = host_state.new_window_start[0];
-				device_state.window_upper = host_state.new_window_start[0] + delta; 
+				device_state.window_upper = host_state.new_window_start[0] + delta;
+				
 				// host_state.frontier1_size[0] = 0;
 
 				// host_state.frontier1_size[0] = 0;
