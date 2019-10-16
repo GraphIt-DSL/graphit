@@ -48,15 +48,30 @@ void static sort_with_degree(GraphT<EdgeWeightType> &graph) {
 	assert(false && "Sort with degree not yet implemented\n");
 	return;
 }
+static bool string_ends_with(const char* str, const char* sub_str) {
+	if (strlen(sub_str) > strlen(str))
+		return false;
+	int32_t len1 = strlen(str);
+	int32_t len2 = strlen(sub_str);
+	if (strcmp(str + len1 - len2, sub_str) == 0)
+		return true;
+	return false;
+}
 template <typename EdgeWeightType>
 static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool to_sort = false) {
 	int flen = strlen(filename.c_str());
-	const char* bin_extension = to_sort?".graphit.sbin":".graphit.bin";
-	char bin_filename[100];
+	const char* bin_extension = to_sort?".graphit_sbin":".graphit_bin";
+	char bin_filename[1024];
 	strcpy(bin_filename, filename.c_str());
-	strcat(bin_filename, bin_extension);
+
+	if (string_ends_with(filename.c_str(), bin_extension) == false)	
+		strcat(bin_filename, bin_extension);
 	
 	FILE *bin_file = fopen(bin_filename, "rb");
+	if (!bin_file && string_ends_with(filename.c_str(), bin_extension)) {
+		std::cout << "Binary file not found" << std::endl;
+		exit(-1);
+	}
 	if (bin_file) {
 		CONSUME(fread(&graph.num_vertices, sizeof(int32_t), 1, bin_file));
 		CONSUME(fread(&graph.num_edges, sizeof(int32_t), 1, bin_file));

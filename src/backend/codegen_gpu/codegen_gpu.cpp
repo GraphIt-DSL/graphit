@@ -28,7 +28,8 @@ int CodeGenGPU::genGPU() {
 			// This is some vertex data
 			genPropertyArrayDecl(constant);	
 		} else {
-			assert(false && "Constant type not handled yet in GPU backend\n");	
+			// This is some scalar variable w or w/o initialization
+			genScalarDecl(constant);
 		}
 	}	
 		
@@ -58,6 +59,14 @@ int CodeGenGPU::genGPU() {
 
 	oss << std::endl;
 	return 0;
+}
+
+void CodeGenGPU::genScalarDecl(mir::VarDecl::Ptr var_decl) {	
+	var_decl->type->accept(this);
+	oss << " __device__ " << var_decl->name << "; " << std::endl;
+	
+	var_decl->type->accept(this);
+	oss << " __host_" << var_decl->name << ";" << std::endl;
 }
 void CodeGenGPU::genPropertyArrayDecl(mir::VarDecl::Ptr constant) {
 	mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(constant->type);
@@ -771,6 +780,9 @@ void CodeGenGPUHost::visit(mir::TensorArrayReadExpr::Ptr expr) {
 }
 
 void CodeGenGPU::visit(mir::IntLiteral::Ptr expr) {
+	oss << expr->val;
+}
+void CodeGenGPU::visit(mir::FloatLiteral::Ptr expr) {
 	oss << expr->val;
 }
 void CodeGenGPU::visit(mir::StringLiteral::Ptr expr) {

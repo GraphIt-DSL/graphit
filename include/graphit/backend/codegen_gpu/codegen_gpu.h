@@ -63,6 +63,7 @@ private:
 
 
 	void genPropertyArrayDecl(mir::VarDecl::Ptr);
+	void genScalarDecl(mir::VarDecl::Ptr);
 	void genPropertyArrayAlloca(mir::VarDecl::Ptr);
 	
 	void genFusedWhileLoop(mir::WhileStmt::Ptr);
@@ -104,6 +105,7 @@ protected:
 
 	virtual void visit(mir::TensorArrayReadExpr::Ptr) override;
 	virtual void visit(mir::IntLiteral::Ptr) override;
+	virtual void visit(mir::FloatLiteral::Ptr) override;
 	virtual void visit(mir::BoolLiteral::Ptr) override;
 	virtual void visit(mir::StringLiteral::Ptr) override;
 
