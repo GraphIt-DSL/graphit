@@ -8,6 +8,7 @@
 #include <vector>
 #include <queue>
 
+//#define DEBUG
 
 typedef struct {
 	int32_t *SP;
@@ -421,7 +422,8 @@ int main(int argc, char *argv[]) {
 			gpu_runtime::vertex_set_prepare_sparse(frontier);
 
 
-			cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t*), 0);
+			cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t), 0);
+			gpu_runtime::cudaCheckLastError();
 			gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
 			
 			// host_state.frontier1_size[0] = 0;
@@ -493,8 +495,11 @@ int main(int argc, char *argv[]) {
 			//printf("Iter %d time = %f, output_size = %d <%d, %d>\n", iters, t, *host_state.frontier1_size, num_cta, CTA_SIZE);
 			iter_total += t;
 		}
-		
-		//printf("Num iters = %d\n", iters);
+
+
+		#ifdef DEBUG
+		printf("Num iters = %d\n", iters);
+		#endif
 		//printf("Time elapsed = %f\n", iter_total);
 		total_time += iter_total;
 
