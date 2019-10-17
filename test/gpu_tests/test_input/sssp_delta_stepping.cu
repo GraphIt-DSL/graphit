@@ -71,7 +71,7 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
                 int id = num_threads * i + thread_id;
                 if (id < total_work) {
 			device_state.SP[id] = INT_MAX;
-			device_state.frontier2[id] = 0;
+			//device_state.frontier2[id] = 0;
                 }
         }
 	if (thread_id == 0) {
@@ -79,12 +79,12 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
 		SP[start_v] = 0;
 		
 		device_state.SP[start_v] = 0;
-		device_state.frontier1[graph.num_vertices] = 0;	
-		device_state.frontier1_size[0] = 1;
-		device_state.frontier1_size[1] = 1;
-		device_state.frontier1_size[2] = 0;
-		device_state.frontier1_size[3] = 0;
-		device_state.frontier1_size[4] = 0;
+		// device_state.frontier1[graph.num_vertices] = 0;	
+		// device_state.frontier1_size[0] = 1;
+		// device_state.frontier1_size[1] = 1;
+		// device_state.frontier1_size[2] = 0;
+		// device_state.frontier1_size[3] = 0;
+		// device_state.frontier1_size[4] = 0;
 	}
 }
 __device__ inline int warp_bcast(int v, int leader) { return __shfl_sync((uint32_t)-1, v, leader); }
@@ -358,6 +358,8 @@ int main(int argc, char *argv[]) {
 	gpu_runtime::load_graph(graph, argv[1], false);
 	int32_t delta = atoi(argv[3]);
 	int32_t start_vertex = atoi(argv[2]);
+
+
 	
 	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
 	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
@@ -368,6 +370,16 @@ int main(int argc, char *argv[]) {
 	algo_state host_state, device_state;	
 	allocate_state(host_state, device_state, graph);
 
+	//host_state.frontier1_size = new int32_t[1];
+	//host_state.frontier1 = new int32_t[graph.num_vertices];
+	//host_state.more_elems = new int32_t();
+
+	//cudaMalloc(&device_state.frontier1, sizeof(int32_t)*graph.num_vertices*5);
+	//cudaMalloc(&device_state.frontier2, sizeof(char)*graph.num_vertices);
+	//cudaMalloc(&device_state.frontier1_size, 5*sizeof(int32_t));
+
+	
+	
 	host_state.window_lower = 0;
 	host_state.window_upper = delta;
 	device_state.window_lower = 0;
@@ -387,7 +399,9 @@ int main(int argc, char *argv[]) {
 		float iter_total = 0;
 		startTimer();
 		
-		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);		
+		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);
+		gpu_runtime::cudaCheckLastError();
+		
 		int iters = 0;	
 		cudaDeviceSynchronize();
 		float t = stopTimer();
