@@ -474,6 +474,28 @@ class TestGraphitCompiler(unittest.TestCase):
                 break
         self.assertEqual(test_flag, True)
 
+    def tc_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("tc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        os.chdir("..")
+        cmd = "OMP_PLACES=sockets ./bin/test.o " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4_sym.el" + " > verifier_input"
+        print (cmd)
+        subprocess.call(cmd, shell=True)
+
+        verify_cmd = "./bin/tc_verifier -s -f " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4_sym.el -t verifier_input"
+        print (verify_cmd)
+        output = self.get_command_output(verify_cmd)
+        test_flag = False
+        for line in output.rstrip().split("\n"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
+
     def test_simple_splitting(self):
         self.basic_compile_test("simple_loop_index_split.gt")
 
@@ -690,6 +712,18 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_ppsp_delta_stepping_SparsePush_parallel_delta2(self):
         self.ppsp_verified_test("SparsePush_VertexParallel_Delta2.gt", True);
+
+    def test_tc_hiroshi(self):
+        self.tc_verified_test("tc_hiroshi.gt", True);
+
+    def test_tc_multi_skip(self):
+        self.tc_verified_test("tc_multiskip.gt", True);
+
+    def test_tc_naive(self):
+        self.tc_verified_test("tc_naive.gt", True);
+
+    def test_tc_empty(self):
+        self.tc_verified_test("tc_empty.gt", True);
 
     def test_delta_stepping_eager_with_merge(self):
         self.ppsp_verified_test("priority_update_eager_with_merge.gt", True);

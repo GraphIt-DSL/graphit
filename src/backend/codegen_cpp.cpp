@@ -1628,11 +1628,11 @@ namespace graphit {
     void CodeGenCPP::visit(mir::IntersectionExpr::Ptr intersection_exp){
 
         if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
-            oss << "intersectSortedNodeSetHiroshi(";
+            oss << "hiroshiVertexIntersection(";
         }
 
         else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::MULTISKIP) {
-            oss << "intersectSortedNodeSetMultipleSkip(";
+            oss << "multiSkipVertexIntersection(";
         }
 
         else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::COMBINED) {
@@ -1640,7 +1640,7 @@ namespace graphit {
         }
 
         else {
-            oss << "intersectSortedNodeSetNaive(";
+            oss << "naiveVertexIntersection(";
         }
 
         intersection_exp->vertex_a->accept(this);

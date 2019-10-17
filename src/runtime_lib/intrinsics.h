@@ -78,6 +78,7 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 #include "infra_gapbs/bitmap.h"
 #include "infra_gapbs/command_line.h"
 #include "infra_gapbs/graph.h"
+#include "infra_gapbs/intersections.h"
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
 #include "infra_gapbs/eager_priority_queue.h"
@@ -176,6 +177,47 @@ static int builtin_getVertices(Graph &edges){
 
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
+}
+
+static NodeID builtin_getOutDegree(Graph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static NodeID builtin_getOutDegree(WGraph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(Graph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(WGraph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+//static NodeID* builtin_getNgh(Graph &edges, NodeID src){
+//    return edges.out_neigh(src).begin();
+//
+//}
+//
+//static NodeWeight<int, int>* builtin_getNgh(WGraph &edges, NodeID src){
+//    return edges.out_neigh(src).begin();
+//}
+
+static size_t hiroshiVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetHiroshi((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+}
+
+static size_t multiSkipVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetMultipleSkip((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+}
+
+static size_t naiveVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetNaive((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
 }
 
 template <typename T>
