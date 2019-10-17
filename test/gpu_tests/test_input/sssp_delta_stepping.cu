@@ -47,6 +47,7 @@ int32_t *__device_SP;
 int32_t __device__ window_lower;
 int32_t __device__ window_upper;
 
+
 void cudaCheckLastError(void) {
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) 
@@ -61,7 +62,7 @@ void cudaCheckLastError(void) {
 #define WARP_SIZE (32)
 #define STAGE_1_SIZE (8)
 
-void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state device_state) {
+void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state device_state, int start_v) {
         int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
         int num_threads = blockDim.x * gridDim.x;
         int total_work = graph.num_vertices;
@@ -75,9 +76,9 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
         }
 	if (thread_id == 0) {
 		//reset with the new data structure
-		SP[0] = 0;
+		SP[start_v] = 0;
 		
-		device_state.SP[0] = 0;
+		device_state.SP[start_v] = 0;
 		device_state.frontier1[graph.num_vertices] = 0;	
 		device_state.frontier1_size[0] = 1;
 		device_state.frontier1_size[1] = 1;
@@ -330,25 +331,8 @@ void allocate_state(algo_state &host_state, algo_state &device_state, gpu_runtim
 	host_state.SP = new int[graph.num_vertices];
 	host_state.output_size = new int32_t[1];
 	host_state.new_window_start = new int32_t[1];
-
-	host_state.frontier1_size = new int32_t[1];
-	host_state.frontier1 = new int32_t[graph.num_vertices];
-
-
-	host_state.more_elems = new int32_t();
 	cudaMalloc(&device_state.SP, sizeof(int32_t)*graph.num_vertices);	
-
-	cudaMalloc(&device_state.frontier1, sizeof(int32_t)*graph.num_vertices * 5);	
-	cudaMalloc(&device_state.frontier2, sizeof(char)*graph.num_vertices );	
-
-	cudaMalloc(&device_state.frontier1_size, 5*sizeof(int32_t));	
-	//cudaMalloc(&device_state.frontier2_size, sizeof(int32_t));	
-
 	cudaMalloc(&device_state.output_size, sizeof(int32_t));
-
-
-	cudaMalloc(&device_state.worklist, sizeof(int32_t));
-	cudaMalloc(&device_state.more_elems, sizeof(int32_t));
 	cudaMalloc(&device_state.new_window_start, sizeof(int32_t));
 }
 
@@ -372,8 +356,9 @@ int main(int argc, char *argv[]) {
 	cudaThreadSetCacheConfig(cudaFuncCachePreferShared);
 	gpu_runtime::GraphT<int32_t> graph;
 	gpu_runtime::load_graph(graph, argv[1], false);
-	int32_t delta = atoi(argv[2]);
-
+	int32_t delta = atoi(argv[3]);
+	int32_t start_vertex = atoi(argv[2]);
+	
 	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
 	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
 	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
@@ -388,9 +373,11 @@ int main(int argc, char *argv[]) {
 	device_state.window_lower = 0;
 	device_state.window_upper = delta;
 
+	
+
 	//this sets it to Sparse
 	gpu_runtime::VertexFrontier frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
-	gpu_runtime::builtin_addVertex(frontier, 0);
+	gpu_runtime::builtin_addVertex(frontier, start_vertex);
 
 	cudaDeviceSynchronize();
 
@@ -400,16 +387,13 @@ int main(int argc, char *argv[]) {
 		float iter_total = 0;
 		startTimer();
 		
-		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);		
+		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);		
 		int iters = 0;	
 		cudaDeviceSynchronize();
 		float t = stopTimer();
 		//printf("Init time = %f\n", t);
 		iter_total+=t;
 
-		host_state.frontier1_size[0] = 1;
-
-		//while(*host_state.frontier1_size) {
 		while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
 			startTimer();
 			iters++;
@@ -493,6 +477,12 @@ int main(int argc, char *argv[]) {
 
 			t = stopTimer();
 			//printf("Iter %d time = %f, output_size = %d <%d, %d>\n", iters, t, *host_state.frontier1_size, num_cta, CTA_SIZE);
+
+
+			#ifdef DEBUG
+			//printf("Iter %d output_size = %d \n", iters, gpu_runtime::builtin_getVertexSetSize(frontier));
+			#endif
+			
 			iter_total += t;
 		}
 
@@ -506,11 +496,15 @@ int main(int argc, char *argv[]) {
 	}
 	//printf("Total time = %f\n", total_time);
 	if (argc > 3)
-		if (argv[3][0] == 'v'){ 
+		if (argv[4][0] == 'v'){ 
 			//FILE *output = fopen("output.txt", "w");
 			cudaMemcpy(host_state.SP, __device_SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
 			for (int i = 0; i < graph.num_vertices; i++)
+				#ifdef DEBUG
+				printf("%d, %d\n", i, host_state.SP[i]);
+				#else
 				printf("%d\n", host_state.SP[i]);
+                #endif
 		}else if (argv[2][0] == 'c'){
 			/*
 			for (int i = 0; i < NUM_BLOCKS * NUM_THREADS; i++)
