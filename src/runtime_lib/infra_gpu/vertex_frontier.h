@@ -32,6 +32,9 @@ struct VertexFrontier {
 
 	format_ready_type format_ready;
 };
+
+static VertexFrontier sentinel_frontier;
+
 static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
 	int32_t curr_size = 0;
 	cudaMemcpy(&curr_size, frontier.d_num_elems_input, sizeof(int32_t), cudaMemcpyDeviceToHost);

@@ -144,7 +144,7 @@ private:
 
 	virtual void visit(mir::Call::Ptr) override;	
 	virtual void visit(mir::PrintStmt::Ptr) override;
-
+	virtual void visit(mir::VarExpr::Ptr) override;
 
 
 	void generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare);

@@ -178,6 +178,8 @@ namespace graphit {
 	if (schedule_ != nullptr && !schedule_->apply_gpu_schedules.empty()) {
 		// Always parallelize all operators for GPU schedules
 		edgeset_apply->is_parallel = true;
+		if (edgeset_apply->tracking_field != "")
+			edgeset_apply->requires_output = true;
 		// Check if there is a GPU schedule attached to this statement - 
             	auto current_scope_name = label_scope_.getCurrentScope();
 		auto apply_schedule_iter = schedule_->apply_gpu_schedules.find(current_scope_name);
