@@ -34,10 +34,10 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t __device__ d_get_degree(int32_t vertex_id) {
 		return d_src_offsets[vertex_id + 1] - d_src_offsets[vertex_id];
 	}
-	VertexFrontier getFullFrontier(void) {
-		VertexFrontier frontier;
-		frontier.max_num_elems = num_vertices;
-		return frontier;
+	VertexFrontier full_frontier;
+	VertexFrontier& getFullFrontier(void) {
+		full_frontier.max_num_elems = num_vertices;
+		return full_frontier;
 	}
 };
 void consume(int32_t _) {
@@ -141,6 +141,24 @@ static int32_t builtin_getVertices(GraphT<EdgeWeightType> &graph) {
 	return graph.num_vertices;
 }
 
+template <typename EdgeWeightType>
+static int32_t __device__ device_builtin_getVertices(GraphT<EdgeWeightType> &graph) {
+	return graph.num_vertices;
+}
+
+template <typename EdgeWeightType> 
+void __global__ init_degrees_kernel(int32_t *degrees, GraphT<EdgeWeightType> graph) {
+	for (int32_t vid = threadIdx.x + blockIdx.x * blockDim.x; vid < graph.num_vertices; vid += gridDim.x * blockDim.x) 
+		degrees[vid] = graph.d_get_degree(vid);
+}
+
+template <typename EdgeWeightType>
+static int32_t* builtin_getOutDegrees(GraphT<EdgeWeightType> &graph) {
+	int32_t *degrees = nullptr;
+	cudaMalloc(&degrees, sizeof(int32_t) * graph.num_vertices);
+	init_degrees_kernel<<<NUM_CTA, CTA_SIZE>>>(degrees, graph);
+	return degrees;
+}
 
 }
 #endif

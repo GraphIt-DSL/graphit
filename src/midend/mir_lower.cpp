@@ -23,7 +23,7 @@ namespace graphit {
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
 
         //lower global vector assignment to vector operations
-        GlobalFieldVectorLower(mir_context).lower();
+        GlobalFieldVectorLower(mir_context, schedule).lower();
 
         //lower  global edgeset assignment (from loading)
         // needed for reading commandline arguments in the main function

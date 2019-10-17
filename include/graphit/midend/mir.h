@@ -853,6 +853,7 @@ namespace graphit {
 	    std::string kernel_function;
 	
 	    fir::gpu_schedule::SimpleGPUSchedule applied_schedule;
+	    bool requires_output = false;
 
         protected:
             virtual void copy(MIRNode::Ptr);

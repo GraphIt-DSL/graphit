@@ -6,6 +6,7 @@
 #define GRAPHIT_VECTOR_OP_LOWER_H
 
 #include <graphit/midend/mir_context.h>
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
     /**
@@ -15,7 +16,7 @@ namespace graphit {
      */
     class GlobalFieldVectorLower {
     public:
-        GlobalFieldVectorLower(MIRContext *mir_context) : mir_context_(mir_context){
+        GlobalFieldVectorLower(MIRContext *mir_context, Schedule *schedule) : mir_context_(mir_context), schedule_(schedule) {
 
         }
 
@@ -27,6 +28,7 @@ namespace graphit {
 
     private:
         MIRContext *mir_context_;
+        Schedule *schedule_ = nullptr;
 
     };
 }
