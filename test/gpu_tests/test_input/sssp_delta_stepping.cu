@@ -11,10 +11,13 @@
 //#define DEBUG
 
 #ifdef DEBUG
-  #define ITER_COUNT (4)
+  #define ITER_COUNT (5)
 #else
   #define ITER_COUNT (1)
 #endif
+
+gpu_runtime::GPUPriorityQueue<int> host_gpq;
+gpu_runtime::GPUPriorityQueue<int> __device__  device_gpq; 
 
 typedef struct {
 	int32_t *SP;
@@ -147,8 +150,10 @@ int main(int argc, char *argv[]) {
 	
 	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
 	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
-	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
 	
+	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
+
+	//cudaMemcpyToSymbol(gpq, &host_gpq, sizeof(host_gpq), 0);
 	
 	algo_state host_state, device_state;	
 	allocate_state(host_state, device_state, graph);
@@ -257,7 +262,7 @@ int main(int argc, char *argv[]) {
 				fprintf(output, "%d, %d\n", i, host_state.SP[i]);
 				#else
 				printf("%d\n", host_state.SP[i]);
-                #endif
+                                #endif
 			}
 		}
 	return 0;
