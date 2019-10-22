@@ -22,7 +22,7 @@ TEST_F(GPURuntimeLibTest, SimplePriorityQueueTest){
 	gpu_runtime::load_graph(edges, graph_directory + "/simple_mtx.mtx", false);
 	int num_vertices = gpu_runtime::builtin_getVertices(edges);
 	int* priorities = new int[num_vertices]; 
-	gpu_runtime::GPUPriorityQueue<int> pq = gpu_runtime::GPUPriorityQueue<int>(priorities);
+	gpu_runtime::GPUPriorityQueue<int> pq;
 	EXPECT_EQ (14, num_vertices);
 }
 

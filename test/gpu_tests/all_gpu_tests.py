@@ -78,7 +78,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		
 		shutil.copytree(GRAPHIT_SOURCE_DIRECTORY + "/test/graphs", cls.scratch_directory + "/graphs")
 		cls.graph_directory = cls.scratch_directory + "/graphs"
-		cls.executable_name = cls.scratch_directory + "/test_exectuable"	
+		cls.executable_name = cls.scratch_directory + "/test_executable"	
 		cls.cuda_filename = cls.scratch_directory + "/test_cpp.cu"
 		
 		cls.graphitc_py = GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py"
