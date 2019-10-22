@@ -19,6 +19,7 @@ end
 
 
 func main()
+    edges = edges.relabel();
     #s1# edges.apply(incrementing_count);
     triangles = vertexArray.sum();
     print triangles;
@@ -26,4 +27,4 @@ end
 
 schedule:
     program->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
-    program->configIntersection("s2", "MultiSkipIntersection");
+    program->configIntersection("s2", "HiroshiIntersection");

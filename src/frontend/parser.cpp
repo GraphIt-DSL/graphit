@@ -2634,6 +2634,7 @@ namespace graphit {
         intrinsics_.push_back("getOutDegreesUint");
         intrinsics_.push_back("getOutDegree");
         intrinsics_.push_back("getNgh");
+        intrinsics_.push_back("relabel");
 
         // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");
