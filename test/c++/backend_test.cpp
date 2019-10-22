@@ -1004,6 +1004,19 @@ TEST_F(BackendTest, SimpleIntersectionOperator) {
 
 }
 
+TEST_F(BackendTest, SimpleIntersectionOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersection(vertices1, vertices2, 0, 0);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
 TEST_F(BackendTest, SimpleIntersectionOperatorWithOptional) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"

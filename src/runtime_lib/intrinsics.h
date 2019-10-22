@@ -72,13 +72,12 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 
 
 #include <vector>
-
 #include "infra_gapbs/builder.h"
 #include "infra_gapbs/benchmark.h"
+#include "infra_gapbs/intersections.h"
 #include "infra_gapbs/bitmap.h"
 #include "infra_gapbs/command_line.h"
 #include "infra_gapbs/graph.h"
-#include "infra_gapbs/intersections.h"
 #include "infra_gapbs/platform_atomics.h"
 #include "infra_gapbs/pvector.h"
 #include "infra_gapbs/eager_priority_queue.h"
@@ -199,21 +198,15 @@ static VertexSubset<NodeID>* builtin_getNgh(WGraph &edges, NodeID src){
     return v;
 }
 
-//static NodeID* builtin_getNgh(Graph &edges, NodeID src){
-//    return edges.out_neigh(src).begin();
-//
-//}
-//
-//static NodeWeight<int, int>* builtin_getNgh(WGraph &edges, NodeID src){
-//    return edges.out_neigh(src).begin();
-//}
 
 static size_t hiroshiVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
     return intersectSortedNodeSetHiroshi((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
 }
 
 static size_t multiSkipVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
     return intersectSortedNodeSetMultipleSkip((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
 }
 
 static size_t naiveVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {

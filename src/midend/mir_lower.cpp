@@ -42,7 +42,9 @@ namespace graphit {
         //  sets the flags for other parts of the lowering process
         ApplyExprLower(mir_context, schedule).lower();
 
-        // TODO more context after getting it to work
+        // This pass sets properties of intersection operations based on scheduling languages.
+        // intersection types: HiroshiIntersection, Naive, Multiskip.
+        // If there is no schedule specified, it just chooses naive intersection.
         IntersectionExprLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access
