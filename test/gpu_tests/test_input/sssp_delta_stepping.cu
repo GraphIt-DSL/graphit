@@ -1,7 +1,7 @@
 #include "gpu_intrinsics.h"
 #include <algorithm>
 
-#define ITER_COUNT (1)
+
 #define USE_DEDUP 0
 #define SORT_NODES 0
 #include <assert.h>
@@ -9,6 +9,12 @@
 #include <queue>
 
 //#define DEBUG
+
+#ifdef DEBUG
+  #define ITER_COUNT (4)
+#else
+  #define ITER_COUNT (1)
+#endif
 
 typedef struct {
 	int32_t *SP;
@@ -142,15 +148,12 @@ int main(int argc, char *argv[]) {
 	cudaMalloc(&__device_SP, gpu_runtime::builtin_getVertices(graph) * sizeof(int32_t));
 	cudaMemcpyToSymbol(SP, &__device_SP, sizeof(int32_t*), 0);
 	__host_SP = new int32_t[gpu_runtime::builtin_getVertices(graph)];
-	gpu_runtime::vertex_set_apply_kernel<gpu_runtime::AccessorAll, SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(graph.getFullFrontier());
+	
 	
 	algo_state host_state, device_state;	
 	allocate_state(host_state, device_state, graph);
 	
-	host_state.window_lower = 0;
-	host_state.window_upper = delta;
-	device_state.window_lower = 0;
-	device_state.window_upper = delta;
+
 
    
 
@@ -163,7 +166,13 @@ int main(int argc, char *argv[]) {
 		//this sets it to Sparse
 		gpu_runtime::VertexFrontier frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
 		gpu_runtime::builtin_addVertex(frontier, start_vertex);
+		gpu_runtime::vertex_set_apply_kernel<gpu_runtime::AccessorAll, SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(graph.getFullFrontier());
 		startTimer();
+
+		host_state.window_lower = 0;
+		host_state.window_upper = delta;
+		device_state.window_lower = 0;
+		device_state.window_upper = delta;
 		
 		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);
 		gpu_runtime::cudaCheckLastError();
@@ -180,7 +189,9 @@ int main(int argc, char *argv[]) {
 			gpu_runtime::vertex_set_prepare_sparse(frontier);
 			cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t), 0);
 			gpu_runtime::cudaCheckLastError();
-			gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
+			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
+			gpu_runtime::TWCE_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);
+
 			
 			gpu_runtime::swap_bytemaps(frontier);
 			// set the input to the prepare function
@@ -209,6 +220,7 @@ int main(int argc, char *argv[]) {
 				
 			}
 
+			cudaDeviceSynchronize();
 			t = stopTimer();
 
 			#ifdef DEBUG
@@ -221,22 +233,32 @@ int main(int argc, char *argv[]) {
 
 		#ifdef DEBUG
 		printf("Num iters = %d\n", iters);
+		printf("Time elapsed = %f\n", iter_total);
 		#endif
-		//printf("Time elapsed = %f\n", iter_total);
+		
 		total_time += iter_total;
 
 	}
-	//printf("Total time = %f\n", total_time);
+
+	#ifdef DEBUG
+	printf("Total time = %f\n", total_time);
+	#endif
+	
 	if (argc > 3)
 		if (argv[4][0] == 'v'){ 
 			//FILE *output = fopen("output.txt", "w");
 			cudaMemcpy(host_state.SP, __device_SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
-			for (int i = 0; i < graph.num_vertices; i++)
+			#ifdef DEBUG
+			FILE *output = fopen("output.txt", "w");
+			#endif
+			
+			for (int i = 0; i < graph.num_vertices; i++){
 				#ifdef DEBUG
-				printf("%d, %d\n", i, host_state.SP[i]);
+				fprintf(output, "%d, %d\n", i, host_state.SP[i]);
 				#else
 				printf("%d\n", host_state.SP[i]);
                 #endif
+			}
 		}
 	return 0;
 }
