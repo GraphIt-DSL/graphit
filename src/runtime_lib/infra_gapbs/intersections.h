@@ -23,14 +23,33 @@ using namespace std;
 /*
 Runtime library for various set intersection methods
 */
-size_t intersectSortedNodeSetBitset(Bitmap* A, NodeID *B, size_t totalB);
-size_t intersectSortedNodeSetBinarySearch(NodeID *A, NodeID *B, size_t totalA, size_t totalB);
-size_t intersectSortedNodeSetHiroshi(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest = (NodeID)INT32_MAX);
-size_t intersectSortedNodeSetMultipleSkip(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest=(NodeID)INT32_MAX);
-size_t intersectSortedNodeSetNaive(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest=(NodeID)INT32_MAX);
-size_t intersectSortedNodeSetCombined(NodeID *A, NodeID *B, size_t totalA, size_t totalB, size_t sizeThreshold, double ratioThreshold, NodeID dest = (NodeID)INT32_MAX);
 
-size_t intersectSortedNodeSetBitset(Bitmap* A, NodeID *B, size_t totalB) {
+
+//Naive set intersection method.
+static size_t intersectSortedNodeSetNaive(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest=(NodeID)INT32_MAX) {
+
+    size_t begin_a = 0;
+    size_t begin_b = 0;
+    size_t count = 0;
+
+    // intersect the tail using scalar intersection
+    while (begin_a < totalA && begin_b < totalB) {
+        if (*(B + begin_b) > dest) break;
+        if (*(A + begin_a) < *(B + begin_b)) {
+            begin_a++;
+        } else if (*(A + begin_a) > *(B + begin_b)) {
+            begin_b++;
+        } else {
+            count++;
+            begin_a++;
+            begin_b++;
+        }
+    }
+    return count;
+
+}
+
+static size_t intersectSortedNodeSetBitset(Bitmap* A, NodeID *B, size_t totalB) {
 
     size_t total = 0;
 
@@ -44,7 +63,7 @@ size_t intersectSortedNodeSetBitset(Bitmap* A, NodeID *B, size_t totalB) {
 }
 
 
-long int inline binarySearch(NodeID *A, long int start, size_t total, NodeID *B, size_t offset) {
+inline long int binarySearch(NodeID *A, long int start, size_t total, NodeID *B, size_t offset) {
 
     long int left = start == -1 ? 0 : start;
     long int right = total - 1;
@@ -73,7 +92,7 @@ long int inline binarySearch(NodeID *A, long int start, size_t total, NodeID *B,
 }
 
 //set intersection by looking up smaller arrays in big arrays
-size_t intersectSortedNodeSetBinarySearch(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
+static size_t intersectSortedNodeSetBinarySearch(NodeID *A, NodeID *B, size_t totalA, size_t totalB) {
 
     size_t count = 0;
     long int start = 0;
@@ -115,7 +134,7 @@ size_t intersectSortedNodeSetBinarySearch(NodeID *A, NodeID *B, size_t totalA, s
 }
 
 //set intersection based on Hiroshi method -> reference: https://dl.acm.org/citation.cfm?id=2735518
-size_t intersectSortedNodeSetHiroshi(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest) {
+static size_t intersectSortedNodeSetHiroshi(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest=(NodeID)INT32_MAX) {
 
     // if we cannot load 3 elements at a time, we just do naive intersection.
     if (totalA <= 2 || totalB <= 2){
@@ -197,7 +216,7 @@ size_t intersectSortedNodeSetHiroshi(NodeID *A, NodeID *B, size_t totalA, size_t
 }
 
 //set intersection where it skips multiple element in batch
-size_t intersectSortedNodeSetMultipleSkip(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest) {
+static size_t intersectSortedNodeSetMultipleSkip(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest=(NodeID)INT32_MAX) {
 
     NodeID it_a = 0;
     size_t count = 0;
@@ -234,32 +253,8 @@ size_t intersectSortedNodeSetMultipleSkip(NodeID *A, NodeID *B, size_t totalA, s
     return count;
 }
 
-//Naive set intersection method.
-size_t intersectSortedNodeSetNaive(NodeID *A, NodeID *B, size_t totalA, size_t totalB, NodeID dest) {
-
-    size_t begin_a = 0;
-    size_t begin_b = 0;
-    size_t count = 0;
-
-    // intersect the tail using scalar intersection
-    while (begin_a < totalA && begin_b < totalB) {
-        if (*(B + begin_b) > dest) break;
-        if (*(A + begin_a) < *(B + begin_b)) {
-            begin_a++;
-        } else if (*(A + begin_a) > *(B + begin_b)) {
-            begin_b++;
-        } else {
-            count++;
-            begin_a++;
-            begin_b++;
-        }
-    }
-    return count;
-
-}
-
-size_t intersectSortedNodeSetCombined(NodeID *A, NodeID *B, size_t totalA, size_t totalB, size_t sizeThreshold,
-                                      double ratioThreshold, NodeID dest) {
+static size_t intersectSortedNodeSetCombined(NodeID *A, NodeID *B, size_t totalA, size_t totalB, size_t sizeThreshold,
+                                      double ratioThreshold, NodeID dest=(NodeID)INT32_MAX) {
 
     size_t count = 0;
 
@@ -268,24 +263,11 @@ size_t intersectSortedNodeSetCombined(NodeID *A, NodeID *B, size_t totalA, size_
         count += intersectSortedNodeSetHiroshi(A, B, totalA, totalB, dest);
 
     }
-        // else if (totalA >= totalB) {
-        //     count += intersectSortedNodeSetMultipleSkip(A, B, totalA, totalB, dest);
-        // }
-        // else if (totalA < totalB) {
-        //     count += intersectSortedNodeSetMultipleSkip(B, A, totalB, totalA, dest);
-
-        // } else {
-        //     //shouldn't be here
-        //     return 0;
-        // }
-
-        //TODO there is some tricky overcounting if we switch A, B.
+    //TODO there is some tricky overcounting if we switch A, B.
     else {
         count += intersectSortedNodeSetMultipleSkip(A, B, totalA, totalB, dest);
     }
 
     return count;
-
-
 }
 #endif
