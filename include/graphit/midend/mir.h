@@ -948,6 +948,7 @@ namespace graphit {
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		
 		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -975,6 +976,7 @@ namespace graphit {
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {

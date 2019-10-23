@@ -44,6 +44,19 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 					}
 				}
 			}
+		} else if (mir::isa<mir::VarDecl>(this_stmt)) {
+			mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>(this_stmt);
+			if (var_decl->initVal != nullptr) {
+				if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+					mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
+					if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
+						std::string frontier_name = esae->from_func;
+						if (is_frontier_reusable(stmt_block, i, frontier_name)) {
+							esae->frontier_reusable = true;
+						}
+					}
+				}	
+			}
 		}
 		if (std::find(to_deletes.begin(), to_deletes.end(), this_stmt) == to_deletes.end()) {
 			new_stmts.push_back(this_stmt);	
@@ -64,6 +77,11 @@ void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::PushEdgeSetApplyExpr::
 void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::PullEdgeSetApplyExpr::Ptr pesae) {
 	mir::MIRVisitor::visit(pesae);
 	if (pesae->from_func == frontier_name)
+		is_used = true;
+}
+void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::EdgeSetApplyExpr::Ptr esae) {
+	mir::MIRVisitor::visit(esae);
+	if (esae->from_func == frontier_name)
 		is_used = true;
 }
 }

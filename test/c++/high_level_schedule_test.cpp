@@ -43,6 +43,29 @@ protected:
                                 "  print \"finished running BFS\"; \n"
                                 "end");
 
+        const char* bfs_char_gpu = ("element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                "const parent : vector{Vertex}(int) = -1;\n"
+                                "func updateEdge(src : Vertex, dst : Vertex) "
+                                "  parent[dst] = src; "
+                                "end\n"
+                                "func toFilter(v : Vertex) -> output : bool "
+                                "  output = parent[v] == -1; "
+                                "end\n"
+                                "func main() "
+                                "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                                "  frontier.addVertex(1); "
+                                "  while (frontier.getVertexSetSize() != 0) "
+                                "      #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true); \n"
+				"      delete frontier;\n"
+				"      frontier = output;\n"	
+                                "  end\n"
+                                "  print \"finished running BFS\"; \n"
+                                "end");
+
+
 
         const char*  pr_char = ("element Vertex end\n"
                                              "element Edge end\n"
@@ -128,6 +151,32 @@ protected:
                                                          "          end\n"
                                                          "     end\n"
                                                          "end";
+
+        const char * sssp_char_gpu =      "element Vertex end\n"
+                                                         "element Edge end\n"
+                                                         "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+                                                         "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                         "const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX \n"
+                                                         "func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool\n"
+                                                         "    SP[dst] min= (SP[src] + weight);\n"
+                                                         "end\n"
+                                                         "func main() \n"
+                                                         "    var n : int = edges.getVertices();\n"
+                                                         "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                                         "    frontier.addVertex(0); %add source vertex \n"
+                                                         "    SP[0] = 0;\n"
+                                                         "    var rounds : int = 0;\n"
+                                                         "    while (frontier.getVertexSetSize() != 0)\n"
+                                                         "         #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, SP);\n"
+							 "         delete frontier;\n"
+					                 "         frontier = output;\n"
+                                                         "         rounds = rounds + 1;\n"
+                                                         "         if rounds == n\n"
+                                                         "             print \"negative cycle\";\n"
+                                                         "          end\n"
+                                                         "     end\n"
+                                                         "end";
+
 
         const char * sssp_async_char =      "element Vertex end\n"
                 "element Edge end\n"
@@ -715,8 +764,10 @@ protected:
                                             "end");
 
         bfs_str_ =  string (bfs_char);
+        bfs_str_gpu_ =  string (bfs_char_gpu);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
+        sssp_str_gpu_ = string  (sssp_char_gpu);
         sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
@@ -805,8 +856,10 @@ protected:
     graphit::MIRContext *mir_context_;
 
     string bfs_str_;
+    string bfs_str_gpu_;
     string pr_str_;
     string sssp_str_;
+    string sssp_str_gpu_;
     string sssp_async_str_;
     string cf_str_;
     string cc_str_;
@@ -2291,7 +2344,7 @@ TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
 }
 
 TEST_F(HighLevelScheduleTest, BFSBasicSimpleGPUScheduleTest) {
-    istringstream is (bfs_str_);
+    istringstream is (bfs_str_gpu_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
@@ -2304,7 +2357,7 @@ TEST_F(HighLevelScheduleTest, BFSBasicSimpleGPUScheduleTest) {
 }
 
 TEST_F(HighLevelScheduleTest, BFSBasicHybridGPUScheduleTest) {
-    istringstream is (bfs_str_);
+    istringstream is (bfs_str_gpu_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
@@ -2321,7 +2374,7 @@ TEST_F(HighLevelScheduleTest, BFSBasicHybridGPUScheduleTest) {
 }
 
 TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
-    istringstream is (sssp_str_);
+    istringstream is (sssp_str_gpu_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
@@ -2335,7 +2388,7 @@ TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
 TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
     using namespace fir::gpu_schedule;
 
-    istringstream is (bfs_str_);
+    istringstream is (bfs_str_gpu_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);

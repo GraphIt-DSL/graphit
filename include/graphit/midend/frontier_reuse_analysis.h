@@ -28,6 +28,7 @@ public:
 		virtual void visit(mir::VarExpr::Ptr) override;
 		virtual void visit(mir::PushEdgeSetApplyExpr::Ptr) override;
 		virtual void visit(mir::PullEdgeSetApplyExpr::Ptr) override;
+		virtual void visit(mir::EdgeSetApplyExpr::Ptr) override;
 		
 	};
 	void analyze(void);
