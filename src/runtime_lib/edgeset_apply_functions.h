@@ -6,6 +6,7 @@
 #define GRAPHIT_EDGESET_APPLY_FUNCTIONS_H
 
 #include "vertexsubset.h"
+
 #include "infra_gapbs/builder.h"
 #include "infra_gapbs/benchmark.h"
 #include "infra_gapbs/bitmap.h"

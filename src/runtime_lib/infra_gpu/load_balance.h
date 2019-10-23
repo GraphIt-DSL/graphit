@@ -5,6 +5,7 @@
 #include "infra_gpu/vertex_frontier.h"
 #include "infra_gpu/support.h"
 
+#define PREFIX_BLK (1024) 
 
 namespace gpu_runtime {
 
@@ -34,6 +35,171 @@ static void __global__ vertex_set_apply_kernel(int32_t num_vertices) {
 	vertex_set_apply<body>(num_vertices);
 } 
 
+
+
+__global__ void get_partial_sum(int32_t *elt, int32_t *buf, int32_t f_size, int32_t nnz_per_blk)
+{
+	int32_t idx = blockIdx.x*nnz_per_blk + threadIdx.x;
+	int32_t upper_idx = (blockIdx.x+1)*nnz_per_blk;
+	if(upper_idx > f_size) upper_idx = f_size;
+	int32_t accum=0;
+
+	__shared__ int32_t sm_accum[32];
+	for(int32_t i=idx; i<upper_idx; i+=blockDim.x) {
+		accum += elt[i];
+	}
+	accum += __shfl_down_sync(-1, accum, 16);
+	accum += __shfl_down_sync(-1, accum, 8);
+	accum += __shfl_down_sync(-1, accum, 4);
+	accum += __shfl_down_sync(-1, accum, 2);
+	accum += __shfl_down_sync(-1, accum, 1);
+	if(threadIdx.x % 32 == 0) {
+		sm_accum[threadIdx.x/32] = accum;
+	}
+	__syncthreads();
+	if(threadIdx.x < PREFIX_BLK/32) {
+		accum = sm_accum[threadIdx.x];
+	} else {
+		accum = 0;
+	}
+	__syncwarp();
+	if(threadIdx.x < 32) {
+		accum += __shfl_down_sync(-1, accum, 16);
+		accum += __shfl_down_sync(-1, accum, 8);
+		accum += __shfl_down_sync(-1, accum, 4);
+		accum += __shfl_down_sync(-1, accum, 2);
+		accum += __shfl_down_sync(-1, accum, 1);
+	}
+	if(threadIdx.x == 0) {
+		buf[blockIdx.x] = accum;
+	}
+}
+
+
+__global__ void local_prefix_sum(int32_t *elt, int32_t *buf, int32_t f_size, int32_t nnz_per_blk)
+{
+	__shared__ int32_t sm_deg[PREFIX_BLK];
+
+	int32_t base_idx = blockIdx.x*nnz_per_blk + threadIdx.x;
+	int32_t lane = (threadIdx.x&31);
+	int32_t offset = 0;
+
+	// prefix sum
+	int32_t cosize = blockDim.x;
+	int32_t tot_deg;
+	int32_t phase = threadIdx.x;
+	int32_t off=32;
+
+	int32_t base_offset = buf[blockIdx.x];
+
+	int32_t idx = blockIdx.x*nnz_per_blk + threadIdx.x;
+	int32_t upper_idx = (blockIdx.x+1)*nnz_per_blk;
+	if(upper_idx > f_size) upper_idx = f_size;
+
+	for(int32_t i=idx; i<(blockIdx.x+1)*nnz_per_blk; i+=blockDim.x) {
+		int32_t deg = 0;
+		if(i < upper_idx) deg = elt[i];
+
+		for(int32_t d=2; d<=32; d<<=1) {
+			int32_t temp = __shfl_up_sync(-1, deg, d/2);
+			if (lane % d == d - 1) deg += temp;
+		}
+		sm_deg[threadIdx.x] = deg;
+
+		for(int32_t d=cosize>>(1+5); d>0; d>>=1){
+			__syncthreads();
+			if(phase<d){
+				int32_t ai = off*(2*phase+1)-1;
+				int32_t bi = off*(2*phase+2)-1;
+				sm_deg[bi] += sm_deg[ai];
+			}
+			off<<=1;
+		}
+
+		__syncthreads();
+		tot_deg = sm_deg[cosize-1];
+		__syncthreads();
+		if(!phase) sm_deg[cosize-1]=0;
+		__syncthreads();
+
+		for(int32_t d=1; d<(cosize>>5); d<<=1){
+			off >>=1;
+			__syncthreads();
+			if(phase<d){
+				int32_t ai = off*(2*phase+1)-1;
+				int32_t bi = off*(2*phase+2)-1;
+
+				int32_t t = sm_deg[ai];
+				sm_deg[ai]  = sm_deg[bi];
+				sm_deg[bi] += t;
+			}
+		}
+		__syncthreads();
+		deg = sm_deg[threadIdx.x];
+		__syncthreads();
+		for(int32_t d=32; d>1; d>>=1) {
+			int32_t temp_big = __shfl_down_sync(-1, deg, d/2);
+			int32_t temp_small = __shfl_up_sync(-1, deg, d/2);
+			if (lane % d == d/2 - 1) deg = temp_big;
+			else if(lane % d == d - 1) deg += temp_small;
+		}
+		//sm_deg[threadIdx.x] = deg;
+		if(i < upper_idx) {
+			elt[i] = base_offset + deg;
+		}
+		__syncthreads();
+		base_offset += tot_deg;
+
+	}
+	if(blockIdx.x == gridDim.x - 1 && threadIdx.x == 0) { elt[f_size] = base_offset;}
+}
+
+int32_t GPU_prefix_sum(int32_t mp, int32_t *elt, int32_t *buf, int32_t f_size)
+{
+	/*
+	int dev;
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, dev);
+	int32_t tot_blks = deviceProp.multiProcessorCount*2;
+	*/
+	int32_t tot_blks = mp;	
+	int32_t low_blks = (f_size + PREFIX_BLK - 1)/PREFIX_BLK;
+	if(low_blks < tot_blks) tot_blks = low_blks;
+	int32_t gran = PREFIX_BLK * tot_blks;
+	int32_t nnz_per_thread = ((f_size + gran - 1) / gran);
+	int32_t nnz_per_blk = nnz_per_thread * PREFIX_BLK;
+
+
+//int *ttt=(int *)malloc(sizeof(int)*f_size);
+//cudaMemcpy(ttt, elt, sizeof(int)*f_size, cudaMemcpyDeviceToHost);
+//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
+
+	get_partial_sum<<<tot_blks, PREFIX_BLK>>>(elt, buf, f_size, nnz_per_blk);
+	//get_tot_sum
+	int32_t *tmp = (int32_t *)malloc(sizeof(int32_t)*(tot_blks+1));
+	cudaMemcpy(&tmp[1], buf, sizeof(int32_t)*tot_blks, cudaMemcpyDeviceToHost);
+	tmp[0] = 0;
+	for(int i=1; i<=tot_blks;i++) {
+		tmp[i] = tmp[i] + tmp[i-1];
+	}
+	//printf("tot: %d %d\n", f_size, tmp[f_size]);
+	cudaMemcpy(buf, tmp, sizeof(int32_t)*(tot_blks+1), cudaMemcpyHostToDevice);
+
+	local_prefix_sum<<<tot_blks, PREFIX_BLK>>>(elt, buf, f_size, nnz_per_blk);
+	int32_t rv = tmp[tot_blks];
+	free(tmp);
+//cudaMemcpy(ttt, elt, sizeof(int)*f_size, cudaMemcpyDeviceToHost);
+//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
+	return(rv);
+}
+
+
+
+
+
+
+
+
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
 void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t vid = threadIdx.x + blockDim.x * blockIdx.x;
@@ -47,6 +213,7 @@ void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> graph, VertexFr
 		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
 	}
 }
+
 
 template <typename AccessorType>
 void __host__ vertex_based_load_balance_info(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
@@ -380,7 +547,7 @@ template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightT
 static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 	int32_t thread_id = blockDim.x * blockIdx.x + threadIdx.x;
 	
-	int32_t lane_id = thread_id % 32;
+		int32_t lane_id = thread_id % 32;
 	
 	__shared__ int32_t stage2_queue[CTA_SIZE];
 	__shared__ int32_t stage3_queue[CTA_SIZE];
@@ -403,37 +570,47 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 	int32_t s1_offset;
 	int32_t local_vertex;
 	int32_t src_offset;
+
 	if (local_vertex_idx < total_vertices) {
 		local_vertex = AccessorType::getElement(input_frontier, local_vertex_idx);
 		// Step 1 seggregate vertices into shared buffers
-		if (threadIdx.x % (STAGE_1_SIZE) == 0) {
-			degree = graph.d_get_degree(local_vertex);
-			src_offset = graph.d_src_offsets[local_vertex];
-			int32_t s3_size = degree/CTA_SIZE;
-			degree = degree - s3_size * CTA_SIZE;
-			if (s3_size > 0) {
+		degree = graph.d_get_degree(local_vertex);
+		src_offset = graph.d_src_offsets[local_vertex];
+		int32_t s3_size = degree/CTA_SIZE;
+		degree = degree - s3_size * CTA_SIZE;
+		if (s3_size > 0) {
+			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[2]);
+				//int32_t pos = atomicAdd(&stage_queue_sizes[2],1);
 				stage3_queue[pos] = local_vertex;
 				stage3_size[pos] = s3_size * CTA_SIZE;
 				stage3_offset[pos] = src_offset;
 			}
+		}
 
-			int32_t s2_size = degree/WARP_SIZE;
-			degree = degree - WARP_SIZE * s2_size;
-			if (s2_size > 0) {
+		int32_t s2_size = degree/WARP_SIZE;
+		degree = degree - WARP_SIZE * s2_size;
+		if (s2_size > 0) {
+			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[1]);
+				//int32_t pos = atomicAdd(&stage_queue_sizes[1],1);
 				stage2_queue[pos] = local_vertex;
 				stage2_offset[pos] = s3_size * CTA_SIZE + src_offset;
 				stage2_size[pos] = s2_size * WARP_SIZE;
 			}
-			s1_offset = s3_size * CTA_SIZE + s2_size * WARP_SIZE + src_offset;
 		}
-	} else 
+		s1_offset = s3_size * CTA_SIZE + s2_size * WARP_SIZE + src_offset;
+	} else { 
 		local_vertex = -1;
+	}
+
 	__syncthreads();
-	degree = __shfl_sync((uint32_t)-1, degree, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-	s1_offset = __shfl_sync((uint32_t)-1, s1_offset, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-	local_vertex = __shfl_sync((uint32_t)-1, local_vertex, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
+
+	/*
+	degree = __shfl_sync((uint32_t)-1, degree, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
+	s1_offset = __shfl_sync((uint32_t)-1, s1_offset, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
+	local_vertex = __shfl_sync((uint32_t)-1, local_vertex, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
+	*/
 
 	if (local_vertex_idx < total_vertices) {
 		// STAGE 1
@@ -447,26 +624,30 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 	}
 
 	__syncwarp();
+
 	// STAGE 2 -- stage 2 is dynamically balanced
+
 	while(1) {
 		int32_t to_process;
 		if (lane_id == 0) {
 			to_process = atomicSub(&stage_queue_sizes[1], 1) - 1;
 		}
 		to_process = __shfl_sync((uint32_t)-1, to_process, 0, 32);
+		//__syncwarp();
 		if (to_process < 0)
 			break;
 		local_vertex = stage2_queue[to_process];
 		degree = stage2_size[to_process];
 		int32_t s2_offset = stage2_offset[to_process];
 		for (int32_t neigh_id = s2_offset + (lane_id); neigh_id < degree + s2_offset; neigh_id += WARP_SIZE) {
+			//if(degree % 32) printf("err: %d\n", degree);
 			if (src_filter(local_vertex) == false)
 				break;
 			int32_t dst = graph.d_edge_dst[neigh_id];
 			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);	
 		}
 		
-	}	
+	}
 	// STAGE 3 -- all threads have to do all, no need for LB
 	for (int32_t wid = 0; wid < stage_queue_sizes[2]; wid++) {
 		local_vertex = stage3_queue[wid];

@@ -122,6 +122,7 @@ static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *by
 	// We are not using atomic operation here because races are benign here
 	byte_map[vertex_id] = 1;
 	atomicAggInc(byte_map_size);
+	//atomicAdd(byte_map_size, 1);	
 }
 static void swap_queues(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;
