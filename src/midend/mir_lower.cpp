@@ -14,6 +14,7 @@
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/priority_features_lowering.h>
 #include <graphit/midend/while_loop_fusion.h>
+#include <graphit/midend/frontier_reuse_analysis.h>
 
 namespace graphit {
     /**
@@ -49,9 +50,9 @@ namespace graphit {
         // read write type: read/write/read and write (reduction)
         // access type: shared or local
 	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
-		GPUVectorFieldPropertiesAnalyzer(mir_context,schedule).analyze();
+		GPUVectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
 	} else {
-		VectorFieldPropertiesAnalyzer(mir_context,schedule).analyze();
+		VectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
 	}
 
         // The pass on lowering abstract data structures to
@@ -73,6 +74,9 @@ namespace graphit {
 
 	// This pass lowers while loops that have fusion schedule attached to them 
 	WhileLoopFusion(mir_context, schedule).lower();	
+
+	// This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
+	FrontierReuseAnalysis(mir_context).analyze();
     }
 }
 

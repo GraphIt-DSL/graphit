@@ -914,6 +914,8 @@ namespace graphit {
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 
+	    bool frontier_reusable = false;
+
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

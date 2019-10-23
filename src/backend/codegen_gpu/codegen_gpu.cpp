@@ -543,7 +543,11 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
 	}		
 	// We will assume that the output frontier can reuse the input frontier. 
-	// TOOD: Add liveness analysis for this
+	// Assert that the frontier can be reused
+	if (target != nullptr && esae->frontier_reusable != true) {
+		assert(false && "GPU backend currently doesn't support creating frontiers from the apply expressions. Could not find opportunity for reuse\n");
+	}
+
 	printIndent();
 	oss << "{" << std::endl;
 	indent();
