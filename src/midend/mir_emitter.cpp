@@ -843,6 +843,17 @@ namespace graphit {
                         const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
                         mir_var_decl->initVal = init_val;
                         ctx->updateElementInputFilename(type->element, init_val->file_name);
+                        // need to construct a MethodCallExpr to get the size of vertex type
+                        // need to update the count with "updateElementCount() "
+                        auto mirCallExpr = std::make_shared<mir::Call>();
+                        mirCallExpr->name = "builtin_getVertices";
+                        std::vector<mir::Expr::Ptr> args;
+                        auto mirCallExprArg = std::make_shared<mir::VarExpr>();
+                        mirCallExprArg->var = ctx->getSymbol(mir_var_decl->name);
+                        args.push_back(mirCallExprArg);
+                        mirCallExpr->args = args;
+                        ctx->updateElementCount(type->vertex_element_type_list->at(0), mirCallExpr);
+
                     }
                 }
                 ctx->addEdgeSet(mir_var_decl);
