@@ -242,6 +242,15 @@ static size_t naiveVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<Node
     return intersectSortedNodeSetNaive((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
 }
 
+static size_t combinedVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    // currently just has fixed thresholds
+    return intersectSortedNodeSetCombined((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, 1000, 0.1);
+}
+
+static size_t binarySearchIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    return intersectSortedNodeSetBinarySearch((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB);
+}
+
 template <typename T>
 static int builtin_getVertices(julienne::graph<T> &edges) {
     return edges.n;

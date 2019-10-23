@@ -1636,7 +1636,11 @@ namespace graphit {
         }
 
         else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::COMBINED) {
-            oss << "intersectSortedNodeSetCombined(";
+            oss << "combinedVertexIntersection(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::BINARY) {
+            oss << "binarySearchIntersection(";
         }
 
         else {

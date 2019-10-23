@@ -93,10 +93,12 @@ namespace graphit {
                 configApplyDirection(std::string apply_label, std::string apply_direction);
 
                 // High level API for specifying which intersection method to use
-                // Currently it supports three intersection methods:
+                // Currently it supports five intersection methods:
                 //   1. MultiSkipIntersection
                 //   2. HiroshiIntersection
                 //   3. NaiveIntersection
+                //   4. BinarySearch
+                //   5. Combination of MultiSkip and Hiroshi
                 // If nothing is provided, it uses naive intersection by default
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configIntersection(std::string apply_label, std::string intersection_option);

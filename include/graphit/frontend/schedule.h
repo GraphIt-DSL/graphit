@@ -75,7 +75,8 @@ namespace graphit {
             HIROSHI,
             MULTISKIP,
             COMBINED,
-            NAIVE
+            BINARY,
+            NAIVE,
         };
 
     };

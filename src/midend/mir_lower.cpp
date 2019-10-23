@@ -43,7 +43,7 @@ namespace graphit {
         ApplyExprLower(mir_context, schedule).lower();
 
         // This pass sets properties of intersection operations based on scheduling languages.
-        // intersection types: HiroshiIntersection, Naive, Multiskip.
+        // intersection types: HiroshiIntersection, Naive, Multiskip, Binary, Combined
         // If there is no schedule specified, it just chooses naive intersection.
         IntersectionExprLower(mir_context, schedule).lower();
 

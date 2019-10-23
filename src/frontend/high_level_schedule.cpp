@@ -618,6 +618,10 @@ namespace graphit {
                 (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::COMBINED;
             }
 
+            else if (intersection_option == "BinarySearchIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::BINARY;
+            }
+
             else {
                 std::cout << "unsupported intersection: " << intersection_option << std::endl;
                 (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;

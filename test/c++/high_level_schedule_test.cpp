@@ -1085,6 +1085,19 @@ TEST_F(HighLevelScheduleTest, SimpleIntersectionCombined) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, SimpleIntersectionBinary) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "BinarySearchIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, SimpleIntersectionWithOptional) {
     istringstream is(simple_intersection_opt_str_);
 
