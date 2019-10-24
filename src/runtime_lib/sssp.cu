@@ -116,32 +116,8 @@ int __host__ main(int argc, char* argv[]) {
 				int32_t f_size = builtin_getVertexSetSize(frontier);				
 				int32_t tot_elt;
 
-#ifdef XXX
-//int *ttt=(int *)malloc(sizeof(int)*f_size);
-//cudaMemcpy(ttt, &frontier.d_sparse_queue_input[edges.num_vertices], sizeof(int)*f_size, cudaMemcpyDeviceToHost);
-//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
-
-
 				tot_elt = gpu_runtime::GPU_prefix_sum(mp, &frontier.d_sparse_queue_input[edges.num_vertices], &frontier.d_sparse_queue_input[edges.num_vertices*2], f_size);
 				num_cta = (tot_elt+CTA_SIZE-1)/CTA_SIZE;
-
-//cudaMemcpy(ttt, &frontier.d_sparse_queue_input[edges.num_vertices], sizeof(int)*f_size, cudaMemcpyDeviceToHost);
-//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
-//fprintf(stdout, "tot: %d %d\n", f_size, tot_elt);
-#endif
-
-#ifdef YYY
-				int32_t *tmp = (int32_t *)malloc(sizeof(int32_t)*(f_size+1));
-				cudaMemcpy(&tmp[1], &frontier.d_sparse_queue_input[edges.num_vertices], sizeof(int32_t)*f_size, cudaMemcpyDeviceToHost);
-				tmp[0] = 0;
-				for(int i=1; i<=f_size;i++) {
-					tmp[i] = tmp[i] + tmp[i-1];
-				} 
-
-				cudaMemcpy(&frontier.d_sparse_queue_input[edges.num_vertices], tmp, sizeof(int32_t)*(f_size+1), cudaMemcpyHostToDevice);
-				num_cta = (tmp[f_size]+CTA_SIZE-1)/CTA_SIZE;
-//fprintf(stdout, "tot: %d %d\n", f_size, tmp[f_size]);
-#endif				
 
 				gpu_operator_kernel_4<<<num_cta, cta_size>>>(edges, frontier, output);
 #endif
@@ -158,7 +134,6 @@ int __host__ main(int argc, char* argv[]) {
 #endif
 
 #ifdef TWCE
-//fprintf(stderr,"oo\n");
 				gpu_runtime::TWCE_load_balance_info<gpu_runtime::AccessorSparse>(frontier, num_cta, cta_size);
 				gpu_operator_kernel_6<<<num_cta, cta_size>>>(edges, frontier, output);
 #endif
@@ -175,7 +150,6 @@ int __host__ main(int argc, char* argv[]) {
 				std::cout << "negative cycle" << std::endl;
 				break;
 			}
-//if(rounds == 21) break;
 		}
 
 		

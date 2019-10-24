@@ -16,32 +16,6 @@ __device__ inline int32_t warp_bcast(int32_t mask, int32_t v, int32_t leader) {
 	return __shfl_sync((uint32_t)mask, v, leader); 
 }
 
-/*
-__device__ int atomicAggInc(int *ptr) {
-    int pred;
-    int mask = __match_all_sync(__activemask(), ptr, &pred);
-    int leader = __ffs(mask) – 1;    // select a leader
-    int res;
-    if(threadIdx.x%32 == leader)                  // leader does the update
-        res = atomicAdd(ptr, __popc(mask));
-    res = __shfl_sync(mask, res, leader);    // get leader’s old value
-    return res + __popc(mask & ((1 << (threadIdx.x%32)) – 1)); //compute old value
-}
-
-
-__device__ inline int32_t atomicAggInc(int32_t *ctr) {
-  unsigned int active = __activemask();
-  int leader = __ffs(active) - 1;
-  int change = __popc(active);
-  unsigned int rank = __popc(active & __lanemask_lt());
-  int32_t warp_res;
-  if(rank == 0)
-    warp_res = atomicAdd(ctr, change);
-  warp_res = __shfl_sync(active, warp_res, leader);
-  return warp_res + rank;
-}
-*/
-
 
 __device__ inline int32_t atomicAggInc(int32_t *ctr) {
 	int32_t lane_id = threadIdx.x % 32;

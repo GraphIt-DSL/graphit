@@ -90,7 +90,8 @@ __global__ void local_prefix_sum(int32_t *elt, int32_t *buf, int32_t f_size, int
 	int32_t phase = threadIdx.x;
 	int32_t off=32;
 
-	int32_t base_offset = buf[blockIdx.x];
+	int32_t base_offset = 0;
+	if(blockIdx.x > 0) base_offset = buf[blockIdx.x];
 
 	int32_t idx = blockIdx.x*nnz_per_blk + threadIdx.x;
 	int32_t upper_idx = (blockIdx.x+1)*nnz_per_blk;
@@ -151,45 +152,26 @@ __global__ void local_prefix_sum(int32_t *elt, int32_t *buf, int32_t f_size, int
 		base_offset += tot_deg;
 
 	}
-	if(blockIdx.x == gridDim.x - 1 && threadIdx.x == 0) { elt[f_size] = base_offset;}
+	if(blockIdx.x == gridDim.x - 1 && threadIdx.x == 0 && blockDim.x == PREFIX_BLK) { elt[f_size] = base_offset;}
 }
 
 int32_t GPU_prefix_sum(int32_t mp, int32_t *elt, int32_t *buf, int32_t f_size)
 {
-	/*
-	int dev;
-	cudaDeviceProp deviceProp;
-	cudaGetDeviceProperties(&deviceProp, dev);
-	int32_t tot_blks = deviceProp.multiProcessorCount*2;
-	*/
 	int32_t tot_blks = mp;	
 	int32_t low_blks = (f_size + PREFIX_BLK - 1)/PREFIX_BLK;
 	if(low_blks < tot_blks) tot_blks = low_blks;
 	int32_t gran = PREFIX_BLK * tot_blks;
 	int32_t nnz_per_thread = ((f_size + gran - 1) / gran);
 	int32_t nnz_per_blk = nnz_per_thread * PREFIX_BLK;
+	int32_t rv;
 
-
-//int *ttt=(int *)malloc(sizeof(int)*f_size);
-//cudaMemcpy(ttt, elt, sizeof(int)*f_size, cudaMemcpyDeviceToHost);
-//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
 
 	get_partial_sum<<<tot_blks, PREFIX_BLK>>>(elt, buf, f_size, nnz_per_blk);
-	//get_tot_sum
-	int32_t *tmp = (int32_t *)malloc(sizeof(int32_t)*(tot_blks+1));
-	cudaMemcpy(&tmp[1], buf, sizeof(int32_t)*tot_blks, cudaMemcpyDeviceToHost);
-	tmp[0] = 0;
-	for(int i=1; i<=tot_blks;i++) {
-		tmp[i] = tmp[i] + tmp[i-1];
-	}
-	//printf("tot: %d %d\n", f_size, tmp[f_size]);
-	cudaMemcpy(buf, tmp, sizeof(int32_t)*(tot_blks+1), cudaMemcpyHostToDevice);
-
+	local_prefix_sum<<<1, PREFIX_BLK/2>>>(buf, buf, tot_blks+1, PREFIX_BLK/2);
 	local_prefix_sum<<<tot_blks, PREFIX_BLK>>>(elt, buf, f_size, nnz_per_blk);
-	int32_t rv = tmp[tot_blks];
-	free(tmp);
-//cudaMemcpy(ttt, elt, sizeof(int)*f_size, cudaMemcpyDeviceToHost);
-//for(int i=0;i<f_size;i++) printf("%d ", ttt[i]); printf("\n");
+
+	cudaMemcpy(&rv, &buf[tot_blks], sizeof(int32_t), cudaMemcpyDeviceToHost);
+
 	return(rv);
 }
 
@@ -394,7 +376,7 @@ void __device__ STRICT_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier
         int32_t deg, index, index_size, src_idx;
 
 	// can be fused
-	bool last_tb = (blockIdx.x == (input_frontier.d_sparse_queue_input[graph.num_vertices+tot_size]+NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
+	bool last_tb = (blockIdx.x == (input_frontier.d_sparse_queue_input[graph.num_vertices + tot_size]+NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
 	int32_t start_row = upperbound(&input_frontier.d_sparse_queue_input[graph.num_vertices], tot_size, NNZ_PER_BLOCK*blockIdx.x)-1;
 	int32_t end_row = upperbound(&input_frontier.d_sparse_queue_input[graph.num_vertices], tot_size, NNZ_PER_BLOCK*(blockIdx.x+1))-1;
 
@@ -553,10 +535,8 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 	__shared__ int32_t stage3_queue[CTA_SIZE];
 	__shared__ int32_t stage_queue_sizes[3];
 	
-	if (threadIdx.x == 0) {
-		stage_queue_sizes[0] = 0;
-		stage_queue_sizes[1] = 0;
-		stage_queue_sizes[2] = 0;
+	if (threadIdx.x < 3) {
+		stage_queue_sizes[threadIdx.x] = 0;
 	}
 	__syncthreads();
 	__shared__ int32_t stage2_offset[CTA_SIZE];
@@ -581,7 +561,6 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 		if (s3_size > 0) {
 			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[2]);
-				//int32_t pos = atomicAdd(&stage_queue_sizes[2],1);
 				stage3_queue[pos] = local_vertex;
 				stage3_size[pos] = s3_size * CTA_SIZE;
 				stage3_offset[pos] = src_offset;
@@ -593,7 +572,6 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 		if (s2_size > 0) {
 			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[1]);
-				//int32_t pos = atomicAdd(&stage_queue_sizes[1],1);
 				stage2_queue[pos] = local_vertex;
 				stage2_offset[pos] = s3_size * CTA_SIZE + src_offset;
 				stage2_size[pos] = s2_size * WARP_SIZE;
@@ -605,12 +583,6 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 	}
 
 	__syncthreads();
-
-	/*
-	degree = __shfl_sync((uint32_t)-1, degree, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
-	s1_offset = __shfl_sync((uint32_t)-1, s1_offset, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
-	local_vertex = __shfl_sync((uint32_t)-1, local_vertex, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, STAGE_1_SIZE);
-	*/
 
 	if (local_vertex_idx < total_vertices) {
 		// STAGE 1
