@@ -376,6 +376,12 @@ void CodeGenGPU::genIncludeStmts(void) {
 }
 
 void CodeGenGPU::genGlobalDeclarations(void) {
+	for (auto stmt: mir_context_->hybrid_gpu_stmts) {
+		std::string threshold_var_name = "hybrid_threshold_var" + mir_context_->getUniqueNameCounterString();	
+		oss << "float " << threshold_var_name << ";" << std::endl;
+		oss << "float __device__ __device_" << threshold_var_name << ";" << std::endl;
+		stmt->threshold_var_name = threshold_var_name;
+	}
 }
 
 void CodeGenGPU::genEdgeSets(void) {
@@ -430,6 +436,20 @@ void CodeGenGPU::visit(mir::ScalarType::Ptr scalar_type) {
 	}
 }
 
+void CodeGenGPU::genHybridThresholds(void) {
+	for (auto stmt: mir_context_->hybrid_gpu_stmts) {
+		std::string var_name = stmt->threshold_var_name;
+		if (stmt->threshold < 0) {
+			printIndent();
+			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->argv_index << "])" << std::endl;
+		} else {
+			printIndent();
+			oss << stmt->threshold_var_name << " = " << stmt->threshold << std::endl;
+		}
+		printIndent();
+		oss << "cudaMemcpyToSymbol(__device_" << stmt->threshold_var_name << ", &" << stmt->threshold_var_name << ", sizeof(float), 0);" << std::endl;
+	}
+}
 void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 	if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
 		assert(false && "GPU backend currently doesn't support external functions\n");
@@ -458,8 +478,7 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 		indent();
 
 		if (func_decl->name == "main") {
-			printIndent();
-			oss << "gpu_runtime::register_argv(argc, argv);" << std::endl;
+			genHybridThresholds();
 			for (auto stmt: mir_context_->edgeset_alloc_stmts) {
 				mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(stmt);
 				mir::EdgeSetLoadExpr::Ptr edge_set_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
@@ -993,6 +1012,11 @@ void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
 	vsde->target->accept(this);
 	oss << ")";
 }
+void CodeGenGPUFusedKernel::visit(mir::VertexSetDedupExpr::Ptr vsde) {
+	oss << "gpu_runtime::device_dedup_frontier(";
+	vsde->target->accept(this);
+	oss << ")";
+}
 void CodeGenGPU::visit(mir::BoolLiteral::Ptr bool_literal) {
 	oss << bool_literal->val?"true":"false";
 }
@@ -1238,10 +1262,7 @@ void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
 	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
 		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * ";
-		if (stmt->threshold > 0) 
-			oss << stmt->threshold;
-		else 
-			oss << "gpu_runtime::str_to_float(gpu_runtime::get_argv(" << stmt->argv_index << "))";
+		oss << stmt->threshold_var_name;
 		oss << ") {" << std::endl;
 		indent();
 		stmt->stmt1->accept(this);
@@ -1261,10 +1282,7 @@ void CodeGenGPUFusedKernel::visit(mir::HybridGPUStmt::Ptr stmt) {
 	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
 		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->input_frontier_name) << ") < " << var_name(stmt->input_frontier_name) << ".max_num_elems * ";
-		if (stmt->threshold > 0) 
-			oss << stmt->threshold;
-		else 
-			oss << "gpu_runtime::device_str_to_float(gpu_runtime::device_get_argv(" << stmt->argv_index << "))";
+		oss << "__device_" << stmt->threshold_var_name;
 		oss << ") {" << std::endl;
 		indent();
 		stmt->stmt1->accept(this);

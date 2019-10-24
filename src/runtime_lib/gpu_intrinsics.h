@@ -27,7 +27,11 @@ static __device__ void device_deleteObject(T &t) {
 
 static void * no_args[1];
 
-void register_argv(int32_t argc, char* argv[]) {
+float str_to_float(const char* str) {
+	float val;
+	if (sscanf(str, "%f", &val) != 1)
+		return 0.0;
+	return val;
 }
 }
 #endif

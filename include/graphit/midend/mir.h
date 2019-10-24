@@ -1549,6 +1549,7 @@ namespace graphit {
 		StmtBlock::Ptr stmt2;
 		float threshold;
 		int32_t argv_index;
+		std::string threshold_var_name;
 		fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria criteria;
 			
 		std::string input_frontier_name;
