@@ -54,6 +54,7 @@ protected:
 	MIRContext * mir_context_;
 
 private:
+	void genGlobalDeclarations();
 	void genIncludeStmts(void);
 	void genEdgeSets(void);
 	void genFuncDecl(mir::FuncDecl::Ptr);

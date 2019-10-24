@@ -193,6 +193,8 @@ namespace graphit {
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;
             scope_label_name = expr->scope_label_name;
+            frontier_reusable = expr->frontier_reusable;
+	
         }
 
 

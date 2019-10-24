@@ -8,11 +8,13 @@
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
+#include <graphit/midend/gpu_vector_field_properties_analyzer.h>
 #include <graphit/midend/atomics_op_lower.h>
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/priority_features_lowering.h>
 #include <graphit/midend/while_loop_fusion.h>
+#include <graphit/midend/frontier_reuse_analysis.h>
 
 namespace graphit {
     /**
@@ -33,6 +35,9 @@ namespace graphit {
         //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
         PriorityFeaturesLower(mir_context, schedule).lower();
 
+	// This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
+	FrontierReuseAnalysis(mir_context).analyze();
+
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
         // deduplication: enable / disable
@@ -47,7 +52,11 @@ namespace graphit {
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)
         // access type: shared or local
-        VectorFieldPropertiesAnalyzer(mir_context,schedule).analyze();
+	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+		GPUVectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
+	} else {
+		VectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
+	}
 
         // The pass on lowering abstract data structures to
         // concrete data structures with physical layout information (arrays, field of a struct, dictionary)
@@ -68,6 +77,7 @@ namespace graphit {
 
 	// This pass lowers while loops that have fusion schedule attached to them 
 	WhileLoopFusion(mir_context, schedule).lower();	
+
     }
 }
 

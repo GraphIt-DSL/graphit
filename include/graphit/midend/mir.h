@@ -914,6 +914,8 @@ namespace graphit {
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 
+	    bool frontier_reusable = false;
+
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -946,6 +948,7 @@ namespace graphit {
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		
 		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -973,6 +976,7 @@ namespace graphit {
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1544,6 +1548,7 @@ namespace graphit {
 		StmtBlock::Ptr stmt1;
 		StmtBlock::Ptr stmt2;
 		float threshold;
+		int32_t argv_index;
 		fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria criteria;
 			
 		std::string input_frontier_name;
