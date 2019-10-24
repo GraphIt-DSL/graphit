@@ -27,5 +27,7 @@ static __device__ void device_deleteObject(T &t) {
 
 static void * no_args[1];
 
+void register_argv(int32_t argc, char* argv[]) {
+}
 }
 #endif

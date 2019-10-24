@@ -30,7 +30,9 @@ enum gpu_schedule_options {
 	VERTEX_BASED,
 	INPUT_VERTEXSET_SIZE,
 	BITMAP,
-	BOOLMAP
+	BOOLMAP,
+	BLOCKED,
+	UNBLOCKED
 };
 
 class GPUSchedule {
@@ -72,6 +74,11 @@ public:
 		STRICT,
 		EDGE_ONLY
 	};
+	
+	enum class edge_blocking_type {
+		BLOCKED,
+		UNBLOCKED
+	};
 
 	enum class kernel_fusion_type {
 		FUSION_DISABLED,
@@ -85,6 +92,8 @@ public:
 	frontier_creation_type frontier_creation;
 	deduplication_type deduplication;
 	load_balancing_type load_balancing;
+	edge_blocking_type edge_blocking;
+	uint32_t edge_blocking_size;
 	kernel_fusion_type kernel_fusion;
 	
 	SimpleGPUSchedule () {
@@ -93,6 +102,8 @@ public:
 		frontier_creation = frontier_creation_type::FRONTIER_FUSED;
 		deduplication = deduplication_type::DEDUP_DISABLED;
 		load_balancing = load_balancing_type::VERTEX_BASED;
+		edge_blocking = edge_blocking_type::UNBLOCKED;
+		edge_blocking_size = 0;
 		kernel_fusion = kernel_fusion_type::FUSION_DISABLED;
 	}	
 
@@ -153,7 +164,7 @@ public:
 		}
 	}
 
-	void configLoadBalance(enum gpu_schedule_options o) {
+	void configLoadBalance(enum gpu_schedule_options o, enum gpu_schedule_options blocking = UNBLOCKED, int32_t blocking_size = 1) {
 		switch(o) {
 			case VERTEX_BASED:
 				load_balancing = load_balancing_type::VERTEX_BASED;
@@ -175,6 +186,18 @@ public:
 				break;
 			case EDGE_ONLY:
 				load_balancing = load_balancing_type::EDGE_ONLY;
+				switch (blocking) {
+					case BLOCKED:
+						edge_blocking = edge_blocking_type::BLOCKED;
+						edge_blocking_size = blocking_size;	
+						break;
+					case UNBLOCKED:
+						edge_blocking = edge_blocking_type::UNBLOCKED;
+						break;
+					default:
+						assert(false && "Invalid option for configLoadBalance");
+						break;
+				}
 				break;
 			default:
 				assert(false && "Invalid option for configLoadBalance");
@@ -206,6 +229,8 @@ public:
 	SimpleGPUSchedule s2;
 	
 	float threshold;
+	int32_t argv_index;
+
 	enum class hybrid_criteria {
 		INPUT_VERTEXSET_SIZE
 	};
@@ -224,6 +249,22 @@ public:
 		threshold = t;
 		s1 = _s1;
 		s2 = _s2;
+	}
+	HybridGPUSchedule (enum gpu_schedule_options o, const char *t, SimpleGPUSchedule &_s1, SimpleGPUSchedule &_s2) {
+		switch (o) {
+			case INPUT_VERTEXSET_SIZE:
+				_hybrid_criteria = hybrid_criteria::INPUT_VERTEXSET_SIZE;
+				break;
+			default:
+				assert(false && "Invalid option for HybridGPUScheduleCriteria\n");
+				break;
+		}
+		s1 = _s1;
+		s2 = _s2;	
+		if (sscanf(t, "argv[%i]", &argv_index) != 1) {
+			assert(false && "Invalid threshold option\n");
+		}
+		threshold = -100;
 	}
 };
 

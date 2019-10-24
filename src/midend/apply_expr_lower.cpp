@@ -121,6 +121,7 @@ namespace graphit {
 					hybrid_node->stmt1 = stmt_block_1;
 					hybrid_node->stmt2 = stmt_block_2;
 					hybrid_node->threshold = hybrid_schedule->threshold;
+					hybrid_node->argv_index = hybrid_schedule->argv_index;
 					hybrid_node->criteria = hybrid_schedule->_hybrid_criteria;
 					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
 						hybrid_node->input_frontier_name = edgeset_apply->from_func;	

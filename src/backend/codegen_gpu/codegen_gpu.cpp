@@ -18,6 +18,8 @@ int CodeGenGPU::genGPU() {
 
 	genIncludeStmts();
 	
+	genGlobalDeclarations();
+
 	// This generates all the declarations of type GraphT<...>
 	genEdgeSets();
 
@@ -371,7 +373,9 @@ void CodeGenGPU::genIncludeStmts(void) {
 	oss << "#include \"gpu_intrinsics.h\"" << std::endl;
 	oss << "#include <cooperative_groups.h>" << std::endl;
 	oss << "using namespace cooperative_groups;" << std::endl;
+}
 
+void CodeGenGPU::genGlobalDeclarations(void) {
 }
 
 void CodeGenGPU::genEdgeSets(void) {
@@ -454,6 +458,8 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 		indent();
 
 		if (func_decl->name == "main") {
+			printIndent();
+			oss << "gpu_runtime::register_argv(argc, argv);" << std::endl;
 			for (auto stmt: mir_context_->edgeset_alloc_stmts) {
 				mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(stmt);
 				mir::EdgeSetLoadExpr::Ptr edge_set_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
@@ -1231,7 +1237,12 @@ void CodeGenGPUHost::visit(mir::StmtBlock::Ptr stmt_block) {
 void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
 	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
-		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
+		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * ";
+		if (stmt->threshold > 0) 
+			oss << stmt->threshold;
+		else 
+			oss << "gpu_runtime::str_to_float(gpu_runtime::get_argv(" << stmt->argv_index << "))";
+		oss << ") {" << std::endl;
 		indent();
 		stmt->stmt1->accept(this);
 		dedent();
@@ -1249,7 +1260,12 @@ void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
 void CodeGenGPUFusedKernel::visit(mir::HybridGPUStmt::Ptr stmt) {
 	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
-		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->input_frontier_name) << ") < " << var_name(stmt->input_frontier_name) << ".max_num_elems * " << stmt->threshold << ") {" << std::endl;
+		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->input_frontier_name) << ") < " << var_name(stmt->input_frontier_name) << ".max_num_elems * ";
+		if (stmt->threshold > 0) 
+			oss << stmt->threshold;
+		else 
+			oss << "gpu_runtime::device_str_to_float(gpu_runtime::device_get_argv(" << stmt->argv_index << "))";
+		oss << ") {" << std::endl;
 		indent();
 		stmt->stmt1->accept(this);
 		dedent();
