@@ -179,7 +179,6 @@ int main(int argc, char *argv[]) {
 		
 		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);
 		gpu_runtime::cudaCheckLastError();
-		//std::cout << "test2" << std::endl;
 		
 		int iters = 0;	
 		cudaDeviceSynchronize();
@@ -187,7 +186,8 @@ int main(int argc, char *argv[]) {
 		//printf("Init time = %f\n", t);
 		iter_total+=t;
 
-		while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
+		//while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
+		while(! host_gpq.finished()){
 			startTimer();
 			iters++;
 			gpu_runtime::vertex_set_prepare_sparse(frontier);
@@ -217,9 +217,9 @@ int main(int argc, char *argv[]) {
 			  cudaMemcpyFromSymbol(&host_gpq, device_gpq, sizeof(host_gpq), 0,cudaMemcpyDeviceToHost);
 			  gpu_runtime::cudaCheckLastError();
 
-			  if(host_gpq.current_priority_ == INT_MAX){
-			    break;
-			  }			  
+			  //if(host_gpq.current_priority_ == INT_MAX){
+			  //  break;
+			  //}			  
 			  update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state, frontier);
 			  gpu_runtime::cudaCheckLastError();
 			  gpu_runtime::swap_queues(frontier);
