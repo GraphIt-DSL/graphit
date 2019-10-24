@@ -48,7 +48,7 @@ void __host__ vertex_based_load_balance_info(VertexFrontier &frontier, int32_t &
 }
 template <typename AccessorType>
 void __device__ vertex_based_load_balance_info_device(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
-	int32_t num_threads = AccessorType::getSizeDevice(frontier);
+	int32_t num_threads = AccessorType::getSize(frontier);
 	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
 	cta_size = CTA_SIZE;
 }

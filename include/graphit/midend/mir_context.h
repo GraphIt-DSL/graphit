@@ -452,6 +452,7 @@ namespace graphit {
 
 	// Used by kernel fusion optimization
 	std::vector<mir::WhileStmt::Ptr> fused_while_loops;
+	std::vector<mir::HybridGPUStmt::Ptr> hybrid_gpu_stmts;
 
     };
 

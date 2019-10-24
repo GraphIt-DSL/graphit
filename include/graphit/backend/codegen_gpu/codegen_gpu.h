@@ -54,9 +54,10 @@ protected:
 	MIRContext * mir_context_;
 
 private:
-	void genGlobalDeclarations();
+	void genGlobalDeclarations(void);
 	void genIncludeStmts(void);
 	void genEdgeSets(void);
+	void genHybridThresholds(void);
 	void genFuncDecl(mir::FuncDecl::Ptr);
 
 
@@ -163,6 +164,7 @@ public:
 	virtual void visit(mir::VarDecl::Ptr) override;
 	virtual void visit(mir::PrintStmt::Ptr) override;
 	virtual void visit(mir::HybridGPUStmt::Ptr) override;
+	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
 	
 	std::string var_name (std::string var) {
 		//return current_kernel_name + "_" + var;

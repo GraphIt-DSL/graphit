@@ -130,6 +130,7 @@ namespace graphit {
 					}
 					
 					node = hybrid_node;
+					mir_context_->hybrid_gpu_stmts.push_back(hybrid_node);
 					if (assign_stmt->stmt_label != "") {
 						label_scope_.unscope();
 					}
