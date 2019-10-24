@@ -365,7 +365,6 @@ void __host__ tb_based_load_balance_info(VertexFrontier &frontier, int32_t &num_
 #define STRICT_SM_SIZE (CTA_SIZE)
 
 
-
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
 void __device__ STRICT_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
 
@@ -384,43 +383,66 @@ void __device__ STRICT_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier
 	int32_t start_idx;
 
 	// row_size <= STRICT_SM_SIZE 
-	if(threadIdx.x < row_size) {
-		index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
-		deg = graph.d_get_degree(index);
+	if(row_size <= STRICT_SM_SIZE*-1) {
+		if(threadIdx.x < row_size) {
+			index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
+			deg = graph.d_get_degree(index);
 
-		sm_idx[threadIdx.x] = index;
-		int32_t tmp_deg = input_frontier.d_sparse_queue_input[graph.num_vertices + start_row + threadIdx.x] - blockIdx.x * NNZ_PER_BLOCK;
-		if(tmp_deg >= 0) {
-			sm_deg[threadIdx.x] = tmp_deg;
-			sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+			sm_idx[threadIdx.x] = index;
+			int32_t tmp_deg = input_frontier.d_sparse_queue_input[graph.num_vertices + start_row + threadIdx.x] - blockIdx.x * NNZ_PER_BLOCK;
+			if(tmp_deg >= 0) {
+				sm_deg[threadIdx.x] = tmp_deg;
+				sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+			} else {
+				sm_deg[threadIdx.x] = 0;
+				sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
+			}
 		} else {
-			sm_deg[threadIdx.x] = 0;
-			sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
+			deg = 0;
+			sm_deg[threadIdx.x] = 1073742418;
+		}
+		__syncthreads();
+
+		int32_t lane = (threadIdx.x&31);
+		int32_t offset = 0;
+
+		int32_t tot_deg;
+		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		else tot_deg = (input_frontier.d_sparse_queue_input[graph.num_vertices + tot_size] - 1) % NNZ_PER_BLOCK + 1;
+
+		int32_t phase = threadIdx.x;
+		int32_t off=32;
+
+		int32_t width = row_size;
+		for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
+			int32_t id = upperbound(&sm_deg[offset], width, i)-1;
+			if(id >= width) continue;
+			src_idx = sm_idx[offset + id];
+			int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+			int32_t dst_idx = graph.d_edge_dst[ei];
+			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
 		}
 	} else {
-		deg = 0;
-		sm_deg[threadIdx.x] = 1073742418;
-	}
-	__syncthreads();
+		int32_t tot_deg;
+		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		else tot_deg = (input_frontier.d_sparse_queue_input[graph.num_vertices + tot_size] - 1) % NNZ_PER_BLOCK + 1;
 
-	int32_t lane = (threadIdx.x&31);
-	int32_t offset = 0;
-	
-	int32_t tot_deg;
-	if(!last_tb) tot_deg = NNZ_PER_BLOCK;
-	else tot_deg = (input_frontier.d_sparse_queue_input[graph.num_vertices + tot_size] - 1) % NNZ_PER_BLOCK + 1;
+		int32_t width = row_size;
+		int32_t offset = 0;
 
-	int32_t phase = threadIdx.x;
-	int32_t off=32;
+		for(int32_t i=blockIdx.x*NNZ_PER_BLOCK+threadIdx.x; i<blockIdx.x*NNZ_PER_BLOCK+tot_deg; i+=blockDim.x) {
+			int32_t id = upperbound(&input_frontier.d_sparse_queue_input[graph.num_vertices + start_row], width, i)-1;
+			if(id >= width) continue;
+			src_idx = AccessorType::getElement(input_frontier, start_row+id);
 
-	int32_t width = row_size;
-	for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
-		int32_t id = upperbound(&sm_deg[offset], width, i)-1;
-		if(id >= width) continue;
-		src_idx = sm_idx[offset + id];
-		int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
-		int32_t dst_idx = graph.d_edge_dst[ei];
-		load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+			int32_t ei = graph.d_src_offsets[src_idx] + i - input_frontier.d_sparse_queue_input[graph.num_vertices + start_row + id];
+if(ei < graph.d_src_offsets[src_idx] || ei >= graph.d_src_offsets[src_idx+1]) { printf("ERR: %d %d %d\n", graph.d_src_offsets[src_idx], ei, graph.d_src_offsets[src_idx+1]); return;}
+			//int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+			int32_t dst_idx = graph.d_edge_dst[ei];
+			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+		}
+
+
 	}
 }
 
