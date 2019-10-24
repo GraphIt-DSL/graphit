@@ -38,6 +38,7 @@ namespace gpu_runtime {
     
     PriorityT_ delta_ = 1;
     PriorityT_ current_priority_ = 0;
+    PriorityT_ window_upper_ = 0;
     
   };
 }
