@@ -992,3 +992,15 @@ TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
                      "end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, VectorInitWithoutVertex) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);\n"
+                     "% const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertexArray: vector{Vertex}(int) = 0;\n"
+                     "func main()\n"
+                     "     print vertexArray;\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+}
