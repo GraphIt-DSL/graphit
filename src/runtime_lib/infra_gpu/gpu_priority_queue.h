@@ -12,21 +12,20 @@ namespace gpu_runtime {
     
   public:
 
-    size_t get_current_priority(){
+    size_t getCurrentPriority(){
       return current_priority_;
     }
     
-    void update_current_priority(PriorityT_ priority_change_){
+    void updatePriorityMin(PriorityT_ priority_change_){
       
     }
     
     bool finished() {
-      //TODO
-      return true;
+      return current_priority_ == INT_MAX;
     }
     
     bool host_finishedNode(NodeID v){
-      return host_priorities_[v]/delta_ < get_current_priority();;
+      return host_priorities_[v]/delta_ < current_priority_;
     }
 
     bool __device__ device_finishedNode(NodeID v){
@@ -38,6 +37,7 @@ namespace gpu_runtime {
     
     PriorityT_ delta_ = 1;
     PriorityT_ current_priority_ = 0;
+    PriorityT_ window_upper_ = 0;
     
   };
 }
