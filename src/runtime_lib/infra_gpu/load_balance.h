@@ -647,7 +647,6 @@ void __device__ TWC_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFro
 
 	int num_threads = AccessorType::getSize(input_frontier);	
 	int num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
-	int cta_size = CTA_SIZE;
 
 	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
 		TWC_split_frontier<EdgeWeightType, AccessorType>(graph, input_frontier, cta_id, num_cta);
@@ -683,7 +682,303 @@ void __device__ TWC_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFro
 	this_grid().sync();
 }
 
+// STRICT LOAD BALANCE FUNCTIONS
 
+#define NNZ_PER_BLOCK (CTA_SIZE)
+#define STRICT_SM_SIZE (CTA_SIZE)
+#define PREFIX_BLK (CTA_SIZE)
+
+template <typename AccessorType, typename EdgeWeightType>
+void __device__ strict_gather(GraphT<EdgeWeightType> &graph, VertexFrontier &frontier, unsigned int cta_id, unsigned int num_cta) {
+        int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+        int32_t tot_size = AccessorType::getSize(frontier);
+	int32_t idx, deg;
+	if(thread_id < tot_size) {
+		idx = AccessorType::getElement(frontier, thread_id);
+		graph.strict_sum[thread_id] = graph.d_get_degree(idx);
+	}
 }
 
+template <typename AccessorType, typename EdgeWeightType>
+void __global__ strict_gather_kernel(GraphT<EdgeWeightType> graph, VertexFrontier frontier) {
+	strict_gather<AccessorType, EdgeWeightType>(graph, frontier, blockIdx.x, gridDim.x);
+}
+void __device__ strict_get_partial_sum(int32_t *elt, int32_t *buf, int32_t f_size, int32_t nnz_per_blk, unsigned int cta_id, unsigned int num_cta)
+{
+	int32_t idx = cta_id*nnz_per_blk + threadIdx.x;
+	int32_t upper_idx = (cta_id+1)*nnz_per_blk;
+	if(upper_idx > f_size) upper_idx = f_size;
+	int32_t accum=0;
+
+	__shared__ int32_t sm_accum[32];
+	for(int32_t i=idx; i<upper_idx; i+=blockDim.x) {
+		accum += elt[i];
+	}
+	accum += __shfl_down_sync((uint32_t)-1, accum, 16);
+	accum += __shfl_down_sync((uint32_t)-1, accum, 8);
+	accum += __shfl_down_sync((uint32_t)-1, accum, 4);
+	accum += __shfl_down_sync((uint32_t)-1, accum, 2);
+	accum += __shfl_down_sync((uint32_t)-1, accum, 1);
+	if(threadIdx.x % 32 == 0) {
+		sm_accum[threadIdx.x/32] = accum;
+	}
+	__syncthreads();
+	if(threadIdx.x < PREFIX_BLK/32) {
+		accum = sm_accum[threadIdx.x];
+	} else {
+		accum = 0;
+	}
+	__syncwarp();
+	if(threadIdx.x < 32) {
+		accum += __shfl_down_sync((uint32_t)-1, accum, 16);
+		accum += __shfl_down_sync((uint32_t)-1, accum, 8);
+		accum += __shfl_down_sync((uint32_t)-1, accum, 4);
+		accum += __shfl_down_sync((uint32_t)-1, accum, 2);
+		accum += __shfl_down_sync((uint32_t)-1, accum, 1);
+	}
+	if(threadIdx.x == 0) {
+		buf[blockIdx.x] = accum;
+	}
+}
+void __global__ strict_get_partial_sum_kernel(int32_t *elt, int32_t *buf, int32_t f_size, int32_t nnz_per_blk) {
+	strict_get_partial_sum(elt, buf, f_size, nnz_per_blk, blockIdx.x, gridDim.x);
+}
+
+void __device__ strict_local_prefix_sum(int32_t *elt, int32_t *buf, int32_t *glt, int32_t prefix_mode, int32_t f_size, int32_t nnz_per_blk, unsigned int cta_id, unsigned int num_cta) {
+	__shared__ int32_t sm_deg[PREFIX_BLK];
+
+	int32_t lane = (threadIdx.x&31);
+
+	// prefix sum
+	int32_t cosize = blockDim.x;
+	int32_t tot_deg;
+	int32_t phase = threadIdx.x;
+	int32_t off=32;
+
+	int32_t base_offset = 0;
+	if(cta_id > 0) base_offset = buf[cta_id];
+
+	int32_t idx = cta_id*nnz_per_blk + threadIdx.x;
+	int32_t upper_idx = (cta_id+1)*nnz_per_blk;
+	if(upper_idx > f_size) upper_idx = f_size;
+
+	for(int32_t i=idx; i<(cta_id+1)*nnz_per_blk; i+=blockDim.x) {
+		int32_t deg = 0;
+		if(i < upper_idx) deg = elt[i];
+
+		for(int32_t d=2; d<=32; d<<=1) {
+			int32_t temp = __shfl_up_sync((uint32_t)-1, deg, d/2);
+			if (lane % d == d - 1) deg += temp;
+		}
+		sm_deg[threadIdx.x] = deg;
+
+		for(int32_t d=cosize>>(1+5); d>0; d>>=1){
+			__syncthreads();
+			if(phase<d){
+				int32_t ai = off*(2*phase+1)-1;
+				int32_t bi = off*(2*phase+2)-1;
+				sm_deg[bi] += sm_deg[ai];
+			}
+			off<<=1;
+		}
+
+		__syncthreads();
+		tot_deg = sm_deg[cosize-1];
+		__syncthreads();
+		if(!phase) sm_deg[cosize-1]=0;
+		__syncthreads();
+
+		for(int32_t d=1; d<(cosize>>5); d<<=1){
+			off >>=1;
+			__syncthreads();
+			if(phase<d){
+				int32_t ai = off*(2*phase+1)-1;
+				int32_t bi = off*(2*phase+2)-1;
+
+				int32_t t = sm_deg[ai];
+				sm_deg[ai]  = sm_deg[bi];
+				sm_deg[bi] += t;
+			}
+		}
+		__syncthreads();
+		deg = sm_deg[threadIdx.x];
+		__syncthreads();
+		for(int32_t d=32; d>1; d>>=1) {
+			int32_t temp_big = __shfl_down_sync((uint32_t)-1, deg, d/2);
+			int32_t temp_small = __shfl_up_sync((uint32_t)-1, deg, d/2);
+			if (lane % d == d/2 - 1) deg = temp_big;
+			else if(lane % d == d - 1) deg += temp_small;
+		}
+		//sm_deg[threadIdx.x] = deg;
+		if(i < upper_idx) {
+			elt[i] = base_offset + deg;
+		}
+		__syncthreads();
+		base_offset += tot_deg;
+
+	}
+	if (prefix_mode == 1 && threadIdx.x == 0) {
+		glt[0] = base_offset;
+	}
+}
+void __global__ strict_local_prefix_sum_kernel(int32_t *elt, int32_t *buf, int32_t *glt, int32_t prefix_mode, int32_t f_size, int32_t nnz_per_blk) {
+	strict_local_prefix_sum(elt, buf, glt, prefix_mode, f_size, nnz_per_blk, blockIdx.x, gridDim.x);
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+
+	__shared__ int32_t sm_idx[STRICT_SM_SIZE], sm_deg[STRICT_SM_SIZE], sm_loc[STRICT_SM_SIZE];
+	int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+	int32_t tot_size = AccessorType::getSize(input_frontier);
+
+        int32_t deg, index, index_size, src_idx;
+
+	// can be fused
+	bool last_tb = (cta_id == (graph.strict_grid_sum[0] + NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
+	int32_t start_row = binary_search_upperbound(&graph.strict_sum[0], tot_size, NNZ_PER_BLOCK*cta_id)-1;
+	int32_t end_row = binary_search_upperbound(&graph.strict_sum[0], tot_size, NNZ_PER_BLOCK*(cta_id+1))-1;
+
+	int32_t row_size = end_row - start_row + 1;
+	int32_t start_idx;
+
+	if(row_size <= STRICT_SM_SIZE) {
+		if(threadIdx.x < row_size) {
+			index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
+			deg = graph.d_get_degree(index);
+
+			sm_idx[threadIdx.x] = index;
+			int32_t tmp_deg = graph.strict_sum[start_row + threadIdx.x] - cta_id * NNZ_PER_BLOCK;
+			if(tmp_deg >= 0) {
+				sm_deg[threadIdx.x] = tmp_deg;
+				sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+			} else {
+				sm_deg[threadIdx.x] = 0;
+				sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
+			}
+		} else {
+			deg = 0;
+			sm_deg[threadIdx.x] = INT_MAX;
+		}
+		__syncthreads();
+
+		int32_t lane = (threadIdx.x&31);
+		int32_t offset = 0;
+
+		int32_t tot_deg;
+		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
+
+		int32_t phase = threadIdx.x;
+		int32_t off=32;
+
+		int32_t width = row_size;
+		for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
+			int32_t id = binary_search_upperbound(&sm_deg[offset], width, i)-1;
+			if(id >= width) continue;
+			src_idx = sm_idx[offset + id];
+			if (src_filter(src_idx) == false)
+				continue;
+			int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+			int32_t dst_idx = graph.d_edge_dst[ei];
+			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+		}
+	} else {
+		int32_t tot_deg;
+		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
+
+		int32_t width = row_size;
+		int32_t offset = 0;
+
+		for(int32_t i=cta_id*NNZ_PER_BLOCK+threadIdx.x; i<cta_id*NNZ_PER_BLOCK+tot_deg; i+=blockDim.x) {
+			int32_t id = binary_search_upperbound(&graph.strict_sum[start_row], width, i)-1;
+			if(id >= width) continue;
+			src_idx = AccessorType::getElement(input_frontier, start_row+id);
+			if (src_filter(src_idx) == false)
+				continue;
+			int32_t ei = graph.d_src_offsets[src_idx] + i - graph.strict_sum[start_row + id];
+			int32_t dst_idx = graph.d_edge_dst[ei];
+			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+		}
+
+
+	}
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ strict_load_balance_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	strict_load_balance(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __host__ strict_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int num_threads = AccessorType::getSizeHost(input_frontier);	
+	int num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
+	int cta_size = CTA_SIZE;	
+	
+	strict_gather_kernel<AccessorType, EdgeWeightType><<<num_cta, cta_size>>>(graph, input_frontier);
+	
+	int32_t tot_blk = NUM_CTA;	
+	int32_t low_blk = (num_threads + PREFIX_BLK - 1)/PREFIX_BLK;
+	if (low_blk < tot_blk)
+		tot_blk = low_blk;	
+	
+	int32_t gran = PREFIX_BLK * tot_blk;
+	int32_t nnz_per_thread = (num_threads + gran - 1)/gran;
+	int32_t nnz_per_blk = (nnz_per_thread * PREFIX_BLK);
+
+	strict_get_partial_sum_kernel<<<tot_blk, PREFIX_BLK>>>(graph.strict_sum, graph.strict_cta_sum, num_threads, nnz_per_blk);
+	strict_local_prefix_sum_kernel<<<1, PREFIX_BLK>>>(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, tot_blk + 1);
+	strict_local_prefix_sum_kernel<<<tot_blk, PREFIX_BLK>>>(graph.strict_sum, graph.strict_cta_sum, graph.strict_grid_sum, 0, num_threads, nnz_per_blk);
+	cudaMemcpy(&num_threads, graph.strict_grid_sum, sizeof(int32_t), cudaMemcpyDeviceToHost);
+	num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
+	cta_size = CTA_SIZE;	
+
+	strict_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);	
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __device__ strict_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int num_threads = AccessorType::getSize(input_frontier);	
+	int num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
+	int cta_size = CTA_SIZE;	
+
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {	
+		strict_gather<AccessorType, EdgeWeightType>(graph, input_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+	this_grid().sync();
+	
+	int32_t tot_blk = NUM_CTA;	
+	int32_t low_blk = (num_threads + PREFIX_BLK - 1)/PREFIX_BLK;
+	if (low_blk < tot_blk)
+		tot_blk = low_blk;	
+	int32_t gran = PREFIX_BLK * tot_blk;
+	int32_t nnz_per_thread = (num_threads + gran - 1)/gran;
+	int32_t nnz_per_blk = (nnz_per_thread * PREFIX_BLK);
+
+	for (int32_t cta_id = blockIdx.x; cta_id < tot_blk; cta_id += gridDim.x) {	
+		strict_get_partial_sum(graph.strict_sum, graph.strict_cta_sum, num_threads, nnz_per_blk, cta_id, tot_blk);
+		__syncthreads();
+	}
+	this_grid().sync();
+	if (blockIdx.x == 0) {
+		strict_local_prefix_sum(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, tot_blk + 1, blockIdx.x, 1);
+	}	
+	this_grid().sync();
+	for (int32_t cta_id = blockIdx.x; cta_id < tot_blk; cta_id += gridDim.x) {	
+		strict_local_prefix_sum(graph.strict_sum, graph.strict_cta_sum, graph.strict_grid_sum, 0, num_threads, nnz_per_blk, cta_id, tot_blk);
+		__syncthreads();
+	}
+	this_grid().sync();
+	num_threads = graph.strict_grid_sum[0];
+	num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
+	cta_size = CTA_SIZE;	
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {	
+		strict_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+	this_grid().sync();
+	
+}
+
+}
 #endif

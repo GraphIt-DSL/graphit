@@ -177,6 +177,9 @@ public:
 	using mir::MIRVisitor::visit;
 	std::vector<mir::Var> hoisted_vars; 
 	std::vector<mir::VarDecl::Ptr> hoisted_decls;
+	MIRContext *mir_context_;
+	KernelVariableExtractor(MIRContext* mir_context): mir_context_(mir_context) {
+	}
 
 	void insertVar(mir::Var var_to_insert) {
 		for (auto var: hoisted_vars)
