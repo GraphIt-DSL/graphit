@@ -259,6 +259,431 @@ void __device__ TWCE_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFr
 	}
 	this_grid().sync();
 }
+
+// CM load balance functions
+int32_t __device__ binary_search_upperbound(int32_t *array, int32_t len, int32_t key){
+	int32_t s = 0;
+	while(len>0){
+		int32_t half = len>>1;
+		int32_t mid = s + half;
+		if(array[mid] > key){
+			len = half;
+		}else{
+			s = mid+1;
+			len = len-half-1;
+		}
+	}
+	return s;
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ CM_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+
+	__shared__ int32_t sm_idx[CTA_SIZE], sm_deg[CTA_SIZE], sm_loc[CTA_SIZE];
+	int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+	int32_t tot_size = AccessorType::getSize(input_frontier);
+
+        int32_t deg, index, src_idx;
+        if(thread_id < tot_size) {
+		index = AccessorType::getElement(input_frontier, thread_id);
+                deg = graph.d_get_degree(index);
+
+		sm_idx[threadIdx.x] = index;
+                sm_deg[threadIdx.x] = deg;
+                sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+        } else {
+                deg = 0;
+                sm_deg[threadIdx.x] = deg;
+        }
+
+        int32_t lane = (threadIdx.x & 31);
+        int32_t offset = 0;
+	
+	// prefix sum
+	int32_t cosize = blockDim.x;
+	int32_t tot_deg;
+	int32_t phase = threadIdx.x;
+	int32_t off=32;
+
+	for(int32_t d=2; d<=32; d<<=1) {
+		int32_t temp = __shfl_up_sync((uint32_t)-1, deg, d/2);
+		if (lane % d == d - 1) deg += temp;
+	}
+	sm_deg[threadIdx.x] = deg;
+
+	for(int32_t d=cosize>>(1+5); d>0; d>>=1){
+		__syncthreads();
+		if(phase<d){
+			int32_t ai = off*(2*phase+1)-1;
+			int32_t bi = off*(2*phase+2)-1;
+			sm_deg[bi] += sm_deg[ai];
+		}
+		off<<=1;
+	}
+
+	__syncthreads();
+	tot_deg = sm_deg[cosize-1];
+	__syncthreads();
+	if(!phase) sm_deg[cosize-1]=0;
+	__syncthreads();
+
+	for(int32_t d=1; d<(cosize>>5); d<<=1){
+		off >>=1;
+		__syncthreads();
+		if(phase<d){
+			int32_t ai = off*(2*phase+1)-1;
+			int32_t bi = off*(2*phase+2)-1;
+
+			int32_t t = sm_deg[ai];
+			sm_deg[ai]  = sm_deg[bi];
+			sm_deg[bi] += t;
+		}
+	}
+	__syncthreads();
+	deg = sm_deg[threadIdx.x];
+	__syncthreads();
+	for(int32_t d=32; d>1; d>>=1) {
+		int32_t temp_big = __shfl_down_sync((uint32_t)-1, deg, d/2);
+		int32_t temp_small = __shfl_up_sync((uint32_t)-1, deg, d/2);
+		if (lane % d == d/2 - 1) deg = temp_big;
+		else if(lane % d == d - 1) deg += temp_small;
+	}
+	sm_deg[threadIdx.x] = deg;
+	__syncthreads();
+	
+	// compute
+        int32_t width = thread_id - threadIdx.x + blockDim.x;
+        if(tot_size < width) width = tot_size;
+        width -= thread_id - threadIdx.x;
+
+        for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
+                int32_t id = binary_search_upperbound(&sm_deg[offset], width, i)-1;
+
+                if(id >= width) continue;
+                src_idx = sm_idx[offset + id];
+		if (src_filter(src_idx) == false)
+			continue;
+                int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+                int32_t dst_idx = graph.d_edge_dst[ei];
+		load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+        }
+}
+template <typename AccessorType>
+void __host__ CM_load_balance_info(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
+	int32_t num_threads = AccessorType::getSizeHost(frontier);
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	cta_size = CTA_SIZE;
+}
+template <typename AccessorType>
+void __device__ CM_load_balance_info_device(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
+	int32_t num_threads = AccessorType::getSize(frontier);
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	cta_size = CTA_SIZE;
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ CM_load_balance_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	CM_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __host__ CM_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t num_cta, cta_size;
+	CM_load_balance_info<AccessorType>(input_frontier, num_cta, cta_size);
+	CM_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __device__ CM_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t num_cta, cta_size;
+	CM_load_balance_info_device<AccessorType>(input_frontier, num_cta, cta_size);
+	this_grid().sync();
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		CM_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);	
+		__syncthreads();
+	}
+	this_grid().sync();
+}
+
+
+// WM load balance functions
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ WM_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+
+	__shared__ int32_t sm_idx[CTA_SIZE], sm_deg[CTA_SIZE], sm_loc[CTA_SIZE];
+	int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+	int32_t tot_size = AccessorType::getSize(input_frontier);
+
+        int32_t deg, index, src_idx;
+        if(thread_id < tot_size) {
+		index = AccessorType::getElement(input_frontier, thread_id);
+                deg = graph.d_get_degree(index);
+
+		sm_idx[threadIdx.x] = index;
+                sm_deg[threadIdx.x] = deg;
+                sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+        } else {
+                deg = 0;
+                sm_deg[threadIdx.x] = deg;
+        }
+
+        // prefix sum
+        int32_t lane = (threadIdx.x&31);
+        int32_t offset = threadIdx.x - lane;
+        for(int32_t d=1; d<32; d<<=1) {
+                int32_t temp = __shfl_up_sync((uint32_t)-1, deg, d);
+                if (lane >= d) deg += temp;
+        }
+        int32_t tot_deg = __shfl_sync((uint32_t)-1, deg, 31);
+        if(lane == 31) deg = 0;
+        sm_deg[offset + ((lane+1)&31)] = deg;
+        __syncthreads();
+
+        // compute
+        int32_t width = thread_id - lane + 32;
+        if(tot_size < width) width = tot_size;
+        width -= thread_id - lane;
+
+        for(int32_t i=lane; i<tot_deg; i+=32) {
+                int32_t id = binary_search_upperbound(&sm_deg[offset], width, i)-1;
+
+                src_idx = sm_idx[offset + id];
+		if (src_filter(src_idx) == false)
+			continue;
+
+                int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+                int32_t dst_idx = graph.d_edge_dst[ei];
+		load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+        }
+}
+template <typename AccessorType>
+void __host__ WM_load_balance_info(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
+	int32_t num_threads = AccessorType::getSizeHost(frontier);
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	cta_size = CTA_SIZE;
+}
+template <typename AccessorType>
+void __device__ WM_load_balance_info_device(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
+	int32_t num_threads = AccessorType::getSize(frontier);
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	cta_size = CTA_SIZE;
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ WM_load_balance_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	WM_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __host__ WM_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t num_cta, cta_size;
+	WM_load_balance_info<AccessorType>(input_frontier, num_cta, cta_size);
+	WM_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __device__ WM_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t num_cta, cta_size;
+	WM_load_balance_info_device<AccessorType>(input_frontier, num_cta, cta_size);
+	this_grid().sync();
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		WM_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);	
+		__syncthreads();
+	}
+	this_grid().sync();
+}
+
+//TWCE load balance functions
+#define MID_BIN (32)
+#define LARGE_BIN (CTA_SIZE)
+
+template <typename EdgeWeightType, typename AccessorType>
+void __device__ TWC_split_frontier (GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, unsigned int cta_id, unsigned int num_cta) {
+        int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+        int32_t tot_size = AccessorType::getSize(input_frontier);
+	int32_t idx, deg;
+	if(thread_id < tot_size) {
+		idx = AccessorType::getElement(input_frontier, thread_id);
+		deg = graph.d_get_degree(idx);
+		if(deg < MID_BIN) {
+			int32_t k = atomicAggInc(&graph.twc_bin_sizes[0]);
+			graph.twc_small_bin[k] = idx;
+		} else if(deg < LARGE_BIN) {
+			int32_t k = atomicAggInc(&graph.twc_bin_sizes[1]);
+			graph.twc_mid_bin[k] = idx;
+		} else {
+			int32_t k = atomicAggInc(&graph.twc_bin_sizes[2]);
+			graph.twc_large_bin[k] = idx;
+		}
+	}	
+}
+template <typename EdgeWeightType, typename AccessorType>
+void __global__ TWC_split_frontier_kernel (GraphT<EdgeWeightType> graph, VertexFrontier input_frontier) {
+	TWC_split_frontier<EdgeWeightType, AccessorType> (graph, input_frontier, blockIdx.x, gridDim.x);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ TWC_small_bin (GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+
+	__shared__ int32_t sm_idx[CTA_SIZE], sm_deg[CTA_SIZE], sm_loc[CTA_SIZE];
+	int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+	int32_t tot_size = graph.twc_bin_sizes[0];
+
+        int32_t deg, index, src_idx;
+        if(thread_id < tot_size) {
+		index = graph.twc_small_bin[thread_id];
+                deg = graph.d_get_degree(index);
+
+		sm_idx[threadIdx.x] = index;
+                sm_deg[threadIdx.x] = deg;
+                sm_loc[threadIdx.x] = graph.d_src_offsets[index];
+        } else {
+                deg = 0;
+                sm_deg[threadIdx.x] = deg;
+        }
+
+        // prefix sum
+        int32_t lane = (threadIdx.x&31);
+        int32_t offset = threadIdx.x - lane;
+        for(int32_t d=1; d<32; d<<=1) {
+                int32_t temp = __shfl_up_sync((uint32_t)-1, deg, d);
+                if (lane >= d) deg += temp;
+        }
+        int32_t tot_deg = __shfl_sync((uint32_t)-1, deg, 31);
+        if(lane == 31) deg = 0;
+        sm_deg[offset + ((lane+1)&31)] = deg;
+        __syncthreads();
+
+        // compute
+        int32_t width = thread_id - lane + 32;
+        if(tot_size < width) width = tot_size;
+        width -= thread_id - lane;
+
+        for(int32_t i=lane; i<tot_deg; i+=32) {
+                int32_t id = binary_search_upperbound(&sm_deg[offset], width, i)-1;
+
+                src_idx = sm_idx[offset + id];
+		if (src_filter(src_idx) == false)
+			continue;
+
+                int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+                int32_t dst_idx = graph.d_edge_dst[ei];
+		load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
+        }
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ TWC_small_bin_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	TWC_small_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+	
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ TWC_mid_bin (GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+	int32_t vid = (threadIdx.x + blockDim.x * cta_id)/MID_BIN;
+	int32_t tot_size = graph.twc_bin_sizes[1];
+	
+	if (vid >= tot_size)
+		return;
+
+	int32_t src = graph.twc_mid_bin[vid];
+	for (int32_t eid = graph.d_src_offsets[src]+(threadIdx.x%MID_BIN); eid < graph.d_src_offsets[src+1]; eid+=MID_BIN) {
+		if (src_filter(src) == false)
+			break;
+		int32_t dst = graph.d_edge_dst[eid];
+		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
+	}
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ TWC_mid_bin_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	TWC_mid_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+	
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __device__ TWC_large_bin (GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+	int32_t vid = (threadIdx.x + blockDim.x * cta_id)/LARGE_BIN;
+	int32_t tot_size = graph.twc_bin_sizes[2];
+	if (vid >= tot_size)
+		return;
+	int32_t src = graph.twc_large_bin[vid];
+	for (int32_t eid = graph.d_src_offsets[src]+(threadIdx.x%LARGE_BIN); eid < graph.d_src_offsets[src+1]; eid+=LARGE_BIN) {
+		if (src_filter(src) == false)
+			break;
+		int32_t dst = graph.d_edge_dst[eid];
+		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
+	}
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ TWC_large_bin_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	TWC_large_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+	
+}
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __host__ TWC_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	cudaMemset(graph.twc_bin_sizes, 0, sizeof(int32_t) * 3);
+	int num_threads = AccessorType::getSizeHost(input_frontier);	
+	int num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	int cta_size = CTA_SIZE;
+	TWC_split_frontier_kernel<EdgeWeightType, AccessorType><<<num_cta, cta_size>>>(graph, input_frontier);
+	int32_t twc_bin_sizes[3];
+	cudaMemcpy(twc_bin_sizes, graph.twc_bin_sizes, 3 * sizeof(int32_t), cudaMemcpyDeviceToHost);
+	num_threads = twc_bin_sizes[0];	
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	TWC_small_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
+	num_threads = twc_bin_sizes[1] * MID_BIN;	
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	TWC_mid_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
+	num_threads = twc_bin_sizes[2] * LARGE_BIN;	
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	TWC_large_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 	
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
+void __device__ TWC_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t thread_id = blockDim.x * blockIdx.x + threadIdx.x;
+	if (thread_id < 3) {
+		graph.twc_bin_sizes[thread_id] = 0;
+	}	
+	this_grid().sync();
+
+	int num_threads = AccessorType::getSize(input_frontier);	
+	int num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	int cta_size = CTA_SIZE;
+
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		TWC_split_frontier<EdgeWeightType, AccessorType>(graph, input_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+
+	this_grid().sync();	
+
+	num_threads = graph.twc_bin_sizes[0];	
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+	
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		TWC_small_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+
+	num_threads = graph.twc_bin_sizes[1] * MID_BIN;
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		TWC_mid_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+
+	num_threads = graph.twc_bin_sizes[2] * LARGE_BIN;
+	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+
+	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {
+		TWC_large_bin<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);
+		__syncthreads();
+	}
+	
+	this_grid().sync();
+}
+
+
 }
 
 #endif

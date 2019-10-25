@@ -39,6 +39,16 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 		full_frontier.max_num_elems = num_vertices;
 		return full_frontier;
 	}
+
+
+	// Load balance scratch pads
+	// TWC bins
+	int32_t *twc_small_bin;
+	int32_t *twc_mid_bin;
+	int32_t *twc_large_bin;
+	
+	int32_t *twc_bin_sizes;
+		
 };
 void consume(int32_t _) {
 }
@@ -134,6 +144,11 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMemcpy(graph.d_edge_weight, graph.h_edge_weight, sizeof(EdgeWeightType) * graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(graph.d_src_offsets, graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
 	//std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
+
+	cudaMalloc(&graph.twc_small_bin, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.twc_mid_bin, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.twc_large_bin, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.twc_bin_sizes, 3 * sizeof(int32_t));
 
 }
 template <typename EdgeWeightType>
