@@ -97,8 +97,8 @@ void __global__ update_nodes_identify_min(gpu_runtime::GraphT<int32_t> graph, al
 	for (int i = 0; i < work_per_thread; i++) {
 		int32_t node_id = thread_id + i * num_threads;
 		if (node_id < graph.num_vertices) {
-		  if (SP[node_id] >= (device_gpq.window_upper_) && SP[node_id] != INT_MAX && SP[node_id] < my_minimum) {
-				my_minimum = SP[node_id];
+		  if (device_gpq.device_priorities_[node_id] >= (device_gpq.window_upper_) && device_gpq.device_priorities_[node_id] != INT_MAX && device_gpq.device_priorities_[node_id] < my_minimum) {
+				my_minimum = device_gpq.device_priorities_[node_id];
 			}
 		}
 	}
@@ -119,7 +119,7 @@ void __global__ update_nodes_special(gpu_runtime::GraphT<int32_t> graph, algo_st
 		int32_t node_id = thread_id + i * num_threads;
 		if (node_id < graph.num_vertices) {
 		  //if(SP[node_id] >= device_state.window_lower && SP[node_id] < device_state.window_upper) {
-		  if(SP[node_id] >= device_gpq.current_priority_ && SP[node_id] < (device_gpq.current_priority_ + device_gpq.delta_)) {
+		  if(device_gpq.device_priorities_[node_id] >= device_gpq.current_priority_ && SP[node_id] < (device_gpq.current_priority_ + device_gpq.delta_)) {
 				gpu_runtime::enqueueVertexSparseQueue(output_frontier.d_sparse_queue_output, output_frontier.d_num_elems_output, node_id);
 			}	
 		}

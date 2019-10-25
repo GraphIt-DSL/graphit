@@ -45,7 +45,9 @@ namespace gpu_runtime {
 
     }
 
-    gpu_runtime::VertexFrontier dequeueReadySet(){
+    
+
+    gpu_runtime::VertexFrontier __device__ dequeueReadySet(){
       
 
     }
