@@ -48,6 +48,11 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t *twc_large_bin;
 	
 	int32_t *twc_bin_sizes;
+
+	// strict frontiers
+	int32_t *strict_sum;
+	int32_t *strict_cta_sum;
+	int32_t *strict_grid_sum;
 		
 };
 void consume(int32_t _) {
@@ -149,6 +154,10 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMalloc(&graph.twc_mid_bin, graph.num_vertices * 6 * sizeof(int32_t));
 	cudaMalloc(&graph.twc_large_bin, graph.num_vertices * 6 * sizeof(int32_t));
 	cudaMalloc(&graph.twc_bin_sizes, 3 * sizeof(int32_t));
+
+	cudaMalloc(&graph.strict_sum, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.strict_cta_sum, NUM_CTA * 2 * sizeof(int32_t));
+	cudaMalloc(&graph.strict_grid_sum, sizeof(int32_t));
 
 }
 template <typename EdgeWeightType>

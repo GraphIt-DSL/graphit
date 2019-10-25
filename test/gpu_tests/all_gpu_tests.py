@@ -39,7 +39,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 			#start point 0, delta 10, verified
 			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 10 v > " + self.verifier_input)
 		else:
-			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > " + self.verifier_input)	     
+			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 v > " + self.verifier_input)	     
 		output = self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t " + self.verifier_input + "  -r 0")		
 		test_flag = False
 		for line in output.rstrip().split("\n"):
@@ -73,8 +73,8 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		compute_capability = output[0]
 		num_of_sm = output[1]
 		
-		cls.nvcc_command += " -DNUM_CTA=" + num_of_sm + " -DCTA_SIZE=1024 -gencode arch=compute_" + compute_capability + ",code=sm_" + compute_capability
-		cls.nvcc_command += " -std=c++11 -O3 -I " + GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -Xcompiler \"-w\" -Wno-deprecated-gpu-targets "
+		cls.nvcc_command += " -rdc=true -DNUM_CTA=" + str(int(num_of_sm)*2) + " -DCTA_SIZE=512 -gencode arch=compute_" + compute_capability + ",code=sm_" + compute_capability
+		cls.nvcc_command += " -std=c++11 -O3 -I " + GRAPHIT_SOURCE_DIRECTORY + "/src/runtime_lib/ -Xcompiler \"-w\" -Wno-deprecated-gpu-targets --use_fast_math -Xptxas \" -dlcm=ca --maxrregcount=64\" "
 		
 		shutil.copytree(GRAPHIT_SOURCE_DIRECTORY + "/test/graphs", cls.scratch_directory + "/graphs")
 		cls.graph_directory = cls.scratch_directory + "/graphs"
@@ -162,6 +162,34 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_WM_schedule.gt")
 		self.sssp_verified_test(self.cuda_filename, False)
 		
+	def test_simple_graphit_sssp_strict_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_strict_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_vertex_based_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_vertex_based_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_TWC_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_TWC_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_TWCE_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_TWCE_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_CM_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_CM_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_WM_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_WM_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_strict_kernel_fusion_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_strict_kernel_fusion_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
 if __name__ == '__main__':
 	unittest.main()
 	#suite = unittest.TestSuite()

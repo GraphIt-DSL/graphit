@@ -21,7 +21,7 @@ func main()
     frontier.addVertex(start_vertex); %add source vertex
     SP[start_vertex] = 0;
     var rounds : int = 0;
-    while (frontier.getVertexSetSize() != 0)
+    #s0# while (frontier.getVertexSetSize() != 0)
         #s1# var output: vertexset{Vertex}  = edges.from(frontier).applyModified(updateEdge, SP);
         delete frontier;
         frontier = output;

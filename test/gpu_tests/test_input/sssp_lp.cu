@@ -58,7 +58,7 @@ void cudaCheckLastError(void) {
 #define WARP_SIZE (32)
 #define STAGE_1_SIZE (8)
 
-void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state device_state) {
+void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state device_state, int32_t start_vertex) {
         int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
         int num_threads = blockDim.x * gridDim.x;
         int total_work = graph.num_vertices;
@@ -71,9 +71,9 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state devic
                 }
         }
 	if (thread_id == 0) {
-		device_state.SP[0] = 0;
+		device_state.SP[start_vertex] = 0;
 		//starting point is set to 0 
-		device_state.frontier1[0] = 0;	
+		device_state.frontier1[0] = start_vertex;
 		*device_state.frontier1_size = 1;
 		*device_state.frontier2_size = 0;
 	}
@@ -289,6 +289,7 @@ int main(int argc, char *argv[]) {
 	cudaThreadSetCacheConfig(cudaFuncCachePreferShared);
 	gpu_runtime::GraphT<int32_t> graph;
 	gpu_runtime::load_graph(graph, argv[1], false);
+	int32_t start_vertex = atoi(argv[2]);
 
 	algo_state host_state, device_state;
 
@@ -302,7 +303,7 @@ int main(int argc, char *argv[]) {
 		startTimer();
 		
 		startTimer();
-		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);		
+		init_kernel<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state, start_vertex);		
 		int iters = 0;	
 		cudaDeviceSynchronize();
 		float t = stopTimer();
@@ -338,8 +339,8 @@ int main(int argc, char *argv[]) {
 
 	}
 	//printf("Total time = %f\n", total_time);
-	if (argc > 2)
-		if (argv[2][0] == 'v'){ 
+	if (argc > 3)
+		if (argv[3][0] == 'v'){ 
 			//FILE *output = fopen("output.txt", "w");
 			cudaMemcpy(host_state.SP, device_state.SP, sizeof(int32_t)*graph.num_vertices, cudaMemcpyDeviceToHost);
 			for (int i = 0; i < graph.num_vertices; i++)

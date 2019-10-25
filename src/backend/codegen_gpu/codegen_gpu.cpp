@@ -121,6 +121,8 @@ void CodeGenGPU::genPropertyArrayAlloca(mir::VarDecl::Ptr var_decl) {
 		
 }
 void KernelVariableExtractor::visit(mir::VarExpr::Ptr var_expr) {
+	if (mir_context_->isLoweredConst(var_expr->var.getName()))
+		return;
 	insertVar(var_expr->var);
 }
 void KernelVariableExtractor::visit(mir::VarDecl::Ptr var_decl) {
@@ -133,7 +135,7 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 
 	// Now we extract the list of variables that are used in the kernel that are not const 
 	// So we can hoist them
-	KernelVariableExtractor extractor;
+	KernelVariableExtractor extractor(mir_context_);
 	while_stmt->accept(&extractor);
 
 	while_stmt->hoisted_vars = extractor.hoisted_vars;
@@ -587,6 +589,8 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		load_balance_function = "gpu_runtime::CM_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
@@ -713,6 +717,8 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		load_balance_function = "gpu_runtime::CM_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
 		printIndent();
