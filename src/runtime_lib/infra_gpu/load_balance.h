@@ -131,10 +131,8 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFr
 	__shared__ int32_t stage3_queue[CTA_SIZE];
 	__shared__ int32_t stage_queue_sizes[3];
 	
-	if (threadIdx.x == 0) {
-		stage_queue_sizes[0] = 0;
-		stage_queue_sizes[1] = 0;
-		stage_queue_sizes[2] = 0;
+	if (threadIdx.x < 3) {
+		stage_queue_sizes[threadIdx.x] = 0;
 	}
 	__syncthreads();
 	__shared__ int32_t stage2_offset[CTA_SIZE];
