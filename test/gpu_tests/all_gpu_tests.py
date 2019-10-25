@@ -37,10 +37,10 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		self.cpp_compile_test(input_file_name, [])
 		if use_delta:
 			#start point 0, delta 10, verified
-			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 10 v > verifier_input ")
+			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 10 v > " + self.verifier_input)
 		else:
-			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > verifier_input ")	     
-		output = self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t verifier_input -r 0")		
+			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > " + self.verifier_input)	     
+		output = self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t " + self.verifier_input + "  -r 0")		
 		test_flag = False
 		for line in output.rstrip().split("\n"):
 			if line.rstrip().find("SUCCESSFUL") != -1:
@@ -82,6 +82,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		cls.cuda_filename = cls.scratch_directory + "/test_cpp.cu"
 		
 		cls.graphitc_py = GRAPHIT_BUILD_DIRECTORY + "/bin/graphitc.py"
+		cls.verifier_input = cls.scratch_directory + "/verifier_input"
 
 	def cpp_compile_test(self, input_file_name, extra_cpp_args=[]):
 		if input_file_name[0] == "/":
@@ -141,6 +142,25 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 		self.assertEqual(len(output), 2)
 		self.assertEqual(output[0], "14")
 
+	def test_simple_graphit_sssp_basic_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_default_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_TWCE_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_TWCE_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_TWC_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_TWC_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_CM_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_CM_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
+
+	def test_simple_graphit_sssp_WM_schedule(self):
+		self.graphit_generate_test("inputs/sssp.gt", "schedules/sssp_WM_schedule.gt")
+		self.sssp_verified_test(self.cuda_filename, False)
 		
 if __name__ == '__main__':
 	unittest.main()

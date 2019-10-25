@@ -441,7 +441,7 @@ void CodeGenGPU::genHybridThresholds(void) {
 		std::string var_name = stmt->threshold_var_name;
 		if (stmt->threshold < 0) {
 			printIndent();
-			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->argv_index << "])" << std::endl;
+			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->argv_index << "]);" << std::endl;
 		} else {
 			printIndent();
 			oss << stmt->threshold_var_name << " = " << stmt->threshold << std::endl;
@@ -581,6 +581,12 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
 		load_balance_function = "gpu_runtime::edge_only_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWC) {
+		load_balance_function = "gpu_runtime::TWC_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::CM) {
+		load_balance_function = "gpu_runtime::CM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
+		load_balance_function = "gpu_runtime::WM_load_balance";
 	}
 
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
@@ -701,6 +707,12 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
 		load_balance_function = "gpu_runtime::edge_only_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWC) {
+		load_balance_function = "gpu_runtime::TWC_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::CM) {
+		load_balance_function = "gpu_runtime::CM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
+		load_balance_function = "gpu_runtime::WM_load_balance";
 	}
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
 		printIndent();
@@ -1013,7 +1025,7 @@ void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
 	oss << ")";
 }
 void CodeGenGPUFusedKernel::visit(mir::VertexSetDedupExpr::Ptr vsde) {
-	oss << "gpu_runtime::device_dedup_frontier(";
+	oss << "gpu_runtime::dedup_frontier_device(";
 	vsde->target->accept(this);
 	oss << ")";
 }

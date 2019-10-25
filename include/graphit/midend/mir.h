@@ -949,6 +949,7 @@ namespace graphit {
 		
 		applied_schedule = edgeset_apply->applied_schedule;
 		frontier_reusable = edgeset_apply->frontier_reusable;
+		requires_output = edgeset_apply->requires_output;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -977,6 +978,7 @@ namespace graphit {
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		applied_schedule = edgeset_apply->applied_schedule;
 		frontier_reusable = edgeset_apply->frontier_reusable;
+		requires_output = edgeset_apply->requires_output;
             }
 
             virtual void accept(MIRVisitor *visitor) {

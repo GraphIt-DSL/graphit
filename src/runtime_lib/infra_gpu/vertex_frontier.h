@@ -31,6 +31,7 @@ struct VertexFrontier {
 	};
 
 	format_ready_type format_ready;
+
 };
 
 static VertexFrontier sentinel_frontier;
