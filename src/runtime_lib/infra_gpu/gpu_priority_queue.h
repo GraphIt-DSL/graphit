@@ -7,6 +7,12 @@
 
 
 namespace gpu_runtime {
+
+    template<typename PriorityT_>
+    class GPUPriorityQueue;
+
+    static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices);
+  
   
   template<typename PriorityT_>
     class GPUPriorityQueue {
@@ -46,10 +52,9 @@ namespace gpu_runtime {
     }
 
     
-
-    gpu_runtime::VertexFrontier __device__ dequeueReadySet(){
-      
-
+    gpu_runtime::VertexFrontier __host__ dequeueReadySet(GPUPriorityQueue<PriorityT_> * device_gpq){
+      update_nodes_identify_min<<<NUM_BLOCKS, CTA_SIZE>>>(device_gpq, frontier_.max_num_elems);
+      return;
     }
     
     PriorityT_* host_priorities_ = nullptr;
@@ -61,9 +66,32 @@ namespace gpu_runtime {
 
     //Need to do = {0} to avoid dynamic initialization error
     VertexFrontier frontier_ = {0};
-
     
   };
+
+
+  static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices)
+  {
+    int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
+    int num_threads = blockDim.x * gridDim.x;
+    int total_work = num_vertices;
+    int work_per_thread = (total_work + num_threads - 1)/num_threads;
+    int32_t my_minimum = INT_MAX;
+    for (int i = 0; i < work_per_thread; i++) {
+      int32_t node_id = thread_id + i * num_threads;
+	if (node_id < num_vertices) {
+	  if (gpq->device_priorities_[node_id] >= (gpq->window_upper_) && gpq->device_priorities_[node_id] != INT_MAX && gpq->device_priorities_[node_id] < my_minimum) {
+	    my_minimum = gpq->device_priorities_[node_id];
+	  }
+	}
+    }
+    
+    if (my_minimum < gpq->current_priority_){
+          atomicMin(&(gpq->current_priority_), my_minimum);
+    }
+  }
+
+  
 }
 
 

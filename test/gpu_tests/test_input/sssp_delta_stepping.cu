@@ -1,3 +1,14 @@
+
+
+
+#define VIRTUAL_WARP_SIZE (32)
+#define NUM_THREADS (1024)
+#define NUM_BLOCKS (80)
+#define CTA_SIZE (1024)
+#define WARP_SIZE (32)
+#define STAGE_1_SIZE (8)
+
+
 #include "gpu_intrinsics.h"
 #include <algorithm>
 
@@ -8,7 +19,7 @@
 #include <vector>2
 #include <queue>
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
   #define ITER_COUNT (5)
@@ -39,13 +50,6 @@ int32_t *__device_SP;
 //int32_t __device__ window_lower;
 //int32_t __device__ window_upper;
 
-
-#define VIRTUAL_WARP_SIZE (32)
-#define NUM_THREADS (1024)
-#define NUM_BLOCKS (80)
-#define CTA_SIZE (1024)
-#define WARP_SIZE (32)
-#define STAGE_1_SIZE (8)
 
 void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, algo_state device_state, int start_v) {
         int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -214,14 +218,25 @@ int main(int argc, char *argv[]) {
 			  //host_state.new_window_start[0] = INT_MAX;
 			  host_gpq.window_upper_ = host_gpq.current_priority_ + host_gpq.delta_;
 			  host_gpq.current_priority_ = INT_MAX;
-			  
+
+			  //std::cout << "test0" << std::endl;
 			  cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
 			  gpu_runtime::cudaCheckLastError();
 
-			  update_nodes_identify_min<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);
+			  //update_nodes_identify_min<<<NUM_BLOCKS, CTA_SIZE>>>(graph, device_state);
+			  //device_gpq.update_nodes_identify_min(graph.num_vertices);
+			  //std::cout << "test1" << std::endl;
+
+			  
+			  gpu_runtime::GPUPriorityQueue<int> * tmp_gpq;
+			  cudaGetSymbolAddress(((void **)&tmp_gpq), device_gpq);
+			  host_gpq.dequeueReadySet(tmp_gpq);
+			  
 			  gpu_runtime::cudaCheckLastError();
 			  cudaMemcpyFromSymbol(&host_gpq, device_gpq, sizeof(host_gpq), 0,cudaMemcpyDeviceToHost);
 			  gpu_runtime::cudaCheckLastError();
+
+			  //std::cout << "host_gpq.current_priority_: " << host_gpq.current_priority_ << std::endl;
 
 			  //if(host_gpq.current_priority_ == INT_MAX){
 			  //  break;
