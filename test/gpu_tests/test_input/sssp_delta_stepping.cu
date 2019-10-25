@@ -5,7 +5,7 @@
 #define USE_DEDUP 0
 #define SORT_NODES 0
 #include <assert.h>
-#include <vector>
+#include <vector>2
 #include <queue>
 
 //#define DEBUG
@@ -18,6 +18,7 @@
 
 gpu_runtime::GPUPriorityQueue<int> host_gpq;
 gpu_runtime::GPUPriorityQueue<int> __device__  device_gpq; 
+
 
 typedef struct {
 	int32_t *SP;
@@ -166,13 +167,18 @@ int main(int argc, char *argv[]) {
 	for (int outer = 0; outer < ITER_COUNT; outer++) {
 		float iter_total = 0;
 		//this sets it to Sparse
-		gpu_runtime::VertexFrontier frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
-		gpu_runtime::builtin_addVertex(frontier, start_vertex);
+		host_gpq.frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
+
+		//frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
+		
+		//gpu_runtime::builtin_addVertex(host_gpq.frontier_, start_vertex);
 		gpu_runtime::vertex_set_apply_kernel<gpu_runtime::AccessorAll, SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(graph.getFullFrontier());
 		startTimer();
 
-		host_gpq.delta_ = delta;
-		host_gpq.current_priority_ = 0 ;
+		//host_gpq.delta_ = delta;
+		//host_gpq.current_priority_ = 0 ;
+
+		host_gpq.init(__host_SP, __device_SP, 0, delta, start_vertex);
 
 		cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
 		gpu_runtime::cudaCheckLastError();
@@ -190,21 +196,21 @@ int main(int argc, char *argv[]) {
 		while(! host_gpq.finished()){
 			startTimer();
 			iters++;
-			gpu_runtime::vertex_set_prepare_sparse(frontier);
+			gpu_runtime::vertex_set_prepare_sparse(host_gpq.frontier_);
 			//cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t), 0);
 			//Might not be necessary, always synchronized at this point?? 
 			cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
 			gpu_runtime::cudaCheckLastError();
 
 			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
-			gpu_runtime::TWCE_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);
+			gpu_runtime::TWCE_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, host_gpq.frontier_, host_gpq.frontier_);
 			gpu_runtime::cudaCheckLastError();
 			
-			gpu_runtime::swap_bytemaps(frontier);
+			gpu_runtime::swap_bytemaps(host_gpq.frontier_);
 			// set the input to the prepare function
-			frontier.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
+			host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
 			
-			if (gpu_runtime::builtin_getVertexSetSize(frontier) == (0)) {
+			if (gpu_runtime::builtin_getVertexSetSize(host_gpq.frontier_) == (0)) {
 			  //host_state.new_window_start[0] = INT_MAX;
 			  host_gpq.window_upper_ = host_gpq.current_priority_ + host_gpq.delta_;
 			  host_gpq.current_priority_ = INT_MAX;
@@ -220,10 +226,10 @@ int main(int argc, char *argv[]) {
 			  //if(host_gpq.current_priority_ == INT_MAX){
 			  //  break;
 			  //}			  
-			  update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state, frontier);
+			  update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state, host_gpq.frontier_);
 			  gpu_runtime::cudaCheckLastError();
-			  gpu_runtime::swap_queues(frontier);
-			  frontier.format_ready = gpu_runtime::VertexFrontier::SPARSE; 
+			  gpu_runtime::swap_queues(host_gpq.frontier_);
+			  host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE; 
 			}
 
 			cudaDeviceSynchronize();
