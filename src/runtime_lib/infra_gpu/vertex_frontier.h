@@ -5,7 +5,10 @@
 #include <cooperative_groups.h>
 using namespace cooperative_groups;
 namespace gpu_runtime {
-struct VertexFrontier {
+class VertexFrontier {
+
+ public:
+  
 	int32_t max_num_elems; 
 
 	int32_t *d_num_elems_input;
@@ -31,6 +34,7 @@ struct VertexFrontier {
 	};
 
 	format_ready_type format_ready;
+
 };
 
 static VertexFrontier sentinel_frontier;
