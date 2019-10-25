@@ -39,7 +39,7 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 			#start point 0, delta 10, verified
 			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 10 v > " + self.verifier_input)
 		else:
-			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel v > " + self.verifier_input)	     
+			self.get_command_output(self.executable_name + " " + self.graph_directory + "/4.wel 0 v > " + self.verifier_input)	     
 		output = self.get_command_output(self.verifier_directory + "/sssp_verifier -f " + self.graph_directory +  "/4.wel -t " + self.verifier_input + "  -r 0")		
 		test_flag = False
 		for line in output.rstrip().split("\n"):

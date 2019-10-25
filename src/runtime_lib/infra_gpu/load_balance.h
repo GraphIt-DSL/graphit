@@ -692,7 +692,7 @@ template <typename AccessorType, typename EdgeWeightType>
 void __device__ strict_gather(GraphT<EdgeWeightType> &graph, VertexFrontier &frontier, unsigned int cta_id, unsigned int num_cta) {
         int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
         int32_t tot_size = AccessorType::getSize(frontier);
-	int32_t idx, deg;
+	int32_t idx;
 	if(thread_id < tot_size) {
 		idx = AccessorType::getElement(frontier, thread_id);
 		graph.strict_sum[thread_id] = graph.d_get_degree(idx);
@@ -736,8 +736,9 @@ void __device__ strict_get_partial_sum(int32_t *elt, int32_t *buf, int32_t f_siz
 		accum += __shfl_down_sync((uint32_t)-1, accum, 2);
 		accum += __shfl_down_sync((uint32_t)-1, accum, 1);
 	}
+	__syncthreads();
 	if(threadIdx.x == 0) {
-		buf[blockIdx.x] = accum;
+		buf[cta_id] = accum;
 	}
 }
 void __global__ strict_get_partial_sum_kernel(int32_t *elt, int32_t *buf, int32_t f_size, int32_t nnz_per_blk) {
@@ -762,7 +763,7 @@ void __device__ strict_local_prefix_sum(int32_t *elt, int32_t *buf, int32_t *glt
 	int32_t upper_idx = (cta_id+1)*nnz_per_blk;
 	if(upper_idx > f_size) upper_idx = f_size;
 
-	for(int32_t i=idx; i<(cta_id+1)*nnz_per_blk; i+=blockDim.x) {
+	for(int32_t i=idx; i<(cta_id+1)*nnz_per_blk; i += blockDim.x) {
 		int32_t deg = 0;
 		if(i < upper_idx) deg = elt[i];
 
@@ -817,6 +818,7 @@ void __device__ strict_local_prefix_sum(int32_t *elt, int32_t *buf, int32_t *glt
 		base_offset += tot_deg;
 
 	}
+	__syncthreads();
 	if (prefix_mode == 1 && threadIdx.x == 0) {
 		glt[0] = base_offset;
 	}
@@ -828,10 +830,11 @@ template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> loa
 void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
 
 	__shared__ int32_t sm_idx[STRICT_SM_SIZE], sm_deg[STRICT_SM_SIZE], sm_loc[STRICT_SM_SIZE];
-	int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
+	//int32_t thread_id = threadIdx.x + blockDim.x * cta_id;
 	int32_t tot_size = AccessorType::getSize(input_frontier);
 
-        int32_t deg, index, index_size, src_idx;
+        int32_t index, src_idx;
+	//int32_t deg;
 
 	// can be fused
 	bool last_tb = (cta_id == (graph.strict_grid_sum[0] + NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
@@ -839,12 +842,12 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 	int32_t end_row = binary_search_upperbound(&graph.strict_sum[0], tot_size, NNZ_PER_BLOCK*(cta_id+1))-1;
 
 	int32_t row_size = end_row - start_row + 1;
-	int32_t start_idx;
+	//int32_t start_idx;
 
 	if(row_size <= STRICT_SM_SIZE) {
 		if(threadIdx.x < row_size) {
 			index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
-			deg = graph.d_get_degree(index);
+			//deg = graph.d_get_degree(index);
 
 			sm_idx[threadIdx.x] = index;
 			int32_t tmp_deg = graph.strict_sum[start_row + threadIdx.x] - cta_id * NNZ_PER_BLOCK;
@@ -856,20 +859,20 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 				sm_loc[threadIdx.x] = graph.d_src_offsets[index] - tmp_deg;
 			}
 		} else {
-			deg = 0;
+			//deg = 0;
 			sm_deg[threadIdx.x] = INT_MAX;
 		}
 		__syncthreads();
 
-		int32_t lane = (threadIdx.x&31);
+		//int32_t lane = (threadIdx.x&31);
 		int32_t offset = 0;
 
 		int32_t tot_deg;
 		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
 		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
 
-		int32_t phase = threadIdx.x;
-		int32_t off=32;
+		//int32_t phase = threadIdx.x;
+		//int32_t off=32;
 
 		int32_t width = row_size;
 		for(int32_t i=threadIdx.x; i<tot_deg; i+=blockDim.x) {
@@ -888,7 +891,7 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
 
 		int32_t width = row_size;
-		int32_t offset = 0;
+		//int32_t offset = 0;
 
 		for(int32_t i=cta_id*NNZ_PER_BLOCK+threadIdx.x; i<cta_id*NNZ_PER_BLOCK+tot_deg; i+=blockDim.x) {
 			int32_t id = binary_search_upperbound(&graph.strict_sum[start_row], width, i)-1;
@@ -906,7 +909,7 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 }
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
 void __global__ strict_load_balance_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
-	strict_load_balance(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
+	strict_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
 }
 
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
@@ -914,7 +917,6 @@ void __host__ strict_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFron
 	int num_threads = AccessorType::getSizeHost(input_frontier);	
 	int num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
 	int cta_size = CTA_SIZE;	
-	
 	strict_gather_kernel<AccessorType, EdgeWeightType><<<num_cta, cta_size>>>(graph, input_frontier);
 	
 	int32_t tot_blk = NUM_CTA;	
@@ -926,10 +928,13 @@ void __host__ strict_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFron
 	int32_t nnz_per_thread = (num_threads + gran - 1)/gran;
 	int32_t nnz_per_blk = (nnz_per_thread * PREFIX_BLK);
 
+
 	strict_get_partial_sum_kernel<<<tot_blk, PREFIX_BLK>>>(graph.strict_sum, graph.strict_cta_sum, num_threads, nnz_per_blk);
-	strict_local_prefix_sum_kernel<<<1, PREFIX_BLK>>>(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, tot_blk + 1);
+	
+	strict_local_prefix_sum_kernel<<<1, PREFIX_BLK>>>(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, (tot_blk + PREFIX_BLK)/PREFIX_BLK * PREFIX_BLK);
 	strict_local_prefix_sum_kernel<<<tot_blk, PREFIX_BLK>>>(graph.strict_sum, graph.strict_cta_sum, graph.strict_grid_sum, 0, num_threads, nnz_per_blk);
 	cudaMemcpy(&num_threads, graph.strict_grid_sum, sizeof(int32_t), cudaMemcpyDeviceToHost);
+	cudaCheckLastError();
 	num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
 	cta_size = CTA_SIZE;	
 
@@ -939,7 +944,6 @@ template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> loa
 void __device__ strict_load_balance_device(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
 	int num_threads = AccessorType::getSize(input_frontier);	
 	int num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
-	int cta_size = CTA_SIZE;	
 
 	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {	
 		strict_gather<AccessorType, EdgeWeightType>(graph, input_frontier, cta_id, num_cta);
@@ -961,7 +965,7 @@ void __device__ strict_load_balance_device(GraphT<EdgeWeightType> &graph, Vertex
 	}
 	this_grid().sync();
 	if (blockIdx.x == 0) {
-		strict_local_prefix_sum(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, tot_blk + 1, blockIdx.x, 1);
+		strict_local_prefix_sum(graph.strict_cta_sum, graph.strict_cta_sum, graph.strict_grid_sum, 1, tot_blk + 1, (tot_blk + PREFIX_BLK)/PREFIX_BLK * PREFIX_BLK, blockIdx.x, 1);
 	}	
 	this_grid().sync();
 	for (int32_t cta_id = blockIdx.x; cta_id < tot_blk; cta_id += gridDim.x) {	
@@ -971,7 +975,6 @@ void __device__ strict_load_balance_device(GraphT<EdgeWeightType> &graph, Vertex
 	this_grid().sync();
 	num_threads = graph.strict_grid_sum[0];
 	num_cta = (num_threads + CTA_SIZE - 1)/CTA_SIZE;
-	cta_size = CTA_SIZE;	
 	for (int32_t cta_id = blockIdx.x; cta_id < num_cta; cta_id += gridDim.x) {	
 		strict_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, cta_id, num_cta);
 		__syncthreads();

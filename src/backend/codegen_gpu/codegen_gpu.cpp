@@ -589,6 +589,8 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		load_balance_function = "gpu_runtime::CM_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
@@ -715,6 +717,8 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		load_balance_function = "gpu_runtime::CM_load_balance";
 	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
+	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
 		printIndent();
