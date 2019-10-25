@@ -1,4 +1,5 @@
 #include <gtest.h>
+#define NUM_BLOCKS (80)
 #include "gpu_intrinsics.h"
 
 std::string graph_directory;

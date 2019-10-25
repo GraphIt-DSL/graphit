@@ -19,7 +19,7 @@
 #include <vector>2
 #include <queue>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
   #define ITER_COUNT (5)

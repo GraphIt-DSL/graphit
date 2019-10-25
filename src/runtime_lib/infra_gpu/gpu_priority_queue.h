@@ -5,6 +5,9 @@
 #include <cinttypes>
 #include "vertex_frontier.h" 
 
+#ifndef NUM_BLOCKS
+  #define NUM_BLOCKS 80
+#endif
 
 namespace gpu_runtime {
 
