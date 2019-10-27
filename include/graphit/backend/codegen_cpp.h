@@ -60,6 +60,7 @@ namespace graphit {
         //virtual void visit(mir::EdgeSetWhereExpr::Ptr);
 
         virtual void visit(mir::VarExpr::Ptr);
+        virtual void visit(mir::IntersectionExpr::Ptr);
         virtual void visit(mir::EdgeSetLoadExpr::Ptr);
 
         virtual void visit(mir::NegExpr::Ptr);

@@ -776,8 +776,6 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
     auto A = new NodeID[0]{};
     auto B = new NodeID[5]{3, 4, 23, 45, 56};
 
-    ASSERT_DEATH(intersectSortedNodeSetHiroshi(A, B, 0, 5), ".*");
-
     //build bitmap
     size_t MAX_LIMIT = 20000;
     Bitmap* bitarray = new Bitmap(MAX_LIMIT);
@@ -815,8 +813,6 @@ TEST_F(RuntimeLibTest, IntersectSortedNodeSetOneSetEmpty){
     for(size_t i = 0; i < 5; i++){
         bitarray1->set_bit(*(A1+i));
     }
-
-    ASSERT_DEATH(intersectSortedNodeSetHiroshi(A1, B1, 5, 0), ".*");
 
     countBitset = intersectSortedNodeSetBitset(bitarray1, B1, 0);
     countBinarySearch = intersectSortedNodeSetBinarySearch(A1, B1, 5, 0);

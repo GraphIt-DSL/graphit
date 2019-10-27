@@ -114,6 +114,8 @@ namespace graphit {
                 return "'new'";
             case Token::Type::DELETE:
                 return "'delete'";
+            case Token::Type::INTERSECTION:
+                return "'intersection'";
             case Token::Type::RARROW:
                 return "'->'";
             case Token::Type::LP:

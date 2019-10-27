@@ -881,6 +881,8 @@ namespace graphit {
                 return parseNewExpr();
             case Token::Type::LOAD:
                 return parseLoadExpr();
+            case Token::Type::INTERSECTION:
+                return parseIntersectionExpr();
             default:
                 return parseOrExpr();
         }
@@ -2590,6 +2592,36 @@ namespace graphit {
         return load_expr;
     }
 
+    // intersection_expr: ('intersection') '(' 'expr', 'expr', 'expr', 'expr' ')' ';'
+    fir::IntersectionExpr::Ptr Parser::parseIntersectionExpr() {
+
+        const auto intersectionExpr = std::make_shared<fir::IntersectionExpr>();
+
+        const Token intersectionToken = consume(Token::Type::INTERSECTION);
+        consume(Token::Type::LP);
+
+        const auto vertexA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexB = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numB = parseExpr();
+
+        intersectionExpr->vertex_a = vertexA;
+        intersectionExpr->vertex_b = vertexB;
+        intersectionExpr->numA = numA;
+        intersectionExpr->numB = numB;
+
+        if (tryConsume(Token::Type::COMMA)) {
+            const auto reference = parseExpr();
+            intersectionExpr->reference = reference;
+        }
+
+        consume(Token::Type::RP);
+        return intersectionExpr;
+    }
+
     void Parser::initIntrinsics() {
         // set up method call intrinsics
 
@@ -2600,7 +2632,9 @@ namespace graphit {
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
         intrinsics_.push_back("getOutDegreesUint");
-
+        intrinsics_.push_back("getOutDegree");
+        intrinsics_.push_back("getNgh");
+        intrinsics_.push_back("relabel");
 
         // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");

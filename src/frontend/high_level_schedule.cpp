@@ -589,6 +589,50 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configIntersection(std::string intersection_label,
+                                                                       std::string intersection_option) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no intersection schedule has been constructed, construct a new one
+            if (schedule_->intersection_schedules == nullptr) {
+                schedule_->intersection_schedules = new std::map<std::string, IntersectionSchedule::IntersectionType>();
+            }
+
+            if (schedule_->intersection_schedules->find(intersection_label) == schedule_->intersection_schedules->end()) {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
+            }
+
+
+            if (intersection_option == "HiroshiIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::HIROSHI;
+            }
+
+            else if (intersection_option == "MultiskipIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::MULTISKIP;
+            }
+
+            else if (intersection_option == "CombinedIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::COMBINED;
+            }
+
+            else if (intersection_option == "BinarySearchIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::BINARY;
+            }
+
+            else {
+                std::cout << "unsupported intersection: " << intersection_option << std::endl;
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
+            }
+
+            return this->shared_from_this();
+
+
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyParallelization(std::string apply_label,
                                                                              std::string apply_parallel, int grain_size,
                                                                              std::string direction) {

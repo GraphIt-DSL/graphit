@@ -72,9 +72,9 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 
 
 #include <vector>
-
 #include "infra_gapbs/builder.h"
 #include "infra_gapbs/benchmark.h"
+#include "infra_gapbs/intersections.h"
 #include "infra_gapbs/bitmap.h"
 #include "infra_gapbs/command_line.h"
 #include "infra_gapbs/graph.h"
@@ -176,6 +176,79 @@ static int builtin_getVertices(Graph &edges){
 
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
+}
+
+static NodeID builtin_getOutDegree(Graph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static NodeID builtin_getOutDegree(WGraph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static Graph builtin_relabel(Graph &edges) {
+
+    // GAPBS way to figure out if the graph is worth relabelling
+    auto worthLabelling = [](Graph &g) {
+        int64_t average_degree = g.num_edges() / g.num_nodes();
+        if (average_degree < 10)
+            return false;
+        SourcePicker<Graph> sp(g);
+        int64_t num_samples = min(int64_t(1000), g.num_nodes());
+        int64_t sample_total = 0;
+        pvector<int64_t> samples(num_samples);
+        for (int64_t trial=0; trial < num_samples; trial++) {
+            samples[trial] = g.out_degree(sp.PickNext());
+            sample_total += samples[trial];
+        }
+        sort(samples.begin(), samples.end());
+        double sample_average = static_cast<double>(sample_total) / num_samples;
+        double sample_median = samples[num_samples/2];
+        return sample_average / 1.3 > sample_median;
+    };
+
+    if (worthLabelling(edges)) {
+        Graph relabeledGraph = Builder::RelabelByDegree(edges);
+        return relabeledGraph;
+    }
+
+    return edges;
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(Graph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(WGraph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+
+static size_t hiroshiVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetHiroshi((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
+}
+
+static size_t multiSkipVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetMultipleSkip((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
+}
+
+static size_t naiveVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetNaive((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+}
+
+static size_t combinedVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    // currently just has fixed thresholds
+    return intersectSortedNodeSetCombined((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, 1000, 0.1);
+}
+
+static size_t binarySearchIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    return intersectSortedNodeSetBinarySearch((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB);
 }
 
 template <typename T>

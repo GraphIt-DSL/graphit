@@ -17,4 +17,13 @@ pvector<T>* readFileIntoVector(std::string file_name){
     return output;
 }
 
+template <typename T>
+T readFileIntoSize(std::string file_name) {
+    std::ifstream file(file_name);
+    T output;
+    file >> output;
+    return output;
+
+}
+
 #endif //GRAPHIT_VERIFIER_UTILS_H
