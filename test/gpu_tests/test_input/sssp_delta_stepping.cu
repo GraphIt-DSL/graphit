@@ -172,15 +172,9 @@ int main(int argc, char *argv[]) {
 		float iter_total = 0;
 		//this sets it to Sparse
 		host_gpq.frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
-
-		//frontier = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
 		
-		//gpu_runtime::builtin_addVertex(host_gpq.frontier_, start_vertex);
 		gpu_runtime::vertex_set_apply_kernel<gpu_runtime::AccessorAll, SP_generated_vector_op_apply_func_0><<<NUM_CTA, CTA_SIZE>>>(graph.getFullFrontier());
 		startTimer();
-
-		//host_gpq.delta_ = delta;
-		//host_gpq.current_priority_ = 0 ;
 
 		host_gpq.init(__host_SP, __device_SP, 0, delta, start_vertex);
 
@@ -196,25 +190,18 @@ int main(int argc, char *argv[]) {
 		//printf("Init time = %f\n", t);
 		iter_total+=t;
 
+		//std::cout << "frontier size: " << gpu_runtime::builtin_getVertexSetSize(host_gpq.frontier_) << std::endl;
+		
 		//while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
 		while(! host_gpq.finished()){
 			startTimer();
 			iters++;
-			gpu_runtime::vertex_set_prepare_sparse(host_gpq.frontier_);
-			//cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t), 0);
-			//Might not be necessary, always synchronized at this point?? 
-			cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
-			gpu_runtime::cudaCheckLastError();
 
-			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
-			gpu_runtime::TWCE_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, host_gpq.frontier_, host_gpq.frontier_);
-			gpu_runtime::cudaCheckLastError();
-			
-			gpu_runtime::swap_bytemaps(host_gpq.frontier_);
-			// set the input to the prepare function
-			host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
-			
+			//std::cout << "iter: " << iters << std::endl;
+
 			if (gpu_runtime::builtin_getVertexSetSize(host_gpq.frontier_) == (0)) {
+
+			  //std::cout << "inside dequeue routine" << std::endl;
 			  //host_state.new_window_start[0] = INT_MAX;
 			  host_gpq.window_upper_ = host_gpq.current_priority_ + host_gpq.delta_;
 			  host_gpq.current_priority_ = INT_MAX;
@@ -244,9 +231,38 @@ int main(int argc, char *argv[]) {
 			  update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>( graph, device_state, host_gpq.frontier_);
 			  gpu_runtime::cudaCheckLastError();
 			  gpu_runtime::swap_queues(host_gpq.frontier_);
-			  host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE; 
+			  host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
+			  
+			}//end of checking if host_gpq frontier is empty or not
+
+			if (host_gpq.finished()){
+			  break;
 			}
 
+			
+			gpu_runtime::vertex_set_prepare_sparse(host_gpq.frontier_);
+			//cudaMemcpyToSymbol(window_upper, &device_state.window_upper, sizeof(int32_t), 0);
+			//Might not be necessary, always synchronized at this point?? 
+			cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
+			gpu_runtime::cudaCheckLastError();
+
+			//gpu_runtime::vertex_based_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, frontier, frontier);  
+			gpu_runtime::TWCE_load_balance_host<int32_t, gpu_operator_body_3, gpu_runtime::AccessorSparse, gpu_runtime::true_function>(graph, host_gpq.frontier_, host_gpq.frontier_);
+			gpu_runtime::cudaCheckLastError();
+			
+			gpu_runtime::swap_bytemaps(host_gpq.frontier_);
+			// set the input to the prepare function
+			host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::BYTEMAP;
+			
+			
+
+
+
+
+			
+
+
+			
 			cudaDeviceSynchronize();
 			t = stopTimer();
 
