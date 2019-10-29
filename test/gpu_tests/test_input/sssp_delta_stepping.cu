@@ -19,7 +19,7 @@
 #include <vector>2
 #include <queue>
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
   #define ITER_COUNT (5)
@@ -199,6 +199,7 @@ int main(int argc, char *argv[]) {
 
 			//std::cout << "iter: " << iters << std::endl;
 
+			/*
 			if (gpu_runtime::builtin_getVertexSetSize(host_gpq.frontier_) == (0)) {
 
 			  //std::cout << "inside dequeue routine" << std::endl;
@@ -234,6 +235,12 @@ int main(int argc, char *argv[]) {
 			  host_gpq.frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
 			  
 			}//end of checking if host_gpq frontier is empty or not
+			*/
+			
+			gpu_runtime::GPUPriorityQueue<int> * tmp_gpq;
+			cudaGetSymbolAddress(((void **)&tmp_gpq), device_gpq);
+			host_gpq.dequeueReadySet(tmp_gpq);
+			
 
 			if (host_gpq.finished()){
 			  break;
