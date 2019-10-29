@@ -102,20 +102,18 @@ int main(int argc, char *argv[]) {
 		//printf("Init time = %f\n", t);
 		iter_total+=t;
 
-		//std::cout << "frontier size: " << gpu_runtime::builtin_getVertexSetSize(host_gpq.frontier_) << std::endl;
+		gpu_runtime::GPUPriorityQueue<int> * tmp_gpq;
+		cudaGetSymbolAddress(((void **)&tmp_gpq), device_gpq);
 		
-		//while(gpu_runtime::builtin_getVertexSetSize(frontier) != (0)){
-		while(! host_gpq.finished()){
+		while(! host_gpq.finished(tmp_gpq)){
 			startTimer();
 			iters++;
-
-			gpu_runtime::GPUPriorityQueue<int> * tmp_gpq;
-			cudaGetSymbolAddress(((void **)&tmp_gpq), device_gpq);
-			host_gpq.dequeueReadySet(tmp_gpq);
 			
-			if (host_gpq.finished()){
-			  break;
-			}
+			gpu_runtime::VertexFrontier frontier = host_gpq.dequeueReadySet(tmp_gpq);
+			
+			//if (host_gpq.finished()){
+			//  break;
+			//}
 
 			gpu_runtime::vertex_set_prepare_sparse(host_gpq.frontier_);
 			cudaMemcpyToSymbol(device_gpq, &host_gpq, sizeof(host_gpq), 0);
