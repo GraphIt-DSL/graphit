@@ -33,12 +33,13 @@ namespace gpu_runtime {
       return current_priority_;
     }
 
-    void init(PriorityT_ * host_priorities, PriorityT_* device_priorities, PriorityT_ initial_priority, PriorityT_ delta, NodeID initial_node = -1){
+    void init(GraphT<int32_t> graph, PriorityT_ * host_priorities, PriorityT_* device_priorities, PriorityT_ initial_priority, PriorityT_ delta, NodeID initial_node = -1){
       host_priorities_ = host_priorities;
       device_priorities_ = device_priorities;
       current_priority_ = initial_priority;
       delta_ = delta;
       ready_set_dequeued = false;
+      frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
       if (initial_node != -1){
 	  gpu_runtime::builtin_addVertex(frontier_, initial_node);
       }
@@ -71,7 +72,7 @@ namespace gpu_runtime {
     }
 
     
-    VertexFrontier dequeueReadySet(GPUPriorityQueue<PriorityT_> * device_gpq){
+    VertexFrontier& dequeueReadySet(GPUPriorityQueue<PriorityT_> * device_gpq){
       // if this is already dequeued in the previous finish() operator
       // then don't do the dequeu operation again
       if (ready_set_dequeued){
