@@ -33,15 +33,15 @@ namespace gpu_runtime {
       return current_priority_;
     }
 
-    void init(PriorityT_ * host_priorities, PriorityT_* device_priorities, PriorityT_ initial_priority, PriorityT_ delta, NodeID initial_node = -1){
+    void init(GraphT<int32_t> graph, PriorityT_ * host_priorities, PriorityT_* device_priorities, PriorityT_ initial_priority, PriorityT_ delta, NodeID initial_node = -1){
       host_priorities_ = host_priorities;
       device_priorities_ = device_priorities;
       current_priority_ = initial_priority;
       delta_ = delta;
+      ready_set_dequeued = false;
+      frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
       if (initial_node != -1){
-	//if (frontier_ != {0}){
 	  gpu_runtime::builtin_addVertex(frontier_, initial_node);
-	  //}
       }
     }
     
@@ -49,8 +49,18 @@ namespace gpu_runtime {
       
     }
     
-    bool finished() {
-      return current_priority_ == INT_MAX;
+    bool finished(GPUPriorityQueue<PriorityT_> * device_gpq) {
+      if (current_priority_ == INT_MAX){
+	return true;
+      }
+
+      if (!ready_set_dequeued && gpu_runtime::builtin_getVertexSetSize(frontier_) == 0){
+	dequeueReadySet(device_gpq);
+	ready_set_dequeued = true;
+	return current_priority_ == INT_MAX;
+      } 
+
+      return false;
     }
     
     bool host_finishedNode(NodeID v){
@@ -62,7 +72,16 @@ namespace gpu_runtime {
     }
 
     
-    void  dequeueReadySet(GPUPriorityQueue<PriorityT_> * device_gpq){
+    VertexFrontier& dequeueReadySet(GPUPriorityQueue<PriorityT_> * device_gpq){
+      // if this is already dequeued in the previous finish() operator
+      // then don't do the dequeu operation again
+      if (ready_set_dequeued){
+	//Now that we dequeued it, the next ready set is no longer dequeued
+	ready_set_dequeued = false;
+	return frontier_;
+      }
+
+      //perform the dequeue operation only if the current frontier is empty
       if (gpu_runtime::builtin_getVertexSetSize(frontier_) == 0) {
 	window_upper_ = current_priority_ + delta_;
 	current_priority_ = INT_MAX;
@@ -81,7 +100,14 @@ namespace gpu_runtime {
 	gpu_runtime::cudaCheckLastError();
 	gpu_runtime::swap_queues(frontier_);
 	frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
+
+	//Now that we dequeued it, the next ready set is no longer dequeued
+	ready_set_dequeued = false;
+	return frontier_;
       }
+
+      //if it is empty, just return the empty frontier
+      return frontier_;
     }
     
     PriorityT_* host_priorities_ = nullptr;
@@ -93,7 +119,7 @@ namespace gpu_runtime {
 
     //Need to do = {0} to avoid dynamic initialization error
     VertexFrontier frontier_ = {0};
-    
+    bool ready_set_dequeued = false;
   };
 
 
