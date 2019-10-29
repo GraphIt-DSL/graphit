@@ -72,6 +72,52 @@ static bool string_ends_with(const char* str, const char* sub_str) {
 		return true;
 	return false;
 }
+
+static int32_t identify_block_id (int32_t vid, int32_t blocking_size) {
+	return vid / blocking_size;
+}
+template <typename EdgeWeightType>
+static void block_graph_edges(GraphT<EdgeWeightType> &input_graph, GraphT<EdgeWeightType> &output_graph, int32_t blocking_size) {
+	output_graph = input_graph;
+	output_graph.h_src_offsets = nullptr;
+	output_graph.d_src_offsets = nullptr;
+
+	output_graph.h_edge_src = new int32_t[input_graph.num_edges];
+	output_graph.h_edge_dst = new int32_t[input_graph.num_edges];
+	output_graph.h_edge_weights = new EdgeWeightType[input_graph.num_edges];
+
+	int32_t num_blocks = (input_graph.num_vertices + blocking_size - 1)/blocking_size;
+	
+	int32_t *block_sizes = new int32_t[num_blocks+1];		
+	
+	for (int32_t eid = 0; eid < input_graph.num_edges; eid++) {
+		int32_t dst = input_graph.d_edge_dst[eid];
+		int32_t block_id = identify_block_id(dst, blocking_size);
+		block_sizes[block_id] += 1;
+	}	
+	block_sizes[0] = 0;
+	for (int32_t eid = 0; eid < input_graph.num_edges; eid++) {
+		int32_t dst = input_graph.d_edge_dst[eid];
+		int32_t block_id = identify_block_id(dst, blocking_size);
+		int32_t new_eid = block_sizes[block_id];
+		block_sizes[block_id]++;
+		output_graph.h_edge_src[new_eid] = input_graph.d_edge_src[eid];	
+		output_graph.h_edge_dst[new_eid] = input_graph.d_edge_dst[eid];	
+		output_graph.h_edge_weights[new_eid] = input_graph.d_edge_weights[eid];	
+	}
+	
+	delete[] block_sizes;
+	cudaMalloc(&output_graph.d_edge_src, sizeof(int32_t) * output_graph.num_edges);
+	cudaMalloc(&output_graph.d_edge_dst, sizeof(int32_t) * output_graph.num_edges);
+	cudaMalloc(&output_graph.d_edge_weight, sizeof(EdgeWeightType) * output_graph.num_edges);
+	
+	
+	cudaMemcpy(output_graph.d_edge_src, output_graph.h_edge_src, sizeof(int32_t) * output_graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_edge_dst, output_graph.h_edge_dst, sizeof(int32_t) * output_graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_edge_weight, output_graph.h_edge_weight, sizeof(EdgeWeightType) * output_graph.num_edges, cudaMemcpyHostToDevice);
+		
+}
+
 template <typename EdgeWeightType>
 static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool to_sort = false) {
 	int flen = strlen(filename.c_str());
@@ -160,6 +206,7 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMalloc(&graph.strict_grid_sum, sizeof(int32_t));
 
 }
+
 template <typename EdgeWeightType>
 static int32_t builtin_getVertices(GraphT<EdgeWeightType> &graph) {
 	return graph.num_vertices;

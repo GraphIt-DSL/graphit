@@ -131,10 +131,8 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFr
 	__shared__ int32_t stage3_queue[CTA_SIZE];
 	__shared__ int32_t stage_queue_sizes[3];
 	
-	if (threadIdx.x == 0) {
-		stage_queue_sizes[0] = 0;
-		stage_queue_sizes[1] = 0;
-		stage_queue_sizes[2] = 0;
+	if (threadIdx.x < 3) {
+		stage_queue_sizes[threadIdx.x] = 0;
 	}
 	__syncthreads();
 	__shared__ int32_t stage2_offset[CTA_SIZE];
@@ -151,35 +149,38 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFr
 	if (local_vertex_idx < total_vertices) {
 		local_vertex = AccessorType::getElement(input_frontier, local_vertex_idx);
 		// Step 1 seggregate vertices into shared buffers
-		if (threadIdx.x % (STAGE_1_SIZE) == 0) {
-			degree = graph.d_get_degree(local_vertex);
-			src_offset = graph.d_src_offsets[local_vertex];
-			int32_t s3_size = degree/CTA_SIZE;
-			degree = degree - s3_size * CTA_SIZE;
-			if (s3_size > 0) {
+		degree = graph.d_get_degree(local_vertex);
+		src_offset = graph.d_src_offsets[local_vertex];
+		int32_t s3_size = degree/CTA_SIZE;
+		degree = degree - s3_size * CTA_SIZE;
+		if (s3_size > 0) {
+			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[2]);
 				stage3_queue[pos] = local_vertex;
 				stage3_size[pos] = s3_size * CTA_SIZE;
 				stage3_offset[pos] = src_offset;
 			}
+		}
 
-			int32_t s2_size = degree/WARP_SIZE;
-			degree = degree - WARP_SIZE * s2_size;
-			if (s2_size > 0) {
+		int32_t s2_size = degree/WARP_SIZE;
+		degree = degree - WARP_SIZE * s2_size;
+		if (s2_size > 0) {
+			if (threadIdx.x % (STAGE_1_SIZE) == 0) {
 				int32_t pos = atomicAggInc(&stage_queue_sizes[1]);
 				stage2_queue[pos] = local_vertex;
 				stage2_offset[pos] = s3_size * CTA_SIZE + src_offset;
 				stage2_size[pos] = s2_size * WARP_SIZE;
 			}
-			s1_offset = s3_size * CTA_SIZE + s2_size * WARP_SIZE + src_offset;
 		}
+		s1_offset = s3_size * CTA_SIZE + s2_size * WARP_SIZE + src_offset;
 	} else 
 		local_vertex = -1;
 	__syncthreads();
+/*
 	degree = __shfl_sync((uint32_t)-1, degree, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
 	s1_offset = __shfl_sync((uint32_t)-1, s1_offset, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
 	local_vertex = __shfl_sync((uint32_t)-1, local_vertex, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-
+*/
 	if (local_vertex_idx < total_vertices) {
 		// STAGE 1
 		for (int32_t neigh_id = s1_offset + (lane_id % STAGE_1_SIZE); neigh_id < degree + s1_offset; neigh_id += STAGE_1_SIZE) {
