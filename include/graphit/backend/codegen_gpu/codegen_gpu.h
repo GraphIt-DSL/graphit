@@ -32,7 +32,7 @@ public:
 
 };
 
-class CodeGenGPU : public mir::MIRVisitor{
+class CodeGenGPU: public mir::MIRVisitor{
 public:
 	CodeGenGPU(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_, std::string module_path):
 		oss(input_oss), mir_context_(mir_context), module_name(module_name_) {
@@ -41,7 +41,6 @@ public:
 		}
 
 	int genGPU();
-
 protected:
 
 	void indent() { ++indentLevel; }

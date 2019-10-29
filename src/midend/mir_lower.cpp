@@ -7,6 +7,7 @@
 #include <graphit/midend/apply_expr_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
+#include <graphit/midend/gpu_change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
 #include <graphit/midend/gpu_vector_field_properties_analyzer.h>
 #include <graphit/midend/atomics_op_lower.h>
@@ -69,7 +70,12 @@ namespace graphit {
         // This pass generates code for tracking if a field has been modified
         // during the execution of the edgeset apply functions.
         // It return values for implicit tracking of changes to certain field
-        ChangeTrackingLower(mir_context, schedule).lower();
+	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+		// No change tracking lower for GPUs
+		GPUChangeTrackingLower(mir_context, schedule).lower();
+	} else {	
+        	ChangeTrackingLower(mir_context, schedule).lower();
+	}
 
         // This pass extracts the merge field and reduce operator. If numa_aware is set to true in
         // the schedule for the corresponding label, it also adds NUMA optimization
