@@ -17,7 +17,7 @@
 #define SORT_NODES 0
 #include <assert.h>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
   #define ITER_COUNT (5)
