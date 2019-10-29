@@ -45,22 +45,27 @@ void __global__ init_kernel(gpu_runtime::GraphT<int32_t> graph, int start_v) {
 	}
 }
 
-bool __device__ updateEdge(int32_t src, int32_t dst, int32_t weight) {
-  bool output2;
-	bool SP_trackving_var_1 = 0;
+/*bool __device__ updateEdge(int32_t src, int32_t dst, int32_t weight) {
+        bool output2;
+        bool SP_trackving_var_1 = 0;
 	SP_trackving_var_1 = gpu_runtime::writeMin(&SP[dst], (SP[src] + weight));
 	output2 = SP_trackving_var_1;
 	if (SP[dst] >= (device_gpq.current_priority_ + device_gpq.delta_)) return false;
 	return output2;
+	}*/
+
+void __device__ deviceUpdateEdge(int32_t src, int32_t dst, int32_t weight, gpu_runtime::VertexFrontier output_frontier){
+  device_gpq.updatePriorityMin(&device_gpq, (SP[src] + weight), output_frontier, dst);
 }
 
 template <typename EdgeWeightType>
 void __device__ gpu_operator_body_3(gpu_runtime::GraphT<EdgeWeightType> graph, int32_t src, int32_t dst, int32_t edge_id, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {
 	// Body of the actual operator code
 	EdgeWeightType weight = graph.d_edge_weight[edge_id];
-	if (updateEdge(src, dst, weight)){
+	deviceUpdateEdge(src, dst, weight, output_frontier);
+	/*if (updateEdge(src, dst, weight)){
 		gpu_runtime::enqueueVertexBytemap(output_frontier.d_byte_map_output, output_frontier.d_num_elems_output, dst);
-	}
+		}*/
 }
 
 void __device__ SP_generated_vector_op_apply_func_0(int32_t v) {

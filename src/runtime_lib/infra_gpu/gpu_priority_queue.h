@@ -45,8 +45,13 @@ namespace gpu_runtime {
       }
     }
     
-    void updatePriorityMin(PriorityT_ priority_change_){
-      
+    void __device__ updatePriorityMin(GPUPriorityQueue<PriorityT_> * device_gpq,  PriorityT_ new_priority, VertexFrontier output_frontier, int32_t node){
+      bool output = gpu_runtime::writeMin(&(device_gpq->device_priorities_[node]), new_priority);
+     if (device_gpq->device_priorities_[node] >= (device_gpq->current_priority_ + device_gpq->delta_)) return;
+     if (output){
+       enqueueVertexBytemap(output_frontier.d_byte_map_output, output_frontier.d_num_elems_output, node);
+     }
+
     }
     
     bool finished(GPUPriorityQueue<PriorityT_> * device_gpq) {
