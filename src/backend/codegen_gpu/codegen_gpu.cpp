@@ -949,27 +949,31 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			break;
 	}	
 
-	if (reduce_stmt->tracking_var_name_ != "") {
-		mir::EdgeSetApplyExpr::Ptr apply_expr = reduce_stmt->calling_edge_set_apply_expr;
-		printIndent();
-		oss << "if (" << reduce_stmt->tracking_var_name_ << ") {" << std::endl;
-		indent();
-		printIndent();
-		if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED)
-			oss << "gpu_runtime::enqueueVertexSparseQueue(__output_frontier.d_sparse_queue_output, __output_frontier.d_num_elems_output, ";
-		else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP)
-			oss << "gpu_runtime::enqueueVertexBytemap(__output_frontier.d_byte_map_output, __output_frontier.d_num_elems_output, ";
-		else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP)
-			oss << "gpu_runtime::enqueueVertexBitmap(__output_frontier.d_bit_map_output, __output_frontier.d_num_elems_output, ";
-		mir::TensorReadExpr::Ptr tre = mir::to<mir::TensorReadExpr>(reduce_stmt->lhs);
-		tre->index->accept(this);
-		oss << ");" << std::endl;
-		dedent();
-		printIndent();
-		oss << "}" << std::endl;
-	}
-
 }
+
+void CodeGenGPU::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
+	printIndent();
+	if (enqueue_vertex->type == mir::EnqueueVertex::Type::SPARSE) {
+		oss << "gpu_runtime::enqueueVertexSparseQueue(";
+		enqueue_vertex->vertex_frontier->accept(this);
+		oss << ".d_sparse_queue_output";
+	} else if (enqueue_vertex->type == mir::EnqueueVertex::Type::BOOLMAP) {
+		oss << "gpu_runtime::enqueueVertexBytemap(";
+		enqueue_vertex->vertex_frontier->accept(this);
+		oss << ".d_byte_map_output";
+	} else if (enqueue_vertex->type == mir::EnqueueVertex::Type::BITMAP) {
+		oss << "gpu_runtime::enqueueVertexBitmap(";
+		enqueue_vertex->vertex_frontier->accept(this);
+		oss << ".d_bit_map_output";
+	}
+	oss << ", ";
+	enqueue_vertex->vertex_frontier->accept(this);
+	oss << ".d_num_elems_output, ";
+	enqueue_vertex->vertex_id->accept(this);
+	oss << ");" << std::endl;	
+	
+}
+
 void CodeGenGPU::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
 	printIndent();
 	if (cas_stmt->tracking_var_ != "") 
@@ -981,25 +985,6 @@ void CodeGenGPU::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
 	oss << ", ";
 	cas_stmt->expr->accept(this);
 	oss << ");" << std::endl;
-	if (cas_stmt->tracking_var_ != "") {
-		mir::EdgeSetApplyExpr::Ptr apply_expr = cas_stmt->calling_edge_set_apply_expr;
-		printIndent();
-		oss << "if (" << cas_stmt->tracking_var_ << ") {" << std::endl;
-		indent();
-		printIndent();
-		if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED)
-			oss << "gpu_runtime::enqueueVertexSparseQueue(__output_frontier.d_sparse_queue_output, __output_frontier.d_num_elems_output, ";
-		else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP)
-			oss << "gpu_runtime::enqueueVertexBytemap(__output_frontier.d_byte_map_output, __output_frontier.d_num_elems_output, ";
-		else if (apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP)
-			oss << "gpu_runtime::enqueueVertexBitmap(__output_frontier.d_bit_map_output, __output_frontier.d_num_elems_output, ";
-		mir::TensorReadExpr::Ptr tre = mir::to<mir::TensorReadExpr>(cas_stmt->lhs);
-		tre->index->accept(this);
-		oss << ");" << std::endl;
-		dedent();
-		printIndent();
-		oss << "}" << std::endl;
-	}
 }
 void CodeGenGPU::visit(mir::VarDecl::Ptr var_decl) {
 	

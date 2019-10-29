@@ -39,6 +39,8 @@ static bool __device__ writeAdd(T *dst, T src) {
 }
 template <typename T>
 static bool __device__ CAS(T *dst, T old_val, const T &new_val) {
+	if (*dst != old_val)
+		return false;
 	return old_val == atomicCAS(dst, old_val, new_val);
 }
 static void __device__ parallel_memset(unsigned char* dst, unsigned char val, size_t total_bytes) {

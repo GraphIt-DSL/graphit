@@ -130,6 +130,8 @@ protected:
 	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
 	virtual void visit(mir::HybridGPUStmt::Ptr) override;
 
+	virtual void visit(mir::EnqueueVertex::Ptr) override;
+
 
 };
 class CodeGenGPUHost: public CodeGenGPU {

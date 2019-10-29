@@ -380,5 +380,9 @@ namespace graphit {
 		op->stmt1->accept(this);
 		op->stmt2->accept(this);		
 	}
+	void MIRVisitor::visit(std::shared_ptr<EnqueueVertex> op) {
+		op->vertex_id->accept(this);
+		op->vertex_frontier->accept(this);
+	}
     }
 }
