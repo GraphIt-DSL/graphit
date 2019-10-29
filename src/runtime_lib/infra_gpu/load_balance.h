@@ -176,11 +176,6 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFr
 	} else 
 		local_vertex = -1;
 	__syncthreads();
-/*
-	degree = __shfl_sync((uint32_t)-1, degree, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-	s1_offset = __shfl_sync((uint32_t)-1, s1_offset, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-	local_vertex = __shfl_sync((uint32_t)-1, local_vertex, (lane_id / STAGE_1_SIZE) * STAGE_1_SIZE, 32);
-*/
 	if (local_vertex_idx < total_vertices) {
 		// STAGE 1
 		for (int32_t neigh_id = s1_offset + (lane_id % STAGE_1_SIZE); neigh_id < degree + s1_offset; neigh_id += STAGE_1_SIZE) {

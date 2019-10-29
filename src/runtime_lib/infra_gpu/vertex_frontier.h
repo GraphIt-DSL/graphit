@@ -37,6 +37,19 @@ class VertexFrontier {
 
 };
 
+
+void delete_vertex_frontier(VertexFrontier &frontier) {
+	cudaFree(frontier.d_sparse_queue_input);	
+	cudaFree(frontier.d_sparse_queue_output);
+	cudaFree(frontier.d_num_elems_input);
+	cudaFree(frontier.d_num_elems_output);
+	cudaFree(frontier.d_byte_map_input);
+	cudaFree(frontier.d_byte_map_output);
+	cudaFree(frontier.d_bit_map_input);
+	cudaFree(frontier.d_bit_map_output);
+	cudaFree(frontier.d_dedup_counters);
+	return;
+}
 static VertexFrontier sentinel_frontier;
 
 static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
@@ -72,15 +85,29 @@ public:
 		return frontier.max_num_elems;
 	}
 };
-static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
+
+void __global__ initialize_frontier_all(VertexFrontier frontier) {
+	for (int32_t idx = threadIdx.x + blockIdx.x * blockDim.x; idx < frontier.max_num_elems; idx += blockDim.x * gridDim.x)
+		frontier.d_sparse_queue_input[idx] = idx;
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		frontier.d_num_elems_input[0] = frontier.max_num_elems;
+	}
+}
+static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_elems = 0) {
 	VertexFrontier frontier;
+	frontier.max_num_elems = num_vertices;
 	cudaMalloc(&frontier.d_num_elems_input, sizeof(int32_t));
 	cudaMalloc(&frontier.d_num_elems_output, sizeof(int32_t));
-	cudaMemset(frontier.d_num_elems_input, 0, sizeof(int32_t));
-	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));
-
 	cudaMalloc(&frontier.d_sparse_queue_input, sizeof(int32_t) * num_vertices * 6);
 	cudaMalloc(&frontier.d_sparse_queue_output, sizeof(int32_t) * num_vertices * 6);
+	
+	if (num_vertices == init_elems) {
+		initialize_frontier_all<<<NUM_CTA, CTA_SIZE>>>(frontier);		
+	} else {
+		cudaMemset(frontier.d_num_elems_input, 0, sizeof(int32_t));
+	}
+	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));
+
 
 	cudaMalloc(&frontier.d_byte_map_input, sizeof(unsigned char) * num_vertices);
 	cudaMalloc(&frontier.d_byte_map_output, sizeof(unsigned char) * num_vertices);
@@ -96,7 +123,6 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices) {
 	cudaMemset(frontier.d_bit_map_output, 0, sizeof(uint32_t) * num_byte_for_bitmap);	
 	cudaCheckLastError();
 
-	frontier.max_num_elems = num_vertices;
 
 	frontier.curr_dedup_counter = 0;
 	cudaMalloc(&frontier.d_dedup_counters, sizeof(int32_t) * num_vertices);
@@ -255,7 +281,7 @@ static void __device__ vertex_set_create_reverse_sparse_queue(VertexFrontier &fr
 	}	
 }
 template <bool to_func(int32_t)>
-static void __global__ vertex_set_create_reverse_sparse_queue_kernel(VertexFrontier &frontier) {
+static void __global__ vertex_set_create_reverse_sparse_queue_kernel(VertexFrontier frontier) {
 	vertex_set_create_reverse_sparse_queue<to_func>(frontier);
 }
 
@@ -270,6 +296,8 @@ static void __device__ vertex_set_create_reverse_sparse_queue_device(VertexFront
 	vertex_set_create_reverse_sparse_queue<to_func>(frontier);
 	this_grid().sync();
 	swap_queues_device(frontier);	
+}
+static void foo_bar(void) {
 }
 
 }

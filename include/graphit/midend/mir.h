@@ -473,6 +473,7 @@ namespace graphit {
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";
             bool is_atomic_ = false;
+	    std::shared_ptr<EdgeSetApplyExpr> calling_edge_set_apply_expr = nullptr;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
 
@@ -495,6 +496,7 @@ namespace graphit {
         struct CompareAndSwapStmt : public AssignStmt {
             Expr::Ptr compare_val_expr;
             std::string tracking_var_;
+	    std::shared_ptr<EdgeSetApplyExpr> calling_edge_set_apply_expr = nullptr;
 
             typedef std::shared_ptr<CompareAndSwapStmt> Ptr;
 
@@ -617,6 +619,7 @@ namespace graphit {
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
+	
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 

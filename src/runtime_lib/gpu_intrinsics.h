@@ -16,12 +16,17 @@
 namespace gpu_runtime {
 
 template <typename T>
-static void deleteObject(T &t) {
+void deleteObject(T &t) {
 	// Currently deleteObject is empty
 
 }
+template <>
+void deleteObject<VertexFrontier>(VertexFrontier &t) {
+	delete_vertex_frontier(t);
+}
+
 template <typename T>
-static __device__ void device_deleteObject(T &t) {
+__device__ void device_deleteObject(T &t) {
 	// Currently deleteObject is empty
 }
 
