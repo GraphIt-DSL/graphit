@@ -27,7 +27,8 @@ public:
 		MIRContext *mir_context_;
 		mir::EdgeSetApplyExpr::Ptr current_edge_set_apply_expr;
 		std::string udf_tracking_var;
-		ReductionOpChangeVisitor(MIRContext *mir_context, std::string tracking_var, mir::EdgeSetApplyExpr::Ptr edge_set_apply_expr): mir_context_(mir_context), udf_tracking_var(tracking_var), current_edge_set_apply_expr(edge_set_apply_expr) {
+		mir::Type::Ptr frontier_type;
+		ReductionOpChangeVisitor(MIRContext *mir_context, std::string tracking_var, mir::EdgeSetApplyExpr::Ptr edge_set_apply_expr, mir::Type::Ptr type): mir_context_(mir_context), udf_tracking_var(tracking_var), current_edge_set_apply_expr(edge_set_apply_expr), frontier_type(type) {
 		}	
 		virtual void visit(mir::StmtBlock::Ptr) override;
 

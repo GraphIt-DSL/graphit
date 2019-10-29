@@ -473,7 +473,6 @@ namespace graphit {
             ReductionOp reduce_op_;
             std::string tracking_var_name_ = "";
             bool is_atomic_ = false;
-	    std::shared_ptr<EdgeSetApplyExpr> calling_edge_set_apply_expr = nullptr;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
 
@@ -496,7 +495,6 @@ namespace graphit {
         struct CompareAndSwapStmt : public AssignStmt {
             Expr::Ptr compare_val_expr;
             std::string tracking_var_;
-	    std::shared_ptr<EdgeSetApplyExpr> calling_edge_set_apply_expr = nullptr;
 
             typedef std::shared_ptr<CompareAndSwapStmt> Ptr;
 
@@ -1562,6 +1560,19 @@ namespace graphit {
 		typedef std::shared_ptr<HybridGPUStmt> Ptr;
 		virtual void accept(MIRVisitor *visitor) {
 			visitor->visit(self<HybridGPUStmt>());
+		}
+	protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
+	struct EnqueueVertex: Stmt {
+		Expr::Ptr vertex_id;
+		Expr::Ptr vertex_frontier;
+		enum class Type {SPARSE, BOOLMAP, BITMAP};
+		Type type;
+		typedef std::shared_ptr<EnqueueVertex> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<EnqueueVertex>());
 		}
 	protected:
 		virtual void copy(MIRNode::Ptr);

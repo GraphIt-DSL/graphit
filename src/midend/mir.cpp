@@ -711,7 +711,6 @@ namespace graphit {
             reduce_op_ = stmt->reduce_op_;
             tracking_var_name_ = stmt->tracking_var_name_;
             is_atomic_ = stmt->is_atomic_;
-	    calling_edge_set_apply_expr = stmt->calling_edge_set_apply_expr;
         }
 
 
@@ -725,7 +724,6 @@ namespace graphit {
             auto stmt = to<mir::CompareAndSwapStmt>(node);
             compare_val_expr = stmt->compare_val_expr->clone<Expr>();
             tracking_var_ = stmt->tracking_var_;
-	    calling_edge_set_apply_expr = stmt->calling_edge_set_apply_expr;
         }
 
 
@@ -969,6 +967,18 @@ namespace graphit {
 	}
 	MIRNode::Ptr HybridGPUStmt::cloneNode() {
 		const auto node = std::make_shared<HybridGPUStmt>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
+	void EnqueueVertex::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<EnqueueVertex>(node);
+		vertex_id = op->vertex_id;
+		vertex_frontier = op->vertex_frontier;
+		type = op->type;
+	}
+	MIRNode::Ptr EnqueueVertex::cloneNode() {
+		const auto node = std::make_shared<EnqueueVertex>();
 		node->copy(shared_from_this());
 		return node;
 	}

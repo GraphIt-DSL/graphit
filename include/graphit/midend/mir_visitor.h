@@ -115,6 +115,7 @@ namespace graphit {
 	// GPU Additions
 	struct VertexSetDedupExpr;
 	struct HybridGPUStmt;
+	struct EnqueueVertex;
 	
 
         struct MIRVisitor {
@@ -264,6 +265,7 @@ namespace graphit {
 	    // GPU Additions
 	    virtual void visit(std::shared_ptr<VertexSetDedupExpr>); 
 	    virtual void visit(std::shared_ptr<HybridGPUStmt>); 
+	    virtual void visit(std::shared_ptr<EnqueueVertex>);
 
        	    protected:
 

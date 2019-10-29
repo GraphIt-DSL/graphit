@@ -421,6 +421,11 @@ namespace graphit {
 		stmt->stmt2 = rewrite<StmtBlock>(stmt->stmt2);
 		node = stmt;
 	}
+	void MIRRewriter::visit(EnqueueVertex::Ptr stmt) {
+		stmt->vertex_id = rewrite<Expr>(stmt->vertex_id);
+		stmt->vertex_frontier = rewrite<Expr>(stmt->vertex_frontier);
+		node = stmt;
+	}
 
     }
 }
