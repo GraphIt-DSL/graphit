@@ -56,11 +56,11 @@ int main(int argc, char **argv) {
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleApplyFunctionFusion";
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.UnorderedKCoreSparsePushDensePullParallel";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultGPUSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.UnorderedKCoreSparsePushParallel";
 
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushParallel";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushSerial";
 //
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";

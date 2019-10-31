@@ -2385,6 +2385,16 @@ TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
     EXPECT_EQ (0, basicTestWithGPUSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultGPUSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
     using namespace fir::gpu_schedule;
 
