@@ -90,6 +90,7 @@ namespace graphit {
             Call::copy(node);
             destination_node_id = expr->destination_node_id;
             priority_queue = expr->priority_queue;
+            edgeset_apply_expr = expr->edgeset_apply_expr;
         }
 
 

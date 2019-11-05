@@ -14,6 +14,7 @@
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/priority_features_lowering.h>
+#include <graphit/midend/gpu_priority_features_lowering.h>
 #include <graphit/midend/while_loop_fusion.h>
 #include <graphit/midend/frontier_reuse_analysis.h>
 
@@ -33,8 +34,13 @@ namespace graphit {
         VertexEdgeSetLower(mir_context).lower();
 
 
-        //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
-        PriorityFeaturesLower(mir_context, schedule).lower();
+	// We use the GPU version when the GPU Scheules are set
+	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+		GPUPriorityFeaturesLowering(mir_context, schedule).lower();
+	} else  {
+		//This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
+		PriorityFeaturesLower(mir_context, schedule).lower();
+	}
 
 	// This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
 	FrontierReuseAnalysis(mir_context).analyze();

@@ -50,6 +50,30 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PullEdgeSetA
 	func->accept(&visitor);
 }
 
+void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr pesae) {
+	// UpdatePriority will function just like Push for now
+	std::unordered_set<std::string> idp_set;
+	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function_name);
+
+	std::string src_name = func->args[0].getName();
+	std::string dst_name = func->args[1].getName();
+
+	switch (pesae->applied_schedule.load_balancing) {
+		case fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
+			idp_set.insert(src_name);
+			break;
+		default:
+			break;	
+	}	
+	
+	
+	PropertyAnalyzingVisitor visitor(mir_context_, idp_set, func);
+	func->accept(&visitor);
+	
+}
+
+
+
 bool GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::is_independent_index(mir::Expr::Ptr expr) {
 	if (mir::isa<mir::VarExpr>(expr)) {
 		mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(expr);
@@ -129,5 +153,12 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Redu
 	std::string target = tre->getTargetNameStr();
 	enclosing_function->field_vector_properties_map_[target] = property;	
 	
+}
+void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr puo) {
+	mir::MIRVisitor::visit(puo);
+	mir::Expr::Ptr index_expr = puo->destination_node_id;
+	if (!is_independent_index(index_expr)) {
+		puo->is_atomic = true;	
+	}
 }
 }

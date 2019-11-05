@@ -69,6 +69,11 @@ void CodeGenGPU::genScalarDecl(mir::VarDecl::Ptr var_decl) {
 	
 	var_decl->type->accept(this);
 	oss << " __host_" << var_decl->name << ";" << std::endl;
+
+	if (mir::isa<mir::PriorityQueueType>(var_decl->type)) {
+		var_decl->type->accept(this);
+		oss << " *__device_" << var_decl->name << ";" << std::endl;
+	}
 }
 void CodeGenGPU::genPropertyArrayDecl(mir::VarDecl::Ptr constant) {
 	mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(constant->type);
@@ -233,15 +238,6 @@ void CodeGenGPU::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
 }
 void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
-	/*
-	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
-	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
-	genFuncDecl(input_function_decl);
-	if (apply_expr->to_func != "") {
-		mir::FuncDecl::Ptr to_function_decl = mir_context_->getFunction(apply_expr->to_func);
-		genFuncDecl(to_function_decl);
-	}
-	*/
 	// First we generate the function that is passed to the load balancing function
 
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -280,12 +276,46 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	
 }
 
+void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr apply_expr) {
+
+	// First we generate the function that is passed to the load balancing function
+
+	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
+
+	oss << "template <typename EdgeWeightType>" << std::endl;
+	oss << "void __device__ " << load_balancing_arg << "(gpu_runtime::GraphT<EdgeWeightType> graph, int32_t src, int32_t dst, int32_t edge_id, gpu_runtime::VertexFrontier input_frontier, gpu_runtime::VertexFrontier output_frontier) {" << std::endl;
+	indent();
+	printIndent();
+	oss << "// Body of the actual operator code" << std::endl;
+	if (apply_expr->to_func != "") {
+		printIndent();
+		oss << "if (!" << apply_expr->to_func << "(dst))" << std::endl;
+		indent();
+		printIndent();
+		oss << "return;" << std::endl;
+		dedent();
+	}
+	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+	// Enqueueing is disabled from here. We are now enqueing from the UDF 
+	if (apply_expr->is_weighted) {	
+		printIndent();
+		oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
+		printIndent();
+		oss << apply_expr->input_function_name << "(src, dst, weight";
+	} else {
+		printIndent();
+		oss << apply_expr->input_function_name << "(src, dst";
+	}
+	if (apply_expr->requires_output)
+		oss << ", output_frontier";
+	oss << ");" << std::endl;
+	dedent();
+	printIndent();
+	oss << "}" << std::endl;	
+	apply_expr->device_function = load_balancing_arg;	
+}
+
 void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-	/*
-	// Before we generate the payload for the load balancing function, we need to generate a declaration for the UDF
-	mir::FuncDecl::Ptr input_function_decl = mir_context_->getFunction(apply_expr->input_function_name);
-	genFuncDecl(input_function_decl);
-	*/
 
 	// First we generate the function that is passed to the load balancing function
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -347,6 +377,7 @@ void CodeGenGPU::genGlobalDeclarations(void) {
 		oss << "float __device__ __device_" << threshold_var_name << ";" << std::endl;
 		stmt->threshold_var_name = threshold_var_name;
 	}
+	oss << "int32_t __delta_param;" << std::endl;	
 }
 
 void CodeGenGPU::genEdgeSets(void) {
@@ -367,6 +398,12 @@ void CodeGenGPU::visit(mir::EdgeSetType::Ptr edgeset_type) {
 	} else {
 		oss << "gpu_runtime::GraphT<int32_t>";
 	}
+}
+
+void CodeGenGPU::visit(mir::PriorityQueueType::Ptr pqt) {
+	oss << "gpu_runtime::GPUPriorityQueue<";
+	pqt->priority_type->accept(this);
+	oss << ">";
 }
 
 void CodeGenGPU::visit(mir::VertexSetType::Ptr vertexset_type) {
@@ -409,7 +446,7 @@ void CodeGenGPU::genHybridThresholds(void) {
 			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->argv_index << "]);" << std::endl;
 		} else {
 			printIndent();
-			oss << stmt->threshold_var_name << " = " << stmt->threshold << std::endl;
+			oss << stmt->threshold_var_name << " = " << stmt->threshold << ";" << std::endl;
 		}
 		printIndent();
 		oss << "cudaMemcpyToSymbol(__device_" << stmt->threshold_var_name << ", &" << stmt->threshold_var_name << ", sizeof(float), 0);" << std::endl;
@@ -444,6 +481,13 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 
 		if (func_decl->name == "main") {
 			genHybridThresholds();
+			if (mir_context_->delta_ <= 0) {
+				printIndent();
+				oss << "__delta_param = gpu_runtime::str_to_int(argv[" << - mir_context_->delta_ << "]);" << std::endl;
+			} else {
+				printIndent();
+				oss << "__delta_param = " << mir_context_->delta_ << ";" << std::endl;
+			}
 			for (auto stmt: mir_context_->edgeset_alloc_stmts) {
 				mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(stmt);
 				mir::EdgeSetLoadExpr::Ptr edge_set_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
@@ -477,6 +521,10 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 						oss << "), 0, cudaMemcpyHostToDevice);" << std::endl;
 					}
 				}
+				if (mir::isa<mir::PriorityQueueType>(constant->type)) {
+					printIndent();
+					oss << "cudaGetSymbolAddress(((void**)&__device_" << constant->name << "), " << constant->name << ");" << std::endl;
+				}
 			}
 			for (auto stmt: mir_context_->field_vector_init_stmts) {
 				stmt->accept(this);
@@ -503,9 +551,66 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 void CodeGenGPU::visit(mir::ElementType::Ptr element_type) {
 	oss << "int32_t";
 }
+void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo) {
+	printIndent();
+	oss << "if (";
+	if (mir::isa<mir::PriorityUpdateOperatorMin>(puo)) {
+		mir::PriorityUpdateOperatorMin::Ptr puom = mir::to<mir::PriorityUpdateOperatorMin>(puo);
+		if (puom->is_atomic) {
+			oss << "gpu_runtime::writeMin";
+		} else {
+			assert(false && "Currently only atomic priority update is supported");
+		}
+		oss << "(";
+		oss << "&(";
+		puom->priority_queue->accept(this);
+		oss << ".device_priorities_[";
+		puom->destination_node_id->accept(this);
+		oss << "]), ";
+		puom->new_val->accept(this);
+		oss << ")";
+	}
+	oss << " && ";
+	puo->priority_queue->accept(this);
+	oss << ".device_priorities_[";
+	puo->destination_node_id->accept(this);
+	oss << "] < (";
+	puo->priority_queue->accept(this);
+	oss << ".current_priority_ + ";
+	puo->priority_queue->accept(this);
+	oss << ".delta_)";
+	oss << ") {" << std::endl;
+	indent();
+
+	mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = puo->edgeset_apply_expr;	
+	mir::EnqueueVertex::Ptr evp = std::make_shared<mir::EnqueueVertex>();
+	evp->vertex_id = puo->destination_node_id;
+	mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(puo->priority_queue);
+	// Since this variable is created temporarily, we don;t need type
+	mir::Var var(var_expr->var.getName() + ".frontier_", nullptr);
+	mir::VarExpr::Ptr frontier_expr = std::make_shared<mir::VarExpr>();
+	frontier_expr->var = var;	
+	
+	evp->vertex_frontier = frontier_expr;
+	if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		evp->type = mir::EnqueueVertex::Type::SPARSE;
+	} else if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+		evp->type = mir::EnqueueVertex::Type::BOOLMAP;
+	} else if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+		evp->type = mir::EnqueueVertex::Type::BITMAP;
+	} 
+	
+	evp->accept(this);
+	dedent();
+	printIndent();	
+	oss << "}" << std::endl;
+
+}
 void CodeGenGPU::visit(mir::ExprStmt::Ptr expr_stmt) {
 	if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
 		genEdgeSetApplyExpr(mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr), nullptr);
+	} else if (mir::isa<mir::PriorityUpdateOperatorMin>(expr_stmt->expr)) {
+		genPriorityUpdateOperator(mir::to<mir::PriorityUpdateOperatorMin>(expr_stmt->expr));
 	} else {
 		printIndent();
 		expr_stmt->expr->accept(this);
@@ -556,7 +661,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 
-	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae)) {
+	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
 		if (esae->from_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_sparse(";
@@ -590,6 +695,11 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		printIndent();
 		target->accept(this);
 		oss << " = " << esae->from_func << ";" << std::endl;
+	}
+	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
+		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(esae);
+		printIndent();
+		oss << "cudaMemcpyToSymbol(" << upesae->priority_queue_used.getName() << ", &__host_" << upesae->priority_queue_used.getName() << ", sizeof(" << upesae->priority_queue_used.getName() << "), 0);" << std::endl;
 	}
 
 	printIndent();
@@ -774,6 +884,28 @@ void CodeGenGPU::visit(mir::AssignStmt::Ptr assign_stmt) {
 	if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);	
 		genEdgeSetApplyExpr(esae, assign_stmt->lhs);
+	} else if (mir::isa<mir::PriorityQueueAllocExpr>(assign_stmt->expr)) {
+		mir::PriorityQueueAllocExpr::Ptr pqae = mir::to<mir::PriorityQueueAllocExpr>(assign_stmt->expr);	
+		printIndent();
+		assign_stmt->lhs->accept(this);
+		oss << ".init(";
+		std::string graph_name = mir_context_->getEdgeSets()[0]->name;	
+		oss << "__host_" << graph_name << ", ";
+		std::string vector_name = pqae->vector_function;
+		if (mir_context_->isLoweredConst(vector_name))
+			oss << "__host_" << vector_name;
+		else
+			oss << vector_name;
+		oss << ", ";
+		if (mir_context_->isLoweredConst(vector_name))
+			oss << "__device_" << vector_name;
+		else
+			oss << vector_name;
+		oss << ", 0, ";
+		oss << "__delta_param";
+		oss << ", ";
+		pqae->starting_node->accept(this);
+		oss << ");" << std::endl;	
 	} else {
 		printIndent();
 		assign_stmt->lhs->accept(this);
@@ -1125,6 +1257,15 @@ void CodeGenGPUFusedKernel::visit(mir::PrintStmt::Ptr print_stmt) {
 	oss << "_grid.sync();" << std::endl;
 }
 void CodeGenGPUHost::visit(mir::Call::Ptr call_expr) {
+	if (call_expr->name == "dequeue_ready_set" || call_expr->name == "finished") {
+		if (call_expr->name == "dequeue_ready_set")
+			call_expr->name = "dequeueReadySet";
+		mir::VarExpr::Ptr pq_expr = mir::to<mir::VarExpr>(call_expr->args[0]);
+		std::string pq_name = pq_expr->var.getName();
+		
+		oss << "__host_" << pq_name << "." << call_expr->name << "(__device_" << pq_name << ")";
+		return;
+	}
 	if (call_expr->name == "deleteObject" || call_expr->name.substr(0, strlen("builtin_")) == "builtin_")	
 		oss << "gpu_runtime::" << call_expr->name << "(";
 	else

@@ -28,6 +28,10 @@ void GPUChangeTrackingLower::UdfArgChangeVisitor::visit(mir::PushEdgeSetApplyExp
 	mir::FuncDecl::Ptr func_decl = mir_context_->getFunction(pesae->input_function_name);	
 	updateUdf(func_decl, pesae);
 }
+void GPUChangeTrackingLower::UdfArgChangeVisitor::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr pesae) {
+	mir::FuncDecl::Ptr func_decl = mir_context_->getFunction(pesae->input_function_name);	
+	updateUdf(func_decl, pesae);
+}
 void GPUChangeTrackingLower::UdfArgChangeVisitor::visit(mir::PullEdgeSetApplyExpr::Ptr pesae) {
 	mir::FuncDecl::Ptr func_decl = mir_context_->getFunction(pesae->input_function_name);	
 	updateUdf(func_decl, pesae);

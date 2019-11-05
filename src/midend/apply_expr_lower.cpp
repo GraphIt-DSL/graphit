@@ -160,6 +160,7 @@ namespace graphit {
 	}
 	node = assign_stmt;
     }
+
     void ApplyExprLower::LowerApplyExpr::visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply) {
 
         // use the target var expressionto figure out the edgeset type

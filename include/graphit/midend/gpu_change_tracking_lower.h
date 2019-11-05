@@ -20,6 +20,7 @@ public:
 		void updateUdf(mir::FuncDecl::Ptr func_decl, mir::EdgeSetApplyExpr::Ptr);
 		virtual void visit(mir::PushEdgeSetApplyExpr::Ptr) override;
 		virtual void visit(mir::PullEdgeSetApplyExpr::Ptr) override;
+		virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr) override;
 	};
 
 	struct ReductionOpChangeVisitor: public mir::MIRVisitor {

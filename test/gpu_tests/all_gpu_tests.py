@@ -136,6 +136,9 @@ class TestGPURuntimeLibrary(unittest.TestCase):
 	def test_sssp_delta_stepping_verified(self):
 		self.sssp_verified_test("sssp_delta_stepping.cu", True)
 
+	def test_sssp_delta_stepping_verified_frontier_byval(self):
+		self.sssp_verified_test("sssp_delta_stepping_frontier_byval.cu", True)
+
 	def test_simple_graphit_exec(self):
 		output = self.graphit_exec_test("simple_graph_load.gt", "default_gpu_schedule.gt", [], [self.graph_directory + "/simple_mtx.mtx"])
 		output = output.split("\n")

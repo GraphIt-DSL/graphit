@@ -27,6 +27,7 @@ public:
 
 	void visit(mir::PushEdgeSetApplyExpr::Ptr);
 	void visit(mir::PullEdgeSetApplyExpr::Ptr);
+	void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr);
 
 	void genEdgeSetGlobalKernel(mir::EdgeSetApplyExpr::Ptr);
 
@@ -89,6 +90,7 @@ protected:
 	void generateBinaryExpr(mir::BinaryExpr::Ptr, std::string);
 protected:
 	virtual void visit(mir::EdgeSetType::Ptr) override;
+	virtual void visit(mir::PriorityQueueType::Ptr) override;
 	virtual void visit(mir::VertexSetType::Ptr) override;
 	virtual void visit(mir::ScalarType::Ptr) override;
 	virtual void visit(mir::FuncDecl::Ptr) override;
@@ -114,6 +116,7 @@ protected:
 
 	virtual void visit(mir::ReduceStmt::Ptr) override;
 	virtual void visit(mir::CompareAndSwapStmt::Ptr) override;
+
 	virtual void visit(mir::VarDecl::Ptr) override;
 
 	virtual void visit(mir::ForStmt::Ptr) override;
@@ -132,6 +135,7 @@ protected:
 
 	virtual void visit(mir::EnqueueVertex::Ptr) override;
 
+	void genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr); 
 
 };
 class CodeGenGPUHost: public CodeGenGPU {

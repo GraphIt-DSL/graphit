@@ -177,6 +177,11 @@ namespace graphit {
 	    return false;
 	}
 	bool isLoweredConst(std::string var_name) {
+		size_t dot_pos = var_name.find(".");
+		if (dot_pos != std::string::npos) {
+			var_name.resize(dot_pos);
+		}
+		
 		for (auto var: lowered_constants_) {
 			if (var->name == var_name)
 				return true;	
@@ -185,6 +190,11 @@ namespace graphit {
 			if (var->name == var_name)
 				return true;
 		}
+		for (auto var: const_priority_queues_) {
+			if (var->name == var_name) 
+				return true;
+		}
+		
 		return false;
 	}
 
@@ -381,6 +391,7 @@ namespace graphit {
         // These are global sets that are loaded from outside sources and cannot be modified
         std::vector<mir::VarDecl::Ptr> const_vertex_sets_;
         std::vector<mir::VarDecl::Ptr> const_edge_sets_;
+	std::vector<mir::VarDecl::Ptr> const_priority_queues_;
 
         //maps a vector to the Element it is associated with;
         std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;

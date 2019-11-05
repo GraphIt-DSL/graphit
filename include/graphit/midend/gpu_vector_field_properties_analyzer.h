@@ -25,6 +25,8 @@ class GPUVectorFieldPropertiesAnalyzer {
 		virtual void visit(mir::AssignStmt::Ptr) override;
 		virtual void visit(mir::ReduceStmt::Ptr) override;
 		
+		virtual void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
+		
 	};
 	struct ApplyExprVisitor: public mir::MIRVisitor {
 		MIRContext* mir_context_;
@@ -33,6 +35,7 @@ class GPUVectorFieldPropertiesAnalyzer {
 		using mir::MIRVisitor::visit;
 		virtual void visit(mir::PushEdgeSetApplyExpr::Ptr) override;
 		virtual void visit(mir::PullEdgeSetApplyExpr::Ptr) override;
+		virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr) override;
 	};
 
 	MIRContext* mir_context_;

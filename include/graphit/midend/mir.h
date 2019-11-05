@@ -753,6 +753,8 @@ namespace graphit {
             std::string tracking_var;
             bool is_atomic = false;
 
+	    std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> edgeset_apply_expr;
+
             typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1401,6 +1403,7 @@ namespace graphit {
             typedef std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> Ptr;
 
             UpdatePriorityEdgeSetApplyExpr() {}
+	    mir::Var priority_queue_used;
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;

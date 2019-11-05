@@ -95,6 +95,8 @@ public:
 	edge_blocking_type edge_blocking;
 	uint32_t edge_blocking_size;
 	kernel_fusion_type kernel_fusion;
+
+	int32_t delta;
 	
 	SimpleGPUSchedule () {
 		direction = direction_type::DIR_PUSH;
@@ -105,6 +107,7 @@ public:
 		edge_blocking = edge_blocking_type::UNBLOCKED;
 		edge_blocking_size = 0;
 		kernel_fusion = kernel_fusion_type::FUSION_DISABLED;
+		delta = 1;
 	}	
 
 public:	
@@ -219,6 +222,18 @@ public:
 		}
 		
 	}
+	void configDelta(int32_t d) {
+		if (d <= 0)
+			assert(false && "Invalid option for configDelta");
+		delta = d;
+	}
+	void configDelta(const char* d) {
+		if (sscanf(d, "argv[%i]", &delta) != 1) {
+			assert(false && "Invalid option for configDelta");
+		}	
+		delta *= -1;
+	}
+	
 };
 
 class HybridGPUSchedule: public GPUSchedule {
