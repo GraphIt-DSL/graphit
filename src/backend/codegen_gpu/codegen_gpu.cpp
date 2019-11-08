@@ -653,6 +653,9 @@ void CodeGenGPUFusedKernel::visit(mir::VarExpr::Ptr var_expr) {
 	if (mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
 		oss << "__local_" << var_expr->var.getName();
 		return;
+	} else if (is_hoisted_var(var_expr->var)) {
+		oss << "__local_" << var_expr->var.getName();
+		return;
 	} else 
 		oss << var_expr->var.getName();
 }
