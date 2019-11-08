@@ -212,12 +212,9 @@ namespace graphit {
             printIndent();
             assign_stmt->expr->accept(this);
             oss << std::endl;
-
             printIndent();
-
             assign_stmt->lhs->accept(this);
             oss << "  = ____graphit_tmp_out; " << std::endl;
-
         } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
@@ -389,11 +386,9 @@ namespace graphit {
             printIndent();
             var_decl->initVal->accept(this);
             oss << std::endl;
-
             printIndent();
             var_decl->type->accept(this);
             oss << var_decl->name << "  = ____graphit_tmp_out; " << std::endl;
-
         } else 
 */
         if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
@@ -601,11 +596,11 @@ namespace graphit {
                         count_expr->accept(this);
                         oss << ", socketId);\n";
 
-                        oss << "    parallel_for (int n = 0; n < ";
+                        oss << "    ligra::parallel_for_lambda((int)0, (int)";
                         count_expr->accept(this);
-                        oss << "; n++) {\n";
+                        oss << ", [&] (int n) {\n";
                         oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
-                        oss << "    }\n  }\n";
+                        oss << "    });\n  }\n";
 
                         oss << "  omp_set_nested(1);" << std::endl;
                     }
@@ -867,6 +862,9 @@ namespace graphit {
                 break;
             case mir::ScalarType::Type::UINT:
                 oss << "uintE ";
+                break;
+            case mir::ScalarType::Type::UINT_64:
+                oss << "uint64_t ";
                 break;
             case mir::ScalarType::Type::FLOAT:
                 oss << "float ";
@@ -1378,10 +1376,15 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
-            std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
-            oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
-            associated_element_type_size->accept(this);
-            oss << "; vertexsetapply_iter++) {" << std::endl;
+            if (apply_expr->is_parallel) {
+                oss << "ligra::parallel_for_lambda((int)0, (int)";
+                associated_element_type_size->accept(this);
+                oss << ", [&] (int vertexsetapply_iter) {" << std::endl;
+            } else {
+                oss << "for" << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
+                associated_element_type_size->accept(this);
+                oss << "; vertexsetapply_iter++) {" << std::endl;
+            }
             indent();
             printIndent();
             if (mir_context_->isExternFunction(apply_expr->input_function_name)){
@@ -1394,7 +1397,11 @@ namespace graphit {
             }
             dedent();
             printIndent();
-            oss << "}";
+            if (apply_expr->is_parallel) {
+                oss << "});";
+            } else {
+                oss << "}";
+            }
         } else {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
@@ -1437,7 +1444,6 @@ namespace graphit {
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
             oss << "auto ____graphit_tmp_out = new VertexSubset <NodeID> ( ";
-
             //get the total number of vertices in the vertex set
             auto vertex_type = mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
             auto vertices_range_expr =
@@ -1616,6 +1622,45 @@ namespace graphit {
         }
 
         oss << "); " << std::endl;
+    }
+
+
+    void CodeGenCPP::visit(mir::IntersectionExpr::Ptr intersection_exp){
+
+        if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
+            oss << "hiroshiVertexIntersection(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::MULTISKIP) {
+            oss << "multiSkipVertexIntersection(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::COMBINED) {
+            oss << "combinedVertexIntersection(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::BINARY) {
+            oss << "binarySearchIntersection(";
+        }
+
+        else {
+            oss << "naiveVertexIntersection(";
+        }
+
+        intersection_exp->vertex_a->accept(this);
+        oss << ", ";
+        intersection_exp->vertex_b->accept(this);
+        oss << ", ";
+        intersection_exp->numA->accept(this);
+        oss << ", ";
+        intersection_exp->numB->accept(this);
+        // reference is an optional parameter only used for Triangular Counting
+        if (intersection_exp->reference != nullptr){
+            oss << ", ";
+            intersection_exp->reference->accept(this);
+        }
+        oss << ") ";
+
     }
 
     void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {

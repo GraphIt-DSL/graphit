@@ -16,7 +16,6 @@ namespace graphit {
         TokenStream tokens = Scanner(errors).lex(programStream);
         fir::Program::Ptr program = Parser(errors).parse(tokens);
 
-
         // Only emit IR if no syntactic or semantic error was found.
         if (!errors->empty()) {
             std::cout << "Error in parsing: " << std::endl;

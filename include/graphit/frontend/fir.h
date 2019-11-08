@@ -401,7 +401,7 @@ namespace graphit {
 
         struct ScalarType : public TensorType {
             enum class Type {
-                INT, UINT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
+                INT, UINT, UINT_64, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
             };
 
             Type type;
@@ -1618,6 +1618,24 @@ namespace graphit {
         protected:
             virtual FIRNode::Ptr cloneNode();
             virtual void copy(FIRNode::Ptr);
+        };
+
+        struct IntersectionExpr : public Expr {
+            typedef std::shared_ptr<IntersectionExpr> Ptr;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            Expr::Ptr numA;
+            Expr::Ptr numB;
+            Expr::Ptr reference;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<IntersectionExpr>());
+            }
+
+            protected:
+                virtual FIRNode::Ptr cloneNode();
+
+                virtual void copy(FIRNode::Ptr);
         };
 
         struct LoadExpr : public Expr {

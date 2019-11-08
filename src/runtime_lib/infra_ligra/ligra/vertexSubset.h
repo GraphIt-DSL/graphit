@@ -9,25 +9,25 @@ struct vertexSubset {
   bool isDense;
 
   // make a singleton vertex in range of n
-vertexSubset(long _n, intE v) 
-: n(_n), m(1), d(NULL), isDense(0) {
-  s = newA(uintE,1);
-  s[0] = v;
-}
-  
+  vertexSubset(long _n, intE v)
+    : n(_n), m(1), d(NULL), isDense(0) {
+    s = newA(uintE,1);
+    s[0] = v;
+  }
+
   //empty vertex set
-vertexSubset(long _n) : n(_n), m(0), d(NULL), s(NULL), isDense(0) {}
+  vertexSubset(long _n) : n(_n), m(0), d(NULL), s(NULL), isDense(0) {}
   // make vertexSubset from array of vertex indices
   // n is range, and m is size of array
-vertexSubset(long _n, long _m, uintE* indices) 
-: n(_n), m(_m), s(indices), d(NULL), isDense(0) {}
+  vertexSubset(long _n, long _m, uintE* indices)
+    : n(_n), m(_m), s(indices), d(NULL), isDense(0) {}
   // make vertexSubset from boolean array, where n is range
-vertexSubset(long _n, bool* bits) 
-: n(_n), d(bits), s(NULL), isDense(1)  {
-  m = sequence::sum(bits,_n); }
+  vertexSubset(long _n, bool* bits)
+    : n(_n), d(bits), s(NULL), isDense(1)  {
+    m = sequence::sum(bits,_n); }
   // make vertexSubset from boolean array giving number of true values
-vertexSubset(long _n, long _m, bool* bits) 
-: n(_n), m(_m), s(NULL), d(bits), isDense(1)  {}
+  vertexSubset(long _n, long _m, bool* bits)
+    : n(_n), m(_m), s(NULL), d(bits), isDense(1)  {}
 
   // delete the contents
   void del(){
@@ -42,8 +42,8 @@ vertexSubset(long _n, long _m, bool* bits)
   void toDense() {
     if (d == NULL) {
       d = newA(bool,n);
-      {parallel_for(long i=0;i<n;i++) d[i] = 0;}
-      {parallel_for(long i=0;i<m;i++) d[s[i]] = 1;}
+      ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) { d[i] = 0; });
+      ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) { d[s[i]] = 1; });
     }
     isDense = true;
   }
@@ -53,8 +53,8 @@ vertexSubset(long _n, long _m, bool* bits)
     if (s == NULL) {
       _seq<uintE> R = sequence::packIndex<uintE>(d,n);
       if (m != R.n) {
-	cout << "bad stored value of m" << endl; 
-	abort();
+        cout << "bad stored value of m" << endl;
+        abort();
       }
       s = R.A;
     }
@@ -65,8 +65,9 @@ vertexSubset(long _n, long _m, bool* bits)
     toDense();
     b.toDense();
     bool* c = newA(bool,n);
-    {parallel_for (long i=0; i<b.n; i++) 
-	c[i] = (d[i] != b.d[i]);}
+    ligra::parallel_for_lambda((long)0, (long)b.n, [&] (long i) {
+        c[i] = (d[i] != b.d[i]);
+      });
     bool equal = (sequence::sum(c,n) == 0);
     free(c);
     return equal;
@@ -79,7 +80,7 @@ vertexSubset(long _n, long _m, bool* bits)
       cout << endl;
     } else {
       cout << "S:";
-      for (long i=0; i<m; i++)	cout << s[i] << " ";
+      for (long i=0; i<m; i++) cout << s[i] << " ";
       cout << endl;
     }
   }

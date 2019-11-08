@@ -998,6 +998,22 @@ namespace graphit {
 
         }
 
+        void FIRPrinter::visit(IntersectionExpr::Ptr expr) {
+            oss << "intersection(";
+            expr->vertex_a->accept(this);
+            oss << ", ";
+            expr->vertex_b->accept(this);
+            oss << ", ";
+            expr->numA->accept(this);
+            oss << ", ";
+            expr->numB->accept(this);
+            if (expr->reference != nullptr) {
+                oss << ", ";
+                expr->reference->accept(this);
+            }
+            oss << ") ";
+        }
+
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
             oss << "edgeset_load (";
             expr->file_name->accept(this);

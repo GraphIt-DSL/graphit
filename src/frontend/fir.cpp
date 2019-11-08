@@ -1029,6 +1029,23 @@ namespace graphit {
             return node;
         }
 
+        void IntersectionExpr::copy(FIRNode::Ptr node) {
+            const auto intersection_expr = to<IntersectionExpr>(node);
+            Expr::copy(intersection_expr);
+            vertex_a = intersection_expr->vertex_a->clone<Expr>();
+            vertex_b = intersection_expr->vertex_b->clone<Expr>();
+            numA = intersection_expr->numA->clone<Expr>();
+            numB = intersection_expr->numB->clone<Expr>();
+            reference = intersection_expr->reference->clone<Expr>();
+        }
+
+
+        FIRNode::Ptr IntersectionExpr::cloneNode() {
+            const auto node = std::make_shared<IntersectionExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void EdgeSetLoadExpr::copy(FIRNode::Ptr node) {
             //TODO: figure out what the copy operator should do
             const auto edge_set_load_expr = to<EdgeSetLoadExpr>(node);

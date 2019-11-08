@@ -60,6 +60,51 @@ TEST_F(BackendTest, SimpleVarDecl) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+TEST_F(BackendTest, UINTGlobalDecl) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64GlobalDecl) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, UINTGlobalLocalIncr) {
+    istringstream is("const a : uint = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64GlobalLocalIncr) {
+    istringstream is("const a : uint_64 = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTReassign) {
+    istringstream is("const a : uint;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64Reassign) {
+    istringstream is("const a : uint_64;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTLocalDec) {
+    istringstream is("func main() const a : uint = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64LocalDec) {
+    istringstream is("func main() const a : uint_64 = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleDoubleVarDecl) {
     istringstream is("const a : double = 3; \n func main()  end");
     EXPECT_EQ (0, basicTest(is));
@@ -118,6 +163,19 @@ TEST_F(BackendTest, SimpleVertexSetDeclAlloc) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleUINTVector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleUINT64Vector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint_64) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, SimpleVertexSetDeclAllocWithMain) {
     istringstream is("element Vertex end\n"
@@ -933,4 +991,52 @@ TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
                      "  constant_vector = input_vector;"
                      "end");
     EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, vertices2);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersection(vertices1, vertices2, 0, 0);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperatorWithOptional) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, VectorInitWithoutVertex) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);\n"
+                     "% const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertexArray: vector{Vertex}(int) = 0;\n"
+                     "func main()\n"
+                     "     print vertexArray;\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+
 }

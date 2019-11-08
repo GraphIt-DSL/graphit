@@ -54,6 +54,15 @@ TEST_F(MidendTest, SimpleVarDecl ) {
 }
 
 
+TEST_F(MidendTest, UINTDecl ) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0 , basicTest(is));
+}
+
+TEST_F(MidendTest, UINT64Decl ) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0 , basicTest(is));
+}
 //tests mid end
 TEST_F(MidendTest, SimpleFunctionDecl) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
@@ -109,5 +118,15 @@ TEST_F(MidendTest, SimpleVertexSetDeclAllocWithMain) {
                              "const vector_a : vector{Vertex}(float) = 0.0;\n"
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
                              "func main() print 4; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(MidendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0);\n");
     EXPECT_EQ (0, basicTest(is));
 }

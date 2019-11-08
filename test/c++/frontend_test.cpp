@@ -51,7 +51,20 @@ TEST_F(FrontendTest, SimpleVarDecl ) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, UINTVarDecl ) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
 
+TEST_F(FrontendTest, UINT64VarDecl ) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+//TEST_F(FrontendTest, UINT64WithVar ) {
+//    istringstream is("var a : uint_64 = 3 + 4;");
+//    EXPECT_EQ (0,  basicTest(is));
+//}
 TEST_F(FrontendTest, SimpleFunctionDecl ) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
     EXPECT_EQ (0,  basicTest(is));
@@ -81,6 +94,28 @@ TEST_F(FrontendTest, SimpleFunctionWithVarDecl) {
 TEST_F(FrontendTest, SimpleFunctionWithAdd) {
     istringstream is("func add(a : int, b: int) -> c : int c = a + b; end");
     EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(FrontendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(FrontendTest, SimpleIntersectionOperatorWithOptional) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n");
+    EXPECT_EQ (0, basicTest(is));
+
 }
 
 TEST_F(FrontendTest, MainFunctionWithPrint) {

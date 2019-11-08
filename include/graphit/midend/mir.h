@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <graphit/midend/field_vector_property.h>
 #include <unordered_map>
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
     namespace mir {
@@ -214,7 +215,7 @@ namespace graphit {
 
         struct ScalarType : public Type {
             enum class Type {
-                INT, UINT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
+                INT, UINT, UINT_64, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
             };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
@@ -792,6 +793,25 @@ namespace graphit {
                 visitor->visit(self<LoadExpr>());
             }
 
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct IntersectionExpr : public Expr {
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            Expr::Ptr numA;
+            Expr::Ptr numB;
+            Expr::Ptr reference;
+            IntersectionSchedule::IntersectionType intersectionType;
+
+            typedef std::shared_ptr<IntersectionExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntersectionExpr>());
+            }
         protected:
             virtual void copy(MIRNode::Ptr);
 

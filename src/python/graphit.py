@@ -23,7 +23,7 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 	#module_filename_base = module_file.name
 	#module_file.close()
 	module_filename_base = os.path.splitext(graphit_source_file)[0]
-	module_name = os.path.basename(module_filename_base)	
+	module_name = os.path.basename(module_filename_base)    
 	module_filename_base = "/tmp/" + module_name
 
 	# compile the file into a cpp file
@@ -70,7 +70,7 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 		cmd += " -fcilkplus "
 	elif parallelization_type == PARALLEL_OPENMP:
 		cmd += " -fopenmp "
-	        
+			
 	if len(linker_args) > 0:
 		cmd += " " + " ".join(linker_args) + " "
 	subprocess.check_call(cmd, shell=True)
@@ -83,6 +83,51 @@ def compile_and_load(graphit_source_file, extern_cpp_files=[], linker_args=[], p
 	module_so_list.append(module_filename_so)
 
 	return module
+
+def compile_and_load_cache(graphit_source_file, extern_cpp_files=[], linker_args=[], parallelization_type=PARALLEL_NONE):
+	graphit_source_file = os.path.expanduser(graphit_source_file.strip())
+	# Obtain a unique filename for the module
+	#module_file = tempfile.NamedTemporaryFile()
+	#module_filename_base = module_file.name
+	#module_file.close()
+	module_filename_base = os.path.splitext(graphit_source_file)[0]
+	module_name = os.path.basename(module_filename_base)    
+	module_filename_base = "/tmp/" + module_name
+
+	# compile the file into a cpp file
+	module_filename_cpp = module_filename_base + ".cpp"
+	module_filename_object = module_filename_base + ".o"
+	module_filename_so = module_filename_base + ".so"
+
+	# check if it is loaded before and it is the latest, we return the cached version.
+	if os.path.exists(module_filename_so) and os.stat(graphit_source_file).st_mtime < os.stat(module_filename_so).st_mtime:
+		spec = importlib.util.spec_from_file_location(module_name, module_filename_so)
+		module = importlib.util.module_from_spec(spec)
+		spec.loader.exec_module(module)
+		return module
+	
+	#else we just follow the normal routine
+	return compile_and_load(graphit_source_file, extern_cpp_files, linker_args, parallelization_type)
+	
+
+from scipy.sparse import csr_matrix
+def read_adjacency_tsv(file):
+	"""Read a graph from a file-like object in "adjacency TSV" format,
+	returning a `csr_matrix` object.
+	In this format (popularized by the MIT GraphChallenge datasets),
+	each row has three numbers, separated by tabs: the vertex indices
+	and the edge weight.
+	"""
+	srcs = []
+	dests = []
+	values = []
+	for line in file:
+		line = line.strip()
+		i, j, v = [int(n) for n in line.split('\t')]
+		srcs.append(i)
+		dests.append(j)
+		values.append(v)
+	return csr_matrix((values, (srcs, dests)))
 
 import atexit
 def cleanup_module():

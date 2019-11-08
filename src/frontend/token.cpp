@@ -34,6 +34,10 @@ namespace graphit {
                 return "'-'";
             case Token::Type::INT:
                 return "'int'";
+            case Token::Type::UINT:
+                return "'uint'";
+            case Token::Type::UINT_64:
+                return "'uint64_t'";
             case Token::Type::FLOAT:
                 return "'float'";
             case Token::Type::DOUBLE:
@@ -110,6 +114,8 @@ namespace graphit {
                 return "'new'";
             case Token::Type::DELETE:
                 return "'delete'";
+            case Token::Type::INTERSECTION:
+                return "'intersection'";
             case Token::Type::RARROW:
                 return "'->'";
             case Token::Type::LP:

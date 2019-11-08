@@ -173,6 +173,10 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::UINT;
                 retType = output;
                 break;
+            case fir::ScalarType::Type::UINT_64:
+                output->type = mir::ScalarType::Type::UINT_64;
+                retType = output;
+                break;
             case fir::ScalarType::Type::FLOAT:
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;
@@ -332,6 +336,18 @@ namespace graphit {
             mir_listalloc_expr->size_expr = emitExpr(expr->numElements);
         mir_listalloc_expr->element_type = mir::to<mir::Type>(emitType(expr->general_element_type));
         retExpr = mir_listalloc_expr;
+    }
+
+    void MIREmitter::visit(fir::IntersectionExpr::Ptr intersection_expr) {
+        auto mir_inter_expr = std::make_shared<mir::IntersectionExpr>();
+        mir_inter_expr->vertex_a = emitExpr(intersection_expr->vertex_a);
+        mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
+        mir_inter_expr->numA = emitExpr(intersection_expr->numA);
+        mir_inter_expr->numB = emitExpr(intersection_expr->numB);
+        if (intersection_expr->reference != nullptr) {
+            mir_inter_expr->reference = emitExpr(intersection_expr->reference);
+        }
+        retExpr = mir_inter_expr;
     }
 
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
@@ -839,6 +855,17 @@ namespace graphit {
                         const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
                         mir_var_decl->initVal = init_val;
                         ctx->updateElementInputFilename(type->element, init_val->file_name);
+                        // need to construct a MethodCallExpr to get the size of vertex type
+                        // need to update the count with "updateElementCount() "
+                        auto mirCallExpr = std::make_shared<mir::Call>();
+                        mirCallExpr->name = "builtin_getVertices";
+                        std::vector<mir::Expr::Ptr> args;
+                        auto mirCallExprArg = std::make_shared<mir::VarExpr>();
+                        mirCallExprArg->var = ctx->getSymbol(mir_var_decl->name);
+                        args.push_back(mirCallExprArg);
+                        mirCallExpr->args = args;
+                        ctx->updateElementCount(type->vertex_element_type_list->at(0), mirCallExpr);
+
                     }
                 }
                 ctx->addEdgeSet(mir_var_decl);
