@@ -15,27 +15,27 @@
 
 namespace gpu_runtime {
 
-template <typename T>
-void deleteObject(T &t) {
-	// Currently deleteObject is empty
-
-}
-template <>
-void deleteObject<VertexFrontier>(VertexFrontier &t) {
+void deleteObject(VertexFrontier &t) {
 	delete_vertex_frontier(t);
 }
 
 template <typename T>
-__device__ void device_deleteObject(T &t) {
-	// Currently deleteObject is empty
+void deleteObject(GPUPriorityQueue<T> &pq) {
+	pq.release();
 }
 
-static void * no_args[1];
+ void * no_args[1];
 
 float str_to_float(const char* str) {
 	float val;
 	if (sscanf(str, "%f", &val) != 1)
 		return 0.0;
+	return val;
+}
+int32_t str_to_int(const char* str) {
+	int32_t val;
+	if (sscanf(str, "%i", &val) != 1)
+		return 0;
 	return val;
 }
 }

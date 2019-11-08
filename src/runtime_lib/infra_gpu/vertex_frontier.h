@@ -38,16 +38,19 @@ class VertexFrontier {
 };
 
 
+static void cudaFreeSafe(void* ptr) {
+	cudaFree(ptr);
+}
 void delete_vertex_frontier(VertexFrontier &frontier) {
-	cudaFree(frontier.d_sparse_queue_input);	
-	cudaFree(frontier.d_sparse_queue_output);
-	cudaFree(frontier.d_num_elems_input);
-	cudaFree(frontier.d_num_elems_output);
-	cudaFree(frontier.d_byte_map_input);
-	cudaFree(frontier.d_byte_map_output);
-	cudaFree(frontier.d_bit_map_input);
-	cudaFree(frontier.d_bit_map_output);
-	cudaFree(frontier.d_dedup_counters);
+	cudaFreeSafe(frontier.d_sparse_queue_input);	
+	cudaFreeSafe(frontier.d_sparse_queue_output);
+	cudaFreeSafe(frontier.d_num_elems_input);
+	cudaFreeSafe(frontier.d_num_elems_output);
+	cudaFreeSafe(frontier.d_byte_map_input);
+	cudaFreeSafe(frontier.d_byte_map_output);
+	cudaFreeSafe(frontier.d_bit_map_input);
+	cudaFreeSafe(frontier.d_bit_map_output);
+	cudaFreeSafe(frontier.d_dedup_counters);
 	return;
 }
 static VertexFrontier sentinel_frontier;
@@ -180,6 +183,7 @@ static void swap_queues(VertexFrontier &frontier) {
 
 	cudaMemset(frontier.d_num_elems_output, 0, sizeof(int32_t));	
 }
+
 static void __device__ swap_queues_device(VertexFrontier &frontier) {	
 	int32_t *temp = frontier.d_num_elems_input;
 	frontier.d_num_elems_input = frontier.d_num_elems_output;
@@ -188,6 +192,20 @@ static void __device__ swap_queues_device(VertexFrontier &frontier) {
 	temp = frontier.d_sparse_queue_input;
 	frontier.d_sparse_queue_input = frontier.d_sparse_queue_output;
 	frontier.d_sparse_queue_output = temp;
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
+		frontier.d_num_elems_output[0] = 0;
+	this_grid().sync();
+}
+static void __device__ swap_queues_device_global(VertexFrontier &frontier) {	
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		int32_t *temp = frontier.d_num_elems_input;
+		frontier.d_num_elems_input = frontier.d_num_elems_output;
+		frontier.d_num_elems_output = temp;
+		
+		temp = frontier.d_sparse_queue_input;
+		frontier.d_sparse_queue_input = frontier.d_sparse_queue_output;
+		frontier.d_sparse_queue_output = temp;
+	}
 	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
 		frontier.d_num_elems_output[0] = 0;
 	this_grid().sync();
@@ -221,6 +239,24 @@ static void __device__ swap_bytemaps_device(VertexFrontier &frontier) {
 	parallel_memset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);		
 	this_grid().sync();
 }
+static void __device__ swap_bytemaps_device_global(VertexFrontier &frontier) {
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		int32_t *temp = frontier.d_num_elems_input;
+		frontier.d_num_elems_input = frontier.d_num_elems_output;
+		frontier.d_num_elems_output = temp;
+		
+		unsigned char* temp2;
+		temp2 = frontier.d_byte_map_input;
+		frontier.d_byte_map_input = frontier.d_byte_map_output;
+		frontier.d_byte_map_output = temp2;
+	}
+	this_grid().sync();
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
+		frontier.d_num_elems_output[0] = 0;
+	this_grid().sync();
+	parallel_memset(frontier.d_byte_map_output, 0, sizeof(unsigned char) * frontier.max_num_elems);		
+	this_grid().sync();
+}
 static void swap_bitmaps(VertexFrontier &frontier) {
 	int32_t *temp = frontier.d_num_elems_input;
 	frontier.d_num_elems_input = frontier.d_num_elems_output;
@@ -245,6 +281,25 @@ static void __device__ swap_bitmaps_device(VertexFrontier &frontier) {
 	temp2 = frontier.d_bit_map_input;
 	frontier.d_bit_map_input = frontier.d_bit_map_output;
 	frontier.d_bit_map_output = temp2;
+
+	int32_t num_byte_for_bitmap = (frontier.max_num_elems + 8 * sizeof(uint32_t) - 1)/(sizeof(uint32_t) * 8);
+
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) 
+		frontier.d_num_elems_output[0] = 0;
+	parallel_memset((unsigned char*)frontier.d_bit_map_output, 0, sizeof(uint32_t) * num_byte_for_bitmap);		
+	this_grid().sync();
+}
+static void __device__ swap_bitmaps_device_global(VertexFrontier &frontier) {
+	if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+		int32_t *temp = frontier.d_num_elems_input;
+		frontier.d_num_elems_input = frontier.d_num_elems_output;
+		frontier.d_num_elems_output = temp;
+		
+		uint32_t* temp2;
+		temp2 = frontier.d_bit_map_input;
+		frontier.d_bit_map_input = frontier.d_bit_map_output;
+		frontier.d_bit_map_output = temp2;
+	}
 
 	int32_t num_byte_for_bitmap = (frontier.max_num_elems + 8 * sizeof(uint32_t) - 1)/(sizeof(uint32_t) * 8);
 

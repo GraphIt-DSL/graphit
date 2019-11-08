@@ -122,7 +122,7 @@ void __device__ edge_only_load_balance_device(GraphT<EdgeWeightType> &graph, Ver
 #define STAGE_1_SIZE (8)
 #define WARP_SIZE (32)
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
-static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier input_frontier, VertexFrontier output_frontier, unsigned int cta_id, unsigned int total_cta) {
+static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier, unsigned int cta_id, unsigned int total_cta) {
 	int32_t thread_id = blockDim.x * cta_id + threadIdx.x;
 	
 	int32_t lane_id = thread_id % 32;

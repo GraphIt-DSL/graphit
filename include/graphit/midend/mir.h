@@ -418,6 +418,7 @@ namespace graphit {
 	    std::string fused_kernel_name;
 	    std::vector<mir::Var> hoisted_vars;
 	    std::vector<std::shared_ptr<mir::VarDecl>> hoisted_decls;
+	    std::vector<mir::Var> used_priority_queues;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());

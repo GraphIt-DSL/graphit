@@ -20,9 +20,9 @@ template<typename PriorityT_>
 	class GPUPriorityQueue;
 
 static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices);
-
-
 static void __global__ update_nodes_special(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices, gpu_runtime::VertexFrontier output_frontier);
+static void __device__ update_nodes_identify_min_device(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices);
+static void __device__ update_nodes_special_device(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices, gpu_runtime::VertexFrontier output_frontier);
 
 template<typename PriorityT_>
 	class GPUPriorityQueue {
@@ -40,9 +40,13 @@ template<typename PriorityT_>
 			delta_ = delta;
 			ready_set_dequeued = false;
 			frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
+			cudaMalloc(&current_priority_shared, sizeof(PriorityT_));
 			if (initial_node != -1){
 				gpu_runtime::builtin_addVertex(frontier_, initial_node);
 			}
+		}
+		void release(void) {
+			delete_vertex_frontier(frontier_);
 		}
 
 		void __device__ updatePriorityMin(GPUPriorityQueue<PriorityT_> * device_gpq,  PriorityT_ new_priority, VertexFrontier output_frontier, int32_t node){
@@ -65,6 +69,30 @@ template<typename PriorityT_>
 				return current_priority_ == INT_MAX;
 			} 
 
+			return false;
+		}
+#ifdef GLOBAL
+		bool __device__ device_finished(void) {
+			if (current_priority_ == INT_MAX)
+				return true;
+			if (!ready_set_dequeued && gpu_runtime::device_builtin_getVertexSetSize(frontier_) == 0) {
+				device_dequeueReadySet();
+				if (threadIdx.x + blockIdx.x * blockDim.x == 0)
+					ready_set_dequeued = true;
+				this_grid().sync();
+				return current_priority_ == INT_MAX;
+			}
+			return false;
+		}
+#endif
+		bool __device__ device_finished(void) {
+			if(current_priority_ == INT_MAX)
+				return true;
+			if (!ready_set_dequeued && gpu_runtime::device_builtin_getVertexSetSize(frontier_) == 0) {
+				device_dequeueReadySet();
+				ready_set_dequeued = true;
+				return current_priority_ == INT_MAX;
+			}
 			return false;
 		}
 
@@ -99,7 +127,6 @@ template<typename PriorityT_>
 				cudaMemcpy(this, device_gpq, sizeof(*this), cudaMemcpyDeviceToHost);
 				gpu_runtime::cudaCheckLastError();
 
-				//this line needs to be fixed
 				update_nodes_special<<<NUM_BLOCKS, CTA_SIZE>>>(device_gpq, frontier_.max_num_elems,  frontier_);
 				gpu_runtime::cudaCheckLastError();
 				gpu_runtime::swap_queues(frontier_);
@@ -113,6 +140,79 @@ template<typename PriorityT_>
 			//if it is empty, just return the empty frontier
 			return frontier_;
 		}
+		
+		VertexFrontier __device__ device_dequeueReadySet(void) {
+			if (ready_set_dequeued) {
+				ready_set_dequeued = false;
+				return frontier_;
+			}
+			if (gpu_runtime::device_builtin_getVertexSetSize(frontier_) == 0) {
+				window_upper_ = current_priority_ + delta_;
+				current_priority_ = INT_MAX;
+				this_grid().sync();
+				if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+					current_priority_shared[0] = INT_MAX;
+				}
+				this_grid().sync();
+				
+				update_nodes_identify_min_device(this, frontier_.max_num_elems);
+				this_grid().sync();
+				
+				current_priority_ = current_priority_shared[0];
+				this_grid().sync();
+				update_nodes_special_device(this, frontier_.max_num_elems, frontier_);
+				gpu_runtime::swap_queues_device(frontier_);
+				frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
+				ready_set_dequeued = false;
+				return frontier_;
+			}
+			return frontier_;
+		}	
+
+
+#ifdef GLOBAL
+		VertexFrontier __device__ device_dequeueReadySet(void) {
+/*
+			if (threadIdx.x + blockDim.x * blockIdx.x == 0)
+				printf("Entering dequeue ready set\n");
+*/
+			if (ready_set_dequeued) {
+				this_grid().sync();
+				if (threadIdx.x + blockIdx.x * blockDim.x == 0)
+					ready_set_dequeued = false;
+				this_grid().sync();
+				return frontier_;
+			}
+			if (gpu_runtime::device_builtin_getVertexSetSize(frontier_) == 0) {
+/*				
+				if (threadIdx.x + blockDim.x * blockIdx.x == 0)
+					printf("Entering special case\n");
+*/
+				this_grid().sync();
+				if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+					window_upper_ = current_priority_ + delta_;
+					current_priority_ = INT_MAX;
+				}
+				this_grid().sync();
+				// No need for copy
+				update_nodes_identify_min_device(this, frontier_.max_num_elems);	
+				this_grid().sync();
+				update_nodes_special_device(this, frontier_.max_num_elems, frontier_);
+				this_grid().sync();
+				gpu_runtime::swap_queues_device_global(frontier_);
+				this_grid().sync();	
+				if (threadIdx.x + blockIdx.x * blockDim.x == 0) {
+					frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
+					ready_set_dequeued = false;
+				}
+				this_grid().sync();
+				return frontier_;
+					
+			}
+			this_grid().sync();
+			return frontier_;
+		}
+#endif
 
 		PriorityT_* host_priorities_ = nullptr;
 		PriorityT_* device_priorities_ = nullptr;
@@ -124,10 +224,12 @@ template<typename PriorityT_>
 		//Need to do = {0} to avoid dynamic initialization error
 		VertexFrontier frontier_ = {0};
 		bool ready_set_dequeued = false;
+		
+		PriorityT_ *current_priority_shared = nullptr;
 	};
 
 
-static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices) {
+static void __device__ update_nodes_identify_min_device(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices) {
 	int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
 	int num_threads = blockDim.x * gridDim.x;
 	int total_work = num_vertices;
@@ -142,14 +244,14 @@ static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,
 		}
 	}
 
-	if (my_minimum < gpq->current_priority_){
-		atomicMin(&(gpq->current_priority_), my_minimum);
+	if (my_minimum < gpq->current_priority_shared[0]){
+		atomicMin(&(gpq->current_priority_shared[0]), my_minimum);
 	}
 }//end of update_nodes_identify_min
 
 
 
-static void __global__ update_nodes_special(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices, gpu_runtime::VertexFrontier output_frontier){
+static void __device__ update_nodes_special_device(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices, gpu_runtime::VertexFrontier output_frontier){
 
 	int thread_id = blockDim.x * blockIdx.x + threadIdx.x;
 	int num_threads = blockDim.x * gridDim.x;
@@ -168,7 +270,13 @@ static void __global__ update_nodes_special(GPUPriorityQueue<int32_t>* gpq,  int
 }
 
 
+static void __global__ update_nodes_identify_min(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices) {
+	update_nodes_identify_min_device(gpq, num_vertices);	
+}
 
+static void __global__ update_nodes_special(GPUPriorityQueue<int32_t>* gpq,  int32_t num_vertices, gpu_runtime::VertexFrontier output_frontier){
+	update_nodes_special_device(gpq, num_vertices, output_frontier);
+}
 
 
 }

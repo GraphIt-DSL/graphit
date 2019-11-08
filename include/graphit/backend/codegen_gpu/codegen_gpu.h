@@ -163,10 +163,20 @@ class CodeGenGPUFusedKernel: public CodeGenGPU {
 public:
 	using CodeGenGPU::CodeGenGPU;
 	using CodeGenGPU::visit;
+
+	mir::WhileStmt::Ptr current_while_stmt;
+	void insertUsedPq(mir::Var var) {
+		for (auto v: current_while_stmt->used_priority_queues) {
+			if (v.getName() == var.getName())
+				return;
+		}
+		current_while_stmt->used_priority_queues.push_back(var);
+	}
 	void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
 	virtual void visit(mir::StmtBlock::Ptr) override;
 	virtual void visit(mir::AssignStmt::Ptr) override;
 	virtual void visit(mir::VarDecl::Ptr) override;
+	virtual void visit(mir::VarExpr::Ptr) override;
 	virtual void visit(mir::PrintStmt::Ptr) override;
 	virtual void visit(mir::HybridGPUStmt::Ptr) override;
 	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
@@ -182,6 +192,8 @@ public:
 	using mir::MIRVisitor::visit;
 	std::vector<mir::Var> hoisted_vars; 
 	std::vector<mir::VarDecl::Ptr> hoisted_decls;
+	std::vector<mir::Var> hoisted_pqs;
+
 	MIRContext *mir_context_;
 	KernelVariableExtractor(MIRContext* mir_context): mir_context_(mir_context) {
 	}
@@ -194,10 +206,13 @@ public:
 	}
 	void insertDecl(mir::VarDecl::Ptr decl_to_insert) {
 		hoisted_decls.push_back(decl_to_insert);
+		mir::Var var(decl_to_insert->name, decl_to_insert->type);
+		insertVar(var);
 	}
 
 	virtual void visit(mir::VarExpr::Ptr);
 	virtual void visit(mir::VarDecl::Ptr);
+	virtual void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr);
 };
 
 }
