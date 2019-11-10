@@ -217,7 +217,7 @@ def get_cmd_graphit(g, p, point, dst_point):
         p = "sssp_delta_stepping"
     command = graphit_PATH + graphit_binary_map[g][p] + " " + args
 
-    if g in ["monaco",  "massachusetts"]:
+    if g in ["massachusetts"]:
         command = "taskset -c 0-11 " + command
 
     if g in ["twitter", "twitter_rand1000", "twitter_logn",  "webGraph", "friendster", "com_orkut_W", "com_orkut_rand1000", "webGraph_rand1000", "webGraph_logn", "friendster_rand1000", "friendster_logn", "socLive_rand1000", "socLive_logn", "road-central-usa_origweights", "road-usad_origweights", "germany"]:
