@@ -9,7 +9,7 @@ GRAPHIT_SCHEDULE_DIR= ../../../test/input_with_schedules
 
 ifdef GCC_PAR
 # compiling with gcc CILK and OPENMP
-PCC = g++-5.4
+PCC = g++
 CILK_FLAGS +=  -fcilkplus -lcilkrts -O2 -DCILK
 OPENMP_FLAGS += -DOPENMP -fopenmp -O3 
 
@@ -63,6 +63,7 @@ cilk_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/$@ $<
 
 clean:
+	rm -r compile*
 	rm cpps/*.cpp
 	rm -r bin/*
-	rm -r compile*
+
