@@ -23,7 +23,7 @@ framework_app_lookup = {
 }
 
 #shared across all frameworks
-wBFS_runtime_param_dict = {"socLive_rand1000" : 1, "road-usad_rand1000" : 1, "road-usad_origweights" : 1, "twitter_rand1000" : 1, "friendster": 1,  "webGraph_rand1000": 1, "friendster_rand1000": 1, "socLive_logn" : 1, "com_orkut_W": 1, "webGraph_logn": 1, "twitter_logn" : 1, "friendster_logn": 1}
+wBFS_runtime_param_dict = {"testGraph" : 1, "socLive_rand1000" : 1, "road-usad_rand1000" : 1, "road-usad_origweights" : 1, "twitter_rand1000" : 1, "friendster": 1,  "webGraph_rand1000": 1, "friendster_rand1000": 1, "socLive_logn" : 1, "com_orkut_W": 1, "webGraph_logn": 1, "twitter_logn" : 1, "friendster_logn": 1}
 
 # stores the runtime parameter for each application, on each graph for each framework
 framework_app_graph_runtime_param_map = {
@@ -32,9 +32,9 @@ framework_app_graph_runtime_param_map = {
                "astar" : {"germany" : 300000, "massachusetts" : 35000, "monaco" : 35000, "road-usad_origweights" : 40000},
                "wBFS": wBFS_runtime_param_dict},
 
-    "graphit" : {"sssp_delta_stepping": {"socLive_logn" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "twitter_logn" : 1, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "webGraph_logn": 1,"friendster_rand1000": 2, "friendster_logn": 5, "germany":400000, "road-central-usa_origweights":400000},
-                 "sssp_delta_stepping_lazy":{"socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 8, "webGraph_rand1000": 8, "friendster_rand1000": 2},
-                 "ppsp_delta_stepping" : {"socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "friendster_rand1000": 1, "germany":400000, "road-central-usa_origweights":400000}, 
+    "graphit" : {"sssp_delta_stepping": {"testGraph" : 1, "socLive_logn" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "twitter_logn" : 1, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "webGraph_logn": 1,"friendster_rand1000": 2, "friendster_logn": 5, "germany":400000, "road-central-usa_origweights":400000},
+                 "sssp_delta_stepping_lazy":{"testGraph" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 8, "webGraph_rand1000": 8, "friendster_rand1000": 2},
+                 "ppsp_delta_stepping" : {"testGraph" : 1, "socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "friendster_rand1000": 1, "germany":400000, "road-central-usa_origweights":400000}, 
                  "astar" : {"germany" : 45000, "massachusetts" : 35000, "monaco" : 35000, "road-usad_origweights" : 40000, "road-central-usa_origweights":400000},
                  "wBFS": wBFS_runtime_param_dict},
 
@@ -94,7 +94,8 @@ graphit_road_binary_dict = {"pr":"pagerank_pull",
                             "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge",
                             "astar" : "astar_with_merge"}
 
-graphit_binary_map = {"socLive":graphit_socLive_binary_dict,
+graphit_binary_map = {"testGraph" : graphit_socLive_binary_dict,
+                      "socLive":graphit_socLive_binary_dict,
                       "socLive_rand1000" : graphit_socLive_binary_dict,
                       "socLive_logn" : graphit_socLive_binary_dict,
                       "twitter" : graphit_twitter_binary_dict,
@@ -131,18 +132,8 @@ graphit_binary_map = {"socLive":graphit_socLive_binary_dict,
 NUM_THREADS=48
 PR_ITERATIONS=20
 
-GreenMarl_PATH = "/data/scratch/baghdadi/green-marl/apps/output_cpp/bin/"
-galois_PATH = "/data/scratch/yunming/galois/Galois-2.2.1/build/default/apps/"
-galois_v4_PATH = "/data/scratch/xinyic/app_binaries/galois-v4/"
-ligra_PATH = "/data/scratch/mengjiao/app_binaries/ligra/"
-polymer_PATH = "/data/scratch/mengjiao/polymer/"
-gemini_PATH = "/data/scratch/mengjiao/GeminiGraph/toolkits/"
-gapbs_PATH = "/data/commit/graphit/yunming/app_binaries/gapbs/"
-gapbs_prototype_PATH = "/data/commit/graphit/yunming/app_binaries/gapbs_prototype/"
-julienne_PATH = "/data/commit/graphit/yunming/app_binaries/julienne/"
-graphit_PATH = "/data/commit/graphit/yunming/app_binaries/graphit/"
-grazelle_PATH = "/data/scratch/mengjiao/app_binaries/grazelle/"
-DATA_PATH = "/data/commit/graphit/yunming/graphit_benchmark_graphs/"
+graphit_PATH = "./bin/"
+DATA_PATH = "./graphs/"
 
 
 def get_vertex_count(graph):
@@ -161,6 +152,8 @@ def get_starting_points(graph):
     """ Use the points with non-zero out degree and don't hang during execution.  """
     if graph == "germany":
       return ["1087", "2019", "2019", "0", "3478", "134", "13", "47"]
+    elif graph == "testGraph":
+        return ["1","2"]
     elif graph == "massachusetts":
       return ["0", "19", "101", "0", "1000", "44955", "3432", "23"]
     elif graph == "monaco":
@@ -192,81 +185,6 @@ def get_ending_points(graph):
     else:
         # friendster takes a long time so use fewer ending points
         return ["286", "16966", "37728", "56030", "155929", "101"]
-
-def get_cmd_grazelle(g, p):
-    graph_path = DATA_PATH + g + "/" + g + "_grazelle.bin"
-    command = grazelle_PATH + p
-    if g in ["friendster", "friendster_rand1000", "friendster_logn"]:
-        # run the binary built with 101 as starting point
-        command += "101"
-    command += " -i "  + graph_path + " -u 0,1"
-    if p == "pr":
-        command += " -N " + str(PR_ITERATIONS)
-    return command
-
-def get_cmd_greenmarl(g, p):
-    graph_path = DATA_PATH + g + "/" + g + "_greenmarl.bin"
-    args = graph_path + " " + str(NUM_THREADS) + " " + str(PR_ITERATIONS)
-    command = GreenMarl_PATH + p + " " + args
-    return "numactl -i all " + command
-
-def get_cmd_ligra(g, p, point):
-    # netflix graph is only used for collaborative filtering
-    if (g == "netflix" and p != "CF"):
-        return ""
-    # social graphs are not to be used for cf
-    if (g != "netflix" and p == "CF"):
-        return ""
-
-    args = ""
-    if p in ["BellmanFord", "BFS", "BC"]:
-        args += " -r " + point + " " 
-
-    if g == "webGraph" or g == "friendster":
-        if g == "friendster":
-            # friendster is a symmetric graph
-            args += " -s "
-
-        # use binary format for large graphs
-        args += " -b "
-        if p == "BellmanFord" or p == "CF":
-            graph_path = DATA_PATH + g + "/" + g + "-wgh_ligra_bin"
-        else:
-            graph_path = DATA_PATH + g + "/" + g + "_ligra_bin"
-    else:
-        if p == "BellmanFord" or p == "CF":
-            graph_path = DATA_PATH + g + "/" + g + "_ligra.wadj"
-        else:
-            graph_path = DATA_PATH + g + "/" + g + "_ligra.adj"
-
-    if p == "PageRank":
-        args += " -maxiters 20 "
-    elif p == "PageRankDelta":
-        args += " -maxiters 10 "
-    elif p == "CF":
-        args += " -numiter 10 "
-
-    if p == "BellmanFord" and g == "friendster":
-        # need LONG option since there are 3.6*2=7.2 billion entries
-        p += "_LONG"
-                            
-    args += graph_path
-    command = ligra_PATH + p + " " + args 
-    return "numactl -i all " + command
-
-def get_cmd_polymer(g, p, point):
-    if p == "numa-BellmanFord":
-        graph_path = DATA_PATH + g + "/" + g + "_ligra.wadj"
-    else:
-        graph_path = DATA_PATH + g + "/" + g + "_ligra.adj"
-    command = polymer_PATH + p + " " + graph_path
-    if p == "numa-PageRank":
-        command += " 20"
-    if p == "numa-PageRankDelta":
-        command += " 10"
-    if p in ["numa-BellmanFord", "numa-BFS"]:
-        command += " " + str(point)
-    return command
 
 def get_cmd_graphit(g, p, point, dst_point):
     # netflix graph is only used for collaborative filtering
@@ -312,196 +230,6 @@ def get_cmd_graphit(g, p, point, dst_point):
             command += " 16"
     return command
 
-def get_cmd_gemini(g, p, point):
-    graph_path = DATA_PATH + g + "/" + g + "_gemini.b"
-    if (p == "sssp"):
-        graph_path += "wel"
-    else:
-        graph_path += "el"
-    args = graph_path + " " + str(get_vertex_count(g))
-    if p in ["sssp", "bfs", "bc"]:
-        args += " " + point
-    elif (p == "pagerank"):
-        args += " " + str(PR_ITERATIONS)
-    command = gemini_PATH + p + " " + args
-    return command
-
-def get_cmd_galois(g, p, src_point, dst_point):
-    if (p == "astar"):
-        extension = "bin"
-    elif p in ["sssp", "deltastepping", "ppsp", "wBFS"]:
-        extension = "gr"
-    else:
-        extension = "vgr"
-    
-    if (g in ["com_orkut_W", "webGraph_rand1000"]):
-        graph_path = DATA_PATH + g + "/" + g + "." + extension
-    else:
-        graph_path = DATA_PATH + g + "/" + g + "_galois." + extension
-    
-    if p == "astar":
-        graph_path = DATA_PATH + g + "/" + g + "." + extension
-    
-    special_args = ""
-    if p == "astar":
-        special_args += " -algo=deltaStep" + " -startNode=" + src_point + " -reportNode=" + dst_point + " -delta=" + str(framework_app_graph_runtime_param_map["galois"][p][g]) + " "
-    if p == "deltastepping" or p == "wBFS":
-        special_args += " -algo=deltaStep" + " -startNode=" + src_point + " -delta=" + str(framework_app_graph_runtime_param_map["galois"][p][g]) + " "
-    if p == "ppsp":
-        special_args += " -algo=deltaStep" + " -startNode=" + src_point + " -reportNode=" + dst_point + " -delta=" + str(framework_app_graph_runtime_param_map["galois"][p][g]) + " "
-    if p in ["bfs", "sssp", "betweennesscentrality"]:
-        special_args += " -startNode=" + src_point + " "
-    if p == "bfs" and g == "road-usad":
-        special_args += " -algo=async "
-    if p == "connectedcomponents":
-        special_args += " -algo=labelProp " # use label propagation rather than union find to be fair
-        transpose_graph = DATA_PATH + g + "/" + g + "_galois.tvgr" 
-        special_args += " -graphTranspose=" + transpose_graph + " "
-    if p == "sssp":
-        special_args += " -algo=ligra " # use bellman-ford rather than delta stepping to be fair
-        transpose_graph = DATA_PATH + g + "/" + g + "_galois.tgr" 
-        special_args += " -graphTranspose=" + transpose_graph + " "
-    if (p == "pagerank"):
-        transpose_graph = DATA_PATH + g + "/" + g + "_galois.prpull" 
-        special_args += " -maxIterations=" + str(PR_ITERATIONS) + " -graphTranspose=" + transpose_graph + " "
-    
-    args = graph_path + " -t=" + str(NUM_THREADS) + " " + special_args
-    
-    command = galois_PATH + p + "/" + p
-    if p == "astar" or p == "ppsp" or p == "deltastepping":
-        command = galois_v4_PATH + p
-    if p == "wBFS":
-        command = galois_v4_PATH + "deltastepping"
-    if p == "betweennesscentrality":
-        command += "-outer" # or "-inner"
-    command += " " + args
-    return "numactl -i all " + command
-
-def get_cmd_julienne(g, p, src_point, dst_point):
-    if (p in ["DeltaStepping", "PPSP", "wBFS"]):
-        if (g in ["com_orkut_W", "webGraph_rand1000", "friendster_rand1000"]):
-            graph_path = DATA_PATH + g + "/" + g + ".adj"
-        else:
-            graph_path = DATA_PATH + g + "/" + g + "_ligra.wadj"
-    elif (p == "Astar"):
-        graph_path = DATA_PATH + g + "/" + g + ".bin"
-    else:
-        graph_path = DATA_PATH + g + "/" + g + "_ligra.adj"
-    args = ""
-    if p in ["DeltaStepping", "PPSP", "Astar", "wBFS"]:
-        args += " " +  " -src " + src_point
-
-    #Laxman mentioned that we should use -s all the time 
-    args += " -s " 
-
-    if p in ["PPSP", "Astar"]:
-        args += " -dst " + dst_point
-
-    # add runtime parameter
-    if p in ["DeltaStepping", "PPSP", "Astar", "wBFS"]:
-        args += " -delta " + str(framework_app_graph_runtime_param_map["julienne"][p][g]) + " " 
-       
-    if p == "Astar":
-        args += " -as "
-
-    args += graph_path
-
-    #wBFS uses the same binary as delta stepping, different runtime parameter
-    if p == "wBFS":
-        p = "DeltaStepping"
-
-    command = julienne_PATH +  p + " " + args
-    
-    # adds numactl or taskset in the end for large social graphs 
-
-
-    if g in ["road-usad", "road-usad_rand1000", "road-usad_origweights", "germany", "massachusetts", "monaco"]:
-        command = "taskset -c 0-11 " + command
-    else:
-        command = "numactl -i all " + command
-    return command
-
-def get_cmd_gapbs(g, p, src_point, dst_point):
-    if (p in ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"]):
-        #if (g in ["com_orkut_W", "webGraph_rand1000"]):
-        #    graph_path = DATA_PATH + g + "/" + g + ".wel"
-        #else:
-        graph_path = DATA_PATH + g + "/" + g + "_gapbs.wsg"
-    elif (p == "astar"):
-        graph_path = DATA_PATH + g + "/" + g + ".bin"
-    else:
-        graph_path = DATA_PATH + g + "/" + g + "_gapbs.sg"
-
-    args = " -f " + graph_path
-
-    if p in ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"]:
-        args += " " +  " -r " + src_point
-        
-    if p == "ppsp":
-        args += " -u " + dst_point
-    
-    if p == "astar":
-        args += " -d " + str(framework_app_graph_runtime_param_map["gapbs"][p][g]) + " -b " + src_point + " -p " + dst_point
-
-    #just run one trail 
-    args += " -n 1"
-
-    # add runtime parameter
-    if p in  ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"] :
-        args += " -d " + str(framework_app_graph_runtime_param_map["gapbs"][p][g]) 
-
-    #wBFS and delta_stepping is using the same binary, just different runtime param (delta always 1)
-    if p == "wBFS":
-        p = "delta_stepping"
-    command = gapbs_PATH +  p + " " + args
-    
-         
-    if g in ["road-usad", "road-usad_rand1000", "road-usad_origweights", "germany", "massachusetts", "monaco"]:
-        command = "taskset -c 0-11 " + command
-    # adds numactl or taskset in the end for large social graphs 
-    else:
-        command = "numactl -i all " + command
-
-    return command
-
-
-def get_cmd_gapbs_prototype(g, p, src_point, dst_point):
-    if (p in ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"]):
-        graph_path = DATA_PATH + g + "/" + g + "_gapbs.wsg"
-    else:
-        graph_path = DATA_PATH + g + "/" + g + "_gapbs.sg"
-
-    args = " -f " + graph_path
-
-    if p in ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"]:
-        args += " " +  " -r " + src_point
-        
-    if p == "ppsp":
-        args += " -u " + dst_point
-    
-    #just run one trail 
-    args += " -n 1"
-
-    # add runtime parameter
-    if p in  ["delta_stepping", "ppsp", "delta_stepping_refactor", "wBFS"] :
-        args += " -d " + str(framework_app_graph_runtime_param_map["gapbs_prototype"][p][g]) 
-        
-    command = gapbs_prototype_PATH +  p + " " + args
-    if p == "wBFS":
-      command = gapbs_prototype_PATH + "delta_stepping"  + " " + args
-
-    #command = "numactl -i all " + command
-    #command = "taskset -c 0-11 " + command
-     
-    if p in ["ppsp"] and  g in ["road-usad", "road-usad_rand1000"]:
-        command = "taskset -c 0-11 " + command
-    # adds numactl or taskset in the end for large social graphs 
-    else:
-        command = "numactl -i all " + command
-
-
-    return command
-
 #potentially providing both a source and destination point to each framework
 
 def get_cmd(framework, graph, app, src_point, dst_point = 0):
@@ -532,7 +260,7 @@ def get_cmd(framework, graph, app, src_point, dst_point = 0):
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--frameworks', nargs='+',
-                        default=[], # "netflix" only used for cf
+                        default=['graphit'], # "netflix" only used for cf
                         help="frameworks to benchmark: " + ' '.join(["galois", "ligra", "graphit", "greenmarl", "gemini", "gapbs", "julienne"]))
 
 

@@ -135,7 +135,7 @@ def print_graph_names(graphs, delimiter=","):
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--frameworks', nargs='+',
-                        default=["galois", "ligra", "graphit", "greenmarl", "gemini"], # "netflix" only used for cf
+                        default=["graphit"], # "netflix" only used for cf
                         help="frameworks to parse")
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["socLive", "road-usad", "twitter", "webGraph", "friendster"],
@@ -181,8 +181,8 @@ def main():
     #print_normalized_execution(args.frameworks, args.applications, args.graphs, results)
     print_absolute_execution(args.frameworks, args.applications, args.graphs, results)
 
-    print_graph_names(args.graphs, "&")
-    print_absolute_execution_by_framework(args.frameworks, args.applications, args.graphs, results, "&")
+    #print_graph_names(args.graphs, "&")
+    #print_absolute_execution_by_framework(args.frameworks, args.applications, args.graphs, results, "&")
 
     
 if __name__ == "__main__":
