@@ -1,5 +1,3 @@
-
-
 COMMON_FLAGS = -std=c++14 -g -I ../../../src/runtime_lib/ 
 CILK_FLAGS = $(COMMON_FLAGS)
 OPENMP_FLAGS = $(COMMON_FLAGS)
@@ -39,7 +37,13 @@ all:
 
 #python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cf.gt -f ${GRAPHIT_SCHEDULE_DIR}/cf_pull_parallel_load_balance_segment_argv.gt -o cpps/cf_pull_load_balance_segment.cpp
 
-graphit_files:
+k_core_graphit:
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/k_core.gt -f ${GRAPHIT_SCHEDULE_DIR}/k_core_const_sum_reduce.gt -o cpps/k_core_const_sum_reduce.cpp
+
+set_cover_graphit:
+	python ${GRAPHITC_PY} -f ${GRAPHIT_APP_DIR}/set_cover.gt  -o cpps/set_cover.cpp
+
+graphit_files:k_core_graphit set_cover_graphit
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp_delta_stepping.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_with_merge_argv3.gt -o cpps/sssp_delta_stepping_with_merge.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp_delta_stepping.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_no_merge_argv3.gt -o cpps/sssp_delta_stepping_no_merge.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/ppsp_delta_stepping.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_with_merge_argv4.gt -o cpps/ppsp_delta_stepping_with_merge.cpp
@@ -51,7 +55,11 @@ astar:
 	$(PCC) $(OPENMP_FLAGS) -o bin/astar_no_merge cpps/astar_no_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
 	$(PCC) $(OPENMP_FLAGS) -o bin/astar_with_merge cpps/astar_with_merge.cpp ${GRAPHIT_APP_DIR}/astar_distance_loader.cpp 
 
-cpps:  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps} astar
+
+setcover:
+	$(PCC) $(OPENMP_FLAGS) -o bin/set_cover_lazy cpps/set_cover_lazy.cpp ${GRAPHIT_APP_DIR}/set_cover_extern.cpp 
+
+cpps: k_core_const_sum_reduce  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps}  astar
 
 
 #$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
