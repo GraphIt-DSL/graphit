@@ -28,7 +28,7 @@ func main()
 	    end
 	    delete pq;
 	    var elapsed_time: float = stopTimer();
-            print "elapsed_time";
+            print "elapsed time";
 	    print elapsed_time;
     end
     

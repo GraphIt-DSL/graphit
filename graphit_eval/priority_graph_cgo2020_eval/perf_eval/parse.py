@@ -27,6 +27,8 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     @time_key_own_line: if the time_key is one its own line
     """
 
+    #print(log_file_name)
+
     with open(log_file_name) as f:
         content = f.readlines()
     content = [x.strip() for x in content]
@@ -57,7 +59,7 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
                 sum_time += min_time
                 min_time = 10000
                 inner_cnt = initial_inner_cnt
-    if (app == "pr" or app == "cc" or app == "cf" or app == "prd"):
+    if app in ["pr", "cc", "cf", "prd", "kcore", "setcover"]:
         return min_time
     else: # bfs or sssp
         if successes > 0:
@@ -148,16 +150,8 @@ def main():
     args = parser.parse_args()
 
     # time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line
-    parse_args = {"greenmarl": ["running time", "=", 1, 0, 1000, 1, False], # runs 10 times internally so 1000*10
-                  "graphit": ["elapsed time", "", None, None, 1, 10, True],
-                  "ligra": ["Running time", ":", 1, 0, 1, 3, False],
-                  "galois": ["STAT, (NULL), Time, TMAX,", ",", 4, 0, 1000, 1, False],
-                  "gemini": ["exec_time", "=", 1, -3, 1, 6, False],
-                  "grazelle": ["Running Time", "= ", 1, -2, 1000, 1, False],
-                  "polymer": ["", "= ", 1, -2, 1000, 1, False],
-                  "gapbs" : ["Trial Time", ":", 1, 0, 1, 6, False],
-                  "gapbs_prototype" : ["Trial Time", ":", 1, 0, 1, 6, False],
-                  "julienne" : ["Running time", ":", 1, 0, 1, 3, False]
+    parse_args = {
+                  "graphit": ["elapsed time", "", None, None, 1, 10, True]
     }
 
     LOG_PATH = args.logPath + "/"
@@ -170,10 +164,6 @@ def main():
             for app in args.applications:
                 log_file_name = LOG_PATH + framework + "/" + app + "_" + g + ".txt"
                 runtime = parse_result(log_file_name, app, *parse_args[framework])
-                if framework == "greenmarl" and app in ["bfs", "sssp"]:
-                    # greenmarl internally picks 10 starting points for sssp and bfs
-                    # but there is only 1 successes
-                    runtime /= 10
                 results[framework][g][app] = runtime
     print results
 

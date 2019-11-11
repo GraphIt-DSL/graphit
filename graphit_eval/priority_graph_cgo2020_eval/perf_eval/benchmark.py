@@ -10,7 +10,7 @@ from threading import Timer
 # wBFS is just DeltaStepping with delta set to 1
 
 framework_app_lookup = {
-    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS"}
+    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS", "kcore" : "kcore"}
 }
 
 #shared across all frameworks
@@ -33,7 +33,8 @@ graphit_twitter_binary_dict = {"pr":"pagerank_pull_numa",
                                    "prd" : "pagerankdelta_hybrid_dense_bitvec_numa",
                                "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
-                               "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge"}
+                               "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge", 
+                               "kcore" : "k_core_const_sum_reduce"}
 
 graphit_web_binary_dict = {"pr":"pagerank_pull_numa",
                                    "sssp" : "sssp_hybrid_denseforward",
@@ -52,7 +53,8 @@ graphit_socLive_binary_dict = {"pr":"pagerank_pull",
                                    "prd" : "pagerankdelta_hybrid_dense",
                                    "sssp_delta_stepping" : "sssp_delta_stepping_no_merge",
                                "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
-                               "ppsp_delta_stepping" : "ppsp_delta_stepping_no_merge"
+                               "ppsp_delta_stepping" : "ppsp_delta_stepping_no_merge",
+                               "kcore" : "k_core_const_sum_reduce"
 }
 
 graphit_road_binary_dict = {"pr":"pagerank_pull",
@@ -169,6 +171,8 @@ def get_cmd_graphit(g, p, point, dst_point):
         graph_path = DATA_PATH + g + "/" + g + "_gapbs.wsg"
     elif p in ["astar"]:
         graph_path = DATA_PATH + g + "/" + g + ".bin"
+    elif p in ["kcore", "setcover"]:
+        graph_path = DATA_PATH + g + "/" + g + "_ligra.sadj"
     else:
         graph_path = DATA_PATH + g + "/" + g + "_gapbs.sg"
 
@@ -204,26 +208,8 @@ def get_cmd_graphit(g, p, point, dst_point):
 #potentially providing both a source and destination point to each framework
 
 def get_cmd(framework, graph, app, src_point, dst_point = 0):
-    if framework == "greenmarl":
-        cmd = get_cmd_greenmarl(graph, app)
-    elif framework == "ligra":
-        cmd = get_cmd_ligra(graph, app, src_point)
-    elif framework == "galois":
-        cmd = get_cmd_galois(graph, app,  src_point, dst_point)
-    elif framework == "graphit":
+    if framework == "graphit":
         cmd = get_cmd_graphit(graph, app,  src_point, dst_point)
-    elif framework == "grazelle":
-        cmd = get_cmd_grazelle(graph, app)
-    elif framework == "polymer":
-        cmd = get_cmd_polymer(graph, app,  src_point)
-    elif framework == "gapbs":
-        cmd = get_cmd_gapbs(graph,app,  src_point, dst_point)
-    elif framework == "gapbs_prototype":
-        cmd = get_cmd_gapbs_prototype(graph,app,  src_point, dst_point)
-    elif framework == "julienne":
-        cmd = get_cmd_julienne(graph, app, src_point, dst_point)
-    elif framework == "gemini":
-        cmd = get_cmd_gemini(graph, app, point)
     else:
         print("unsupported framework: " + framework)
     return cmd
@@ -288,7 +274,7 @@ def main():
                         log_file.write("\n")
                         log_file.write(output)
                         log_file.write("\n------------------------------------------------\n")
-                        if generic_app_name in ["pr", "cc", "prd", "cf"] or framework in ["greenmarl", "grazelle"]:
+                        if generic_app_name in ["pr", "cc", "prd", "cf", "kcore", "setcover"]:
                             # pagerank, cc, prd, and cf can return when they succeeds once.
                             # greenmarl sets starting point internally
                             break;            
