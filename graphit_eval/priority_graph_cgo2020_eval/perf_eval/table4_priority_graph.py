@@ -10,7 +10,7 @@ def main():
 socLive, road-usad, twitter, webGraph, friendster.Defaults to the test gra\
 ph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["ds","ppsp","wBFS"],
+                        default=["ds","ppsp","wBFS", "kcore","setcover"],
                         help="applications to benchmark. ds: sssp with delta stepping, ppsp: point-to-point shortests paths, wBFS: weighted BFS.")
 
     args = parser.parse_args()

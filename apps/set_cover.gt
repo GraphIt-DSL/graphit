@@ -43,6 +43,6 @@ func main()
 		rounds += 1;
 	end
         var elapsed_time: float = stopTimer();
-        print "elapsed_time";
+        print "elapsed time";
 	print elapsed_time;
 end

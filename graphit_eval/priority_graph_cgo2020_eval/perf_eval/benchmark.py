@@ -10,7 +10,7 @@ from threading import Timer
 # wBFS is just DeltaStepping with delta set to 1
 
 framework_app_lookup = {
-    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS", "kcore" : "kcore"}
+    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS", "kcore" : "kcore", "setcover":"setcover"}
 }
 
 #shared across all frameworks
@@ -43,7 +43,8 @@ graphit_web_binary_dict = {"pr":"pagerank_pull_numa",
                                    "prd" : "pagerankdelta_hybrid_dense_bitvec_numa",
                                "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
-                               "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge"}
+                               "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge",
+                               "kcore" : "k_core_const_sum_reduce"}
 
 
 graphit_socLive_binary_dict = {"pr":"pagerank_pull", 
@@ -54,7 +55,8 @@ graphit_socLive_binary_dict = {"pr":"pagerank_pull",
                                    "sssp_delta_stepping" : "sssp_delta_stepping_no_merge",
                                "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
                                "ppsp_delta_stepping" : "ppsp_delta_stepping_no_merge",
-                               "kcore" : "k_core_const_sum_reduce"
+                               "kcore" : "k_core_const_sum_reduce",
+                               "setcover" : "set_cover"
 }
 
 graphit_road_binary_dict = {"pr":"pagerank_pull",
