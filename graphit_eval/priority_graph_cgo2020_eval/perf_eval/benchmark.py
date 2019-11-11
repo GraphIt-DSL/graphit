@@ -10,16 +10,7 @@ from threading import Timer
 # wBFS is just DeltaStepping with delta set to 1
 
 framework_app_lookup = {
-    "greenmarl": {"pr": "pagerank", "sssp": "sssp", "bfs": "bfs", "cc": "cc"},
-    "gapbs": {"ds": "delta_stepping", "ppsp":"ppsp", "astar":"astar", "wBFS":"wBFS"},
-    "gapbs_prototype": { "ds": "delta_stepping", "ppsp":"ppsp", "wBFS":"wBFS"},
-    "julienne":{"ds": "DeltaStepping", "ppsp":"PPSP", "astar":"Astar", "wBFS":"wBFS"},
-    "galois": {"pr": "pagerank", "sssp": "sssp", "bfs": "bfs", "cc": "connectedcomponents", "bc": "betweennesscentrality", "astar": "astar", "ds": "deltastepping", "ppsp": "ppsp", "wBFS": "wBFS"},
-    "ligra": {"pr": "PageRank", "sssp": "BellmanFord", "bfs": "BFS", "cc": "Components", "prd": "PageRankDelta", "cf": "CF", "bc": "BC"},
-    "gemini": {"pr": "pagerank", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "bc": "bc"},
-    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS"},
-    "grazelle": {"pr": "pr", "cc": "cc", "bfs": "bfs"},
-    "polymer": {"pr": "numa-PageRank", "sssp": "numa-BellmanFord", "bfs": "numa-BFS", "cc": "numa-Components", "prd": "numa-PageRankDelta"}
+    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy" ,"ppsp" : "ppsp_delta_stepping", "astar" : "astar", "wBFS" : "wBFS"}
 }
 
 #shared across all frameworks
@@ -27,31 +18,11 @@ wBFS_runtime_param_dict = {"testGraph" : 1, "socLive_rand1000" : 1, "road-usad_r
 
 # stores the runtime parameter for each application, on each graph for each framework
 framework_app_graph_runtime_param_map = {
-    "gapbs" : {"delta_stepping": {"socLive_rand1000" : 100, "road-usad_rand1000" : 10000, "road-usad_origweights" : 100000, "twitter_rand1000" : 8, "twitter_logn" : 1, "friendster": 2, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000": 4, "friendster_rand1000": 4, "friendster_logn": 5, "germany" : 300000}, 
-               "ppsp" : {"socLive_rand1000" : 50, "road-usad_rand1000" : 10000, "road-usad_origweights" : 100000,"twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000": 16, "friendster_rand1000": 1, "germany" : 300000}, 
-               "astar" : {"germany" : 300000, "massachusetts" : 35000, "monaco" : 35000, "road-usad_origweights" : 40000},
-               "wBFS": wBFS_runtime_param_dict},
-
     "graphit" : {"sssp_delta_stepping": {"testGraph" : 1, "socLive_logn" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "twitter_logn" : 1, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "webGraph_logn": 1,"friendster_rand1000": 2, "friendster_logn": 5, "germany":400000, "road-central-usa_origweights":400000},
                  "sssp_delta_stepping_lazy":{"testGraph" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 8, "webGraph_rand1000": 8, "friendster_rand1000": 2},
                  "ppsp_delta_stepping" : {"testGraph" : 1, "socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "friendster_rand1000": 1, "germany":400000, "road-central-usa_origweights":400000}, 
                  "astar" : {"germany" : 45000, "massachusetts" : 35000, "monaco" : 35000, "road-usad_origweights" : 40000, "road-central-usa_origweights":400000},
-                 "wBFS": wBFS_runtime_param_dict},
-
-    "gapbs_prototype" : {"delta_stepping": {"socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "friendster_rand1000": 2}, 
-               "ppsp" : {"socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "friendster_rand1000": 1},
-                         "wBFS": wBFS_runtime_param_dict},
-
-    "julienne" : {"DeltaStepping": {"socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "germany" : 35000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 3, "webGraph_rand1000": 8, "friendster_rand1000": 1},
-               "PPSP" : {"socLive_rand1000" : 20, "germany" : 35000, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000,"twitter_rand1000" : 4, "webGraph_rand1000": 8, "com_orkut_W": 4, "com_orkut_rand1000": 3, "friendster_rand1000": 1}, 
-                  "Astar": {"germany" : 35000, "massachusetts" : 35000, "monaco" : 35000},
-                  "wBFS": wBFS_runtime_param_dict},
-    
-    "galois" : {"deltastepping": {"friendster": 1, "com_orkut_W": 2, "com_orkut_rand1000": 2, "webGraph_rand1000": 2, "socLive_rand1000": 2, "road-usad_rand1000": 11, "twitter_rand1000": 0, "road-usad_origweights": 14, "friendster_rand1000": 0, "germany" : 15},
-                "wBFS": {"socLive_rand1000": 0, "twitter_rand1000": 0, "com_orkut_W": 0, "webGraph_rand1000": 0, "friendster_rand1000": 0},
-                "ppsp": {"com_orkut_W": 1, "com_orkut_rand1000": 2, "webGraph_rand1000": 1, "socLive_rand1000": 2, "road-usad_rand1000": 12, "road-usad_origweights": 13, "twitter_rand1000": 0, "friendster_rand1000": 0, "germany" : 15}, 
-                "astar": {"germany" : 15, "massachusetts" : 14, "monaco" : 10, "road-u\
-sad_origweights": 14}} # galois uses 2^d as its actual delta where d is the delta passed in using -delta arg
+                 "wBFS": wBFS_runtime_param_dict}
 }
 
 
