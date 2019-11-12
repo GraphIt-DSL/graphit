@@ -6,12 +6,10 @@ import os
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-g', '--graphs', nargs='+',
-                        default=["testGraph"], help = "enable graphs with \
-socLive, road-usad, twitter, webGraph, friendster.Defaults to the test gra\
-ph.")
+                        default=["testGraph"], help = "graphs to benchmark")
     parser.add_argument('-a', '--applications', nargs='+',
                         default=["ds","ppsp","wBFS", "kcore","setcover"],
-                        help="applications to benchmark. ds: sssp with delta stepping, ppsp: point-to-point shortests paths, wBFS: weighted BFS.")
+                        help="applications to benchmark. ds: sssp with delta stepping, ppsp: point-to-point shortests paths, wBFS: weighted BFS, astar: AStar search (needs special graph coordinates).")
 
     args = parser.parse_args()
     graphs_arg = ''

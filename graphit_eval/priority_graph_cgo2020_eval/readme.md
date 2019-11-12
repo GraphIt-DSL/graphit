@@ -4,7 +4,7 @@ This is the guide for evaluating our CGO 2020 paper, **PriorityGraph:A Unified P
 ## Setup PriorityGraph 
 PriorityGraph is implemented as an extension to GraphIt for supporting ordered parallelism as stated in the paper. You do **NOT** need any additional setup instruction other than setting up GraphIt. 
 
-**Please first follow the [Getting Started Guide](https://github.com/GraphIt-DSL/graphit/blob/master/README.md ) to set up GraphIt.** . 
+**Please first follow the [Getting Started Guide](https://github.com/GraphIt-DSL/graphit/blob/master/README.md ) to set up GraphIt.** . This guide  compile and test the correctness of a series of PriorityGraph algorithms.
 
 ## Examine the algorithm source files used in the paper 
 The programs used in the paper (sssp_delta_stepping.gt, pppsp_delta_stepping, astar.gt, k_core.gt, and set_cover.gt) are stored in the `graphit/apps` directory. All PriorityGraph programs are just graphit programs with priority extensions. The rest of the evaluation guide will generate programs from these PriorityGraph / GraphIt programs. 
@@ -41,7 +41,53 @@ make cpps
 
 The generated cpp files are in the `perf_eval/cpps` directory, and the compiled binaries are in the `perf_eval/bin` directory. 
 
-### Generating the C++ files from PriorityGraph programs
+### Running PriorityGraph Programs on Small Graphs
 
+The following commands run the **serial** version of GraphIt compiled programs (from the earlier section) on small graphs, testGraph and Monaco. Both the unweighted and weighted versions are in `graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs` directory.
+
+```
+#start from graphit root directory
+cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval
+
+#run and benchmark the performance for testGraph on SSSP with delta stepping, ppsp, wBFS, kcore, and setcover 
+python table4_priority_graph.py
+
+#run astar on monaco (needs special data on coordinates)
+python table4_priority_graph.py -a astar -g monaco
+```
+
+The script table4_priority_graph.py first runs the benchmarks and then saves the outputs to the `graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/benchmark_logs` directory. The benchmark script choose the binary based on the graph. Then a separate script parses the outputs to generate the final table of performance in the following form. The application and graph information are shown in the leftmost column, and the running times are shown in the second column in seconds.
+```
+# performance results from running ds, ppsp, wBFS, kcore, and setcover on testGraph
+ -------------------
+frameworks: graphit 
+ -------------------
+ds
+testGraph, 2e-06
+ppsp
+testGraph, 1e-06
+wBFS
+testGraph, 2e-06
+kcore
+testGraph, 2.4e-05
+setcover
+testGraph, 8e-05
+Done parsing the run outputs
+
+# performance results from running astar on monaco graph
+ -------------------
+frameworks: graphit 
+ -------------------
+astar
+monaco, 7.6e-05
+Done parsing the run output
+```
+These runs should complete very quickly. This test on the small graphs demonstrate that the compiler can compile and run all the PriorityGraph extensions in graphit programs. We have verified the correctness of the compiled programs in the test suite of the compiler run in [Getting Started Guide](https://github.com/GraphIt-DSL/graphit/blob/master/README.md). 
+
+To see more options that run specific graphs and algorithms, simply type the following command. 
+```
+#To see options for running a specific graph or application / algorithm
+python table4_priority_graph.py -h
+```
 
 ## Reproducing PriorityGraph Performance on 2-socekt Intel Xeon E5-2695 v3 CPUs with 30 MB LLC, TPH enabled. ## 

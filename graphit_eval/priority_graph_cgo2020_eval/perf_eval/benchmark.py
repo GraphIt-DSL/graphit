@@ -18,9 +18,9 @@ wBFS_runtime_param_dict = {"testGraph" : 1, "socLive_rand1000" : 1, "road-usad_r
 
 # stores the runtime parameter for each application, on each graph for each framework
 framework_app_graph_runtime_param_map = {
-    "graphit" : {"sssp_delta_stepping": {"testGraph" : 1, "socLive_logn" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "twitter_logn" : 1, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "webGraph_logn": 1,"friendster_rand1000": 2, "friendster_logn": 5, "germany":400000, "road-central-usa_origweights":400000},
-                 "sssp_delta_stepping_lazy":{"testGraph" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 8, "webGraph_rand1000": 8, "friendster_rand1000": 2},
-                 "ppsp_delta_stepping" : {"testGraph" : 1, "socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "friendster_rand1000": 1, "germany":400000, "road-central-usa_origweights":400000}, 
+    "graphit" : {"sssp_delta_stepping": {"testGraph" : 1, "socLive_logn" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "twitter_logn" : 1, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "webGraph_logn": 1,"friendster_rand1000": 2, "friendster_logn": 5, "germany":400000, "road-central-usa_origweights":400000, "monaco" : 35000},
+                 "sssp_delta_stepping_lazy":{"testGraph" : 1, "socLive_rand1000" : 100, "road-usad_rand1000" : 4096, "road-usad_origweights" : 10000, "twitter_rand1000" : 4, "com_orkut_W": 4, "com_orkut_rand1000": 8, "webGraph_rand1000": 8, "friendster_rand1000": 2, "monaco" : 35000},
+                 "ppsp_delta_stepping" : {"testGraph" : 1, "socLive_rand1000" : 50, "road-usad_rand1000" : 8000, "road-usad_origweights" : 40000, "twitter_rand1000" : 4, "com_orkut_W": 1, "com_orkut_rand1000": 8, "webGraph_rand1000":4, "friendster_rand1000": 1, "germany":400000, "road-central-usa_origweights":400000, "monaco" : 35000}, 
                  "astar" : {"germany" : 45000, "massachusetts" : 35000, "monaco" : 35000, "road-usad_origweights" : 40000, "road-central-usa_origweights":400000},
                  "wBFS": wBFS_runtime_param_dict}
 }
