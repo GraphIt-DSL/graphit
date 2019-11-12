@@ -59,7 +59,7 @@ astar:
 set_cover:
 	$(PCC) $(OPENMP_FLAGS) -o bin/set_cover cpps/set_cover.cpp ${GRAPHIT_APP_DIR}/set_cover_extern.cpp 
 
-cpps: k_core_const_sum_reduce  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps}  astar
+cpps: k_core_const_sum_reduce set_cover  ${sssp_delta_stepping_cpps} ${ppsp_delta_stepping_cpps}  astar
 
 
 #$(PCC) $(OPENMP_FLAGS) -o bin/sssp_push_slq cpps/sssp_push_slq.cpp
