@@ -71,7 +71,7 @@ cilk_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/$@ $<
 
 clean:
-	rm -r compile*
-	rm cpps/*.cpp
-	rm -r bin/*
+	-rm -r compile*
+	-rm cpps/*.cpp
+	-rm -r bin/*
 

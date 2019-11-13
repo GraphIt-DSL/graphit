@@ -34,7 +34,8 @@ graphit_twitter_binary_dict = {"pr":"pagerank_pull_numa",
                                "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
                                "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge", 
-                               "kcore" : "k_core_const_sum_reduce"}
+                               "kcore" : "k_core_const_sum_reduce",
+                               "setcover" : "set_cover"}
 
 graphit_web_binary_dict = {"pr":"pagerank_pull_numa",
                                    "sssp" : "sssp_hybrid_denseforward",
@@ -67,7 +68,9 @@ graphit_road_binary_dict = {"pr":"pagerank_pull",
                             "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                             "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy",
                             "ppsp_delta_stepping" : "ppsp_delta_stepping_with_merge",
-                            "astar" : "astar_with_merge"}
+                            "astar" : "astar_with_merge",
+                            "kcore" : "k_core_const_sum_reduce",
+                            "setcover" : "set_cover"}
 
 graphit_binary_map = {"testGraph" : graphit_socLive_binary_dict,
                       "socLive":graphit_socLive_binary_dict,
