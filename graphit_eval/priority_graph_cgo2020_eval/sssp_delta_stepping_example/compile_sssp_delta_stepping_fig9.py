@@ -64,7 +64,7 @@ def eval_schedules():
 
     myprint("Reproducing Fig 9 Successful! The generated C++ files are stored in the current directory")
 
-    clean_cmd = "rm compile.cpp; rm compile.o; rm -r compile.o.dSYM; rm test.o; rm -r test.o.dSYM; "
+    clean_cmd = "rm -rf compile.cpp compile.o compile.o.dSYM test.o test.o.dSYM"
     subprocess.check_call(clean_cmd, shell=True)
     
 
