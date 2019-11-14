@@ -21,7 +21,7 @@ julienne::dyn_arr<julienne::uintE> cover = julienne::dyn_arr<julienne::uintE>();
 
 constexpr double epsilon = 0.01;
 const double x = 1.0/log(1.0 + epsilon);
-auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
+
 
 julienne::vertexSubset extern_function(julienne::vertexSubset active) {
     static julienne::array_imap<julienne::uintE> *Elms_p = NULL;
@@ -31,6 +31,7 @@ julienne::vertexSubset extern_function(julienne::vertexSubset active) {
     auto &Elms = *Elms_p;
     auto &G = edges.julienne_graph;
 
+    auto get_bucket_clamped = [&] (size_t deg) -> julienne::uintE { return (deg == 0) ? UINT_E_MAX : (julienne::uintE)floor(x * log((double) deg)); };
     // 1. sets -> elements (Pack out sets and update their degree)
     auto pack_predicate = [&] (const julienne::uintE& u, const julienne::uintE& ngh) { return Elms[ngh] != COVERED; };
     auto pack_apply = [&] (julienne::uintE v, size_t ct) { D[v] = get_bucket_clamped(ct); };

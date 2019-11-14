@@ -516,18 +516,18 @@ protected:
                                  "const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
                                  "const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
                                  "const pq: priority_queue{Vertex}(int);"
-
+                                 "const dst_vertex : Vertex;\n"
                                  "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
                                  "  var new_f_score : int = f_score[src] + weight; "
                                  "  var changed : bool = writeMin(f_score[dst], new_f_score);"
                                  "  if changed \n"
-                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst), g_score[src]);"
+                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst_vertex), g_score[src]);"
                                  "    pq.updatePriorityMin(dst, g_score[dst], new_g_score); "
                                  "  end\n"
                                  "end\n"
                                  "func main() "
                                  "  var start_vertex : int = atoi(argv[2]);"
-                                 "  var dst_vertex : int = atoi(argv[3]);"
+                                 "  dst_vertex = atoi(argv[3]);"
                                  "  load_coords(argv[1]);"
                                  "  pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);"
                                  "  while (pq.finishedNode(dst_vertex) == false) "
@@ -2188,6 +2188,14 @@ TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithDefaultSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, AStarDeltaSteppingWithDefaultSchedule) {
+istringstream is (ppsp_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithSparsePushParallelSchedule) {

@@ -6,8 +6,7 @@ const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX
 const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX
-
-const dst_vertex : int;
+const dst_vertex : Vertex;
 
 const pq: priority_queue{Vertex}(int);
 
