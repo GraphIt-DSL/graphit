@@ -1,4 +1,4 @@
-This is the guide for evaluating our CGO 2020 paper, **PriorityGraph:A Unified Programming Model for Optimizing Ordered Graph Algorithms**. The following guide consists of a step by step instruction to reproduce Figure 9 (generating C++ code for Single Source Shortest Paths with Delta Steppng using different schedules) and Table 4 (PriorityGraph's Perfromance on our 2-socket machine).  The schedules we used here are very likely  **NOT** the fastest schedules for your machine. **Please only use the instructions here as examples for writing and compiling different schedules, and tune schedules to best fit your machine's features.**
+This is the guide for evaluating our CGO 2020 paper, **PriorityGraph:A Unified Programming Model for Optimizing Ordered Graph Algorithms**. The following guide consists of a step-by-step instruction to reproduce Figure 9 (generating C++ code for Single Source Shortest Paths with Delta Steppng using different schedules) and Table 4 (PriorityGraph's Perfromance on our 2-socket machine).  The schedules we used here are very likely  **NOT** the fastest schedules for your machine. **Please only use the instructions here as examples for writing and compiling different schedules, and tune schedules to best fit your machine's features.**
 
 
 ## Setup PriorityGraph 
@@ -35,7 +35,7 @@ cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval
 #compile the graphit files (.gt) into C++ files with schedules used in the paper (from  graphit/test/input_with_schedules directory)
 make graphit_files
 
-#compile the generated C++ files
+#compile the generated C++ files with serial implementation (not parallel)
 make cpps
 ```
 
@@ -90,4 +90,107 @@ To see more options that run specific graphs and algorithms, simply type the fol
 python table4_priority_graph.py -h
 ```
 
-## Reproducing PriorityGraph Performance on 2-socekt Intel Xeon E5-2695 v3 CPUs with 30 MB LLC, TPH enabled. ## 
+## Reproducing PriorityGraph Performance on 2-socekt Intel Xeon E5-2695 v3 CPUs with 30 MB LLC, TPH enabled. (OPTIONAL) ## 
+
+The above sections showed that the compiler can compile PriorityGraph programs into efficient C++ implementations for all six algorithms and run them. Below are the optional instructions for setting up the large graphs and replicating the performance numbers in table 4. 
+Your system will need to support "numactl", "taskset", "cilk", and "openmp" to perform the following the evaluations. We use both OpenMP and CILK based parallelism. OpenMP is required for ds, ppsp, wBFS, and astar and CILK performs better for setcover. We provide step-by-step graph set up, compilation, and running instructions below. 
+
+### Setting up and running algorithms on larger graphs 
+We have provided a few larger graphs for testing in the Dropbox folder [`additional_graphit_graphs`](https://www.dropbox.com/sh/n5f69fk9q3i6349/AAAnkyHFqvQpNBs3TJseq5Opa?dl=0). 
+There are five folders for *road-usad_origweights* (USA Road graphs with original weights), *socLive_logn* (Live Journal graph with log num_vertices distributed weights), *socLive_rand1000* (Live Journal graph with weights distributed from 1 to 1000), *twitter_logn* (Twitter graph with log num_vertices weight distribution), and *twitter_rand1000* (Twitter graph with weights distributed between 1 to 1000).
+Running the experiments on Twitter graph can potentially take a significant amount of time if your machine does not have a 100 GB memory and many cores. Running these other graphs with serial C++ implementations are very slow. **Please try to use the parallel implementations if possible (shown in the code snipet below).**
+
+Below we first show the instructions for running the socLive_rand1000 and socLive_logn graph.
+
+```
+#copy the files to the data directories.
+#The directory names have to be socLive_logn, socLive_rand1000, twitter_logn, twitter_rand1000, road-usad_origweights as we used hard-coded names in the scripts.
+
+cp -r socLive_logn graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
+cp -r socLive_rand1000 graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
+
+#start from graphit root directory
+cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_val/
+
+#first compile the graphit files and the generated cpp files with gcc parallelism enabled with GCC_PAR=1
+make graphit_files
+make GCC_PAR=1 cpps
+
+#run and benchmark the performance for delta stepping (ds), ppsp, kcore, and setcover on socLive_rand1000 as in the paper
+python table4_priority_graph.py -a ds ppsp kcore setcover -g socLive_rand1000
+
+# run and benchmark the performance for weighted BFS (wBFS) on socLive_logn as in the paper
+python table4_priority_graph.py -a wBFS -g socLive_logn
+```
+
+
+On our machine with two sockets, we get the following results running the script, which matches the data in Table 4. 
+```
+ -------------------
+frameworks: graphit 
+ -------------------
+ds
+socLive_rand1000, 0.0900572
+ppsp
+socLive_rand1000, 0.04255
+kcore
+socLive_rand1000, 0.634528
+setcover
+socLive_rand1000, 0.495883
+
+ -------------------
+frameworks: graphit 
+ -------------------
+wBFS
+socLive_logn, 0.0699865
+
+```
+
+
+The road graph and Twitter graph need to be named as *twitter_logn*, *twitter_rand1000*, *road-usad_origweights*. We have included some instructions below.
+
+```
+#copy the files to the data directories.
+#The directory names have to be socLive_rand1000, socLive_logn, road-usad_origweights, twitter_rand1000, twitter_logn as we used hard-coded names in the scripts.
+
+# copy over the directories, can also be soft links
+cp -r twitter_logn graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
+cp -r twitter_rand1000 graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
+cp -r road-usad_origweights graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
+
+#start from graphit root directory
+cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_val/
+
+#first compile the generated cpp files
+#see the section below for info on parallel builds
+make graphit_files
+make GCC_PAR=1 cpps
+
+#run and benchmark the performance on both USARoad graphs
+python table4_priority_graph.py -g  road-usad_origweights -a  ds ppsp kcore setcover astar
+
+#run and benchmark the performance on twitter_rand1000 graphs
+python table4_priority_graph.py -g twitter_rand1000 -a ds ppsp wBFS kcore setcover
+
+#run and benchmark the wBFS performance on twitter_rand1000 graphs
+python table4_priority_graph.py -g twitter_logn -a wBFS
+```
+
+For example the output for the road graph is shown here, which matches Table 4. 
+```
+ -------------------
+frameworks: graphit
+ -------------------
+ds
+road-usad_origweights, 0.2121662
+ppsp
+road-usad_origweights, 0.0424522
+kcore
+road-usad_origweights, 0.305012
+setcover
+road-usad_origweights, 0.868475
+astar
+road-usad_origweights, 0.0717215
+Done parsing the run outputs
+```
+This concludes our artifact evaluation guide
