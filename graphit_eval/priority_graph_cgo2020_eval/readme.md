@@ -58,7 +58,7 @@ python table4_priority_graph.py -a astar -g monaco
 
 The script table4_priority_graph.py first runs the benchmarks and then saves the outputs to the `graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/benchmark_logs` directory. The benchmark script choose the binary based on the graph. Then a separate script parses the outputs to generate the final table of performance in the following form. The application and graph information are shown in the leftmost column, and the running times are shown in the second column in seconds.
 ```
-# performance results from running ds, ppsp, wBFS, kcore, and setcover on testGraph
+#performance results from running ds, ppsp, wBFS, kcore, and setcover on testGraph
  -------------------
 frameworks: graphit 
  -------------------
@@ -74,7 +74,7 @@ setcover
 testGraph, 8e-05
 Done parsing the run outputs
 
-# performance results from running astar on monaco graph
+#performance results from running astar on monaco graph
  -------------------
 frameworks: graphit 
  -------------------
@@ -110,21 +110,23 @@ cp -r socLive_logn graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/gr
 cp -r socLive_rand1000 graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/graphs
 
 #start from graphit root directory
-cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_val/
+cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/
 
-#first compile the graphit files and the generated cpp files with gcc parallelism enabled with GCC_PAR=1
+#If you have not already done so in an earlier step, please first compile the graphit files to cpp
 make graphit_files
+
+#compile cpp files with gcc parallelism (enabled with GCC_PAR=1)
 make GCC_PAR=1 cpps
 
 #run and benchmark the performance for delta stepping (ds), ppsp, kcore, and setcover on socLive_rand1000 as in the paper
 python table4_priority_graph.py -a ds ppsp kcore setcover -g socLive_rand1000
 
-# run and benchmark the performance for weighted BFS (wBFS) on socLive_logn as in the paper
+#run and benchmark the performance for weighted BFS (wBFS) on socLive_logn as in the paper
 python table4_priority_graph.py -a wBFS -g socLive_logn
 ```
 
 
-On our machine with two sockets, we get the following results running the script, which matches the data in Table 4. 
+On our machine with two sockets, we get the following results running the script, which matches the data in Table 4. Note that we only use the log num_vertices (logn) weight distribution graphs for wBFS because it is more suitable for the algorithm (as discussed in the paper).
 ```
  -------------------
 frameworks: graphit 
@@ -161,9 +163,10 @@ cp -r road-usad_origweights graphit/graphit_eval/priority_graph_cgo2020_eval/per
 #start from graphit root directory
 cd  graphit/graphit_eval/priority_graph_cgo2020_eval/perf_eval/
 
-#first compile the generated cpp files
-#see the section below for info on parallel builds
+#If you have not already generated the cpp files, please first do so
 make graphit_files
+
+#GCC_PAR=1 enables builds for parallel programs
 make GCC_PAR=1 cpps
 
 #run and benchmark the performance on both USARoad graphs
@@ -172,7 +175,7 @@ python table4_priority_graph.py -g road-usad_origweights -a  ds ppsp kcore setco
 #run and benchmark the performance on twitter_rand1000 graphs
 python table4_priority_graph.py -g twitter_rand1000 -a ds ppsp wBFS kcore setcover
 
-#run and benchmark the wBFS performance on twitter_rand1000 graphs
+#run and benchmark the wBFS performance on twitter_logn graphs
 python table4_priority_graph.py -g twitter_logn -a wBFS
 ```
 
@@ -213,7 +216,6 @@ frameworks: graphit
  -------------------
 wBFS
 twitter_logn, 1.766514
-
 ```
 
 
