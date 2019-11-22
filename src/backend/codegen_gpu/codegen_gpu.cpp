@@ -177,6 +177,8 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	}
 	codegen.kernel_hoisted_vars = extractor.hoisted_vars;
 	codegen.current_kernel_name = fused_kernel_name;
+	for (auto var: extractor.hoisted_pqs)
+		codegen.kernel_hoisted_vars.push_back(var);
 
 	oss << "void __global__ " << fused_kernel_name << "(void) {" << std::endl;	
 	codegen.indent();
@@ -342,21 +344,22 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	printIndent();
 	oss << "// Body of the actual operator" << std::endl;
 	// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
-	
-	if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
-		printIndent();
-		oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
-		indent();
-		printIndent();
-		oss << "return;" << std::endl;
-		dedent();
-	} else if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
-		printIndent();
-		oss << "if (!gpu_runtime::checkBit(input_frontier.d_bit_map_input, dst))" << std::endl;
-		indent();
-		printIndent();
-		oss << "return;" << std::endl;
-		dedent();
+	if (apply_expr->from_func != "") {	
+		if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+			printIndent();
+			oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
+			indent();
+			printIndent();
+			oss << "return;" << std::endl;
+			dedent();
+		} else if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+			printIndent();
+			oss << "if (!gpu_runtime::checkBit(input_frontier.d_bit_map_input, dst))" << std::endl;
+			indent();
+			printIndent();
+			oss << "return;" << std::endl;
+			dedent();
+		}
 	}
 
 	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
@@ -403,6 +406,16 @@ void CodeGenGPU::genEdgeSets(void) {
 		oss << " __device__ " << edgeset->name << ";" << std::endl;
 		edge_set_type->accept(this);
 		oss << " " << "__host_" << edgeset->name << ";" << std::endl;
+
+
+		if (mir_context_->graphs_with_blocking.find(edgeset->name) != mir_context_->graphs_with_blocking.end()) {
+			uint32_t blocking_size = mir_context_->graphs_with_blocking[edgeset->name];
+			auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
+			edge_set_type->accept(this);
+			oss << " __device__ " << edgeset->name << "__blocked_" << blocking_size << ";" << std::endl;
+			edge_set_type->accept(this);
+			oss << " " << "__host_" << edgeset->name << "__blocked_" << blocking_size << ";" << std::endl;
+		}
 	}
 }
 
@@ -412,7 +425,7 @@ void CodeGenGPU::visit(mir::EdgeSetType::Ptr edgeset_type) {
 		edgeset_type->weight_type->accept(this);
 		oss << ">";	
 	} else {
-		oss << "gpu_runtime::GraphT<int32_t>";
+		oss << "gpu_runtime::GraphT<char>";
 	}
 }
 
@@ -519,6 +532,15 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 				printIndent();
 				oss << "cudaMemcpyToSymbol(";
 				oss << var_name << ", &__host_" << var_name << ", sizeof(__host_" << var_name << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+				if (mir_context_->graphs_with_blocking.find(var_name) != mir_context_->graphs_with_blocking.end()) {
+					uint32_t blocking_size = mir_context_->graphs_with_blocking[var_name];		
+					printIndent();
+					oss << "gpu_runtime::block_graph_edges(__host_" << var_name << ", __host_" << var_name << "__blocked_" << blocking_size << ", " << blocking_size << ");" << std::endl;
+					printIndent();
+					oss << "cudaMemcpyToSymbol(";
+					oss << var_name << "__blocked_" << blocking_size << ", &__host_" << var_name << "__blocked_" << blocking_size << ", sizeof(__host_" << var_name << "__blocked_" << blocking_size << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+				}
+				
 
 			}
 			for (auto constant: mir_context_->getLoweredConstants()) {
@@ -579,22 +601,19 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 		}
 		oss << "(";
 		oss << "&(";
-		puom->priority_queue->accept(this);
-		oss << ".device_priorities_[";
+		//puom->priority_queue->accept(this);
+		oss << "__output_frontier.d_priority_array[";
 		puom->destination_node_id->accept(this);
 		oss << "]), ";
 		puom->new_val->accept(this);
 		oss << ")";
 	}
 	oss << " && ";
-	puo->priority_queue->accept(this);
-	oss << ".device_priorities_[";
+	oss << "__output_frontier.d_priority_array[";
 	puo->destination_node_id->accept(this);
 	oss << "] < (";
-	puo->priority_queue->accept(this);
-	oss << ".current_priority_ + ";
-	puo->priority_queue->accept(this);
-	oss << ".delta_)";
+	//puo->priority_queue->accept(this);
+	oss << "__output_frontier.priority_cutoff)";
 	oss << ") {" << std::endl;
 	indent();
 
@@ -603,7 +622,7 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	evp->vertex_id = puo->destination_node_id;
 	mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(puo->priority_queue);
 	// Since this variable is created temporarily, we don;t need type
-	mir::Var var(var_expr->var.getName() + ".frontier_", nullptr);
+	mir::Var var("__output_frontier", nullptr);
 	mir::VarExpr::Ptr frontier_expr = std::make_shared<mir::VarExpr>();
 	frontier_expr->var = var;	
 	
@@ -650,10 +669,7 @@ void CodeGenGPUHost::visit(mir::VarExpr::Ptr var_expr) {
 
 }
 void CodeGenGPUFusedKernel::visit(mir::VarExpr::Ptr var_expr) {
-	if (mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
-		oss << "__local_" << var_expr->var.getName();
-		return;
-	} else if (is_hoisted_var(var_expr->var)) {
+	if (is_hoisted_var(var_expr->var)) {
 		oss << "__local_" << var_expr->var.getName();
 		return;
 	} else 
@@ -734,7 +750,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
 	mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
 	if (target_type->weight_type == nullptr)
-		oss << "int32_t";
+		oss << "char";
 	else
 		target_type->weight_type->accept(this);
 
@@ -749,6 +765,9 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 
 	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
+	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY && esae->applied_schedule.edge_blocking == fir::gpu_schedule::SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
+		oss << "__blocked_" << esae->applied_schedule.edge_blocking_size;
+	}
 	oss << ", ";
 	if (esae->from_func != "")
 		oss << esae->from_func;
@@ -854,6 +873,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		insertUsedPq(upesae->priority_queue_used);
 	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
+/*
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(esae);
 		printIndent();
 		oss << "if (_thread_id == 0) {" << std::endl;
@@ -866,6 +886,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		printIndent();
 		oss << "_grid.sync();" << std::endl;
 		//oss << "cudaMemcpyToSymbol(" << upesae->priority_queue_used.getName() << ", &__host_" << upesae->priority_queue_used.getName() << ", sizeof(" << upesae->priority_queue_used.getName() << "), 0);" << std::endl;
+*/
 	}
 	printIndent();
 	oss << load_balance_function << "_device<";
@@ -873,7 +894,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	mir::Var target_var = mir::to<mir::VarExpr>(esae->target)->var;
 	mir::EdgeSetType::Ptr target_type = mir::to<mir::EdgeSetType>(target_var.getType());
 	if (target_type->weight_type == nullptr)
-		oss << "int32_t";
+		oss << "char";
 	else
 		target_type->weight_type->accept(this);
 	

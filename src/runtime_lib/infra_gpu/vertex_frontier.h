@@ -3,6 +3,9 @@
 
 #include "infra_gpu/support.h"
 #include <cooperative_groups.h>
+#ifndef FRONTIER_MULTIPLIER
+#define FRONTIER_MULTIPLIER (6)
+#endif
 using namespace cooperative_groups;
 namespace gpu_runtime {
 class VertexFrontier {
@@ -34,7 +37,10 @@ class VertexFrontier {
 	};
 
 	format_ready_type format_ready;
-
+	
+	// PriorityQueue related trackers
+	int32_t* d_priority_array;
+	int32_t priority_cutoff;
 };
 
 
@@ -101,8 +107,8 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_e
 	frontier.max_num_elems = num_vertices;
 	cudaMalloc(&frontier.d_num_elems_input, sizeof(int32_t));
 	cudaMalloc(&frontier.d_num_elems_output, sizeof(int32_t));
-	cudaMalloc(&frontier.d_sparse_queue_input, sizeof(int32_t) * num_vertices * 6);
-	cudaMalloc(&frontier.d_sparse_queue_output, sizeof(int32_t) * num_vertices * 6);
+	cudaMalloc(&frontier.d_sparse_queue_input, sizeof(int32_t) * num_vertices * FRONTIER_MULTIPLIER);
+	cudaMalloc(&frontier.d_sparse_queue_output, sizeof(int32_t) * num_vertices * FRONTIER_MULTIPLIER);
 	
 	if (num_vertices == init_elems) {
 		initialize_frontier_all<<<NUM_CTA, CTA_SIZE>>>(frontier);		

@@ -40,6 +40,8 @@ template<typename PriorityT_>
 			delta_ = delta;
 			ready_set_dequeued = false;
 			frontier_ = gpu_runtime::create_new_vertex_set(gpu_runtime::builtin_getVertices(graph));
+			frontier_.d_priority_array = device_priorities;
+			frontier_.priority_cutoff = current_priority_ + delta_;
 			cudaMalloc(&current_priority_shared, sizeof(PriorityT_));
 			if (initial_node != -1){
 				gpu_runtime::builtin_addVertex(frontier_, initial_node);
@@ -136,6 +138,7 @@ template<typename PriorityT_>
 				frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
 
 				//Now that we dequeued it, the next ready set is no longer dequeued
+				frontier_.priority_cutoff = current_priority_ + delta_;
 				ready_set_dequeued = false;
 				return frontier_;
 			}
@@ -167,6 +170,7 @@ template<typename PriorityT_>
 				gpu_runtime::swap_queues_device(frontier_);
 				frontier_.format_ready = gpu_runtime::VertexFrontier::SPARSE;
 				ready_set_dequeued = false;
+				frontier_.priority_cutoff = current_priority_ + delta_;
 				return frontier_;
 			}
 			return frontier_;

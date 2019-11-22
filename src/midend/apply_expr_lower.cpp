@@ -199,6 +199,10 @@ namespace graphit {
 				node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
 			else 
 				assert(false && "Invalid option for direction\n");
+			
+			if (edgeset_apply->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY && edgeset_apply->applied_schedule.edge_blocking == fir::gpu_schedule::SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
+				mir_context_->graphs_with_blocking[mir::to<mir::VarExpr>(edgeset_apply->target)->var.getName()] = edgeset_apply->applied_schedule.edge_blocking_size;
+			}
 						
 		} else {
 			// No schedule is attached, lower using default schedule	

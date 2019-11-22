@@ -3,6 +3,7 @@
 
 #include "infra_gpu/graph.h"
 #include "infra_gpu/vertex_frontier.h"
+#include "infra_gpu/gpu_priority_queue.h"
 #include <cooperative_groups.h>
 using namespace cooperative_groups;
 
@@ -29,6 +30,7 @@ static void __global__ vertex_set_apply_kernel(VertexFrontier frontier) {
 // VERTEX BASED LOAD BALANCE FUNCTIONS
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
 void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier, unsigned int cta_id, unsigned int num_cta) {
+
 	int32_t vid = threadIdx.x + blockDim.x * cta_id;
 	if (vid >= AccessorType::getSize(input_frontier))
 		return;
@@ -39,11 +41,27 @@ void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> &graph, VertexF
 		int32_t dst = graph.d_edge_dst[eid];
 		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
 	}
+
+/*
+	int32_t total_vertices = AccessorType::getSize(input_frontier);
+	for (int32_t vidx = threadIdx.x + blockDim.x * cta_id; vidx < total_vertices; vidx += num_cta * blockDim.x) {
+		int32_t src = AccessorType::getElement(input_frontier, vidx);
+		for (int32_t eid = graph.d_src_offsets[src]; eid < graph.d_src_offsets[src+1]; eid++) {
+			if (src_filter(src) == false)
+				break;
+			int32_t dst = graph.d_edge_dst[eid];
+			load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
+		}	
+	}
+*/
 }
 template <typename AccessorType>
 void __host__ vertex_based_load_balance_info(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
+
 	int32_t num_threads = AccessorType::getSizeHost(frontier);
 	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
+
+	//num_cta = NUM_CTA;
 	cta_size = CTA_SIZE;
 }
 template <typename AccessorType>
@@ -90,6 +108,21 @@ static void __device__ edge_only_load_balance(GraphT<EdgeWeightType> &graph, Ver
 		}
 	}		
 }
+
+template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
+static void __device__ edge_only_load_balance_blocked(GraphT<EdgeWeightType> &graph, VertexFrontier input_frontier, VertexFrontier output_frontier, unsigned int cta_id, unsigned int total_cta, int32_t index) {
+	int32_t thread_id = blockDim.x * cta_id + threadIdx.x;
+	int32_t total_threads = blockDim.x * total_cta;
+	int32_t starting_edge = index == 0?0:graph.d_bucket_sizes[index-1];
+	int32_t ending_edge = graph.d_bucket_sizes[index];
+	for (int32_t eid = thread_id + starting_edge; eid < ending_edge; eid += total_threads) {
+		int32_t src = graph.d_edge_src[eid];
+		if (src_filter(src) == true) {
+			int32_t dst = graph.d_edge_dst[eid];
+			load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);	
+		}
+	}		
+}
 template <typename AccessorType>
 void __host__ edge_only_load_balance_info(VertexFrontier &frontier, int32_t &num_cta, int32_t &cta_size) {
 	num_cta = NUM_CTA;
@@ -105,11 +138,26 @@ void __global__ edge_only_load_balance_kernel(GraphT<EdgeWeightType> graph, Vert
 	edge_only_load_balance<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x);
 }
 
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __global__ edge_only_load_balance_blocked_kernel(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier) {
+	for (int32_t index = 0; index < graph.num_buckets; index++) {
+		edge_only_load_balance_blocked<EdgeWeightType, load_balance_payload, AccessorType, src_filter>(graph, input_frontier, output_frontier, blockIdx.x, gridDim.x, index);
+		__syncthreads();
+	}
+}
+
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
 void __host__ edge_only_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
 	int32_t num_cta, cta_size;
 	edge_only_load_balance_info<AccessorType>(input_frontier, num_cta, cta_size);
 	edge_only_load_balance_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);
+}
+
+template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)>
+void __host__ edge_only_load_balance_blocked_host(GraphT<EdgeWeightType> &graph, VertexFrontier &input_frontier, VertexFrontier &output_frontier) {
+	int32_t num_cta = NUM_CTA;
+	int32_t cta_size = CTA_SIZE;
+	edge_only_load_balance_blocked_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier);
 }
 
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
@@ -122,6 +170,7 @@ void __device__ edge_only_load_balance_device(GraphT<EdgeWeightType> &graph, Ver
 #define STAGE_1_SIZE (8)
 #define WARP_SIZE (32)
 template <typename EdgeWeightType, void load_balance_payload (GraphT<EdgeWeightType>, int32_t, int32_t, int32_t, VertexFrontier, VertexFrontier), typename AccessorType, bool src_filter(int32_t)>
+
 static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFrontier input_frontier, VertexFrontier output_frontier, unsigned int cta_id, unsigned int total_cta) {
 	int32_t thread_id = blockDim.x * cta_id + threadIdx.x;
 	
@@ -182,7 +231,7 @@ static void __device__ TWCE_load_balance(GraphT<EdgeWeightType> graph, VertexFro
 			if (src_filter(local_vertex) == false)
 				break;
 			int32_t dst = graph.d_edge_dst[neigh_id];
-			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);	
+			load_balance_payload(graph, local_vertex, dst, neigh_id, input_frontier, output_frontier);
 		}
 
 	}
@@ -624,13 +673,16 @@ void __host__ TWC_load_balance_host(GraphT<EdgeWeightType> &graph, VertexFrontie
 	cudaMemcpy(twc_bin_sizes, graph.twc_bin_sizes, 3 * sizeof(int32_t), cudaMemcpyDeviceToHost);
 	num_threads = twc_bin_sizes[0];	
 	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
-	TWC_small_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
+	if (num_cta)
+		TWC_small_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
 	num_threads = twc_bin_sizes[1] * MID_BIN;	
 	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
-	TWC_mid_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
+	if (num_cta)
+		TWC_mid_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 
 	num_threads = twc_bin_sizes[2] * LARGE_BIN;	
 	num_cta = (num_threads + CTA_SIZE-1)/CTA_SIZE;
-	TWC_large_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 	
+	if (num_cta)
+		TWC_large_bin_kernel<EdgeWeightType, load_balance_payload, AccessorType, src_filter><<<num_cta, cta_size>>>(graph, input_frontier, output_frontier); 	
 }
 
 template <typename EdgeWeightType, load_balance_payload_type<EdgeWeightType> load_balance_payload, typename AccessorType, bool src_filter(int32_t)> 
@@ -840,7 +892,8 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 	int32_t row_size = end_row - start_row + 1;
 	//int32_t start_idx;
 
-	if(row_size <= STRICT_SM_SIZE) {
+	//if(row_size <= STRICT_SM_SIZE) {
+	if(row_size <= -1 ) {
 		if(threadIdx.x < row_size) {
 			index = AccessorType::getElement(input_frontier, start_row+threadIdx.x);
 			//deg = graph.d_get_degree(index);

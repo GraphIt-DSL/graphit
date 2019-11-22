@@ -53,6 +53,13 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t *strict_sum;
 	int32_t *strict_cta_sum;
 	int32_t *strict_grid_sum;
+
+
+	// blocking related parameters
+	int32_t num_buckets;
+	int32_t *h_bucket_sizes;
+	int32_t *d_bucket_sizes;
+
 		
 };
 void consume(int32_t _) {
@@ -84,37 +91,54 @@ static void block_graph_edges(GraphT<EdgeWeightType> &input_graph, GraphT<EdgeWe
 
 	output_graph.h_edge_src = new int32_t[input_graph.num_edges];
 	output_graph.h_edge_dst = new int32_t[input_graph.num_edges];
-	output_graph.h_edge_weights = new EdgeWeightType[input_graph.num_edges];
+	output_graph.h_edge_weight = new EdgeWeightType[input_graph.num_edges];
 
 	int32_t num_blocks = (input_graph.num_vertices + blocking_size - 1)/blocking_size;
-	
+	std::cout << "num blocks " << num_blocks << std::endl;	
 	int32_t *block_sizes = new int32_t[num_blocks+1];		
+	for (int32_t id = 0; id < num_blocks+1; id++)
+		block_sizes[id] = 0;
 	
 	for (int32_t eid = 0; eid < input_graph.num_edges; eid++) {
-		int32_t dst = input_graph.d_edge_dst[eid];
+		int32_t dst = input_graph.h_edge_dst[eid];
 		int32_t block_id = identify_block_id(dst, blocking_size);
-		block_sizes[block_id] += 1;
+		block_sizes[block_id+1] += 1;
 	}	
+	int32_t running_sum = 0;
+	for (int32_t bid = 0; bid < num_blocks; bid++) {
+		running_sum += block_sizes[bid];
+		block_sizes[bid] = running_sum;
+	}
 	block_sizes[0] = 0;
 	for (int32_t eid = 0; eid < input_graph.num_edges; eid++) {
-		int32_t dst = input_graph.d_edge_dst[eid];
+		int32_t dst = input_graph.h_edge_dst[eid];
 		int32_t block_id = identify_block_id(dst, blocking_size);
 		int32_t new_eid = block_sizes[block_id];
 		block_sizes[block_id]++;
-		output_graph.h_edge_src[new_eid] = input_graph.d_edge_src[eid];	
-		output_graph.h_edge_dst[new_eid] = input_graph.d_edge_dst[eid];	
-		output_graph.h_edge_weights[new_eid] = input_graph.d_edge_weights[eid];	
+		output_graph.h_edge_src[new_eid] = input_graph.h_edge_src[eid];	
+		output_graph.h_edge_dst[new_eid] = input_graph.h_edge_dst[eid];	
+		output_graph.h_edge_weight[new_eid] = input_graph.h_edge_weight[eid];	
 	}
 	
-	delete[] block_sizes;
+	//delete[] block_sizes;
+	output_graph.num_buckets = num_blocks;
+	output_graph.h_bucket_sizes = block_sizes;
+
+
+	cudaFree(input_graph.d_edge_src);
+	cudaFree(input_graph.d_edge_dst);
+	cudaFree(input_graph.d_edge_weight);
+
 	cudaMalloc(&output_graph.d_edge_src, sizeof(int32_t) * output_graph.num_edges);
 	cudaMalloc(&output_graph.d_edge_dst, sizeof(int32_t) * output_graph.num_edges);
 	cudaMalloc(&output_graph.d_edge_weight, sizeof(EdgeWeightType) * output_graph.num_edges);
+	cudaMalloc(&output_graph.d_bucket_sizes, sizeof(int32_t) * num_blocks);
 	
 	
 	cudaMemcpy(output_graph.d_edge_src, output_graph.h_edge_src, sizeof(int32_t) * output_graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(output_graph.d_edge_dst, output_graph.h_edge_dst, sizeof(int32_t) * output_graph.num_edges, cudaMemcpyHostToDevice);
 	cudaMemcpy(output_graph.d_edge_weight, output_graph.h_edge_weight, sizeof(EdgeWeightType) * output_graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_bucket_sizes, output_graph.h_bucket_sizes, sizeof(int32_t) * num_blocks, cudaMemcpyHostToDevice);
 		
 }
 
@@ -145,7 +169,7 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 		
 		CONSUME(fread(graph.h_edge_src, sizeof(int32_t), graph.num_edges, bin_file));
 		CONSUME(fread(graph.h_edge_dst, sizeof(int32_t), graph.num_edges, bin_file));
-		CONSUME(fread(graph.h_edge_weight, sizeof(int32_t), graph.num_edges, bin_file));
+		CONSUME(fread(graph.h_edge_weight, sizeof(EdgeWeightType), graph.num_edges, bin_file));
 
 		CONSUME(fread(graph.h_src_offsets, sizeof(int32_t), graph.num_vertices + 1, bin_file));
 		fclose(bin_file);	
@@ -180,7 +204,7 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 		CONSUME(fwrite(&graph.num_edges, sizeof(int32_t), 1, bin_file));
 		CONSUME(fwrite(graph.h_edge_src, sizeof(int32_t), graph.num_edges, bin_file));
 		CONSUME(fwrite(graph.h_edge_dst, sizeof(int32_t), graph.num_edges, bin_file));
-		CONSUME(fwrite(graph.h_edge_weight, sizeof(int32_t), graph.num_edges, bin_file));
+		CONSUME(fwrite(graph.h_edge_weight, sizeof(EdgeWeightType), graph.num_edges, bin_file));
 		CONSUME(fwrite(graph.h_src_offsets, sizeof(int32_t), graph.num_vertices + 1, bin_file));
 		fclose(bin_file);	
 	}

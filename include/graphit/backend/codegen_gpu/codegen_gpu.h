@@ -80,9 +80,16 @@ protected:
 	std::vector<mir::Var> kernel_hoisted_vars;
 	std::string current_kernel_name;
 	bool is_hoisted_var (mir::Var var) {
-		for (auto h_var: kernel_hoisted_vars)
-			if (h_var.getName() == var.getName())
+		std::string var_name = var.getName();
+			
+		size_t dot_pos = var_name.find(".");
+		if (dot_pos != std::string::npos) {
+			var_name.resize(dot_pos);
+		}
+		for (auto h_var: kernel_hoisted_vars) {
+			if (h_var.getName() == var_name)
 				return true;
+		}
 		return false;
 	}
 	
