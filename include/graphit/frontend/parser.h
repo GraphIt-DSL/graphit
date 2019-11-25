@@ -209,6 +209,8 @@ namespace graphit {
         fir::LoadExpr::Ptr parseLoadExpr();
 
         fir::IntersectionExpr::Ptr parseIntersectionExpr();
+        
+        fir::IntersectNeighborExpr::Ptr parseIntersectNeighborExpr();
 
         // OG Additions
         fir::PriorityQueueType::Ptr parsePriorityQueueType();

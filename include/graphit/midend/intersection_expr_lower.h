@@ -33,6 +33,7 @@ namespace graphit {
             };
 
             virtual void visit(mir::IntersectionExpr::Ptr intersection_expr);
+            virtual void visit(mir::IntersectNeighborExpr::Ptr intersection_expr);
 
 
             Schedule * schedule_;

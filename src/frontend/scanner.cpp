@@ -50,6 +50,7 @@ namespace graphit {
         if (token == "new") return Token::Type::NEW;
         if (token == "delete") return Token::Type::DELETE;
         if (token == "intersection") return Token::Type::INTERSECTION;
+        if (token == "intersectNeighbor") return Token::Type::INTERSECT_NEIGH;
         if (token == "and") return Token::Type::AND;
         if (token == "or") return Token::Type::OR;
         if (token == "not") return Token::Type::NOT;

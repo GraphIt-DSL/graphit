@@ -322,6 +322,12 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<IntersectNeighborExpr> inter_expr) {
+            inter_expr->edges->accept(this);
+            inter_expr->vertex_a->accept(this);
+            inter_expr->vertex_b->accept(this);
+        }
+
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {
             load_expr->file_name->accept(this);
         }

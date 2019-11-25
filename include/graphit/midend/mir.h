@@ -817,6 +817,23 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+        struct IntersectNeighborExpr : public Expr {
+            Expr::Ptr edges;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            IntersectionSchedule::IntersectionType intersectionType;
+
+            typedef std::shared_ptr<IntersectNeighborExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntersectNeighborExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
         
 
         
