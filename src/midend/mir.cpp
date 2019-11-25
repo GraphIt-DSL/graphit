@@ -162,6 +162,21 @@ namespace graphit {
             return node;
         }
 
+        void IntersectNeighborExpr::copy(MIRNode::Ptr node) {
+            auto expr = to<mir::IntersectNeighborExpr>(node);
+            vertex_a = expr->vertex_a->clone<Expr>();
+            vertex_b = expr->vertex_b->clone<Expr>();
+            intersectionType = expr->intersectionType;
+
+        }
+
+
+        MIRNode::Ptr IntersectNeighborExpr::cloneNode() {
+            const auto node = std::make_shared<IntersectNeighborExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void EdgeSetLoadExpr::copy(MIRNode::Ptr node) {
             Expr::copy(node);
             auto expr = to<mir::EdgeSetLoadExpr>(node);

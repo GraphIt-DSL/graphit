@@ -250,6 +250,57 @@ static size_t binarySearchIntersection(VertexSubset<NodeID>* A, VertexSubset<Nod
     return intersectSortedNodeSetBinarySearch((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB);
 }
 
+static size_t hiroshiVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetHiroshi(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t multiSkipVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetMultipleSkip(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t naiveVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetNaive(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t combinedVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetCombined(iter_src, iter_dest, srcTotal, destTotal, 1000, 0.1);
+
+}
+
+static size_t binarySearchIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetBinarySearch(iter_src, iter_dest, srcTotal, destTotal);
+
+}
+
+
 template <typename T>
 static int builtin_getVertices(julienne::graph<T> &edges) {
     return edges.n;

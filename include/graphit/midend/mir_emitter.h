@@ -99,6 +99,8 @@ namespace graphit {
 
         virtual void visit(fir::IntersectionExpr::Ptr);
 
+        virtual void visit(fir::IntersectNeighborExpr::Ptr);
+
         virtual void visit(fir::EdgeSetLoadExpr::Ptr);
 
         virtual void visit(fir::VarExpr::Ptr);

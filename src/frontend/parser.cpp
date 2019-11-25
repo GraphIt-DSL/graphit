@@ -883,6 +883,8 @@ namespace graphit {
                 return parseLoadExpr();
             case Token::Type::INTERSECTION:
                 return parseIntersectionExpr();
+            case Token::Type::INTERSECT_NEIGH:
+                return parseIntersectNeighborExpr();
             default:
                 return parseOrExpr();
         }
@@ -2620,6 +2622,25 @@ namespace graphit {
 
         consume(Token::Type::RP);
         return intersectionExpr;
+    }
+
+    // intersect_neigh_expr: ('intersection') '(' 'expr', 'expr' ')' ';'
+    fir::IntersectNeighborExpr::Ptr Parser::parseIntersectNeighborExpr() {
+        const auto intersectNeighExpr = std::make_shared<fir::IntersectNeighborExpr>();
+
+        const Token intersectionToken = consume(Token::Type::INTERSECT_NEIGH);
+
+        consume(Token::Type::LP);
+        const auto edges = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexB = parseExpr();
+        consume(Token::Type::RP);
+        intersectNeighExpr->edges = edges;
+        intersectNeighExpr->vertex_a = vertexA;
+        intersectNeighExpr->vertex_b = vertexB;
+        return intersectNeighExpr;
     }
 
     void Parser::initIntrinsics() {

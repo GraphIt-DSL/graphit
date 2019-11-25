@@ -1663,6 +1663,36 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::IntersectNeighborExpr::Ptr intersection_exp){
+
+        if (intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::HIROSHI) {
+            oss << "hiroshiVertexIntersectionNeighbor(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::MULTISKIP) {
+            oss << "multiSkipVertexIntersectionNeighbor(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::COMBINED) {
+            oss << "combinedVertexIntersectionNeighbor(";
+        }
+
+        else if(intersection_exp->intersectionType == IntersectionSchedule::IntersectionType::BINARY) {
+            oss << "binarySearchIntersectionNeighbor(";
+        }
+
+        else {
+            oss << "naiveVertexIntersectionNeighbor(";
+        }
+        intersection_exp->edges->accept(this);
+        oss << ", ";
+        intersection_exp->vertex_a->accept(this);
+        oss << ", ";
+        intersection_exp->vertex_b->accept(this);
+        oss << ") ";
+
+    }
+
     void CodeGenCPP::visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
         if (edgeset_load_expr->is_weighted_) {
             oss << "builtin_loadWeightedEdgesFromFile ( ";

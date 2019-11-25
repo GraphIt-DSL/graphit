@@ -102,6 +102,8 @@ namespace graphit {
 
         struct IntersectionExpr;
 
+        struct IntersectNeighborExpr;
+
         struct EdgeSetLoadExpr;
 
         // Expression that allocates a new vertexset (new vertexset(node_id));
@@ -303,6 +305,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<VectorAllocExpr>);
 
             virtual void visit(std::shared_ptr<IntersectionExpr>);
+            virtual void visit(std::shared_ptr<IntersectNeighborExpr>);
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
             virtual void visit(std::shared_ptr<MethodCallExpr>);

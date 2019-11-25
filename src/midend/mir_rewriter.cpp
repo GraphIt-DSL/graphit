@@ -341,6 +341,15 @@ namespace graphit {
             node = load_expr;
         }
 
+        void MIRRewriter::visit(IntersectNeighborExpr::Ptr inter_neigh_expr) {
+            inter_neigh_expr->edges = rewrite<Expr>(inter_neigh_expr->edges);
+            inter_neigh_expr->vertex_a = rewrite<Expr>(inter_neigh_expr->vertex_a);
+            inter_neigh_expr->vertex_b = rewrite<Expr>(inter_neigh_expr->vertex_b);
+            inter_neigh_expr->intersectionType = inter_neigh_expr->intersectionType;
+            node = inter_neigh_expr;
+        }
+
+
         void MIRRewriter::visit(IntersectionExpr::Ptr inter_expr) {
             inter_expr->vertex_a = rewrite<Expr>(inter_expr->vertex_a);
             inter_expr->vertex_b = rewrite<Expr>(inter_expr->vertex_b);
@@ -353,6 +362,7 @@ namespace graphit {
             inter_expr->intersectionType = inter_expr->intersectionType;
             node = inter_expr;
         }
+
 
         // OG Additions
         void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {
