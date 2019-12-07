@@ -101,7 +101,7 @@ def main():
                         default=["graphit"], # "netflix" only used for cf
                         help="frameworks to parse")
     parser.add_argument('-g', '--graphs', nargs='+',
-                        default=["testGraph"],
+                        default=["socLive", "twitter", "webGraph"],
                         help="graphs to parse. Defaults to testGraph.")
     parser.add_argument('-a', '--applications', nargs='+',
                         default=["bfs", "sssp", "pr", "cc", "prd"], 

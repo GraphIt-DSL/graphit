@@ -10,39 +10,45 @@ use_NUMACTL = True
 
 
 framework_app_lookup = {
-    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf"},
+    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "prd": "prd", "cf": "cf", "bc":"bc"},
 }
 
 graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull", 
                                    "sssp" : "sssp_hybrid_denseforward",
                                    "cc" : "cc_hybrid_dense",
                                    "bfs" :"bfs_hybrid_dense",
-                                   "prd" : "pagerankdelta_hybrid_dense"},
+                                   "prd" : "pagerankdelta_hybrid_dense",
+                                   "bc" : "bc_SparsePushDensePull_bitvector"},
                       "socLive" : {"pr":"pagerank_pull", 
                                    "sssp" : "sssp_hybrid_denseforward",
                                    "cc" : "cc_hybrid_dense",
                                    "bfs" :"bfs_hybrid_dense",
-                                   "prd" : "pagerankdelta_hybrid_dense"},
+                                   "prd" : "pagerankdelta_hybrid_dense",
+                                   "bc": "bc_SparsePushDensePull"},
                       "twitter" : {"pr":"pagerank_pull_segment",
                                    "sssp" : "sssp_hybrid_denseforward",
                                    "cc" : "cc_hybrid_dense_bitvec_segment",
                                    "bfs" :"bfs_hybrid_dense_bitvec",
-                                   "prd" : "pagerankdelta_hybrid_dense_bitvec_segment"}, 
+                                   "prd" : "pagerankdelta_hybrid_dense_bitvec_segment",
+                                   "bc" : "bc_SparsePushDensePull_bitvector"}, 
                       "webGraph" : {"pr":"pagerank_pull_segment",
                                     "sssp" : "sssp_hybrid_denseforward",
                                     "cc" : "cc_hybrid_dense_bitvec_segment",
                                     "bfs" :"bfs_hybrid_dense_bitvec",
-                                    "prd" : "pagerankdelta_hybrid_dense_bitvec_segment"},
+                                    "prd" : "pagerankdelta_hybrid_dense_bitvec_segment",
+                                    "bc" : "bc_SparsePushDensePull_bitvector"},
                       "friendster" : {"pr":"pagerank_pull_segment",
                                       "sssp" : "sssp_hybrid_denseforward",
                                       "cc" : "cc_hybrid_dense_bitvec_segment",
                                       "bfs" :"bfs_hybrid_dense_bitvec",
-                                      "prd" : "pagerankdelta_hybrid_dense_bitvec_segment"},
+                                      "prd" : "pagerankdelta_hybrid_dense_bitvec_segment",
+                                      "bc" : "bc_SparsePushDensePull_bitvector"},
                       "road-usad" : {"pr":"pagerank_pull",
                                      "sssp" : "sssp_push_slq",
                                      "cc" : "cc_hybrid_dense",
                                      "bfs" :"bfs_push_slq",
-                                     "prd" : "pagerankdelta_sparse_push"},
+                                     "prd" : "pagerankdelta_sparse_push",
+                                     "bc": "bc_SparsePushDensePull"},
                       "netflix"   : {"cf" : "cf_pull_load_balance_segment"},
                       "netflix_2x"   : {"cf" : "cf_pull_load_balance_segment"}
                       }
@@ -51,7 +57,8 @@ NUM_THREADS=48
 PR_ITERATIONS=20
 
 graphit_PATH = "./bin/"
-DATA_PATH = "../data/"
+#DATA_PATH = "../../../data/"
+DATA_PATH = "/home/u32249/data/"
 OUTPUT_DIR= "./outputs/"
 
 def get_vertex_count(graph):
@@ -90,10 +97,14 @@ def get_cmd_graphit(g, p, point):
         graph_path = DATA_PATH + g + "/" + g + "_gapbs.sg"
 
     args = graph_path
-    if p == "sssp" or p == "bfs":
+    if p == "sssp" or p == "bfs" or p == "bc":
         args += " " +  point
-
-    command = graphit_PATH + graphit_binary_map[g][p] + " " + args
+    
+    if p == "tc":
+        command = graphit_PATH + "tc " + args 
+        print "Tc Command", command
+    else:
+        command = graphit_PATH + graphit_binary_map[g][p] + " " + args
     #if p in ["pr", "cc", "prd"] and g in ["twitter", "webGraph", "friendster"]:
     if g in ["socLive", "twitter", "webGraph", "friendster"]:
         
@@ -127,9 +138,9 @@ def get_cmd(framework, graph, app, point):
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-g', '--graphs', nargs='+',
-                        default=["testGraph"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
+                        default=["road-usad", "socLive", "twitter", "webGraph"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "prd"], 
+                        default=["bfs", "sssp", "pr", "cc", "prd", "bc"], 
                         help="applications to benchmark. Defaults to all four applications.")
     
     args = parser.parse_args()
