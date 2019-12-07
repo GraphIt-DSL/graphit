@@ -82,7 +82,6 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 #include "infra_gapbs/pvector.h"
 #include "infra_gapbs/eager_priority_queue.h"
 #include <queue>
-//#include <curses.h>
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
 #include "infra_gapbs/ordered_processing.h"
