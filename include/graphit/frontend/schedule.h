@@ -208,6 +208,7 @@ namespace graphit {
             int pull_load_balance_edge_grain_size;
             int num_segment;
             int delta;
+            int grain_size;
             bool numa_aware;
             int merge_threshold;
             int num_open_buckets;
