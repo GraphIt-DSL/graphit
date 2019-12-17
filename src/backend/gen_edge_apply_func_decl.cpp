@@ -150,7 +150,6 @@ namespace graphit {
             std::string apply_func_name) {
 
 
-
         //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
             oss_ << "    if (g.get_flags_() == nullptr){\n"
@@ -186,16 +185,24 @@ namespace graphit {
 
         std::string for_type = "for";
         if (apply->is_parallel)
-            for_type = "parallel_for";
+            for_type = "ligra::parallel_for";
 
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
+        if (apply->grain_size == 1){
+            for_type.append("_1_lambda(");
+
+        } else if(apply->grain_size == 256) {
+            for_type.append("_256_lambda(");
+        }
+
+
         if (apply->is_parallel) {
             if (from_vertexset_specified)
-                oss_ << "ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {" << std::endl;
+                oss_ << for_type + "(long)0, (long)m, [&] (long i) {" << std::endl;
             else
-                oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+                oss_ << for_type + "(NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
         } else {
 
             if (from_vertexset_specified)

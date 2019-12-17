@@ -459,6 +459,30 @@ TEST_F(FrontendTest, SimpleAttachLabel) {
 
 }
 
+TEST_F(FrontendTest, SimpleIntersectNeighborOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "const inter : uint_64 = intersectNeighbor(edges, src, dest);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+
+}
+
+TEST_F(FrontendTest, SimpleIntersectNeighborOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersectNeighbor(edges, src, dest);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(FrontendTest, SimpleAttachLabelNoSpace) {
     istringstream is("func main() "
@@ -725,3 +749,4 @@ TEST_F(FrontendTest, SetCoverFrontendTest) {
     );
     EXPECT_EQ(0, basicTest(is));
 }
+

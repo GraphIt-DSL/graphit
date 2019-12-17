@@ -272,6 +272,7 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label,
                                                            std::string apply_schedule_str,
                                                            int parameter) {
+            cout << "Para:" << parameter << "\n";
             // If no schedule has been constructed, construct a new one
             if (schedule_ == nullptr) {
                 schedule_ = new Schedule();
@@ -305,6 +306,9 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
             } else if (apply_schedule_str == "num_open_buckets"){
                 (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
+            }  else if (apply_schedule_str == "grain_size"){
+                (*schedule_->apply_schedules)[apply_label].grain_size = parameter;
+
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -668,7 +672,8 @@ namespace graphit {
                 }
             }
 
-
+            // set apply config
+            setApply(apply_label, "grain_size", grain_size);
             //for now, we still use the old API, it will slowly be deprecated
             if (parallelCompatibilityMap_.find(apply_parallel) != parallelCompatibilityMap_.end()) {
                 std::string old_par_schedule = parallelCompatibilityMap_[apply_parallel];
@@ -925,6 +930,7 @@ namespace graphit {
                     0, // pull_load_balance_edge_grain_size
                     -100, // num_segment
                     1, // default delta
+                    256,
                     false, // enable_numa_aware?
                     1000, // merge threshold for eager prioirty queue
                     128   // default number of open buckets for lazy priority queue

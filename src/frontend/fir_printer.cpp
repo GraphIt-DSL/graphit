@@ -1014,6 +1014,16 @@ namespace graphit {
             oss << ") ";
         }
 
+        void FIRPrinter::visit(IntersectNeighborExpr::Ptr expr) {
+            oss << "intersectNeighbor(";
+            expr->edges->accept(this);
+            oss << ", ";
+            expr->vertex_a->accept(this);
+            oss << ", ";
+            expr->vertex_b->accept(this);
+            oss << ") ";
+        }
+
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
             oss << "edgeset_load (";
             expr->file_name->accept(this);

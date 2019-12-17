@@ -817,6 +817,23 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+        struct IntersectNeighborExpr : public Expr {
+            Expr::Ptr edges;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            IntersectionSchedule::IntersectionType intersectionType;
+
+            typedef std::shared_ptr<IntersectNeighborExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntersectNeighborExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
         
 
         
@@ -899,6 +916,8 @@ namespace graphit {
             bool use_pull_edge_based_load_balance = false;
             //hard coded default value for grain size
             int pull_edge_based_load_balance_grain_size = 4096;
+            //grain size for parallel for
+            int grain_size = 256;
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 

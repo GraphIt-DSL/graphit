@@ -51,12 +51,11 @@ namespace graphit {
         }
 
         // check if the schedule contains entry for the current edgeset apply expressions
-
         if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
+
             // We assume that there is only one apply in each statement
             auto current_scope_name = label_scope_.getCurrentScope();
             auto apply_schedule = schedule_->apply_schedules->find(current_scope_name);
-
 
             if (apply_schedule != schedule_->apply_schedules->end()) {
                 // a schedule is found
@@ -117,6 +116,10 @@ namespace graphit {
                     }
                 }
 
+
+                mir::to<mir::EdgeSetApplyExpr>(node)->grain_size = apply_schedule->second.grain_size;
+
+
                 //if this is applyModified with a tracking field
                 if (edgeset_apply->tracking_field != "") {
                     // only enable deduplication when the argument to ApplyModified is True (disable deduplication), or the user manually set disable
@@ -133,6 +136,7 @@ namespace graphit {
                 return;
             }
 
+            //mir::to<mir::EdgeSetApplyExpr>(node)->grain_size = stuff->second->
             return;
         } else {
             //setting the default direction to push if no schedule is specified
