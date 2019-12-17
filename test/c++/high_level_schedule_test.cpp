@@ -1057,6 +1057,33 @@ TEST_F(HighLevelScheduleTest, SimpleLabelForVarDecl) {
 
 }
 
+TEST_F(HighLevelScheduleTest, SimpleLabelForVarDeclWithDifferentGrainSize) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                     "func srcAddOne(src : Vertex, dst : Vertex) "
+                     "vector_a[src] += 1; end\n"
+                     "func srcAddTwo(src : Vertex, dst : Vertex) "
+                     "vector_a[src] += 2; end\n"
+                     "func main() "
+                     "    #s1# edges.apply(srcAddOne); "
+                     "end");
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program_schedule_node = program_schedule_node->configApplyDirection("s1", "SparsePush");
+    program_schedule_node->configApplyParallelization("s1", "dynamic-vertex-parallel", 1);
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+}
+
 TEST_F(HighLevelScheduleTest, SimpleIntersectionHiroshi) {
     istringstream is(simple_intersection_str_);
 
