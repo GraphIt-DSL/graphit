@@ -193,16 +193,22 @@ namespace graphit {
         if (apply->grain_size == 1){
             for_type.append("_1_lambda(");
 
+        } else if(apply->grain_size == 64){
+            for_type.append("_64_lambda(");
+
         } else if(apply->grain_size == 256) {
             for_type.append("_256_lambda(");
+
+        } else {
+            for_type.append("(");
         }
 
 
         if (apply->is_parallel) {
             if (from_vertexset_specified)
-                oss_ << for_type + "(long)0, (long)m, [&] (long i) {" << std::endl;
+                oss_ << for_type << "(long)0, (long)m, [&] (long i) {" << std::endl;
             else
-                oss_ << for_type + "(NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+                oss_ << for_type << "(NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
         } else {
 
             if (from_vertexset_specified)

@@ -58,6 +58,13 @@ void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
 }
 
 template<typename IterT, typename BodyT>
+void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 64") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+
+template<typename IterT, typename BodyT>
 void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
   _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
     body(i);
@@ -117,6 +124,12 @@ void parallel_for_lambda(IterT start, IterT end, BodyT body) {
 template<typename IterT, typename BodyT>
 void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
   _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
+    body(i);
+}
+
+template<typename IterT, typename BodyT>
+void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("cilk_grainsize = 64") cilk_for(IterT i = start; i < end; ++i)
     body(i);
 }
 
@@ -204,6 +217,11 @@ tbb::parallel_for(start, end, body);
 }
 
 template<typename IterT, typename BodyT>
+void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
+tbb::parallel_for(start, end, body);
+}
+
+template<typename IterT, typename BodyT>
 void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
 tbb::parallel_for(start, end, body);
 }
@@ -257,6 +275,13 @@ void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
 }
 
 template<typename IterT, typename BodyT>
+void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
+  _Pragma("omp parallel for schedule (static,64)") for (IterT i = start; i < end; ++i)
+    body(i);
+}
+
+
+template<typename IterT, typename BodyT>
 void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
   _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; ++i)
     body(i);
@@ -307,6 +332,13 @@ void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
   for (IterT i = start; i < end; ++i)
     body(i);
 }
+
+template<typename IterT, typename BodyT>
+void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
+    for (IterT i = start; i < end; ++i)
+        body(i);
+}
+
 
 template<typename IterT, typename BodyT>
 void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
