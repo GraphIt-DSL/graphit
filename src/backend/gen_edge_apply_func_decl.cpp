@@ -183,24 +183,27 @@ namespace graphit {
 
         printIndent();
 
-        std::string for_type = "for";
-        if (apply->is_parallel)
-            for_type = "ligra::parallel_for";
 
         std::string node_id_type = "NodeID";
         if (apply->is_weighted) node_id_type = "WNode";
 
-        if (apply->grain_size == 1){
-            for_type.append("_1_lambda(");
+        std::string for_type = "for";
+        if (apply->is_parallel) {
+            // for type changes based on grain sizes
+            for_type = "ligra::parallel_for";
+            if (apply->grain_size == 1){
+                for_type.append("_1_lambda(");
 
-        } else if(apply->grain_size == 64){
-            for_type.append("_64_lambda(");
+            } else if(apply->grain_size == 64){
+                for_type.append("_64_lambda(");
 
-        } else if(apply->grain_size == 256) {
-            for_type.append("_256_lambda(");
+            } else if(apply->grain_size == 256) {
+                for_type.append("_256_lambda(");
 
-        } else {
-            for_type.append("(");
+            } else {
+                for_type.append("_lambda(");
+            }
+
         }
 
 
