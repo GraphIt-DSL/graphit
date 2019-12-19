@@ -4,7 +4,7 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load(argv[1]);
 const triangles : uint_64 = 0;
 const vertices : vertexset{Vertex} = edges.getVertices();
-const vertexArray: vector{Vertex}(uint) = 0;
+const vertexArray: vector{Vertex}(uint_64) = 0;
 
 func incrementing_count(src : Vertex, dst : Vertex)
     if dst < src
@@ -15,12 +15,16 @@ end
 
 
 func main()
+    startTimer();
     edges = edges.relabel();
     #s1# edges.apply(incrementing_count);
     triangles = vertexArray.sum();
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
     print triangles;
 end
 
 schedule:
-    program->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->configApplyDirection("s1", "SparsePush")->configApplyParallelization("s1", "dynamic-vertex-parallel", 64);
     program->configIntersection("s2", "HiroshiIntersection");
