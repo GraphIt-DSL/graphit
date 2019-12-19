@@ -218,6 +218,106 @@ wBFS
 twitter_logn, 1.766514
 ```
 
+## Run the comparison frameworks (OPTIONAL) ## 
+
+### For GAPBS 
+
+You can run the SSSP algorithm from GAPBS to verify the performance
+comparisons with Delta Stepping and wBFS very easily. wBFS is just Delta Stepping
+with delta fixed to one. This is the easiest as it uses the same Graph
+format as PriorityGraph (.sg and .wsg are all GAPBS formats). 
+Please clone and GAPBS from here (https://github.com/sbeamer/gapbs)
+
+make sssp
+
+numactl -i all ./sssp -f socLive_rand1000_gapbs.wsg -d 100 
+
+The deltas we tuned for GAPBS Delta Stepping (SSSP) on our machine are 
+
+"socLive_rand1000" : 100
+"road-usad_origweights" : 100000
+"twitter_rand1000" : 8
+
+For wBFS, it is sssp with delta set to 1 for all graphs
+
+socLive as an example
+
+numactl -i all ./sssp -f socLive_rand1000_gapbs.wsg -d 1 
+
+Note, the starting points are a bit different, so treat the results with
+a grain of salt. However, the starting points should not have a huge
+impact on the results if you run 6 to 7 of them. You can find the
+starting points we used here
+(https://github.com/GraphIt-DSL/graphit/blob/master/graphit_eval/
+priority_graph_cgo2020_eval/perf_eval/benchmark.py#L130)
+
+
+
+### For Julienne 
+
+
+You can replicate the results for SSSP, wBFS, KCore, and SetCover.
+
+First clone and compile julienne repository (same as Ligra) at
+https://github.com/jshun/ligra. Go into the bucketing directory
+(https://github.com/jshun/ligra/tree/master/apps/bucketing) to compile
+Julienne programs with the Makefile. 
+ 
+
+*For SSSP, wBFS*
+
+We have added graphs for Julienne with _ligra.wadj inside the graph folders here 
+https://www.dropbox.com/work/CGO_Artifact_Eval/additional_graphit_graphs
+
+socLive as an example
+
+numactl -i all ./DeltaStepping -delta 100  socLive_rand1000_ligra.wadj
+
+Deltas we used for our machine 
+
+"socLive_rand1000" : 100
+"road-usad_origweights" : 10000
+"twitter_rand1000" : 4
+
+Again, delta is 1 for wBFS. 
+
+*KCore, and SetCover*
+
+Use the .sadj (symmetrized graphs) already in the repository. 
+
+socLive as an example
+
+numactl -i all ./KCore socLive_rand1000_ligra.sadj
+
+numactl -i all ./SetCover ~/graphs/socLive_rand1000/socLive_rand1000_ligra.sadj 
+
+(NOTE: only the FIRST run's running time is valid for SetCover as the graph is modified after
+the first run)
+
+
+
+### For Galois
+
+You can replicate the results for SSSP for Galois. 
+https://github.com/IntelligentSoftwareSystems/Galois
+Follow the instructions to build the software. We have added the galois graphs in the 
+graph folders as before (https://www.dropbox.com/work/CGO_Artifact_Eval/additional_graphit_graphs)
+
+The compiled binary is at 
+
+build/lonestar/sssp
+
+socLive as an example 
+
+numactl -i all ./sssp socLive_rand1000_galois.gr -t=48  -algo=deltaStep -startNode=14 -delta=2
+
+The delta here is actually powers of 2, the deltas we used are 
+
+"socLive_rand1000": 2
+"twitter_rand1000": 0
+"road-usad_origweights": 14
+
+Galois does not support wBFS since it only offers approximate priority ordering
 
 
 This concludes our artifact evaluation guide.
