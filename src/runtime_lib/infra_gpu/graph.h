@@ -8,6 +8,10 @@
 #define IGNORE_JULIENNE_TYPES
 #include "infra_gapbs/benchmark.h"
 #include "infra_gpu/vertex_frontier.h"
+#include "graphit_timer.h"
+#ifndef FRONTIER_MULTIPLIER
+	#define FRONTIER_MULTIPLIER (6)
+#endif
 namespace gpu_runtime {
 
 template <typename EdgeWeightType>
@@ -38,6 +42,10 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	VertexFrontier& getFullFrontier(void) {
 		full_frontier.max_num_elems = num_vertices;
 		return full_frontier;
+	}
+	VertexFrontier& __device__ getFullFrontierDevice(void) {
+		full_frontier.max_num_elems = num_vertices;
+		return full_frontier;	
 	}
 
 
@@ -123,6 +131,7 @@ static void block_graph_edges(GraphT<EdgeWeightType> &input_graph, GraphT<EdgeWe
 	//delete[] block_sizes;
 	output_graph.num_buckets = num_blocks;
 	output_graph.h_bucket_sizes = block_sizes;
+	
 
 
 	cudaFree(input_graph.d_edge_src);
@@ -220,12 +229,12 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMemcpy(graph.d_src_offsets, graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
 	//std::cout << filename << " (" << graph.num_vertices << ", " << graph.num_edges << ")" << std::endl;
 
-	cudaMalloc(&graph.twc_small_bin, graph.num_vertices * 6 * sizeof(int32_t));
-	cudaMalloc(&graph.twc_mid_bin, graph.num_vertices * 6 * sizeof(int32_t));
-	cudaMalloc(&graph.twc_large_bin, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.twc_small_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&graph.twc_mid_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&graph.twc_large_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
 	cudaMalloc(&graph.twc_bin_sizes, 3 * sizeof(int32_t));
 
-	cudaMalloc(&graph.strict_sum, graph.num_vertices * 6 * sizeof(int32_t));
+	cudaMalloc(&graph.strict_sum, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
 	cudaMalloc(&graph.strict_cta_sum, NUM_CTA * 2 * sizeof(int32_t));
 	cudaMalloc(&graph.strict_grid_sum, sizeof(int32_t));
 

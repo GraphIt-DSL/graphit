@@ -40,6 +40,7 @@ void __device__ vertex_based_load_balance(GraphT<EdgeWeightType> &graph, VertexF
 			break;
 		int32_t dst = graph.d_edge_dst[eid];
 		load_balance_payload(graph, src, dst, eid, input_frontier, output_frontier);
+		
 	}
 
 /*
