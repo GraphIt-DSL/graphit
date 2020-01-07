@@ -190,20 +190,7 @@ namespace graphit {
         std::string for_type = "for";
         if (apply->is_parallel) {
             // for type changes based on grain sizes
-            for_type = "ligra::parallel_for";
-            if (apply->grain_size == 1){
-                for_type.append("_1_lambda(");
-
-            } else if(apply->grain_size == 64){
-                for_type.append("_64_lambda(");
-
-            } else if(apply->grain_size == 256) {
-                for_type.append("_256_lambda(");
-
-            } else {
-                for_type.append("_lambda(");
-            }
-
+            for_type = "ligra::parallel_for_lambda(";
         }
 
 
@@ -342,7 +329,7 @@ namespace graphit {
         printIndent();
 
         if (apply->is_parallel) {
-            oss_ << "});" << std::endl;
+            oss_ << "}," << apply->grain_size << ");" << std::endl;
         } else {
             oss_ << "}" << std::endl;
         }

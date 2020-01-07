@@ -337,7 +337,7 @@ inline ulong hashInt(ulong a) {
 static void remDuplicates(uintE* indices, uintE* flags, long m, long n) {
   //make flags for first time
   if(flags == NULL) {flags = newA(uintE,n);
-    ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) { flags[i]=UINT_E_MAX; });
+    ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) { flags[i]=UINT_E_MAX; }, 0);
     ligra::parallel_for_lambda((uintE)0, (uintE)m, [&] (uintE i) {
         if(indices[i] != UINT_E_MAX && flags[indices[i]] == UINT_E_MAX)
           CAS(&flags[indices[i]],(uintE)UINT_E_MAX,i);
