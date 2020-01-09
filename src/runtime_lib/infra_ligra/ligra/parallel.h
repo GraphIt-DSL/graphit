@@ -276,7 +276,7 @@ void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
 
 template<typename IterT, typename BodyT>
 void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("omp parallel for schedule (static,64)") for (IterT i = start; i < end; ++i)
+  _Pragma("omp parallel for schedule (dynamic,64)") for (IterT i = start; i < end; ++i)
     body(i);
 }
 
