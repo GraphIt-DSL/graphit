@@ -2648,6 +2648,7 @@ namespace graphit {
 
         //TODO: this one might need to be removed
         intrinsics_.push_back("sum");
+        intrinsics_.push_back("max");
 
         //library functions for edgeset
         intrinsics_.push_back("getVertices");

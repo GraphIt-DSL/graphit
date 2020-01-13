@@ -118,6 +118,15 @@ static T builtin_sum(T* input_vector, int num_elem){
     return reduce_sum;
 }
 
+template <typename T>
+static T builtin_max(T* input_vector, int num_elem){
+
+    T reduce_max = sequence::maxReduce(input_vector, num_elem);
+
+    return reduce_max;
+}
+
+
 static int max(double val1, int val2){
     return max(int(val1), val2);
 }

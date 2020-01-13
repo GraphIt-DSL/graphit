@@ -564,6 +564,16 @@ TEST_F(RuntimeLibTest, SetCover_test) {
     G.del();
 }
 
+TEST_F(RuntimeLibTest, BuiltInMax){
+
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    auto maxVal = builtin_max<NodeID>(A, 5);
+    delete[] A;
+
+    EXPECT_EQ(5, maxVal);
+}
+
+
 
 TEST_F(RuntimeLibTest, IntersectSortedNodeSetHiroshiBasicTest){
 

@@ -532,8 +532,9 @@ namespace graphit {
             //add the target to the argument
             args.push_back(self_arg);
 
-            //adds an additional argument for Builtin Sum
-            if (method_call_expr->method_name->ident == "builtin_sum") {
+            //adds an additional argument for Builtin Sum and Max
+            auto identifier = method_call_expr->method_name->ident;
+            if (identifier == "builtin_sum" || identifier == "builtin_max") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
 		//assert(mir::isa<mir::VectorType>(mir_target_type));
 		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
