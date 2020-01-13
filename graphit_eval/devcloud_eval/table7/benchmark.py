@@ -9,7 +9,14 @@ from threading import Timer
 use_NUMACTL = True 
 
 framework_app_lookup = {
-    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "bc":"bc", "tc":"tc"},
+    "graphit": {"pr": "pr", "sssp": "sssp", "bfs": "bfs", "cc": "cc", "bc":"bc", "tc":"tc", "ds": "sssp_delta_stepping", "ds_lazy" : "sssp_delta_stepping_lazy"},
+}
+
+# TODO these numbers might not be optimal
+framework_app_graph_runtime_param_map = {
+    "graphit" : {"sssp_delta_stepping": {"testGraph" : 1, "twitter" : 2, "web" : 2, "kron": 2, "urand": 2, "road":50000},
+                 "sssp_delta_stepping_lazy":{"testGraph" : 1, "twitter" : 10000, "web" : 10000, "kron": 10000, "urand": 10000, "road":10000},
+                }
 }
 
 #TODO kron and urand have to be tuned. Right now they are just placeholders
@@ -18,38 +25,50 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                                    "cc" : "cc_hybrid_dense",
                                    "bfs" :"bfs_hybrid_dense",
                                    "bc" : "bc_SparsePushDensePull_bitvector",
-                                   "tc" : "tc_hiroshi"},
+                                   "tc" : "tc_hiroshi",
+                                   "sssp_delta_stepping" : "sssp_delta_stepping_no_merge",
+                                   "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
                       "twitter" : {"pr":"pagerank_pull_segment",
                                    "sssp" : "sssp_hybrid_denseforward",
                                    "cc" : "cc_hybrid_dense_bitvec_segment",
                                    "bfs" :"bfs_hybrid_dense_bitvec",
                                    "bc" : "bc_SparsePushDensePull_bitvector",
-                                   "tc": "tc_hiroshi"}, 
+                                   "tc": "tc_hiroshi",
+                                   "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
+                                   "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"}, 
                       "web" : {"pr":"pagerank_pull_segment",
                                     "sssp" : "sssp_hybrid_denseforward",
                                     "cc" : "cc_hybrid_dense_bitvec_segment",
                                     "bfs" :"bfs_hybrid_dense_bitvec",
                                     "bc" : "bc_SparsePushDensePull_bitvector",
-                                    "tc": "tc_hiroshi"},
+                                    "tc": "tc_hiroshi",
+                                    "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
+                                    "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
                         "kron" : {"pr":"pagerank_pull",
                                   "sssp" : "sssp_hybrid_denseforward",
                                   "cc" : "cc_hybrid_dense_bitvec_segment",
                                   "bfs" :"bfs_hybrid_dense_bitvec",
                                   "bc" : "bc_SparsePushDensePull_bitvector",
-                                  "tc": "tc_hiroshi"},
+                                  "tc": "tc_hiroshi",
+                                  "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
+                                  "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
                         "urand" : {"pr":"pagerank_pull",
                                   "sssp" : "sssp_hybrid_denseforward",
                                   "cc" : "cc_hybrid_dense_bitvec_segment",
                                   "bfs" :"bfs_hybrid_dense_bitvec",
                                   "bc" : "bc_SparsePushDensePull_bitvector",
-                                  "tc": "tc_hiroshi"},
+                                  "tc": "tc_hiroshi",
+                                  "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
+                                  "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
 
                         "road" : {"pr":"pagerank_pull",
                                   "sssp" : "sssp_push_slq",
                                   "cc" : "cc_hybrid_dense",
                                   "bfs" :"bfs_push_slq",
                                   "bc": "bc_SparsePushDensePull",
-                                  "tc": "tc_hiroshi"},
+                                  "tc": "tc_hiroshi",
+                                  "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
+                                  "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
                       }
 
 graphit_PATH = "./bin/"
@@ -92,7 +111,7 @@ def get_starting_points(graph):
 
 def get_cmd_graphit(g, p, point):
 
-    if p == "sssp":
+    if p == "sssp" or p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
         graph_path = DATA_PATH + g + ".wsg"
 
     #For Triangle Counting, we use undirected graph
@@ -105,8 +124,10 @@ def get_cmd_graphit(g, p, point):
 
     if p == "bc":
         print("BC is not supported yet")
-    if p == "sssp" or p == "bfs":
+    if p == "sssp" or p == "bfs" or p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
         args += " " +  point
+    if p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
+        args += " " + str(framework_app_graph_runtime_param_map["graphit"][p][g]) 
     
     
     command = graphit_PATH + graphit_binary_map[g][p] + " " + args
@@ -131,7 +152,7 @@ def main():
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["road", "urand", "twitter", "web", "kron"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "tc", "bc"], 
+                        default=["bfs", "sssp", "pr", "cc", "tc", "bc", "ds", "ds_lazy"], 
                         help="applications to benchmark. Defaults to all four applications.")
 
     args = parser.parse_args()

@@ -111,7 +111,7 @@ NUM_THREADS=48
 PR_ITERATIONS=20
 
 graphit_PATH = "./bin/"
-DATA_PATH = "./graphs/"
+DATA_PATH = "~/data/"
 
 
 def get_vertex_count(graph):

@@ -61,6 +61,9 @@ graphit_files:
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp.gt -f ${GRAPHIT_SCHEDULE_DIR}/sssp_hybrid_denseforward_parallel_cas.gt -o cpps/sssp_hybrid_denseforward.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp.gt -f ${GRAPHIT_SCHEDULE_DIR}/sssp_push_parallel_sliding_queue.gt -o cpps/sssp_push_slq.cpp
 
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp_delta_stepping.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_with_merge_argv3.gt -o cpps/sssp_delta_stepping_with_merge.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/sssp_delta_stepping.gt -f ${GRAPHIT_SCHEDULE_DIR}/priority_update_eager_no_merge_argv3.gt -o cpps/sssp_delta_stepping_no_merge.cpp
+
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerank.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_benchmark_pull_parallel.gt -o cpps/pagerank_pull.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerank.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_benchmark_cache.gt -o cpps/pagerank_pull_segment.cpp
 
@@ -78,6 +81,8 @@ openmp_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull cpps/bc_SparsePushDensePull.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull_bitvector cpps/bc_SparsePushDensePull_bitvector.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/tc_hiroshi cpps/tc_hiroshi.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_with_merge cpps/sssp_delta_stepping_with_merge.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_no_merge cpps/sssp_delta_stepping_no_merge.cpp
 % : cpps/%.cpp
 	$(PCC) -o bin/$@ $< $(CILK_FLAGS) $(TBB_FLAGS)
 
