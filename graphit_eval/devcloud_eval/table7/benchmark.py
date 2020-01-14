@@ -44,7 +44,7 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                                     "tc": "tc_hiroshi",
                                     "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                     "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
-                        "kron" : {"pr":"pagerank_pull",
+                        "kron" : {"pr":"pagerank_pull_segment",
                                   "sssp" : "sssp_hybrid_denseforward",
                                   "cc" : "cc_hybrid_dense_bitvec_segment",
                                   "bfs" :"bfs_hybrid_dense_bitvec",
@@ -52,7 +52,7 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                                   "tc": "tc_hiroshi",
                                   "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                   "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
-                        "urand" : {"pr":"pagerank_pull",
+                        "urand" : {"pr":"pagerank_pull_segment",
                                   "sssp" : "sssp_hybrid_denseforward",
                                   "cc" : "cc_hybrid_dense_bitvec_segment",
                                   "bfs" :"bfs_hybrid_dense_bitvec",
@@ -122,8 +122,6 @@ def get_cmd_graphit(g, p, point):
 
     args = graph_path
 
-    if p == "bc":
-        print("BC is not supported yet")
     if p == "sssp" or p == "bfs" or p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
         args += " " +  point
     if p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
@@ -146,6 +144,27 @@ def get_cmd(framework, graph, app, point):
     if framework == "graphit":
         cmd = get_cmd_graphit(graph, app, point)
     return cmd
+
+def get_bc_cmd(framework, graph, app, points):
+    if framework == "graphit":
+        cmd = get_bc_cmd_graphit(graph, app, points)
+    return cmd
+
+def get_bc_cmd_graphit(g, p, points):
+
+    graph_path = DATA_PATH + g + ".sg"
+
+    args = graph_path
+
+    for point in points:
+      args += " " + point
+    command = graphit_PATH + graphit_binary_map[g][p] + " " + args
+    if use_NUMACTL:
+      command = "numactl -i all " + command
+    return command
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -172,12 +191,15 @@ def main():
                 log_file = open(log_file_str, "w+")
                 successes = 0
                 points = get_starting_points(graph)
-                for point in points:
-                    cmd = get_cmd(framework, graph, app, point)
-                    if not cmd:
-                        break
-                    print(cmd)
 
+                #process bc 
+                if generic_app_name == "bc":
+                  for i in range(0, len(points) - 4, 4):
+                    starting_points = points[i:i+4]
+                    cmd = get_bc_cmd(framework, graph, app, starting_points)
+                    if not cmd:
+                      break
+                    print(cmd)
                     # setup timeout for executions that hang
                     kill = lambda process: process.kill()
                     out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -197,10 +219,36 @@ def main():
                         log_file.write("\n")
                         log_file.write(output)
                         log_file.write("\n------------------------------------------------\n")
-                        if generic_app_name in ["pr", "cc", "prd", "cf", "tc"]:
-                            # pagerank, cc, prd, and cf can return when they succeeds once.
-                            # greenmarl sets starting point internally
-                            break;            
+                else:
+                  for point in points:
+                      cmd = get_cmd(framework, graph, app, point)
+                      if not cmd:
+                          break
+                      print(cmd)
+
+                      # setup timeout for executions that hang
+                      kill = lambda process: process.kill()
+                      out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                      timer = Timer(7200, kill, [out]) # timeout after 2 hrs
+                      try:
+                          timer.start()
+                          (output, err) = out.communicate()
+                          if err:
+                            print("Failed with error", err)
+                      finally:
+                          timer.cancel()
+
+                      if output:
+                          successes += 1
+                          log_file.write("\n------------------------------------------------\n")
+                          log_file.write(time.strftime("%d/%m/%Y-%H:%M:%S"))
+                          log_file.write("\n")
+                          log_file.write(output)
+                          log_file.write("\n------------------------------------------------\n")
+                          if generic_app_name in ["pr", "cc", "prd", "cf", "tc"]:
+                              # pagerank, cc, prd, and cf can return when they succeeds once.
+                              # greenmarl sets starting point internally
+                              break;            
                 log_file.write("successes=" + str(successes) + "\n")
                 log_file.close()
 

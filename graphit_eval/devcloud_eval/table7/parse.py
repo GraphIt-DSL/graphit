@@ -172,8 +172,6 @@ def process_bc(log_file_name, app, graph, time_key, delimiter, index, strip_end,
         avg_time = total_time/successes 
         output_times.append(avg_time)
 
-    assert len(output_times) == len(starting_points)
-
     output_dict = {}
     for ix in range(len(output_times)):
         output_dict[starting_points[ix]] = output_times[ix]
@@ -282,7 +280,7 @@ def main():
             for app in args.applications:
                 log_file_name = LOG_PATH + framework + "/" + app + "_" + g + ".txt"
                 if app == "bc":
-                    results[framework][g][app] = process_bc(log_file_name, app, g, *parse_args[framework])
+                    results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
                 elif app == "tc":
                     results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
                 elif app == "bfs":
