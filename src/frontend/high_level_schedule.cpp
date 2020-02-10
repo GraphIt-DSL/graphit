@@ -627,6 +627,8 @@ namespace graphit {
             else if (intersection_option == "NaiveIntersection") {
                 (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
             }
+
+            // if no valid intersection is specified, we use naive intersection.
             else {
                 std::cout << "unsupported intersection: " << intersection_option << " using naive version instead" << std::endl;
                 (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
