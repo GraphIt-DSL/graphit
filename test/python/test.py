@@ -176,6 +176,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_apply_sum_expected(self):
         self.expect_output_val("simple_apply_sum.gt", 7)
 
+    def test_simple_max_expected(self):
+        self.expect_output_val("simple_apply_max.gt", 3)
+
     def test_simple_vertexset_apply(self):
         self.basic_compile_exec_test("simple_vertexset_apply.gt")
 
@@ -407,7 +410,6 @@ if __name__ == '__main__':
 
     unittest.main()
     # used for enabling a specific test
-
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to_return_frontier'))
+    # suite.addTest(TestGraphitCompiler('test_simple_max_expected'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

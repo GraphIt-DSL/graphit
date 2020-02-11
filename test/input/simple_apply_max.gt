@@ -1,0 +1,14 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const vector_a : vector{Vertex}(float) = 0.0;
+func srcAddOne(src : Vertex, dst : Vertex)
+    vector_a[src] = vector_a[src] + 1; end
+
+func main()
+    edges.apply(srcAddOne);
+    #s2# var max : float = vector_a.max();
+    print max;
+end
