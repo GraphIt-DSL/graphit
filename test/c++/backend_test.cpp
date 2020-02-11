@@ -1028,6 +1028,29 @@ TEST_F(BackendTest, SimpleIntersectionOperatorWithOptional) {
 
 }
 
+TEST_F(BackendTest, SimpleIntersectNeighborOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "const inter : uint_64 = intersectNeighbor(edges, src, dest);\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleIntersectNeighborOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersectNeighbor(edges, src, dest);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
 TEST_F(BackendTest, VectorInitWithoutVertex) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"

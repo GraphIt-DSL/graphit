@@ -64,6 +64,7 @@ namespace graphit {
             NEW,
             DELETE,
             INTERSECTION,
+            INTERSECT_NEIGH,
             RARROW,
             LP,
             RP,

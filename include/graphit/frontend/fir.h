@@ -1638,6 +1638,22 @@ namespace graphit {
                 virtual void copy(FIRNode::Ptr);
         };
 
+        struct IntersectNeighborExpr : public Expr {
+            typedef std::shared_ptr<IntersectNeighborExpr> Ptr;
+            Expr::Ptr edges;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<IntersectNeighborExpr>());
+            }
+
+            protected:
+               virtual FIRNode::Ptr cloneNode();
+
+               virtual void copy(FIRNode::Ptr);
+        };
+
         struct LoadExpr : public Expr {
             typedef std::shared_ptr<LoadExpr> Ptr;
             //Currently unused for cleaner syntax

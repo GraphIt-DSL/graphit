@@ -350,6 +350,14 @@ namespace graphit {
         retExpr = mir_inter_expr;
     }
 
+    void MIREmitter::visit(fir::IntersectNeighborExpr::Ptr intersection_expr) {
+        auto mir_inter_expr = std::make_shared<mir::IntersectNeighborExpr>();
+        mir_inter_expr->edges = emitExpr(intersection_expr->edges);
+        mir_inter_expr->vertex_a = emitExpr(intersection_expr->vertex_a);
+        mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
+        retExpr = mir_inter_expr;
+    }
+
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
         auto mir_load_expr = std::make_shared<mir::EdgeSetLoadExpr>();
         mir_load_expr->file_name = emitExpr(load_expr->file_name);
