@@ -156,9 +156,15 @@ static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indic
 	typedef EdgePair<NodeID, NodeID> Edge;
 	typedef pvector<Edge> EdgeList;
 	EdgeList el;
-	for (NodeID x = 0; x < num_nodes; x++)
-		for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++)
-			el.push_back(Edge(x, indices[_y]));
+	el.resize(num_edges);
+	int total = 0;
+	for (NodeID x = 0; x < num_nodes; x++) {
+        for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
+            el[total] = Edge(x, indices[_y]);
+            total++;
+        }
+	}
+
 	CLBase cli(0, NULL);
 	BuilderBase<NodeID> bb(cli);
 	return bb.MakeGraphFromEL(el);
@@ -167,11 +173,15 @@ static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_
 	typedef EdgePair<NodeID, WNode> Edge;
 	typedef pvector<Edge> EdgeList;
 	EdgeList el;
+	el.resize(num_edges);
+	int total = 0;
 	for (NodeID x = 0; x < num_nodes; x++) {
 		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
-			el.push_back(Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y])));
+		    el[total] = Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y]));
+		    total++;
 		}
-	}	
+	}
+	
 	CLBase cli(0, NULL);
 	BuilderBase<NodeID, WNode, WeightT> bb(cli);
 	bb.needs_weights_ = false;
