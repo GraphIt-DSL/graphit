@@ -1,14 +1,14 @@
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("../test/graphs/test.wel");
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load ("test.wel");
 const vertices : vertexset{Vertex} = edges.getVertices();
 
 const input : vector{Vertex}(float) = 1.0; %vector to be multiplied
 const output : vector{Vertex}(float) = 0.0; %result of spmv
 
 func updateEdge(src : Vertex, dst : Vertex, weight : int)
-     output[src] = output[src] + input[dst] * weight;
+     output[dst] += input[src] * weight;
      % if working on transpose of graph, then change to 
      % output[dst] = output[dst] + input[src] * weight;
 end
@@ -18,8 +18,12 @@ func main()
     startTimer();
 
     edges.apply(updateEdge);
-  
+    var output_sum : int = output.sum();
     var elapsed_time : float = stopTimer();
+
+    print "output_sum";
+    print output_sum;
+
     print "elapsed time: ";
     print elapsed_time;
 
