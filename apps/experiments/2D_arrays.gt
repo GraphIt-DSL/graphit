@@ -1,0 +1,17 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices: vertexset{Vertex} = edges.getVertices();
+const visitedArrays : vector[512](vector{Vertex}(bool));
+%const visitedArrays: vector[512](vector[10](bool)) = false;
+
+
+func main()
+
+    %var visitedArraysV2: vector[512](vector{Vertex}(bool)) = false;
+    visitedArrays[0][0] = true;
+
+    var n: int = 5;
+    var visitedArraysV3: vector[n](bool) = false;
+
+end

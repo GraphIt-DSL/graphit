@@ -1,0 +1,146 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex);
+const vertices : vertexset{Vertex};
+const graphs : vector[3](edgeset{Edge}(Vertex, Vertex));
+const data: vector{Vertex}(vector[100](float));
+const ef: int;
+const v_entry: int;
+const qs: vector[512](vector[100](float));
+
+const pqs: vector[512](priority_queue{Vertex}(pair?));
+const topk_pqs: vector[512](priority_queue{Vertex}(pair?));
+
+var d_currs: vector[512](float) = 0.0;
+var v_currs: vector[512](int) =0;
+
+export func set_up(edges_arg: edgeset{Edge}(Vertex, Vertex),
+                   graphs_arg : vector[3](edgeset{Edge}(Vertex, Vertex),
+                   data_arg : vector{Vertex}(vector[100](float)),
+                   ef_arg : int,
+                   v_entry_arg : int)
+
+       edges = edges_arg;
+       graphs = graphs_arg;
+       vertices = edges.getVertices();
+       data =  data_arg;
+       ef = ef_arg;
+       v_entry = v_entry_arg;
+end
+
+
+func not_seen<cur_seen>(v:Vertex) -> output : bool
+     if (cur_seen[v])
+         output = false;
+     else
+         output = true;
+     end
+end
+
+
+func update_distance_vertex<dist: float, node: Vertex, q: vector[100](float)>(v: Vertex) -> output: bool
+
+    var new_dist: float = dist(data[v], q);
+    if dist < new_dist
+        dist = new_dist;
+        node = v;
+        output = true;
+    else
+        output = false;
+    end
+
+end
+
+
+func update_edge<seen: vector{Vertex}(bool), q: vector[100](float), pq: priority_queue, topk_pq: priority_queue>(src: Vertex, dest: Vertex)
+
+  seen[dest] = true;
+  var d_neib: float = dist(data[dest],q);
+  var d_worst: float = -1*topk_pq.top().first;
+
+  % TODO does this work
+  if (topk_pq.size() < ef) || (d_neib < d_worst)
+
+    pq.push(d_neib, dest);
+    topk_pq.push(-1*d_neib, dest);
+
+    if topk_pq.size() > ef
+      topk_pq.pop();
+    end
+  end
+
+end
+
+export func multiple_search(qs_arg : vector[512](vector[100](float))) -> output : vector[512](vector[10](int))
+
+
+    %greedy walk
+    for i in 0:512
+
+        var d_entry_cur : float = dist(qs[i], data[v_entry]);
+        var v_entry_cur : int = v_entry
+
+        for j in 0:3
+            % TODO different kind of vertex??
+            var graph: edgeset{Edge}(Vertex, Vertex) = graphs[j];
+            var changed: bool = true;
+            while(changed)
+                changed = false;
+                var neighs: vertexset{Vertex} = graph.getNgh(v_curr);
+                var changedArray: vector{Vertex} = neighs.apply(update_distance_vertex<d_entry_cur, v_entry_cur, qs[i]>);
+
+                var summation = changedArray.sum();
+                if summation != 0
+                    changed = true
+                end
+
+        end
+
+        v_currs[i] = v_entry_cur;
+        d_currs[i] = d_entry_cur;
+
+    end
+
+    qs = q_arg
+
+    var seen : vector[512](vector{Vertex}(bool)) = false;
+    var neighbors: vector[512](vector[10](int)) = 0;
+
+    for i in 0:512
+        var d_curr: float = d_currs[i];
+        var v_curr: int = v_currs[i];
+        var cur_neigh: vector[10](int) = neighbors[i];
+        var cur_seen: vector{Vertex}(bool) = seen[i];
+        var pq : priority_queue{Vertex}(pair?) = pqs[i];
+        var topk_pq : priority_queue{Vertex}(pair?) = topk_pqs[i];
+
+        pq.push(d_curr, v_curr)
+        topk_pq.push(-1*d_curr, v_curr)
+
+
+        while(pq.empty() != true)
+
+            var d_worst: float = -1*topk_pq.top().first;
+            var d_best: float = pq.top().first;
+            var candidate: Vertex = pq.pop();
+            if (d_best > d_worst) break; end
+            var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+            frontier.addVertex(candidate);
+            #s1# edges.from(frontier).to(not_seen<cur_seen>).apply(update_edge<cur_seen, qs[i], pq, topk_pq>);
+            delete frontier;
+            num_rounds = num_rounds + 1;
+
+        end
+
+        topk_pq.return_top_n_results(10, cur_neigh);
+
+
+    end
+
+    output = neighbors
+
+
+end
+
+schedule:
+	program->configApplyDirection("s1", "SparsePush");

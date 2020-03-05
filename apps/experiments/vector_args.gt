@@ -1,0 +1,21 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex);
+
+% Vector of graphs to be loaded
+const graphs : vector[3](edgeset{Edge}(Vertex, Vertex));
+
+
+
+export func set_up(edges_arg: edgeset{Edge}(Vertex, Vertex),
+                   graphs_arg: vector[3](edgeset{Edge}(Vertex, Vertex)))
+
+       edges = edges_arg;
+       graphs = graphs_arg;
+end
+
+
+
+
+
+
