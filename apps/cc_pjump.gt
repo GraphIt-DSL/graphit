@@ -53,10 +53,3 @@ func main()
 end
 
 
-% specify schedules here or use a separate schedule file
-schedule:
-	SimpleGPUSchedule s1;
-	s1.configLoadBalance(TWCE);
-	s1.configDeduplication(ENABLED);
-	s1.configFrontierCreation(UNFUSED_BOOLMAP);
-	program->applyGPUSchedule("s1", s1);
