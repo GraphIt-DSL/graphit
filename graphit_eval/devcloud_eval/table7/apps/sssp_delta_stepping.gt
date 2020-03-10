@@ -19,23 +19,23 @@ func reset(v: Vertex)
 end
 
 func main()
-    for trail in 0:16
-        vertices.apply(reset);
-        startTimer();
-        var start_vertex : int = atoi(argv[2]);
-        dist[start_vertex] = 0;
-        % parameter list in order -- priority type: int
-        % duplication within bucket : false, duplication across bucket: false, priority vector : dist
-        % bucket ordering: 1 -> increasing, priority ordering: 2 -> lower first, init_bucket : false
-        % optional starting node: start_vertex
-        pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
-        while (pq.finished() == false)
-            var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue lowest priority nodes
-            #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
-            delete frontier;
-        end
-        var elapsed_time : float = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
+
+    vertices.apply(reset);
+    startTimer();
+    var start_vertex : int = atoi(argv[2]);
+    dist[start_vertex] = 0;
+    % parameter list in order -- priority type: int
+    % duplication within bucket : false, duplication across bucket: false, priority vector : dist
+    % bucket ordering: 1 -> increasing, priority ordering: 2 -> lower first, init_bucket : false
+    % optional starting node: start_vertex
+    pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
+    while (pq.finished() == false)
+        var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue lowest priority nodes
+        #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
+        delete frontier;
     end
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
 end

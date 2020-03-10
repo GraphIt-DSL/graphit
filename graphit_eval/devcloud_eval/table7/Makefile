@@ -68,6 +68,8 @@ graphit_files:
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/pagerank.gt -f ${GRAPHIT_SCHEDULE_DIR}/pagerank_benchmark_cache.gt -o cpps/pagerank_pull_segment.cpp
 
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/tc.gt -f ${GRAPHIT_SCHEDULE_DIR}/tc_hiroshi.gt -o cpps/tc_hiroshi.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/tc.gt -f ${GRAPHIT_SCHEDULE_DIR}/tc_multiskip.gt -o cpps/tc_multiskip.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/tc.gt -f ${GRAPHIT_SCHEDULE_DIR}/tc_naive.gt -o cpps/tc_naive.cpp
 
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bc.gt -f ${GRAPHIT_SCHEDULE_DIR}/bc_SparsePushDensePull.gt -o cpps/bc_SparsePushDensePull.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bc.gt -f ${GRAPHIT_SCHEDULE_DIR}/bc_SparsePushDensePull_bitvector.gt -o cpps/bc_SparsePushDensePull_bitvector.cpp
@@ -81,6 +83,9 @@ openmp_only_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull cpps/bc_SparsePushDensePull.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull_bitvector cpps/bc_SparsePushDensePull_bitvector.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/tc_hiroshi cpps/tc_hiroshi.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/tc_multiskip cpps/tc_multiskip.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/tc_naive cpps/tc_naive.cpp
+
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_with_merge cpps/sssp_delta_stepping_with_merge.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_no_merge cpps/sssp_delta_stepping_no_merge.cpp
 % : cpps/%.cpp

@@ -25,8 +25,8 @@ ph.")
         apps_args = apps_args + " " + app
     print("running benchmarks for applications: " + graphs_arg)
 
-    run_benchmark_cmd = "python benchmark.py --graph " + graphs_arg + " --applications " + apps_args
-    parse_benchmark_results_cmd = "python parse.py --graph " + graphs_arg + " --applications " + apps_args
+    run_benchmark_cmd = "python2 benchmark.py --graph " + graphs_arg + " --applications " + apps_args
+    parse_benchmark_results_cmd = "python2 parse.py --graph " + graphs_arg + " --applications " + apps_args
 
     out = subprocess.check_call(run_benchmark_cmd, stderr=subprocess.PIPE, shell=True)
     out = subprocess.check_call(parse_benchmark_results_cmd,  stderr=subprocess.PIPE, shell=True)

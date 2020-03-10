@@ -1,0 +1,69 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const cur_rank : vector{Vertex}(double) = 0;
+const ngh_sum : vector{Vertex}(double) = 0.0;
+const delta : vector{Vertex}(double) = 1.0/vertices.size();
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+const damp : double = 0.85;
+const beta_score : double = (1.0 - damp) / vertices.size();
+const epsilon2 : double = 0.1;
+const epsilon : double = 0.0000001;
+
+func updateEdge(src : Vertex, dst : Vertex)
+    ngh_sum[dst] += delta[src] /out_degree[src];
+end
+
+func updateVertexFirstRound(v : Vertex) -> output : bool
+    delta[v] = damp*(ngh_sum[v]) + beta_score;
+    cur_rank[v] += delta[v];
+    delta[v] = delta[v] - 1.0/vertices.size();
+    output = (fabs(delta[v]) > epsilon2*cur_rank[v]);
+    ngh_sum[v] = 0;
+end
+
+func updateVertex(v : Vertex) -> output : bool
+   delta[v] = ngh_sum[v]*damp;
+   cur_rank[v]+= delta[v];
+   ngh_sum[v] = 0;
+   output = fabs(delta[v]) > epsilon2*cur_rank[v];
+end
+
+func printRank(v : Vertex)
+    print cur_rank[v];
+end
+
+func reset(v: Vertex)
+    cur_rank[v] = 0;
+    ngh_sum[v] = 0.0;
+    delta[v] = 1.0/vertices.size();
+end
+
+func main()
+    var n : int = edges.getVertices();
+    for trail in 0:10
+	startTimer();
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+        vertices.apply(reset);
+
+    	for i in 1:11
+            #s1# edges.from(frontier).apply(updateEdge);
+            if i == 1
+                frontier = vertices.where(updateVertexFirstRound);
+            else
+		frontier = vertices.where(updateVertex);
+       	    end
+    	end
+
+     	var elapsed_time : double = stopTimer();
+     	print "elapsed time: ";
+     	print elapsed_time;
+    end
+end
+
+schedule:
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel")
+    ->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
+    program->fuseFields("delta", "out_degree");
+    program->configApplyNumSSG("s1", "fixed-vertex-count",  16, "DensePull")->configApplyNUMA("s1", "static-parallel", "DensePull");

@@ -1,0 +1,6 @@
+
+schedule:
+    program->configApplyDirection("s1", "SparsePush");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->configApplyPriorityUpdateDelta("s1", "argv[3]");
+    program->configNumOpenBuckets("s1", "argv[4]");

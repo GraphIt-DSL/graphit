@@ -134,7 +134,7 @@ def get_cmd_graphit(g, p, point):
     if use_NUMACTL:
         # if NUAMCTL is available
         command = "numactl -i all " + command
-
+    # TODO make it work for PR (try less than 16)
     command += " 16"
 
     return command
@@ -171,7 +171,7 @@ def main():
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["road", "urand", "twitter", "web", "kron"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "tc", "bc", "ds", "ds_lazy"], 
+                        default=["bfs", "pr", "cc", "tc", "bc", "ds"], 
                         help="applications to benchmark. Defaults to all four applications.")
 
     args = parser.parse_args()
@@ -194,7 +194,7 @@ def main():
 
                 #process bc 
                 if generic_app_name == "bc":
-                  for i in range(0, len(points) - 4, 4):
+                  for i in range(0, len(points) - 3, 4):
                     starting_points = points[i:i+4]
                     cmd = get_bc_cmd(framework, graph, app, starting_points)
                     if not cmd:
@@ -243,7 +243,7 @@ def main():
                           log_file.write("\n------------------------------------------------\n")
                           log_file.write(time.strftime("%d/%m/%Y-%H:%M:%S"))
                           log_file.write("\n")
-                          log_file.write(output)
+                          log_file.write(output.decode("utf-8"))
                           log_file.write("\n------------------------------------------------\n")
                           if generic_app_name in ["pr", "cc", "prd", "cf", "tc"]:
                               # pagerank, cc, prd, and cf can return when they succeeds once.

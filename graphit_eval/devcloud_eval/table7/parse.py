@@ -106,11 +106,9 @@ def process_bfs(log_file_name, app, time_key, delimiter, index, strip_end, divid
     initial_inner_cnt = inner_cnt
     min_time = 10000000
     sum_time = 0
-    successes = 1
+    successes = 0
     for i in range(len(content)):
         line = content[i]
-        if line.find("successes") != -1:
-            successes = int(line.split("=")[1])
         if line.find(time_key) != -1:
             if time_key_own_line:
                 next_line = content[i+1]
@@ -124,60 +122,8 @@ def process_bfs(log_file_name, app, time_key, delimiter, index, strip_end, divid
             else:
                 time = float(time_str) / divider 
             sum_time += time
-
+            successes += 1
     return sum_time / successes
-
-def process_bc(log_file_name, app, graph, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
-    """
-    @time_key: used to find the time of execution in the log file
-    @delimiter: used to extract the time
-    @index: used together with the delimiter
-    @strip_end: end index to strip off (e.g. seconds) from the time value
-    @divider: divice this value to convert the time in log into seconds
-    @inner_cnt: number of runs that an application performs internally
-    @time_key_own_line: if the time_key is one its own line
-    """
-    print ("processing log file: " + log_file_name)
-    with open(log_file_name) as f:
-        content = f.readlines()
-    content = [x.strip() for x in content]
-    starting_points = get_starting_points(graph)
-    runtimes = []
-    # if the file is empty, don't try to parse it
-    if (len(content) < 3):
-        print "invalid log file" + log_file_name
-        return -1
-    successes = 1
-    for i in range(len(content)):
-        line = content[i]
-        if line.find("successes") != -1:
-            successes = int(line.split("=")[1])
-        if line.find(time_key) != -1:
-            if time_key_own_line:
-                next_line = content[i+1]
-                time_str = next_line.strip()
-            else:
-                time_str = line.split(delimiter)[index]
-            if strip_end:
-                time_str = time_str[:strip_end] # strip the (s) at the end
-            if time_str.strip() == '':
-                time = min_time
-            else:
-                time = float(time_str) / divider 
-            runtimes.append(time)
-    
-    output_times = []
-    for i in range(0, len(runtimes), successes):
-        total_time = sum(runtimes[i:i+successes])
-        avg_time = total_time/successes 
-        output_times.append(avg_time)
-
-    output_dict = {}
-    for ix in range(len(output_times)):
-        output_dict[starting_points[ix]] = output_times[ix]
-    
-    output_dict['avg'] = sum(output_times)/len(output_times)
-    return output_dict
 
 def process_tc(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
     """
@@ -259,7 +205,7 @@ def main():
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["road", "urand", "twitter", "web", "kron"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "tc", "bc", "ds"], 
+                        default=["bfs", "pr", "cc", "tc", "bc", "ds"], 
                         help="applications to benchmark. Defaults to all four applications.")
     args = parser.parse_args()
 
@@ -276,6 +222,7 @@ def main():
     for framework in args.frameworks:
         results[framework] = {}
         for g in args.graphs:
+            print("graph: " + g)
             results[framework][g] = {}
             for app in args.applications:
                 log_file_name = LOG_PATH + framework + "/" + app + "_" + g + ".txt"
@@ -285,6 +232,8 @@ def main():
                     results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
                 elif app == "bfs":
                     results[framework][g][app] = process_bfs(log_file_name, app, *parse_args[framework])
+                elif app == "cc":
+                    results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
                 elif app == "ds":
                     results[framework][g][app] = process_bfs(log_file_name, app, *parse_args[framework])
                 else:

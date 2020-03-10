@@ -1,0 +1,5 @@
+schedule:
+        program->configApplyPriorityUpdate("s1", "eager_priority_update");
+        program->configApplyPriorityUpdateDelta("s1", 2);
+        program->configApplyParallelization("s2","serial");
+
