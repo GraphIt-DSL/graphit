@@ -219,6 +219,63 @@ protected:
                                                       "end"
         );
 
+
+        const char* cc_pjump_char = ( "element Vertex end\n"
+                                      "element Edge end\n"
+                                      "\n"
+                                      "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                      "\n"
+                                      "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                      "const IDs : vector{Vertex}(int) = 1;\n"
+                                      "\n"
+                                      "const update: vector[1](int);\n"
+                                      "\n"
+                                      "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                      "    var src_id: Vertex = IDs[src];\n"
+                                      "    var dst_id: Vertex = IDs[dst];\n"
+                                      "\n"
+                                      "    IDs[dst_id] min= IDs[src_id];\n"
+                                      "    IDs[src_id] min= IDs[dst_id];\n"
+                                      "end\n"
+                                      "\n"
+                                      "func init(v : Vertex)\n"
+                                      "     IDs[v] = v;\n"
+                                      "end\n"
+                                      "\n"
+                                      "func pjump(v: Vertex) \n"
+                                      "    var y: Vertex = IDs[v];\n"
+                                      "    var x: Vertex = IDs[y];\n"
+                                      "    if x != y\n"
+                                      "        IDs[v] = x;\n"
+                                      "        update[0] = 1;\n"
+                                      "    end\n"
+                                      "end\n"
+                                      "\n"
+                                      "func main()\n"
+                                      "    var n : int = edges.getVertices();\n"
+                                      "    for trail in 0:10\n"
+                                      "        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                      "        startTimer();\n"
+                                      "        vertices.apply(init);\n"
+                                      "        while (frontier.getVertexSetSize() != 0)\n"
+                                      "            #s1# var output: vertexset{Vertex} = edges.from(frontier).apply(updateEdge);\n"
+                                      "\t    delete frontier;\n"
+                                      "\t    frontier = output;\n"
+                                      "            update[0] = 1;\n"
+                                      "            while update[0] != 0\n"
+                                      "\t\tupdate[0] = 0;\n"
+                                      "\t\tvertices.apply(pjump);\n"
+                                      "            end\n"
+                                      "        end\n"
+                                      "        var elapsed_time : float = stopTimer();\n"
+                                      "\tdelete frontier;\n"
+                                      "        print \"elapsed time: \";\n"
+                                      "        print elapsed_time;\n"
+                                      "    end\n"
+                                      "end"
+        );
+
+
         const char* prd_char =  ("element Vertex end\n"
                                                        "element Edge end\n"
                                                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
@@ -748,6 +805,7 @@ protected:
         sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
+        cc_pjump_str_ = string  (cc_pjump_char);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
@@ -827,6 +885,7 @@ protected:
     string sssp_async_str_;
     string cf_str_;
     string cc_str_;
+    string cc_pjump_str_;
     string prd_str_;
     string prd_double_str_;
     string pr_cc_str_;
@@ -1281,6 +1340,16 @@ TEST_F(HighLevelScheduleTest, CCNoSchedule) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, CCPJUMPNoSchedule) {
+    istringstream is (cc_pjump_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
