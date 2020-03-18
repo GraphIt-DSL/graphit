@@ -259,7 +259,7 @@ protected:
                                       "        startTimer();\n"
                                       "        vertices.apply(init);\n"
                                       "        while (frontier.getVertexSetSize() != 0)\n"
-                                      "            #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, IDs);\n"
+                                      "            #s1# var output: vertexset{Vertex} = edges.applyModified(updateEdge, IDs);\n"
                                       "\t    delete frontier;\n"
                                       "\t    frontier = output;\n"
                                       "            update[0] = 1;\n"

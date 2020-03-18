@@ -27,13 +27,6 @@ func pjump(v: Vertex)
     end
 end
 
-
-func printID(v : Vertex)
-    print IDs[v];
-end
-
-
-
 func main()
     var n : int = edges.getVertices();
     for trail in 0:10
@@ -41,7 +34,7 @@ func main()
         startTimer();
          vertices.apply(init);
          while (frontier.getVertexSetSize() != 0)
-            #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
+            #s1# var output: vertexset{Vertex} = edges.applyModified(updateEdge,IDs);
 	        delete frontier;
 	        frontier = output;
             update[0] = 1;
@@ -52,7 +45,6 @@ func main()
         end
         var elapsed_time : float = stopTimer();
 	     delete frontier;
-	     % #s2# vertices.apply(printID);
         print "elapsed time: ";
         print elapsed_time;
     end
