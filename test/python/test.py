@@ -426,5 +426,5 @@ if __name__ == '__main__':
     unittest.main()
     # used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_cc_verified'))
+    # suite.addTest(TestGraphitCompiler('test_cc_pjump_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
