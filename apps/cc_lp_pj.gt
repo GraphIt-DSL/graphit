@@ -1,7 +1,9 @@
+%Connected Components with Label Propagation and PJump Shortcut
+
 element Vertex end
 element Edge end
 
-const edges : edgeset{Edge}(Vertex,Vertex) = load ("../test/graphs/4.el");
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 
 const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
@@ -9,11 +11,6 @@ const IDs : vector{Vertex}(int) = 1;
 const update: vector[1](int);
 
 func updateEdge(src : Vertex, dst : Vertex)
-%    var src_id: Vertex = IDs[src];
-%    var dst_id: Vertex = IDs[dst];
-
-%    IDs[dst_id] min= IDs[src_id];
-%    IDs[src_id] min= IDs[dst_id];
      IDs[dst] min= IDs[src];
 end
 
@@ -41,7 +38,7 @@ func main()
     var n : int = edges.getVertices();
     for trail in 0:10
          var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
-%        startTimer();
+        startTimer();
          vertices.apply(init);
          while (frontier.getVertexSetSize() != 0)
             #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
@@ -53,10 +50,10 @@ func main()
 		       vertices.apply(pjump);
             end
         end
-%        var elapsed_time : float = stopTimer();
+        var elapsed_time : float = stopTimer();
 	     delete frontier;
-	     #s2# vertices.apply(printID);
-%        print "elapsed time: ";
-%        print elapsed_time;
+	     % #s2# vertices.apply(printID);
+        print "elapsed time: ";
+        print elapsed_time;
     end
 end
