@@ -555,6 +555,9 @@ namespace graphit {
                         //genPropertyArrayDecl(constant);
                         if (constant->needs_allocation)
                             genPropertyArrayAlloc(constant);
+                    } else {
+                        //constant scalar vector
+                        genScalarVectorAlloc(constant, type);
                     }
                 } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type) ||
                         std::dynamic_pointer_cast<mir::PriorityQueueType>(constant->type)){
@@ -2171,6 +2174,12 @@ namespace graphit {
         oss << ", ";
         update_op->minimum_val->accept(this);
         oss << ")";
+    }
+
+    void CodeGenCPP::genScalarVectorAlloc(mir::VarDecl::Ptr constant, mir::VectorType::Ptr vector_type) {
+        oss << constant->name << " = new ";
+        vector_type->vector_element_type->accept(this);
+        oss << " ();" << std::endl;
     }
 
 
