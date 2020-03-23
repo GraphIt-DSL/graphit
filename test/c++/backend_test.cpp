@@ -1063,3 +1063,46 @@ TEST_F(BackendTest, VectorInitWithoutVertex) {
     EXPECT_EQ (0, basicTest(is));
 
 }
+
+TEST_F(BackendTest, FunctorOneStateTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    vertices.apply(addStuff[test]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, FunctorMultipleStatesTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int, b: float](v: Vertex)\n"
+                     "    print b;\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    var test_v2: float = 5.0;\n"
+                     "    vertices.apply(addStuff[test, test_v2]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}

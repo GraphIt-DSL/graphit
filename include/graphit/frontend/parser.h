@@ -51,6 +51,10 @@ namespace graphit {
 
         fir::GenericParam::Ptr parseGenericParam();
 
+        std::vector<fir::Argument::Ptr> parseFunctorArgs();
+
+        fir::FuncExpr::Ptr parseFunctorExpr();
+
         std::vector<fir::Argument::Ptr> parseArguments();
 
         fir::Argument::Ptr parseArgumentDecl();

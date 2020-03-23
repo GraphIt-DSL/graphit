@@ -743,6 +743,12 @@ namespace graphit {
             for (const auto &genericArg : callExpr->genericArgs) {
                 genericArgs.push_back(genericArg->clone<IndexSet>());
             }
+
+            for (const auto &arg : callExpr->functorArgs) {
+                functorArgs.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
+            }
+
+
             for (const auto &arg : callExpr->args) {
                 args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
             }
@@ -1118,18 +1124,36 @@ namespace graphit {
             }
         }
 
+
         FIRNode::Ptr MethodCallExpr::cloneNode() {
             const auto node = std::make_shared<MethodCallExpr>();
             node->copy(shared_from_this());
             return node;
         }
 
+        void FuncExpr::copy(FIRNode::Ptr node) {
+            const auto funcExpr = to<FuncExpr>(node);
+            Expr::copy(funcExpr);
+            name = funcExpr->name->clone<Identifier>();
+
+            for (const auto &arg : funcExpr->args) {
+                args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
+            }
+        }
+
+
+        FIRNode::Ptr FuncExpr::cloneNode() {
+            const auto node = std::make_shared<FuncExpr>();
+            node->copy(shared_from_this());
+        }
+
+
 
         void ApplyExpr::copy(FIRNode::Ptr node) {
             const auto apply_expr = to<ApplyExpr>(node);
             Expr::copy(apply_expr);
             target = apply_expr->target->clone<Expr>();
-            input_function = apply_expr->input_function->clone<Identifier>();
+            input_function = apply_expr->input_function->clone<FuncExpr>();
             type = apply_expr->type;
 
             if (apply_expr->from_expr){

@@ -201,6 +201,7 @@ namespace graphit {
             decls.scope();
 
             funcDecl->genericParams = parseGenericParams();
+            funcDecl->functorArgs = parseFunctorArgs();
             funcDecl->args = parseArguments();
             funcDecl->results = parseResults();
 
@@ -262,7 +263,27 @@ namespace graphit {
         return genericParam;
     }
 
-// arguments: '(' [argument_decl {',' argument_decl}] ')'
+    // arguments: '(' [argument_decl {',' argument_decl}] ')'
+    std::vector<fir::Argument::Ptr> Parser::parseFunctorArgs() {
+        std::vector<fir::Argument::Ptr> arguments;
+
+        if (tryConsume(Token::Type::LB)){
+            if (peek().type != Token::Type::RP) {
+                do {
+                    const fir::Argument::Ptr argument = parseArgumentDecl();
+                    arguments.push_back(argument);
+                } while (tryConsume(Token::Type::COMMA));
+            }
+            consume(Token::Type::RB);
+
+        }
+
+        return arguments;
+    }
+
+
+
+    // arguments: '(' [argument_decl {',' argument_decl}] ')'
     std::vector<fir::Argument::Ptr> Parser::parseArguments() {
         std::vector<fir::Argument::Ptr> arguments;
 
@@ -1230,7 +1251,8 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                //apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
@@ -1462,6 +1484,11 @@ namespace graphit {
             consume(Token::Type::RA);
         }
 
+        if (tryConsume(Token::Type::LB)) {
+            call->functorArgs = parseExprParams();
+            consume(Token::Type::RB);
+        }
+
         consume(Token::Type::LP);
 
         if (peek().type != Token::Type::RP) {
@@ -1510,6 +1537,33 @@ namespace graphit {
         ident->ident = identToken.str;
 
         return ident;
+    }
+
+
+    fir::FuncExpr::Ptr Parser::parseFunctorExpr() {
+        auto funcExpr = std::make_shared<fir::FuncExpr>();
+
+        auto ident = parseIdent();
+
+        std::vector<fir::Expr::Ptr> arguments;
+
+        if (tryConsume(Token::Type::LB)){
+            if (peek().type != Token::Type::RP) {
+                do {
+                    const fir::Expr::Ptr argument = parseExpr();
+                    arguments.push_back(argument);
+                } while (tryConsume(Token::Type::COMMA));
+            }
+            consume(Token::Type::RB);
+
+        }
+
+        funcExpr->args = arguments;
+
+
+        return funcExpr;
+
+
     }
 
 // read_params: read_param {',' read_param}

@@ -406,6 +406,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_boolean_op(self):
         self.basic_compile_test("simple_boolean_op.gt")
 
+    def test_functor(self):
+        self.expect_output_val("functor.gt", 20)
+
 if __name__ == '__main__':
 
     unittest.main()
