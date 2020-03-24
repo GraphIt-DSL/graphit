@@ -36,9 +36,9 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
                                    "tc": "tc_hiroshi",
                                    "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                    "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"}, 
-                      "web" : {"pr":"pagerank_pull_segment",
+                      "web" : {"pr":"pagerank_pull",
                                     "sssp" : "sssp_hybrid_denseforward",
-                                    "cc" : "cc_hybrid_dense_bitvec_segment",
+                                    "cc" : "cc_hybrid_dense_bitvec",
                                     "bfs" :"bfs_hybrid_dense_bitvec",
                                     "bc" : "bc_SparsePushDensePull_bitvector",
                                     "tc": "tc_hiroshi",
@@ -63,7 +63,7 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
 
                         "road" : {"pr":"pagerank_pull",
                                   "sssp" : "sssp_push_slq",
-                                  "cc" : "cc_hybrid_dense",
+                                  "cc" : "cc_pj_hybrid_dense_bitvec",
                                   "bfs" :"bfs_push_slq",
                                   "bc": "bc_SparsePushDensePull",
                                   "tc": "tc_hiroshi",
@@ -115,7 +115,7 @@ def get_cmd_graphit(g, p, point):
         graph_path = DATA_PATH + g + ".wsg"
 
     #For Triangle Counting, we use undirected graph
-    elif p == "tc":
+    elif p == "tc" or p == "cc":
         graph_path = DATA_PATH + g + "U.sg"
     else:
         graph_path = DATA_PATH + g + ".sg"

@@ -28,47 +28,43 @@
 #include <cilk/cilk.h>
 #define parallel_main main
 namespace ligra {
+
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  cilk_for(IterT i = start; i < end; i += step)
-    body(i);
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
+    // if there is grain size specified, we just
+    if (grain_size != 0){
+        #pragma cilk grainsize = grain_size 
+        cilk_for(IterT i = start; i < end; i += step) {
+            body(i);
+        }
+    }
+    // if there is no grain size specified, we just default cilk
+    else {
+        cilk_for(IterT i = start; i < end; i += step) {
+            body(i);
+        }
+    }
+
 }
 
 template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; i += step)
-    body(i);
+void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
+    // if there is grain size specified, we just
+    if (grain_size != 0){
+        #pragma cilk grainsize = grain_size 
+        cilk_for(IterT i = start; i < end; i++) {
+            body(i);
+        }
+    }
+    // if there is no grain size specified, we just default cilk
+    else {
+        cilk_for(IterT i = start; i < end; i++) {
+            body(i);
+        }
+    }
+
 }
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; i += step)
-    body(i);
-}
-template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, BodyT body) {
-  cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 64") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
 
 template <typename Func0, typename Func1>
 void parallel_invoke(const Func0& func0, const Func1& func1) {
@@ -99,44 +95,39 @@ static void setWorkers(int n) {
 #include <cilk/cilk.h>
 namespace ligra {
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  cilk_for(IterT i = start; i < end; i += step)
-    body(i);
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
+    // if there is grain size specified, we just
+    if (grain_size != 0){
+        #pragma cilk grainsize = grain_size 
+        cilk_for(IterT i = start; i < end; i += step) {
+            body(i);
+        }
+    }
+    // if there is no grain size specified, we just default cilk
+    else {
+        cilk_for(IterT i = start; i < end; i += step) {
+            body(i);
+        }
+    }
+
 }
 
 template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; i += step)
-    body(i);
-}
+void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
+    // if there is grain size specified, we just
+    if (grain_size != 0){
+        #pragma cilk grainsize = grain_size 
+        cilk_for(IterT i = start; i < end; i++) {
+            body(i);
+        }
+    }
+    // if there is no grain size specified, we just default cilk
+    else {
+        cilk_for(IterT i = start; i < end; i++) {
+            body(i);
+        }
+    }
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; i += step)
-    body(i);
-}
-template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, BodyT body) {
-  cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 1") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 64") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("cilk_grainsize = 256") cilk_for(IterT i = start; i < end; ++i)
-    body(i);
 }
 
 template <typename Func0, typename Func1>
@@ -186,45 +177,19 @@ using tbb::parallel_invoke;
 
 //TODO I don't know why it is not necessary
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
   // ignore grain size for now
   tbb::parallel_for(start, end, step, body);
 
 }
 
-
 template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
+void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
   // ignore grain size for now
-tbb::parallel_for(start, end, step, body);
+  tbb::parallel_for(start, end, body);
+
 }
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
-tbb::parallel_for(start, end, step, body);
-}
-
-//TODO I don't know why it is not necessary
-template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, BodyT body) {
-  // ignore grain size for now
-tbb::parallel_for(start, end, body);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
-tbb::parallel_for(start, end, body);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-tbb::parallel_for(start, end, body);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
-tbb::parallel_for(start, end, body);
-}
 }
 #define parallel_main main
 static int s_nthreads;
@@ -246,46 +211,44 @@ static void setWorkers(int n) {
 #define parallel_main main
 namespace ligra {
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("omp parallel for ") for (IterT i = start; i < end; i += step)
-    body(i);
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
+
+    if (grain_size == 0){
+        #pragma omp parallel for
+        for (IterT i = start; i < end; i += step) {
+            body(i);
+        }
+    }
+    else {
+        #pragma omp parallel for schedule(static, grain_size)
+        for (IterT i = start; i < end; i += step) {
+            body(i);
+        }
+
+    }
+
 }
 
 template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("omp parallel for schedule (static,1)") for (IterT i = start; i < end; i += step)
-    body(i);
-}
+void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; i += step)
-    body(i);
-}
-template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("omp parallel for ") for (IterT i = start; i < end; ++i)
-    body(i);
-}
+    if (grain_size == 0){
+        #pragma omp parallel for
+        for (IterT i = start; i < end; i++) {
+            body(i);
+        }
+    }
+    else {
+        #pragma omp parallel for schedule(static, grain_size)
+        for (IterT i = start; i < end; i++) {
+            body(i);
+        }
 
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("omp parallel for schedule (static,1)") for (IterT i = start; i < end; ++i)
-    body(i);
-}
+    }
 
-template<typename IterT, typename BodyT>
-void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("omp parallel for schedule (dynamic,64)") for (IterT i = start; i < end; ++i)
-    body(i);
 }
 
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
-  _Pragma("omp parallel for schedule (static,256)") for (IterT i = start; i < end; ++i)
-    body(i);
-}
 
 template <typename Func0, typename Func1>
 void parallel_invoke(const Func0& func0, const Func1& func1) {
@@ -305,46 +268,18 @@ static void setWorkers(int n) { omp_set_num_threads(n); }
 #define parallel_main main
 namespace ligra {
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  for (IterT i = start; i < end; i += step)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, IterT step, BodyT body) {
-  for (IterT i = start; i < end; i += step)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, IterT step, BodyT body) {
+void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
   for (IterT i = start; i < end; i += step)
     body(i);
 }
 template<typename IterT, typename BodyT>
-void parallel_for_lambda(IterT start, IterT end, BodyT body) {
-  for (IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_1_lambda(IterT start, IterT end, BodyT body) {
-  for (IterT i = start; i < end; ++i)
-    body(i);
-}
-
-template<typename IterT, typename BodyT>
-void parallel_for_64_lambda(IterT start, IterT end, BodyT body) {
-    for (IterT i = start; i < end; ++i)
+void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
+    for (IterT i = start; i < end; i++)
         body(i);
 }
 
 
-template<typename IterT, typename BodyT>
-void parallel_for_256_lambda(IterT start, IterT end, BodyT body) {
-  for (IterT i = start; i < end; ++i)
-    body(i);
-}
+
 
 template <typename Func0, typename Func1>
 void parallel_invoke(const Func0& func0, const Func1& func1) {

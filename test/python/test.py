@@ -176,6 +176,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_apply_sum_expected(self):
         self.expect_output_val("simple_apply_sum.gt", 7)
 
+    def test_simple_max_expected(self):
+        self.expect_output_val("simple_apply_max.gt", 3)
+
     def test_simple_vertexset_apply(self):
         self.basic_compile_exec_test("simple_vertexset_apply.gt")
 
@@ -365,6 +368,21 @@ class TestGraphitCompiler(unittest.TestCase):
                 break
         self.assertEqual(test_flag, True)
 
+
+    def test_cc_pjump_verified(self):
+        self.basic_compile_test("cc_pjump.gt")
+        cmd = "./" + self.executable_file_name + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+        #proc = subprocess.Popen("./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output("./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 1")
+        test_flag = False
+        for line in output.rstrip().split("\n"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break
+        self.assertEqual(test_flag, True)
+
+
     def test_argv_safe(self):
         self.basic_compile_test("simple_atoi.gt")
         cmd = "./" + self.executable_file_name + " 150 170"
@@ -407,7 +425,6 @@ if __name__ == '__main__':
 
     unittest.main()
     # used for enabling a specific test
-
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_edgeset_apply_from_to_return_frontier'))
+    # suite.addTest(TestGraphitCompiler('test_cc_pjump_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

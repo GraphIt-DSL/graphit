@@ -1,5 +1,3 @@
-
-
 COMMON_FLAGS = -std=gnu++1y -g -I ../../../src/runtime_lib/
 CILK_FLAGS = $(COMMON_FLAGS)
 OPENMP_FLAGS = $(COMMON_FLAGS)
@@ -42,7 +40,7 @@ endif
 #the cpps files that are faster compiled with cilk 
 pr_cilk_cpps = pagerank_pull pagerank_pull_segment 
 sssp_cilk_cpps = sssp_hybrid_denseforward 
-cc_cilk_cpps = cc_hybrid_dense cc_hybrid_dense_bitvec_segment
+cc_cilk_cpps = cc_hybrid_dense cc_hybrid_dense_bitvec_segment cc_hybrid_dense_bitvec
 bfs_cilk_cpps = bfs_hybrid_dense bfs_hybrid_dense_bitvec 
 
 
@@ -53,6 +51,7 @@ all:
 graphit_files:
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cc.gt -f ${GRAPHIT_SCHEDULE_DIR}/cc_benchmark_cache.gt -o cpps/cc_hybrid_dense_bitvec_segment.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cc.gt -f ${GRAPHIT_SCHEDULE_DIR}/cc_hybrid_dense_parallel_cas.gt -o cpps/cc_hybrid_dense.cpp
+	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/cc.gt -f ${GRAPHIT_SCHEDULE_DIR}/cc_hybrid_dense_parallel_bitvector.gt -o cpps/cc_hybrid_dense_bitvec.cpp
 
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bfs.gt -f ${GRAPHIT_SCHEDULE_DIR}/bfs_hybrid_dense_parallel_cas.gt -o cpps/bfs_hybrid_dense.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bfs.gt -f ${GRAPHIT_SCHEDULE_DIR}/bfs_hybrid_dense_parallel_cas_bitvector.gt -o cpps/bfs_hybrid_dense_bitvec.cpp

@@ -153,6 +153,8 @@ namespace graphit {
     	void generatePyBindModule();
 
         std::string genFuncNameAsArgumentString(std::string func_name);
+
+        void genScalarVectorAlloc(mir::VarDecl::Ptr sharedPtr, mir::VectorType::Ptr vector_type);
     };
 }
 

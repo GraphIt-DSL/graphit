@@ -186,7 +186,7 @@ namespace graphit {
             //TODO: in the future, if we have multiple writes to the field, may be we need to create a big OR expression
 
             //for now, assume we only write to the field once
-            assert(field_vector_variable_map_[field_vector_name].size() == 1);
+            //assert(field_vector_variable_map_[field_vector_name].size() == 1);
 
             //this is a variable to be set
             auto bool_type = std::make_shared<mir::ScalarType>();
