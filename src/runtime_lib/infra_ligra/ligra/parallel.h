@@ -33,7 +33,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        _Pragma("cilk_grainsize = " + std::to_string(grain_size))
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i += step) {
             body(i);
         }
@@ -51,7 +51,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        _Pragma("cilk_grainsize = " + std::to_string(grain_size))
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i++) {
             body(i);
         }
@@ -100,7 +100,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        _Pragma("cilk_grainsize = " + std::to_string(grain_size))
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i += step) {
             body(i);
         }
@@ -118,7 +118,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        _Pragma("cilk_grainsize = " + std::to_string(grain_size))
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i++) {
             body(i);
         }
@@ -216,13 +216,13 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
 
     if (grain_size == 0){
-        _Pragma("omp parallel for ")
+        #pragma omp parallel for
         for (IterT i = start; i < end; i += step) {
             body(i);
         }
     }
     else {
-        _Pragma("omp parallel for schedule (static," + std::to_string(grain_size) + ")")
+        #pragma omp parallel for schedule(static, grain_size)
         for (IterT i = start; i < end; i += step) {
             body(i);
         }
@@ -235,13 +235,13 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
 
     if (grain_size == 0){
-        _Pragma("omp parallel for ")
+        #pragma omp parallel for
         for (IterT i = start; i < end; i++) {
             body(i);
         }
     }
     else {
-        _Pragma("omp parallel for schedule (static," + std::to_string(grain_size) + ")")
+        #pragma omp parallel for schedule(static, grain_size)
         for (IterT i = start; i < end; i++) {
             body(i);
         }
