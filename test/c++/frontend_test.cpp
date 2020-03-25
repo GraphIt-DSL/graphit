@@ -772,13 +772,18 @@ TEST_F(FrontendTest, FunctorOneStateDeclTest) {
 
 TEST_F(FrontendTest, FunctorOneStateTest) {
 
-    istringstream is("func addStuff[a: int](v: Vertex)\n"
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
                      "    simpleArray[v] += a;\n"
                      "end\n"
                      "func main()\n"
                      "    var test: int = 5;\n"
                      "    vertices.apply(addStuff[test]);\n"
-                     "    addstuff[test](0); <- call expr \n"
+                     "    addStuff[test](0); \n"
                      "end\n"
 
     );

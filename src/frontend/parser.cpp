@@ -1412,7 +1412,13 @@ namespace graphit {
                     switch (decls.get(identStr)) {
                         case IdentType::FUNCTION:
                             // If the function is actually being called, then return a CallExpr, else treat the function name as a variable and return a VarExpr
-                            if (peek(1).type == Token::Type::LP)
+
+                            // check if it is functor
+                            if (this->tokens.contains(Token::Type::LB) && this->tokens.contains(Token::Type::LP)){
+                                return parseCallExpr();
+                            }
+                            // check if it is just function
+                            else if (peek(1).type == Token::Type::LP)
                                 return parseCallExpr();
                             break;
                         case IdentType::RANGE_GENERIC_PARAM:
@@ -1476,7 +1482,6 @@ namespace graphit {
 // call_expr: ident ['<' endpoints '>'] '(' [expr_params] ')'
     fir::CallExpr::Ptr Parser::parseCallExpr() {
         auto call = std::make_shared<fir::CallExpr>();
-
         call->func = parseIdent();
 
         if (tryConsume(Token::Type::LA)) {
@@ -1548,7 +1553,7 @@ namespace graphit {
         std::vector<fir::Expr::Ptr> arguments;
 
         if (tryConsume(Token::Type::LB)){
-            if (peek().type != Token::Type::RP) {
+            if (peek().type != Token::Type::RB) {
                 do {
                     const fir::Expr::Ptr argument = parseExpr();
                     arguments.push_back(argument);

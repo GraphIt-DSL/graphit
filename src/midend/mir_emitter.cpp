@@ -581,7 +581,7 @@ namespace graphit {
                 //dense vertexset apply
                 auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
                 vertexset_apply_expr->target = target_expr;
-                vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
+                vertexset_apply_expr->input_function_name = apply_expr->input_function->name->ident;
                 if (apply_expr->change_tracking_field != nullptr)
                     vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
                             apply_expr->change_tracking_field)->ident;
@@ -589,7 +589,7 @@ namespace graphit {
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityExternVertexSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
-                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+                apply_update_priority_expr->input_function_name = apply_expr->input_function->name->ident;
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with vertex set" << std::endl;
@@ -604,7 +604,7 @@ namespace graphit {
             if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
                 auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
                 edgeset_apply_expr->target = target_expr;
-                edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
+                edgeset_apply_expr->input_function_name = apply_expr->input_function->name->ident;
                 if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
                 if (apply_expr->from_expr) {
                     //TODO: move the checking from expr is a function or vertexsubset logic here
@@ -619,7 +619,7 @@ namespace graphit {
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
-                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+                apply_update_priority_expr->input_function_name = apply_expr->input_function->name->ident;
                 if (apply_expr->to_expr)
                     apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
                 if (apply_expr->from_expr)

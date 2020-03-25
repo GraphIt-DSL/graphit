@@ -261,6 +261,17 @@ namespace graphit {
         return *it;
     }
 
+    bool TokenStream::contains(Token::Type tokenType) {
+        std::list<Token>::const_iterator it = tokens.cbegin();
+        while(it != tokens.cend()){
+            Token foundToken = *it;
+            if (foundToken.type == tokenType) return true;
+            it++;
+        }
+        return false;
+
+    }
+
     std::ostream &operator <<(std::ostream &out, const TokenStream &tokens) {
         for (auto it = tokens.tokens.cbegin(); it != tokens.tokens.cend(); ++it) {
             out << *it << std::endl;

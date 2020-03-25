@@ -261,6 +261,22 @@ namespace graphit {
                 oss << ">";
             }
 
+            if (!decl->functorArgs.empty()) {
+                oss << "[";
+
+                bool printDelimiter = false;
+                for (auto functorArg : decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    functorArg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << "]";
+            }
+
             oss << "(";
 
             bool printDelimiter = false;
@@ -608,6 +624,22 @@ namespace graphit {
                 }
 
                 oss << ">";
+            }
+
+            if (!expr->functorArgs.empty()) {
+                oss << "[";
+
+                bool printDelimiter = false;
+                for (auto functorArg : expr->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    functorArg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << "]";
             }
 
             oss << "(";
@@ -959,8 +991,27 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(FuncExpr::Ptr expr) {
+            expr->name->accept(this);
+
+            if (!expr->args.empty()){
+                oss << "[";
+                bool printDelimiter = false;
+                for (auto arg : expr->args) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    arg->accept(this);
+                    printDelimiter = true;
+                }
+                oss << "]";
+
+            }
+        }
+
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
+            std::cout << "HDDE" << "\n";
 
             if (expr->type == ApplyExpr::Type::REGULAR_APPLY){
                 oss << ".APPLY(";
