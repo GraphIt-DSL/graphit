@@ -1662,7 +1662,7 @@ namespace graphit {
             std::vector<Expr::Ptr> args;
 
             virtual void accept(FIRVisitor *visitor) {
-                visitor->visit(self<FuncArgExpr>());
+                visitor->visit(self<FuncExpr>());
             }
 
             protected:

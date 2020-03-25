@@ -1262,7 +1262,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::COMMA);
                 auto change_tracking_field = parseIdent();
                 apply_expr->change_tracking_field = change_tracking_field;
@@ -1288,7 +1288,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY;
@@ -1299,7 +1299,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY;

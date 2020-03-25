@@ -376,12 +376,12 @@ namespace graphit {
 
             void ApplyNode::updateApplyFunc(std::string new_apply_func_name) {
                 auto apply_expr = fir::to<fir::ApplyExpr>(apply_expr_stmt_->expr);
-                apply_expr->input_function->ident = new_apply_func_name;
+                apply_expr->input_function->name->ident = new_apply_func_name;
             }
 
             std::string ApplyNode::getApplyFuncName() {
                 auto apply_expr = fir::to<fir::ApplyExpr>(apply_expr_stmt_->expr);
-                return apply_expr->input_function->ident;
+                return apply_expr->input_function->name->ident;
             }
 
             fir::ExprStmt::Ptr ApplyNode::emitFIRNode() {

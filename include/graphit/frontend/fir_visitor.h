@@ -8,7 +8,6 @@
 
 #include <memory>
 #include <graphit/midend/label_scope.h>
-#include "fir.h"
 
 // Visitor pattern abstract class
 namespace graphit {
