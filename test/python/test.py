@@ -407,12 +407,12 @@ class TestGraphitCompiler(unittest.TestCase):
         self.basic_compile_test("simple_boolean_op.gt")
 
     def test_functor(self):
-        self.expect_output_val("functor.gt", 20)
+        self.expect_output_val("functor.gt", 25)
 
 if __name__ == '__main__':
 
-    unittest.main()
-    # used for enabling a specific test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_max_expected'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    #unittest.main()
+    #used for enabling a specific test
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_functor'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

@@ -146,7 +146,9 @@ namespace graphit {
 
         Token peek(unsigned) const;
 
-        bool contains(Token::Type tokenType);
+        bool contains(Token::Type tokenType) const;
+
+        int findFirstOccurence(Token::Type tokenType) const;
 
         void skip() { tokens.pop_front(); }
         bool consume(Token::Type);

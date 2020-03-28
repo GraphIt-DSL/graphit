@@ -595,6 +595,7 @@ namespace graphit {
             };
 
             std::string name;
+            std::vector<mir::Var> functorArgs;
             std::vector<mir::Var> args;
             mir::Var result;
             std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
@@ -704,6 +705,7 @@ namespace graphit {
         /// Calls a function that may any number of arguments.
         struct Call : public Expr {
             std::string name;
+            std::vector<Expr::Ptr> functorArgs;
             std::vector<Expr::Ptr> args;
             Type::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
@@ -857,6 +859,7 @@ namespace graphit {
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
             std::string input_function_name = "";
+            std::vector<Expr::Ptr> functorArgs;
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 

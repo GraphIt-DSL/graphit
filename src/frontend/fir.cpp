@@ -1135,16 +1135,17 @@ namespace graphit {
             const auto funcExpr = to<FuncExpr>(node);
             Expr::copy(funcExpr);
             name = funcExpr->name->clone<Identifier>();
-
             for (const auto &arg : funcExpr->args) {
                 args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
             }
+
         }
 
 
         FIRNode::Ptr FuncExpr::cloneNode() {
             const auto node = std::make_shared<FuncExpr>();
             node->copy(shared_from_this());
+            return node;
         }
 
 

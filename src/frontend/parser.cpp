@@ -1413,13 +1413,22 @@ namespace graphit {
                         case IdentType::FUNCTION:
                             // If the function is actually being called, then return a CallExpr, else treat the function name as a variable and return a VarExpr
 
-                            // check if it is functor
-                            if (this->tokens.contains(Token::Type::LB) && this->tokens.contains(Token::Type::LP)){
+                            //check if it is possibly a functor
+                            if (peek(1).type == Token::Type::LB){
+                                //TODO: we could potentially do more rigorous check
+                                auto firstEndIndex = findFirstOccurence(Token::Type::RB);
+                                // if we find the closing bracket, we check if the next element is open paranthesis
+                                // for example: function[..., ..., ...](..., ...)
+                                if (firstEndIndex != -1 && peek(firstEndIndex+1).type == Token::Type::LP){
+                                    return parseCallExpr();
+
+                                }
+                            }
+                            // it could be stateless functor (aka normal function)
+                            else if (peek(1).type == Token::Type::LP){
                                 return parseCallExpr();
                             }
-                            // check if it is just function
-                            else if (peek(1).type == Token::Type::LP)
-                                return parseCallExpr();
+
                             break;
                         case IdentType::RANGE_GENERIC_PARAM:
                             return parseRangeConst();
@@ -1564,6 +1573,7 @@ namespace graphit {
         }
 
         funcExpr->args = arguments;
+        funcExpr->name = ident;
 
 
         return funcExpr;

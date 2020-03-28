@@ -224,6 +224,8 @@ namespace graphit {
 
         Token peek(unsigned k = 0) const { return tokens.peek(k); }
 
+        int findFirstOccurence(Token::Type type) const { return tokens.findFirstOccurence(type); }
+
         void skipTo(std::vector<Token::Type>);
 
         Token consume(Token::Type);

@@ -72,6 +72,10 @@ namespace graphit {
                 args.push_back(arg);
             }
 
+            for (const auto &arg: expr->functorArgs) {
+                functorArgs.push_back(arg);
+            }
+
             if (generic_type != nullptr){
                 generic_type = expr->generic_type->clone<Type>();
             }
@@ -197,6 +201,9 @@ namespace graphit {
             auto expr = to<mir::ApplyExpr>(node);
             target = expr->target->clone<Expr>();
             input_function_name = expr->input_function_name;
+            for (const auto &arg: expr->functorArgs) {
+                functorArgs.push_back(arg);
+            }
             tracking_field = expr->tracking_field;
         }
 
@@ -855,6 +862,10 @@ namespace graphit {
             name = decl->name;
             for (const auto &arg : decl->args) {
                 args.push_back(arg);
+            }
+
+            for (const auto &arg : decl->functorArgs) {
+                functorArgs.push_back(arg);
             }
             body = decl->body->clone<StmtBlock>();
             if (decl->result.isInitialized())

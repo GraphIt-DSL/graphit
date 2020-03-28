@@ -461,7 +461,46 @@ namespace graphit {
             oss << "struct " << func_decl->name << std::endl;
             printBeginIndent();
             indent();
-            oss << std::string(2 * indentLevel, ' ');
+            //oss << std::string(2 * indentLevel, ' ');
+
+            for (auto arg : func_decl->functorArgs) {
+
+                arg.getType()->accept(this);
+                oss << arg.getName() << ";\n";
+
+            }
+
+            bool printDelimiter = false;
+
+            if (!func_decl->functorArgs.empty()){
+                oss << func_decl->name;
+                oss << "(";
+
+                for (auto arg : func_decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    arg.getType()->accept(this);
+                    oss << arg.getName();
+                    printDelimiter = true;
+                }
+                oss << "): ";
+
+                printDelimiter = false;
+                for (auto arg : func_decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    oss << arg.getName() << "(" << arg.getName() << ")";
+                    printDelimiter = true;
+                }
+
+                oss << " {}" << std::endl;
+
+            }
+
+
 
             if (func_decl->result.isInitialized()) {
                 func_decl->result.getType()->accept(this);
@@ -489,7 +528,7 @@ namespace graphit {
                 oss << "vector<vector<NodeID>>& local_bins, ";
             }
 
-            bool printDelimiter = false;
+            printDelimiter = false;
 
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -1393,7 +1432,23 @@ namespace graphit {
             } else  {
                 // This function is not an extern function, it is defined in GraphIt code
                 // This would generate a functor declaration
-                oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+                // oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+                oss << apply_expr->input_function_name << "(";
+
+                bool printDelimiter = false;
+
+                for (auto &arg: apply_expr->functorArgs) {
+
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    arg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << ")(vertexsetapply_iter);" << std::endl;
+
+
             }
             dedent();
             printIndent();

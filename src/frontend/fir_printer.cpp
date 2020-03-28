@@ -1011,7 +1011,6 @@ namespace graphit {
 
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
-            std::cout << "HDDE" << "\n";
 
             if (expr->type == ApplyExpr::Type::REGULAR_APPLY){
                 oss << ".APPLY(";

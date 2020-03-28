@@ -480,6 +480,13 @@ namespace graphit {
         }
         mir_expr->args = args;
 
+        std::vector<mir::Expr::Ptr> functorArgs;
+        for (auto &fir_arg : call_expr->functorArgs) {
+            const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+            functorArgs.push_back(mir_arg);
+        }
+        mir_expr->functorArgs = functorArgs;
+
         retExpr = mir_expr;
     };
 
@@ -582,6 +589,16 @@ namespace graphit {
                 auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
                 vertexset_apply_expr->target = target_expr;
                 vertexset_apply_expr->input_function_name = apply_expr->input_function->name->ident;
+
+                std::vector<mir::Expr::Ptr> functorArgs;
+
+                for (auto &fir_arg : apply_expr->input_function->args) {
+                    const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                    functorArgs.push_back(mir_arg);
+                }
+
+                vertexset_apply_expr->functorArgs = functorArgs;
+
                 if (apply_expr->change_tracking_field != nullptr)
                     vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
                             apply_expr->change_tracking_field)->ident;
@@ -590,6 +607,15 @@ namespace graphit {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityExternVertexSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
                 apply_update_priority_expr->input_function_name = apply_expr->input_function->name->ident;
+
+                std::vector<mir::Expr::Ptr> functorArgs;
+
+                for (auto &fir_arg : apply_expr->input_function->args) {
+                    const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                    functorArgs.push_back(mir_arg);
+                }
+
+                apply_update_priority_expr->functorArgs = functorArgs;
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with vertex set" << std::endl;
@@ -671,6 +697,7 @@ namespace graphit {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
         std::vector<mir::Var> arguments;
+        std::vector<mir::Var> functorArguments;
 
         //processing the arguments to the function declaration
         for (auto arg : func_decl->args) {
@@ -679,6 +706,13 @@ namespace graphit {
             ctx->addSymbol(arg_var);
         }
         mir_func_decl->args = arguments;
+
+        for (auto arg : func_decl->functorArgs) {
+            const mir::Var functor_arg_var = emitVar(arg);
+            functorArguments.push_back(functor_arg_var);
+            ctx->addSymbol(functor_arg_var);
+        }
+        mir_func_decl->functorArgs = functorArguments;
 
         //Processing the output of the function declaration
         //we assume there is only one argument for easy C++ code generation
