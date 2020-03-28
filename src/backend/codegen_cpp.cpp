@@ -1432,7 +1432,13 @@ namespace graphit {
             } else  {
                 // This function is not an extern function, it is defined in GraphIt code
                 // This would generate a functor declaration
-                // oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+
+                // wrap the function call with parenthesis to avoid confusion between functor args and parameter args
+
+                if (!apply_expr->functorArgs.empty()) {
+                    oss << "(";
+                }
+
                 oss << apply_expr->input_function_name << "(";
 
                 bool printDelimiter = false;
@@ -1445,8 +1451,14 @@ namespace graphit {
                     arg->accept(this);
                     printDelimiter = true;
                 }
+                // wrap the function call with parenthesis to avoid confusion between functor args and parameter args
+                if (!apply_expr->functorArgs.empty()){
+                    oss << "))(vertexsetapply_iter);" << std::endl;
 
-                oss << ")(vertexsetapply_iter);" << std::endl;
+                } else {
+                    oss << ")(vertexsetapply_iter);" << std::endl;
+                }
+
 
 
             }

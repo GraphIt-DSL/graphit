@@ -408,6 +408,8 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_functor(self):
         self.expect_output_val("functor.gt", 25)
+    def test_functor_with_vector(self):
+        self.expect_output_val("functor_vector.gt", 5)
 
 if __name__ == '__main__':
 
@@ -415,4 +417,5 @@ if __name__ == '__main__':
     #used for enabling a specific test
     suite = unittest.TestSuite()
     suite.addTest(TestGraphitCompiler('test_functor'))
+    suite.addTest(TestGraphitCompiler('test_functor_with_vector'))
     unittest.TextTestRunner(verbosity=2).run(suite)
