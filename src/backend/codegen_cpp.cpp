@@ -1433,13 +1433,11 @@ namespace graphit {
                 // This function is not an extern function, it is defined in GraphIt code
                 // This would generate a functor declaration
 
-                // wrap the function call with parenthesis to avoid confusion between functor args and parameter args
-
-                if (!apply_expr->functorArgs.empty()) {
-                    oss << "(";
+                if(!apply_expr->functorArgs.empty()){
+                    oss << "(" << apply_expr->input_function_name << "(";
+                } else {
+                    oss <<  apply_expr->input_function_name << "(";
                 }
-
-                oss << apply_expr->input_function_name << "(";
 
                 bool printDelimiter = false;
 
@@ -1448,17 +1446,15 @@ namespace graphit {
                     if (printDelimiter) {
                         oss << ", ";
                     }
-                    arg->accept(this);
+                    oss << arg;
                     printDelimiter = true;
                 }
-                // wrap the function call with parenthesis to avoid confusion between functor args and parameter args
-                if (!apply_expr->functorArgs.empty()){
-                    oss << "))(vertexsetapply_iter);" << std::endl;
 
+                if(!apply_expr->functorArgs.empty()){
+                    oss << "))(vertexsetapply_iter);" << std::endl;
                 } else {
                     oss << ")(vertexsetapply_iter);" << std::endl;
                 }
-
 
 
             }
@@ -1645,7 +1641,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->from_func)) {
                 // the schedule is an input from function
                 // Create functor instance
-                arguments.push_back(genFuncNameAsArgumentString(apply->from_func));
+                arguments.push_back(genFunctorNameAsArgumentString(apply->from_func, apply->fromFuncFunctorArgs));
             } else {
                 // the input is an input from vertexset
                 arguments.push_back(apply->from_func);
@@ -1656,7 +1652,7 @@ namespace graphit {
             if (mir_context_->isFunction(apply->to_func)) {
                 // the schedule is an input to function
                 // Create functor instance
-                arguments.push_back(genFuncNameAsArgumentString(apply->to_func));
+                arguments.push_back(genFunctorNameAsArgumentString(apply->to_func, apply->toFuncFunctorArgs));
             } else {
                 // the input is an input to vertexset
                 arguments.push_back(apply->to_func);
@@ -1664,7 +1660,8 @@ namespace graphit {
         }
 
         // the original apply function (pull direction in hybrid case)
-        arguments.push_back(genFuncNameAsArgumentString(apply->input_function_name));
+        // TODO: modify this later
+        arguments.push_back(genFunctorNameAsArgumentString(apply->input_function_name, apply->functorArgs));
 
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
@@ -1813,6 +1810,37 @@ namespace graphit {
             return func_name + "()";
         }
     }
+
+    std::string CodeGenCPP::genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs) {
+        if (mir_context_->isExternFunction(func_name)){
+            //If it is an extern function, don't need to do anything, just pass the func name
+            return func_name;
+        } else {
+            //If it is a GraphIt generated function, then we need to instantiate the functor
+
+            auto returnString = func_name + "(";
+
+            bool printDelimiter = false;
+
+            for (auto arg: functorArgs) {
+
+                if (printDelimiter) {
+                    returnString +=  ", ";
+                }
+
+                returnString += arg;
+                printDelimiter = true;
+            }
+
+            returnString += ")";
+            return returnString;
+
+
+        }
+
+
+    }
+
 
     void CodeGenCPP::genTypesRequiringTypeDefs() {
 

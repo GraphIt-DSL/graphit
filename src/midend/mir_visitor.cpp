@@ -184,9 +184,6 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<VertexSetApplyExpr> expr) {
             expr->target->accept(this);
-            for(auto arg : expr->functorArgs){
-                arg->accept(this);
-            }
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetApplyExpr> expr) {

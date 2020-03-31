@@ -408,13 +408,18 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_functor(self):
         self.expect_output_val("functor.gt", 25)
+
     def test_functor_with_vector(self):
         self.expect_output_val("functor_vector.gt", 5)
+
     def test_functor_with_local_vector(self):
         self.expect_output_val("functor_local_vector.gt", 5)
 
     def test_functor_with_multiple_local_vector(self):
         self.expect_output_val("functor_multiple_local_vector.gt", 10)
+
+    def test_functor_edgeset_apply(self):
+        self.expect_output_val("functor_edgeset_apply.gt", 35)
 
 if __name__ == '__main__':
 

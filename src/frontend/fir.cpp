@@ -1187,7 +1187,7 @@ namespace graphit {
         void FromExpr::copy(FIRNode::Ptr node) {
             const auto from_expr = to<FromExpr>(node);
             Expr::copy(from_expr);
-            input_func = from_expr->input_func->clone<Identifier>();
+            input_func = from_expr->input_func->clone<FuncExpr>();
        }
 
         FIRNode::Ptr FromExpr::cloneNode() {
@@ -1199,7 +1199,7 @@ namespace graphit {
         void ToExpr::copy(FIRNode::Ptr node) {
             const auto from_expr = to<ToExpr>(node);
             Expr::copy(from_expr);
-            input_func = from_expr->input_func->clone<Identifier>();
+            input_func = from_expr->input_func->clone<FuncExpr>();
         }
 
         FIRNode::Ptr ToExpr::cloneNode() {

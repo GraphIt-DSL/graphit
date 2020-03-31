@@ -590,11 +590,14 @@ namespace graphit {
                 vertexset_apply_expr->target = target_expr;
                 vertexset_apply_expr->input_function_name = apply_expr->input_function->name->ident;
 
-                std::vector<mir::Expr::Ptr> functorArgs;
+                std::vector<std::string> functorArgs;
 
                 for (auto &fir_arg : apply_expr->input_function->args) {
                     const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
-                    functorArgs.push_back(mir_arg);
+                    if (mir::isa<mir::VarExpr>(mir_arg)){
+                        auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                        functorArgs.push_back(var_expr->var.getName());
+                    }
                 }
 
                 vertexset_apply_expr->functorArgs = functorArgs;
@@ -608,14 +611,19 @@ namespace graphit {
                 apply_update_priority_expr->target = target_expr;
                 apply_update_priority_expr->input_function_name = apply_expr->input_function->name->ident;
 
-                std::vector<mir::Expr::Ptr> functorArgs;
+                std::vector<std::string> functorArgs;
 
                 for (auto &fir_arg : apply_expr->input_function->args) {
                     const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
-                    functorArgs.push_back(mir_arg);
+                    if (mir::isa<mir::VarExpr>(mir_arg)){
+                        auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                        functorArgs.push_back(var_expr->var.getName());
+                    }
                 }
 
                 apply_update_priority_expr->functorArgs = functorArgs;
+
+
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with vertex set" << std::endl;
@@ -631,10 +639,57 @@ namespace graphit {
                 auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
                 edgeset_apply_expr->target = target_expr;
                 edgeset_apply_expr->input_function_name = apply_expr->input_function->name->ident;
-                if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
+
+                std::vector<std::string> functorArgs;
+
+                for (auto fir_arg : apply_expr->input_function->args) {
+                    const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                    if (mir::isa<mir::VarExpr>(mir_arg)){
+                        auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                        functorArgs.push_back(var_expr->var.getName());
+
+                    }
+
+                }
+
+                edgeset_apply_expr->functorArgs = functorArgs;
+
+                if (apply_expr->to_expr) {
+                    edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->name->ident;
+
+                    std::vector<std::string> toFunctorArgs;
+
+                    for (auto fir_arg : apply_expr->to_expr->input_func->args) {
+                        const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                        if (mir::isa<mir::VarExpr>(mir_arg)){
+                            auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                            toFunctorArgs.push_back(var_expr->var.getName());
+
+                        }
+
+                    }
+
+                    edgeset_apply_expr->toFuncFunctorArgs = toFunctorArgs;
+
+
+                }
                 if (apply_expr->from_expr) {
                     //TODO: move the checking from expr is a function or vertexsubset logic here
-                    edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
+                    edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->name->ident;
+
+                    std::vector<std::string> fromFunctorArgs;
+
+                    for (auto fir_arg : apply_expr->from_expr->input_func->args) {
+                        const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                        if (mir::isa<mir::VarExpr>(mir_arg)){
+                            auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                            fromFunctorArgs.push_back(var_expr->var.getName());
+
+                        }
+
+                    }
+
+                    edgeset_apply_expr->fromFuncFunctorArgs = fromFunctorArgs;
                 }
                 if (apply_expr->change_tracking_field != nullptr)
                     edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(
@@ -642,14 +697,63 @@ namespace graphit {
                 if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
                 else edgeset_apply_expr->enable_deduplication = true;
                 retExpr = edgeset_apply_expr;
+
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
                 apply_update_priority_expr->input_function_name = apply_expr->input_function->name->ident;
-                if (apply_expr->to_expr)
-                    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
-                if (apply_expr->from_expr)
-                    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->ident;
+
+                std::vector<std::string> functorArgs;
+
+                for (auto &fir_arg : apply_expr->input_function->args) {
+                    const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                    if (mir::isa<mir::VarExpr>(mir_arg)){
+                        auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                        functorArgs.push_back(var_expr->var.getName());
+                    }
+                }
+
+                apply_update_priority_expr->functorArgs = functorArgs;
+
+                apply_update_priority_expr->functorArgs = functorArgs;
+                if (apply_expr->to_expr) {
+                    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->name->ident;
+
+                    std::vector<std::string> toFunctorArgs;
+
+                    for (auto fir_arg : apply_expr->to_expr->input_func->args) {
+                        const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                        if (mir::isa<mir::VarExpr>(mir_arg)){
+                            auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                            toFunctorArgs.push_back(var_expr->var.getName());
+
+                        }
+
+                    }
+
+                    apply_update_priority_expr->toFuncFunctorArgs = toFunctorArgs;
+
+                }
+
+                if (apply_expr->from_expr) {
+                    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->name->ident;
+
+                    std::vector<std::string> fromFunctorArgs;
+
+                    for (auto fir_arg : apply_expr->from_expr->input_func->args) {
+                        const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+                        if (mir::isa<mir::VarExpr>(mir_arg)){
+                            auto var_expr = mir::to<mir::VarExpr>(mir_arg);
+                            fromFunctorArgs.push_back(var_expr->var.getName());
+
+                        }
+
+                    }
+
+                    apply_update_priority_expr->fromFuncFunctorArgs = fromFunctorArgs;
+
+                }
+
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with edge set" << std::endl;

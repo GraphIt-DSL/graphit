@@ -1239,13 +1239,13 @@ namespace graphit {
             if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
                 consume(Token::Type::LP);
                 from_expr = std::make_shared<fir::FromExpr>();
-                from_expr->input_func = parseIdent();
+                from_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
                 // right now this is a bit of a hack, dstFilter and to act the same in the compiler
             } else if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
                 consume(Token::Type::LP);
                 to_expr = std::make_shared<fir::ToExpr>();
-                to_expr->input_func = parseIdent();
+                to_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
             } else if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);

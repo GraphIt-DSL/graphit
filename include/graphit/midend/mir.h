@@ -859,7 +859,7 @@ namespace graphit {
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
             std::string input_function_name = "";
-            std::vector<Expr::Ptr> functorArgs;
+            std::vector<std::string> functorArgs;
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
@@ -910,7 +910,9 @@ namespace graphit {
 
         struct EdgeSetApplyExpr : public ApplyExpr {
             std::string from_func = "";
+            std::vector<std::string> fromFuncFunctorArgs;
             std::string to_func = "";
+            std::vector<std::string> toFuncFunctorArgs;
             bool is_parallel = false;
             bool enable_deduplication = false;
             bool is_weighted = false;
@@ -948,8 +950,11 @@ namespace graphit {
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
                 input_function_name = edgeset_apply->input_function_name;
+                functorArgs = edgeset_apply->functorArgs;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
+                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -974,8 +979,11 @@ namespace graphit {
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
                 input_function_name = edgeset_apply->input_function_name;
+                functorArgs = edgeset_apply->functorArgs;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
+                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1004,8 +1012,11 @@ namespace graphit {
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
                 input_function_name = edgeset_apply->input_function_name;
+                functorArgs = edgeset_apply->functorArgs;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
+                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1033,8 +1044,11 @@ namespace graphit {
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
                 input_function_name = edgeset_apply->input_function_name;
+                functorArgs = edgeset_apply->functorArgs;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
+                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 push_to_function_ = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
