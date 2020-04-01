@@ -71,7 +71,7 @@ Then, do:
 
 ```
 
-This compiles the GraphIt files into binaries that we can directly from benchmark script. After the above step is completed, do:
+This compiles the GraphIt files into binaries that we can directly from benchmark script. We use GCC compiler with Parallel flag to use OPENMP/CILK. After the above step is completed, do:
 
 ```
   python2 benchmark.py -a your_application -g your graph
