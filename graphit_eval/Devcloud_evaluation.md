@@ -4,7 +4,7 @@
 
 ## Instruction to access necessary files
 
-After successfully compiling the GraphIt, we can go to evaluation folder:
+After successfully compiling and build GraphIt, we can go to evaluation folder:
 
 To access relevant files for dataset #1:
 
