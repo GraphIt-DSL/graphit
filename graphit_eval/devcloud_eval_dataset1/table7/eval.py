@@ -6,12 +6,10 @@ import os
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-g', '--graphs', nargs='+',
-                        default=["testGraph"], help = "enable graphs with \
-socLive, road-usad, twitter, webGraph, friendster.Defaults to the test gra\
-ph.")
+                        default=["road", "twitter", "kron", "urand", "web"], help = "specify the graphs")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "prd"],
-                        help="applications to benchmark. Defaults to all  applications.")
+                        default=["bfs", "ds", "pr", "cc", "tc", "bc"],
+                        help="specify the applications")
 
     args = parser.parse_args()
     graphs_arg = ''

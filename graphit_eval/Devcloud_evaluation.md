@@ -74,37 +74,38 @@ Then, do:
 This compiles the GraphIt files into binaries that we can directly from benchmark script. We use GCC compiler with Parallel flag to use OPENMP/CILK. After the above step is completed, do:
 
 ```
-  python2 benchmark.py -a your_application -g your graph
+  python2 eval.py -a application -g graph
 
 ```
 
 This will run the benchmark for a specific application and for a specific graph. For example, you can run BFS on road graph by doing:
 
 ```
-  python2 benchmark.py -a bfs -g road
+  python2 eval.py -a bfs -g road
 
 ```
 
 To run the entire benchmark for all applications and graphs, you can just do:
 
 ```
-  python2 benchmark.py 
+  python2 eval.py 
 
 ```
 
 To run the entire benchmark on one application, you can do:
 
 ```
-  python2 benchmark.py -a your_application
+  python2 eval.py -a application
 
 ```
 
 To run the entire benchmark on one graph, you can do:
 
 ```
-  python2 benchmark.py -g your_graph
+  python2 eval.py -g graph
 
 ```
+
 
 To parse the results, you can do:
 
@@ -131,7 +132,7 @@ Done parsing the run outputs
 
 Below we list the applications and graphs For the devcloud evaluation
 
-#Applications
+**_Applications_ (GAP Benchmark Suite)**
 
 bfs - Breadth First Search
 
@@ -145,7 +146,16 @@ bc - Betweenness Centrality
 
 tc - Triangle Counting
 
+**_Graphs_ (GAPB Benchmark Suite)**
 
+road - USA RoadNetworks
 
+kron - Kron generated graph of scale 27
+
+urand - Uniform Random graph of scale 27
+
+twitter - Twitter social netowrks
+
+web - Web graph
 
 
