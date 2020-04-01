@@ -1,3 +1,0 @@
-schedule:
-        program->configApplyPriorityUpdate("s1", "eager_priority_update");
-        program->configApplyPriorityUpdateDelta("s1", "argv[4]");

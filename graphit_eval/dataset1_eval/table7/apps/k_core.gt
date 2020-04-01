@@ -1,0 +1,35 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const D_original: vector{Vertex}(uint) = edges.getOutDegreesUint();
+const D: vector{Vertex}(uint);
+const pq: priority_queue{Vertex}(uint);
+func apply_f(src: Vertex, dst: Vertex)
+    var k: int = pq.get_current_priority();
+    pq.updatePrioritySum(dst, -1, k);
+end
+
+func reset_v(v: Vertex) 
+    D[v] = D_original[v];
+end 
+ 
+func main()
+    for trial in 0:10
+	    vertices.apply(reset_v);
+	    startTimer();
+	    pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 0, true, -1);
+	    var finished: int = 0; 
+	    while (finished != vertices.size()) 
+            var frontier: vertexset{Vertex} = pq.dequeue_ready_set();
+            finished += frontier.getVertexSetSize();
+            #s1# edges.from(frontier).applyUpdatePriority(apply_f);
+            delete frontier;
+	    end
+	    delete pq;
+	    var elapsed_time: float = stopTimer();
+            print "elapsed time";
+	    print elapsed_time;
+    end
+    
+end

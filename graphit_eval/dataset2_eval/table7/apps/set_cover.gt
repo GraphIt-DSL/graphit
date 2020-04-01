@@ -1,0 +1,48 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const degrees: vector{Vertex}(int) = edges.getOutDegrees();
+
+const D: vector{Vertex}(uint);
+const pq: priority_queue{Vertex}(uint);
+
+const epsilon: double = 0.01;
+const x: double = 1.0/log(1.0+epsilon);
+
+func get_bucket_clamped(deg: int) -> output: int 
+	if deg == 0
+		output = 4294967295;
+	else 
+		output = floor( x * log(to_double(deg)));
+	end
+end
+
+
+func init_udf(v : Vertex)
+	var deg:int = degrees[v];
+	D[v] = get_bucket_clamped(deg);
+end
+
+
+extern func extern_function(active: vertexset{Vertex}) -> output: vertexset{Vertex};
+extern func get_cover_size() -> size: int;
+
+func main()
+	startTimer();
+	vertices.apply(init_udf);
+	pq = new priority_queue{Vertex}(uint)(false, false, D, 0, 0, false, -1);
+	var rounds: int = 0;
+	while (1)
+		var frontier: vertexset{Vertex} = pq.dequeue_ready_set();
+		if pq.finished()
+			break;
+		end
+		frontier.applyUpdatePriorityExtern(extern_function);
+		delete frontier;
+		rounds += 1;
+	end
+        var elapsed_time: float = stopTimer();
+        print "elapsed time";
+	print elapsed_time;
+end

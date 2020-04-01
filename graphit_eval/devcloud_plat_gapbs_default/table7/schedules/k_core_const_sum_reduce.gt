@@ -1,3 +1,0 @@
-
-schedule:
-       program->configApplyPriorityUpdate("s1", "constant_sum_reduce_before_update");

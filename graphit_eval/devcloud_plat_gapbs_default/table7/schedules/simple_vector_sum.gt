@@ -1,3 +1,0 @@
-
-schedule:
-    program->configApplyParallelization("s2","serial");

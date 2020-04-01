@@ -1,6 +1,0 @@
-
-
-schedule:
-    program->configApplyDirection("s1", "SparsePush")
-    ->configApplyParallelization("s1","dynamic-vertex-parallel");
-    program->fuseFields("delta", "out_degree");

@@ -1,0 +1,3 @@
+schedule:
+    program->configApplyDirection("s1", "DensePush-SparsePush");
+    program->configApplyParallelization("s1", "serial");

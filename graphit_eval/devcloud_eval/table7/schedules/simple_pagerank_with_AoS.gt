@@ -1,2 +1,0 @@
-schedule:
-    program->fuseFields("old_rank", "out_degree");
