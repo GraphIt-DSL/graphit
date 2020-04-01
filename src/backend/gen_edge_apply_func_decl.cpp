@@ -329,7 +329,14 @@ namespace graphit {
         printIndent();
 
         if (apply->is_parallel) {
-            oss_ << "}," << apply->grain_size << ");" << std::endl;
+
+            if (apply->grain_size != 1024){
+                oss_ << "}," << apply->grain_size << ");" << std::endl;
+
+            } else {
+                oss_ << "});" << std::endl;
+            }
+
         } else {
             oss_ << "}" << std::endl;
         }

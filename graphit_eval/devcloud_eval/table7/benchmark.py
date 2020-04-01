@@ -63,10 +63,10 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
 
                         "road" : {"pr":"pagerank_pull",
                                   "sssp" : "sssp_push_slq",
-                                  "cc" : "cc_pj_hybrid_dense_bitvec",
+                                  "cc" : "cc_pj_pull",
                                   "bfs" :"bfs_push_slq",
                                   "bc": "bc_SparsePushDensePull",
-                                  "tc": "tc_hiroshi",
+                                  "tc": "tc_naive",
                                   "sssp_delta_stepping" : "sssp_delta_stepping_with_merge",
                                   "sssp_delta_stepping_lazy" : "sssp_delta_stepping_lazy"},
                       }
@@ -109,6 +109,19 @@ def get_starting_points(graph):
         print("Unsupported graph type")
         return []
 
+
+def setVariables():
+
+  os.environ["OMP_NUM_THREADS"] = "32"
+  os.environ["CILK_NWORKERS"] = "32"
+  os.environ["KMP_AFFINITY"] = "verbose,explicit,proclist=[0-31]"
+  os.environ["GOMP_CPU_AFFINITY"] = "0-31"
+
+def unsetVariables():
+  del os.environ["OMP_NUM_THREADS"]
+  del os.environ["CILK_NWORKERS"]
+  del os.environ["KMP_AFFINITY"]
+  del os.environ["GOMP_CPU_AFFINITY"]
 def get_cmd_graphit(g, p, point):
 
     if p == "sssp" or p == "sssp_delta_stepping" or p == "sssp_delta_stepping_lazy":
@@ -200,6 +213,9 @@ def main():
                     if not cmd:
                       break
                     print(cmd)
+
+                    if graph == "road":
+                      setVariables()
                     # setup timeout for executions that hang
                     kill = lambda process: process.kill()
                     out = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -219,12 +235,18 @@ def main():
                         log_file.write("\n")
                         log_file.write(output)
                         log_file.write("\n------------------------------------------------\n")
+                    if graph == "road":
+                      unsetVariables()
                 else:
                   for point in points:
                       cmd = get_cmd(framework, graph, app, point)
                       if not cmd:
                           break
                       print(cmd)
+
+                      if graph == "road" and app == "bfs":
+                        setVariables()
+
 
                       # setup timeout for executions that hang
                       kill = lambda process: process.kill()
@@ -248,7 +270,9 @@ def main():
                           if generic_app_name in ["pr", "cc", "prd", "cf", "tc"]:
                               # pagerank, cc, prd, and cf can return when they succeeds once.
                               # greenmarl sets starting point internally
-                              break;            
+                              break;  
+                      if graph == "road" and app == "bfs":
+                        unsetVariables()          
                 log_file.write("successes=" + str(successes) + "\n")
                 log_file.close()
 

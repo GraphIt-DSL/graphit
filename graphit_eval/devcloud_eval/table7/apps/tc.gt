@@ -13,6 +13,11 @@ func incrementing_count(src : Vertex, dst : Vertex)
 
 end
 
+func reset(v: Vertex)
+    vertexArray[v] = 0;
+
+end
+
 
 func main()
 
@@ -23,6 +28,7 @@ func main()
         edges = edges.relabel();
         #s1# edges.apply(incrementing_count);
         triangles = vertexArray.sum();
+        vertices.apply(reset);
         var elapsed_time : float = stopTimer();
         print "elapsed time: ";
         print elapsed_time;
