@@ -129,12 +129,20 @@ testGraph, 1e-06
 Done parsing the run outputs
 ```
 
-For the devcloud evaluation, following mappings for the arguments are used:
+Below we list the applications and graphs For the devcloud evaluation
+
+#Applications
+
 bfs - Breadth First Search
+
 cc - Connected Components
-ds - Single Source Shortest Path
-pr - PageRank
-bc - Betweenness Centrality
+
+ds - Single Source Shortest Path with Delta Stepping
+
+pr - PageRank  
+
+bc - Betweenness Centrality 
+
 tc - Triangle Counting
 
 
