@@ -14,12 +14,9 @@ After successfully compiling and build GraphIt, we can go to evaluation folder:
   #start from graphit root directory
   cd graphit_eval/
   cd devcloud_eval_dataset1/table7/
-
 ```
 
-
-
-In each of the folders, you will see something like this:
+In the folder, you will see the following structure:
 
 ```
   apps/
@@ -56,8 +53,7 @@ First, we should be in the respective evaluation directory:
 ```
   #start from graphit root directory
   cd graphit_eval/
-  cd devcloud_eval_dataset2/table7/
-
+  cd devcloud_eval_dataset1/table7/
 ```
 
 Then, do:
@@ -78,11 +74,10 @@ To run the benchmark for dataset#1, set the following variables
 export OMP_NUM_THREADS=32; export GOMP_CPU_AFFINITY="0-31"; export export CILK_NWORKERS=32;
 ```
 
-To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**.
+To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**. The binaries we used will be printed and can be found within **benchmark.py**. 
 
 ```
   python2 eval.py -a application -g graph
-
 ```
 
 This will run the benchmark for a specific application and for a specific graph. For example, you can run BFS on road graph by doing:
@@ -175,4 +170,36 @@ web - Web graph
 
 The instructions are mostly the same as Relicating Dataset#1 results.
 The main difference is that we don't limit the number of threads in this case. However, there are a few data points that are faster with limiting the threadcount as in Dataset#1 (BFS on road, BC on road). In these cases, we just use the numbers generated from Dataset#1.
+
+First, we will go into dataset2 directory:
+
+```
+  #start from graphit root directory
+  cd graphit_eval/
+  cd devcloud_eval_dataset2/table7/
+
+```
+
+Then, do:
+
+```
+  make clean
+  make GCC_PAR=1 
+
+```
+
+The rest of the instructions is the same as benchmarking dataset1 using eval.py.
+To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**.
+
+To run a specific test
+
+```
+  python2 eval.py -a application -g graph
+```
+
+To run all the tests
+```
+  python2 eval.py
+```
+
 
