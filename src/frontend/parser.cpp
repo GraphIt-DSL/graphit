@@ -413,7 +413,7 @@ namespace graphit {
             varDecl->name = parseIdent();
             if (tryConsume(Token::Type::COL)) {
                 // Extend the grammar to support more than just tensor types
-                //varDecl->type = parseTensorType();
+                // varDecl->type = parseTensorType();
                 varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
                     varDecl->initVal = parseExpr();

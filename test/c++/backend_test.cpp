@@ -1106,3 +1106,15 @@ TEST_F(BackendTest, FunctorMultipleStatesTest) {
     EXPECT_EQ(0, basicTest(is));
 
 }
+
+TEST_F(BackendTest, LocalVectorInitTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const stuff : vector{Vertex}(int) = 0;\n"
+                     "func main() end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}

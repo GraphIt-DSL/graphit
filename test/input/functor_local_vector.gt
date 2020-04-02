@@ -13,9 +13,8 @@ end
 
 func main()
 
-    var simpleArray : vector{Vertex}(int) = new vector{Vertex}(int)();
+    var simpleArray : vector{Vertex}(int) = 0;
 
-    vertices.apply(initArray[simpleArray]);
     vertices.apply(addOne[simpleArray]);
 
     print simpleArray.sum();

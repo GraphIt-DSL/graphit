@@ -837,4 +837,18 @@ TEST_F(FrontendTest, FunctorMultipleStatesTest) {
 
 }
 
+TEST_F(FrontendTest, LocalVectorInitTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "func main()\n"
+                     "    var simpleArray: vector{Vertex}(int) = 0;\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
 

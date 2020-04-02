@@ -18,7 +18,6 @@ func main()
     var simpleArray1 : vector{Vertex}(int) = new vector{Vertex}(int)();
     var simpleArray2: vector{Vertex}(int) = new vector{Vertex}(int)();
 
-
     vertices.apply(initArray[simpleArray1, simpleArray2]);
     vertices.apply(addOne[simpleArray1, simpleArray2]);
 

@@ -136,6 +136,8 @@ namespace graphit {
         // generate the call to the right edgeset apply function with all the arguments
         void genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply);
 
+        void genLocalArrayAlloc(mir::VarDecl::Ptr var_decl);
+
         void genPropertyArrayDecl(mir::VarDecl::Ptr shared_ptr);
 
         void genPropertyArrayAlloc(mir::VarDecl::Ptr shared_ptr);

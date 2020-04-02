@@ -168,6 +168,10 @@ namespace graphit {
 
         void addElementType(mir::ElementType::Ptr);
 
+        std::vector<std::string> emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs);
+
+        std::string convertToFunctorArg(mir::Expr::Ptr arg);
+
         mir::FuncDecl::Type getMirFuncDeclType(fir::FuncDecl::Type);
 
         mir::Stmt::Ptr makeNoOPStmt();

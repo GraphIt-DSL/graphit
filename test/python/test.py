@@ -421,10 +421,20 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_functor_edgeset_apply(self):
         self.expect_output_val("functor_edgeset_apply.gt", 35)
 
+    def test_functor_local_vector(self):
+        self.expect_output_val("local_vector.gt", 5)
+
+    def test_functor_int_as_argument(self):
+        self.expect_output_val("functor_int_as_argument.gt", 25)
+
+    def test_functor_float_as_argument(self):
+        self.expect_output_val("functor_float_as_argument.gt", 25.0)
 if __name__ == '__main__':
 
-    unittest.main()
+    #unittest.main()
     #used for enabling a specific test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_functor'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_functor_local_vector'))
+    suite.addTest(TestGraphitCompiler('test_functor_int_as_argument'))
+    suite.addTest(TestGraphitCompiler('test_functor_float_as_argument'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

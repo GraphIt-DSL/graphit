@@ -254,10 +254,10 @@ namespace graphit {
 	    assign_stmt->lhs->accept(this);
 	    //oss << ".julienne_graph";
             oss << " = ";
-            oss << "builtin_loadJulienneEdgesFromFile(";	    
+            oss << "builtin_loadJulienneEdgesFromFile(";
 	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
 	    oss << ");" << std::endl;
-           
+
             printIndent();
             assign_stmt->lhs->accept(this);
 	    oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
@@ -265,11 +265,11 @@ namespace graphit {
             oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
             assign_stmt->lhs->accept(this);
             oss << ".m/5);" << std::endl;
-	 
+
 	    dedent();
 	    printIndent();
 	    oss << "}" << std::endl;
-	    
+
 	} else {
             printIndent();
             assign_stmt->lhs->accept(this);
@@ -407,12 +407,15 @@ namespace graphit {
 	    }
 	    oss << ";" <<std::endl;
 */
+        } else if (mir::isa<mir::VectorType>(var_decl->type)){
+
+            printIndent();
+            genLocalArrayAlloc(var_decl);
+
         } else {
             printIndent();
-
             //we probably don't need the modifiers now
             //oss << var_decl->modifier << ' ';
-
             var_decl->type->accept(this);
             oss << var_decl->name << " ";
             if (var_decl->initVal != nullptr) {
@@ -420,6 +423,7 @@ namespace graphit {
                 var_decl->initVal->accept(this);
             }
             oss << ";" << std::endl;
+
         }
     }
 
@@ -1296,6 +1300,47 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::genLocalArrayAlloc(mir::VarDecl::Ptr var_decl) {
+        // read the name of the array
+        const auto name = var_decl->name;
+
+        // read the type of the array
+        mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+        assert(vector_type != nullptr);
+        auto vector_element_type = vector_type->vector_element_type;
+        assert(vector_element_type != nullptr);
+
+        vector_element_type->accept(this);
+        oss << " * ";
+        oss << name;
+
+        // read the size of the array
+        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+        assert(size_expr != nullptr);
+        const auto init_val = var_decl->initVal;
+
+        if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
+            auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
+            oss << " = ";
+            call_expr->accept(this);
+            oss << ";" << std::endl;
+
+        } else {
+            oss << " = new ";
+            vector_element_type->accept(this);
+            oss << " [ ";
+            size_expr->accept(this);
+            oss << " ]; " << std::endl;
+            printIndent();
+            oss << "ligra::parallel_for_lambda((int)0, (int)";
+            size_expr->accept(this);
+            oss << ", [&] (int i) { ";
+            oss << name << "[i]=";
+            init_val->accept(this);
+            oss << "; });" << std::endl;
+
+        }
+    }
 
     void CodeGenCPP::genPropertyArrayAlloc(mir::VarDecl::Ptr var_decl) {
         const auto name = var_decl->name;
