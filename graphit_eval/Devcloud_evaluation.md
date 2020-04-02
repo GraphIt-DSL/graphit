@@ -61,7 +61,6 @@ Then, do:
 ```
   make clean
   make GCC_PAR=1 
-
 ```
 
 This compiles the GraphIt files into binaries that we can directly from benchmark script. We use GCC compiler with Parallel flag to use OPENMP/CILK.
@@ -166,7 +165,7 @@ twitter - Twitter social netowrks
 web - Web graph
 
 
-## Replicating Dataset 2
+## Replicating Dataset2
 
 The instructions are mostly the same as Relicating Dataset#1 results.
 The main difference is that we don't limit the number of threads in this case. However, there are a few data points that are faster with limiting the threadcount as in Dataset#1 (BFS on road, BC on road). In these cases, we just use the numbers generated from Dataset#1.
@@ -177,7 +176,6 @@ First, we will go into dataset2 directory:
   #start from graphit root directory
   cd graphit_eval/
   cd devcloud_eval_dataset2/table7/
-
 ```
 
 Then, do:
@@ -185,11 +183,10 @@ Then, do:
 ```
   make clean
   make GCC_PAR=1 
-
 ```
 
 The rest of the instructions is the same as benchmarking dataset1 using eval.py.
-To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**.
+To run a specific benchmark, use eval.py. This script runs **more than one binary for each application, and the binaries are potentially specialized for the specific graph**. The schedules we used to generate each binary can be found in **benchmark.py**.
 
 To run a specific test
 
