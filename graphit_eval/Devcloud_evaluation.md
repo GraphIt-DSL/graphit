@@ -74,10 +74,11 @@ This compiles the GraphIt files into binaries that we can directly from benchmar
 
 To run the benchmark for dataset#1, set the following variables
 
+```
 export OMP_NUM_THREADS=32; export GOMP_CPU_AFFINITY="0-31"; export export CILK_NWORKERS=32;
+```
 
-
-To run a specific benchmark, use eval.py
+To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**.
 
 ```
   python2 eval.py -a application -g graph
@@ -88,53 +89,58 @@ This will run the benchmark for a specific application and for a specific graph.
 
 ```
   python2 eval.py -a bfs -g road
+```
 
+This should give the following output with running time in seconds
+```
+{'graphit': {'testGraph': {'bfs': 3.3333333333333335e-07, 'pr': 1e-06, 'ds': 5e-07, 'cc': 1e-06, }}}
+bfs
+road, 1.23381740625
+ds
+road, 0.284026953125
+pr
+road, 0.42012
+cc
+road, 36.21985625
+tc
+road, 0.0620836666667
+bc
+road, 5.353310625
+Done parsing the run outputs
 ```
 
 To run the entire benchmark for all applications and graphs, you can just do:
 
 ```
   python2 eval.py 
-
 ```
 
 To run the entire benchmark on one application, you can do:
 
 ```
   python2 eval.py -a application
-
 ```
 
-To run the entire benchmark on one graph, you can do:
+To run the entire all applications on one graph, you can do:
 
 ```
   python2 eval.py -g graph
-
 ```
 
+The eval.py script print out the commands used. You can use that to rerun a specific benchmark. 
 
-To parse the results after the run (all results are stored as logs in the outputs directory), you can do:
+
+### (OPTIONAL) Parse Results Later
+
+All results are stored as logs in the outputs directory. As a result, you can parse them separately later.
 
 ```
-  python2 parse.py -a your_application -g your_graph
-
+  python2 parse.py -a application -g graph
 ```
 
 You can also run the parsing script for all applications and graphs same way was benchmarking script. For example ```python2 parse.py``` would run the parsing script for all applications and graphs. Parser output would be something like this:
 
-```
-{'graphit': {'testGraph': {'bfs': 3.3333333333333335e-07, 'pr': 1e-06, 'ds': 5e-07, 'cc': 1e-06, }}}
-bfs
-testGraph, 3.33333333333e-07
-ds
-testGraph, 5e-07
-pr
-testGraph, 1e-06
-cc
-testGraph, 1e-06
-
-Done parsing the run outputs
-```
+### All Applications and Graphs
 
 Below we list the applications and graphs For the devcloud evaluation
 
@@ -152,7 +158,7 @@ bc - Betweenness Centrality
 
 tc - Triangle Counting
 
-**_Graphs_ (GAPB Benchmark Suite)**
+**_Graphs_ (GAP Benchmark Suite)**
 
 road - USA RoadNetworks
 
@@ -166,3 +172,7 @@ web - Web graph
 
 
 ## Replicating Dataset 2
+
+The instructions are mostly the same as Relicating Dataset#1 results.
+The main difference is that we don't limit the number of threads in this case. However, there are a few data points that are faster with limiting the threadcount as in Dataset#1 (BFS on road, BC on road). In these cases, we just use the numbers generated from Dataset#1.
+
