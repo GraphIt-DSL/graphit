@@ -205,7 +205,7 @@ def main():
     parser.add_argument('-g', '--graphs', nargs='+',
                         default=["road", "urand", "twitter", "web", "kron"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
-                        default=["bfs", "sssp", "pr", "cc", "tc", "bc", "ds"], 
+                        default=["bfs", "pr", "cc", "tc", "bc", "ds"], 
                         help="applications to benchmark. Defaults to all four applications.")
     args = parser.parse_args()
 

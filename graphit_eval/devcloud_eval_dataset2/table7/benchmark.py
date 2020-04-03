@@ -148,6 +148,9 @@ def get_cmd_graphit(g, p, point):
         # if NUAMCTL is available
         command = "numactl -i all " + command
 
+    if p == "pr" or p == "cc":
+        command += " 16"
+
     return command
 
 
