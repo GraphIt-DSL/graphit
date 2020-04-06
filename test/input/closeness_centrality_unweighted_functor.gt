@@ -14,7 +14,7 @@ end
 
 func main()
 
-    var checked_local : vector{Vertex}(int) = 1;
+    var checked_local : vector{Vertex}(int) = -1;
 
 
 	checked_local[1] = 0;

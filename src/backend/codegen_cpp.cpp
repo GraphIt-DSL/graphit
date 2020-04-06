@@ -1911,7 +1911,13 @@ namespace graphit {
         bool isFloatLiteral = mir::isa<mir::FloatLiteral>(expression);
         bool isStringLiteral = mir::isa<mir::StringLiteral>(expression);
 
-        return isIntLiteral || isBoolLiteral || isFloatLiteral || isStringLiteral;
+        bool negativeIntOrFloatLiteral = false;
+        if (mir::isa<mir::NegExpr>(expression)) {
+            auto negExpr = mir::to<mir::NegExpr>(expression);
+            negativeIntOrFloatLiteral = mir::isa<mir::IntLiteral>(negExpr->operand) || mir::isa<mir::FloatLiteral>(negExpr->operand);
+        }
+
+        return isIntLiteral || isBoolLiteral || isFloatLiteral || isStringLiteral || negativeIntOrFloatLiteral;
 
     }
 

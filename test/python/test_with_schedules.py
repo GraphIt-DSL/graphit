@@ -481,6 +481,32 @@ class TestGraphitCompiler(unittest.TestCase):
         print (lines)
         self.assertEqual(float(lines[1].strip()), 15)
 
+    def closeness_centrality_unweighted_functor_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted_functor.gt",
+                                                                          input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        print (cmd)
+        # check the value printed to stdout is as expected
+        lines = self.get_command_output(cmd).strip().split("\n")
+        print (lines)
+        self.assertEqual(float(lines[1].strip()), 3)
+
+    def closeness_centrality_weighted_functor_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted_functor.gt",
+                                                                      input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        print (cmd)
+        # check the value printed to stdout is as expected
+        lines = self.get_command_output(cmd).strip().split("\n")
+        print (lines)
+        self.assertEqual(float(lines[1].strip()), 15)
+
     def ppsp_verified_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("ppsp_delta_stepping.gt",
@@ -688,6 +714,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_closeness_centrality_weighted_hybrid_parallel(self):
         self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt", True)
 
+    def test_closeness_centrality_unweighted_functor_hybrid_parallel(self):
+        self.closeness_centrality_unweighted_functor_test("closeness_centrality_unweighted_hybrid_parallel.gt", True)
+
+    def test_closeness_centrality_weighted_functor_hybrid_parallel(self):
+        self.closeness_centrality_weighted_functor_test("closeness_centrality_weighted_hybrid_parallel.gt", True)
+
     def test_bc_SparsePushDensePull_basic(self):
         self.bc_basic_compile_test("bc_SparsePushDensePull.gt", True);
 
@@ -883,6 +915,8 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_library_cf_with_return_verified'))
+    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_hybrid_parallel'))
+    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted_functor_hybrid_parallel'))
+
     # unittest.TextTestRunner(verbosity=2).run(suite)
     
