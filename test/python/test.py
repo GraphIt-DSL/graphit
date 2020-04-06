@@ -436,6 +436,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_functor_float_as_argument(self):
         self.expect_output_val("functor_float_as_argument.gt", 25.0)
 
+    def test_functor_edgeset_src_dest(self):
+        self.expect_output_val("functor_edgeset_srcFilter_dstFilter.gt", 275)
+
     def test_local_vector_call_expr(self):
         self.expect_output_val("local_vector_call_expr.gt", 20);
 
@@ -444,5 +447,5 @@ if __name__ == '__main__':
     unittest.main()
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_local_vector_call_expr'))
+    # suite.addTest(TestGraphitCompiler('test_functor_edgeset_src_dest'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

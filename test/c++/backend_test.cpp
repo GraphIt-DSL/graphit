@@ -1159,6 +1159,23 @@ TEST_F(BackendTest, ExportLocalVectorWithNew) {
 
 }
 
+
+TEST_F(BackendTest, SrcFilterDstFilterApplyFunctor) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func update[age: vector{Vertex}(int)] (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                     "func to_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                     "func from_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                     "func main()\n"
+                     "var age: vector{Vertex}(int) = 0;\n"
+                     "var active_vertices : vertexset{Vertex} = "
+                     "edges.srcFilter(from_filter[age]).dstFilter(to_filter[age]).apply(update[age]);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 //TODO: should be supported soon
 TEST_F(BackendTest, LocalVector) {
 
