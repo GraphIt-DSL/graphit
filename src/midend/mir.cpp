@@ -230,7 +230,9 @@ namespace graphit {
             const auto expr = to<EdgeSetApplyExpr>(node);
             ApplyExpr::copy(expr);
             from_func = expr->from_func;
+            fromFuncFunctorArgs = expr->fromFuncFunctorArgs;
             to_func = expr->to_func;
+            toFuncFunctorArgs = expr->toFuncFunctorArgs;
             is_parallel = expr->is_parallel;
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;

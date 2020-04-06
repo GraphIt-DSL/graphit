@@ -317,6 +317,28 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def bc_functor_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc_functor.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)  # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..")
+        cmd = "OMP_PLACES=sockets ./bin/test.o " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.el" + " > verifier_input"
+        print (cmd)
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        verify_cmd = "./bin/bc_verifier -f ../test/graphs/4.el -t verifier_input -r 3"
+        print (verify_cmd)
+        output = self.get_command_output(verify_cmd)
+        test_flag = False
+        for line in output.rstrip().split("\n"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
     def sssp_verified_test(self, input_file_name,
                            use_separate_algo_file=True,
                            use_delta_stepping=False,
@@ -372,6 +394,13 @@ class TestGraphitCompiler(unittest.TestCase):
     def bc_basic_compile_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+
+    def bc_functor_basic_compile_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc_functor.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
@@ -683,6 +712,30 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
+    def test_bc_functor_SparsePushDensePull_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull.gt", True);
+
+    def test_bc_functor_SparsePushDensePull_bitvector_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull_bitvector.gt", True);
+
+    def test_bc_functor_SparsePush_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePush.gt", True);
+
+    def test_bc_functor_SparsePushDensePull_bitvector_cache_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull_bitvector_cache.gt", True);
+
+    def test_bc_functor_SparsePush_verified(self):
+        self.bc_functor_verified_test("bc_SparsePush.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_bitvector_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull_bitvector.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_bitvector_cache_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
+
     def test_delta_stepping_SparsePush_schedule(self):
         self.sssp_verified_test("SparsePush_VertexParallel.gt", True, True)
 
@@ -830,6 +883,6 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
+    # suite.addTest(TestGraphitCompiler('test_library_cf_with_return_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
     

@@ -741,6 +741,24 @@ protected:
                                                "#s1# const inter: uint_64 = intersectNeighbor(edges, src, dest);\n"
                                                "end\n");
 
+        const char* bc_functor = ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const simpleArray: vector{Vertex}(int) = 0;\n"
+                                 "const visited: vector{Vertex}(bool) = false;"
+                                 "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                                 "    a[src] += a[dst];"
+                                 "end\n"
+                                 "func visited_filter(v : Vertex) -> output : bool\n"
+                                 "     output = (visited[v] == false);\n"
+                                 "end\n"
+                                 "func main()\n"
+                                 "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                 "frontier.addVertex(3)\n;"
+                                 "    var local_array: vector{Vertex}(int) = 0;"
+                                 "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                                 "end\n");
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -765,6 +783,7 @@ protected:
         simple_intersection_str_ = string(simple_intersection);
         simple_intersection_opt_str_ = string(simple_intersection_opt);
         simple_intersect_neigh_opt_str_ = string(simple_intersect_neigh_opt);
+        bc_functor_str_ = string(bc_functor);
     }
 
     virtual void TearDown() {
@@ -844,6 +863,7 @@ protected:
     string simple_intersection_str_;
     string simple_intersection_opt_str_;
     string simple_intersect_neigh_opt_str_;
+    string bc_functor_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -1171,6 +1191,19 @@ TEST_F(HighLevelScheduleTest, SimpleIntersectNeigh) {
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, BCFunctorTest) {
+    istringstream is(bc_functor_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }

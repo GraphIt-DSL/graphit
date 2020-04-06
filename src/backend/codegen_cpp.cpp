@@ -407,7 +407,7 @@ namespace graphit {
 	    }
 	    oss << ";" <<std::endl;
 */
-        } else if (mir::isa<mir::VectorType>(var_decl->type)){
+        } else if (mir::isa<mir::VectorType>(var_decl->type)) {
 
             printIndent();
             genLocalArrayAlloc(var_decl);
@@ -1307,39 +1307,45 @@ namespace graphit {
         // read the type of the array
         mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
         assert(vector_type != nullptr);
-        auto vector_element_type = vector_type->vector_element_type;
-        assert(vector_element_type != nullptr);
 
-        vector_element_type->accept(this);
-        oss << " * ";
-        oss << name;
 
-        // read the size of the array
-        const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
-        assert(size_expr != nullptr);
+        vector_type->accept(this);
+        oss << name << " ";
+
+
         const auto init_val = var_decl->initVal;
 
-        if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
-            auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
-            oss << " = ";
-            call_expr->accept(this);
-            oss << ";" << std::endl;
+        if(init_val != nullptr) {
 
-        } else {
-            oss << " = new ";
-            vector_element_type->accept(this);
-            oss << " [ ";
-            size_expr->accept(this);
-            oss << " ]; " << std::endl;
-            printIndent();
-            oss << "ligra::parallel_for_lambda((int)0, (int)";
-            size_expr->accept(this);
-            oss << ", [&] (int i) { ";
-            oss << name << "[i]=";
-            init_val->accept(this);
-            oss << "; });" << std::endl;
+            if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
+                auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
+                oss << " = ";
+                call_expr->accept(this);
+                oss << ";" << std::endl;
+
+            } else {
+                oss << " = new ";
+                const auto vector_element_type = vector_type->vector_element_type;
+                vector_element_type->accept(this);
+                const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+                oss << " [ ";
+                size_expr->accept(this);
+                oss << " ]; " << std::endl;
+                printIndent();
+                oss << "ligra::parallel_for_lambda((int)0, (int)";
+                size_expr->accept(this);
+                oss << ", [&] (int i) { ";
+                oss << name << "[i]=";
+                init_val->accept(this);
+                oss << "; });" << std::endl;
+
+            }
 
         }
+        else {
+            oss << ";\n";
+        }
+
     }
 
     void CodeGenCPP::genPropertyArrayAlloc(mir::VarDecl::Ptr var_decl) {
@@ -1492,6 +1498,7 @@ namespace graphit {
                         oss << ", ";
                     }
                     oss << arg;
+
                     printDelimiter = true;
                 }
 
@@ -1514,7 +1521,19 @@ namespace graphit {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
-            oss << apply_expr->input_function_name << "() ); " << std::endl;
+            oss << apply_expr->input_function_name;
+            oss << "( ";
+
+            bool printDelimeter = false;
+            for (auto &arg: apply_expr->functorArgs) {
+
+                if (printDelimeter) {
+                    oss << ", ";
+                }
+                oss << arg;
+                printDelimeter = true;
+            }
+            oss << ") );" << std::endl;
 
 
         }
@@ -1713,7 +1732,7 @@ namespace graphit {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
             if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
+                arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_to_function_, apply_expr->toFuncFunctorArgs));
 
             }
         }
@@ -1721,7 +1740,9 @@ namespace graphit {
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
+            std::vector<std::string> pushFunctionArguments;
+            //pushFunctionArguments.push_back(apply_expr->tracking_field);
+            arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_function_, apply_expr->functorArgs));
         }
 
         // the edgeset that is being applied over (target)

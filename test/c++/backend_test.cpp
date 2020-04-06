@@ -1107,14 +1107,69 @@ TEST_F(BackendTest, FunctorMultipleStatesTest) {
 
 }
 
-TEST_F(BackendTest, LocalVectorInitTest) {
+
+TEST_F(BackendTest, FunctorEdgesetApplyModified) {
 
     istringstream is("element Vertex end\n"
                      "element Edge end\n"
                      "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
-                     "const stuff : vector{Vertex}(int) = 0;\n"
-                     "func main() end\n"
-    );
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "const visited: vector{Vertex}(bool) = false;"
+                     "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                     "    a[src] += a[dst];"
+                     "end\n"
+                     "func visited_filter(v : Vertex) -> output : bool\n"
+                     "     output = (visited[v] == false);\n"
+                     "end\n"
+                     "func main()\n"
+                     "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                     "frontier.addVertex(3)\n;"
+                     "    var local_array: vector{Vertex}(int) = 0;"
+                     "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                     "end\n");
+
     EXPECT_EQ(0, basicTest(is));
 
 }
+
+TEST_F(BackendTest, ExportLocalVectorWithNew) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(vector[1](float));\n"
+                     "const simpleArray2: vector{Vertex}(vector[1](int));\n"
+                     "const K: int = 1;\n"
+                     "func initVertex (v : Vertex)\n"
+                     "      for i in 0:K\n"
+                     "          simpleArray[v][i] = 0.5;\n"
+                     "          simpleArray2[v][i] = 0;\n"
+                     "      end\n"
+                     "end\n"
+                     "export func export_func() -> output : vector{Vertex}(vector[1](float))\n"
+                     "    simpleArray = new vector{Vertex}(vector[1](float))();\n"
+                     "    simpleArray2 = new vector{Vertex}(vector[1](int))();\n"
+                     "    vertices.apply(initVertex);\n"
+                     "    output = simpleArray;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+//TODO: should be supported soon
+TEST_F(BackendTest, LocalVector) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()"
+                     "    var simpleArray: vector{Vertex}(vector[1](int)) = 0;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+

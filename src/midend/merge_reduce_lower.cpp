@@ -60,7 +60,11 @@ namespace graphit {
                 return;
             auto target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
             merge_reduce_->field_name = target_expr->var.getName();
-            merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
+
+            if (mir_context_->getVectorItemType(merge_reduce_->field_name) != nullptr) {
+                merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
+            }
+
             merge_reduce_->reduce_op = reduce_stmt->reduce_op_;
 
             if (merge_reduce_->numa_aware) {

@@ -969,7 +969,9 @@ namespace graphit {
 
         for (auto &fir_arg : functorArgs){
             auto mir_arg = emitExpr(fir_arg);
-            result.push_back(convertToFunctorArg(mir_arg));
+            auto name = convertToFunctorArg(mir_arg);
+            result.push_back(name);
+
         }
 
         return result;

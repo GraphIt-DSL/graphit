@@ -431,10 +431,10 @@ class TestGraphitCompiler(unittest.TestCase):
         self.expect_output_val("functor_float_as_argument.gt", 25.0)
 if __name__ == '__main__':
 
-    #unittest.main()
+    unittest.main()
     #used for enabling a specific test
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_functor_local_vector'))
-    suite.addTest(TestGraphitCompiler('test_functor_int_as_argument'))
-    suite.addTest(TestGraphitCompiler('test_functor_float_as_argument'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_functor_local_vector'))
+    # suite.addTest(TestGraphitCompiler('test_functor_int_as_argument'))
+    # suite.addTest(TestGraphitCompiler('test_functor_float_as_argument'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
