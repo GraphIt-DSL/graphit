@@ -1323,10 +1323,9 @@ namespace graphit {
                 call_expr->accept(this);
                 oss << ";" << std::endl;
 
-            } else {
+            } else if (std::dynamic_pointer_cast<mir::ScalarType>(init_val)){
                 oss << " = new ";
                 const auto vector_element_type = vector_type->vector_element_type;
-                vector_element_type->accept(this);
                 const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
                 oss << " [ ";
                 size_expr->accept(this);
@@ -1339,11 +1338,16 @@ namespace graphit {
                 init_val->accept(this);
                 oss << "; });" << std::endl;
 
+            } else {
+                oss << " = ";
+                var_decl->initVal->accept(this);
+                oss << ";" << std::endl;
+
             }
 
         }
         else {
-            oss << ";\n";
+            oss << ";" << std::endl;
         }
 
     }

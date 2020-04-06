@@ -434,7 +434,5 @@ if __name__ == '__main__':
     unittest.main()
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_functor_local_vector'))
-    # suite.addTest(TestGraphitCompiler('test_functor_int_as_argument'))
-    # suite.addTest(TestGraphitCompiler('test_functor_float_as_argument'))
+    # suite.addTest(TestGraphitCompiler('test_functor_with_multiple_local_vector'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
