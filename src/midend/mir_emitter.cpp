@@ -699,22 +699,13 @@ namespace graphit {
     void MIREmitter::visit(fir::FuncDecl::Ptr func_decl) {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
-        std::vector<mir::Var> arguments;
-        std::vector<mir::Var> functorArguments;
+        std::vector<mir::Var> arguments = emitVars(func_decl->args);
+        std::vector<mir::Var> functorArguments = emitVars(func_decl->functorArgs);
+
 
         //processing the arguments to the function declaration
-        for (auto arg : func_decl->args) {
-            const mir::Var arg_var = emitVar(arg);
-            arguments.push_back(arg_var);
-            ctx->addSymbol(arg_var);
-        }
-        mir_func_decl->args = arguments;
 
-        for (auto arg : func_decl->functorArgs) {
-            const mir::Var functor_arg_var = emitVar(arg);
-            functorArguments.push_back(functor_arg_var);
-            ctx->addSymbol(functor_arg_var);
-        }
+        mir_func_decl->args = arguments;
         mir_func_decl->functorArgs = functorArguments;
 
         //Processing the output of the function declaration
@@ -961,6 +952,19 @@ namespace graphit {
             return std::to_string(boolLiteral->val);
         }
 
+    }
+
+    std::vector<mir::Var> MIREmitter::emitVars(std::vector<fir::Argument::Ptr> args) {
+
+        std::vector<mir::Var> result;
+
+        for (auto arg : args) {
+            const mir::Var arg_var = emitVar(arg);
+            result.push_back(arg_var);
+            ctx->addSymbol(arg_var);
+        }
+
+        return result;
     }
 
     std::vector<std::string> MIREmitter::emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs) {
