@@ -154,6 +154,8 @@ namespace graphit {
 
     	void generatePyBindModule();
 
+    	void genStringArgs(std::vector<std::string> functorArgs);
+
         std::string genFuncNameAsArgumentString(std::string func_name);
 
         std::string genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs);

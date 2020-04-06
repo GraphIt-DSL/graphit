@@ -1514,17 +1514,7 @@ namespace graphit {
                     oss <<  apply_expr->input_function_name << "(";
                 }
 
-                bool printDelimiter = false;
-
-                for (auto &arg: apply_expr->functorArgs) {
-
-                    if (printDelimiter) {
-                        oss << ", ";
-                    }
-                    oss << arg;
-
-                    printDelimiter = true;
-                }
+                genStringArgs(apply_expr->functorArgs);
 
                 if(!apply_expr->functorArgs.empty()){
                     oss << "))(vertexsetapply_iter);" << std::endl;
@@ -1548,15 +1538,8 @@ namespace graphit {
             oss << apply_expr->input_function_name;
             oss << "( ";
 
-            bool printDelimeter = false;
-            for (auto &arg: apply_expr->functorArgs) {
+            genStringArgs(apply_expr->functorArgs);
 
-                if (printDelimeter) {
-                    oss << ", ";
-                }
-                oss << arg;
-                printDelimeter = true;
-            }
             oss << ") );" << std::endl;
 
 
@@ -1638,16 +1621,22 @@ namespace graphit {
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             oss << "builtin_const_vertexset_filter <";
-	    oss << vertexset_where_expr->input_func ;
+	        oss << vertexset_where_expr->input_func ;
             oss << ">(";
-            oss << vertexset_where_expr->input_func << "(), ";
+            oss << vertexset_where_expr->input_func << "(";
+            genStringArgs(vertexset_where_expr->input_func_args);
+            oss << "), ";
             associated_element_type_size->accept(this);
             oss << ")";
         } else {
             oss << "builtin_vertexset_filter <";
             oss << vertexset_where_expr->input_func;
             oss << ">(";
-            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "()";
+            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "(";
+
+            genStringArgs(vertexset_where_expr->input_func_args);
+
+            oss << ")";
             oss << ")";
         }
     }
@@ -1889,6 +1878,20 @@ namespace graphit {
 	    alloc_expr->size_expr->accept(this);
 	}
         oss << "]";
+    }
+
+    void CodeGenCPP::genStringArgs(std::vector<std::string> functorArgs) {
+
+        bool printDelimeter = false;
+        for (auto arg: functorArgs) {
+            if (printDelimeter) {
+                oss << ", ";
+            }
+            oss << arg;
+            printDelimeter = true;
+        }
+
+
     }
 
     std::string CodeGenCPP::genFuncNameAsArgumentString(std::string func_name) {

@@ -1070,6 +1070,7 @@ namespace graphit {
             std::string target;
             bool is_constant_set = false;
             std::string input_func;
+            std::vector<std::string> input_func_args;
             typedef std::shared_ptr<WhereExpr> Ptr;
 
         protected:

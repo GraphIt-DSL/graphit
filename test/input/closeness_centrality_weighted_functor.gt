@@ -1,0 +1,44 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex, int) = load ("../../test/graphs/test_closeness_sssp.wel");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const starting_node : int = 3;
+
+const distance_from_start : vector{Vertex}(int) = 21474836;
+func updateEdge[distance_from_start_local: vector{Vertex}(int)](src : Vertex, dst : Vertex, weight : int) -> output : bool
+           distance_from_start_local[dst] min= (distance_from_start_local[src] + weight);
+end
+func toFilter[distance_from_start_local: vector{Vertex}(int)](v : Vertex) -> output : bool
+     output = distance_from_start_local[v] == 21474836;
+end
+func main()
+
+  var distance_from_start_local : vector{Vertex}(int) = 21474836;
+  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+  frontier.addVertex(starting_node);
+  distance_from_start_local[starting_node] = 0;
+  var n : int = edges.getVertices();
+  var rounds : int = 0;
+  while (frontier.getVertexSetSize() != 0)
+      #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge[distance_from_start_local], distance_from_start_local);
+      delete frontier;
+      frontier = output;
+      rounds = rounds + 1;
+      if  rounds == n
+         print "negative cycle";
+         break;
+      end
+  end
+  delete frontier;
+  var sum: int = 0;
+  var numVerts : int = vertices.size();
+  for i in 0 : numVerts
+      if distance_from_start_local[i] != 21474836
+      	sum += distance_from_start_local[i];
+      end
+  end
+  print "sum of distance_from_starts: ";
+  print sum;
+  delete distance_from_start_local;
+end

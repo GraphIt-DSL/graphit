@@ -1719,7 +1719,7 @@ namespace graphit {
 
         struct WhereExpr : public Expr {
             Expr::Ptr target;
-            Identifier::Ptr input_func;
+            FuncExpr::Ptr input_func;
 
             typedef std::shared_ptr<WhereExpr> Ptr;
 

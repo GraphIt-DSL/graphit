@@ -1309,7 +1309,7 @@ namespace graphit {
             } else if (tryConsume(Token::Type::WHERE) || tryConsume(Token::Type::FILTER)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
-                where_expr->input_func = parseIdent();
+                where_expr->input_func = parseFunctorExpr();
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;

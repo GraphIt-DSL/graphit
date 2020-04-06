@@ -301,6 +301,7 @@ namespace graphit {
             const auto expr = mir::to<WhereExpr>(node);
             target = expr->target;
             input_func = expr->input_func;
+            input_func_args = expr->input_func_args;
             is_constant_set = expr->is_constant_set;
         }
 

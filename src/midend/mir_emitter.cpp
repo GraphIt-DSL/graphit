@@ -673,7 +673,8 @@ namespace graphit {
         //if (ctx->isConstVertexSet(fir_target_var_name)) {
         auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
         verteset_where_expr->target = fir_target_var_name;
-        verteset_where_expr->input_func = where_expr->input_func->ident;
+        verteset_where_expr->input_func = where_expr->input_func->name->ident;
+        verteset_where_expr->input_func_args = emitFunctorArgs(where_expr->input_func->args);
         if (ctx->isConstVertexSet(fir_target_var_name))
             verteset_where_expr->is_constant_set = true;
         else
