@@ -224,15 +224,19 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
-	    printIndent();
-	    oss << "{" << std::endl;
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) &&
+                   (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type ==
+                    mir::PriorityUpdateType::ExternPriorityUpdate ||
+                    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type ==
+                    mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
+            printIndent();
+            oss << "{" << std::endl;
             indent();
-	    printIndent();
+            printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
-	    //assign_stmt->expr->accept(this);
-	    auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
+            //assign_stmt->expr->accept(this);
+            auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
             // DO no load the infra_gapbs format 
             /*
 	    if (edgeset_load_expr->is_weighted_) {
@@ -250,27 +254,27 @@ namespace graphit {
 	    oss << ";" << std::endl;
             */
             // Now load the Julienne type graph
-	    printIndent();
-	    assign_stmt->lhs->accept(this);
-	    //oss << ".julienne_graph";
+            printIndent();
+            assign_stmt->lhs->accept(this);
+            //oss << ".julienne_graph";
             oss << " = ";
             oss << "builtin_loadJulienneEdgesFromFile(";
-	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
-	    oss << ");" << std::endl;
+            mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
+            oss << ");" << std::endl;
 
             printIndent();
             assign_stmt->lhs->accept(this);
-	    oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
+            oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
             assign_stmt->lhs->accept(this);
             oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
             assign_stmt->lhs->accept(this);
             oss << ".m/5);" << std::endl;
 
-	    dedent();
-	    printIndent();
-	    oss << "}" << std::endl;
+            dedent();
+            printIndent();
+            oss << "}" << std::endl;
 
-	} else {
+        } else {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -978,9 +982,24 @@ namespace graphit {
 
         if (mir_context_->isFunction(call_expr->name)) {
             auto mir_func_decl = mir_context_->getFunction(call_expr->name);
-            if (mir_func_decl->isFunctor)
-                oss << "()";
+            if (mir_func_decl->isFunctor) {
+                oss << "(";
+                bool printDelimiter = false;
+
+                for (auto arg : call_expr->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    arg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << ")";
+            }
         }
+
+
+
 
         oss << "(";
 
@@ -1323,9 +1342,10 @@ namespace graphit {
                 call_expr->accept(this);
                 oss << ";" << std::endl;
 
-            } else if (std::dynamic_pointer_cast<mir::ScalarType>(init_val)){
+            } else if (isLiteral(init_val)){
                 oss << " = new ";
                 const auto vector_element_type = vector_type->vector_element_type;
+                vector_element_type->accept(this);
                 const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
                 oss << " [ ";
                 size_expr->accept(this);
@@ -1879,6 +1899,17 @@ namespace graphit {
             //If it is a GraphIt generated function, then we need to instantiate the functor
             return func_name + "()";
         }
+    }
+
+    bool CodeGenCPP::isLiteral(mir::Expr::Ptr expression) {
+
+        bool isIntLiteral = mir::isa<mir::IntLiteral>(expression);
+        bool isBoolLiteral = mir::isa<mir::BoolLiteral>(expression);
+        bool isFloatLiteral = mir::isa<mir::FloatLiteral>(expression);
+        bool isStringLiteral = mir::isa<mir::StringLiteral>(expression);
+
+        return isIntLiteral || isBoolLiteral || isFloatLiteral || isStringLiteral;
+
     }
 
     std::string CodeGenCPP::genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs) {

@@ -157,6 +157,8 @@ namespace graphit {
         std::string genFuncNameAsArgumentString(std::string func_name);
 
         std::string genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs);
+
+        bool isLiteral(mir::Expr::Ptr expression);
     };
 }
 

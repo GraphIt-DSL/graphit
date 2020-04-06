@@ -418,8 +418,14 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_functor_with_multiple_local_vector(self):
         self.expect_output_val("functor_multiple_local_vector.gt", 10)
 
+    def test_functor_with_multiple_local_vector_with_int(self):
+        self.expect_output_val("functor_multiple_local_vector_with_int.gt", 60)
+
     def test_functor_edgeset_apply(self):
         self.expect_output_val("functor_edgeset_apply.gt", 35)
+
+    def test_functor_edgeset_apply_from(self):
+        self.expect_output_val("functor_edgeset_from_to.gt", 30)
 
     def test_functor_local_vector(self):
         self.expect_output_val("local_vector.gt", 5)
@@ -429,10 +435,14 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_functor_float_as_argument(self):
         self.expect_output_val("functor_float_as_argument.gt", 25.0)
+
+    def test_local_vector_call_expr(self):
+        self.expect_output_val("local_vector_call_expr.gt", 20);
+
 if __name__ == '__main__':
 
     unittest.main()
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_functor_with_multiple_local_vector'))
+    # suite.addTest(TestGraphitCompiler('test_local_vector_call_expr'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
