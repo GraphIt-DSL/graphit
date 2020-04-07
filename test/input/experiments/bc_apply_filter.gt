@@ -12,7 +12,7 @@ const visited : vector{Vertex}(bool) = false;
 
 
 
-func add_scores<dependences_local: vector{Vertex}(double)>(v: Vertex)
+func add_scores[dependences_local: vector{Vertex}(double)](v: Vertex)
 
    % var new_score : double = dependences[v] + dependences_local[v];
    % CAS(dependences, v, new_score);
@@ -24,32 +24,32 @@ func add_scores<dependences_local: vector{Vertex}(double)>(v: Vertex)
 end
 
 
-func forward_update<num_paths_local: vector{Vertex}(double)>(src : Vertex, dst : Vertex)
+func forward_update[num_paths_local: vector{Vertex}(double)](src : Vertex, dst : Vertex)
     num_paths_local[dst] +=  num_paths_local[src];
 end
 
-func visited_vertex_filter<visited_local: vector{Vertex}>(v : Vertex) -> output : bool
+func visited_vertex_filter[visited_local: vector{Vertex}](v : Vertex) -] output : bool
     output = (visited_local[v] == false);
 end
 
-func mark_visited<visited_local: vector{Vertex}>(v : Vertex)
+func mark_visited[visited_local: vector{Vertex}](v : Vertex)
     visited_local[v] = true;
 end
 
-func mark_unvisited<visited_local: vector{Vertex}>(v : Vertex)
+func mark_unvisited[visited_local: vector{Vertex}](v : Vertex)
     visited_local[v] = false;
 end
 
-func backward_vertex_f<dependences_local: vector{Vertex}, visited_local: vector{Vertex}, num_paths_local: vector{Vertex}>(v : Vertex)
+func backward_vertex_f[dependences_local: vector{Vertex}, visited_local: vector{Vertex}, num_paths_local: vector{Vertex}](v : Vertex)
     visited_local[v] = true;
     dependences_local[v] += 1 / num_paths_local[v];
 end
 
-func backward_update<dependences_local: vector{Vertex})(src : Vertex, dst : Vertex)
+func backward_update[dependences_local: vector{Vertex})(src : Vertex, dst : Vertex)
     dependences_local[dst] += dependences_local[src];
 end
 
-func final_vertex_f<dependences_local: vector{Vertex}, num_paths_local: vector{Vertex}>(v : Vertex)
+func final_vertex_f[dependences_local: vector{Vertex}, num_paths_local: vector{Vertex}](v : Vertex)
     if num_paths_local[v] != 0
         dependences_local[v] = (dependences_local[v] - 1 / num_paths_local[v]) * num_paths_local[v];
     else
@@ -57,7 +57,7 @@ func final_vertex_f<dependences_local: vector{Vertex}, num_paths_local: vector{V
     end
 end
 
-func reset<dependences_local: vector{Vertex}, visited_local: vector{Vertex}, num_paths_local: vector{Vertex}>(v : Vertex)
+func reset[dependences_local: vector{Vertex}, visited_local: vector{Vertex}, num_paths_local: vector{Vertex}](v : Vertex)
     dependences_local[v] = 0;
     num_paths_local[v] = 0;
     visited_local[v] = false;
@@ -81,8 +81,8 @@ func compute_bc(start_vertex: Vertex)
     % foward pass to propagate num_paths
     while (frontier.getVertexSetSize() != 0)
          round = round + 1;
-         #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter<visited_local>).applyModified(forward_update<num_paths_local>, num_paths_local);
-         output.apply(mark_visited<visited_local>);
+         #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter[visited_local]).applyModified(forward_update[num_paths_local], num_paths_local);
+         output.apply(mark_visited[visited_local]);
          frontier_list.append(output);
          frontier = output;
     end
@@ -91,7 +91,7 @@ func compute_bc(start_vertex: Vertex)
     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
 
    	% resetting the visited information for the backward pass
-    vertices.apply(mark_unvisited<visited_local>);
+    vertices.apply(mark_unvisited[visited_local]);
 
     % pop off the empty frontier
     frontier = frontier_list.pop();
@@ -99,24 +99,24 @@ func compute_bc(start_vertex: Vertex)
 
     % start from the last frontier
     frontier = frontier_list.pop();
-    frontier.apply(backward_vertex_f<dependences_local, visited_local, num_paths_local>);
+    frontier.apply(backward_vertex_f[dependences_local, visited_local, num_paths_local]);
     round = round - 1;
 
     % backward pass to accumulate the dependencies
-    while (round > 0)
-        #s2# transposed_edges.from(frontier).to(visited_vertex_filter<visitied_local>).apply(backward_update<dependences_local>);
+    while (round ] 0)
+        #s2# transposed_edges.from(frontier).to(visited_vertex_filter[visitied_local]).apply(backward_update[dependences_local]);
         delete frontier;
         frontier = frontier_list.pop();
-        frontier.apply(backward_vertex_f<dependences_local, visited_local, num_paths_local>);
+        frontier.apply(backward_vertex_f[dependences_local, visited_local, num_paths_local]);
         round = round - 1;
     end
 
     delete frontier;
 
-    vertices.apply(final_vertex_f<dependences_local, num_paths_local>);
-	vertices.apply(reset<dependences_local, visited_local, num_paths_local>);
+    vertices.apply(final_vertex_f[dependences_local, num_paths_local]);
+	vertices.apply(reset[dependences_local, visited_local, num_paths_local]);
 
-	vertices.apply(add_scores<dependences_local>);
+	vertices.apply(add_scores[dependences_local]);
 
 	delete dependences_local;
 	delete num_paths_local;
