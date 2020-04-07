@@ -3,13 +3,11 @@
 //
 
 #include <graphit/backend/backend.h>
+#include <graphit/backend/codegen_swarm.h>
 
 namespace graphit{
     int Backend::emitCPP(std::ostream &oss, std::string module_name) {
-        CodeGenCPP* codegen_cpp = new CodeGenCPP(oss, mir_context_, module_name);
-        int flag = codegen_cpp->genCPP();
-        delete codegen_cpp;
-        return flag;
+	return CodeGenSwarm(oss, mir_context_, module_name).genSwarmCode();
     }
     int Backend::emitPython(std::ostream &oss, std::string module_name, std::string module_path) {
 	CodeGenPython *codegen_python = new CodeGenPython(oss, mir_context_, module_name, module_path);

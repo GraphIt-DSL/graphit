@@ -41,13 +41,14 @@ namespace graphit {
         for (auto function : mir_context_->getExternFunctionList()) {
             function->accept(&lower_priority_queue_type_and_alloc_expr);
         }
-
+/*
         LowerUpdatePriorityEdgeSetApplyExpr lower_update_priority_edge_set_apply_expr = LowerUpdatePriorityEdgeSetApplyExpr(
                 schedule_, mir_context_);
 
         for (auto function : functions) {
             function->accept(&lower_update_priority_edge_set_apply_expr);
         }
+*/
 
         // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
         auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
