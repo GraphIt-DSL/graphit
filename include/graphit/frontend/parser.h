@@ -83,6 +83,8 @@ namespace graphit {
 
         fir::ForStmt::Ptr parseForStmt();
 
+        fir::ParForStmt::Ptr parseParForStmt();
+
         fir::ForDomain::Ptr parseForDomain();
 
         fir::PrintStmt::Ptr parsePrintStmt();

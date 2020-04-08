@@ -818,6 +818,35 @@ protected:
                                  "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
                                  "end\n");
 
+        const char* par_for_simple_schedule = ("element Vertex end\n"
+                                               "element Edge end\n"
+                                               "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                               "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                               "func main()\n"
+                                               "    var k: int = 7;"
+                                               "    #s1# par_for i in 0: k"
+                                               "       print 3;\n"
+                                               "    end\n"
+                                               "end\n");
+
+        const char* par_for_nested_schedule = ("element Vertex end\n"
+                                        "element Edge end\n"
+                                        "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                        "func addOneEdge[local_array: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                                        "       local_array[src] = 5;\n"
+                                        "end\n"
+                                        "func addOneVertex[local_array: vector{Vertex}(int)](v: Vertex)\n"
+                                        "       local_array[v] = 5;\n"
+                                        "end\n"
+                                        "func main()\n"
+                                        "    var local_array: vector{Vertex}(int) = 0;"
+                                        "    #s1# par_for i in 0: 10"
+                                        "       #s2# edges.apply(addOneEdge[local_array];\n"
+                                        "       #s3# vertices.apply(addOneVertex[local_array];\n"
+                                        "    end\n"
+                                        "end\n");
+
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
@@ -843,6 +872,8 @@ protected:
         simple_intersection_opt_str_ = string(simple_intersection_opt);
         simple_intersect_neigh_opt_str_ = string(simple_intersect_neigh_opt);
         bc_functor_str_ = string(bc_functor);
+        par_for_str_ = string(par_for_simple_schedule);
+        par_for_nested_str_ = string(par_for_nested_schedule);
     }
 
     virtual void TearDown() {
@@ -924,6 +955,8 @@ protected:
     string simple_intersection_opt_str_;
     string simple_intersect_neigh_opt_str_;
     string bc_functor_str_;
+    string par_for_str_;
+    string par_for_nested_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -2473,7 +2506,7 @@ TEST_F(HighLevelScheduleTest, KCoreSparsePushSerial){
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSparsePushParallel){
-istringstream is (kcore_str_);
+    istringstream is (kcore_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
@@ -2528,6 +2561,31 @@ program->configApplyDirection("s1", "SparsePush-DensePull");
 program->configApplyParallelization("s1", "dynamic-vertex-parallel");
 EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
+TEST_F(HighLevelScheduleTest, ParForSimpleSchedule){
+
+    istringstream is (par_for_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configParForGrainSize("s1", 16);
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+}
+
+TEST_F(HighLevelScheduleTest, ParForNestedSchedule){
+
+    istringstream is (par_for_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configParForGrainSize("s1", 16);
+    program->configApplyParallelization("s2", "dynamic-vertex-parallel");
+    program->configApplyParallelization("s3", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+}
+
 
 
 TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){

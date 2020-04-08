@@ -55,6 +55,7 @@ namespace graphit {
             ELIF,
             ELSE,
             FOR,
+            PAR_FOR,
             IN,
             BLOCKEND,
             RETURN,

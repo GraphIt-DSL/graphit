@@ -412,6 +412,26 @@ namespace graphit {
             oss << "end";
         }
 
+        void FIRPrinter::visit(ParForStmt::Ptr stmt) {
+            printIndent();
+
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
+            oss << "par_for ";
+            stmt->loopVar->accept(this);
+            oss << " in ";
+            stmt->domain->accept(this);
+            oss << std::endl;
+
+            indent();
+            stmt->body->accept(this);
+            dedent();
+
+            printIndent();
+            oss << "end";
+        }
+
         void FIRPrinter::visit(PrintStmt::Ptr stmt) {
             printIndent();
 
