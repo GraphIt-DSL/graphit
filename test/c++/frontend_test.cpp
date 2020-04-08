@@ -281,6 +281,11 @@ TEST_F(FrontendTest, SimpleForLoops) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(FrontendTest, SimpleParForLoops) {
+    istringstream is("func main() par_for i in 1:10; print i; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
 TEST_F(FrontendTest, VertexSetGetSize) {
     istringstream is("element Vertex end\n"
                              "element Edge end\n"
@@ -458,6 +463,15 @@ TEST_F(FrontendTest, SimpleAttachLabel) {
     EXPECT_EQ (0,  basicTest(is));
 
 }
+
+TEST_F(FrontendTest, SimpleAttachLabelParFor) {
+    istringstream is("func main() "
+                     "# l1 # par_for i in 1:2; print 4; end "
+                     "end");
+    EXPECT_EQ (0,  basicTest(is));
+
+}
+
 
 TEST_F(FrontendTest, SimpleIntersectNeighborOperator) {
     istringstream is("element Vertex end\n"

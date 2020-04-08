@@ -377,6 +377,8 @@ namespace graphit {
                 return parseDoWhileStmt();
             case Token::Type::FOR:
                 return parseForStmt();
+            case Token::Type::PAR_FOR:
+                return parseParForStmt();
             case Token::Type::PRINT:
             case Token::Type::PRINTLN:
                 return parsePrintStmt();
@@ -661,7 +663,39 @@ namespace graphit {
         }
     }
 
-// DEPRECATED: for_domain: set_index_set | (expr ':' expr)
+    fir::ParForStmt::Ptr Parser::parseParForStmt() {
+        try {
+            auto parForStmt = std::make_shared<fir::ParForStmt>();
+
+            const Token parForToken = consume(Token::Type::PAR_FOR);
+            parForStmt->setBeginLoc(parForToken);
+
+            parForStmt->loopVar = parseIdent();
+            consume(Token::Type::IN);
+            parForStmt->domain = parseForDomain();
+
+            decls.scope();
+            decls.insert(parForStmt->loopVar->ident, IdentType::OTHER);
+
+            parForStmt->body = parseStmtBlock();
+            decls.unscope();
+
+            const Token endToken = consume(Token::Type::BLOCKEND);
+            parForStmt->setEndLoc(endToken);
+
+            return parForStmt;
+        } catch (const SyntaxError &) {
+            skipTo({Token::Type::BLOCKEND});
+            consume(Token::Type::BLOCKEND);
+
+            return fir::ParForStmt::Ptr();
+        }
+    }
+
+
+
+
+    // DEPRECATED: for_domain: set_index_set | (expr ':' expr)
     // for_domain: (expr ':' expr)
     fir::ForDomain::Ptr Parser::parseForDomain() {
 //        GraphIt currently do not support for loop over set_index_set

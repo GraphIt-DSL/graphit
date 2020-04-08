@@ -592,6 +592,27 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configParForGrainSize(std::string apply_label, int grain_size) {
+
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+
+            // If no par for schedule has been constructed, construct a new one
+            if (schedule_->par_for_schedules == nullptr) {
+                schedule_->par_for_schedules= new std::map<std::string, int>();
+            }
+
+
+            (*schedule_->par_for_schedules)[apply_label] = grain_size;
+
+
+            return this->shared_from_this();
+
+
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configIntersection(std::string intersection_label,
                                                                        std::string intersection_option) {
             // If no schedule has been constructed, construct a new one
