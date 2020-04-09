@@ -1190,3 +1190,8 @@ TEST_F(BackendTest, LocalVector) {
     EXPECT_EQ(0, basicTest(is));
 }
 
+TEST_F(BackendTest, SimpleParForLoops) {
+    istringstream is("func main() par_for i in 1:10; print i; end end");
+    EXPECT_EQ (0,  basicTest(is));
+}
+

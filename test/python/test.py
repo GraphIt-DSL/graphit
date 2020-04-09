@@ -442,10 +442,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_local_vector_call_expr(self):
         self.expect_output_val("local_vector_call_expr.gt", 20);
 
+    def test_par_for(self):
+        self.expect_output_val("par_for.gt", 50);
 if __name__ == '__main__':
 
-    unittest.main()
+    #unittest.main()
     #used for enabling a specific test
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_functor_edgeset_src_dest'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestSuite()
+    suite.addTest(TestGraphitCompiler('test_par_for'))
+    unittest.TextTestRunner(verbosity=2).run(suite)

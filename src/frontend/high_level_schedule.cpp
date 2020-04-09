@@ -599,13 +599,41 @@ namespace graphit {
             }
 
             // If no par for schedule has been constructed, construct a new one
-            if (schedule_->par_for_schedules == nullptr) {
-                schedule_->par_for_schedules= new std::map<std::string, int>();
+            if (schedule_->par_for_grain_size_schedules == nullptr) {
+                schedule_->par_for_grain_size_schedules= new std::map<std::string, int>();
             }
 
 
-            (*schedule_->par_for_schedules)[apply_label] = grain_size;
+            (*schedule_->par_for_grain_size_schedules)[apply_label] = grain_size;
 
+            return this->shared_from_this();
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configParForScheduleType(std::string apply_label, std::string schedule_type) {
+
+            if (schedule_ == nullptr){
+                schedule_ = new Schedule();
+            }
+
+            // If no par for schedule has been constructed, construct a new one
+            if (schedule_->par_for_type_schedules == nullptr) {
+                schedule_->par_for_type_schedules= new std::map<std::string, ParForSchedule::ParForType>();
+            }
+
+            if (schedule_type == "static") {
+                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::STATIC;
+            }
+
+            else if (schedule_type == "dynamic") {
+                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::DYNAMIC;
+            }
+
+            else {
+                std::cout << "unsupported option: " << schedule_type << " using static instead" << std::endl;
+                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::STATIC;
+
+            }
 
             return this->shared_from_this();
 

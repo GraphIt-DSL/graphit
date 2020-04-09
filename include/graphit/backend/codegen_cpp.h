@@ -26,6 +26,8 @@ namespace graphit {
     protected:
 
         virtual void visit(mir::ForStmt::Ptr);
+        virtual void visit(mir::ParForStmt::Ptr);
+
         virtual void visit(mir::WhileStmt::Ptr);
         virtual void visit(mir::IfStmt::Ptr);
 

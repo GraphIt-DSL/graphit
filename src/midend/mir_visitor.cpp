@@ -247,6 +247,17 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain->accept(this);
+            stmt->body->accept(this);
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
             if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);

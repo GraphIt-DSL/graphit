@@ -494,6 +494,25 @@ class TestGraphitCompiler(unittest.TestCase):
         print (lines)
         self.assertEqual(float(lines[1].strip()), 3)
 
+    def closeness_centrality_unweighted_functor_parallel_for_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted_functor_parallel_for.gt",
+                                                                          input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        print (cmd)
+        # check the value printed to stdout is as expected
+        lines = self.get_command_output(cmd).strip().split("\n")
+        lines = [int(i.strip()) for i in lines]
+        print (lines)
+        expected = [0, 3, 2, 3, 3]
+
+        for i in range(len(lines)):
+            self.assertEqual(lines[i], expected[i])
+
+
+
     def closeness_centrality_weighted_functor_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted_functor.gt",
@@ -717,6 +736,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_closeness_centrality_unweighted_functor_hybrid_parallel(self):
         self.closeness_centrality_unweighted_functor_test("closeness_centrality_unweighted_hybrid_parallel.gt", True)
 
+    def test_closeness_centrality_unweighted_functor_parallel_for_hybrid_parallel(self):
+        self.closeness_centrality_unweighted_functor_parallel_for_test("closeness_centrality_unweighted_parallel_for_hybrid_parallel.gt", True)
+
     def test_closeness_centrality_weighted_functor_hybrid_parallel(self):
         self.closeness_centrality_weighted_functor_test("closeness_centrality_weighted_hybrid_parallel.gt", True)
 
@@ -888,6 +910,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_library_cf_with_return_verified(self):
         self.library_cf_verified_test("export_cf_vector_input_with_return.gt", '/test/input/')
 
+    def test_par_for_grain_size(self):
+        self.library_cf_verified_test("export_cf_vector_input_with_return.gt", '/test/input/')
+
+    def test_par_for_grain_size(self):
+        self.expect_output_val_with_separate_schedule("par_for_schedule_testing.gt", "par_for_grain_size.gt", 50, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"]);
+
 
 if __name__ == '__main__':
 
@@ -915,8 +943,7 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_hybrid_parallel'))
-    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted_functor_hybrid_parallel'))
-
+    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_parallel_for_hybrid_parallel'))
+    #
     # unittest.TextTestRunner(verbosity=2).run(suite)
     

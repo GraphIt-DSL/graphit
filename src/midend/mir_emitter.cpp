@@ -258,6 +258,24 @@ namespace graphit {
         retStmt = mir_for_stmt;
     }
 
+    void MIREmitter::visit(fir::ParForStmt::Ptr par_for_stmt) {
+        ctx->scope();
+        auto mir_for_stmt = std::make_shared<mir::ParForStmt>();
+        mir_for_stmt->loopVar = par_for_stmt->loopVar->ident;
+        auto loop_var_type = std::make_shared<mir::ScalarType>();
+        loop_var_type->type = mir::ScalarType::Type::INT;
+        auto mir_var = mir::Var(par_for_stmt->loopVar->ident, loop_var_type);
+        //copy over the label from fir
+        mir_for_stmt->stmt_label = par_for_stmt->stmt_label;
+        ctx->addSymbol(mir_var);
+
+        mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(par_for_stmt->body));
+        mir_for_stmt->domain = emitDomain(par_for_stmt->domain);
+        ctx->unscope();
+
+        retStmt = mir_for_stmt;
+    }
+
     void MIREmitter::visit(fir::RangeDomain::Ptr for_domain) {
         auto mir_for_domain = std::make_shared<mir::ForDomain>();
         mir_for_domain->upper = emitExpr(for_domain->upper);

@@ -21,7 +21,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 
 file(GLOB_RECURSE SOURCE_FILES include/*.h include/graphit/midend/*.h src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/utils/*.h include/utils/*.h)
-add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp test/library_test_drivers/library_test_driver_cpp.txt)
+add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp test/library_test_drivers/library_test_driver_cpp.txt src/midend/par_for_lower.cpp)
 
 # build a front end library used for unit testing
 file(GLOB_RECURSE LIB_SOURCE_FILES include/*.h src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/main.cpp)
@@ -32,7 +32,7 @@ add_library(graphitlib ${HEADER_FILES} ${LIB_SOURCE_FILES})
 include_directories(./test/gtest/)
 add_subdirectory(test)
 set(GTEST_SOURCE ./test/gtest/gtest-all.cc)
-set(GTEST_HEADER ./test/gtest/gtest.h test/input/extern_add_one.cpp src/runtime_lib/infra_gapbs/minimum_spanning_tree.h)
+set(GTEST_HEADER ./test/gtest/gtest.h test/input/extern_add_one.cpp src/runtime_lib/infra_gapbs/minimum_spanning_tree.h include/graphit/midend/par_for_lower.h)
 add_library(gtest ${GTEST_HEADER} ${GTEST_SOURCE})
 
 
