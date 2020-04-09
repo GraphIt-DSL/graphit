@@ -109,6 +109,11 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configParForGrainSize(std::string apply_label, int grain_size=0);
 
+                // High level API for configuring par_for type -> either static/dynamic
+                // If nothing is provided, it uses static by default.
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configParForScheduleType(std::string apply_label, std::string schedule_type="static");
+
 
 
                 // High lvel API for speicifying parallelization scheduling options for apply

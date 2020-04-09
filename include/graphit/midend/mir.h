@@ -407,6 +407,28 @@ namespace graphit {
         };
 
 
+        struct ParForStmt : public Stmt {
+            std::string loopVar;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
+            int grain_size;
+            ParForSchedule::ParForType type;
+
+            typedef std::shared_ptr<ParForStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ParForStmt>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+
         struct WhileStmt : public Stmt {
             Expr::Ptr cond;
             StmtBlock::Ptr body;

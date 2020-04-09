@@ -16,7 +16,7 @@ end
 func main()
         startTimer();
        
-	checked[1] = 0;
+	    checked[1] = 0;
 
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 

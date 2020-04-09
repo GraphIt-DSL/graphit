@@ -710,6 +710,22 @@ namespace graphit {
             return node;
         }
 
+        void ParForStmt::copy(MIRNode::Ptr node) {
+            auto for_node = to<mir::ParForStmt>(node);
+            loopVar = for_node->loopVar;
+            domain = for_node->domain->clone<ForDomain>();
+            body = for_node->body->clone<StmtBlock>();
+            grain_size = for_node->grain_size;
+            type = for_node->type;
+        }
+
+
+        MIRNode::Ptr ParForStmt::cloneNode() {
+            const auto node = std::make_shared<ParForStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void WhileStmt::copy(MIRNode::Ptr node) {
             auto while_stmt = to<mir::WhileStmt>(node);
             cond = while_stmt->cond->clone<Expr>();

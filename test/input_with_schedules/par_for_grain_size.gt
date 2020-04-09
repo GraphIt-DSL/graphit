@@ -1,0 +1,3 @@
+schedule:
+    program->configParForGrainSize("s1", 16);
+    program->configApplyDirection("s2", "SparsePush")->configApplyParallelization("s2", "dynamic-vertex-parallel");

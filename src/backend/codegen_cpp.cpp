@@ -127,6 +127,45 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::ParForStmt::Ptr par_for_stmt) {
+        printIndent();
+        auto for_domain = par_for_stmt->domain;
+        auto loop_var = par_for_stmt->loopVar;
+        oss << "#pragma omp parallel ";
+
+        if (par_for_stmt->grain_size != 0){
+
+            if (par_for_stmt->type == ParForSchedule::ParForType::STATIC) {
+                oss << "schedule(static, " << par_for_stmt->grain_size << ")";
+
+            }
+
+            else if (par_for_stmt->type == ParForSchedule::ParForType::DYNAMIC){
+                oss << "schedule(dynamic, " << par_for_stmt->grain_size << ")";
+            }
+
+            else {
+                oss << "schedule(static, " << par_for_stmt->grain_size << ")";
+            }
+
+        }
+
+        oss << std::endl;
+        printIndent();
+        oss << "for ( int " << loop_var << " = ";
+        for_domain->lower->accept(this);
+        oss << "; " << loop_var << " < ";
+        for_domain->upper->accept(this);
+        oss << "; " << loop_var << "++ )" << std::endl;
+        printBeginIndent();
+        indent();
+        par_for_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+
+    }
+
     void CodeGenCPP::visit(mir::WhileStmt::Ptr while_stmt) {
         printIndent();
         oss << "while ( ";

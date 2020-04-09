@@ -262,6 +262,21 @@ namespace graphit {
             }
         }
 
+        void MIRRewriter::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain = rewrite<ForDomain>(stmt->domain);
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            node = stmt;
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+
+            stmt->grain_size = stmt->grain_size;
+            stmt->type = stmt->type;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {
             for_domain->lower = rewrite<Expr>(for_domain->lower);
             for_domain->upper = rewrite<Expr>(for_domain->upper);

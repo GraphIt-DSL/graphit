@@ -23,6 +23,7 @@ namespace graphit {
 
         struct WhileStmt;
         struct ForStmt;
+        struct ParForStmt;
         struct IfStmt;
 
         struct ForDomain;
@@ -125,6 +126,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<NameNode>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
+            virtual void visit(std::shared_ptr<ParForStmt>);
 
             virtual void visit(std::shared_ptr<WhileStmt>);
 
