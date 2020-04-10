@@ -5,13 +5,16 @@
 #include "pls/pls_api.h"
 #include "pls/algorithm.h"
 #include "thread_local_queues.h"
+#include "scc/hacks.h"
 
 #include "infra_swarm/graph.h"
 #define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, swarmify, assertswarmified))
 namespace swarm_runtime {
 template <typename T>
 bool sum_reduce(T& dst, T src) {
-	dst += src;
+	SCC_HACK_TASK({
+		dst += src;
+	});
 	return true;
 }	
 
