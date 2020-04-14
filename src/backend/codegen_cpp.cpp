@@ -105,6 +105,10 @@ namespace graphit {
 	
     }
 
+    void CodeGenCPP::visit(mir::IdentDecl::Ptr ident) {
+        oss << ident->name;
+    }
+
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
         printIndent();
         auto for_domain = for_stmt->domain;
@@ -427,6 +431,33 @@ namespace graphit {
                 var_decl->initVal->accept(this);
             }
             oss << ";" << std::endl;
+
+        }
+    }
+
+    void CodeGenCPP::visit(mir::FuncExpr::Ptr funcExpr) {
+
+        // if it is extern function, just stop after the name.
+        if (mir_context_->isExternFunction(funcExpr->function_name->name)){
+            funcExpr->function_name->accept(this);
+
+        } else {
+            funcExpr->function_name->accept(this);
+
+            oss << "(";
+
+            bool printDelimiter = false;
+
+            for (auto arg: funcExpr->functorArgs){
+                if (printDelimiter) {
+                    oss << ",";
+                }
+
+                arg->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << ")";
 
         }
     }
@@ -1501,29 +1532,18 @@ namespace graphit {
             }
             indent();
             printIndent();
-            if (mir_context_->isExternFunction(apply_expr->input_function_name)){
-                // This function is an extern function (not a functor)
-                oss << apply_expr->input_function_name << "(vertexsetapply_iter);" << std::endl;
-            } else  {
-                // This function is not an extern function, it is defined in GraphIt code
-                // This would generate a functor declaration
 
-                if(!apply_expr->functorArgs.empty()){
-                    oss << "(" << apply_expr->input_function_name << "(";
-                } else {
-                    oss <<  apply_expr->input_function_name << "(";
-                }
-
-                genStringArgs(apply_expr->functorArgs);
-
-                if(!apply_expr->functorArgs.empty()){
-                    oss << "))(vertexsetapply_iter);" << std::endl;
-                } else {
-                    oss << ")(vertexsetapply_iter);" << std::endl;
-                }
-
-
+            // if functor arg is not empty, we wrap another paranthesis to not confuse it with vertexsetapply_iter
+            if (!apply_expr->input_function->functorArgs.empty()) {
+                oss << "(";
+                apply_expr->input_function->accept(this);
+                oss << ")(vertexsetapply_iter);" << std::endl;
+            } else {
+                apply_expr->input_function->accept(this);
+                oss << "(vertexsetapply_iter);" << std::endl;
             }
+
+
             dedent();
             printIndent();
             if (apply_expr->is_parallel) {
@@ -1535,12 +1555,8 @@ namespace graphit {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
-            oss << apply_expr->input_function_name;
-            oss << "( ";
-
-            genStringArgs(apply_expr->functorArgs);
-
-            oss << ") );" << std::endl;
+            apply_expr->input_function->accept(this);
+            oss << " );" << std::endl;
 
 
         }
@@ -1621,22 +1637,18 @@ namespace graphit {
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             oss << "builtin_const_vertexset_filter <";
-	        oss << vertexset_where_expr->input_func ;
+	        vertexset_where_expr->input_func->function_name->accept(this);
             oss << ">(";
-            oss << vertexset_where_expr->input_func << "(";
-            genStringArgs(vertexset_where_expr->input_func_args);
-            oss << "), ";
+            vertexset_where_expr->input_func->accept(this);
+            oss << ", ";
             associated_element_type_size->accept(this);
             oss << ")";
         } else {
             oss << "builtin_vertexset_filter <";
-            oss << vertexset_where_expr->input_func;
+            vertexset_where_expr->input_func->function_name->accept(this);
             oss << ">(";
-            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "(";
-
-            genStringArgs(vertexset_where_expr->input_func_args);
-
-            oss << ")";
+            oss << vertexset_where_expr->target << ", ";
+            vertexset_where_expr->input_func->accept(this);
             oss << ")";
         }
     }
@@ -1710,59 +1722,71 @@ namespace graphit {
 	
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
-        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
-        std::vector<std::string> arguments = std::vector<std::string>();
 
+        apply->target->accept(this);
+        oss << ", ";
 
-        if (apply->from_func != "") {
-            if (mir_context_->isFunction(apply->from_func)) {
-                // the schedule is an input from function
-                // Create functor instance
-                arguments.push_back(genFunctorNameAsArgumentString(apply->from_func, apply->fromFuncFunctorArgs));
+        if (apply->from_func) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
+                apply->from_func->accept(this);
             } else {
                 // the input is an input from vertexset
-                arguments.push_back(apply->from_func);
+
+                // TODO is it correct that we just accept the Identifier
+                apply->from_func->function_name->accept(this);
             }
+
+            oss << ", ";
         }
 
-        if (apply->to_func != "") {
-            if (mir_context_->isFunction(apply->to_func)) {
-                // the schedule is an input to function
-                // Create functor instance
-                arguments.push_back(genFunctorNameAsArgumentString(apply->to_func, apply->toFuncFunctorArgs));
+        if (apply->to_func) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
+                apply->to_func->accept(this);
             } else {
-                // the input is an input to vertexset
-                arguments.push_back(apply->to_func);
+                // the input is an input from vertexset
+
+                // TODO is it correct that we just accept the Identifier
+                apply->to_func->function_name->accept(this);
             }
+            oss << ", ";
         }
+
+
 
         // the original apply function (pull direction in hybrid case)
-        // TODO: modify this later
-        arguments.push_back(genFunctorNameAsArgumentString(apply->input_function_name, apply->functorArgs));
+        apply->input_function->accept(this);
+
+
 
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_to_function_, apply_expr->toFuncFunctorArgs));
+            auto pushToFunctionExist = false;
+
+            if (apply_expr->push_to_function_){
+                oss << ", ";
+                apply_expr->push_to_function_->accept(this);
+                //TODO look at it again?
+                //arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_to_function_, apply_expr->toFuncFunctorArgs));
+                oss << ", ";
+                pushToFunctionExist = true;
 
             }
-        }
 
-        // the push direction apply function for hybrid schedule
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
-            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
             std::vector<std::string> pushFunctionArguments;
             //pushFunctionArguments.push_back(apply_expr->tracking_field);
-            arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_function_, apply_expr->functorArgs));
+            //TODO look at it again?
+            //apply_expr->push_function_->functorArgs = apply_expr->input_function->functorArgs;
+            if (pushToFunctionExist) {
+                apply_expr->push_function_->accept(this);
+            } else {
+                oss << ", ";
+                apply_expr->push_function_->accept(this);
+            }
+
         }
 
-        // the edgeset that is being applied over (target)
-        apply->target->accept(this);
-        for (auto &arg : arguments) {
-            oss << ", " << arg;
-        }
 
         oss << "); " << std::endl;
     }
@@ -1880,29 +1904,6 @@ namespace graphit {
         oss << "]";
     }
 
-    void CodeGenCPP::genStringArgs(std::vector<std::string> functorArgs) {
-
-        bool printDelimeter = false;
-        for (auto arg: functorArgs) {
-            if (printDelimeter) {
-                oss << ", ";
-            }
-            oss << arg;
-            printDelimeter = true;
-        }
-
-
-    }
-
-    std::string CodeGenCPP::genFuncNameAsArgumentString(std::string func_name) {
-        if (mir_context_->isExternFunction(func_name)){
-            //If it is an extern function, don't need to do anything, just pass the func name
-            return func_name;
-        } else {
-            //If it is a GraphIt generated function, then we need to instantiate the functor
-            return func_name + "()";
-        }
-    }
 
     bool CodeGenCPP::isLiteral(mir::Expr::Ptr expression) {
 
@@ -1921,35 +1922,6 @@ namespace graphit {
 
     }
 
-    std::string CodeGenCPP::genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs) {
-        if (mir_context_->isExternFunction(func_name)){
-            //If it is an extern function, don't need to do anything, just pass the func name
-            return func_name;
-        } else {
-            //If it is a GraphIt generated function, then we need to instantiate the functor
-
-            auto returnString = func_name + "(";
-
-            bool printDelimiter = false;
-
-            for (auto arg: functorArgs) {
-
-                if (printDelimiter) {
-                    returnString +=  ", ";
-                }
-
-                returnString += arg;
-                printDelimiter = true;
-            }
-
-            returnString += ")";
-            return returnString;
-
-
-        }
-
-
-    }
 
 
     void CodeGenCPP::genTypesRequiringTypeDefs() {
@@ -2084,8 +2056,8 @@ namespace graphit {
 
         //the user defined edge update function, instantiated with a functor
         // augmented with local_bins argument,
-        oss << ordered_op->edge_update_func  << "(), ";
-
+        ordered_op->edge_update_func->accept(this);
+        oss << ", ";
 
         // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
         if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
@@ -2255,7 +2227,7 @@ namespace graphit {
 	indent();
 	//printIndent();
 
-	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function_name);
+	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function->function_name->name);
 	//udf->accept(this);
 
 		
@@ -2357,7 +2329,8 @@ namespace graphit {
 	oss << " = ";
 	call->target->accept(this);
 	oss << ".em->edgeMapCount<julienne::uintE> (";
-	oss << call->from_func;
+	//TODO this is bit hacky (should ideally accept funcexpr entirely)
+	call->from_func->function_name->accept(this);
 	oss << ", ";
 	get_edge_count_lambda(call);
 	oss << ")";

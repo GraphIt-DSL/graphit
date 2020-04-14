@@ -94,6 +94,7 @@ namespace graphit {
         virtual void visit(fir::ApplyExpr::Ptr);
         //virtual void visit(fir::FromExpr::Ptr);
         //virtual void visit(fir::ToExpr::Ptr);
+        virtual void visit(fir::FuncExpr::Ptr);
 
         virtual void visit(fir::WhereExpr::Ptr);
 
@@ -168,7 +169,7 @@ namespace graphit {
 
         void addElementType(mir::ElementType::Ptr);
 
-        std::vector<std::string> emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs);
+        std::vector<mir::Expr::Ptr> emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs);
 
         std::vector<mir::Var> emitVars(std::vector<fir::Argument::Ptr> args);
 

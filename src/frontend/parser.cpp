@@ -1488,7 +1488,7 @@ namespace graphit {
         return rangeConst;
     }
 
-// call_expr: ident ['<' endpoints '>'] '(' [expr_params] ')'
+// call_expr: ident ['<' endpoints '>'] ['[' functor_params ']'] '(' [expr_params] ')'
     fir::CallExpr::Ptr Parser::parseCallExpr() {
         auto call = std::make_shared<fir::CallExpr>();
         call->func = parseIdent();

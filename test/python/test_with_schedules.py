@@ -217,12 +217,12 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def astar_verified_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
+    def astar_verified_test(self, graphit_file, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
         input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
         input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
         if (use_separate_algo_file):
-            algo_file = input_algos_path + "astar.gt"
+            algo_file = input_algos_path + graphit_file
             graphit_compile_cmd = "python graphitc.py -a " + algo_file + " -f " + input_schedules_path + input_file_name + " -o  test.cpp"
             print (graphit_compile_cmd)
             self.assertEqual(subprocess.call(graphit_compile_cmd, shell=True), 0)
@@ -814,19 +814,43 @@ class TestGraphitCompiler(unittest.TestCase):
         self.ppsp_verified_test("priority_update_eager_with_merge.gt", True);
 
     def test_astar_eager_with_merge(self):
-        self.astar_verified_test("priority_update_eager_with_merge.gt",
+        self.astar_verified_test("astar.gt",
+                                 "priority_update_eager_with_merge.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
     def test_astar_sparsepush_parallel(self):
-        self.astar_verified_test("SparsePush_VertexParallel.gt",
+        self.astar_verified_test("astar.gt",
+                                 "SparsePush_VertexParallel.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
     def test_astar_sparsepush_parallel_delta2(self):
-        self.astar_verified_test("SparsePush_VertexParallel_Delta2.gt",
+        self.astar_verified_test("astar.gt",
+                                 "SparsePush_VertexParallel_Delta2.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_eager_with_merge_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "priority_update_eager_with_merge.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_sparsepush_parallel_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "SparsePush_VertexParallel.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_sparsepush_parallel_delta2_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "SparsePush_VertexParallel_Delta2.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
@@ -910,13 +934,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    unittest.main(verbosity=2)
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_hybrid_parallel'))
-    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_weighted_functor_hybrid_parallel'))
-
-    # unittest.TextTestRunner(verbosity=2).run(suite)
-    
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge_functor'))
+    #unittest.TextTestRunner(verbosity=2).run(suite)

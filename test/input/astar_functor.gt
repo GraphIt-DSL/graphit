@@ -1,0 +1,40 @@
+element Vertex end
+element Edge end
+extern func load_coords(filename: string, num_nodes: int);
+extern func calculate_distance(source: Vertex, destination: Vertex) -> output: double;
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const dst_vertex : Vertex;
+
+const pq: priority_queue{Vertex}(int);
+
+func printDist[f_score_local: vector{Vertex}(int)](v : Vertex)
+    print f_score_local[v];
+end
+
+func updateEdge[f_score_local: vector{Vertex}(int), g_score_local: vector{Vertex}(int)](src : Vertex, dst : Vertex, weight : int)
+    var new_f_score : int = f_score_local[src] + weight;
+    var changed : bool = writeMin(f_score_local, dst, new_f_score);
+    if changed
+        var new_g_score : int = max(new_f_score + calculate_distance(dst, dst_vertex), g_score_local[src]);
+        pq.updatePriorityMin(dst, g_score_local[dst], new_g_score);
+    end
+end
+
+func main()
+    var start_vertex : int = 0;
+    dst_vertex = 4;
+    load_coords(argv[1], edges.getVertices());
+    var f_score_local : vector{Vertex}(int) = 2147483647;
+    var g_score_local : vector{Vertex}(int) = 2147483647;
+    f_score_local[start_vertex] = 0;
+    g_score_local[start_vertex] = calculate_distance(start_vertex, dst_vertex);
+    pq = new priority_queue{Vertex}(int)(false, false, g_score_local, 1, 0, false, start_vertex);
+    while (pq.finishedNode(dst_vertex) == false)
+           var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set()
+           #s1# edges.from(frontier).applyUpdatePriority(updateEdge[f_score_local, g_score_local]);
+           delete frontier;
+     end
+     vertices.apply(printDist[f_score_local]);
+end

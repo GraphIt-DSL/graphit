@@ -24,6 +24,7 @@ namespace graphit {
         int genCPP();
 
     protected:
+        virtual void visit(mir::IdentDecl::Ptr);
 
         virtual void visit(mir::ForStmt::Ptr);
         virtual void visit(mir::WhileStmt::Ptr);
@@ -38,6 +39,7 @@ namespace graphit {
         virtual void visit(mir::PrintStmt::Ptr);
         virtual void visit(mir::BreakStmt::Ptr);
 
+        virtual void visit(mir::FuncExpr::Ptr);
         virtual void visit(mir::FuncDecl::Ptr);
 
         virtual void visit(mir::Call::Ptr);
@@ -154,12 +156,7 @@ namespace graphit {
 
     	void generatePyBindModule();
 
-    	void genStringArgs(std::vector<std::string> functorArgs);
-
-        std::string genFuncNameAsArgumentString(std::string func_name);
-
-        std::string genFunctorNameAsArgumentString(std::string func_name, std::vector<std::string> functorArgs);
-
+    	// checks if expression is literal exp (Int, Float, Bool, String)
         bool isLiteral(mir::Expr::Ptr expression);
     };
 }

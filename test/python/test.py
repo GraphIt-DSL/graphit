@@ -444,8 +444,8 @@ class TestGraphitCompiler(unittest.TestCase):
 
 if __name__ == '__main__':
 
-    unittest.main()
+    unittest.main(verbosity=2)
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_functor_edgeset_src_dest'))
+    # suite.addTest(TestGraphitCompiler('test_vertexset_filter'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

@@ -148,6 +148,7 @@ namespace graphit {
 
         bool contains(Token::Type tokenType) const;
 
+        //Finds the first occurence of the token type from the stream of tokens and return its' relative index.
         int findFirstOccurence(Token::Type tokenType) const;
 
         void skip() { tokens.pop_front(); }

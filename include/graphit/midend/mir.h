@@ -618,6 +618,25 @@ namespace graphit {
             virtual MIRNode::Ptr cloneNode();
         };
 
+
+        struct FuncExpr : public Expr {
+
+            IdentDecl::Ptr function_name;
+            std::vector<mir::Expr::Ptr> functorArgs;
+
+            typedef std::shared_ptr<FuncExpr> Ptr;
+
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<FuncExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
             Expr::Ptr target;
@@ -858,8 +877,7 @@ namespace graphit {
 
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
-            std::string input_function_name = "";
-            std::vector<std::string> functorArgs;
+            FuncExpr::Ptr input_function;
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
@@ -884,13 +902,12 @@ namespace graphit {
 
             VertexSetApplyExpr(std::string target_name,
                                mir::Type::Ptr target_type,
-                               std::string function_name) {
+                               mir::FuncExpr::Ptr input_func) {
                 mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
                 mir::Var target_var = mir::Var(target_name, target_type);
                 target_expr->var = target_var;
                 target = target_expr;
-                input_function_name = function_name;
-            }
+                input_function = input_func;}
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -909,10 +926,11 @@ namespace graphit {
         };
 
         struct EdgeSetApplyExpr : public ApplyExpr {
-            std::string from_func = "";
-            std::vector<std::string> fromFuncFunctorArgs;
-            std::string to_func = "";
-            std::vector<std::string> toFuncFunctorArgs;
+
+
+            FuncExpr::Ptr from_func;
+            FuncExpr::Ptr to_func;
+
             bool is_parallel = false;
             bool enable_deduplication = false;
             bool is_weighted = false;
@@ -949,12 +967,9 @@ namespace graphit {
 
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
-                functorArgs = edgeset_apply->functorArgs;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
-                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
-                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -978,12 +993,9 @@ namespace graphit {
 
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
-                functorArgs = edgeset_apply->functorArgs;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
-                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
-                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1011,12 +1023,9 @@ namespace graphit {
                 target = edgeset_apply->target;
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
-                input_function_name = edgeset_apply->input_function_name;
-                functorArgs = edgeset_apply->functorArgs;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
-                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
-                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1034,8 +1043,8 @@ namespace graphit {
 
         struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
-            std::string push_function_;
-            std::string push_to_function_;
+            FuncExpr::Ptr push_function_;
+            FuncExpr::Ptr push_to_function_;
 
             HybridDenseEdgeSetApplyExpr() {}
 
@@ -1043,12 +1052,9 @@ namespace graphit {
                 target = edgeset_apply->target;
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
-                input_function_name = edgeset_apply->input_function_name;
-                functorArgs = edgeset_apply->functorArgs;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
-                fromFuncFunctorArgs = edgeset_apply->fromFuncFunctorArgs;
-                toFuncFunctorArgs = edgeset_apply->toFuncFunctorArgs;
                 push_to_function_ = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
@@ -1069,8 +1075,7 @@ namespace graphit {
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;
-            std::string input_func;
-            std::vector<std::string> input_func_args;
+            FuncExpr::Ptr input_func;
             typedef std::shared_ptr<WhereExpr> Ptr;
 
         protected:
@@ -1419,7 +1424,7 @@ namespace graphit {
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
@@ -1443,7 +1448,7 @@ namespace graphit {
 
             UpdatePriorityExternVertexSetApplyExpr(VertexSetApplyExpr::Ptr vertexset_apply) {
                 target = vertexset_apply->target;
-                input_function_name = vertexset_apply->input_function_name;
+                input_function= vertexset_apply->input_function;
                 tracking_field = vertexset_apply->tracking_field;
             }
 
@@ -1523,7 +1528,7 @@ namespace graphit {
 
         struct OrderedProcessingOperator : Stmt {
             Expr::Ptr while_cond_expr;
-            std::string edge_update_func;
+            FuncExpr::Ptr edge_update_func;
             std::string priority_queue_name;
             Expr::Ptr optional_source_node;
             Expr::Ptr graph_name;

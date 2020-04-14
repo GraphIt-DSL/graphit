@@ -96,6 +96,17 @@ namespace graphit {
             enclosing_func_decl_ = nullptr;
         }
 
+
+        void MIRVisitor::visit(FuncExpr::Ptr func_expr) {
+
+            for (auto arg : func_expr->functorArgs) {
+                arg->accept(this);
+            }
+
+
+            func_expr->function_name->accept(this);
+        }
+
         void MIRVisitor::visit(Call::Ptr expr) {
             for(auto arg : expr->functorArgs){
                 arg->accept(this);
