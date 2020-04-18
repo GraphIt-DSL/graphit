@@ -719,8 +719,8 @@ namespace graphit {
     void MIREmitter::visit(fir::FuncDecl::Ptr func_decl) {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
-        std::vector<mir::Var> arguments = emitVars(func_decl->args);
-        std::vector<mir::Var> functorArguments = emitVars(func_decl->functorArgs);
+        std::vector<mir::Var> arguments = emitArgumentVariables(func_decl->args);
+        std::vector<mir::Var> functorArguments = emitArgumentVariables(func_decl->functorArgs);
 
 
         //processing the arguments to the function declaration
@@ -944,7 +944,7 @@ namespace graphit {
     }
 
 
-    std::vector<mir::Var> MIREmitter::emitVars(std::vector<fir::Argument::Ptr> args) {
+    std::vector<mir::Var> MIREmitter::emitArgumentVariables(std::vector<fir::Argument::Ptr> args) {
 
         std::vector<mir::Var> result;
 

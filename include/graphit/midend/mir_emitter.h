@@ -171,9 +171,7 @@ namespace graphit {
 
         std::vector<mir::Expr::Ptr> emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs);
 
-        std::vector<mir::Var> emitVars(std::vector<fir::Argument::Ptr> args);
-
-        std::string convertToFunctorArg(mir::Expr::Ptr arg);
+        std::vector<mir::Var> emitArgumentVariables(std::vector<fir::Argument::Ptr> args);
 
         mir::FuncDecl::Type getMirFuncDeclType(fir::FuncDecl::Type);
 

@@ -877,7 +877,7 @@ namespace graphit {
 
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
-            FuncExpr::Ptr input_function;
+            FuncExpr::Ptr input_function = nullptr;
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
@@ -928,8 +928,8 @@ namespace graphit {
         struct EdgeSetApplyExpr : public ApplyExpr {
 
 
-            FuncExpr::Ptr from_func;
-            FuncExpr::Ptr to_func;
+            FuncExpr::Ptr from_func = nullptr;
+            FuncExpr::Ptr to_func = nullptr;
 
             bool is_parallel = false;
             bool enable_deduplication = false;
@@ -1043,8 +1043,8 @@ namespace graphit {
 
         struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
-            FuncExpr::Ptr push_function_;
-            FuncExpr::Ptr push_to_function_;
+            FuncExpr::Ptr push_function_ = nullptr;
+            FuncExpr::Ptr push_to_function_ = nullptr;
 
             HybridDenseEdgeSetApplyExpr() {}
 
@@ -1075,7 +1075,7 @@ namespace graphit {
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;
-            FuncExpr::Ptr input_func;
+            FuncExpr::Ptr input_func = nullptr;
             typedef std::shared_ptr<WhereExpr> Ptr;
 
         protected:
@@ -1528,7 +1528,7 @@ namespace graphit {
 
         struct OrderedProcessingOperator : Stmt {
             Expr::Ptr while_cond_expr;
-            FuncExpr::Ptr edge_update_func;
+            FuncExpr::Ptr edge_update_func = nullptr;
             std::string priority_queue_name;
             Expr::Ptr optional_source_node;
             Expr::Ptr graph_name;
