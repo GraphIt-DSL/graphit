@@ -70,7 +70,7 @@ This compiles the GraphIt files into binaries that we can directly from benchmar
 To run the benchmark for dataset#1, set the following variables
 
 ```
-export OMP_NUM_THREADS=32; export GOMP_CPU_AFFINITY="0-31"; export export CILK_NWORKERS=32;
+export OMP_NUM_THREADS=32; export GOMP_CPU_AFFINITY="0-31"; export CILK_NWORKERS=32; export KMP_AFFINITY="verbose,explicit,proclist=[0-31]"
 ```
 
 To run a specific benchmark, use eval.py. This script runs **one binary per application for all graphs**. The binaries we used will be printed and can be found within **benchmark.py**. 
