@@ -5,3 +5,6 @@
 .settings/
 .idea/
 build/
+autotune/*.json
+*.graphit_bin
+*.graphit_sbin

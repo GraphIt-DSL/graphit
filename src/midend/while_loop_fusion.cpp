@@ -19,9 +19,10 @@ void graphit::WhileLoopFusion::visit(mir::WhileStmt::Ptr while_stmt) {
 			auto apply_schedule = apply_schedule_iter->second;
 			if (dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule)) {
 				auto applied_simple_schedule = dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule);
-				if (applied_simple_schedule->kernel_fusion == fir::gpu_schedule::SimpleGPUSchedule::kernel_fusion_type::FUSION_ENABLED)
-					while_stmt->is_fused = true;
+				if (applied_simple_schedule->kernel_fusion == fir::gpu_schedule::SimpleGPUSchedule::kernel_fusion_type::FUSION_ENABLED) {
+					while_stmt->is_fused = true; 
 					mir_context_->fused_while_loops.push_back(while_stmt);
+				}
 			}
 		}
 	}

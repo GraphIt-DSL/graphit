@@ -60,6 +60,7 @@ void delete_vertex_frontier(VertexFrontier &frontier) {
 	return;
 }
 static VertexFrontier sentinel_frontier;
+static __device__ VertexFrontier device_sentinel_frontier;
 
 static int32_t builtin_getVertexSetSize(VertexFrontier &frontier) {
 	int32_t curr_size = 0;
@@ -155,6 +156,21 @@ static void builtin_addVertex(VertexFrontier &frontier, int32_t vid) {
 static void __device__ enqueueVertexSparseQueue(int32_t *sparse_queue, int32_t *sparse_queue_size, int32_t vertex_id) {
 	int32_t pos = atomicAggInc(sparse_queue_size);
 	sparse_queue[pos] = vertex_id;
+}
+static void __device__ enqueueVertexSparseQueueDedup(int32_t *sparse_queue, int32_t *sparse_queue_size, int32_t vertex_id, VertexFrontier &frontier) {
+	int32_t vid = vertex_id;
+	if (frontier.d_dedup_counters[vid] < frontier.curr_dedup_counter) {
+		int32_t pos = atomicAggInc(sparse_queue_size);
+		sparse_queue[pos] = vertex_id;
+		frontier.d_dedup_counters[vid] = frontier.curr_dedup_counter;
+	}
+}
+static void __device__ enqueueVertexSparseQueueDedupPerfect(int32_t *sparse_queue, int32_t *sparse_queue_size, int32_t vertex_id, VertexFrontier &frontier) {
+	int32_t vid = vertex_id;
+	if (writeMax(&frontier.d_dedup_counters[vid], frontier.curr_dedup_counter)) {
+		int32_t pos = atomicAggInc(sparse_queue_size);
+		sparse_queue[pos] = vertex_id;
+	}
 }
 static void __device__ enqueueVertexBytemap(unsigned char* byte_map, int32_t *byte_map_size, int32_t vertex_id) {
 	// We are not using atomic operation here because races are benign here
@@ -331,6 +347,23 @@ static void dedup_frontier(VertexFrontier &frontier) {
 	dedup_frontier_kernel<<<NUM_CTA, CTA_SIZE>>>(frontier);
 	swap_queues(frontier);
 }
+
+static void __device__ dedup_frontier_device_perfect(VertexFrontier &frontier) {
+	for(int32_t vidx = threadIdx.x + blockDim.x * blockIdx.x; vidx < frontier.d_num_elems_input[0]; vidx += blockDim.x * gridDim.x) {
+		int32_t vid = frontier.d_sparse_queue_input[vidx];
+		if (writeMax(&frontier.d_dedup_counters[vid], frontier.curr_dedup_counter)) {
+			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, vid);
+		}
+	}
+}
+static void __global__ dedup_frontier_kernel_perfect(VertexFrontier frontier) {
+	dedup_frontier_device_perfect(frontier);	
+}
+static void dedup_frontier_perfect(VertexFrontier &frontier) {
+	frontier.curr_dedup_counter++;
+	dedup_frontier_kernel_perfect<<<NUM_CTA, CTA_SIZE>>>(frontier);
+	swap_queues(frontier);
+}
 bool __device__ true_function(int32_t _) {
 	return true;
 }
@@ -359,6 +392,23 @@ static void __device__ vertex_set_create_reverse_sparse_queue_device(VertexFront
 	swap_queues_device(frontier);	
 }
 static void foo_bar(void) {
+}
+
+template <bool where_func(int32_t)>
+static void __global__ vertex_set_where_kernel(int32_t num_vertices, VertexFrontier frontier) {
+
+	for (int32_t node_id = blockDim.x * blockIdx.x + threadIdx.x; node_id < num_vertices; node_id += blockDim.x * gridDim.x) {
+		if (where_func(node_id)) {
+			enqueueVertexSparseQueue(frontier.d_sparse_queue_output, frontier.d_num_elems_output, node_id);
+		}
+	}
+
+}
+
+template <bool where_func(int32_t)>
+static void __host__ vertex_set_where(int32_t num_vertices, VertexFrontier &frontier) {
+	vertex_set_where_kernel<where_func><<<NUM_CTA, CTA_SIZE>>>(num_vertices, frontier);
+	swap_queues(frontier);
 }
 
 }

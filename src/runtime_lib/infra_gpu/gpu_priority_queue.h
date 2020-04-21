@@ -123,7 +123,6 @@ template<typename PriorityT_>
 				cudaMemcpy(current_priority_shared, &current_priority_, sizeof(int32_t), cudaMemcpyHostToDevice);
 				cudaMemcpy(device_gpq, this, sizeof(*device_gpq), cudaMemcpyHostToDevice); 
 				gpu_runtime::cudaCheckLastError();
-				
 				update_nodes_identify_min<<<NUM_BLOCKS, CTA_SIZE>>>(device_gpq, frontier_.max_num_elems);
 				gpu_runtime::cudaCheckLastError();
 

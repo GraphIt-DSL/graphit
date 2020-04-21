@@ -225,6 +225,11 @@ namespace graphit {
                 visitor->visit(self<ScalarType>());
             }
 
+	    enum class BoolType {
+		BYTE, BIT
+	    };
+	    BoolType bool_type;
+
             std::string toString(){
                 std::string output_str = "";
                 if (type == mir::ScalarType::Type::FLOAT){
@@ -919,6 +924,8 @@ namespace graphit {
             MergeReduceField::Ptr merge_reduce;
 
 	    bool frontier_reusable = false;
+	    bool fused_dedup = false;
+	    bool fused_dedup_perfect = false;
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
@@ -954,6 +961,8 @@ namespace graphit {
 		applied_schedule = edgeset_apply->applied_schedule;
 		frontier_reusable = edgeset_apply->frontier_reusable;
 		requires_output = edgeset_apply->requires_output;
+		fused_dedup = edgeset_apply->fused_dedup;
+		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -983,6 +992,8 @@ namespace graphit {
 		applied_schedule = edgeset_apply->applied_schedule;
 		frontier_reusable = edgeset_apply->frontier_reusable;
 		requires_output = edgeset_apply->requires_output;
+		fused_dedup = edgeset_apply->fused_dedup;
+		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1543,6 +1554,7 @@ namespace graphit {
 	// GPU Specific operators
 	struct VertexSetDedupExpr: Expr {
 		Expr::Ptr target;
+		bool perfect_dedup;
 		typedef std::shared_ptr<VertexSetDedupExpr> Ptr;
 		virtual void accept(MIRVisitor *visitor) {
 			visitor->visit(self<VertexSetDedupExpr>());
@@ -1572,6 +1584,8 @@ namespace graphit {
 	struct EnqueueVertex: Stmt {
 		Expr::Ptr vertex_id;
 		Expr::Ptr vertex_frontier;
+		bool fused_dedup;
+		bool fused_dedup_perfect;
 		enum class Type {SPARSE, BOOLMAP, BITMAP};
 		Type type;
 		typedef std::shared_ptr<EnqueueVertex> Ptr;

@@ -31,6 +31,15 @@ static bool __device__ writeMin(T *dst, T src) {
 	bool ret = (old_value > src);
 	return ret;
 }
+template <typename T>
+static bool __device__ writeMax(T *dst, T src) {
+	if (*dst >= src)
+		return false;
+	T old_value = atomicMax(dst, src);
+	bool ret = (old_value < src);
+	return ret;
+}
+
 
 template <typename T>
 static bool __device__ writeAdd(T *dst, T src) {
@@ -46,6 +55,10 @@ static bool __device__ CAS(T *dst, T old_val, const T &new_val) {
 static void __device__ parallel_memset(unsigned char* dst, unsigned char val, size_t total_bytes) {
 	for (size_t index = threadIdx.x + blockDim.x * blockIdx.x; index < total_bytes; index += blockDim.x * gridDim.x)
 		dst[index] = val;
+}
+static void __device__ parallel_memcpy(unsigned char* dst, unsigned char* src, size_t total_bytes) {
+	for (size_t index = threadIdx.x + blockDim.x * blockIdx.x; index < total_bytes; index += blockDim.x * gridDim.x)
+		dst[index] = src[index];
 }
 }
 

@@ -20,6 +20,7 @@ class AssignFunctionContext : mir::MIRVisitor {
 		void visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr);
 		void visit(mir::PullEdgeSetApplyExpr::Ptr);
 		void visit(mir::VertexSetApplyExpr::Ptr);
+		void visit(mir::VertexSetWhereExpr::Ptr);
 	private:
 		MIRContext *mir_context_;
 };

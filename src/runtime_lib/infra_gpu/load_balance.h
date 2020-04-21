@@ -885,8 +885,9 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
         int32_t index, src_idx;
 	//int32_t deg;
 
+	// if(cta_id == num_cta - 1) return;
 	// can be fused
-	bool last_tb = (cta_id == (graph.strict_grid_sum[0] + NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
+	//bool last_tb = (cta_id == (graph.strict_grid_sum[0] + NNZ_PER_BLOCK-1)/NNZ_PER_BLOCK-1);
 	int32_t start_row = binary_search_upperbound(&graph.strict_sum[0], tot_size, NNZ_PER_BLOCK*cta_id)-1;
 	int32_t end_row = binary_search_upperbound(&graph.strict_sum[0], tot_size, NNZ_PER_BLOCK*(cta_id+1))-1;
 
@@ -917,9 +918,12 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 		//int32_t lane = (threadIdx.x&31);
 		int32_t offset = 0;
 
-		int32_t tot_deg;
-		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
-		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
+
+		int32_t tot_deg = graph.strict_grid_sum[0] - cta_id * NNZ_PER_BLOCK;
+		if(tot_deg > NNZ_PER_BLOCK) tot_deg = NNZ_PER_BLOCK;
+		//int32_t tot_deg;
+		//if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		//else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
 
 		//int32_t phase = threadIdx.x;
 		//int32_t off=32;
@@ -932,13 +936,15 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 			if (src_filter(src_idx) == false)
 				continue;
 			int32_t ei = sm_loc[offset + id] + i - sm_deg[offset + id];
+			if(ei >= graph.num_edges) break;
 			int32_t dst_idx = graph.d_edge_dst[ei];
 			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
 		}
 	} else {
-		int32_t tot_deg;
-		if(!last_tb) tot_deg = NNZ_PER_BLOCK;
-		else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
+		int32_t tot_deg = graph.strict_grid_sum[0] - cta_id * NNZ_PER_BLOCK;
+		if(tot_deg > NNZ_PER_BLOCK) tot_deg = NNZ_PER_BLOCK;
+		//if(!last_tb) tot_deg = NNZ_PER_BLOCK;
+		//else tot_deg = (graph.strict_grid_sum[0] - 1) % NNZ_PER_BLOCK + 1;
 
 		int32_t width = row_size;
 		//int32_t offset = 0;
@@ -950,6 +956,7 @@ void __device__ strict_load_balance(GraphT<EdgeWeightType> &graph, VertexFrontie
 			if (src_filter(src_idx) == false)
 				continue;
 			int32_t ei = graph.d_src_offsets[src_idx] + i - graph.strict_sum[start_row + id];
+			if(ei >= graph.num_edges) break;
 			int32_t dst_idx = graph.d_edge_dst[ei];
 			load_balance_payload(graph, src_idx, dst_idx, ei, input_frontier, output_frontier);
 		}

@@ -40,6 +40,7 @@ namespace graphit {
 	    virtual void visit(mir::StmtBlock::Ptr stmt_block);
 	    virtual void visit(mir::VarDecl::Ptr var_decl);
 	    virtual void visit(mir::AssignStmt::Ptr assign_stmt); 
+	    virtual void visit(mir::ExprStmt::Ptr assign_stmt); 
 
             Schedule * schedule_;
             MIRContext* mir_context_;

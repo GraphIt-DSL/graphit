@@ -17,6 +17,7 @@ enum gpu_schedule_options {
 	PUSH, 
 	PULL, 
 	FUSED, 
+	UNFUSED,
 	UNFUSED_BITMAP,
 	UNFUSED_BOOLMAP,
 	ENABLED,
@@ -32,7 +33,7 @@ enum gpu_schedule_options {
 	BITMAP,
 	BOOLMAP,
 	BLOCKED,
-	UNBLOCKED
+	UNBLOCKED,
 };
 
 class GPUSchedule {
@@ -64,6 +65,10 @@ public:
 		DEDUP_DISABLED,
 		DEDUP_ENABLED
 	};
+	enum class deduplication_strategy_type {
+		DEDUP_FUSED,
+		DEDUP_UNFUSED
+	};
 
 	enum class load_balancing_type {
 		VERTEX_BASED,	
@@ -85,16 +90,23 @@ public:
 		FUSION_ENABLED
 	};
 
+	enum class boolean_type_type {
+		BOOLMAP,
+		BITMAP
+	};
+
 private:
 public:
 	direction_type direction;
 	pull_frontier_rep_type pull_frontier_rep;
 	frontier_creation_type frontier_creation;
 	deduplication_type deduplication;
+	deduplication_strategy_type deduplication_strategy;
 	load_balancing_type load_balancing;
 	edge_blocking_type edge_blocking;
 	uint32_t edge_blocking_size;
 	kernel_fusion_type kernel_fusion;
+	boolean_type_type boolean_type;
 
 	int32_t delta;
 	
@@ -108,6 +120,7 @@ public:
 		edge_blocking_size = 0;
 		kernel_fusion = kernel_fusion_type::FUSION_DISABLED;
 		delta = 1;
+		boolean_type = boolean_type_type::BOOLMAP;
 	}	
 
 public:	
@@ -153,10 +166,21 @@ public:
 		}
 	}
 
-	void configDeduplication(enum gpu_schedule_options o) {
+	void configDeduplication(enum gpu_schedule_options o, enum gpu_schedule_options l = UNFUSED) {
 		switch(o) {
 			case ENABLED:
 				deduplication = deduplication_type::DEDUP_ENABLED;
+				switch (l) {
+					case FUSED:
+						deduplication_strategy = deduplication_strategy_type::DEDUP_FUSED;
+						break;
+					case UNFUSED:
+						deduplication_strategy = deduplication_strategy_type::DEDUP_UNFUSED;
+						break;
+					default:
+						assert(false && "Invalid deduplication strategy\n");
+						break;
+				}
 				break;
 			case DISABLED:
 				deduplication = deduplication_type::DEDUP_DISABLED;
@@ -232,6 +256,19 @@ public:
 			assert(false && "Invalid option for configDelta");
 		}	
 		delta *= -1;
+	}
+	void configBooleanType(enum gpu_schedule_options o) {
+		switch(o) {
+			case BOOLMAP:
+				boolean_type = boolean_type_type::BOOLMAP;
+				break;
+			case BITMAP:
+				boolean_type = boolean_type_type::BITMAP;
+				break;
+			default:
+				assert(false && "Invalid option for configBooleanType");
+				break;
+		}
 	}
 	
 };

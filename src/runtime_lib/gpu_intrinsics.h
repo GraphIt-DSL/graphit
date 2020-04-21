@@ -12,6 +12,7 @@
 #include "infra_gpu/support.h"
 #include "infra_gpu/printer.h"
 #include "infra_gpu/gpu_priority_queue.h"
+#include "infra_gpu/list.h"
 
 namespace gpu_runtime {
 

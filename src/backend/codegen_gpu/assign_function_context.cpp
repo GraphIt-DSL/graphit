@@ -38,4 +38,8 @@ void AssignFunctionContext::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 	if (mir_context_->isFunction(vsae->input_function_name))
 		mir_context_->getFunction(vsae->input_function_name)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
 }
+void AssignFunctionContext::visit(mir::VertexSetWhereExpr::Ptr vswe) {
+	if (mir_context_->isFunction(vswe->input_func))
+		mir_context_->getFunction(vswe->input_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+}
 }

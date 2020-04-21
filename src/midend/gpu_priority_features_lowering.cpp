@@ -46,6 +46,9 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 				if (dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule) != nullptr) {
 					upesae->applied_schedule = *dynamic_cast<fir::gpu_schedule::SimpleGPUSchedule*>(apply_schedule);
 					mir_context_->delta_ = upesae->applied_schedule.delta;
+					if (upesae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {	
+						mir_context_->graphs_with_transpose[mir::to<mir::VarExpr>(upesae->target)->var.getName()] = true;
+					}
 				} else {
 					assert(false && "Scedule applied to edgesetapply must be a Simple Schedule");
 				}

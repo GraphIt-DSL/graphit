@@ -467,6 +467,7 @@ namespace graphit {
 	
 	// Used by blocking optimization
 	std::unordered_map<std::string, uint32_t> graphs_with_blocking;
+	std::unordered_map<std::string, bool> graphs_with_transpose;
     };
 
 }

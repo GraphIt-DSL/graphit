@@ -32,6 +32,9 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
 	int32_t *d_edge_dst; // num_edges;
 	EdgeWeightType *d_edge_weight; // num_edges;
 
+	GraphT<EdgeWeightType> *transposed_graph;
+	
+
 	int32_t h_get_degree(int32_t vertex_id) {
 		return h_src_offsets[vertex_id + 1] - h_src_offsets[vertex_id];
 	}
@@ -152,14 +155,91 @@ static void block_graph_edges(GraphT<EdgeWeightType> &input_graph, GraphT<EdgeWe
 }
 
 template <typename EdgeWeightType>
+static GraphT<EdgeWeightType> builtin_transpose(GraphT<EdgeWeightType> &graph) {
+	if (graph.transposed_graph != nullptr)
+		return *(graph.transposed_graph);
+	// For now we will return the same graph
+	// TODO: copy transpose implementation from infra_ CPU
+	GraphT<EdgeWeightType> output_graph;
+	output_graph.num_vertices = graph.num_vertices;
+	output_graph.num_edges = graph.num_edges;
+	
+	output_graph.h_src_offsets = new int32_t[graph.num_vertices+2];
+	output_graph.h_edge_src = new int32_t[graph.num_edges];
+	output_graph.h_edge_dst = new int32_t[graph.num_edges];
+	output_graph.h_edge_weight = new EdgeWeightType[graph.num_edges];
+	
+	for (int32_t i = 0; i < graph.num_vertices + 2; i++)
+		output_graph.h_src_offsets[i] = 0;
+	
+	// This will count the degree for each vertex in the transposed graph
+	for (int32_t i = 0; i < graph.num_edges; i++) {
+		int32_t dst = graph.h_edge_dst[i];
+		output_graph.h_src_offsets[dst+2]++;
+	}
+
+	// We will now create cummulative sums
+	for (int32_t i = 0; i < graph.num_vertices; i++) {
+		output_graph.h_src_offsets[i+2] += output_graph.h_src_offsets[i+1];	
+	}
+	
+	// Finally fill in the edges and the weights for the new graph		
+	for (int32_t i = 0; i < graph.num_edges; i++) {
+		int32_t dst = graph.h_edge_dst[i];
+		int32_t pos = output_graph.h_src_offsets[dst+1];
+		output_graph.h_src_offsets[dst+1]++;
+		output_graph.h_edge_src[pos] = dst;
+		output_graph.h_edge_dst[pos] = graph.h_edge_src[i];
+		output_graph.h_edge_weight[pos] = graph.h_edge_weight[i];
+	}
+
+	cudaMalloc(&output_graph.d_edge_src, sizeof(int32_t) * graph.num_edges);
+	cudaMalloc(&output_graph.d_edge_dst, sizeof(int32_t) * graph.num_edges);
+	cudaMalloc(&output_graph.d_edge_weight, sizeof(EdgeWeightType) * graph.num_edges);
+	cudaMalloc(&output_graph.d_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1));
+	
+	
+	cudaMemcpy(output_graph.d_edge_src, output_graph.h_edge_src, sizeof(int32_t) * graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_edge_dst, output_graph.h_edge_dst, sizeof(int32_t) * graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_edge_weight, output_graph.h_edge_weight, sizeof(EdgeWeightType) * graph.num_edges, cudaMemcpyHostToDevice);
+	cudaMemcpy(output_graph.d_src_offsets, output_graph.h_src_offsets, sizeof(int32_t) * (graph.num_vertices + 1), cudaMemcpyHostToDevice);
+	
+/*	
+	cudaMalloc(&output_graph.twc_small_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&output_graph.twc_mid_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&output_graph.twc_large_bin, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&output_graph.twc_bin_sizes, 3 * sizeof(int32_t));
+
+	cudaMalloc(&output_graph.strict_sum, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
+	cudaMalloc(&output_graph.strict_cta_sum, NUM_CTA * 2 * sizeof(int32_t));
+	cudaMalloc(&output_graph.strict_grid_sum, sizeof(int32_t));
+*/
+	output_graph.twc_small_bin = graph.twc_small_bin;
+	output_graph.twc_mid_bin = graph.twc_mid_bin;
+	output_graph.twc_large_bin = graph.twc_large_bin;
+	output_graph.strict_sum = graph.strict_sum;
+	output_graph.strict_cta_sum = graph.strict_cta_sum;
+	output_graph.strict_grid_sum = output_graph.strict_grid_sum;
+
+	output_graph.transposed_graph = &graph;
+	graph.transposed_graph = new GraphT<EdgeWeightType>(output_graph);
+
+	
+	return output_graph;
+}
+
+template <typename EdgeWeightType>
 static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool to_sort = false) {
 	int flen = strlen(filename.c_str());
 	const char* bin_extension = to_sort?".graphit_sbin":".graphit_bin";
 	char bin_filename[1024];
 	strcpy(bin_filename, filename.c_str());
 
-	if (string_ends_with(filename.c_str(), bin_extension) == false)	
+	if (string_ends_with(filename.c_str(), bin_extension) == false)	 {
+		strcat(bin_filename, ".");
+		strcat(bin_filename, typeid(EdgeWeightType).name());
 		strcat(bin_filename, bin_extension);
+	}
 	
 	FILE *bin_file = fopen(bin_filename, "rb");
 	if (!bin_file && string_ends_with(filename.c_str(), bin_extension)) {
@@ -217,6 +297,7 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 		CONSUME(fwrite(graph.h_src_offsets, sizeof(int32_t), graph.num_vertices + 1, bin_file));
 		fclose(bin_file);	
 	}
+
 	cudaMalloc(&graph.d_edge_src, sizeof(int32_t) * graph.num_edges);
 	cudaMalloc(&graph.d_edge_dst, sizeof(int32_t) * graph.num_edges);
 	cudaMalloc(&graph.d_edge_weight, sizeof(EdgeWeightType) * graph.num_edges);
@@ -237,6 +318,8 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
 	cudaMalloc(&graph.strict_sum, graph.num_vertices * FRONTIER_MULTIPLIER * sizeof(int32_t));
 	cudaMalloc(&graph.strict_cta_sum, NUM_CTA * 2 * sizeof(int32_t));
 	cudaMalloc(&graph.strict_grid_sum, sizeof(int32_t));
+	
+	graph.transposed_graph = nullptr;
 
 }
 

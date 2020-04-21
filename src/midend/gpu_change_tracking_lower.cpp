@@ -77,6 +77,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
 					if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->type = mir::EnqueueVertex::Type::SPARSE;
 					} else if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
@@ -125,6 +127,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
 					if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->type = mir::EnqueueVertex::Type::SPARSE;
 					} else if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
@@ -151,6 +155,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
 					if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->type = mir::EnqueueVertex::Type::SPARSE;
 					} else if (current_edge_set_apply_expr->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {

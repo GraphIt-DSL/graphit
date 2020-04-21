@@ -69,7 +69,7 @@ private:
 	void genPropertyArrayAlloca(mir::VarDecl::Ptr);
 	
 	void genFusedWhileLoop(mir::WhileStmt::Ptr);
-	void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
+	virtual void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
 
 	EdgesetApplyFunctionDeclGenerator* edgeset_apply_func_gen_;
 
@@ -142,6 +142,12 @@ protected:
 
 	virtual void visit(mir::EnqueueVertex::Ptr) override;
 
+        virtual void visit(mir::VertexSetWhereExpr::Ptr) override;
+
+
+	virtual void visit(mir::ListType::Ptr) override;
+	virtual void visit(mir::ListAllocExpr::Ptr) override;
+
 	void genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr); 
 
 };
@@ -179,7 +185,7 @@ public:
 		}
 		current_while_stmt->used_priority_queues.push_back(var);
 	}
-	void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr);
+	virtual void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr) override;
 	virtual void visit(mir::StmtBlock::Ptr) override;
 	virtual void visit(mir::AssignStmt::Ptr) override;
 	virtual void visit(mir::VarDecl::Ptr) override;
@@ -187,6 +193,7 @@ public:
 	virtual void visit(mir::PrintStmt::Ptr) override;
 	virtual void visit(mir::HybridGPUStmt::Ptr) override;
 	virtual void visit(mir::VertexSetDedupExpr::Ptr) override;
+	virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
 	
 	std::string var_name (std::string var) {
 		//return current_kernel_name + "_" + var;
