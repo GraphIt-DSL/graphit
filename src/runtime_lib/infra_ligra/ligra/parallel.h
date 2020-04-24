@@ -33,7 +33,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        #pragma cilk grainsize = grain_size 
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i += step) {
             body(i);
         }
@@ -51,7 +51,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        #pragma cilk grainsize = grain_size 
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i++) {
             body(i);
         }
@@ -98,7 +98,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, IterT step, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        #pragma cilk grainsize = grain_size 
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i += step) {
             body(i);
         }
@@ -116,7 +116,7 @@ template<typename IterT, typename BodyT>
 void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0) {
     // if there is grain size specified, we just
     if (grain_size != 0){
-        #pragma cilk grainsize = grain_size 
+        #pragma cilk grainsize = grain_size
         cilk_for(IterT i = start; i < end; i++) {
             body(i);
         }
