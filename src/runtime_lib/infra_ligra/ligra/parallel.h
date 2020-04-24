@@ -66,8 +66,6 @@ void parallel_for_lambda(IterT start, IterT end, BodyT body, int grain_size = 0)
 }
 
 
-
-
 template <typename Func0, typename Func1>
 void parallel_invoke(const Func0& func0, const Func1& func1) {
   cilk_spawn func0();

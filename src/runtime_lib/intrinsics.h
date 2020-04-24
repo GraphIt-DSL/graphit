@@ -209,7 +209,6 @@ static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_
             el[startOffset+i] = Edge(x, NodeWeight<NodeID, WeightT>(indices[startOffset + i], data[startOffset + i]));
         }
     }
-    
 
 	return bb.MakeGraphFromEL(el);	
 }

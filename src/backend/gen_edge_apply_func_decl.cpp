@@ -64,12 +64,12 @@ namespace graphit {
                                                        std::string &dst_type) {
 
         // set up the flag for checking if a from_vertexset has been specified
-        if (apply->from_func != "")
-            if (!mir_context_->isFunction(apply->from_func))
+        if (apply->from_func)
+            if (!mir_context_->isFunction(apply->from_func->function_name->name))
                 from_vertexset_specified = true;
 
         // Check if the apply function has a return value
-        auto apply_func = mir_context_->getFunction(apply->input_function_name);
+        auto apply_func = mir_context_->getFunction(apply->input_function->function_name->name);
         dst_type = apply->is_weighted ? "d.v" : "d";
 
         if (apply_func->result.isInitialized()) {
@@ -222,7 +222,7 @@ namespace graphit {
         }
 
 
-        if (apply->from_func != "" && !from_vertexset_specified) {
+        if (apply->from_func && !from_vertexset_specified) {
             printIndent();
             oss_ << "if (from_func(s)){ " << std::endl;
             indent();
@@ -234,13 +234,13 @@ namespace graphit {
 
 
         // print the checks on filtering on sources s
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             indent();
             printIndent();
 
             oss_ << "if";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply->to_func)) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
                 //if the input expression is a function call
                 oss_ << " (to_func(" << dst_type << ")";
 
@@ -295,7 +295,7 @@ namespace graphit {
 
 
         // end of from filtering
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             dedent();
             printIndent();
             oss_ << "} //end of to func" << std::endl;
@@ -318,7 +318,7 @@ namespace graphit {
         printIndent();
         oss_ << "} //end of for loop on neighbors" << std::endl;
 
-        if (apply->from_func != "" && !from_vertexset_specified) {
+        if (apply->from_func && !from_vertexset_specified) {
             dedent();
             printIndent();
             oss_ << "} //end of from func " << std::endl;
@@ -329,7 +329,14 @@ namespace graphit {
         printIndent();
 
         if (apply->is_parallel) {
-            oss_ << "}," << apply->grain_size << ");" << std::endl;
+
+            if (apply->grain_size != 1024){
+                oss_ << "}," << apply->grain_size << ");" << std::endl;
+
+            } else {
+                oss_ << "});" << std::endl;
+            }
+
         } else {
             oss_ << "}" << std::endl;
         }
@@ -365,7 +372,7 @@ namespace graphit {
 
 
         //filtering on destination
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             printIndent();
             oss_ << "if (to_func(d)){ " << std::endl;
             indent();
@@ -385,7 +392,7 @@ namespace graphit {
 
 
         // print the checks on filtering on sources s
-        if (apply->from_func != "") {
+        if (apply->from_func) {
             indent();
             printIndent();
 
@@ -394,7 +401,7 @@ namespace graphit {
             std::string src_type = apply->is_weighted? "s.v" : "s";
 
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply->from_func)) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
                 //if the input expression is a function call
                 oss_ << " (from_func(" << src_type << ")";
 
@@ -435,7 +442,7 @@ namespace graphit {
             printIndent();
             oss_ << "next[d] = 1; " << std::endl;
             // generating code for early break
-            if (apply->to_func != "") {
+            if (apply->to_func) {
                 printIndent();
                 oss_ << "if (!to_func(d)) break; " << std::endl;
             }
@@ -447,7 +454,7 @@ namespace graphit {
 
 
         // end of from filtering
-        if (apply->from_func != "") {
+        if (apply->from_func) {
             dedent();
             printIndent();
             oss_ << "}" << std::endl;
@@ -459,7 +466,7 @@ namespace graphit {
         oss_ << "} //end of loop on in neighbors" << std::endl;
 
         // end of to filtering (filtering on the destination)
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             dedent();
             printIndent();
             oss_ << "} //end of to filtering " << std::endl;
@@ -520,8 +527,8 @@ namespace graphit {
         indent();
 
 
-        if (apply->from_func != "") {
-            if (!mir_context_->isFunction(apply->from_func)) {
+        if (apply->from_func) {
+            if (!mir_context_->isFunction(apply->from_func->function_name->name)) {
                 printIndent();
                 oss_ << "from_vertexset->toDense();" << std::endl;
             }
@@ -620,7 +627,7 @@ namespace graphit {
                     "  SGOffset * edge_in_index = g.get_offsets_();\n";
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
-                    "    [" << (apply->to_func != "" ?  "&to_func, " : "")
+                    "    [" << (apply->to_func ?  "&to_func, " : "")
                  << "&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
@@ -753,13 +760,13 @@ namespace graphit {
         indent();
 
         // print the checks on filtering on sources s
-        if (apply->from_func != "") {
+        if (apply->from_func) {
             indent();
             printIndent();
 
             oss_ << "if";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply->from_func)) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
                 //if the input expression is a function call
                 oss_ << " (from_func(s)";
 
@@ -778,13 +785,13 @@ namespace graphit {
         printIndent();
 
         // print the checks on filtering on sources s
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             indent();
             printIndent();
 
             oss_ << "if";
             //TODO: move this logic in to MIR at some point
-            if (mir_context_->isFunction(apply->to_func)) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
                 //if the input expression is a function call
                 oss_ << " (to_func(" << dst_type << ")";
 
@@ -825,7 +832,7 @@ namespace graphit {
 
 
         // end of to filtering
-        if (apply->to_func != "") {
+        if (apply->to_func) {
             dedent();
             printIndent();
             oss_ << "} // end of if to_func filtering" << std::endl;
@@ -836,7 +843,7 @@ namespace graphit {
         printIndent();
         oss_ << "} // end of inner for loop" << std::endl;
 
-        if (apply->from_func != "") {
+        if (apply->from_func) {
             dedent();
             printIndent();
             oss_ << "} // end of if for from_func or from vertexset" << std::endl;
@@ -930,8 +937,8 @@ namespace graphit {
             arguments.push_back("Graph & g");
         }
 
-        if (apply->from_func != "") {
-            if (mir_context_->isFunction(apply->from_func)) {
+        if (apply->from_func) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
                 // the schedule is an input from function
                 templates.push_back("typename FROM_FUNC");
                 arguments.push_back("FROM_FUNC from_func");
@@ -941,8 +948,8 @@ namespace graphit {
             }
         }
 
-        if (apply->to_func != "") {
-            if (mir_context_->isFunction(apply->to_func)) {
+        if (apply->to_func) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
                 // the schedule is an input to function
                 templates.push_back("typename TO_FUNC");
                 arguments.push_back("TO_FUNC to_func");
@@ -959,7 +966,7 @@ namespace graphit {
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != "") {
+            if (apply_expr->push_to_function_) {
                 templates.push_back("typename PUSH_TO_FUNC");
                 arguments.push_back("PUSH_TO_FUNC push_to_func");
             }
@@ -983,7 +990,7 @@ namespace graphit {
                 oss_ << ", " << temp;
         }
         oss_ << "> ";
-        oss_ << (mir_context_->getFunction(apply->input_function_name)->result.isInitialized() ?
+        oss_ << (mir_context_->getFunction(apply->input_function->function_name->name)->result.isInitialized() ?
                  "VertexSubset<NodeID>* " : "void ")  << func_name << "(";
 
         first = true;
@@ -1014,9 +1021,9 @@ namespace graphit {
         // Weighted: "" (unweighted) or "weighted"
 
         string output_name = "edgeset_apply";
-        auto original_apply_func_name = apply->input_function_name;
+        auto original_apply_func_name = apply->input_function->function_name->name;
 
-        mir::FuncDecl::Ptr apply_func = mir_context_->getFunction(apply->input_function_name);
+        mir::FuncDecl::Ptr apply_func = mir_context_->getFunction(apply->input_function->function_name->name);
 
         //check direction
         if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)) {
@@ -1050,8 +1057,8 @@ namespace graphit {
             output_name += "_deduplicatied";
         }
 
-        if (apply->from_func != "") {
-            if (mir_context_->isFunction(apply->from_func)) {
+        if (apply->from_func) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
                 // the schedule is an input from function
                 output_name += "_from_filter_func";
             } else {
@@ -1060,8 +1067,8 @@ namespace graphit {
             }
         }
 
-        if (apply->to_func != "") {
-            if (mir_context_->isFunction(apply->to_func)) {
+        if (apply->to_func) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
                 // the schedule is an input to function
                 output_name += "_to_filter_func";
             } else {
@@ -1072,8 +1079,8 @@ namespace graphit {
 
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            if (apply_expr->push_to_function_ != "") {
-                if (mir_context_->isFunction(apply->to_func)) {
+            if (apply_expr->push_to_function_) {
+                if (mir_context_->isFunction(apply->to_func->function_name->name)) {
                     // the schedule is an input to function
                     output_name += "_push_to_filter_func";
                 } else {

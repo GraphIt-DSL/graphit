@@ -7,7 +7,7 @@ const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
 
 func updateEdge(src : Vertex, dst : Vertex)
-    IDs[dst] min= IDs[src];
+      IDs[dst] min= IDs[src];
 end
 
 func init(v : Vertex)

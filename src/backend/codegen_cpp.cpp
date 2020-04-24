@@ -105,6 +105,10 @@ namespace graphit {
 	
     }
 
+    void CodeGenCPP::visit(mir::IdentDecl::Ptr ident) {
+        oss << ident->name;
+    }
+
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
         printIndent();
         auto for_domain = for_stmt->domain;
@@ -224,15 +228,19 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
-	    printIndent();
-	    oss << "{" << std::endl;
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) &&
+                   (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type ==
+                    mir::PriorityUpdateType::ExternPriorityUpdate ||
+                    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type ==
+                    mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
+            printIndent();
+            oss << "{" << std::endl;
             indent();
-	    printIndent();
+            printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
-	    //assign_stmt->expr->accept(this);
-	    auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
+            //assign_stmt->expr->accept(this);
+            auto edgeset_load_expr = mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr);
             // DO no load the infra_gapbs format 
             /*
 	    if (edgeset_load_expr->is_weighted_) {
@@ -250,27 +258,27 @@ namespace graphit {
 	    oss << ";" << std::endl;
             */
             // Now load the Julienne type graph
-	    printIndent();
-	    assign_stmt->lhs->accept(this);
-	    //oss << ".julienne_graph";
-            oss << " = ";
-            oss << "builtin_loadJulienneEdgesFromFile(";	    
-	    mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
-	    oss << ");" << std::endl;
-           
             printIndent();
             assign_stmt->lhs->accept(this);
-	    oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
+            //oss << ".julienne_graph";
+            oss << " = ";
+            oss << "builtin_loadJulienneEdgesFromFile(";
+            mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
+            oss << ");" << std::endl;
+
+            printIndent();
+            assign_stmt->lhs->accept(this);
+            oss << ".em = new julienne::EdgeMap<julienne::uintE, julienne::symmetricVertex>(";
             assign_stmt->lhs->accept(this);
             oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
             assign_stmt->lhs->accept(this);
             oss << ".m/5);" << std::endl;
-	 
-	    dedent();
-	    printIndent();
-	    oss << "}" << std::endl;
-	    
-	} else {
+
+            dedent();
+            printIndent();
+            oss << "}" << std::endl;
+
+        } else {
             printIndent();
             assign_stmt->lhs->accept(this);
             oss << " = ";
@@ -407,12 +415,15 @@ namespace graphit {
 	    }
 	    oss << ";" <<std::endl;
 */
+        } else if (mir::isa<mir::VectorType>(var_decl->type)) {
+
+            printIndent();
+            genLocalArrayAlloc(var_decl);
+
         } else {
             printIndent();
-
             //we probably don't need the modifiers now
             //oss << var_decl->modifier << ' ';
-
             var_decl->type->accept(this);
             oss << var_decl->name << " ";
             if (var_decl->initVal != nullptr) {
@@ -420,6 +431,34 @@ namespace graphit {
                 var_decl->initVal->accept(this);
             }
             oss << ";" << std::endl;
+
+        }
+    }
+
+    void CodeGenCPP::visit(mir::FuncExpr::Ptr funcExpr) {
+
+        // if it is extern function, just stop after the name.
+        if (mir_context_->isExternFunction(funcExpr->function_name->name)){
+            funcExpr->function_name->accept(this);
+
+        } else {
+            funcExpr->function_name->accept(this);
+
+            oss << "(";
+
+            bool printDelimiter = false;
+
+            for (auto arg: funcExpr->functorArgs){
+                if (printDelimiter) {
+                    oss << ",";
+                }
+
+                arg->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << ")";
+
         }
     }
 
@@ -461,7 +500,46 @@ namespace graphit {
             oss << "struct " << func_decl->name << std::endl;
             printBeginIndent();
             indent();
-            oss << std::string(2 * indentLevel, ' ');
+            //oss << std::string(2 * indentLevel, ' ');
+
+            for (auto arg : func_decl->functorArgs) {
+
+                arg.getType()->accept(this);
+                oss << arg.getName() << ";\n";
+
+            }
+
+            bool printDelimiter = false;
+
+            if (!func_decl->functorArgs.empty()){
+                oss << func_decl->name;
+                oss << "(";
+
+                for (auto arg : func_decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    arg.getType()->accept(this);
+                    oss << arg.getName();
+                    printDelimiter = true;
+                }
+                oss << "): ";
+
+                printDelimiter = false;
+                for (auto arg : func_decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    oss << arg.getName() << "(" << arg.getName() << ")";
+                    printDelimiter = true;
+                }
+
+                oss << " {}" << std::endl;
+
+            }
+
+
 
             if (func_decl->result.isInitialized()) {
                 func_decl->result.getType()->accept(this);
@@ -489,7 +567,7 @@ namespace graphit {
                 oss << "vector<vector<NodeID>>& local_bins, ";
             }
 
-            bool printDelimiter = false;
+            printDelimiter = false;
 
             for (auto arg : func_decl->args) {
                 if (printDelimiter) {
@@ -555,6 +633,9 @@ namespace graphit {
                         //genPropertyArrayDecl(constant);
                         if (constant->needs_allocation)
                             genPropertyArrayAlloc(constant);
+                    } else {
+                        //constant scalar vector
+                        genScalarVectorAlloc(constant, type);
                     }
                 } else if (std::dynamic_pointer_cast<mir::VertexSetType>(constant->type) ||
                         std::dynamic_pointer_cast<mir::PriorityQueueType>(constant->type)){
@@ -935,9 +1016,24 @@ namespace graphit {
 
         if (mir_context_->isFunction(call_expr->name)) {
             auto mir_func_decl = mir_context_->getFunction(call_expr->name);
-            if (mir_func_decl->isFunctor)
-                oss << "()";
+            if (mir_func_decl->isFunctor) {
+                oss << "(";
+                bool printDelimiter = false;
+
+                for (auto arg : call_expr->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    arg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << ")";
+            }
         }
+
+
+
 
         oss << "(";
 
@@ -1257,6 +1353,58 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::genLocalArrayAlloc(mir::VarDecl::Ptr var_decl) {
+        // read the name of the array
+        const auto name = var_decl->name;
+
+        // read the type of the array
+        mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
+        assert(vector_type != nullptr);
+
+
+        vector_type->accept(this);
+        oss << name << " ";
+
+
+        const auto init_val = var_decl->initVal;
+
+        if(init_val != nullptr) {
+
+            if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
+                auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
+                oss << " = ";
+                call_expr->accept(this);
+                oss << ";" << std::endl;
+
+            } else if (isLiteral(init_val)){
+                oss << " = new ";
+                const auto vector_element_type = vector_type->vector_element_type;
+                vector_element_type->accept(this);
+                const auto size_expr = mir_context_->getElementCount(vector_type->element_type);
+                oss << " [ ";
+                size_expr->accept(this);
+                oss << " ]; " << std::endl;
+                printIndent();
+                oss << "ligra::parallel_for_lambda((int)0, (int)";
+                size_expr->accept(this);
+                oss << ", [&] (int i) { ";
+                oss << name << "[i]=";
+                init_val->accept(this);
+                oss << "; });" << std::endl;
+
+            } else {
+                oss << " = ";
+                var_decl->initVal->accept(this);
+                oss << ";" << std::endl;
+
+            }
+
+        }
+        else {
+            oss << ";" << std::endl;
+        }
+
+    }
 
     void CodeGenCPP::genPropertyArrayAlloc(mir::VarDecl::Ptr var_decl) {
         const auto name = var_decl->name;
@@ -1387,14 +1535,18 @@ namespace graphit {
             }
             indent();
             printIndent();
-            if (mir_context_->isExternFunction(apply_expr->input_function_name)){
-                // This function is an extern function (not a functor)
-                oss << apply_expr->input_function_name << "(vertexsetapply_iter);" << std::endl;
-            } else  {
-                // This function is not an extern function, it is defined in GraphIt code
-                // This would generate a functor declaration
-                oss << apply_expr->input_function_name << "()(vertexsetapply_iter);" << std::endl;
+
+            // if functor arg is not empty, we wrap another paranthesis to not confuse it with vertexsetapply_iter
+            if (!apply_expr->input_function->functorArgs.empty()) {
+                oss << "(";
+                apply_expr->input_function->accept(this);
+                oss << ")(vertexsetapply_iter);" << std::endl;
+            } else {
+                apply_expr->input_function->accept(this);
+                oss << "(vertexsetapply_iter);" << std::endl;
             }
+
+
             dedent();
             printIndent();
             if (apply_expr->is_parallel) {
@@ -1406,7 +1558,8 @@ namespace graphit {
             // NOT sure what how this condition is triggered and used
             // if this is a dynamically created vertexset
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
-            oss << apply_expr->input_function_name << "() ); " << std::endl;
+            apply_expr->input_function->accept(this);
+            oss << " );" << std::endl;
 
 
         }
@@ -1487,16 +1640,18 @@ namespace graphit {
                     mir_context_->getElementTypeFromVectorOrSetName(vertexset_where_expr->target);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             oss << "builtin_const_vertexset_filter <";
-	    oss << vertexset_where_expr->input_func ;
+	        vertexset_where_expr->input_func->function_name->accept(this);
             oss << ">(";
-            oss << vertexset_where_expr->input_func << "(), ";
+            vertexset_where_expr->input_func->accept(this);
+            oss << ", ";
             associated_element_type_size->accept(this);
             oss << ")";
         } else {
             oss << "builtin_vertexset_filter <";
-            oss << vertexset_where_expr->input_func;
+            vertexset_where_expr->input_func->function_name->accept(this);
             oss << ">(";
-            oss << vertexset_where_expr->target << ", " << vertexset_where_expr->input_func << "()";
+            oss << vertexset_where_expr->target << ", ";
+            vertexset_where_expr->input_func->accept(this);
             oss << ")";
         }
     }
@@ -1570,56 +1725,71 @@ namespace graphit {
 	
         auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
         oss << edgeset_apply_func_name << "(";
-        auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
-        std::vector<std::string> arguments = std::vector<std::string>();
 
+        apply->target->accept(this);
+        oss << ", ";
 
-        if (apply->from_func != "") {
-            if (mir_context_->isFunction(apply->from_func)) {
-                // the schedule is an input from function
-                // Create functor instance
-                arguments.push_back(genFuncNameAsArgumentString(apply->from_func));
+        if (apply->from_func) {
+            if (mir_context_->isFunction(apply->from_func->function_name->name)) {
+                apply->from_func->accept(this);
             } else {
                 // the input is an input from vertexset
-                arguments.push_back(apply->from_func);
+
+                // TODO is it correct that we just accept the Identifier
+                apply->from_func->function_name->accept(this);
             }
+
+            oss << ", ";
         }
 
-        if (apply->to_func != "") {
-            if (mir_context_->isFunction(apply->to_func)) {
-                // the schedule is an input to function
-                // Create functor instance
-                arguments.push_back(genFuncNameAsArgumentString(apply->to_func));
+        if (apply->to_func) {
+            if (mir_context_->isFunction(apply->to_func->function_name->name)) {
+                apply->to_func->accept(this);
             } else {
-                // the input is an input to vertexset
-                arguments.push_back(apply->to_func);
+                // the input is an input from vertexset
+
+                // TODO is it correct that we just accept the Identifier
+                apply->to_func->function_name->accept(this);
             }
+            oss << ", ";
         }
+
+
 
         // the original apply function (pull direction in hybrid case)
-        arguments.push_back(genFuncNameAsArgumentString(apply->input_function_name));
+        apply->input_function->accept(this);
+
+
 
         // a filter function for the push direction in hybrid code
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
+            auto pushToFunctionExist = false;
+
+            if (apply_expr->push_to_function_){
+                oss << ", ";
+                apply_expr->push_to_function_->accept(this);
+                //TODO look at it again?
+                //arguments.push_back(genFunctorNameAsArgumentString(apply_expr->push_to_function_, apply_expr->toFuncFunctorArgs));
+                oss << ", ";
+                pushToFunctionExist = true;
 
             }
+
+            std::vector<std::string> pushFunctionArguments;
+            //pushFunctionArguments.push_back(apply_expr->tracking_field);
+            //TODO look at it again?
+            //apply_expr->push_function_->functorArgs = apply_expr->input_function->functorArgs;
+            if (pushToFunctionExist) {
+                apply_expr->push_function_->accept(this);
+            } else {
+                oss << ", ";
+                apply_expr->push_function_->accept(this);
+            }
+
         }
 
-        // the push direction apply function for hybrid schedule
-        if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
-            auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
-        }
-
-        // the edgeset that is being applied over (target)
-        apply->target->accept(this);
-        for (auto &arg : arguments) {
-            oss << ", " << arg;
-        }
 
         oss << "); " << std::endl;
     }
@@ -1737,15 +1907,25 @@ namespace graphit {
         oss << "]";
     }
 
-    std::string CodeGenCPP::genFuncNameAsArgumentString(std::string func_name) {
-        if (mir_context_->isExternFunction(func_name)){
-            //If it is an extern function, don't need to do anything, just pass the func name
-            return func_name;
-        } else {
-            //If it is a GraphIt generated function, then we need to instantiate the functor
-            return func_name + "()";
+
+    bool CodeGenCPP::isLiteral(mir::Expr::Ptr expression) {
+
+        bool isIntLiteral = mir::isa<mir::IntLiteral>(expression);
+        bool isBoolLiteral = mir::isa<mir::BoolLiteral>(expression);
+        bool isFloatLiteral = mir::isa<mir::FloatLiteral>(expression);
+        bool isStringLiteral = mir::isa<mir::StringLiteral>(expression);
+
+        bool negativeIntOrFloatLiteral = false;
+        if (mir::isa<mir::NegExpr>(expression)) {
+            auto negExpr = mir::to<mir::NegExpr>(expression);
+            negativeIntOrFloatLiteral = mir::isa<mir::IntLiteral>(negExpr->operand) || mir::isa<mir::FloatLiteral>(negExpr->operand);
         }
+
+        return isIntLiteral || isBoolLiteral || isFloatLiteral || isStringLiteral || negativeIntOrFloatLiteral;
+
     }
+
+
 
     void CodeGenCPP::genTypesRequiringTypeDefs() {
 
@@ -1879,8 +2059,8 @@ namespace graphit {
 
         //the user defined edge update function, instantiated with a functor
         // augmented with local_bins argument,
-        oss << ordered_op->edge_update_func  << "(), ";
-
+        ordered_op->edge_update_func->accept(this);
+        oss << ", ";
 
         // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
         if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
@@ -2050,7 +2230,7 @@ namespace graphit {
 	indent();
 	//printIndent();
 
-	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function_name);
+	mir::FuncDecl::Ptr udf = mir_context_->getFunction(call->input_function->function_name->name);
 	//udf->accept(this);
 
 		
@@ -2152,7 +2332,8 @@ namespace graphit {
 	oss << " = ";
 	call->target->accept(this);
 	oss << ".em->edgeMapCount<julienne::uintE> (";
-	oss << call->from_func;
+	//TODO this is bit hacky (should ideally accept funcexpr entirely)
+	call->from_func->function_name->accept(this);
 	oss << ", ";
 	get_edge_count_lambda(call);
 	oss << ")";
@@ -2171,6 +2352,12 @@ namespace graphit {
         oss << ", ";
         update_op->minimum_val->accept(this);
         oss << ")";
+    }
+
+    void CodeGenCPP::genScalarVectorAlloc(mir::VarDecl::Ptr constant, mir::VectorType::Ptr vector_type) {
+        oss << constant->name << " = new ";
+        vector_type->vector_element_type->accept(this);
+        oss << " ();" << std::endl;
     }
 
 

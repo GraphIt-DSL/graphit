@@ -1063,3 +1063,130 @@ TEST_F(BackendTest, VectorInitWithoutVertex) {
     EXPECT_EQ (0, basicTest(is));
 
 }
+
+TEST_F(BackendTest, FunctorOneStateTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    vertices.apply(addStuff[test]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, FunctorMultipleStatesTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int, b: float](v: Vertex)\n"
+                     "    print b;\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    var test_v2: float = 5.0;\n"
+                     "    vertices.apply(addStuff[test, test_v2]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, FunctorEdgesetApplyModified) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "const visited: vector{Vertex}(bool) = false;"
+                     "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                     "    a[src] += a[dst];"
+                     "end\n"
+                     "func visited_filter(v : Vertex) -> output : bool\n"
+                     "     output = (visited[v] == false);\n"
+                     "end\n"
+                     "func main()\n"
+                     "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                     "frontier.addVertex(3)\n;"
+                     "    var local_array: vector{Vertex}(int) = 0;"
+                     "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, ExportLocalVectorWithNew) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(vector[1](float));\n"
+                     "const simpleArray2: vector{Vertex}(vector[1](int));\n"
+                     "const K: int = 1;\n"
+                     "func initVertex (v : Vertex)\n"
+                     "      for i in 0:K\n"
+                     "          simpleArray[v][i] = 0.5;\n"
+                     "          simpleArray2[v][i] = 0;\n"
+                     "      end\n"
+                     "end\n"
+                     "export func export_func() -> output : vector{Vertex}(vector[1](float))\n"
+                     "    simpleArray = new vector{Vertex}(vector[1](float))();\n"
+                     "    simpleArray2 = new vector{Vertex}(vector[1](int))();\n"
+                     "    vertices.apply(initVertex);\n"
+                     "    output = simpleArray;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, SrcFilterDstFilterApplyFunctor) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func update[age: vector{Vertex}(int)] (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                     "func to_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                     "func from_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                     "func main()\n"
+                     "var age: vector{Vertex}(int) = 0;\n"
+                     "var active_vertices : vertexset{Vertex} = "
+                     "edges.srcFilter(from_filter[age]).dstFilter(to_filter[age]).apply(update[age]);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+//TODO: should be supported soon
+TEST_F(BackendTest, LocalVector) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()"
+                     "    var simpleArray: vector{Vertex}(vector[1](int)) = 0;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+

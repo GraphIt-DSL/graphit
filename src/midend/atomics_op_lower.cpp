@@ -24,15 +24,15 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::UpdatePriori
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
     if (apply_expr->is_parallel){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-        auto pull_func_name = apply_expr->input_function_name;
+        auto pull_func_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
-        auto push_func_name = apply_expr->push_function_;
+        auto push_func_name = apply_expr->push_function_->function_name->name;
         mir::FuncDecl::Ptr push_func_decl = mir_context_->getFunction(push_func_name);
 
         pull_func_decl->accept(&reduce_stmt_lower);
         push_func_decl->accept(&reduce_stmt_lower);
 
-        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function, apply_expr);
         lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->push_function_, apply_expr);
 
     }
@@ -41,10 +41,10 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseE
 void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){
     if (apply_expr->is_parallel){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-        auto apply_func_decl_name = apply_expr->input_function_name;
+        auto apply_func_decl_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&reduce_stmt_lower);
-        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function, apply_expr);
     }
 }
 
@@ -56,18 +56,18 @@ void graphit::AtomicsOpLower::lower() {
     }
 }
 
-bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string to_func,
-                                                  std::string from_func,
-                                                  std::string apply_func,
+bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(mir::FuncExpr::Ptr to_func,
+                                                  mir::FuncExpr::Ptr from_func,
+                                                  mir::FuncExpr::Ptr apply_func,
                                                   mir::EdgeSetApplyExpr::Ptr apply_expr) {
-    if (to_func != ""){
+    if (to_func != nullptr){
         //pattern 1:
         // condition 1: to function reads field[v] (v is dst) (the only stmt in to_func), field read is tensorArrayRead
         // condition 2: apply function has one assignment only
         // condition 3: assignment is on the same field and on dst, and this is a shared write
         // condition 4: the data must be of a supported type
 
-        auto to_func_decl = mir_context_->getFunction(to_func);
+        auto to_func_decl = mir_context_->getFunction(to_func->function_name->name);
         auto to_func_body = to_func_decl->body;
         std::string compare_filed;
         // this is the value that the CAS is going to compare to if the CAS is to be generated
@@ -120,7 +120,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
             // to_func did not fit the pattern
             return false;
 
-        auto apply_func_decl = mir_context_->getFunction(apply_func);
+        auto apply_func_decl = mir_context_->getFunction(apply_func->function_name->name);
         auto apply_func_body = apply_func_decl->body;
 
         if (apply_func_body->stmts->size() == 1){
@@ -167,9 +167,14 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                             if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply_expr)){
                                 //if this is hybrid, just remove the push_to, and keep the other to for pull
                                 //TODO: this is a bit hacky, think about how to do it better later
-                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                                //(mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                                // maybe there is better way to do this
+                                //TODO: ask Yunming about this?
+                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = nullptr;
+
                             } else {
-                                apply_expr->to_func = "";
+                                //apply_expr->to_func = "";
+                                apply_expr->to_func = nullptr;
                             }
                             return true;
 
@@ -189,7 +194,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
 
     }
 
-    if (from_func != ""){
+    if (from_func != nullptr){
         //TODO: support this other pattern
         //pattern 2:
         // condition 1: from function reads field[v] (v is src) (the only stmt in from_func)

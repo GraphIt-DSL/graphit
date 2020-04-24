@@ -331,6 +331,10 @@ namespace graphit {
             for (auto genericArg : expr->genericArgs) {
                 genericArg->accept(this);
             }
+
+            for (auto functorArg: expr->functorArgs){
+                functorArg->accept(this);
+            }
             for (auto arg : expr->args) {
                 arg->accept(this);
             }
@@ -445,6 +449,16 @@ namespace graphit {
 
         }
 
+        void FIRVisitor::visit(std::shared_ptr<FuncExpr> expr) {
+            expr->name->accept(this);
+
+            for (auto arg: expr->args){
+                arg->accept(this);
+            }
+        }
+
+
+
         void FIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> expr) {
             //expr->element_type->accept(this);
             expr->file_name->accept(this);
@@ -453,10 +467,13 @@ namespace graphit {
         void FIRVisitor::visit(std::shared_ptr<MethodCallExpr> expr) {
             expr->method_name->accept(this);
             expr->target->accept(this);
+
             for (auto arg : expr->args) {
                 arg->accept(this);
             }
+
         }
+
 
         void FIRVisitor::visit(std::shared_ptr<ApplyExpr> expr) {
             expr->input_function->accept(this);

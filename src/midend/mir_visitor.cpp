@@ -79,9 +79,14 @@ namespace graphit {
 
         void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
 
+            for (auto arg : func_decl->functorArgs) {
+                arg.accept(this);
+            }
+
             for (auto arg : func_decl->args) {
                 arg.accept(this);
             }
+
             func_decl->result.accept(this);
 
             enclosing_func_decl_ = func_decl;
@@ -91,7 +96,21 @@ namespace graphit {
             enclosing_func_decl_ = nullptr;
         }
 
+
+        void MIRVisitor::visit(FuncExpr::Ptr func_expr) {
+
+            for (auto arg : func_expr->functorArgs) {
+                arg->accept(this);
+            }
+
+
+            func_expr->function_name->accept(this);
+        }
+
         void MIRVisitor::visit(Call::Ptr expr) {
+            for(auto arg : expr->functorArgs){
+                arg->accept(this);
+            }
             for (auto arg : expr->args) {
                 arg->accept(this);
             }

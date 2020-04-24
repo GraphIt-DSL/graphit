@@ -1,0 +1,19 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const simpleArray: vector{Vertex}(int) = 0;
+const simpleArrayFloat: vector{Vertex}(float) = 0.0;
+func addStuff[a: int, b: float](v: Vertex)
+
+    simpleArray[v] += a;
+    simpleArrayFloat[v] += b;
+
+end
+
+func main()
+    var test: int = 5;
+    var test_v2: float = 5.0;
+    vertices.apply(addStuff[test, test_v2]);
+    print simpleArray.sum();
+end

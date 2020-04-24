@@ -368,6 +368,21 @@ class TestGraphitCompiler(unittest.TestCase):
                 break
         self.assertEqual(test_flag, True)
 
+
+    def test_cc_pjump_verified(self):
+        self.basic_compile_test("cc_pjump.gt")
+        cmd = "./" + self.executable_file_name + " > verifier_input"
+        subprocess.call(cmd, shell=True)
+        #proc = subprocess.Popen("./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 1", stdout=subprocess.PIPE, shell=True)
+        output = self.get_command_output("./bin/cc_verifier -f "+GRAPHIT_SOURCE_DIRECTORY+"/test/graphs/4.el -t verifier_input -r 1")
+        test_flag = False
+        for line in output.rstrip().split("\n"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break
+        self.assertEqual(test_flag, True)
+
+
     def test_argv_safe(self):
         self.basic_compile_test("simple_atoi.gt")
         cmd = "./" + self.executable_file_name + " 150 170"
@@ -406,10 +421,46 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_simple_boolean_op(self):
         self.basic_compile_test("simple_boolean_op.gt")
 
+    def test_functor(self):
+        self.expect_output_val("functor.gt", 25)
+
+    def test_functor_with_vector(self):
+        self.expect_output_val("functor_vector.gt", 5)
+
+    def test_functor_with_local_vector(self):
+        self.expect_output_val("functor_local_vector.gt", 5)
+
+    def test_functor_with_multiple_local_vector(self):
+        self.expect_output_val("functor_multiple_local_vector.gt", 10)
+
+    def test_functor_with_multiple_local_vector_with_int(self):
+        self.expect_output_val("functor_multiple_local_vector_with_int.gt", 60)
+
+    def test_functor_edgeset_apply(self):
+        self.expect_output_val("functor_edgeset_apply.gt", 35)
+
+    def test_functor_edgeset_apply_from(self):
+        self.expect_output_val("functor_edgeset_from_to.gt", 30)
+
+    def test_functor_local_vector(self):
+        self.expect_output_val("local_vector.gt", 5)
+
+    def test_functor_int_as_argument(self):
+        self.expect_output_val("functor_int_as_argument.gt", 25)
+
+    def test_functor_float_as_argument(self):
+        self.expect_output_val("functor_float_as_argument.gt", 25.0)
+
+    def test_functor_edgeset_src_dest(self):
+        self.expect_output_val("functor_edgeset_srcFilter_dstFilter.gt", 275)
+
+    def test_local_vector_call_expr(self):
+        self.expect_output_val("local_vector_call_expr.gt", 20);
+
 if __name__ == '__main__':
 
-    unittest.main()
-    # used for enabling a specific test
+    unittest.main(verbosity=2)
+    #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_simple_max_expected'))
+    # suite.addTest(TestGraphitCompiler('test_vertexset_filter'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

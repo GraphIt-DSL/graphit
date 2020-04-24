@@ -24,6 +24,7 @@ namespace graphit {
         int genCPP();
 
     protected:
+        virtual void visit(mir::IdentDecl::Ptr);
 
         virtual void visit(mir::ForStmt::Ptr);
         virtual void visit(mir::WhileStmt::Ptr);
@@ -38,6 +39,7 @@ namespace graphit {
         virtual void visit(mir::PrintStmt::Ptr);
         virtual void visit(mir::BreakStmt::Ptr);
 
+        virtual void visit(mir::FuncExpr::Ptr);
         virtual void visit(mir::FuncDecl::Ptr);
 
         virtual void visit(mir::Call::Ptr);
@@ -136,6 +138,8 @@ namespace graphit {
         // generate the call to the right edgeset apply function with all the arguments
         void genEdgesetApplyFunctionCall(mir::EdgeSetApplyExpr::Ptr apply);
 
+        void genLocalArrayAlloc(mir::VarDecl::Ptr var_decl);
+
         void genPropertyArrayDecl(mir::VarDecl::Ptr shared_ptr);
 
         void genPropertyArrayAlloc(mir::VarDecl::Ptr shared_ptr);
@@ -152,7 +156,9 @@ namespace graphit {
 
     	void generatePyBindModule();
 
-        std::string genFuncNameAsArgumentString(std::string func_name);
+        void genScalarVectorAlloc(mir::VarDecl::Ptr sharedPtr, mir::VectorType::Ptr vector_type);
+    	// checks if expression is literal exp (Int, Float, Bool, String)
+        bool isLiteral(mir::Expr::Ptr expression);
     };
 }
 

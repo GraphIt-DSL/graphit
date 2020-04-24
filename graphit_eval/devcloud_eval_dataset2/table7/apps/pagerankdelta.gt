@@ -1,0 +1,72 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const cur_rank : vector{Vertex}(double) = 0;
+const ngh_sum : vector{Vertex}(double) = 0.0;
+const delta : vector{Vertex}(double) = 1.0/vertices.size();
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+const damp : double = 0.85;
+const beta_score : double = (1.0 - damp) / vertices.size();
+const epsilon : double = 0.0001;
+
+func updateEdge(src : Vertex, dst : Vertex)
+    ngh_sum[dst] += delta[src] /out_degree[src];
+end
+
+func updateVertexFirstRound(v : Vertex) -> output : bool
+    delta[v] = damp*(ngh_sum[v]) + beta_score;
+    cur_rank[v] += delta[v];
+    delta[v] = delta[v] - 1.0/vertices.size();
+    output = (fabs(delta[v]) > epsilon*cur_rank[v]);
+    ngh_sum[v] = 0;
+end
+
+func updateVertex(v : Vertex) -> output : bool
+   delta[v] = ngh_sum[v]*damp;
+   cur_rank[v]+= delta[v];
+   ngh_sum[v] = 0;
+   output = fabs(delta[v]) > epsilon*cur_rank[v];
+end
+
+func printRank(v : Vertex)
+    print cur_rank[v];
+end
+
+func reset(v: Vertex)
+    cur_rank[v] = 0;
+    ngh_sum[v] = 0.0;
+    delta[v] = 1.0/vertices.size();
+end
+
+
+func main()
+    var n : int = edges.getVertices();
+    for trail in 0:16
+        startTimer();
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+        vertices.apply(reset);
+
+        for i in 0:20
+            #s1# edges.from(frontier).apply(updateEdge);
+            var output : vertexset{Vertex};
+            if i == 1
+                output = vertices.where(updateVertexFirstRound);
+            else
+                output = vertices.where(updateVertex);
+            end
+            
+
+        delete frontier;
+        frontier = output;
+        end
+	    delete frontier;
+
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+
+% specify schedules here or use a separate schedule file

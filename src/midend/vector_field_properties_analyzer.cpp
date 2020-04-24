@@ -16,22 +16,22 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function->function_name->name, "pull");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function->function_name->name, "push");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor
     ::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function->function_name->name, "push");
     }
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function->function_name->name, "pull");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_->function_name->name, "push");
     }
 
     // Analyze the read / write properties for the priority update edgeset apply function
@@ -41,7 +41,7 @@ namespace graphit {
             mir::UpdatePriorityEdgeSetApplyExpr::Ptr priority_update_expr) {
         if (mir_context_->priority_update_type == mir::EagerPriorityUpdate ||
                 mir_context_->priority_update_type == mir::EagerPriorityUpdateWithMerge){
-            analyzeSingleFunctionEdgesetApplyExpr(priority_update_expr->input_function_name, "push");
+            analyzeSingleFunctionEdgesetApplyExpr(priority_update_expr->input_function->function_name->name, "push");
         } else {
 
         }

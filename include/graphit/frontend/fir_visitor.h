@@ -115,6 +115,7 @@ namespace graphit {
         // Experession that allocates a new vector
         struct VectorAllocExpr;
 
+        struct FuncExpr;
         struct MethodCallExpr;
         struct ApplyExpr;
         struct WhereExpr;
@@ -308,6 +309,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntersectNeighborExpr>);
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
+            virtual void visit(std::shared_ptr<FuncExpr>);
             virtual void visit(std::shared_ptr<MethodCallExpr>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
             virtual void visit(std::shared_ptr<WhereExpr>);

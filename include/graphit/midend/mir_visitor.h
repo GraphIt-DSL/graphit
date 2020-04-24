@@ -91,6 +91,7 @@ namespace graphit {
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+        struct FuncExpr;
 
 
         struct ElementType;
@@ -224,6 +225,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IdentDecl>) {};
 
             virtual void visit(std::shared_ptr<FuncDecl>);
+
+            virtual void visit(std::shared_ptr<FuncExpr>);
 
             virtual void visit(std::shared_ptr<ElementType>) {};
 

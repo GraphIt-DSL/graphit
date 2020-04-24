@@ -1,0 +1,5 @@
+
+
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel")->setApply("s1", "pull_edge_based_load_balance");
+    program->fuseFields("delta", "out_degree");
