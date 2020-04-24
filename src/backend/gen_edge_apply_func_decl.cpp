@@ -151,11 +151,18 @@ namespace graphit {
 
 
         //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
+//        if (apply->enable_deduplication && apply_expr_gen_frontier) {
+//            oss_ << "    if (g.get_flags_() == nullptr){\n"
+////                    "      g.flags_ = new int[numVertices]();\n"
+//                    "      g.set_flags_(new int[numVertices]());\n"
+//                    "      ligra::parallel_for_lambda(0, (int)numVertices, [&] (int i) { g.get_flags_()[i]=0; });\n"
+//                    "    }\n";
+//        }
+
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
-            oss_ << "    if (g.get_flags_() == nullptr){\n"
-//                    "      g.flags_ = new int[numVertices]();\n"
-                    "      g.set_flags_(new int[numVertices]());\n"
-                    "      ligra::parallel_for_lambda(0, (int)numVertices, [&] (int i) { g.get_flags_()[i]=0; });\n"
+            oss_ << "    if (from_vertexset->getFlags() == nullptr){\n"
+                    "      from_vertexset->setFlags(new int[numVertices]());\n"
+                    "      ligra::parallel_for_lambda(0, (int)numVertices, [&] (int i) { from_vertexset->getFlags()[i]=0; });\n"
                     "    }\n";
         }
 
@@ -273,7 +280,7 @@ namespace graphit {
 
             //need to return a frontier
             if (apply->enable_deduplication && apply_expr_gen_frontier) {
-                oss_ << " && CAS(&(g.get_flags_()[" << dst_type << "]), 0, 1) ";
+                oss_ << " && CAS(&(from_vertexset->getFlags()[" << dst_type << "]), 0, 1) ";
             }
 
             indent();
@@ -348,13 +355,14 @@ namespace graphit {
                     "  free(outEdges);\n"
                     "  free(degrees);\n"
                     "  next_frontier->num_vertices_ = nextM;\n"
-                    "  next_frontier->dense_vertex_set_ = nextIndices;\n";
+                    "  next_frontier->dense_vertex_set_ = nextIndices;\n"
+                    "  next_frontier->setFlags(from_vertexset->getFlags());\n";
 
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
                 oss_ << "  ligra::parallel_for_lambda((int)0, (int)nextM, [&] (int i) {\n"
-                        "     g.get_flags_()[nextIndices[i]] = 0;\n"
+                        "     from_vertexset->getFlags()[nextIndices[i]] = 0;\n"
                         "  });\n";
             }
             oss_ << "  return next_frontier;\n";

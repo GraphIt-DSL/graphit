@@ -24,6 +24,9 @@ struct VertexSubset {
     bool* bool_map_;
     SlidingQueue<NodeID>* sliding_queue_;
 
+    //flag for vertex deduplication
+    int* flags;
+
 
     // make a singleton vertex in range of n
 //    VertexSubset(int64_t vertices_range, NodeID_ v)
@@ -268,6 +271,14 @@ struct VertexSubset {
 //            }
 //        }
 
+    }
+
+
+    inline int* getFlags() {
+        return flags;
+    }
+    inline void setFlags(int *flags) {
+        flags = flags;
     }
 
 };
