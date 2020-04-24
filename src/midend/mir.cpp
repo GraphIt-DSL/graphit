@@ -72,6 +72,10 @@ namespace graphit {
                 args.push_back(arg);
             }
 
+            for (const auto &arg: expr->functorArgs) {
+                functorArgs.push_back(arg);
+            }
+
             if (generic_type != nullptr){
                 generic_type = expr->generic_type->clone<Type>();
             }
@@ -196,7 +200,7 @@ namespace graphit {
             Expr::copy(node);
             auto expr = to<mir::ApplyExpr>(node);
             target = expr->target->clone<Expr>();
-            input_function_name = expr->input_function_name;
+            input_function = expr->input_function->clone<FuncExpr>();
             tracking_field = expr->tracking_field;
         }
 
@@ -222,8 +226,15 @@ namespace graphit {
         void EdgeSetApplyExpr::copy(MIRNode::Ptr node) {
             const auto expr = to<EdgeSetApplyExpr>(node);
             ApplyExpr::copy(expr);
-            from_func = expr->from_func;
-            to_func = expr->to_func;
+
+            if (expr->from_func) {
+                from_func = expr->from_func->clone<FuncExpr>();
+            }
+
+            if (expr->to_func) {
+                to_func = expr->to_func->clone<FuncExpr>();
+            }
+
             is_parallel = expr->is_parallel;
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;
@@ -291,7 +302,7 @@ namespace graphit {
         void WhereExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<WhereExpr>(node);
             target = expr->target;
-            input_func = expr->input_func;
+            input_func = expr->input_func->clone<FuncExpr>();
             is_constant_set = expr->is_constant_set;
         }
 
@@ -808,7 +819,9 @@ namespace graphit {
 
         void IdentDecl::copy(MIRNode::Ptr node) {
             auto decl = to<IdentDecl>(node);
-            type = decl->type->clone<Type>();
+            if (decl->type) {
+                type = decl->type->clone<Type>();
+            }
             name = decl->name;
         }
 
@@ -850,11 +863,33 @@ namespace graphit {
             return node;
         }
 
+        void FuncExpr::copy(MIRNode::Ptr node) {
+
+            auto funcExpr = to<FuncExpr>(node);
+
+            for(auto &arg : funcExpr->functorArgs) {
+                functorArgs.push_back(arg);
+            }
+
+            function_name = funcExpr->function_name->clone<IdentDecl>();
+
+        }
+
+        MIRNode::Ptr FuncExpr::cloneNode() {
+            const auto node = std::make_shared<FuncExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void FuncDecl::copy(MIRNode::Ptr node) {
             auto decl = to<FuncDecl>(node);
             name = decl->name;
             for (const auto &arg : decl->args) {
                 args.push_back(arg);
+            }
+
+            for (const auto &arg : decl->functorArgs) {
+                functorArgs.push_back(arg);
             }
             body = decl->body->clone<StmtBlock>();
             if (decl->result.isInitialized())
@@ -956,7 +991,7 @@ namespace graphit {
 
         void OrderedProcessingOperator::copy(MIRNode::Ptr node) {
             const auto op = mir::to<OrderedProcessingOperator>(node);
-            edge_update_func = op->edge_update_func;
+            edge_update_func = op->edge_update_func->clone<FuncExpr>();
             while_cond_expr = op->while_cond_expr;
             optional_source_node = op->optional_source_node;
             priority_queue_name = op->priority_queue_name;

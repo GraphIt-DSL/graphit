@@ -1,0 +1,23 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func updateEdge[local_array: vector{Vertex}(int)](src: Vertex, dst: Vertex)
+    local_array[src] += 10;
+end
+
+func main()
+
+    var frontier: vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(0);
+    frontier.addVertex(1);
+
+    var simpleArray: vector{Vertex}(int) = 0;
+
+    edges.from(frontier).apply(updateEdge[simpleArray]);
+
+    print simpleArray.sum();
+    delete simpleArray;
+
+end

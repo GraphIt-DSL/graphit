@@ -51,6 +51,10 @@ namespace graphit {
 
         fir::GenericParam::Ptr parseGenericParam();
 
+        std::vector<fir::Argument::Ptr> parseFunctorArgs();
+
+        fir::FuncExpr::Ptr parseFunctorExpr();
+
         std::vector<fir::Argument::Ptr> parseArguments();
 
         fir::Argument::Ptr parseArgumentDecl();
@@ -219,6 +223,8 @@ namespace graphit {
         void reportError(const Token &, std::string);
 
         Token peek(unsigned k = 0) const { return tokens.peek(k); }
+
+        int findFirstOccurence(Token::Type type) const { return tokens.findFirstOccurence(type); }
 
         void skipTo(std::vector<Token::Type>);
 

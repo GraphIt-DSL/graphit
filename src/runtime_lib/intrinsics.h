@@ -153,38 +153,63 @@ static Graph builtin_loadEdgesFromFile(std::string file_name){
 
 
 static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
-	typedef EdgePair<NodeID, NodeID> Edge;
-	typedef pvector<Edge> EdgeList;
-	EdgeList el;
-	el.resize(num_edges);
-	int total = 0;
-	for (NodeID x = 0; x < num_nodes; x++) {
-        for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
-            el[total] = Edge(x, indices[_y]);
-            total++;
-        }
-	}
 
-	CLBase cli(0, NULL);
-	BuilderBase<NodeID> bb(cli);
-	return bb.MakeGraphFromEL(el);
+    typedef EdgePair<NodeID, NodeID> Edge;
+    typedef pvector<Edge> EdgeList;
+    typedef pvector<int32_t> DegreeList;
+    EdgeList el;
+    el.resize(num_edges);
+    DegreeList dl;
+    dl.resize(num_nodes);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        int32_t degree = indptr[x+1] - indptr[x];
+        dl[x] = degree;
+    }
+
+    CLBase cli(0, NULL);
+    BuilderBase<NodeID> bb(cli);
+    auto prefSum = bb.ParallelPrefixSum(dl);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        auto startOffset = prefSum[x];
+        for(int32_t i = 0; i < dl[x]; i++) {
+            el[startOffset+i] = Edge(x, indices[startOffset + i]);
+        }
+    }
+
+    return bb.MakeGraphFromEL(el);
 }
 static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_t *indptr, const NodeID *indices, int num_nodes, int num_edges) {
 	typedef EdgePair<NodeID, WNode> Edge;
 	typedef pvector<Edge> EdgeList;
+    typedef pvector<int32_t> DegreeList;
 	EdgeList el;
 	el.resize(num_edges);
-	int total = 0;
-	for (NodeID x = 0; x < num_nodes; x++) {
-		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
-		    el[total] = Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y]));
-		    total++;
-		}
-	}
-	
-	CLBase cli(0, NULL);
-	BuilderBase<NodeID, WNode, WeightT> bb(cli);
-	bb.needs_weights_ = false;
+	DegreeList dl;
+	dl.resize(num_nodes);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        int32_t degree = indptr[x+1] - indptr[x];
+        dl[x] = degree;
+    }
+
+    CLBase cli(0, NULL);
+    BuilderBase<NodeID, WNode, WeightT> bb(cli);
+    auto prefSum = bb.ParallelPrefixSum(dl);
+    bb.needs_weights_ = false;
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        auto startOffset = prefSum[x];
+        for(int32_t i = 0; i < dl[x]; i++) {
+            el[startOffset+i] = Edge(x, NodeWeight<NodeID, WeightT>(indices[startOffset + i], data[startOffset + i]));
+        }
+    }
+
 	return bb.MakeGraphFromEL(el);	
 }
 

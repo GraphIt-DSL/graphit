@@ -37,7 +37,6 @@ namespace graphit {
     }
 
     void ApplyExprLower::LowerApplyExpr::visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply) {
-
         // use the target var expressionto figure out the edgeset type
         mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(edgeset_apply->target);
         //mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_expr->var.getName());
@@ -74,10 +73,14 @@ namespace graphit {
                     //Hybrid dense (switching betweeen push and pull)
                     auto hybrid_dense_edgeset_apply = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
                     //clone the function delcaration for push, use the original func for pull
-                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
                     push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
+                    hybrid_dense_edgeset_apply->push_function_ = std::make_shared<mir::FuncExpr>();
+                    hybrid_dense_edgeset_apply->push_function_->function_name = std::make_shared<mir::IdentDecl>();
+                    hybrid_dense_edgeset_apply->push_function_->function_name->name = push_apply_func_decl->name;
+                    //TODO is this correct assumption to make?
+                    hybrid_dense_edgeset_apply->push_function_->functorArgs = edgeset_apply->input_function->functorArgs;
                     //insert into MIR context
                     mir_context_->addFunctionFront(push_apply_func_decl);
 

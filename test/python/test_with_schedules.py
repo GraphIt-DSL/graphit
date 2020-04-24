@@ -217,12 +217,12 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
-    def astar_verified_test(self, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
+    def astar_verified_test(self, graphit_file, input_file_name, use_separate_algo_file=True, extra_cpp_args=[], extra_exec_args=[]):
         input_algos_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input/'
         input_schedules_path = GRAPHIT_SOURCE_DIRECTORY + '/test/input_with_schedules/'
         print ("current directory: " + os.getcwd())
         if (use_separate_algo_file):
-            algo_file = input_algos_path + "astar.gt"
+            algo_file = input_algos_path + graphit_file
             graphit_compile_cmd = "python graphitc.py -a " + algo_file + " -f " + input_schedules_path + input_file_name + " -o  test.cpp"
             print (graphit_compile_cmd)
             self.assertEqual(subprocess.call(graphit_compile_cmd, shell=True), 0)
@@ -317,6 +317,28 @@ class TestGraphitCompiler(unittest.TestCase):
         self.assertEqual(test_flag, True)
         os.chdir("bin")
 
+    def bc_functor_verified_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc_functor.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)  # proc = subprocess.Popen(["./"+ self.executable_file_name], stdout=subprocess.PIPE)
+        os.chdir("..")
+        cmd = "OMP_PLACES=sockets ./bin/test.o " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/4.el" + " > verifier_input"
+        print (cmd)
+        subprocess.call(cmd, shell=True)
+
+        # invoke the BFS verifier
+        verify_cmd = "./bin/bc_verifier -f ../test/graphs/4.el -t verifier_input -r 3"
+        print (verify_cmd)
+        output = self.get_command_output(verify_cmd)
+        test_flag = False
+        for line in output.rstrip().split("\n"):
+            if line.rstrip().find("SUCCESSFUL") != -1:
+                test_flag = True
+                break;
+        self.assertEqual(test_flag, True)
+        os.chdir("bin")
+
     def sssp_verified_test(self, input_file_name,
                            use_separate_algo_file=True,
                            use_delta_stepping=False,
@@ -372,6 +394,13 @@ class TestGraphitCompiler(unittest.TestCase):
     def bc_basic_compile_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("bc.gt", input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+
+    def bc_functor_basic_compile_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("bc_functor.gt", input_file_name)
         else:
             self.basic_compile_test(input_file_name)
         cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
@@ -442,6 +471,32 @@ class TestGraphitCompiler(unittest.TestCase):
     def closeness_centrality_weighted_test(self, input_file_name, use_separate_algo_file=False):
         if use_separate_algo_file:
             self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted.gt",
+                                                                      input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        print (cmd)
+        # check the value printed to stdout is as expected
+        lines = self.get_command_output(cmd).strip().split("\n")
+        print (lines)
+        self.assertEqual(float(lines[1].strip()), 15)
+
+    def closeness_centrality_unweighted_functor_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_unweighted_functor.gt",
+                                                                          input_file_name)
+        else:
+            self.basic_compile_test(input_file_name)
+        cmd = "OMP_PLACES=sockets ./" + self.executable_file_name + " " + GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"
+        print (cmd)
+        # check the value printed to stdout is as expected
+        lines = self.get_command_output(cmd).strip().split("\n")
+        print (lines)
+        self.assertEqual(float(lines[1].strip()), 3)
+
+    def closeness_centrality_weighted_functor_test(self, input_file_name, use_separate_algo_file=False):
+        if use_separate_algo_file:
+            self.basic_compile_test_with_separate_algo_schedule_files("closeness_centrality_weighted_functor.gt",
                                                                       input_file_name)
         else:
             self.basic_compile_test(input_file_name)
@@ -659,6 +714,12 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_closeness_centrality_weighted_hybrid_parallel(self):
         self.closeness_centrality_weighted_test("closeness_centrality_weighted_hybrid_parallel.gt", True)
 
+    def test_closeness_centrality_unweighted_functor_hybrid_parallel(self):
+        self.closeness_centrality_unweighted_functor_test("closeness_centrality_unweighted_hybrid_parallel.gt", True)
+
+    def test_closeness_centrality_weighted_functor_hybrid_parallel(self):
+        self.closeness_centrality_weighted_functor_test("closeness_centrality_weighted_hybrid_parallel.gt", True)
+
     def test_bc_SparsePushDensePull_basic(self):
         self.bc_basic_compile_test("bc_SparsePushDensePull.gt", True);
 
@@ -682,6 +743,30 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_bc_SparsePushDensePull_bitvector_cache_verified(self):
         self.bc_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull.gt", True);
+
+    def test_bc_functor_SparsePushDensePull_bitvector_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull_bitvector.gt", True);
+
+    def test_bc_functor_SparsePush_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePush.gt", True);
+
+    def test_bc_functor_SparsePushDensePull_bitvector_cache_basic(self):
+        self.bc_functor_basic_compile_test("bc_SparsePushDensePull_bitvector_cache.gt", True);
+
+    def test_bc_functor_SparsePush_verified(self):
+        self.bc_functor_verified_test("bc_SparsePush.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_bitvector_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull_bitvector.gt", True)
+
+    def test_bc_functor_SparsePushDensePull_bitvector_cache_verified(self):
+        self.bc_functor_verified_test("bc_SparsePushDensePull_bitvector_cache.gt", True)
 
     def test_delta_stepping_SparsePush_schedule(self):
         self.sssp_verified_test("SparsePush_VertexParallel.gt", True, True)
@@ -729,19 +814,43 @@ class TestGraphitCompiler(unittest.TestCase):
         self.ppsp_verified_test("priority_update_eager_with_merge.gt", True);
 
     def test_astar_eager_with_merge(self):
-        self.astar_verified_test("priority_update_eager_with_merge.gt",
+        self.astar_verified_test("astar.gt",
+                                 "priority_update_eager_with_merge.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
     def test_astar_sparsepush_parallel(self):
-        self.astar_verified_test("SparsePush_VertexParallel.gt",
+        self.astar_verified_test("astar.gt",
+                                 "SparsePush_VertexParallel.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
 
     def test_astar_sparsepush_parallel_delta2(self):
-        self.astar_verified_test("SparsePush_VertexParallel_Delta2.gt",
+        self.astar_verified_test("astar.gt",
+                                 "SparsePush_VertexParallel_Delta2.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_eager_with_merge_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "priority_update_eager_with_merge.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_sparsepush_parallel_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "SparsePush_VertexParallel.gt",
+                                 True,
+                                 [self.root_test_input_dir + "astar_distance_loader.cpp"],
+                                 [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
+
+    def test_astar_sparsepush_parallel_delta2_functor(self):
+        self.astar_verified_test("astar_functor.gt",
+                                 "SparsePush_VertexParallel_Delta2.gt",
                                  True,
                                  [self.root_test_input_dir + "astar_distance_loader.cpp"],
                                  [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/monaco.bin"]);
@@ -825,11 +934,10 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    unittest.main()
+    unittest.main(verbosity=2)
 
     # used for enabling a specific test
 
-    # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge'))
-    # unittest.TextTestRunner(verbosity=2).run(suite)
-    
+    #suite = unittest.TestSuite()
+    #suite.addTest(TestGraphitCompiler('test_astar_eager_with_merge_functor'))
+    #unittest.TextTestRunner(verbosity=2).run(suite)

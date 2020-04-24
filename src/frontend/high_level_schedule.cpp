@@ -272,7 +272,6 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::setApply(std::string apply_label,
                                                            std::string apply_schedule_str,
                                                            int parameter) {
-            cout << "Para:" << parameter << "\n";
             // If no schedule has been constructed, construct a new one
             if (schedule_ == nullptr) {
                 schedule_ = new Schedule();

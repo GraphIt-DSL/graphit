@@ -263,6 +263,31 @@ namespace graphit {
         return *it;
     }
 
+    bool TokenStream::contains(Token::Type tokenType) const {
+        auto it = tokens.cbegin();
+        while(it != tokens.cend()){
+            Token foundToken = *it;
+            if (foundToken.type == tokenType) return true;
+            it++;
+        }
+        return false;
+
+    }
+
+    int TokenStream::findFirstOccurence(Token::Type tokenType) const {
+        auto it = tokens.cbegin();
+
+        int count = 0;
+        while(it != tokens.cend()){
+            Token foundToken = *it;
+            if (foundToken.type == tokenType) return count;
+            it++;
+            count++;
+        }
+        return -1;
+
+    }
+
     std::ostream &operator <<(std::ostream &out, const TokenStream &tokens) {
         for (auto it = tokens.tokens.cbegin(); it != tokens.tokens.cend(); ++it) {
             out << *it << std::endl;
