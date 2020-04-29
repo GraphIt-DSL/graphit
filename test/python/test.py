@@ -462,7 +462,9 @@ class TestGraphitCompiler(unittest.TestCase):
 if __name__ == '__main__':
 
     unittest.main(verbosity=2)
+
     #used for enabling a specific test
     # suite = unittest.TestSuite()
     # suite.addTest(TestGraphitCompiler('test_vertexset_filter'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
+
