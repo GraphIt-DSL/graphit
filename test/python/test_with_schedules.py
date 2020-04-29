@@ -967,6 +967,6 @@ if __name__ == '__main__':
     # used for enabling a specific test
 
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_parallel_for_hybrid_parallel'))
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_verified'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
     
