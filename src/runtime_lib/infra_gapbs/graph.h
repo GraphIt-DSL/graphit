@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <map>
 #include <thread>
+#include <mutex>
 
 #include "pvector.h"
 #include "util.h"
