@@ -132,6 +132,11 @@ class CSRGraph {
       delete ((*iter).second);
     }
 
+    for (int i = 0; i < deduplication_flags.size();i++) {
+        delete[] deduplication_flags[i];
+    }
+    deduplication_flags.clear();
+
   }
 
 
