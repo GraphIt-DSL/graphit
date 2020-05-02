@@ -232,6 +232,7 @@ namespace graphit {
                 intersection_schedules = new std::map<std::string, IntersectionSchedule::IntersectionType >();
                 par_for_grain_size_schedules = new std::map<std::string, int>();
                 par_for_type_schedules = new std::map<std::string, ParForSchedule::ParForType>();
+                par_for_num_threads = new std::map<std::string, int>();
                 apply_schedules = new std::map<std::string, ApplySchedule>();
                 vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
                 graph_iter_spaces = new std::map<std::string, std::vector<GraphIterationSpace> *>();
@@ -256,6 +257,7 @@ namespace graphit {
             std::map<std::string, IntersectionSchedule::IntersectionType> *intersection_schedules;
             std::map<std::string, int> *par_for_grain_size_schedules;
             std::map<std::string, ParForSchedule::ParForType> *par_for_type_schedules;
+            std::map<std::string, int> *par_for_num_threads;
 
 
         };

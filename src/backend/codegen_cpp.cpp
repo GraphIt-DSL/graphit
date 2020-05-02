@@ -150,6 +150,11 @@ namespace graphit {
 
         }
 
+        if (par_for_stmt->num_threads != 0){
+            oss << " ";
+            oss << "num_threads(" << par_for_stmt->num_threads << ")";
+        }
+
         oss << std::endl;
         printIndent();
         oss << "for ( int " << loop_var << " = ";
