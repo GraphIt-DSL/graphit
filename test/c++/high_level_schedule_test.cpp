@@ -2586,8 +2586,6 @@ TEST_F(HighLevelScheduleTest, ParForNestedSchedule){
 
 }
 
-
-
 TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
 istringstream is (setcover_uint_str_);
 fe_->parseStream(is, context_, errors_);
