@@ -6,6 +6,7 @@
 #include <graphit/midend/physical_data_layout_lower.h>
 #include <graphit/midend/apply_expr_lower.h>
 #include <graphit/midend/intersection_expr_lower.h>
+#include <graphit/midend/par_for_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
@@ -13,6 +14,7 @@
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/priority_features_lowering.h>
+#include <graphit/midend/frontier_reuse_analysis.h>
 
 namespace graphit {
     /**
@@ -33,6 +35,9 @@ namespace graphit {
         //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
         PriorityFeaturesLower(mir_context, schedule).lower();
 
+        // This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
+        FrontierReuseAnalysis(mir_context).analyze();
+
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
         // deduplication: enable / disable
@@ -46,6 +51,9 @@ namespace graphit {
         // intersection types: HiroshiIntersection, Naive, Multiskip, Binary, Combined
         // If there is no schedule specified, it just chooses naive intersection.
         IntersectionExprLower(mir_context, schedule).lower();
+
+        // This pass sets grain size of the parallel for. If nothing is given, it will use default OPENMP for loop.
+        ParForLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)
