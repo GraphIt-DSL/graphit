@@ -32,7 +32,7 @@ add_library(graphitlib ${HEADER_FILES} ${LIB_SOURCE_FILES})
 include_directories(./test/gtest/)
 add_subdirectory(test)
 set(GTEST_SOURCE ./test/gtest/gtest-all.cc)
-set(GTEST_HEADER ./test/gtest/gtest.h test/input/extern_add_one.cpp src/runtime_lib/infra_gapbs/minimum_spanning_tree.h include/graphit/midend/par_for_lower.h)
+set(GTEST_HEADER ./test/gtest/gtest.h test/input/extern_add_one.cpp src/runtime_lib/infra_gapbs/minimum_spanning_tree.h include/graphit/midend/par_for_lower.h src/runtime_lib/infra_gapbs/memory_alloc.h)
 add_library(gtest ${GTEST_HEADER} ${GTEST_SOURCE})
 
 
