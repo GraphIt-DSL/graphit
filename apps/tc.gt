@@ -1,6 +1,7 @@
 element Vertex end
 element Edge end
 
+
 const edges : edgeset{Edge}(Vertex,Vertex) = load(argv[1]);
 const triangles : uint_64 = 0;
 const vertices : vertexset{Vertex} = edges.getVertices();

@@ -5,8 +5,8 @@ const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 
 const num_paths : vector{Vertex}(double) = 0;
-const dependences : vector{Vertex}(double) = 0;
-const dependences_global : vector{Vertex}(double) = 0;
+const dependences : vector{Vertex}(float) = 0;
+const dependences_global : vector{Vertex}(float) = 0;
 const visited : vector{Vertex}(bool) = false;
 
 const maxScore: float = 0;
