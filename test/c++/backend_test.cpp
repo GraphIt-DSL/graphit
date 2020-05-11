@@ -1195,3 +1195,15 @@ TEST_F(BackendTest, SimpleParForLoops) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+TEST_F(BackendTest, ParForNested) {
+    istringstream is("func main()\n"
+                     "  par_for i in 1:10\n"
+                     "      par_for j in 1:10\n"
+                     "          print i;\n"
+                     "          print j;\n"
+                     "      end\n"
+                     "  end\n"
+                     "end\n");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
