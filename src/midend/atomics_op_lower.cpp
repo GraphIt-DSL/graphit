@@ -224,6 +224,11 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
         return;
     }
 
+    mir::VarExpr::Ptr var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+
+    //TODO this is hack to access local array type since it is not registered in the context map
+    mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+
     std::string field_name = tensor_array_read_expr->getTargetNameStr();
     FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
     mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
@@ -250,6 +255,37 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                         exit(0);
                 }
             }
+        }
+
+        //If it is local vector, we still need to add atomic
+        else if(mir::isa<mir::VectorType>(local_vector_field_type)) {
+            mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(local_vector_field_type);
+            mir::Type::Ptr local_field_type = vector_type->vector_element_type;
+
+            if (mir::isa<mir::ScalarType>(local_field_type)){
+                //check if it is an supported type for atomic operations
+                mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(local_field_type);
+                    if (scalar_type->type == mir::ScalarType::Type::INT
+                        || scalar_type->type == mir::ScalarType::Type::FLOAT
+                        || scalar_type->type == mir::ScalarType::Type::DOUBLE) {
+                        //update the type to atomic op
+                        reduce_stmt->is_atomic_ = true;
+                        switch (reduce_stmt->reduce_op_){
+                            case mir::ReduceStmt::ReductionOp::MIN:
+                                reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;
+                                break;
+                            case mir::ReduceStmt::ReductionOp::SUM:
+                                reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_SUM;
+                                break;
+                            default:
+                                std::cout << "not supported for atomics" << std::endl;
+                                exit(0);
+                        }
+                    }
+
+
+            }
+
         }
     }
 

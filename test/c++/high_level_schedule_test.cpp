@@ -830,22 +830,23 @@ protected:
                                                "end\n");
 
         const char* par_for_nested_schedule = ("element Vertex end\n"
-                                        "element Edge end\n"
-                                        "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
-                                        "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-                                        "func addOneEdge[local_array: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
-                                        "       local_array[src] = 5;\n"
-                                        "end\n"
-                                        "func addOneVertex[local_array: vector{Vertex}(int)](v: Vertex)\n"
-                                        "       local_array[v] = 5;\n"
-                                        "end\n"
-                                        "func main()\n"
-                                        "    var local_array: vector{Vertex}(int) = 0;"
-                                        "    #s1# par_for i in 0: 10"
-                                        "       #s2# edges.apply(addOneEdge[local_array];\n"
-                                        "       #s3# vertices.apply(addOneVertex[local_array];\n"
-                                        "    end\n"
-                                        "end\n");
+                                               "element Edge end\n"
+                                               "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                               "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                               "func addOneEdge[local_array: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                                               "       local_array[dst] += local_array[src];\n"
+                                               "end\n"
+                                               "func addOneVertex[local_array: vector{Vertex}(int)](v: Vertex)\n"
+                                               "       local_array[v] = 5;\n"
+                                               "end\n"
+                                               "func main()\n"
+                                               "    var local_array: vector{Vertex}(int) = 0;\n"
+                                               "    var stuff: int = 0;"
+                                               "    #l1# par_for i in 0: 10\n"
+                                               "       #s2# edges.apply(addOneEdge[local_array]);\n"
+                                               "       #s3# vertices.apply(addOneVertex[local_array]);\n"
+                                               "    end\n"
+                                               "end\n");
 
         bfs_str_ =  string (bfs_char);
         pr_str_ = string(pr_char);
@@ -2575,14 +2576,19 @@ TEST_F(HighLevelScheduleTest, ParForSimpleSchedule){
 
 TEST_F(HighLevelScheduleTest, ParForNestedSchedule){
 
-    istringstream is (par_for_str_);
+    istringstream is (par_for_nested_str_);
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->configParForGrainSize("s1", 16)->configParForScheduleType("s1", "dynamic");
-    program->configApplyParallelization("s2", "dynamic-vertex-parallel");
-    program->configApplyParallelization("s3", "dynamic-vertex-parallel");
+    program->configParForGrainSize("l1", 16)->configParForScheduleType("s1", "dynamic");
+    program->configApplyParallelization("l1:s2", "dynamic-vertex-parallel");
+    program->configApplyParallelization("l1:s3", "dynamic-vertex-parallel");
+
     EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    auto edgeset_func_decl = mir_context_->getFunction("addOneEdge");
+    auto edge_update = mir::to<mir::ReduceStmt>((*(edgeset_func_decl->body->stmts))[0]);
+    EXPECT_EQ(mir::ReduceStmt::ReductionOp::ATOMIC_SUM, edge_update->reduce_op_);
 
 }
 
@@ -2593,6 +2599,7 @@ fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 EXPECT_EQ (0, basicTestWithSchedule(program));
 }
+
 
 
 
