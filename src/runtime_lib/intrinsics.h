@@ -135,6 +135,11 @@ static bool writeMin(int * val_array, int index, int new_val){
     return writeMin(&val_array[index], new_val);
 }
 
+template <typename T>
+static void writeAdd(T * val_array, int index, T new_val){
+    writeAdd(&val_array[index], new_val);
+}
+
 //For now, assume the weights are ints, this would be good enough for now
 // Later, we can change the parser, to supply type information to the library call
 static WGraph builtin_loadWeightedEdgesFromFile(std::string file_name){

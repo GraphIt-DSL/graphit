@@ -2780,6 +2780,7 @@ namespace graphit {
         decls.insert("to_double", IdentType::FUNCTION);
         decls.insert("max", IdentType::FUNCTION);
         decls.insert("writeMin", IdentType::FUNCTION);
+        decls.insert("writeAdd", IdentType::FUNCTION);
 	    decls.insert("getRandomOutNgh", IdentType::FUNCTION);
         decls.insert("getRandomInNgh", IdentType::FUNCTION);
         decls.insert("serialMinimumSpanningTree", IdentType::FUNCTION);

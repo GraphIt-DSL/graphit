@@ -1051,7 +1051,6 @@ namespace graphit {
         }
         oss << call_expr->name;
 
-
         if (call_expr->generic_type != nullptr) {
             oss << " < ";
             call_expr->generic_type->accept(this);

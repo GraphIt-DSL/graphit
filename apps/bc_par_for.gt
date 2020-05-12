@@ -48,8 +48,7 @@ end
 
 
 func reduce_score[dependences_local: vector{Vertex}(double)](v: Vertex)
-    dependences[v] += dependences_local[v];
-
+    writeAdd<double>(dependences, v, dependences_local[v]);
 end
 
 func printDependences(v : Vertex)
@@ -71,7 +70,7 @@ func main()
     startTimer();
 
     % transposing the edges
-    git svar transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
+    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
 
     #l1# par_for i in 0:10
 
