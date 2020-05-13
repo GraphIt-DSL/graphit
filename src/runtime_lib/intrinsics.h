@@ -136,7 +136,7 @@ static bool writeMin(int * val_array, int index, int new_val){
 }
 
 template <typename T>
-static void writeAdd(T * val_array, int index, T new_val){
+static void atomicAdd(T * val_array, int index, T new_val){
     writeAdd(&val_array[index], new_val);
 }
 
