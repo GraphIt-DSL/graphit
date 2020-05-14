@@ -962,11 +962,11 @@ if __name__ == '__main__':
         
 
     # comment out if want to enable a specific test only
-    #unittest.main(verbosity=2)
+    unittest.main(verbosity=2)
 
     # used for enabling a specific test
-
-    suite = unittest.TestSuite()
-    suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_verified'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    #
+    # suite = unittest.TestSuite()
+    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_verified'))
+    # unittest.TextTestRunner(verbosity=2).run(suite)
     
