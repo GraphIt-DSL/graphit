@@ -32,6 +32,8 @@ Simple container for graph in CSR format
  - MakeInverse parameter controls whether graph stores its inverse
 */
 
+//static lock for deduplication flags (only created once)
+static std::mutex thread_mutex;
 
 // Used to hold node & weight, with another node it makes a weighted edge
 template <typename NodeID_=int32_t, typename WeightT_=int32_t>
@@ -133,9 +135,7 @@ class CSRGraph {
       delete ((*iter).second);
     }
 
-    for (int i = 0; i < deduplication_flags.size();i++) {
-        delete[] deduplication_flags[i];
-    }
+    std::lock_guard<std::mutex> lock(thread_mutex);
     deduplication_flags.clear();
 
   }
@@ -567,7 +567,6 @@ public:
 
   inline int* get_flags_atomic_() {
 
-      static std::mutex thread_mutex;
       std::lock_guard<std::mutex> lock(thread_mutex);
 
       if (deduplication_flags.size() == 0) {
@@ -586,10 +585,7 @@ public:
 
   inline void return_flags_atomic_(int * flags) {
 
-      static std::mutex thread_mutex;
       std::lock_guard<std::mutex> lock(thread_mutex);
-
-
       deduplication_flags.push_back(flags);
 
   }

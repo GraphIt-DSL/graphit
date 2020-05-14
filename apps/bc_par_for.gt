@@ -4,13 +4,13 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 
-const num_paths : vector{Vertex}(float) = 0;
+const num_paths : vector{Vertex}(double) = 0;
 const dependences : vector{Vertex}(double) = 0;
 const visited : vector{Vertex}(bool) = false;
 
 const maxScore: float = 0;
 
-func forward_update[num_paths_local: vector{Vertex}(float)](src : Vertex, dst : Vertex)
+func forward_update[num_paths_local: vector{Vertex}(double)](src : Vertex, dst : Vertex)
     num_paths_local[dst] +=  num_paths_local[src];
 end
 
@@ -27,7 +27,7 @@ func mark_unvisited[visited_local: vector{Vertex}(bool)](v : Vertex)
     visited_local[v] = false;
 end
 
-func backward_vertex_f[visited_local: vector{Vertex}(bool), dependences_local: vector{Vertex}(double), num_paths_local: vector{Vertex}(float)](v : Vertex)
+func backward_vertex_f[visited_local: vector{Vertex}(bool), dependences_local: vector{Vertex}(double), num_paths_local: vector{Vertex}(double)](v : Vertex)
     visited_local[v] = true;
     dependences_local[v] += 1 / num_paths_local[v];
 end
@@ -38,7 +38,7 @@ end
 
 
 
-func final_vertex_f[dependences_local: vector{Vertex}(double), num_paths_local: vector{Vertex}(float)](v : Vertex)
+func final_vertex_f[dependences_local: vector{Vertex}(double), num_paths_local: vector{Vertex}(double)](v : Vertex)
     if num_paths_local[v] != 0
         dependences_local[v] = (dependences_local[v] - 1 / num_paths_local[v]) * num_paths_local[v];
     else
@@ -48,7 +48,7 @@ end
 
 
 func reduce_score[dependences_local: vector{Vertex}(double)](v: Vertex)
-    writeAdd<double>(dependences, v, dependences_local[v]);
+    atomicAdd(dependences, v, dependences_local[v]);
 end
 
 func printDependences(v : Vertex)
