@@ -6,6 +6,7 @@
 #define GRAPHIT_GPU_SCHEDULE
 
 #include <assert.h>
+#include <graphit/frontend/abstract_schedule.h>
 
 
 namespace graphit {
@@ -319,6 +320,188 @@ public:
 		threshold = -100;
 	}
 };
+
+
+class SimpleGPUScheduleObject : public abstract_schedule::SimpleScheduleObject {
+public:
+    typedef std::shared_ptr<SimpleGPUScheduleObject> Ptr;
+	enum class gpu_pull_frontier_type {
+		BITMAP,
+		BOOLMAP
+	};
+
+	enum class load_balancing_mode_type {
+		VERTEX_BASED,
+		TWC,
+		TWCE,
+		WM,
+		CM,
+		STRICT,
+		EDGE_ONLY
+	};
+
+	enum class kernel_fusion_type {
+		DISABLED,
+		ENABLED
+	};
+
+	enum class deduplication_type {
+		ENABLED,
+		DISABLED
+	};
+
+    enum class frontier_creation_type {
+        FRONTIER_FUSED,
+        UNFUSED_BITMAP,
+        UNFUSED_BOOLMAP
+    };
+
+    enum class edge_blocking_type {
+        BLOCKED,
+        UNBLOCKED
+    };
+
+    enum class direction_type {
+        DIR_PUSH,
+        DIR_PULL
+    };
+
+private:
+	load_balancing_mode_type load_balancing_mode;
+	kernel_fusion_type kernel_fusion;
+	deduplication_type deduplication;
+	FlexIntVal delta;
+    frontier_creation_type frontier_creation;
+    edge_blocking_type edge_blocking;
+    uint32_t edge_blocking_size;
+    direction_type direction;
+    gpu_pull_frontier_type pull_frontier_type;
+
+public:
+	SimpleGPUScheduleObject() {
+		load_balancing_mode = load_balancing_mode_type :: VERTEX_BASED;
+		kernel_fusion = kernel_fusion_type :: DISABLED;
+		deduplication = deduplication_type ::DISABLED;
+		direction = direction_type ::DIR_PUSH;
+		delta = FlexIntVal(1);
+        edge_blocking_size = 0;
+        frontier_creation = frontier_creation_type ::FRONTIER_FUSED;
+        edge_blocking = edge_blocking_type ::UNBLOCKED;
+        pull_frontier_type = gpu_pull_frontier_type ::BOOLMAP;
+	}
+
+
+	virtual SimpleScheduleObject::ParallelizationType getParallelizationType() override {
+		switch(load_balancing_mode) {
+			case SimpleGPUScheduleObject::load_balancing_mode_type ::VERTEX_BASED:
+				return SimpleScheduleObject::ParallelizationType ::VERTEX_BASED;
+			default:
+				return SimpleScheduleObject::ParallelizationType ::EDGE_BASED;
+		}
+	}
+
+    virtual SimpleScheduleObject::Direction getDirection() override {
+	    switch(direction) {
+	        case direction_type ::DIR_PULL:
+	            return SimpleScheduleObject::Direction ::PULL;
+	        case direction_type ::DIR_PUSH:
+	            return SimpleScheduleObject::Direction ::PUSH;
+	        default:
+                assert(false && "Invalid option for GPU Direction\n");
+                break;
+	    }
+    }
+
+    virtual SimpleScheduleObject::Deduplication getDeduplication() override {
+	    switch(deduplication) {
+	        case deduplication_type ::ENABLED:
+	            return SimpleScheduleObject::Deduplication ::ENABLED;
+	        case deduplication_type ::DISABLED:
+	            return SimpleScheduleObject::Deduplication ::DISABLED;
+            default:
+                assert(false && "Invalid option for GPU Deduplication\n");
+                break;
+	    }
+    }
+
+    virtual FlexIntVal getDelta() override {
+        return delta;
+    }
+
+    virtual SimpleScheduleObject::PullFrontierType getPullFrontierType() override {
+        switch(pull_frontier_type) {
+            case gpu_pull_frontier_type ::BITMAP:
+                return SimpleScheduleObject::PullFrontierType ::BITMAP;
+            case gpu_pull_frontier_type ::BOOLMAP:
+                return SimpleScheduleObject::PullFrontierType ::BOOLMAP;
+            default:
+                assert(false && "Invalid option for GPU Pull Frontier Type\n");
+                break;
+        }
+    }
+
+    SimpleGPUScheduleObject::deduplication_type getGPUDeduplicationType() {
+	    return deduplication;
+	}
+
+    SimpleGPUScheduleObject::kernel_fusion_type getKernelFusion() {
+        return kernel_fusion;
+    }
+
+    SimpleGPUScheduleObject::load_balancing_mode_type getLoadBalancingMode() {
+        return load_balancing_mode;
+    }
+
+    SimpleGPUScheduleObject::edge_blocking_type getEdgeBlockingType() {
+	    return edge_blocking;
+	}
+
+	SimpleGPUScheduleObject::frontier_creation_type getFrontierCreationType() {
+	    return frontier_creation;
+	}
+
+	uint32_t getEdgeBlockingSize() {
+	    return edge_blocking_size;
+	}
+
+    void configKernelFusion(kernel_fusion_type kernelFusionType) {
+        kernel_fusion = kernelFusionType;
+	}
+
+	void configEdgeBlocking(edge_blocking_type edgeBlockingType) {
+	    edge_blocking = edgeBlockingType;
+	}
+
+};
+    class HybridGPUScheduleObject : public abstract_schedule::CompositeScheduleObject {
+    public:
+        typedef std::shared_ptr<HybridGPUScheduleObject> Ptr;
+        enum class CompositeCriteria {
+            INPUT_VERTEXSET_SIZE
+        };
+    private:
+        ScheduleObject::Ptr first_schedule;
+        ScheduleObject::Ptr second_schedule;
+        CompositeCriteria composite_criteria;
+        float threshold;
+    public:
+        HybridGPUScheduleObject (ScheduleObject::Ptr first, ScheduleObject::Ptr second, float t, CompositeCriteria criteria=CompositeCriteria::INPUT_VERTEXSET_SIZE) {
+            composite_criteria = criteria;
+            threshold = t;
+            first_schedule = first;
+            second_schedule = second;
+        }
+
+        virtual ScheduleObject::Ptr getFirstScheduleObject() override {
+            return first_schedule;
+        }
+        virtual ScheduleObject::Ptr getSecondScheduleObject() override {
+            return second_schedule;
+        }
+        virtual CompositeCriteria getCompositeCriteria() {
+            return composite_criteria;
+        }
+    };
 
 
 }
