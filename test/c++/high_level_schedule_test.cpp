@@ -2420,7 +2420,7 @@ TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
 
 // ABSTRACT SIMPLE SCHEDULEOBJECT SCHEDULE TESTS
 TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
-    using namespace fir;
+    using namespace fir::abstract_schedule;
     istringstream is(bfs_str_);
 
     fe_->parseStream(is, context_, errors_);
@@ -2433,34 +2433,40 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
     program->configBucketMergeThreshold("s1", 1000);
     program->setApply("s1", "disable_deduplication");
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-    EXPECT_EQ(false, scheduleObject->isComposite());
-    EXPECT_EQ(SimpleScheduleObject::direction::PULL, scheduleObject->getDirection());
-    EXPECT_EQ(SimpleScheduleObject::parallelization_type::VERTEX_BASED, scheduleObject->getParallelizationType());
-    EXPECT_EQ(SimpleScheduleObject::pull_frontier_type::BITMAP, scheduleObject->getPullFrontierType());
-    EXPECT_EQ(2, scheduleObject->getDelta()->getIntVal());
-    EXPECT_EQ(SimpleScheduleObject::deduplication::DISABLED, scheduleObject->getDeduplication());
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_schedule_object = fir::abstract_schedule::to<SimpleScheduleObject>(scheduleObject);
+
+    EXPECT_EQ(false, simple_schedule_object->isComposite());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PULL, simple_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_schedule_object->getParallelizationType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, simple_schedule_object->getPullFrontierType());
+    EXPECT_EQ(2, simple_schedule_object->getDelta().getIntVal());
+    EXPECT_EQ(SimpleScheduleObject::Deduplication::DISABLED, simple_schedule_object->getDeduplication());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUDefaultsTest) {
     using namespace fir;
+    using namespace fir::abstract_schedule;
     istringstream is(bfs_str_);
 
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-    EXPECT_EQ(false, scheduleObject->isComposite());
-    EXPECT_EQ(SimpleScheduleObject::direction::PUSH, scheduleObject->getDirection());
-    EXPECT_EQ(SimpleScheduleObject::parallelization_type::VERTEX_BASED, scheduleObject->getParallelizationType());
-    EXPECT_EQ(SimpleScheduleObject::pull_frontier_type::BOOLMAP, scheduleObject->getPullFrontierType());
-    EXPECT_EQ(1, scheduleObject->getDelta()->getIntVal());
-    EXPECT_EQ(SimpleScheduleObject::deduplication::ENABLED, scheduleObject->getDeduplication());
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_schedule_object = to<SimpleScheduleObject>(scheduleObject);
+
+    EXPECT_EQ(false, simple_schedule_object->isComposite());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, simple_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_schedule_object->getParallelizationType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, simple_schedule_object->getPullFrontierType());
+    EXPECT_EQ(1, simple_schedule_object->getDelta().getIntVal());
+    EXPECT_EQ(SimpleScheduleObject::Deduplication::ENABLED, simple_schedule_object->getDeduplication());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUTest) {
     using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
     using namespace fir;
     istringstream is(bfs_str_gpu_);
 
@@ -2476,17 +2482,22 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUTest) {
     s1.configDelta(2);
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject *scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-    EXPECT_EQ(false, scheduleObject->isComposite());
-    EXPECT_EQ(SimpleScheduleObject::direction::PULL, scheduleObject->getDirection());
-    EXPECT_EQ(SimpleScheduleObject::parallelization_type::EDGE_BASED, scheduleObject->getParallelizationType());
-    EXPECT_EQ(SimpleScheduleObject::pull_frontier_type::BITMAP, scheduleObject->getPullFrontierType());
-    EXPECT_EQ(2, scheduleObject->getDelta()->getIntVal());
-    EXPECT_EQ(SimpleScheduleObject::deduplication::ENABLED, scheduleObject->getDeduplication());
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_schedule_object = to<SimpleScheduleObject>(scheduleObject);
+
+    EXPECT_EQ(false, simple_schedule_object->isComposite());
+
+    auto simple_gpu_schedule_object = to<SimpleGPUScheduleObject>(scheduleObject);
+    EXPECT_EQ(SimpleScheduleObject::Direction::PULL, simple_gpu_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::EDGE_BASED, simple_gpu_schedule_object->getParallelizationType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, simple_gpu_schedule_object->getPullFrontierType());
+    EXPECT_EQ(2, simple_gpu_schedule_object->getDelta().getIntVal());
+    EXPECT_EQ(SimpleScheduleObject::Deduplication::ENABLED, simple_gpu_schedule_object->getDeduplication());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUDefaultsTest) {
     using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
     using namespace fir;
     istringstream is(bfs_str_gpu_);
 
@@ -2497,18 +2508,23 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUDefaultsTest) {
     SimpleGPUSchedule s1;
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject *scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-    EXPECT_EQ(false, scheduleObject->isComposite());
-    EXPECT_EQ(SimpleScheduleObject::direction::PUSH, scheduleObject->getDirection());
-    EXPECT_EQ(SimpleScheduleObject::parallelization_type::VERTEX_BASED, scheduleObject->getParallelizationType());
-    EXPECT_EQ(SimpleScheduleObject::pull_frontier_type::BOOLMAP, scheduleObject->getPullFrontierType());
-    EXPECT_EQ(1, scheduleObject->getDelta()->getIntVal());
-    EXPECT_EQ(SimpleScheduleObject::deduplication::DISABLED, scheduleObject->getDeduplication());
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_schedule_object = to<SimpleScheduleObject>(scheduleObject);
+
+    EXPECT_EQ(false, simple_schedule_object->isComposite());
+
+    auto simple_gpu_schedule_object = to<SimpleGPUScheduleObject>(simple_schedule_object);
+    EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, simple_gpu_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_gpu_schedule_object->getParallelizationType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, simple_gpu_schedule_object->getPullFrontierType());
+    EXPECT_EQ(1, simple_gpu_schedule_object->getDelta().getIntVal());
+    EXPECT_EQ(SimpleScheduleObject::Deduplication::DISABLED, simple_gpu_schedule_object->getDeduplication());
 }
 
 // ABSTRACT COMPOSITE SCHEDULEOBJECT SCHEDULE TESTS
 TEST_F(HighLevelScheduleTest, CompositeScheduleObject_GPUTest) {
     using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
     using namespace fir;
 
     istringstream is (bfs_str_gpu_);
@@ -2529,34 +2545,93 @@ TEST_F(HighLevelScheduleTest, CompositeScheduleObject_GPUTest) {
     HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
     program->applyGPUSchedule("s1", h1);
 
-    ScheduleObject* compositeScheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-    EXPECT_EQ(true, scheduleObject->isComposite());
-    EXPECT_EQ(HybridGPUScheduleObject::CompositeCriteria::INPUT_VERTEX_SET, compositeScheduleObject::getCompositeCriteria());
-    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::TWCE, compositeScheduleObject->getFirstScheduleObject()->getLoadBalancingMode());
-    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::VERTEX_BASED, compositeScheduleObject->getSecondScheduleObject()->getLoadBalancingMode());
-    EXPECT_EQ(SimpleScheduleObject::direction::PUSH, compositeScheduleObject->getFirstScheduleObject()->getDirection());
-    EXPECT_EQ(SimpleScheduleObject::direction::PULL, compositeScheduleObject->getSecondScheduleObject()->getDirection());
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto composite_schedule_object = to<CompositeScheduleObject>(scheduleObject);
+    EXPECT_EQ(true, composite_schedule_object->isComposite());
+
+    auto hybrid_gpu_schedule_object = to<HybridGPUScheduleObject>(scheduleObject);
+    auto first_schedule_object = to<SimpleGPUScheduleObject>(hybrid_gpu_schedule_object->getFirstScheduleObject());
+    auto second_schedule_object = to<SimpleGPUScheduleObject>(hybrid_gpu_schedule_object->getSecondScheduleObject());
+
+    EXPECT_EQ(HybridGPUScheduleObject::CompositeCriteria::INPUT_VERTEXSET_SIZE, hybrid_gpu_schedule_object->getCompositeCriteria());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, first_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PULL, second_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, first_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, second_schedule_object->getPullFrontierType());
 }
 
-//TEST_F(HighLevelScheduleTest, HybridCPUScheduleObject_Test) {
-//    istringstream is(bfs_str_);
-//
-//    fe_->parseStream(is, context_, errors_);
-//    fir::high_level_schedule::ProgramScheduleNode::Ptr program
-//            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-//
-//    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
-//    EXPECT_EQ(true, scheduleObject->isComposite());
-//    EXPECT_EQ(HybridCPUScheduleObject::CompositeCriteria::INPUT_VERTEX_SET, scheduleObject::getCompositeCriteria());
-//    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE, compositeScheduleObject->getSecondScheduleObject()->getPriorityUpdateType());
-//    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE, compositeScheduleObject->getFirstScheduleObject()->getPriorityUpdateType());
-//    EXPECT_EQ(SimpleScheduleObject::direction::PUSH, compositeScheduleObject->getFirstScheduleObject()->getDirection());
-//    EXPECT_EQ(SimpleScheduleObject::direction::PULL, compositeScheduleObject->getSecondScheduleObject()->getDirection());
-//}
+// ABSTRACT COMPOSITE SCHEDULEOBJECT SCHEDULE TESTS
+TEST_F(HighLevelScheduleTest, HybridGPUScheduleObject_Test) {
+    using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
+    using namespace fir;
+
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Now apply the GPU Schedule
+    SimpleGPUSchedule s1;
+    s1.configDeduplication(ENABLED);
+    s1.configFrontierCreation(UNFUSED_BITMAP);
+    s1.configLoadBalance(TWCE);
+    s1.configDirection(PUSH);
+
+    SimpleGPUSchedule s2 = s1;
+    s2.configLoadBalance(VERTEX_BASED);
+    s2.configDirection(PULL, BITMAP);
+
+    HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
+    program->applyGPUSchedule("s1", h1);
+
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto composite_schedule_object = to<CompositeScheduleObject>(scheduleObject);
+    EXPECT_EQ(true, composite_schedule_object->isComposite());
+
+    auto hybrid_gpu_schedule_object = to<HybridGPUScheduleObject>(composite_schedule_object);
+    auto first_schedule_object = to<SimpleGPUScheduleObject>(hybrid_gpu_schedule_object->getFirstScheduleObject());
+    auto second_schedule_object = to<SimpleGPUScheduleObject>(hybrid_gpu_schedule_object->getSecondScheduleObject());
+
+    EXPECT_EQ(HybridGPUScheduleObject::CompositeCriteria::INPUT_VERTEXSET_SIZE, hybrid_gpu_schedule_object->getCompositeCriteria());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::TWCE, first_schedule_object->getLoadBalancingMode());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::VERTEX_BASED, second_schedule_object->getLoadBalancingMode());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::TWCE, first_schedule_object->getLoadBalancingMode());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::VERTEX_BASED, second_schedule_object->getLoadBalancingMode());
+}
+
+TEST_F(HighLevelScheduleTest, HybridCPUScheduleObject_Test) {
+    istringstream is(bfs_str_);
+    using namespace fir;
+    using namespace fir::cpu_schedule;
+    using namespace fir::abstract_schedule;
+
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->configApplyDirection("s1", "SparsePush-DensePull");
+    program->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
+
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto composite_schedule_object = to<CompositeScheduleObject>(scheduleObject);
+
+    auto hybrid_gpu_schedule_object = to<HybridCPUScheduleObject>(scheduleObject);
+    auto first_schedule_object = to<SimpleCPUScheduleObject>(hybrid_gpu_schedule_object->getFirstScheduleObject());
+    auto second_schedule_object = to<SimpleCPUScheduleObject>(hybrid_gpu_schedule_object->getSecondScheduleObject());
+
+    EXPECT_EQ(true, composite_schedule_object->isComposite());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, first_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, second_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, first_schedule_object->getDirection());
+    EXPECT_EQ(SimpleScheduleObject::Direction::PULL, second_schedule_object->getDirection());
+}
 
 // CPU-SPECIFIC SCHEDULE OBJECT TESTS
 TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
     istringstream is(bfs_str_);
+    using namespace fir;
+    using namespace fir::cpu_schedule;
+    using namespace fir::abstract_schedule;
 
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
@@ -2566,39 +2641,43 @@ TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configBucketMergeThreshold("s1", 800);
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
 
-    EXPECT_EQ(SimpleCPUScheduleObject::CPUDirection::PULL, scheduleObject->getCPUDirection());
-    EXPECT_EQ(SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR, scheduleObject->getCpuParallelizationType());
-    EXPECT_EQ(SimpleCPUScheduleObject::PullLoadBalanceEdgeGrainSize, 2);
-    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE, scheduleObject->getPriorityUpdateType());
-    EXPECT_EQ(800, scheduleObject->getMergeThreshold()->getIntVal());
-    EXPECT_EQ(SimpleCPUScheduleObject::OutputQueueType::QUEUE, scheduleObject->getOutputQueueType());
+    auto simple_cpu_schedule_object = to<SimpleCPUScheduleObject>(scheduleObject);
+    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::PULL, simple_cpu_schedule_object->getCPUDirection());
+    EXPECT_EQ(SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR, simple_cpu_schedule_object->getCPUParallelizationType());
+    EXPECT_EQ(2, simple_cpu_schedule_object->getPullLoadBalanceGrainSize());
+    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE, simple_cpu_schedule_object->getPriorityUpdateType());
+    EXPECT_EQ(800, simple_cpu_schedule_object->getMergeThreshold());
+    EXPECT_EQ(SimpleCPUScheduleObject::OutputQueueType::QUEUE, simple_cpu_schedule_object->getOutputQueueType());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObjectDefaults_Test) {
     istringstream is(bfs_str_);
+    using namespace fir;
+    using namespace fir::cpu_schedule;
+    using namespace fir::abstract_schedule;
 
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_cpu_schedule_object = to<SimpleCPUScheduleObject>(scheduleObject);
 
-    EXPECT_EQ(SimpleCPUScheduleObject::CPUDirection::PUSH, scheduleObject->getCPUDirection());
-    EXPECT_EQ(SimpleCPUScheduleObject::CPUParallelType::SERIAL, scheduleObject->getCpuParallelizationType());
-    EXPECT_EQ(SimpleCPUScheduleObject::PullLoadBalanceEdgeGrainSize, 0);
-    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::REDUCTION_BEFORE_UPDATE, scheduleObject->getPriorityUpdateType());
-    EXPECT_EQ(1000, scheduleObject->getMergeThreshold()->getIntVal());
-    EXPECT_EQ(SimpleCPUScheduleObject::OutputQueueType::QUEUE, scheduleObject->getOutputQueueType());
-    EXPECT_EQ(128, scheduleObject->getNumOpenBuckets()->getIntVal());
-    EXPECT_EQ(false, scheduleObject->getNumaAware());
-    EXPECT_EQ(-100, scheduleObject->getNumSegments());
+    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::PUSH, simple_cpu_schedule_object->getCPUDirection());
+    EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::REDUCTION_BEFORE_UPDATE, simple_cpu_schedule_object->getPriorityUpdateType());
+    EXPECT_EQ(1000, simple_cpu_schedule_object->getMergeThreshold());
+    EXPECT_EQ(SimpleCPUScheduleObject::OutputQueueType::QUEUE, simple_cpu_schedule_object->getOutputQueueType());
+    EXPECT_EQ(128, simple_cpu_schedule_object->getNumOpenBuckets());
+    EXPECT_EQ(false, simple_cpu_schedule_object->getNumaAware());
 }
 
 // GPU-SPECIFIC SCHEDULE OBJECT TESTS
 TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObject_Test) {
+    using namespace fir;
     using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
     istringstream is(bfs_str_gpu_);
 
     fe_->parseStream(is, context_, errors_);
@@ -2613,18 +2692,21 @@ TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObject_Test) {
     s1.configKernelFusion(ENABLED);
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_gpu_schedule_object = to<SimpleGPUScheduleObject>(scheduleObject);
 
-    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::EDGE_ONLY, scheduleObject->getLoadBalancingMode());
-    EXPECT_EQ(SimpleGPUScheduleObject::deduplication_type::ENABLED, scheduleObject->getDeduplication());
-    EXPECT_EQ(SimpleGPUScheduleObject::frontier_creation_type::UNFUSED_BITMAP, scheduleObject->getFrontierCreationMode());
-    EXPECT_EQ(SimpleGPUScheduleObject::kernel_fusion_type::ENABLED, scheduleObject->getKernelFusion());
-    EXPECT_EQ(SimpleGPUScheduleObject::edge_blocking_type::BLOCKED, scheduleObject->getEdgeBlocking());
-    EXPECT_EQ(2, scheduleObject->getEdgeBlockingSize());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::EDGE_ONLY, simple_gpu_schedule_object->getLoadBalancingMode());
+    EXPECT_EQ(SimpleGPUScheduleObject::deduplication_type::ENABLED, simple_gpu_schedule_object->getGPUDeduplicationType());
+    EXPECT_EQ(SimpleGPUScheduleObject::frontier_creation_type::UNFUSED_BITMAP, simple_gpu_schedule_object->getFrontierCreationType());
+    EXPECT_EQ(SimpleGPUScheduleObject::kernel_fusion_type::ENABLED, simple_gpu_schedule_object->getKernelFusion());
+    EXPECT_EQ(SimpleGPUScheduleObject::edge_blocking_type::BLOCKED, simple_gpu_schedule_object->getEdgeBlockingType());
+    EXPECT_EQ(2, simple_gpu_schedule_object->getEdgeBlockingSize());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObjectDefaults_Test) {
+    using namespace fir;
     using namespace fir::gpu_schedule;
+    using namespace fir::abstract_schedule;
     istringstream is(bfs_str_gpu_);
 
     fe_->parseStream(is, context_, errors_);
@@ -2634,12 +2716,13 @@ TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObjectDefaults_Test) {
     SimpleGPUSchedule s1;
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject* scheduleObject = program->getProgramSchedule()->schedule_map->find("s1");
+    ScheduleObject::Ptr scheduleObject = (*(program->getProgramSchedule()->schedule_map))["s1"];
+    auto simple_gpu_schedule_object = to<SimpleGPUScheduleObject>(scheduleObject);
 
-    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::VERTEX_BASED, scheduleObject->getLoadBalancingMode());
-    EXPECT_EQ(SimpleGPUScheduleObject::deduplication_type::DISABLED, scheduleObject->getDeduplication());
-    EXPECT_EQ(SimpleGPUScheduleObject::frontier_creation_type::FRONTIER_FUSED, scheduleObject->getFrontierCreationMode());
-    EXPECT_EQ(SimpleGPUScheduleObject::kernel_fusion_type::DISABLED, scheduleObject->getKernelFusion());
-    EXPECT_EQ(SimpleGPUScheduleObject::edge_blocking_type::UNBLOCKED, scheduleObject->getEdgeBlocking());
-    EXPECT_EQ(0, scheduleObject->getEdgeBlockingSize());
+    EXPECT_EQ(SimpleGPUScheduleObject::load_balancing_mode_type::VERTEX_BASED, simple_gpu_schedule_object->getLoadBalancingMode());
+    EXPECT_EQ(SimpleGPUScheduleObject::deduplication_type::DISABLED, simple_gpu_schedule_object->getGPUDeduplicationType());
+    EXPECT_EQ(SimpleGPUScheduleObject::frontier_creation_type::FRONTIER_FUSED, simple_gpu_schedule_object->getFrontierCreationType());
+    EXPECT_EQ(SimpleGPUScheduleObject::kernel_fusion_type::DISABLED, simple_gpu_schedule_object->getKernelFusion());
+    EXPECT_EQ(SimpleGPUScheduleObject::edge_blocking_type::UNBLOCKED, simple_gpu_schedule_object->getEdgeBlockingType());
+    EXPECT_EQ(0, simple_gpu_schedule_object->getEdgeBlockingSize());
 }
