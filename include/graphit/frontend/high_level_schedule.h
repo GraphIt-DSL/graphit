@@ -17,6 +17,8 @@
 #include <regex>
 
 #include <graphit/frontend/gpu_schedule.h>
+#include <graphit/frontend/cpu_schedule.h>
+#include <graphit/frontend/abstract_schedule.h>
 
 
 namespace graphit {
@@ -53,6 +55,8 @@ namespace graphit {
                 ~ ProgramScheduleNode(){
                     if (schedule_ != nullptr)
                         delete(schedule_);
+                    if (programSchedule_ != nullptr)
+                        delete(programSchedule_);
                 }
                 enum class backend_selection_type {
 			CODEGEN_CPU,
@@ -208,6 +212,10 @@ namespace graphit {
                     return  schedule_;
                 }
 
+                ProgramSchedule * getProgramSchedule() {
+                    return programSchedule_;
+                }
+
 
 		// New GPU Scheduling API
 		// We currently need two different functions to apply simple and hybrid schedules
@@ -239,6 +247,7 @@ namespace graphit {
             private:
                 graphit::FIRContext * fir_context_;
                 Schedule * schedule_;
+                ProgramSchedule * programSchedule_;
                 // Maps the new direction to the old directions for backward compatibility for now.
                 // For example, "SparsePush" would be mapped to "push"
                 // This eventually will be deprecated, just keeping it to keep the unit tests working
