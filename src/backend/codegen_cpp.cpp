@@ -131,9 +131,11 @@ namespace graphit {
         printIndent();
         auto for_domain = par_for_stmt->domain;
         auto loop_var = par_for_stmt->loopVar;
-        oss << "#pragma omp parallel ";
+        oss << "#pragma omp parallel for";
 
         if (par_for_stmt->grain_size != 0){
+
+            oss << " ";
 
             if (par_for_stmt->type == ParForSchedule::ParForType::STATIC) {
                 oss << "schedule(static, " << par_for_stmt->grain_size << ")";

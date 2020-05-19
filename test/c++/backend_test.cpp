@@ -1207,3 +1207,10 @@ TEST_F(BackendTest, ParForNested) {
     EXPECT_EQ (0,  basicTest(is));
 }
 
+//TEST_F(BackendTest, LocalVectorFixedSize) {
+//    istringstream is("func main()\n"
+//                     "  var array: vector[5](int) = {5, 6, 7, 8, 9};\n"
+//                     "  print array.sum();\n"
+//                     "end\n");
+//    EXPECT_EQ (0,  basicTest(is));
+//}
