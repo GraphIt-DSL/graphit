@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_set>
 #include <graphit/midend/mir_visitor.h>
+#include <graphit/midend/mir_metadata.h>
 #include <graphit/midend/var.h>
 #include <assert.h>
 #include <graphit/midend/field_vector_property.h>
@@ -54,6 +55,8 @@ namespace graphit {
                 return to<T>(cloneNode());
             }
 
+            // We use a single map to hold all metadata on the MIR Node
+            std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> metadata_map;
         protected:
             template<typename T = MIRNode>
             std::shared_ptr<T> self() {
@@ -68,6 +71,32 @@ namespace graphit {
                 // as I slowly add in support for copy functionalities
                 return nullptr;
             };
+        public:
+            // Functions to set and retrieve metadata of different types
+            template<typename T>
+            void setMetadata(std::string mdname, T val) {
+                typename MIRMetadataImpl<T>::Ptr mdnode = std::make_shared<MIRMetadataImpl<T>>(val);
+                metadata_map[mdname] = mdnode;
+            }
+            // This function is safe to be called even if the metadata with
+            // the specified name doesn't exist
+            template<typename T>
+            bool hasMetadata(std::string mdname) {
+                if (metadata_map.find(mdname) == metadata_map.end())
+		    return false;
+                typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
+                if (!mdnode->isa<T>())
+                    return false;
+                return true;
+            }
+            // This function should be called only after confirming that the 
+            // metadata with the given name exists
+            template <typename T>
+            T getMetadata(std::string mdname) {
+                assert(hasMetadata<T>(mdname));
+                typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
+                return mdnode->to<T>()->val;
+            } 
         };
 
         struct Expr : public MIRNode {
