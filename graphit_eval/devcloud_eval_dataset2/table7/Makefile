@@ -95,7 +95,7 @@ bc_cpps:
 	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull_bitvector_openmp cpps/bc_SparsePushDensePull_bitvector.cpp
 
 	$(PCC) $(CILK_FLAGS) $(TBB_FLAGS) -o bin/bc_SparsePushDensePull_cilk cpps/bc_SparsePushDensePull.cpp
-    $(PCC) $(CILK_FLAGS) $(TBB_FLAGS) -o bin/bc_SparsePushDensePull_bitvector_cilk cpps/bc_SparsePushDensePull_bitvector.cpp
+	$(PCC) $(CILK_FLAGS) $(TBB_FLAGS) -o bin/bc_SparsePushDensePull_bitvector_cilk cpps/bc_SparsePushDensePull_bitvector.cpp
 
 % : cpps/%.cpp
 	$(PCC) -o bin/$@ $< $(CILK_FLAGS) $(TBB_FLAGS)
