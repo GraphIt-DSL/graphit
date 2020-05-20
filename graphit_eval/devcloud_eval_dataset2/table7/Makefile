@@ -42,8 +42,6 @@ pr_cilk_cpps = pagerank_pull pagerank_pull_segment
 sssp_cilk_cpps = sssp_hybrid_denseforward 
 cc_cilk_cpps = cc_hybrid_dense cc_hybrid_dense_bitvec_segment cc_hybrid_dense_bitvec cc_pj_hybrid_dense_bitvec cc_pj_hybrid_dense cc_pj_pull
 bfs_cilk_cpps = bfs_hybrid_dense bfs_hybrid_dense_bitvec 
-bc_cilk_cpps = bc_SparsePushDensePull bc_SparsePushDensePull_bitvector
-
 
 all: 
 	make graphit_files
@@ -76,7 +74,7 @@ graphit_files:
 
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bc.gt -f ${GRAPHIT_SCHEDULE_DIR}/bc_SparsePushDensePull.gt -o cpps/bc_SparsePushDensePull.cpp
 	python ${GRAPHITC_PY} -a ${GRAPHIT_APP_DIR}/bc.gt -f ${GRAPHIT_SCHEDULE_DIR}/bc_SparsePushDensePull_bitvector.gt -o cpps/bc_SparsePushDensePull_bitvector.cpp
-cpps: $(bfs_cilk_cpps) $(cc_cilk_cpps) $(sssp_cilk_cpps) $(pr_cilk_cpps) $(bc_cilk_cpps) openmp_only_cpps
+cpps: $(bfs_cilk_cpps) $(cc_cilk_cpps) $(sssp_cilk_cpps) $(pr_cilk_cpps) openmp_only_cpps bc_cpps
 
 
 # this two cpps files can only be compiled with openmp to get parallel performance
@@ -91,6 +89,14 @@ openmp_only_cpps:
 
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_with_merge cpps/sssp_delta_stepping_with_merge.cpp
 	$(PCC) $(OPENMP_FLAGS) -o bin/sssp_delta_stepping_no_merge cpps/sssp_delta_stepping_no_merge.cpp
+
+bc_cpps:
+	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull_openmp cpps/bc_SparsePushDensePull.cpp
+	$(PCC) $(OPENMP_FLAGS) -o bin/bc_SparsePushDensePull_bitvector_openmp cpps/bc_SparsePushDensePull_bitvector.cpp
+
+	$(PCC) $(CILK_FLAGS) $(TBB_FLAGS) -o bin/bc_SparsePushDensePull_cilk cpps/bc_SparsePushDensePull.cpp
+    $(PCC) $(CILK_FLAGS) $(TBB_FLAGS) -o bin/bc_SparsePushDensePull_bitvector_cilk cpps/bc_SparsePushDensePull_bitvector.cpp
+
 % : cpps/%.cpp
 	$(PCC) -o bin/$@ $< $(CILK_FLAGS) $(TBB_FLAGS)
 
