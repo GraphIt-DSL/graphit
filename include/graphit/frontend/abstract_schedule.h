@@ -10,45 +10,50 @@
 #include <assert.h>
 
 namespace graphit {
-    class FlexIntVal {
-    private:
-        int val;
-        int argv_idx;
-    public:
-        FlexIntVal(int intVal = 0) {
-            val = intVal;
-            argv_idx = 0;
-        }
+    namespace fir {
+        namespace abstract_schedule {
+            class FlexIntVal {
+            private:
+                int val;
+                int argv_idx;
+            public:
+                FlexIntVal(int intVal = 0) {
+                    val = intVal;
+                    argv_idx = 0;
+                }
 
-        int getIntVal() {
-            return val;
-        }
+                int getIntVal() {
+                    return val;
+                }
 
 //        FlexIntVal(std::string argv){
 //            // TODO(clhsu): parse something here ??
 //        }
-    };
+            };
 
-    namespace fir {
-        namespace abstract_schedule {
-            class ScheduleObject {
+        class ScheduleObject: public std::enable_shared_from_this<ScheduleObject>{
             public:
                 typedef std::shared_ptr<ScheduleObject> Ptr;
 
                 virtual bool isComposite() {};
+
+                template<typename T>
+                inline bool isa(std::shared_ptr<ScheduleObject> ptr) {
+                    return (bool) std::dynamic_pointer_cast<T>(ptr);
+                }
+
+                template<typename T>
+                inline const std::shared_ptr<T> to() {
+                    std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(shared_from_this());
+                    assert(ret != nullptr);
+                    return ret;
+                }
+
+                template<typename T = ScheduleObject>
+                std::shared_ptr<T> self() {
+                    return to<T>();
+                }
             };
-
-            template<typename T>
-            inline bool isa(std::shared_ptr<ScheduleObject> ptr) {
-                return (bool) std::dynamic_pointer_cast<T>(ptr);
-            }
-
-            template<typename T>
-            inline const std::shared_ptr<T> to(std::shared_ptr<ScheduleObject> ptr) {
-                std::shared_ptr<T> ret = std::dynamic_pointer_cast<T>(ptr);
-                assert(ret != nullptr);
-                return ret;
-            }
 
             class SimpleScheduleObject : public ScheduleObject {
                 // Abstract class has no functions for now
