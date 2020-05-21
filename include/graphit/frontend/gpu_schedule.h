@@ -325,12 +325,12 @@ public:
 class SimpleGPUScheduleObject : public abstract_schedule::SimpleScheduleObject {
 public:
     typedef std::shared_ptr<SimpleGPUScheduleObject> Ptr;
-	enum class gpu_pull_frontier_type {
+	enum class GPUPullFrontierType {
 		BITMAP,
 		BOOLMAP
 	};
 
-	enum class load_balancing_mode_type {
+	enum class LoadBalancingModeType {
 		VERTEX_BASED,
 		TWC,
 		TWCE,
@@ -340,60 +340,71 @@ public:
 		EDGE_ONLY
 	};
 
-	enum class kernel_fusion_type {
+	enum class KernelFusionType {
 		DISABLED,
 		ENABLED
 	};
 
-	enum class deduplication_type {
+	enum class DeduplicationType {
 		ENABLED,
 		DISABLED
 	};
 
-    enum class frontier_creation_type {
+    enum class FrontierCreationType {
         FRONTIER_FUSED,
         UNFUSED_BITMAP,
         UNFUSED_BOOLMAP
     };
 
-    enum class edge_blocking_type {
+    enum class EdgeBlockingType {
         BLOCKED,
         UNBLOCKED
     };
 
-    enum class direction_type {
+    enum class DirectionType {
         DIR_PUSH,
         DIR_PULL
     };
 
 private:
-	load_balancing_mode_type load_balancing_mode;
-	kernel_fusion_type kernel_fusion;
-	deduplication_type deduplication;
-	FlexIntVal delta;
-    frontier_creation_type frontier_creation;
-    edge_blocking_type edge_blocking;
+	LoadBalancingModeType load_balancing_mode;
+	KernelFusionType kernel_fusion;
+	DeduplicationType deduplication;
+	abstract_schedule::FlexIntVal delta;
+    FrontierCreationType frontier_creation;
+    EdgeBlockingType edge_blocking;
     uint32_t edge_blocking_size;
-    direction_type direction;
-    gpu_pull_frontier_type pull_frontier_type;
+    DirectionType direction;
+    GPUPullFrontierType pull_frontier_type;
 
 public:
 	SimpleGPUScheduleObject() {
-		load_balancing_mode = load_balancing_mode_type :: VERTEX_BASED;
-		kernel_fusion = kernel_fusion_type :: DISABLED;
-		deduplication = deduplication_type ::DISABLED;
-		direction = direction_type ::DIR_PUSH;
-		delta = FlexIntVal(1);
+		load_balancing_mode = LoadBalancingModeType :: VERTEX_BASED;
+		kernel_fusion = KernelFusionType :: DISABLED;
+		deduplication = DeduplicationType ::DISABLED;
+		direction = DirectionType ::DIR_PUSH;
+		delta = abstract_schedule::FlexIntVal(1);
         edge_blocking_size = 0;
-        frontier_creation = frontier_creation_type ::FRONTIER_FUSED;
-        edge_blocking = edge_blocking_type ::UNBLOCKED;
-        pull_frontier_type = gpu_pull_frontier_type ::BOOLMAP;
+        frontier_creation = FrontierCreationType ::FRONTIER_FUSED;
+        edge_blocking = EdgeBlockingType ::UNBLOCKED;
+        pull_frontier_type = GPUPullFrontierType ::BOOLMAP;
 	}
 
+    SimpleGPUScheduleObject(SimpleGPUSchedule gpu_schedule) {
+        configPullFrontierType(gpu_schedule.pull_frontier_rep);
+        configKernelFusion(gpu_schedule.kernel_fusion);
+        configDeduplicationType(gpu_schedule.deduplication);
+        configDirection(gpu_schedule.direction);
+        delta = abstract_schedule::FlexIntVal(gpu_schedule.delta);
+        edge_blocking_size = gpu_schedule.edge_blocking_size;
+        configFrontierCreationType(gpu_schedule.frontier_creation);
+        configEdgeBlocking(gpu_schedule.edge_blocking);
+        configLoadBalanceMode(gpu_schedule.load_balancing);
+    }
 
 	virtual SimpleScheduleObject::ParallelizationType getParallelizationType() override {
 		switch(load_balancing_mode) {
-			case SimpleGPUScheduleObject::load_balancing_mode_type ::VERTEX_BASED:
+			case SimpleGPUScheduleObject::LoadBalancingModeType ::VERTEX_BASED:
 				return SimpleScheduleObject::ParallelizationType ::VERTEX_BASED;
 			default:
 				return SimpleScheduleObject::ParallelizationType ::EDGE_BASED;
@@ -402,9 +413,9 @@ public:
 
     virtual SimpleScheduleObject::Direction getDirection() override {
 	    switch(direction) {
-	        case direction_type ::DIR_PULL:
+	        case DirectionType ::DIR_PULL:
 	            return SimpleScheduleObject::Direction ::PULL;
-	        case direction_type ::DIR_PUSH:
+	        case DirectionType ::DIR_PUSH:
 	            return SimpleScheduleObject::Direction ::PUSH;
 	        default:
                 assert(false && "Invalid option for GPU Direction\n");
@@ -414,9 +425,9 @@ public:
 
     virtual SimpleScheduleObject::Deduplication getDeduplication() override {
 	    switch(deduplication) {
-	        case deduplication_type ::ENABLED:
+	        case DeduplicationType ::ENABLED:
 	            return SimpleScheduleObject::Deduplication ::ENABLED;
-	        case deduplication_type ::DISABLED:
+	        case DeduplicationType ::DISABLED:
 	            return SimpleScheduleObject::Deduplication ::DISABLED;
             default:
                 assert(false && "Invalid option for GPU Deduplication\n");
@@ -424,15 +435,15 @@ public:
 	    }
     }
 
-    virtual FlexIntVal getDelta() override {
+    virtual abstract_schedule::FlexIntVal getDelta() override {
         return delta;
     }
 
     virtual SimpleScheduleObject::PullFrontierType getPullFrontierType() override {
         switch(pull_frontier_type) {
-            case gpu_pull_frontier_type ::BITMAP:
+            case GPUPullFrontierType ::BITMAP:
                 return SimpleScheduleObject::PullFrontierType ::BITMAP;
-            case gpu_pull_frontier_type ::BOOLMAP:
+            case GPUPullFrontierType ::BOOLMAP:
                 return SimpleScheduleObject::PullFrontierType ::BOOLMAP;
             default:
                 assert(false && "Invalid option for GPU Pull Frontier Type\n");
@@ -440,23 +451,23 @@ public:
         }
     }
 
-    SimpleGPUScheduleObject::deduplication_type getGPUDeduplicationType() {
+    SimpleGPUScheduleObject::DeduplicationType getGPUDeduplicationType() {
 	    return deduplication;
 	}
 
-    SimpleGPUScheduleObject::kernel_fusion_type getKernelFusion() {
+    SimpleGPUScheduleObject::KernelFusionType getKernelFusion() {
         return kernel_fusion;
     }
 
-    SimpleGPUScheduleObject::load_balancing_mode_type getLoadBalancingMode() {
+    SimpleGPUScheduleObject::LoadBalancingModeType getLoadBalancingMode() {
         return load_balancing_mode;
     }
 
-    SimpleGPUScheduleObject::edge_blocking_type getEdgeBlockingType() {
+    SimpleGPUScheduleObject::EdgeBlockingType getEdgeBlockingType() {
 	    return edge_blocking;
 	}
 
-	SimpleGPUScheduleObject::frontier_creation_type getFrontierCreationType() {
+	SimpleGPUScheduleObject::FrontierCreationType getFrontierCreationType() {
 	    return frontier_creation;
 	}
 
@@ -464,14 +475,111 @@ public:
 	    return edge_blocking_size;
 	}
 
-    void configKernelFusion(kernel_fusion_type kernelFusionType) {
+    void configKernelFusion(KernelFusionType kernelFusionType) {
         kernel_fusion = kernelFusionType;
 	}
 
-	void configEdgeBlocking(edge_blocking_type edgeBlockingType) {
+    void configKernelFusion(SimpleGPUSchedule::kernel_fusion_type kernel_fusion_type) {
+	    if (kernel_fusion_type == SimpleGPUSchedule::kernel_fusion_type::FUSION_DISABLED) {
+            kernel_fusion = KernelFusionType ::DISABLED;
+	    } else {
+            kernel_fusion = KernelFusionType::ENABLED;
+        }
+    }
+
+  void configDirection(DirectionType direction_type) {
+      direction = direction_type;
+  }
+
+  void configDirection(SimpleGPUSchedule::direction_type direction_type) {
+      if (direction_type == SimpleGPUSchedule::direction_type::DIR_PUSH) {
+          direction = DirectionType ::DIR_PUSH;
+      } else {
+          direction = DirectionType ::DIR_PULL;
+      }
+  }
+
+	void configEdgeBlocking(EdgeBlockingType edgeBlockingType) {
 	    edge_blocking = edgeBlockingType;
 	}
 
+    void configEdgeBlocking(SimpleGPUSchedule::edge_blocking_type edgeBlockingType) {
+        if (edgeBlockingType == SimpleGPUSchedule::edge_blocking_type::UNBLOCKED) {
+            edge_blocking = EdgeBlockingType ::UNBLOCKED;
+        } else {
+            edge_blocking = EdgeBlockingType ::UNBLOCKED;
+        }
+    }
+
+    void configDeduplicationType(DeduplicationType dedup_type) {
+        deduplication = dedup_type;
+	}
+
+  void configDeduplicationType(SimpleGPUSchedule::deduplication_type dedup_type) {
+        if (dedup_type == SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED) {
+            deduplication = DeduplicationType ::ENABLED;
+        } else {
+            deduplication = DeduplicationType::DISABLED;
+        }
+  }
+
+  void configFrontierCreationType(FrontierCreationType frontier_type) {
+      frontier_creation = frontier_type;
+  }
+
+  void configFrontierCreationType(SimpleGPUSchedule::frontier_creation_type frontier_type) {
+      if (frontier_type == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+          frontier_creation = FrontierCreationType ::FRONTIER_FUSED;
+      } else if (frontier_type == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+          frontier_creation = FrontierCreationType ::UNFUSED_BITMAP;
+      } else {
+          frontier_creation = FrontierCreationType ::UNFUSED_BOOLMAP;
+      }
+  }
+
+  void configPullFrontierType(GPUPullFrontierType frontier_type) {
+      pull_frontier_type = frontier_type;
+  }
+
+  void configPullFrontierType(SimpleGPUSchedule::pull_frontier_rep_type frontier_type) {
+      if (frontier_type == SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+          pull_frontier_type = GPUPullFrontierType ::BITMAP;
+      } else {
+          pull_frontier_type = GPUPullFrontierType ::BOOLMAP;
+      }
+  }
+  void configLoadBalanceMode(LoadBalancingModeType load_balancing_mode_type) {
+      load_balancing_mode = load_balancing_mode_type;
+  }
+
+  void configLoadBalanceMode(SimpleGPUSchedule::load_balancing_type load_balancing_mode_type) {
+      switch(load_balancing_mode_type) {
+          case SimpleGPUSchedule::load_balancing_type ::VERTEX_BASED:
+              load_balancing_mode = LoadBalancingModeType ::VERTEX_BASED;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::TWC:
+              load_balancing_mode = LoadBalancingModeType ::TWC;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::TWCE:
+              load_balancing_mode = LoadBalancingModeType ::TWCE;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::WM:
+              load_balancing_mode = LoadBalancingModeType ::WM;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::CM:
+              load_balancing_mode = LoadBalancingModeType ::CM;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::STRICT:
+              load_balancing_mode = LoadBalancingModeType ::STRICT;
+              break;
+          case SimpleGPUSchedule::load_balancing_type ::EDGE_ONLY:
+              load_balancing_mode = LoadBalancingModeType ::EDGE_ONLY;
+              break;
+          default:
+              assert(false && "Invalid option for configLoadBalance");
+              break;
+      }
+  }
 };
     class HybridGPUScheduleObject : public abstract_schedule::CompositeScheduleObject {
     public:
@@ -491,6 +599,15 @@ public:
             first_schedule = first;
             second_schedule = second;
         }
+
+      HybridGPUScheduleObject (HybridGPUSchedule hybrid_gpu_schedule) {
+          if (hybrid_gpu_schedule._hybrid_criteria == HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
+              composite_criteria = CompositeCriteria ::INPUT_VERTEXSET_SIZE;
+          }
+          threshold = hybrid_gpu_schedule.threshold;
+          first_schedule = std::make_shared<SimpleGPUScheduleObject>(hybrid_gpu_schedule.s1);
+          second_schedule = std::make_shared<SimpleGPUScheduleObject>(hybrid_gpu_schedule.s2);
+      }
 
         virtual ScheduleObject::Ptr getFirstScheduleObject() override {
             return first_schedule;

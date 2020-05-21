@@ -211,15 +211,14 @@ namespace graphit {
             };
 
             ProgramSchedule(BackendID backendId) {
-                schedule_map = new std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr>(); //label to schedule object
+                schedule_map = std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr>(); //label to schedule object
                 backend_identifier = backendId ;
             };
 
             ~ProgramSchedule() {
-                delete schedule_map;
             }
 
-            std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> *schedule_map; //label to schedule object
+            std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
             BackendID backend_identifier;
         };
 

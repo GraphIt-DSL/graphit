@@ -65,12 +65,12 @@ namespace graphit {
                 OutputQueueType queue_type;
                 CPUPullFrontierType cpu_pull_frontier_type;
                 PriorityUpdateType priority_update_type;
-                FlexIntVal pull_load_balance_grain_size;
-                FlexIntVal num_segment;
-                FlexIntVal delta;
+                abstract_schedule::FlexIntVal pull_load_balance_grain_size;
+                abstract_schedule::FlexIntVal num_segment;
+                abstract_schedule::FlexIntVal delta;
                 bool numa_aware;
-                FlexIntVal merge_threshold;
-                FlexIntVal num_open_buckets;
+                abstract_schedule::FlexIntVal merge_threshold;
+                abstract_schedule::FlexIntVal num_open_buckets;
             public:
                 SimpleCPUScheduleObject() {
                     cpu_pull_load_balance_type = CPUPullLoadBalanceType::VERTEX_BASED;
@@ -80,12 +80,12 @@ namespace graphit {
                     queue_type = OutputQueueType :: QUEUE;
                     deduplication_type = CPUDeduplicationType ::ENABLED;
                     priority_update_type = PriorityUpdateType ::REDUCTION_BEFORE_UPDATE;
-                    pull_load_balance_grain_size = FlexIntVal(0);
-                    num_segment = FlexIntVal(-100);
-                    delta = FlexIntVal(1);
+                    pull_load_balance_grain_size = abstract_schedule::FlexIntVal(0);
+                    num_segment = abstract_schedule::FlexIntVal(-100);
+                    delta = abstract_schedule::FlexIntVal(1);
                     numa_aware = false;
-                    merge_threshold = FlexIntVal(1000);
-                    num_open_buckets = FlexIntVal(128);
+                    merge_threshold = abstract_schedule::FlexIntVal(1000);
+                    num_open_buckets = abstract_schedule::FlexIntVal(128);
                 }
 
                 virtual SimpleScheduleObject::ParallelizationType getParallelizationType() override {
@@ -114,7 +114,7 @@ namespace graphit {
                     }
                 }
 
-                virtual FlexIntVal getDelta() override {
+                virtual abstract_schedule::FlexIntVal getDelta() override {
                     return delta;
                 }
 
@@ -126,16 +126,16 @@ namespace graphit {
                     }
                 }
 
-                int getPullLoadBalanceGrainSize() {
-                    return pull_load_balance_grain_size.getIntVal();
+                abstract_schedule::FlexIntVal getPullLoadBalanceGrainSize() {
+                    return pull_load_balance_grain_size;
                 }
 
-                int getMergeThreshold() {
-                    return merge_threshold.getIntVal();
+                abstract_schedule::FlexIntVal getMergeThreshold() {
+                    return merge_threshold;
                 }
 
-                int getNumOpenBuckets() {
-                    return num_open_buckets.getIntVal();
+                abstract_schedule::FlexIntVal getNumOpenBuckets() {
+                    return num_open_buckets;
                 }
 
                 bool getNumaAware() {
@@ -145,6 +145,10 @@ namespace graphit {
                 DirectionType getCPUDirection() {
                     return direction_type;
                 }
+
+              void configCPUDirection(DirectionType direction) {
+                  direction_type = direction;
+              }
 
                 CPUParallelType getCPUParallelizationType() {
                     return cpu_parallel_type;
