@@ -230,9 +230,8 @@ namespace graphit {
 			    programSchedule_ = new ProgramSchedule(ProgramSchedule::BackendID::GPU);
 
 			gpu_schedule::SimpleGPUSchedule *s1_copy = new gpu_schedule::SimpleGPUSchedule(s1);
-			gpu_schedule::SimpleGPUScheduleObject::Ptr s1_object_copy = std::make_shared<gpu_schedule::SimpleGPUScheduleObject>(s1);
 
-			programSchedule_->schedule_map[label_name] = s1_object_copy;
+			programSchedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::SimpleGPUSchedule>(s1);
 			schedule_->apply_gpu_schedules[label_name] = s1_copy;
 			
 		}
@@ -246,10 +245,9 @@ namespace graphit {
                 programSchedule_ = new ProgramSchedule(ProgramSchedule::BackendID::GPU);
 
 			gpu_schedule::HybridGPUSchedule *s2_copy = new gpu_schedule::HybridGPUSchedule(s2);
-            gpu_schedule::HybridGPUScheduleObject::Ptr s2_object_copy = std::make_shared<gpu_schedule::HybridGPUScheduleObject>(s2);
-            programSchedule_->schedule_map[label_name] = s2_object_copy;
 
 			*s2_copy = s2;
+            programSchedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::HybridGPUSchedule>(s2);
 			schedule_->apply_gpu_schedules[label_name] = s2_copy;
 		}
 		

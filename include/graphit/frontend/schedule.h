@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <graphit/frontend/gpu_schedule.h>
+#include "cpu_schedule.h"
 
 namespace graphit {
 
@@ -220,6 +221,26 @@ namespace graphit {
 
             std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
             BackendID backend_identifier;
+
+            fir::abstract_schedule::ScheduleObject::Ptr initOrGetScheduleObject(std::string apply_label, bool hybrid=false) {
+              if (schedule_map.find(apply_label) == schedule_map.end()) {
+                if (backend_identifier == BackendID::CPU) {
+                  if (hybrid) {
+                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr first_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr second_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                    fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(first_schedule, second_schedule);
+                    schedule_map[apply_label] = cpu_schedule_object;
+                    return cpu_schedule_object;
+                  } else {
+                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                    schedule_map[apply_label] = cpu_schedule_object;
+                    return cpu_schedule_object;
+                  }
+                }
+              } else {
+                return schedule_map[apply_label];
+              }
+            }
         };
 
         /**
