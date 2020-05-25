@@ -8,6 +8,7 @@
 #include <string>
 #include <memory>
 #include <assert.h>
+#include "high_level_schedule.h"
 
 namespace graphit {
     namespace fir {
@@ -15,7 +16,6 @@ namespace graphit {
             class FlexIntVal {
             private:
                 int val;
-                int argv_idx;
             public:
                 FlexIntVal(int intVal = 0) {
                     val = intVal;
@@ -26,9 +26,10 @@ namespace graphit {
                     return val;
                 }
 
-//        FlexIntVal(std::string argv){
-//            // TODO(clhsu): parse something here ??
-//        }
+                FlexIntVal(std::string argv){
+                  int argv_num = high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(argv);
+                  val = argv_num;
+              }
             };
 
         class ScheduleObject: public std::enable_shared_from_this<ScheduleObject>{
@@ -38,8 +39,8 @@ namespace graphit {
                 virtual bool isComposite() {};
 
                 template<typename T>
-                inline bool isa(std::shared_ptr<ScheduleObject> ptr) {
-                    return (bool) std::dynamic_pointer_cast<T>(ptr);
+                inline bool isa() {
+                    return (bool) std::dynamic_pointer_cast<T>(shared_from_this());
                 }
 
                 template<typename T>
