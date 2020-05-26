@@ -8,7 +8,7 @@
 #include <string>
 #include <memory>
 #include <assert.h>
-#include "high_level_schedule.h"
+//#include "high_level_schedule.h"
 
 namespace graphit {
     namespace fir {
@@ -19,17 +19,16 @@ namespace graphit {
             public:
                 FlexIntVal(int intVal = 0) {
                     val = intVal;
-                    argv_idx = 0;
                 }
 
                 int getIntVal() {
                     return val;
                 }
 
-                FlexIntVal(std::string argv){
-                  int argv_num = high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(argv);
-                  val = argv_num;
-              }
+//                FlexIntVal(std::string argv){
+//                  int argv_num = high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(argv);
+//                  val = argv_num;
+//              }
             };
 
         class ScheduleObject: public std::enable_shared_from_this<ScheduleObject>{

@@ -109,7 +109,7 @@ namespace graphit {
                 virtual SimpleScheduleObject::Deduplication getDeduplication() override {
                     if (deduplication_type == CPUDeduplicationType::ENABLED) {
                         return SimpleScheduleObject::Deduplication ::ENABLED;
-                    } else{
+                    } else {
                         return SimpleScheduleObject::Deduplication ::DISABLED;
                     }
                 }
@@ -150,6 +150,45 @@ namespace graphit {
                   direction_type = direction;
               }
 
+              void configDeduplication(bool dedup) {
+                  if (dedup) {
+                    deduplication_type = CPUDeduplicationType :: ENABLED;
+                  } else {
+                    deduplication_type = CPUDeduplicationType::DISABLED;
+                  }
+                }
+
+              void configBucketMergeThreshold(int threshold) {
+                  merge_threshold = abstract_schedule::FlexIntVal(threshold);
+                }
+
+              void configApplyPriorityUpdateDelta(int update_delta) {
+                delta = abstract_schedule::FlexIntVal(update_delta);
+              }
+
+              void configApplyNumSSG(int ssg) {
+                num_segment = abstract_schedule::FlexIntVal(ssg);
+              }
+
+              void configApplyParallelization(std::string apply_parallel) {
+                if (apply_parallel == "dynamic-vertex-parallel") {
+                  cpu_parallel_type = CPUParallelType ::WORK_STEALING_PAR;
+                } else if (apply_parallel == "static-vertex-parallel") {
+                  cpu_parallel_type = CPUParallelType ::STATIC_PAR;
+                } else if (apply_parallel == "serial") {
+                  cpu_parallel_type = CPUParallelType ::SERIAL;
+                } else if (apply_parallel == "edge-aware-dynamic-vertex-parallel") {
+                  cpu_parallel_type = CPUParallelType ::WORK_STEALING_PAR;
+                }
+              }
+              void configQueueType(std::string queue) {
+                  if (queue == "sliding_queue") {
+                    queue_type = OutputQueueType::SLIDING_QUEUE;
+                  } else if (queue == "queue") {
+                    queue_type = OutputQueueType ::QUEUE;
+                  }
+                }
+
                 CPUParallelType getCPUParallelizationType() {
                     return cpu_parallel_type;
                 }
@@ -180,6 +219,77 @@ namespace graphit {
                 virtual ScheduleObject::Ptr getSecondScheduleObject() override {
                     return second_schedule;
                 }
+
+                void configApplyNumSSG(int ssg, std::string direction) {
+                  if (direction == "all") {
+                    first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                    second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                  }
+                  if (first_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PUSH) {
+                    if (direction == "push") {
+                      first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                    }
+                  } else if (first_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PULL) {
+                    if (direction == "pull") {
+                      first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                    }
+                  }
+
+                  if (second_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PUSH) {
+                    if (direction == "push") {
+                      second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                    }
+                  } else if (second_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PULL) {
+                    if (direction == "pull") {
+                      second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
+                    }
+                  }
+                }
+                void configApplyParallelization(std::string apply_parallel, std::string direction) {
+                  if (direction == "all") {
+                    first_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                    second_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                  }
+                  if (first_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PUSH) {
+                    if (direction == "push") {
+                      first_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                    }
+                  } else if (first_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PULL) {
+                    if (direction == "pull") {
+                      first_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                    }
+                  }
+
+                  if (second_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PUSH) {
+                    if (direction == "push") {
+                      second_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                    }
+                  } else if (second_schedule->to<SimpleCPUScheduleObject>()->getDirection() == SimpleCPUScheduleObject::DirectionType::PULL) {
+                    if (direction == "pull") {
+                      second_schedule->to<SimpleCPUScheduleObject>()->configApplyParallelization(direction);
+                    }
+                  }
+                }
+
+              void configDeduplication(bool enable) {
+                second_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
+                first_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
+              }
+
+              void configQueueType(std::string queue_type) {
+                second_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
+                first_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
+              }
+
+              void configApplyPriorityUpdateDelta(int update_delta) {
+                second_schedule->to<SimpleCPUScheduleObject>()->configApplyPriorityUpdateDelta(update_delta);
+                first_schedule->to<SimpleCPUScheduleObject>()->configApplyPriorityUpdateDelta(update_delta);
+              }
+
+              void configBucketMergeThreshold(int threshold) {
+                second_schedule->to<SimpleCPUScheduleObject>()->configBucketMergeThreshold(threshold);
+                first_schedule->to<SimpleCPUScheduleObject>()->configBucketMergeThreshold(threshold);
+              }
             };
         }
     }
