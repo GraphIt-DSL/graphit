@@ -8,7 +8,6 @@
 #include <string>
 #include <memory>
 #include <assert.h>
-//#include "high_level_schedule.h"
 
 namespace graphit {
     namespace fir {
@@ -25,10 +24,11 @@ namespace graphit {
                     return val;
                 }
 
-//                FlexIntVal(std::string argv){
-//                  int argv_num = high_level_schedule::ProgramScheduleNode::extractArgvNumFromStringArg(argv);
-//                  val = argv_num;
-//              }
+                FlexIntVal(const char* d){
+                  if (sscanf(d, "argv[%i]", &val) != 1) {
+                    assert(false && "Invalid option for FlexIntVal str argument.");
+                  }
+              }
             };
 
         class ScheduleObject: public std::enable_shared_from_this<ScheduleObject>{

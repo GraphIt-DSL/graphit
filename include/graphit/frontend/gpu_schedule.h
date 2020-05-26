@@ -310,7 +310,7 @@ public:
 			assert(false && "Invalid option for configDelta");
 		}
 		delta *= -1;
-        flex_delta = abstract_schedule::FlexIntVal(delta);
+        flex_delta = abstract_schedule::FlexIntVal(d);
 	}
 	void configBooleanType(enum gpu_schedule_options o) {
 		switch(o) {
@@ -335,8 +335,8 @@ public:
     typedef std::shared_ptr<HybridGPUSchedule> Ptr;
 	SimpleGPUSchedule s1;
 	SimpleGPUSchedule s2;
-	SimpleGPUSchedule::Ptr first_schedule;
-	SimpleGPUSchedule::Ptr second_schedule;
+	ScheduleObject::Ptr first_schedule;
+    ScheduleObject::Ptr second_schedule;
 	
 	float threshold;
 	int32_t argv_index;
