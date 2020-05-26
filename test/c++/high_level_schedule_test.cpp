@@ -2430,7 +2430,6 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
     program->configApplyParallelization("s1", "dynamic-vertex-parallel");
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configApplyPriorityUpdateDelta("s1", 2);
-    program->configBucketMergeThreshold("s1", 1000);
     program->setApply("s1", "disable_deduplication");
 
     ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
@@ -2438,10 +2437,10 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
 
     EXPECT_EQ(false, simple_schedule_object->isComposite());
     EXPECT_EQ(SimpleScheduleObject::Direction::PULL, simple_schedule_object->getDirection());
-//    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_schedule_object->getParallelizationType());
+    EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_schedule_object->getParallelizationType());
 //    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, simple_schedule_object->getPullFrontierType());
-//    EXPECT_EQ(2, simple_schedule_object->getDelta().getIntVal());
-//    EXPECT_EQ(SimpleScheduleObject::Deduplication::DISABLED, simple_schedule_object->getDeduplication());
+    EXPECT_EQ(2, simple_schedule_object->getDelta().getIntVal());
+    EXPECT_EQ(SimpleScheduleObject::Deduplication::DISABLED, simple_schedule_object->getDeduplication());
 }
 
 TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUDefaultsTest) {
@@ -2451,6 +2450,8 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUDefaultsTest) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program->setApply("s1", "sliding_queue");
 
     ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
     auto simple_schedule_object = scheduleObject->to<SimpleScheduleObject>();
