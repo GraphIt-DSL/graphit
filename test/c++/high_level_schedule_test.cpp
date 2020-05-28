@@ -2427,6 +2427,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "DensePull");
+    program->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
     program->configApplyParallelization("s1", "dynamic-vertex-parallel");
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configApplyPriorityUpdateDelta("s1", 2);
@@ -2438,7 +2439,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
     EXPECT_EQ(false, simple_schedule_object->isComposite());
     EXPECT_EQ(SimpleScheduleObject::Direction::PULL, simple_schedule_object->getDirection());
     EXPECT_EQ(SimpleScheduleObject::ParallelizationType::VERTEX_BASED, simple_schedule_object->getParallelizationType());
-//    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, simple_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, simple_schedule_object->getPullFrontierType());
     EXPECT_EQ(2, simple_schedule_object->getDelta().getIntVal());
     EXPECT_EQ(SimpleScheduleObject::Deduplication::DISABLED, simple_schedule_object->getDeduplication());
 }
@@ -2454,7 +2455,8 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUDefaultsTest) {
     program->setApply("s1", "sliding_queue");
 
     ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
-    auto simple_schedule_object = scheduleObject->to<SimpleScheduleObject>();
+    auto simple_cpu_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    auto simple_schedule_object = simple_cpu_schedule->self<SimpleScheduleObject>();
 
     EXPECT_EQ(false, simple_schedule_object->isComposite());
     EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, simple_schedule_object->getDirection());
@@ -2619,8 +2621,8 @@ TEST_F(HighLevelScheduleTest, HybridCPUScheduleObject_Test) {
     auto second_schedule_object = hybrid_cpu_schedule_object->getSecondScheduleObject()->to<SimpleCPUScheduleObject>();
 
     EXPECT_EQ(true, composite_schedule_object->isComposite());
-    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, first_schedule_object->getPullFrontierType());
-    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, second_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BOOLMAP, first_schedule_object->getPullFrontierType());
+    EXPECT_EQ(SimpleScheduleObject::PullFrontierType::BITMAP, second_schedule_object->getPullFrontierType());
     EXPECT_EQ(SimpleScheduleObject::Direction::PUSH, first_schedule_object->getDirection());
     EXPECT_EQ(SimpleScheduleObject::Direction::PULL, second_schedule_object->getDirection());
 }
@@ -2643,7 +2645,7 @@ TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
     ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
 
     auto simple_cpu_schedule_object = scheduleObject->to<SimpleCPUScheduleObject>();
-    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::PULL, simple_cpu_schedule_object->getCPUDirection());
+    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::DENSE_PULL, simple_cpu_schedule_object->getCPUDirection());
     EXPECT_EQ(SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR, simple_cpu_schedule_object->getCPUParallelizationType());
     EXPECT_EQ(2, simple_cpu_schedule_object->getPullLoadBalanceGrainSize().getIntVal());
     EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE, simple_cpu_schedule_object->getPriorityUpdateType());
@@ -2652,20 +2654,12 @@ TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
 }
 
 TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObjectDefaults_Test) {
-    istringstream is(bfs_str_);
     using namespace fir;
     using namespace fir::cpu_schedule;
     using namespace fir::abstract_schedule;
 
-    fe_->parseStream(is, context_, errors_);
-    fir::high_level_schedule::ProgramScheduleNode::Ptr program
-            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
-    auto simple_cpu_schedule_object = scheduleObject->to<SimpleCPUScheduleObject>();
-
-
-    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::PUSH, simple_cpu_schedule_object->getCPUDirection());
+    auto simple_cpu_schedule_object = std::make_shared<SimpleCPUScheduleObject>();
+    EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::DENSE_PUSH, simple_cpu_schedule_object->getCPUDirection());
     EXPECT_EQ(SimpleCPUScheduleObject::PriorityUpdateType::REDUCTION_BEFORE_UPDATE, simple_cpu_schedule_object->getPriorityUpdateType());
     EXPECT_EQ(1000, simple_cpu_schedule_object->getMergeThreshold().getIntVal());
     EXPECT_EQ(SimpleCPUScheduleObject::OutputQueueType::QUEUE, simple_cpu_schedule_object->getOutputQueueType());

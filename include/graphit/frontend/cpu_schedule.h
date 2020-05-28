@@ -31,7 +31,10 @@ class SimpleCPUScheduleObject :
     PUSH,
     PULL,
     HYBRID_DENSE,
-    HYBRID_DENSE_FORWARD
+    HYBRID_DENSE_FORWARD,
+    SPARSE_PUSH,
+    DENSE_PULL,
+    DENSE_PUSH
   };
 
   enum class FrontierType {
@@ -77,11 +80,10 @@ class SimpleCPUScheduleObject :
   abstract_schedule::FlexIntVal num_open_buckets;
 
  public:
-  SimpleCPUScheduleObject() {
+  SimpleCPUScheduleObject(std::string direction="DensePush") {
     cpu_pull_load_balance_type = CPUPullLoadBalanceType::VERTEX_BASED;
     cpu_parallel_type = CPUParallelType::SERIAL;
     cpu_pull_frontier_type = CPUPullFrontierType::BOOLMAP;
-    direction_type = DirectionType::PUSH;
     queue_type = OutputQueueType::QUEUE;
     deduplication_type = CPUDeduplicationType::ENABLED;
     priority_update_type = PriorityUpdateType::REDUCTION_BEFORE_UPDATE;
@@ -91,6 +93,22 @@ class SimpleCPUScheduleObject :
     numa_aware = false;
     merge_threshold = abstract_schedule::FlexIntVal(1000);
     num_open_buckets = abstract_schedule::FlexIntVal(128);
+
+    direction_type = DirectionType::DENSE_PUSH;
+    if (direction == "SparsePush") direction_type = DirectionType ::SPARSE_PUSH;
+    if (direction == "DensePull") direction_type = DirectionType ::DENSE_PULL;
+  }
+
+  static SimpleCPUScheduleObject::DirectionType translateDirection(std::string direction) {
+    if (direction == "SparsePush") return SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH;
+    if (direction == "DensePush") return SimpleCPUScheduleObject::DirectionType::DENSE_PUSH;
+    if (direction == "DensePull") return SimpleCPUScheduleObject::DirectionType::DENSE_PULL;
+    assert(false && "Direction not defined.");
+  }
+
+  SimpleCPUScheduleObject::Ptr cloneSchedule() {
+    SimpleCPUScheduleObject::Ptr new_object = std::make_shared<SimpleCPUScheduleObject>(*this);
+    return new_object;
   }
 
   SimpleScheduleObject::ParallelizationType getParallelizationType() override {
@@ -103,9 +121,12 @@ class SimpleCPUScheduleObject :
 
   SimpleScheduleObject::Direction getDirection() override {
     if (direction_type == DirectionType::PUSH
-        || direction_type == DirectionType::HYBRID_DENSE_FORWARD) {
+        || direction_type == DirectionType::HYBRID_DENSE_FORWARD
+        || direction_type == DirectionType::DENSE_PUSH
+        || direction_type == DirectionType::SPARSE_PUSH) {
       return SimpleScheduleObject::Direction::PUSH;
-    } else if (direction_type == DirectionType::PULL) {
+    } else if (direction_type == DirectionType::PULL
+        || direction_type == DirectionType::DENSE_PULL) {
       return SimpleScheduleObject::Direction::PULL;
     } else {
       // TODO(clhsu): Figure out what hybrid dense does
@@ -176,6 +197,10 @@ class SimpleCPUScheduleObject :
     num_segment = abstract_schedule::FlexIntVal(ssg);
   }
 
+  void configApplyNUMA(bool aware) {
+    numa_aware = aware;
+  }
+
   void configApplyParallelization(std::string apply_parallel) {
     if (apply_parallel == "dynamic-vertex-parallel") {
       cpu_parallel_type = CPUParallelType::WORK_STEALING_PAR;
@@ -185,6 +210,7 @@ class SimpleCPUScheduleObject :
       cpu_parallel_type = CPUParallelType::SERIAL;
     } else if (apply_parallel == "edge-aware-dynamic-vertex-parallel") {
       cpu_parallel_type = CPUParallelType::WORK_STEALING_PAR;
+      cpu_pull_load_balance_type = CPUPullLoadBalanceType::EDGE_BASED;
     }
   }
   void configQueueType(std::string queue) {
@@ -192,6 +218,26 @@ class SimpleCPUScheduleObject :
       queue_type = OutputQueueType::SLIDING_QUEUE;
     } else if (queue == "queue") {
       queue_type = OutputQueueType::QUEUE;
+    }
+  }
+
+  void configApplyPriorityUpdate(std::string priority_update) {
+    if (priority_update == "lazy_priority_update") {
+      priority_update_type = PriorityUpdateType ::REDUCTION_BEFORE_UPDATE;
+    } else if (priority_update == "eager_priority_update") {
+      priority_update_type = PriorityUpdateType ::EAGER_PRIORITY_UPDATE;
+    } else if (priority_update == "eager_priority_update_with_merge") {
+      priority_update_type = PriorityUpdateType ::EAGER_PRIORITY_UPDATE_WITH_MERGE;
+    } else if (priority_update == "constant_sum_reduce_before_update") {
+      priority_update_type = PriorityUpdateType ::CONST_SUM_REDUCTION_BEFORE_UPDATE;
+    } else {
+      assert(false && "Priority update type not recognized.");
+    }
+  }
+
+  void configApplyDenseVertexSet(std::string config) {
+    if (config == "bitvector") {
+      cpu_pull_frontier_type = CPUPullFrontierType ::BITVECTOR;
     }
   }
 
@@ -228,72 +274,6 @@ class HybridCPUScheduleObject :
     return second_schedule;
   }
 
-  void configApplyNumSSG(int ssg, std::string direction) {
-    if (direction == "all") {
-      first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-      second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-    }
-    if (first_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PUSH) {
-      if (direction == "push") {
-        first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-      }
-    } else if (first_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PULL) {
-      if (direction == "pull") {
-        first_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-      }
-    }
-
-    if (second_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PUSH) {
-      if (direction == "push") {
-        second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-      }
-    } else if (second_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PULL) {
-      if (direction == "pull") {
-        second_schedule->to<SimpleCPUScheduleObject>()->configApplyNumSSG(ssg);
-      }
-    }
-  }
-  void configApplyParallelization(std::string apply_parallel,
-      std::string direction) {
-    if (direction == "all") {
-      first_schedule->to<SimpleCPUScheduleObject>()
-          ->configApplyParallelization(direction);
-      second_schedule->to<SimpleCPUScheduleObject>()
-          ->configApplyParallelization(direction);
-    }
-    if (first_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PUSH) {
-      if (direction == "push") {
-        first_schedule->to<SimpleCPUScheduleObject>()
-            ->configApplyParallelization(direction);
-      }
-    } else if (first_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PULL) {
-      if (direction == "pull") {
-        first_schedule->to<SimpleCPUScheduleObject>()
-            ->configApplyParallelization(direction);
-      }
-    }
-
-    if (second_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PUSH) {
-      if (direction == "push") {
-        second_schedule->to<SimpleCPUScheduleObject>()
-            ->configApplyParallelization(direction);
-      }
-    } else if (second_schedule->to<SimpleCPUScheduleObject>()->getCPUDirection()
-        == SimpleCPUScheduleObject::DirectionType::PULL) {
-      if (direction == "pull") {
-        second_schedule->to<SimpleCPUScheduleObject>()
-            ->configApplyParallelization(direction);
-      }
-    }
-  }
-
   void configDeduplication(bool enable) {
     second_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
     first_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
@@ -303,21 +283,8 @@ class HybridCPUScheduleObject :
     second_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
     first_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
   }
-
-  void configApplyPriorityUpdateDelta(int update_delta) {
-    second_schedule->to<SimpleCPUScheduleObject>()
-        ->configApplyPriorityUpdateDelta(update_delta);
-    first_schedule->to<SimpleCPUScheduleObject>()
-        ->configApplyPriorityUpdateDelta(update_delta);
-  }
-
-  void configBucketMergeThreshold(int threshold) {
-    second_schedule->to<SimpleCPUScheduleObject>()
-        ->configBucketMergeThreshold(threshold);
-    first_schedule->to<SimpleCPUScheduleObject>()
-        ->configBucketMergeThreshold(threshold);
-  }
 };
+
 }  // namespace cpu_schedule
 }  // namespace fir
 }  // namespace graphit

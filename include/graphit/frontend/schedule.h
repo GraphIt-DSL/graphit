@@ -222,93 +222,69 @@ namespace graphit {
             std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
             BackendID backend_identifier;
 
-            fir::abstract_schedule::ScheduleObject::Ptr initOrGetScheduleObject(std::string apply_label, bool hybrid=false, std::string direction="") {
-              // no schedule found, then create a new one.
+            // initialize or grab an existing schedule object.
+          fir::abstract_schedule::ScheduleObject::Ptr initOrGetScheduleObject(std::string apply_label, std::string direction="all") {
+            // if a direction is not specified, then just return the schedule, creating a new one if necessary.
+            if (direction == "all") {
               if (schedule_map.find(apply_label) == schedule_map.end()) {
-                if (backend_identifier == BackendID::CPU) {
-                  if (hybrid) {
-                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr first_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr second_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                    fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(first_schedule, second_schedule);
-                    schedule_map[apply_label] = cpu_schedule_object;
-                  } else {
-                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                    schedule_map[apply_label] = cpu_schedule_object;
-                  }
-                }
-              }
-
-              // if schedule found.
-              else {
-                fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_map[apply_label];
-                if (backend_identifier == BackendID::CPU) {
-
-                  // if the scheduleObject is composite and a hybrid schedule is requested.
-                  if (schedule_object->isComposite() && hybrid) {
-                    return schedule_object;
-                  }
-
-                  // if the scheduleObject is not composite and a simple schedule is expected.
-                  else if (!schedule_object->isComposite() && !hybrid) {
-                    auto simple_schedule = schedule_object->self<fir::abstract_schedule::SimpleScheduleObject>();
-                    if (simple_schedule->getDirection()
-                        == fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH) {
-                      if (direction == "push" || direction == "") {
-                        return schedule_object;
-                      }
-                      // convert simple CPU schedule to hybrid CPU schedule. Store the current schedule object in the push object
-                      // and create a new pull schedule, return it.
-                      fir::cpu_schedule::SimpleCPUScheduleObject::Ptr
-                          new_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                      schedule_map[apply_label] =
-                          std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(simple_schedule, new_schedule);
-                      return new_schedule;
-                    }
-
-                    if (simple_schedule->getDirection() == fir::abstract_schedule::SimpleScheduleObject::Direction::PULL) {
-                      if (direction == "pull" || direction == "") {
-                        return schedule_object;
-                      }
-                      // convert simple CPU schedule to hybrid CPU schedule. Store the current schedule object in the pull object
-                      // and create a new push schedule, return it.
-                      fir::cpu_schedule::SimpleCPUScheduleObject::Ptr
-                          new_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                      schedule_map[apply_label] =
-                          std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(new_schedule, schedule_object);
-                      return new_schedule;
-                    }
-                  }
-
-                  // if the schedule is not composite and we want a hybrid schedule, then convert.
-                  else if (!schedule_object->isComposite() && hybrid) {
-                    // convert simple CPU schedule to hybrid CPU schedule.
-                    fir::abstract_schedule::SimpleScheduleObject::Ptr simple_schedule_object = schedule_object->to<fir::abstract_schedule::SimpleScheduleObject>();
-                    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr new_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
-                    if (simple_schedule_object->getDirection() == fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH) {
-                      fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(simple_schedule_object, new_schedule);
-                      schedule_map[apply_label] = cpu_schedule_object;
-                    } else {
-                      fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(new_schedule, simple_schedule_object);
-                      schedule_map[apply_label] = cpu_schedule_object;
-                    }
-                  }
-
-                  // if the schedule is composite, but we want a simple schedule, see if direction is specified.
-                  // if not, then just return the composite schedule.
-                  // otherwise, return the specified schedule.
-                  else {
-                    if (direction == "") {
-                      return schedule_object;
-                    } else if (direction == "push") {
-                      return schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject();
-                    } else {
-                      return schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject();
-                    }
-                  }
-                }
+                fir::cpu_schedule::SimpleCPUScheduleObject::Ptr
+                    cpu_schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                schedule_map[apply_label] = cpu_schedule_object;
               }
               return schedule_map[apply_label];
+            } else {
+              // if a direction is specified, then assert that the existing schedule's direction is the same, otherwise raise error.
+              if (schedule_map.find(apply_label) == schedule_map.end()) {
+                fir::cpu_schedule::SimpleCPUScheduleObject::Ptr
+                    cpu_schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                cpu_schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction));
+                schedule_map[apply_label] = cpu_schedule_object;
+                return schedule_map[apply_label];
+              } else {
+                fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_map[apply_label];
+                if (schedule_object->isComposite()) {
+                  return schedule_object;
+                }
+                auto schedule_direction = schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection();
+                if (fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction) == schedule_direction) {
+                  return schedule_object;
+                } else {
+                  assert(false && "Simple schedule direction does not match expected.");
+                }
+              }
             }
+          }
+
+          // convert a simple schedule to a hybrid CPU schedule.
+          fir::abstract_schedule::ScheduleObject::Ptr convertSimpleToHybrid(fir::abstract_schedule::ScheduleObject::Ptr simple_schedule, std::string hybrid_direction) {
+            assert(!simple_schedule->isComposite());
+            auto schedule_direction = simple_schedule->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection();
+            auto schedule_copy = simple_schedule->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->cloneSchedule();
+            if (hybrid_direction == "SparsePush-DensePull" || hybrid_direction == "DensePull-SparsePush") {
+              if(schedule_direction == fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH) {
+                schedule_copy->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PULL);
+              } else if (schedule_direction == fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PULL) {
+                schedule_copy->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH);
+              } else {
+                // trying to convert an existing schedule without either SparsePush or DensePull
+                assert(false && "Hybrid direction not valid for current direction.");
+              }
+            } else if (hybrid_direction == "DensePush-SparsePush" || hybrid_direction == "SparsePush-DensePush") {
+              if (schedule_direction == fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH) {
+                schedule_copy->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PUSH);
+              } else if (schedule_direction == fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PUSH) {
+                schedule_copy->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH);
+              } else {
+                // trying to convert an existing schedule without either SparsePush or DensePush
+                assert(false && "Hybrid direction not valid for current direction.");
+              }
+            } else {
+              assert(false && "direction not recognized.");
+            }
+
+            fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_hybrid_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(simple_schedule, schedule_copy);
+            return cpu_hybrid_object;
+          }
         };
 
         /**
