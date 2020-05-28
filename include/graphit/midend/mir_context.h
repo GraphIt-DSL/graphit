@@ -461,13 +461,15 @@ namespace graphit {
         std::vector<mir::Type::Ptr> types_requiring_typedef;
 
 
-	// Used by kernel fusion optimization
-	std::vector<mir::WhileStmt::Ptr> fused_while_loops;
-	std::vector<mir::HybridGPUStmt::Ptr> hybrid_gpu_stmts;
+
+	    // Used by kernel fusion optimization
+	    std::vector<mir::WhileStmt::Ptr> fused_while_loops;
+	    std::vector<mir::HybridGPUStmt::Ptr> hybrid_gpu_stmts;
 	
-	// Used by blocking optimization
-	std::unordered_map<std::string, uint32_t> graphs_with_blocking;
-	std::unordered_map<std::string, bool> graphs_with_transpose;
+	    // Used by blocking optimization
+	    std::unordered_map<std::string, uint32_t> graphs_with_blocking;
+	    std::unordered_map<std::string, bool> graphs_with_transpose;
+
     };
 
 }

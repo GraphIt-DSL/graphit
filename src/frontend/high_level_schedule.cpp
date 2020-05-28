@@ -305,6 +305,9 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
             } else if (apply_schedule_str == "num_open_buckets"){
                 (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
+            }  else if (apply_schedule_str == "grain_size"){
+                (*schedule_->apply_schedules)[apply_label].grain_size = parameter;
+
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -589,6 +592,54 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
+        high_level_schedule::ProgramScheduleNode::configIntersection(std::string intersection_label,
+                                                                       std::string intersection_option) {
+            // If no schedule has been constructed, construct a new one
+            if (schedule_ == nullptr) {
+                schedule_ = new Schedule();
+            }
+
+            // If no intersection schedule has been constructed, construct a new one
+            if (schedule_->intersection_schedules == nullptr) {
+                schedule_->intersection_schedules = new std::map<std::string, IntersectionSchedule::IntersectionType>();
+            }
+
+            if (schedule_->intersection_schedules->find(intersection_label) == schedule_->intersection_schedules->end()) {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
+            }
+
+
+            if (intersection_option == "HiroshiIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::HIROSHI;
+            }
+
+            else if (intersection_option == "MultiskipIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::MULTISKIP;
+            }
+
+            else if (intersection_option == "CombinedIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::COMBINED;
+            }
+
+            else if (intersection_option == "BinarySearchIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::BINARY;
+            }
+            else if (intersection_option == "NaiveIntersection") {
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
+            }
+
+            // if no valid intersection is specified, we use naive intersection.
+            else {
+                std::cout << "unsupported intersection: " << intersection_option << " using naive version instead" << std::endl;
+                (*schedule_->intersection_schedules)[intersection_label] = IntersectionSchedule::IntersectionType::NAIVE;
+            }
+
+            return this->shared_from_this();
+
+
+        }
+
+        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyParallelization(std::string apply_label,
                                                                              std::string apply_parallel, int grain_size,
                                                                              std::string direction) {
@@ -624,7 +675,8 @@ namespace graphit {
                 }
             }
 
-
+            // set apply config
+            setApply(apply_label, "grain_size", grain_size);
             //for now, we still use the old API, it will slowly be deprecated
             if (parallelCompatibilityMap_.find(apply_parallel) != parallelCompatibilityMap_.end()) {
                 std::string old_par_schedule = parallelCompatibilityMap_[apply_parallel];
@@ -881,6 +933,7 @@ namespace graphit {
                     0, // pull_load_balance_edge_grain_size
                     -100, // num_segment
                     1, // default delta
+                    256,
                     false, // enable_numa_aware?
                     1000, // merge threshold for eager prioirty queue
                     128   // default number of open buckets for lazy priority queue

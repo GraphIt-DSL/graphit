@@ -268,6 +268,64 @@ protected:
                                                       "end"
         );
 
+
+        const char* cc_pjump_char = ( "element Vertex end\n"
+                                      "element Edge end\n"
+                                      "\n"
+                                      "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                      "\n"
+                                      "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                      "const IDs : vector{Vertex}(int) = 1;\n"
+                                      "\n"
+                                      "const update: vector[1](int);\n"
+                                      "\n"
+                                      "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                      "    IDs[dst] min= IDs[src];\n"
+                                      "    %var src_id: Vertex = IDs[src];\n"
+                                      "    %var dst_id: Vertex = IDs[dst];\n"
+                                      "\n"
+                                      "    %IDs[dst_id] min= IDs[src_id];\n"
+                                      "    %IDs[src_id] min= IDs[dst_id];\n"
+                                      "end\n"
+                                      "\n"
+                                      "func init(v : Vertex)\n"
+                                      "     IDs[v] = v;\n"
+                                      "end\n"
+                                      "\n"
+                                      "func pjump(v: Vertex) \n"
+                                      "    var y: Vertex = IDs[v];\n"
+                                      "    var x: Vertex = IDs[y];\n"
+                                      "    if x != y\n"
+                                      "        IDs[v] = x;\n"
+                                      "        update[0] = 1;\n"
+                                      "    end\n"
+                                      "end\n"
+                                      "\n"
+                                      "func main()\n"
+                                      "    var n : int = edges.getVertices();\n"
+                                      "    for trail in 0:10\n"
+                                      "        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                      "        startTimer();\n"
+                                      "        vertices.apply(init);\n"
+                                      "        while (frontier.getVertexSetSize() != 0)\n"
+                                      "            #s1# var output: vertexset{Vertex} = edges.applyModified(updateEdge, IDs);\n"
+                                      "\t    delete frontier;\n"
+                                      "\t    frontier = output;\n"
+                                      "            update[0] = 1;\n"
+                                      "            while update[0] != 0\n"
+                                      "\t\tupdate[0] = 0;\n"
+                                      "\t\tvertices.apply(pjump);\n"
+                                      "            end\n"
+                                      "        end\n"
+                                      "        var elapsed_time : float = stopTimer();\n"
+                                      "\tdelete frontier;\n"
+                                      "        print \"elapsed time: \";\n"
+                                      "        print elapsed_time;\n"
+                                      "    end\n"
+                                      "end"
+        );
+
+
         const char* prd_char =  ("element Vertex end\n"
                                                        "element Edge end\n"
                                                        "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
@@ -565,18 +623,18 @@ protected:
                                  "const f_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
                                  "const g_score : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
                                  "const pq: priority_queue{Vertex}(int);"
-
+                                 "const dst_vertex : Vertex;\n"
                                  "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
                                  "  var new_f_score : int = f_score[src] + weight; "
                                  "  var changed : bool = writeMin(f_score[dst], new_f_score);"
                                  "  if changed \n"
-                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst), g_score[src]);"
+                                 "    var new_g_score : int = max(new_f_score + calculate_distance(src, dst_vertex), g_score[src]);"
                                  "    pq.updatePriorityMin(dst, g_score[dst], new_g_score); "
                                  "  end\n"
                                  "end\n"
                                  "func main() "
                                  "  var start_vertex : int = atoi(argv[2]);"
-                                 "  var dst_vertex : int = atoi(argv[3]);"
+                                 "  dst_vertex = atoi(argv[3]);"
                                  "  load_coords(argv[1]);"
                                  "  pq = new priority_queue{Vertex}(int)(false, false, g_score, 1, 2, false, start_vertex);"
                                  "  while (pq.finishedNode(dst_vertex) == false) "
@@ -763,6 +821,52 @@ protected:
                                             "    print elapsed_time;\n"
                                             "end");
 
+        const char* simple_intersection = ("element Vertex end\n"
+                                           "element Edge end\n"
+                                           "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                           "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "func main() "
+                                           "#s1# const inter: uint_64 = intersection(vertices1, vertices2, 0, 0);\n"
+                                           "end\n");
+
+        const char* simple_intersection_opt = ("element Vertex end\n"
+                                           "element Edge end\n"
+                                           "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                           "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                                           "func main() "
+                                           "#s1# const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n"
+                                           "end\n");
+
+        const char* simple_intersect_neigh_opt = ("element Vertex end\n"
+                                               "element Edge end\n"
+                                               "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                                               "const src : int = 0;\n"
+                                               "const dest : int = 1;\n"
+                                               "func main() "
+                                               "#s1# const inter: uint_64 = intersectNeighbor(edges, src, dest);\n"
+                                               "end\n");
+
+        const char* bc_functor = ("element Vertex end\n"
+                                 "element Edge end\n"
+                                 "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                 "const simpleArray: vector{Vertex}(int) = 0;\n"
+                                 "const visited: vector{Vertex}(bool) = false;"
+                                 "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                                 "    a[src] += a[dst];"
+                                 "end\n"
+                                 "func visited_filter(v : Vertex) -> output : bool\n"
+                                 "     output = (visited[v] == false);\n"
+                                 "end\n"
+                                 "func main()\n"
+                                 "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                 "frontier.addVertex(3)\n;"
+                                 "    var local_array: vector{Vertex}(int) = 0;"
+                                 "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                                 "end\n");
+
         bfs_str_ =  string (bfs_char);
         bfs_str_gpu_ =  string (bfs_char_gpu);
         pr_str_ = string(pr_char);
@@ -771,6 +875,7 @@ protected:
         sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
+        cc_pjump_str_ = string  (cc_pjump_char);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
@@ -785,6 +890,10 @@ protected:
         kcore_uint_str_ = string(kcore_uint_char);
         unordered_kcore_str_ = string (unordered_kcore_char);
         setcover_uint_str_ = string(setcover_uint_char);
+        simple_intersection_str_ = string(simple_intersection);
+        simple_intersection_opt_str_ = string(simple_intersection_opt);
+        simple_intersect_neigh_opt_str_ = string(simple_intersect_neigh_opt);
+        bc_functor_str_ = string(bc_functor);
     }
 
     virtual void TearDown() {
@@ -863,6 +972,7 @@ protected:
     string sssp_async_str_;
     string cf_str_;
     string cc_str_;
+    string cc_pjump_str_;
     string prd_str_;
     string prd_double_str_;
     string pr_cc_str_;
@@ -877,6 +987,10 @@ protected:
     string kcore_uint_str_;
     string setcover_uint_str_;
     string unordered_kcore_str_;
+    string simple_intersection_str_;
+    string simple_intersection_opt_str_;
+    string simple_intersect_neigh_opt_str_;
+    string bc_functor_str_;
 };
 
 TEST_F(HighLevelScheduleTest, SimpleStructHighLevelSchedule) {
@@ -957,7 +1071,6 @@ TEST_F(HighLevelScheduleTest, SimpleLoopIndexSplit) {
     EXPECT_EQ (2, main_func_decl->body->stmts.size());
 
 }
-
 
 /**
  * A test case that tries to break the 10 iters loop into a 2 iters and a 8 iters loop
@@ -1091,6 +1204,137 @@ TEST_F(HighLevelScheduleTest, SimpleLabelForVarDecl) {
 
 }
 
+TEST_F(HighLevelScheduleTest, SimpleLabelForVarDeclWithDifferentGrainSize) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vector_a : vector{Vertex}(float) = 0.0;\n"
+                     "func srcAddOne(src : Vertex, dst : Vertex) "
+                     "vector_a[src] += 1; end\n"
+                     "func srcAddTwo(src : Vertex, dst : Vertex) "
+                     "vector_a[src] += 2; end\n"
+                     "func main() "
+                     "    #s1# edges.apply(srcAddOne); "
+                     "end");
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program_schedule_node
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program_schedule_node = program_schedule_node->configApplyDirection("s1", "SparsePush");
+    program_schedule_node->configApplyParallelization("s1", "dynamic-vertex-parallel", 1);
+    // Expects that the program still compiles
+    EXPECT_EQ (0,  basicTestWithSchedule(program_schedule_node));
+
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionHiroshi) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionMultiskip) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "MultiskipIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionCombined) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "CombinedIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionBinary) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "BinarySearchIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionWithOptional) {
+    istringstream is(simple_intersection_opt_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectionWithDifferentScheduler) {
+    istringstream is(simple_intersection_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s2", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, SimpleIntersectNeigh) {
+    istringstream is(simple_intersect_neigh_opt_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configIntersection("s1", "HiroshiIntersection");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, BCFunctorTest) {
+    istringstream is(bc_functor_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     istringstream is (bfs_str_);
     fe_->parseStream(is, context_, errors_);
@@ -1197,6 +1441,16 @@ TEST_F(HighLevelScheduleTest, CCNoSchedule) {
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, CCPJUMPNoSchedule) {
+    istringstream is (cc_pjump_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
 
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
@@ -2155,6 +2409,14 @@ TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithDefaultSchedule) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, AStarDeltaSteppingWithDefaultSchedule) {
+istringstream is (ppsp_str_);
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, PPSPDeltaSteppingWithSparsePushParallelSchedule) {

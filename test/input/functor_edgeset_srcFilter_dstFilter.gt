@@ -1,0 +1,43 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func updateEdge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)
+    a[src] += 67;
+    a[dst] += 63;
+end
+
+func initArray[a: vector{Vertex}(int)](v : Vertex)
+
+    if v == 4
+        a[v] = 10;
+    end
+
+    if v == 1
+        a[v] = 5;
+    end
+
+end
+
+func filter_sources[a: vector{Vertex}(int)](v : Vertex) -> output: bool
+    output = (a[v] < 2);
+end
+
+func filter_dests[a: vector{Vertex}(int)](v : Vertex) -> output: bool
+    output = (a[v] > 3);
+end
+
+func main()
+
+    var simpleArray: vector{Vertex}(int) = 0;
+    vertices.apply(initArray[simpleArray]);
+
+    % only edge should be (1, 4)
+    edges.srcFilter(filter_sources[simpleArray]).dstFilter(filter_dests[simpleArray]).apply(updateEdge[simpleArray]);
+
+    % answer should be (5 + 2*67) + (10 + 2*63) = 275
+    print simpleArray.sum();
+    delete simpleArray;
+
+end

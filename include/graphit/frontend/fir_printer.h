@@ -102,10 +102,12 @@ namespace graphit {
             virtual void visit(PriorityQueueType::Ptr);
             virtual void visit(PriorityQueueAllocExpr::Ptr);
 
+            virtual void visit(FuncExpr::Ptr);
             virtual void visit(MethodCallExpr::Ptr);
             virtual void visit(ApplyExpr::Ptr);
             virtual void visit(WhereExpr::Ptr);
-
+            virtual void visit(IntersectionExpr::Ptr);
+            virtual void visit(IntersectNeighborExpr::Ptr);
             virtual void visit(EdgeSetLoadExpr::Ptr);
             virtual void visit(StringLiteral::Ptr);
 

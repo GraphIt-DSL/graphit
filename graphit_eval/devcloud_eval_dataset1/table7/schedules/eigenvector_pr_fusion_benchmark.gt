@@ -1,0 +1,64 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
+const new_rank : vector{Vertex}(float) = 0.0;
+
+const old_ec : vector{Vertex}(float) = 1.0/vertices.size();
+const new_ec : vector{Vertex}(float) = 0.0;
+
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+const error : vector{Vertex}(float) = 0.0;
+
+const damp : float = 0.85;
+const beta_score : float = (1.0 - damp) / vertices.size();
+
+func updateEdge(src : Vertex, dst : Vertex)
+    new_rank[dst] += old_rank[src] / out_degree[src];
+end
+
+func updateEdgeEigenVector(src : Vertex, dst : Vertex)
+    new_ec[dst] += old_ec[src];
+end
+
+func updatePRVertex(v : Vertex)
+    var old_score : float = old_rank[v];
+    new_rank[v] = beta_score + damp*(new_rank[v]);
+    error[v] = fabs(new_rank[v] - old_rank[v]);
+    old_rank[v] = new_rank[v];
+    new_rank[v] = 0.0;
+end
+
+func updateECVertex(v : Vertex)
+    old_ec[v] = new_ec[v];
+    new_ec[v] = 0.0;
+end
+
+
+func main()
+
+    startTimer();
+
+    #l1# for i in 1:10
+        #s1# edges.apply(updateEdge);
+        vertices.apply(updatePRVertex);
+    end
+    #l2# for i in 1:10
+         #s1# edges.apply(updateEdgeEigenVector);
+         vertices.apply(updateECVertex);
+    end
+    print error.sum();
+
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end
+
+schedule:
+    program->fuseFields({"old_rank", "out_degree", "old_ec"})->fuseForLoop("l1", "l2", "l3");
+    program->fuseApplyFunctions("l3:l1:s1", "l3:l2:s1", "fused_kernel");
+    program->configApplyParallelization("l3:l1:s1", "dynamic-vertex-parallel");

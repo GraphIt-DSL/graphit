@@ -12,8 +12,8 @@ using namespace std;
 //    ADJACENCY ARRAY REPRESENTATION
 // **************************************************************
 
-// Class that handles implementation specific freeing of memory 
-// owned by the graph 
+// Class that handles implementation specific freeing of memory
+// owned by the graph
 struct Deletable {
 public:
   virtual void del() = 0;
@@ -36,11 +36,11 @@ graph(vertex* VV, long nn, long mm, Deletable* DD, uintE* _flags) : V(VV), n(nn)
   }
 
   void transpose() {
-    if ((sizeof(vertex) == sizeof(asymmetricVertex)) || 
+    if ((sizeof(vertex) == sizeof(asymmetricVertex)) ||
         (sizeof(vertex) == sizeof(compressedAsymmetricVertex))) {
-      parallel_for(long i=0;i<n;i++) {
-        V[i].flipEdges();
-      }
+      ligra::parallel_for_lambda((long)0, (long)n, [&] (long i) {
+          V[i].flipEdges();
+        });
       transposed = !transposed;
     }
   }

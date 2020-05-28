@@ -1,0 +1,25 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+
+func basicFunc1[array: vector{Vertex}(int)]() -> output: vector{Vertex}(int)
+    output = array;
+end
+
+func basicFunc2() -> output: vector{Vertex}(int)
+    var a: vector{Vertex}(int) = 3;
+    output = a;
+end
+
+func main()
+    var array : vector{Vertex}(int) = 1;
+
+    var array2 : vector{Vertex}(int) = basicFunc1[array]();
+
+    var array3 : vector{Vertex}(int) = basicFunc2();
+
+    print array2.sum() + array3.sum();
+    delete array;
+end

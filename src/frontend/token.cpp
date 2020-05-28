@@ -34,6 +34,10 @@ namespace graphit {
                 return "'-'";
             case Token::Type::INT:
                 return "'int'";
+            case Token::Type::UINT:
+                return "'uint'";
+            case Token::Type::UINT_64:
+                return "'uint64_t'";
             case Token::Type::FLOAT:
                 return "'float'";
             case Token::Type::DOUBLE:
@@ -110,6 +114,10 @@ namespace graphit {
                 return "'new'";
             case Token::Type::DELETE:
                 return "'delete'";
+            case Token::Type::INTERSECTION:
+                return "'intersection'";
+            case Token::Type::INTERSECT_NEIGH:
+                return "'intersectNeighbor'";
             case Token::Type::RARROW:
                 return "'->'";
             case Token::Type::LP:
@@ -253,6 +261,31 @@ namespace graphit {
         }
 
         return *it;
+    }
+
+    bool TokenStream::contains(Token::Type tokenType) const {
+        auto it = tokens.cbegin();
+        while(it != tokens.cend()){
+            Token foundToken = *it;
+            if (foundToken.type == tokenType) return true;
+            it++;
+        }
+        return false;
+
+    }
+
+    int TokenStream::findFirstOccurence(Token::Type tokenType) const {
+        auto it = tokens.cbegin();
+
+        int count = 0;
+        while(it != tokens.cend()){
+            Token foundToken = *it;
+            if (foundToken.type == tokenType) return count;
+            it++;
+            count++;
+        }
+        return -1;
+
     }
 
     std::ostream &operator <<(std::ostream &out, const TokenStream &tokens) {

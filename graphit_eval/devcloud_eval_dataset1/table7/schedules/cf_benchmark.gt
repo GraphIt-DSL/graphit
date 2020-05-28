@@ -1,0 +1,52 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const latent_vec : vector{Vertex}(vector[20](double));
+const error_vec : vector{Vertex}(vector[20](double));
+const step : double = 0.00000035;
+const lambda : double = 0.001;
+const K : int = 20;
+
+func updateEdge (src : Vertex, dst : Vertex, rating : int)
+    var estimate : double = 0;
+    for i in 0:K
+        estimate  += latent_vec[src][i] * latent_vec[dst][i];
+    end
+    var err : double =  rating - estimate;
+    for i in 0:K
+        error_vec[dst][i] += latent_vec[src][i]*err;
+    end
+end
+
+func updateVertex (v : Vertex)
+     for i in 0:K
+        latent_vec[v][i] += step*(-lambda*latent_vec[v][i] + error_vec[v][i]);
+        error_vec[v][i] = 0;
+     end
+end
+
+func initVertex (v : Vertex)
+    for i in 0:K
+        latent_vec[v][i] = 0.5;
+        error_vec[v][i] = 0;
+    end
+end
+
+func main()
+    for trail in 0:10
+        startTimer();
+        vertices.apply(initVertex);
+        for i in 0:10
+            #s1# edges.apply(updateEdge);
+            vertices.apply(updateVertex);
+        end
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel")->setApply("s1", "pull_edge_based_load_balance");

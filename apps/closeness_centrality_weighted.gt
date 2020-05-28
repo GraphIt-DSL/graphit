@@ -1,0 +1,41 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex, int) = load ("../../test/graphs/test_closeness_sssp.wel");
+const vertices : vertexset{Vertex} = edges.getVertices();
+const starting_node : int = 3;
+
+const distance_from_start : vector{Vertex}(int) = 21474836;
+func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool
+           distance_from_start[dst] min= (distance_from_start[src] + weight);
+end
+
+func final_vertex_f(v : Vertex)
+    if distance_from_start[v] == 21474836
+        distance_from_start[v] = 0;
+    end
+end
+
+func main()
+  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+  frontier.addVertex(starting_node);
+  distance_from_start[starting_node] = 0;
+  var n : int = edges.getVertices();
+  var rounds : int = 0;
+  while (frontier.getVertexSetSize() != 0)
+      #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, distance_from_start);
+      delete frontier;
+      frontier = output;
+      rounds = rounds + 1;
+      if  rounds == n
+         print "negative cycle";
+         break;
+      end
+  end
+  delete frontier;
+  vertices.apply(final_vertex_f);
+  var score: int = distance_from_start.sum();
+
+  print "score: ";
+  print score;
+end

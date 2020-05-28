@@ -24,6 +24,7 @@ namespace graphit {
             NEG,
             INT,
             UINT,
+            UINT_64,
             FLOAT,
             BOOL,
             COMPLEX,
@@ -62,6 +63,8 @@ namespace graphit {
             PRINTLN,
             NEW,
             DELETE,
+            INTERSECTION,
+            INTERSECT_NEIGH,
             RARROW,
             LP,
             RP,
@@ -142,6 +145,11 @@ namespace graphit {
         void addToken(Token::Type, unsigned, unsigned, unsigned = 1);
 
         Token peek(unsigned) const;
+
+        bool contains(Token::Type tokenType) const;
+
+        //Finds the first occurence of the token type from the stream of tokens and return its' relative index.
+        int findFirstOccurence(Token::Type tokenType) const;
 
         void skip() { tokens.pop_front(); }
         bool consume(Token::Type);

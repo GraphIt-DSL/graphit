@@ -1,0 +1,18 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+
+func addOne[array: vector{Vertex}(int)](v: Vertex)
+    array[v] += 1;
+end
+
+func main()
+    var array : vector{Vertex}(int) = 0;
+
+    vertices.apply(addOne[array]);
+
+    print array.sum();
+    delete array;
+end

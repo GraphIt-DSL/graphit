@@ -60,6 +60,51 @@ TEST_F(BackendTest, SimpleVarDecl) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+
+TEST_F(BackendTest, UINTGlobalDecl) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64GlobalDecl) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0,  basicTest(is));
+}
+
+TEST_F(BackendTest, UINTGlobalLocalIncr) {
+    istringstream is("const a : uint = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64GlobalLocalIncr) {
+    istringstream is("const a : uint_64 = 0;\n"
+                     "func main() a += 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTReassign) {
+    istringstream is("const a : uint;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64Reassign) {
+    istringstream is("const a : uint_64;\n"
+                     "func main() a = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINTLocalDec) {
+    istringstream is("func main() const a : uint = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, UINT64LocalDec) {
+    istringstream is("func main() const a : uint_64 = 1; end");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleDoubleVarDecl) {
     istringstream is("const a : double = 3; \n func main()  end");
     EXPECT_EQ (0, basicTest(is));
@@ -118,6 +163,19 @@ TEST_F(BackendTest, SimpleVertexSetDeclAlloc) {
                              "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleUINTVector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleUINT64Vector) {
+    istringstream is("element Vertex end\n"
+                     "const vector_a : vector{Vertex}(uint_64) = 0;\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
 
 TEST_F(BackendTest, SimpleVertexSetDeclAllocWithMain) {
     istringstream is("element Vertex end\n"
@@ -934,3 +992,201 @@ TEST_F(BackendTest, GlobalConstantSizeVectorTest) {
                      "end");
     EXPECT_EQ (0, basicTest(is));
 }
+
+TEST_F(BackendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, vertices2);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersection(vertices1, vertices2, 0, 0);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectionOperatorWithOptional) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0, 5);\n");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, SimpleIntersectNeighborOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "const inter : uint_64 = intersectNeighbor(edges, src, dest);\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(BackendTest, SimpleIntersectNeighborOperatorInsideMain) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const src : int = 0;\n"
+                     "const dest: int = 0;\n"
+                     "func main()\n"
+                     "     var inter : uint_64 = intersectNeighbor(edges, src, dest);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+
+TEST_F(BackendTest, VectorInitWithoutVertex) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);\n"
+                     "% const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertexArray: vector{Vertex}(int) = 0;\n"
+                     "func main()\n"
+                     "     print vertexArray;\n"
+                     "end");
+    EXPECT_EQ (0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, FunctorOneStateTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    vertices.apply(addStuff[test]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, FunctorMultipleStatesTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int, b: float](v: Vertex)\n"
+                     "    print b;\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    var test_v2: float = 5.0;\n"
+                     "    vertices.apply(addStuff[test, test_v2]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, FunctorEdgesetApplyModified) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "const visited: vector{Vertex}(bool) = false;"
+                     "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                     "    a[src] += a[dst];"
+                     "end\n"
+                     "func visited_filter(v : Vertex) -> output : bool\n"
+                     "     output = (visited[v] == false);\n"
+                     "end\n"
+                     "func main()\n"
+                     "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                     "frontier.addVertex(3)\n;"
+                     "    var local_array: vector{Vertex}(int) = 0;"
+                     "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+TEST_F(BackendTest, ExportLocalVectorWithNew) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(vector[1](float));\n"
+                     "const simpleArray2: vector{Vertex}(vector[1](int));\n"
+                     "const K: int = 1;\n"
+                     "func initVertex (v : Vertex)\n"
+                     "      for i in 0:K\n"
+                     "          simpleArray[v][i] = 0.5;\n"
+                     "          simpleArray2[v][i] = 0;\n"
+                     "      end\n"
+                     "end\n"
+                     "export func export_func() -> output : vector{Vertex}(vector[1](float))\n"
+                     "    simpleArray = new vector{Vertex}(vector[1](float))();\n"
+                     "    simpleArray2 = new vector{Vertex}(vector[1](int))();\n"
+                     "    vertices.apply(initVertex);\n"
+                     "    output = simpleArray;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(BackendTest, SrcFilterDstFilterApplyFunctor) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func update[age: vector{Vertex}(int)] (src: Vertex, dst: Vertex) age[dst] = 0; end\n"
+                     "func to_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] < 60); end\n"
+                     "func from_filter[age: vector{Vertex}(int)] (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+                     "func main()\n"
+                     "var age: vector{Vertex}(int) = 0;\n"
+                     "var active_vertices : vertexset{Vertex} = "
+                     "edges.srcFilter(from_filter[age]).dstFilter(to_filter[age]).apply(update[age]);\n"
+                     "end\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+//TODO: should be supported soon
+TEST_F(BackendTest, LocalVector) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()"
+                     "    var simpleArray: vector{Vertex}(vector[1](int)) = 0;\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+

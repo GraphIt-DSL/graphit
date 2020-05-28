@@ -152,7 +152,13 @@ namespace sequence {
     return reduce<OT>((intT)0,n,addF<OT>(),getA<OT,intT>(A));
   }
 
-  // g is the map function (applied to each element)
+  template <class OT, class intT>
+  OT maxReduce(OT* A, intT n) {
+    return reduce<OT>((intT)0, n, maxF<OT>(), getA<OT,intT>(A));
+  }
+
+
+    // g is the map function (applied to each element)
   // f is the reduce function
   // need to specify OT since it is not an argument
   template <class OT, class IT, class intT, class F, class G>

@@ -36,7 +36,7 @@ namespace graphit {
             return;
         }
 
-        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function_name);
+        mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function->function_name->name);
         auto edgeset_str = mir::to<mir::VarExpr>(apply_expr->target)->var.getName();
         auto merge_reduce = std::make_shared<mir::MergeReduceField>();
         mir_context_->edgeset_to_label_to_merge_reduce[edgeset_str][apply_schedule->second.scope_label_name] = merge_reduce;
@@ -60,7 +60,13 @@ namespace graphit {
                 return;
             auto target_expr = mir::to<mir::VarExpr>(tensor_read_expr->target);
             merge_reduce_->field_name = target_expr->var.getName();
-            merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
+
+            // TODO this is a hack to get around with local vector initialization. getVectorItemType only works for global arrays.
+            // But it works fine for now, because this optimization won't work for local arrays.
+            if (mir_context_->getVectorItemType(merge_reduce_->field_name) != nullptr) {
+                merge_reduce_->scalar_type = mir::to<mir::ScalarType>(mir_context_->getVectorItemType(merge_reduce_->field_name));
+            }
+
             merge_reduce_->reduce_op = reduce_stmt->reduce_op_;
 
             if (merge_reduce_->numa_aware) {

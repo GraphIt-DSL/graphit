@@ -15,21 +15,21 @@ namespace graphit {
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->input_function->function_name->name, apply_expr->tracking_field);
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->input_function->function_name->name, apply_expr->tracking_field);
     }
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->input_function->function_name->name, apply_expr->tracking_field);
     }
 
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-        processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
-        processSingleFunctionApplyExpr(apply_expr->push_function_, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->input_function->function_name->name, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->push_function_->function_name->name, apply_expr->tracking_field);
 
     }
 
@@ -186,7 +186,7 @@ namespace graphit {
             //TODO: in the future, if we have multiple writes to the field, may be we need to create a big OR expression
 
             //for now, assume we only write to the field once
-            assert(field_vector_variable_map_[field_vector_name].size() == 1);
+            //assert(field_vector_variable_map_[field_vector_name].size() == 1);
 
             //this is a variable to be set
             auto bool_type = std::make_shared<mir::ScalarType>();

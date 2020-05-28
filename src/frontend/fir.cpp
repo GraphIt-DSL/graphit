@@ -743,6 +743,12 @@ namespace graphit {
             for (const auto &genericArg : callExpr->genericArgs) {
                 genericArgs.push_back(genericArg->clone<IndexSet>());
             }
+
+            for (const auto &arg : callExpr->functorArgs) {
+                functorArgs.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
+            }
+
+
             for (const auto &arg : callExpr->args) {
                 args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
             }
@@ -1029,6 +1035,39 @@ namespace graphit {
             return node;
         }
 
+        void IntersectionExpr::copy(FIRNode::Ptr node) {
+            const auto intersection_expr = to<IntersectionExpr>(node);
+            Expr::copy(intersection_expr);
+            vertex_a = intersection_expr->vertex_a->clone<Expr>();
+            vertex_b = intersection_expr->vertex_b->clone<Expr>();
+            numA = intersection_expr->numA->clone<Expr>();
+            numB = intersection_expr->numB->clone<Expr>();
+            reference = intersection_expr->reference->clone<Expr>();
+        }
+
+
+        FIRNode::Ptr IntersectionExpr::cloneNode() {
+            const auto node = std::make_shared<IntersectionExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void IntersectNeighborExpr::copy(FIRNode::Ptr node) {
+            const auto intersection_expr = to<IntersectNeighborExpr>(node);
+            Expr::copy(intersection_expr);
+            edges = intersection_expr->edges->clone<Expr>();
+            vertex_a = intersection_expr->vertex_a->clone<Expr>();
+            vertex_b = intersection_expr->vertex_b->clone<Expr>();
+        }
+
+
+        FIRNode::Ptr IntersectNeighborExpr::cloneNode() {
+            const auto node = std::make_shared<IntersectNeighborExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
         void EdgeSetLoadExpr::copy(FIRNode::Ptr node) {
             //TODO: figure out what the copy operator should do
             const auto edge_set_load_expr = to<EdgeSetLoadExpr>(node);
@@ -1085,18 +1124,37 @@ namespace graphit {
             }
         }
 
+
         FIRNode::Ptr MethodCallExpr::cloneNode() {
             const auto node = std::make_shared<MethodCallExpr>();
             node->copy(shared_from_this());
             return node;
         }
 
+        void FuncExpr::copy(FIRNode::Ptr node) {
+            const auto funcExpr = to<FuncExpr>(node);
+            Expr::copy(funcExpr);
+            name = funcExpr->name->clone<Identifier>();
+            for (const auto &arg : funcExpr->args) {
+                args.push_back(arg ? arg->clone<Expr>() : Expr::Ptr());
+            }
+
+        }
+
+
+        FIRNode::Ptr FuncExpr::cloneNode() {
+            const auto node = std::make_shared<FuncExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+
 
         void ApplyExpr::copy(FIRNode::Ptr node) {
             const auto apply_expr = to<ApplyExpr>(node);
             Expr::copy(apply_expr);
             target = apply_expr->target->clone<Expr>();
-            input_function = apply_expr->input_function->clone<Identifier>();
+            input_function = apply_expr->input_function->clone<FuncExpr>();
             type = apply_expr->type;
 
             if (apply_expr->from_expr){
@@ -1117,7 +1175,7 @@ namespace graphit {
             const auto where_expr = to<WhereExpr>(node);
             Expr::copy(where_expr);
             target = where_expr->target->clone<Expr>();
-            input_func = where_expr->input_func->clone<Identifier>();
+            input_func = where_expr->input_func->clone<FuncExpr>();
         }
 
         FIRNode::Ptr WhereExpr::cloneNode() {
@@ -1129,7 +1187,7 @@ namespace graphit {
         void FromExpr::copy(FIRNode::Ptr node) {
             const auto from_expr = to<FromExpr>(node);
             Expr::copy(from_expr);
-            input_func = from_expr->input_func->clone<Identifier>();
+            input_func = from_expr->input_func->clone<FuncExpr>();
        }
 
         FIRNode::Ptr FromExpr::cloneNode() {
@@ -1141,7 +1199,7 @@ namespace graphit {
         void ToExpr::copy(FIRNode::Ptr node) {
             const auto from_expr = to<ToExpr>(node);
             Expr::copy(from_expr);
-            input_func = from_expr->input_func->clone<Identifier>();
+            input_func = from_expr->input_func->clone<FuncExpr>();
         }
 
         FIRNode::Ptr ToExpr::cloneNode() {

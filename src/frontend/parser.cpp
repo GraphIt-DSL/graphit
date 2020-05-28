@@ -201,6 +201,7 @@ namespace graphit {
             decls.scope();
 
             funcDecl->genericParams = parseGenericParams();
+            funcDecl->functorArgs = parseFunctorArgs();
             funcDecl->args = parseArguments();
             funcDecl->results = parseResults();
 
@@ -262,7 +263,27 @@ namespace graphit {
         return genericParam;
     }
 
-// arguments: '(' [argument_decl {',' argument_decl}] ')'
+    // arguments: '(' [argument_decl {',' argument_decl}] ')'
+    std::vector<fir::Argument::Ptr> Parser::parseFunctorArgs() {
+        std::vector<fir::Argument::Ptr> arguments;
+
+        if (tryConsume(Token::Type::LB)){
+            if (peek().type != Token::Type::RP) {
+                do {
+                    const fir::Argument::Ptr argument = parseArgumentDecl();
+                    arguments.push_back(argument);
+                } while (tryConsume(Token::Type::COMMA));
+            }
+            consume(Token::Type::RB);
+
+        }
+
+        return arguments;
+    }
+
+
+
+    // arguments: '(' [argument_decl {',' argument_decl}] ')'
     std::vector<fir::Argument::Ptr> Parser::parseArguments() {
         std::vector<fir::Argument::Ptr> arguments;
 
@@ -392,7 +413,7 @@ namespace graphit {
             varDecl->name = parseIdent();
             if (tryConsume(Token::Type::COL)) {
                 // Extend the grammar to support more than just tensor types
-                //varDecl->type = parseTensorType();
+                // varDecl->type = parseTensorType();
                 varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
                     varDecl->initVal = parseExpr();
@@ -881,6 +902,10 @@ namespace graphit {
                 return parseNewExpr();
             case Token::Type::LOAD:
                 return parseLoadExpr();
+            case Token::Type::INTERSECTION:
+                return parseIntersectionExpr();
+            case Token::Type::INTERSECT_NEIGH:
+                return parseIntersectNeighborExpr();
             default:
                 return parseOrExpr();
         }
@@ -1214,19 +1239,20 @@ namespace graphit {
             if (tryConsume(Token::Type::FROM) || tryConsume(Token::Type::SRC_FILTER)) {
                 consume(Token::Type::LP);
                 from_expr = std::make_shared<fir::FromExpr>();
-                from_expr->input_func = parseIdent();
+                from_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
                 // right now this is a bit of a hack, dstFilter and to act the same in the compiler
             } else if (tryConsume(Token::Type::TO) || tryConsume(Token::Type::DST_FILTER)) {
                 consume(Token::Type::LP);
                 to_expr = std::make_shared<fir::ToExpr>();
-                to_expr->input_func = parseIdent();
+                to_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
             } else if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                //apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
@@ -1236,7 +1262,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::COMMA);
                 auto change_tracking_field = parseIdent();
                 apply_expr->change_tracking_field = change_tracking_field;
@@ -1262,7 +1288,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY;
@@ -1273,7 +1299,7 @@ namespace graphit {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
                 apply_expr->target = expr;
-                apply_expr->input_function = parseIdent();
+                apply_expr->input_function = parseFunctorExpr();
                 consume(Token::Type::RP);
                 expr = apply_expr;
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY;
@@ -1283,7 +1309,7 @@ namespace graphit {
             } else if (tryConsume(Token::Type::WHERE) || tryConsume(Token::Type::FILTER)) {
                 consume(Token::Type::LP);
                 auto where_expr = std::make_shared<fir::WhereExpr>();
-                where_expr->input_func = parseIdent();
+                where_expr->input_func = parseFunctorExpr();
                 where_expr->target = expr;
                 consume(Token::Type::RP);
                 expr = where_expr;
@@ -1386,8 +1412,23 @@ namespace graphit {
                     switch (decls.get(identStr)) {
                         case IdentType::FUNCTION:
                             // If the function is actually being called, then return a CallExpr, else treat the function name as a variable and return a VarExpr
-                            if (peek(1).type == Token::Type::LP)
+
+                            //check if it is possibly a functor
+                            if (peek(1).type == Token::Type::LB){
+                                //TODO: we could potentially do more rigorous check
+                                auto firstEndIndex = findFirstOccurence(Token::Type::RB);
+                                // if we find the closing bracket, we check if the next element is open paranthesis
+                                // for example: function[..., ..., ...](..., ...)
+                                if (firstEndIndex != -1 && peek(firstEndIndex+1).type == Token::Type::LP){
+                                    return parseCallExpr();
+
+                                }
+                            }
+                            // it could be stateless functor (aka normal function)
+                            else if (peek(1).type == Token::Type::LP){
                                 return parseCallExpr();
+                            }
+
                             break;
                         case IdentType::RANGE_GENERIC_PARAM:
                             return parseRangeConst();
@@ -1447,15 +1488,19 @@ namespace graphit {
         return rangeConst;
     }
 
-// call_expr: ident ['<' endpoints '>'] '(' [expr_params] ')'
+// call_expr: ident ['<' endpoints '>'] ['[' functor_params ']'] '(' [expr_params] ')'
     fir::CallExpr::Ptr Parser::parseCallExpr() {
         auto call = std::make_shared<fir::CallExpr>();
-
         call->func = parseIdent();
 
         if (tryConsume(Token::Type::LA)) {
             call->genericArgs = parseIndexSets();
             consume(Token::Type::RA);
+        }
+
+        if (tryConsume(Token::Type::LB)) {
+            call->functorArgs = parseExprParams();
+            consume(Token::Type::RB);
         }
 
         consume(Token::Type::LP);
@@ -1506,6 +1551,34 @@ namespace graphit {
         ident->ident = identToken.str;
 
         return ident;
+    }
+
+
+    fir::FuncExpr::Ptr Parser::parseFunctorExpr() {
+        auto funcExpr = std::make_shared<fir::FuncExpr>();
+
+        auto ident = parseIdent();
+
+        std::vector<fir::Expr::Ptr> arguments;
+
+        if (tryConsume(Token::Type::LB)){
+            if (peek().type != Token::Type::RB) {
+                do {
+                    const fir::Expr::Ptr argument = parseExpr();
+                    arguments.push_back(argument);
+                } while (tryConsume(Token::Type::COMMA));
+            }
+            consume(Token::Type::RB);
+
+        }
+
+        funcExpr->args = arguments;
+        funcExpr->name = ident;
+
+
+        return funcExpr;
+
+
     }
 
 // read_params: read_param {',' read_param}
@@ -1579,6 +1652,8 @@ namespace graphit {
                 break;
             case Token::Type::DOUBLE:
             case Token::Type::INT:
+            case Token::Type::UINT:
+            case Token::Type::UINT_64:
             case Token::Type::FLOAT:
             case Token::Type::BOOL:
             case Token::Type::COMPLEX:
@@ -1770,6 +1845,7 @@ namespace graphit {
         switch (peek().type) {
             case Token::Type::INT:
             case Token::Type::UINT:
+            case Token::Type::UINT_64:
             case Token::Type::FLOAT:
             case Token::Type::DOUBLE:
             case Token::Type::BOOL:
@@ -1905,6 +1981,10 @@ namespace graphit {
             case Token::Type::UINT:
                 consume(Token::Type::UINT);
                 scalarType->type = fir::ScalarType::Type::UINT;
+                break;
+            case Token::Type::UINT_64:
+                consume(Token::Type::UINT_64);
+                scalarType->type = fir::ScalarType::Type::UINT_64;
                 break;
             case Token::Type::FLOAT:
                 consume(Token::Type::FLOAT);
@@ -2583,17 +2663,69 @@ namespace graphit {
         return load_expr;
     }
 
+    // intersection_expr: ('intersection') '(' 'expr', 'expr', 'expr', 'expr' ')' ';'
+    fir::IntersectionExpr::Ptr Parser::parseIntersectionExpr() {
+
+        const auto intersectionExpr = std::make_shared<fir::IntersectionExpr>();
+
+        const Token intersectionToken = consume(Token::Type::INTERSECTION);
+        consume(Token::Type::LP);
+
+        const auto vertexA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexB = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto numB = parseExpr();
+
+        intersectionExpr->vertex_a = vertexA;
+        intersectionExpr->vertex_b = vertexB;
+        intersectionExpr->numA = numA;
+        intersectionExpr->numB = numB;
+
+        if (tryConsume(Token::Type::COMMA)) {
+            const auto reference = parseExpr();
+            intersectionExpr->reference = reference;
+        }
+
+        consume(Token::Type::RP);
+        return intersectionExpr;
+    }
+
+    // intersect_neigh_expr: ('intersection') '(' 'expr', 'expr' ')' ';'
+    fir::IntersectNeighborExpr::Ptr Parser::parseIntersectNeighborExpr() {
+        const auto intersectNeighExpr = std::make_shared<fir::IntersectNeighborExpr>();
+
+        const Token intersectionToken = consume(Token::Type::INTERSECT_NEIGH);
+
+        consume(Token::Type::LP);
+        const auto edges = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexA = parseExpr();
+        consume(Token::Type::COMMA);
+        const auto vertexB = parseExpr();
+        consume(Token::Type::RP);
+        intersectNeighExpr->edges = edges;
+        intersectNeighExpr->vertex_a = vertexA;
+        intersectNeighExpr->vertex_b = vertexB;
+        return intersectNeighExpr;
+    }
+
     void Parser::initIntrinsics() {
         // set up method call intrinsics
 
         //TODO: this one might need to be removed
         intrinsics_.push_back("sum");
+        intrinsics_.push_back("max");
 
         //library functions for edgeset
         intrinsics_.push_back("getVertices");
         intrinsics_.push_back("getOutDegrees");
         intrinsics_.push_back("getOutDegreesUint");
-
+        intrinsics_.push_back("getOutDegree");
+        intrinsics_.push_back("getNgh");
+        intrinsics_.push_back("relabel");
 
         // library functions for vertexset
         intrinsics_.push_back("getVertexSetSize");
