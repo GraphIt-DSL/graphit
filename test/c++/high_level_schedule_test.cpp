@@ -517,8 +517,52 @@ protected:
                 "  sum = sum + amountNotConnected;\n"
                 "end");
 
+        const char* closeness_centrality_unweighted_char = ("element Vertex end\n"
+                                                            "element Edge end\n"
+                                                            "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                                            "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                            "const checked : vector{Vertex}(int) = -1;\n"
+                                                            "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                            "   checked[dst] = checked[src] + 1;\n"
+                                                            "end\n"
+                                                            "func toFilter(v : Vertex) -> output : bool\n"
+                                                            "   output = checked[v] == -1;\n"
+                                                            "end\n"
+                                                            "func main()\n"
+                                                            "   checked[1] = 0;\n"
+                                                            "   var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                                            "   frontier.addVertex(1);\n"
+                                                            "   while (frontier.getVertexSetSize() != 0)\n"
+                                                            "       #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, checked);\n"
+                                                            "       delete frontier;\n"
+                                                            "       frontier = output;\n"
+                                                            "   end\n"
+                                                            "   delete frontier;\n"
+                                                            "end\n");
 
-
+        const char* closeness_centrality_unweighted_functor_char = ("element Vertex end\n"
+                                                            "element Edge end\n"
+                                                            "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                                            "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                            "const checked : vector{Vertex}(int) = -1;\n"
+                                                            "func updateEdge[checked_local: vector{Vertex}(int)](src : Vertex, dst : Vertex)\n"
+                                                            "   checked_local[dst] = checked_local[src] + 1;\n"
+                                                            "end\n"
+                                                            "func toFilter[checked_local: vector{Vertex}(int)](v : Vertex) -> output : bool\n"
+                                                            "   output = checked_local[v] == -1;\n"
+                                                            "end\n"
+                                                            "func main()\n"
+                                                            "   var checked_local: vector{Vertex}(int) = 0;\n"
+                                                            "   checked_local[1] = 0;\n"
+                                                            "   var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                                            "   frontier.addVertex(1);\n"
+                                                            "   while (frontier.getVertexSetSize() != 0)\n"
+                                                            "       #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter[checked_local]).applyModified(updateEdge[checked_local], checked_local);\n"
+                                                            "       delete frontier;\n"
+                                                            "       frontier = output;\n"
+                                                            "   end\n"
+                                                            "   delete frontier;\n"
+                                                            "end\n");
 
         const char* delta_stepping_char = ("element Vertex end\n"
                              "element Edge end\n"
@@ -818,6 +862,25 @@ protected:
                                  "    #s1# edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
                                  "end\n");
 
+        const char* local_array_cas = ("element Vertex end\n"
+                                  "element Edge end\n"
+                                  "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                                  "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                  "const visited: vector{Vertex}(bool) = false;\n"
+                                  "func update_edge[a: vector{Vertex}(int)](src: Vertex, dst: Vertex)\n"
+                                  "    a[dst] = a[src] + 1;\n"
+                                  "end\n"
+                                  "func visited_filter(v : Vertex) -> output : bool\n"
+                                  "     output = (visited[v] == false);\n"
+                                  "end\n"
+                                  "func main()\n"
+                                  "     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                  "     frontier.addVertex(3)\n;"
+                                  "     var local_array: vector{Vertex}(int) = 0;\n"
+                                  "     #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_filter).applyModified(update_edge[local_array], local_array);\n"
+                                  "     delete output;\n"
+                                  "end\n");
+
         const char* par_for_simple_schedule = ("element Vertex end\n"
                                                "element Edge end\n"
                                                "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
@@ -860,6 +923,8 @@ protected:
         pr_cc_str_ = string(pr_cc_char);
         bc_str_ = string(bc_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
+        closeness_centrality_unweighted_str_ = string(closeness_centrality_unweighted_char);
+        closeness_centrality_unweighted_functor_str_ = string(closeness_centrality_unweighted_functor_char);
         delta_stepping_str_ = string(delta_stepping_char);
         ppsp_str_ = string(ppsp_char);
         astar_str_ = string(astar_char);
@@ -873,6 +938,7 @@ protected:
         simple_intersection_opt_str_ = string(simple_intersection_opt);
         simple_intersect_neigh_opt_str_ = string(simple_intersect_neigh_opt);
         bc_functor_str_ = string(bc_functor);
+        local_array_cas_str_ = string(local_array_cas);
         par_for_str_ = string(par_for_simple_schedule);
         par_for_nested_str_ = string(par_for_nested_schedule);
     }
@@ -943,6 +1009,8 @@ protected:
     string pr_cc_str_;
     string bc_str_;
     string closeness_centrality_weighted_str_;
+    string closeness_centrality_unweighted_str_;
+    string closeness_centrality_unweighted_functor_str_;
     string delta_stepping_str_;
     string ppsp_str_;
     string astar_str_;
@@ -956,6 +1024,7 @@ protected:
     string simple_intersection_opt_str_;
     string simple_intersect_neigh_opt_str_;
     string bc_functor_str_;
+    string local_array_cas_str_;
     string par_for_str_;
     string par_for_nested_str_;
 };
@@ -1300,6 +1369,21 @@ TEST_F(HighLevelScheduleTest, BCFunctorTest) {
     program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, CASLocalArrayTest) {
+    istringstream is(local_array_cas_str_);
+
+    fe_->parseStream(is, context_, errors_);
+
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    auto edgeset_func_decl = mir_context_->getFunction("update_edge");
 }
 
 TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
@@ -2297,6 +2381,37 @@ TEST_F(HighLevelScheduleTest, ClosenessCentralityWeightedDefaultSchedule) {
     EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, ClosenessCentralityUnWeightedParSchedule) {
+    istringstream is (closeness_centrality_unweighted_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    auto edgeset_func_decl = mir_context_->getFunction("updateEdge_push_ver");
+    bool isCAS = mir::isa<mir::CompareAndSwapStmt>((*(edgeset_func_decl->body->stmts))[2]);
+
+    EXPECT_TRUE(isCAS);
+}
+
+TEST_F(HighLevelScheduleTest, ClosenessCentralityUnWeightedFunctorParSchedule) {
+    istringstream is (closeness_centrality_unweighted_functor_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    program = program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    //generate c++ code successfully
+    EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    auto edgeset_func_decl = mir_context_->getFunction("updateEdge_push_ver");
+    bool isCAS = mir::isa<mir::CompareAndSwapStmt>((*(edgeset_func_decl->body->stmts))[2]);
+
+    EXPECT_TRUE(isCAS);
+}
 
 
 TEST_F(HighLevelScheduleTest, DeltaSteppingWithEagerPriorityUpdate) {

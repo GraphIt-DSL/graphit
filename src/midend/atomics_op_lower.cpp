@@ -97,8 +97,27 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(mir::FuncExp
                         = mir::to<mir::TensorArrayReadExpr>(eq_expr->operands[0]);
                 std::string field_name = tensor_array_read_expr->getTargetNameStr();
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
-                if (mir::isa<mir::ScalarType>(field_type)){
-                    mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(field_type);
+
+                //TODO this is hack to access local array type since it is not registered in the context map
+                //it has to be scalar tensor read to have lower to atomic operations
+                if (! mir::isa<mir::VarExpr>(tensor_array_read_expr->target)){
+                    return false;
+                }
+                auto var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+                mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+                mir::Type::Ptr local_element_type;
+                if(mir::isa<mir::VectorType>(local_vector_field_type)){
+                    local_element_type = (mir::to<mir::VectorType>(local_vector_field_type))->vector_element_type;
+                }
+
+                if (mir::isa<mir::ScalarType>(field_type) || mir::isa<mir::ScalarType>(local_element_type)){
+                    mir::ScalarType::Ptr scalar_type;
+                    if (mir::isa<mir::ScalarType>(field_type)) {
+                        scalar_type = mir::to<mir::ScalarType>(field_type);
+                    } else {
+                        scalar_type = mir::to<mir::ScalarType>(local_element_type);
+                    }
+
                     if (scalar_type->type == mir::ScalarType::Type::INT
                         || scalar_type->type == mir::ScalarType::Type::FLOAT){
                         // the tensor has to be of CAS compaitlbe type, currently we only do int and floats
@@ -141,13 +160,31 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(mir::FuncExp
                 FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
 
+                //TODO this is hack to access local array type since it is not registered in the context map
+                //it has to be scalar tensor read to have lower to atomic operations
+                if (! mir::isa<mir::VarExpr>(tensor_array_read_expr->target)){
+                    return false;
+                }
+                auto var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+                mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+                mir::Type::Ptr local_element_type;
+                if(mir::isa<mir::VectorType>(local_vector_field_type)){
+                    local_element_type = (mir::to<mir::VectorType>(local_vector_field_type))->vector_element_type;
+                }
+
                 //condition 3
                 if (field_name == compare_filed
                     && index == "dst"
                     && field_vector_prop.access_type_ == FieldVectorProperty::AccessType::SHARED){
                     // condition 4 checks
-                    if (mir::isa<mir::ScalarType>(field_type)){
-                        mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(field_type);
+                    if (mir::isa<mir::ScalarType>(field_type) || mir::isa<mir::ScalarType>(local_element_type)){
+                        mir::ScalarType::Ptr scalar_type;
+                        if (mir::isa<mir::ScalarType>(field_type)) {
+                            scalar_type = mir::to<mir::ScalarType>(field_type);
+                        } else {
+                            scalar_type = mir::to<mir::ScalarType>(local_element_type);
+                        }
+
                         if (scalar_type->type == mir::ScalarType::Type::INT
                             || scalar_type->type == mir::ScalarType::Type::FLOAT){
                             // the tensor has to be of CAS compaitlbe type, currently we only do int and floats

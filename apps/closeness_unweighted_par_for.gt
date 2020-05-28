@@ -3,14 +3,14 @@ element Edge end
 
 const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
-const checked : vector{Vertex}(int) = -1;
+const checked : vector{Vertex}(float) = -1;
 const scores: vector{Vertex}(double) = 0;
 
-func updateEdge[checked_local: vector{Vertex}(int)](src : Vertex, dst : Vertex)
+func updateEdge[checked_local: vector{Vertex}(float)](src : Vertex, dst : Vertex)
      checked_local[dst] = checked_local[src] + 1;
 end
 
-func toFilter[checked_local: vector{Vertex}(int)](v : Vertex) -> output : bool
+func toFilter[checked_local: vector{Vertex}(float)](v : Vertex) -> output : bool
      output = checked_local[v] == -1;
 end
 
@@ -19,7 +19,7 @@ func main()
 
         #l1# par_for i in 0:64
 
-            var checked_local : vector{Vertex}(int) = -1;
+            var checked_local : vector{Vertex}(float) = -1;
 
             var start_vertex : int = atoi(argv[2]);
             checked_local[start_vertex] = 0;
@@ -39,12 +39,11 @@ func main()
 
 
             var notConnected : vertexset{Vertex} = vertices.filter(toFilter[checked_local]);
-            var amountNotConnected : int = notConnected.getVertexSetSize();
-            var sum: int = checked_local.sum();
+            var amountNotConnected : float = notConnected.getVertexSetSize();
+            var sum: float = checked_local.sum();
             sum = sum + amountNotConnected;
 
-            scores[start_vertex] = 1/sum;
-
+            scores[start_vertex] = sum;
             delete checked_local;
         end
 
