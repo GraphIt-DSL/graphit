@@ -527,9 +527,17 @@ namespace graphit {
             //Default schedule pull, serial
             auto gis_vec = new std::vector<GraphIterationSpace>();
             if (apply_direction == "SparsePush-DensePull" || apply_direction == "DensePull-SparsePush") {
-              cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, true)->self<cpu_schedule::HybridCPUScheduleObject>();
-              cpu_schedule::SimpleCPUScheduleObject::Ptr push_schedule = cpu_schedule_object->getFirstScheduleObject()->self<cpu_schedule::SimpleCPUScheduleObject>();
-              cpu_schedule::SimpleCPUScheduleObject::Ptr pull_schedule = cpu_schedule_object->getSecondScheduleObject()->self<cpu_schedule::SimpleCPUScheduleObject>();
+              abstract_schedule::ScheduleObject::Ptr schedule_object;
+              if (programSchedule_->schedule_map.find(apply_label) == programSchedule_->schedule_map.end()) {
+                auto first_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>("SparsePush");
+                auto second_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>("DensePull");
+                schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(first_schedule, second_schedule);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              } else {
+                schedule_object = programSchedule_->schedule_map[apply_label];
+                schedule_object = programSchedule_->convertSimpleToHybrid(schedule_object, apply_direction);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              }
 
                 //configure the first SparsePush graph iteration space
                 auto gis_first = GraphIterationSpace();
@@ -538,9 +546,6 @@ namespace graphit {
                 gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis_first.scheduling_api_direction = "SparsePush";
 
-                push_schedule->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
-
-
                 //configure the second DensePull graph iteration space
                 auto gis_sec = GraphIterationSpace();
                 gis_sec.direction = GraphIterationSpace::Direction::Pull;
@@ -548,26 +553,28 @@ namespace graphit {
                 gis_sec.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis_sec.scheduling_api_direction = "DensePull";
 
-              pull_schedule->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
-
                 gis_vec->push_back(gis_first);
                 gis_vec->push_back(gis_sec);
 
 
             } else if (apply_direction == "DensePush-SparsePush" || apply_direction == "SparsePush-DensePush") {
-              cpu_schedule::HybridCPUScheduleObject::Ptr cpu_schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, true)->self<cpu_schedule::HybridCPUScheduleObject>();
-              cpu_schedule::SimpleCPUScheduleObject::Ptr first_schedule = cpu_schedule_object->getFirstScheduleObject()->self<cpu_schedule::SimpleCPUScheduleObject>();
-              cpu_schedule::SimpleCPUScheduleObject::Ptr second_schedule = cpu_schedule_object->getSecondScheduleObject()->self<cpu_schedule::SimpleCPUScheduleObject>();
-
+              abstract_schedule::ScheduleObject::Ptr schedule_object;
+              if (programSchedule_->schedule_map.find(apply_label) == programSchedule_->schedule_map.end()) {
+                auto first_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>("SparsePush");
+                auto second_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>("DensePush");
+                schedule_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(first_schedule, second_schedule);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              } else {
+                schedule_object = programSchedule_->schedule_map[apply_label];
+                schedule_object = programSchedule_->convertSimpleToHybrid(schedule_object, apply_direction);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              }
                 //configure the first graph iteration space DensePush
                 auto gis_first = GraphIterationSpace();
                 gis_first.direction = GraphIterationSpace::Direction::Push;
                 gis_first.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
                 gis_first.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis_first.scheduling_api_direction = "DensePush";
-
-              first_schedule->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
-
 
                 //configure the first graph iteration space SparsePush
                 auto gis_sec = GraphIterationSpace();
@@ -576,13 +583,18 @@ namespace graphit {
                 gis_sec.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis_sec.scheduling_api_direction = "SparsePush";
 
-              second_schedule->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
-
                 gis_vec->push_back(gis_first);
                 gis_vec->push_back(gis_sec);
 
             } else if (apply_direction == "SparsePush") {
-              cpu_schedule::SimpleCPUScheduleObject::Ptr cpu_schedule_object = programSchedule_->initOrGetScheduleObject(apply_label)->self<cpu_schedule::SimpleCPUScheduleObject>();
+              abstract_schedule::ScheduleObject::Ptr schedule_object;
+              if (programSchedule_->schedule_map.find(apply_label) == programSchedule_->schedule_map.end()) {
+                schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>(apply_direction);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              } else {
+                schedule_object = programSchedule_->schedule_map[apply_label];
+                assert(!schedule_object->isComposite() && schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(apply_direction));
+              }
 
               auto gis = GraphIterationSpace();
                 gis.direction = GraphIterationSpace::Direction::Push;
@@ -590,12 +602,15 @@ namespace graphit {
                 gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis.scheduling_api_direction = "SparsePush";
                 gis_vec->push_back(gis);
-
-                cpu_schedule_object->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
-
-
             } else if (apply_direction == "DensePull") {
-              cpu_schedule::SimpleCPUScheduleObject::Ptr cpu_schedule_object = programSchedule_->initOrGetScheduleObject(apply_label)->self<cpu_schedule::SimpleCPUScheduleObject>();
+              abstract_schedule::ScheduleObject::Ptr schedule_object;
+              if (programSchedule_->schedule_map.find(apply_label) == programSchedule_->schedule_map.end()) {
+                schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>(apply_direction);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              } else {
+                schedule_object = programSchedule_->schedule_map[apply_label];
+                assert(!schedule_object->isComposite() && schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(apply_direction));
+              }
 
                 auto gis = GraphIterationSpace();
                 gis.direction = GraphIterationSpace::Direction::Pull;
@@ -603,21 +618,22 @@ namespace graphit {
                 gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis.scheduling_api_direction = "DensePull";
                 gis_vec->push_back(gis);
-
-              cpu_schedule_object->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
-
             } else if (apply_direction == "DensePush") {
-              cpu_schedule::SimpleCPUScheduleObject::Ptr cpu_schedule_object = programSchedule_->initOrGetScheduleObject(apply_label)->self<cpu_schedule::SimpleCPUScheduleObject>();
+              abstract_schedule::ScheduleObject::Ptr schedule_object;
+              if (programSchedule_->schedule_map.find(apply_label) == programSchedule_->schedule_map.end()) {
+                schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>(apply_direction);
+                programSchedule_->schedule_map[apply_label] = schedule_object;
+              } else {
+                schedule_object = programSchedule_->schedule_map[apply_label];
+                assert(!schedule_object->isComposite() && schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(apply_direction));
+              }
 
-                auto gis = GraphIterationSpace();
+              auto gis = GraphIterationSpace();
                 gis.direction = GraphIterationSpace::Direction::Push;
                 gis.setFTTag(GraphIterationSpace::Dimension::OuterIter, Tags::FT_Tag::BoolArray);
                 gis.setFTTag(GraphIterationSpace::Dimension::InnerITer, Tags::FT_Tag::BoolArray);
                 gis.scheduling_api_direction = "DensePush";
                 gis_vec->push_back(gis);
-              cpu_schedule_object->configCPUDirection(cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
-
-
             } else {
                 std::cout << "unsupported direction: " << apply_direction << std::endl;
                 throw "Unsupported Schedule!";
@@ -647,18 +663,19 @@ namespace graphit {
 
 
             initGraphIterationSpaceIfNeeded(apply_label);
-            if (direction == "all") {
-              fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
-              if (schedule_object->isComposite()){
-                schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configApplyParallelization(apply_parallel, direction);
-              } else {
-                schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyParallelization(apply_parallel);
+            fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, direction);
+            if (schedule_object->isComposite()){
+              auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+                first_schedule->configApplyParallelization(apply_parallel);
               }
-            } else if (direction == "push" || direction == "pull") {
-              fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, false, direction);
+              if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+                second_schedule->configApplyParallelization(apply_parallel);
+              }
+            } else {
               schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyParallelization(apply_parallel);
             }
-
 
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
 
@@ -708,7 +725,21 @@ namespace graphit {
                                                                             std::string vertexset,
                                                                             std::string direction) {
 
-            initGraphIterationSpaceIfNeeded(label);
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(label, direction);
+          if (schedule_object->isComposite()){
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              first_schedule->configApplyDenseVertexSet(config);
+            }
+            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              second_schedule->configApplyDenseVertexSet(config);
+            }
+          } else {
+            schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyDenseVertexSet(config);
+          }
+
+          initGraphIterationSpaceIfNeeded(label);
             auto gis_vec = (*schedule_->graph_iter_spaces)[label];
 
             //right now, we only support configuring the source vertexset in the pull direction
@@ -785,7 +816,17 @@ namespace graphit {
 
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdate(std::string apply_label, std::string config) {
-            initGraphIterationSpaceIfNeeded(apply_label);
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
+          if (schedule_object->isComposite()){
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            first_schedule->configApplyPriorityUpdate(config);
+            second_schedule->configApplyPriorityUpdate(config);
+          } else {
+            schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyPriorityUpdate(config);
+          }
+
+          initGraphIterationSpaceIfNeeded(apply_label);
 
             // for now, we still use the old setApply API. We will probably switch to full graph iteration space soon
             return setApply(apply_label, config);
@@ -834,20 +875,22 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
                                                                     int num_segment, std::string direction) {
 
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, direction);
+          if (schedule_object->isComposite()){
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              first_schedule->configApplyNumSSG(num_segment);
+            }
+            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              second_schedule->configApplyNumSSG(num_segment);
+            }
+          } else {
+            schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNumSSG(num_segment);
+          }
 
             initGraphIterationSpaceIfNeeded(apply_label);
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
-            if (direction == "all") {
-              fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
-              if (schedule_object->isComposite()){
-                schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configApplyNumSSG(num_segment, direction);
-              } else {
-                schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNumSSG(num_segment);
-              }
-            } else if (direction == "push" || direction == "pull") {
-              fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, false, direction);
-              schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNumSSG(num_segment);
-            }
 
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
@@ -894,7 +937,22 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configApplyNUMA(std::string apply_label, std::string config,
                                                                   std::string direction) {
 
-            initGraphIterationSpaceIfNeeded(apply_label);
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, direction);
+          if (schedule_object->isComposite()){
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              first_schedule->configApplyNUMA(true);
+            }
+            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              second_schedule->configApplyNUMA(true);
+            }
+          } else {
+            schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNUMA(true);
+          }
+
+          initGraphIterationSpaceIfNeeded(apply_label);
+
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
             for (auto &gis : *gis_vec) {
                 if (gis.scheduling_api_direction == direction || direction == "all") {
@@ -925,13 +983,15 @@ namespace graphit {
 
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label, int delta) {
-            fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
-            if (schedule_object->isComposite()){
-              schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configApplyPriorityUpdateDelta(delta);
-            } else {
-              schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyPriorityUpdateDelta(delta);
-            }
-
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
+          if (schedule_object->isComposite()){
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            first_schedule->configApplyPriorityUpdateDelta(delta);
+            second_schedule->configApplyPriorityUpdateDelta(delta);
+          } else {
+            schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyPriorityUpdateDelta(delta);
+          }
             return setApply(apply_label, "delta", delta);
         }
 
@@ -939,7 +999,10 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, int threshold) {
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
           if (schedule_object->isComposite()){
-            schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configBucketMergeThreshold(threshold);
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            first_schedule->configBucketMergeThreshold(threshold);
+            second_schedule->configBucketMergeThreshold(threshold);
           } else {
             schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configBucketMergeThreshold(threshold);
           }
