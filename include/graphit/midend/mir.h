@@ -97,6 +97,15 @@ namespace graphit {
                 typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
                 return mdnode->to<T>()->val;
             } 
+            std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> cloneMetadata(void) {
+                std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> new_map;
+                for (auto iter = metadata_map.begin(); iter != metadata_map.end(); iter++) {
+                    auto key = iter->first;
+                    new_map[key] = metadata_map[key]->clone();
+                }
+               	return new_map;
+            }
+            
         };
 
         struct Expr : public MIRNode {

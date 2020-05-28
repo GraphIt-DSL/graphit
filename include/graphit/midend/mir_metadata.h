@@ -24,10 +24,13 @@ public:
 		return false;
 	}
 	template <typename T>
-	std::shared_ptr<MIRMetadataImpl<T>> to(void) {
-		std::shared_ptr<MIRMetadataImpl<T>> ret = std::dynamic_pointer_cast<MIRMetadataImpl<T>>(shared_from_this());
+	typename MIRMetadataImpl<T>::Ptr to(void) {
+		typename MIRMetadataImpl<T>::Ptr ret = std::dynamic_pointer_cast<MIRMetadataImpl<T>>(shared_from_this());
 		assert(ret != nullptr);
 		return ret;
+	}
+	virtual MIRMetadata::Ptr clone(void) {
+		return shared_from_this();
 	}
 };
 
@@ -38,6 +41,10 @@ public:
 	typedef std::shared_ptr<MIRMetadataImpl<T>> Ptr;
 	T val;	
 	MIRMetadataImpl(T _val): val(_val) {
+	}
+	MIRMetadata::Ptr clone(void) {
+		Ptr new_md = std::make_shared<MIRMetadataImpl<T>>(*this);
+		return 	new_md;
 	}
 };
 
