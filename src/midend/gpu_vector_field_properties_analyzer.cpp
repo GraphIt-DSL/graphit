@@ -11,7 +11,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PushEdgeSetA
 	// Push apply expression requires synchronization on src when using non vertex based load balance
 	// Push apply expression always requires synchronization on dst
 	std::unordered_set<std::string> idp_set;
-	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function_name);
+	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function->function_name->name);
 
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
@@ -32,7 +32,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PullEdgeSetA
 	// Pull apply expression requires synchronization on dst when using non vertex based load balance
 	// Pull apply expression always requires synchronization on src
 	std::unordered_set<std::string> idp_set;
-	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function_name);
+	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function->function_name->name);
 
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
@@ -53,7 +53,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PullEdgeSetA
 void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr pesae) {
 	// UpdatePriority will function just like Push for now
 	std::unordered_set<std::string> idp_set;
-	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function_name);
+	mir::FuncDecl::Ptr func = mir_context_->getFunction(pesae->input_function->function_name->name);
 
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();

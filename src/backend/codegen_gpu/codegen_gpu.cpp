@@ -64,6 +64,16 @@ int CodeGenGPU::genGPU() {
 	return 0;
 }
 
+
+
+static std::string getNameFromFuncExpr(mir::FuncExpr::Ptr fe) {
+	if (fe == nullptr)
+		return "";
+	if (fe->function_name == nullptr)
+		return "";
+	return fe->function_name->name;
+}
+
 void CodeGenGPU::genScalarDecl(mir::VarDecl::Ptr var_decl) {	
 	var_decl->type->accept(this);
 	oss << " __device__ " << var_decl->name << "; " << std::endl;
@@ -266,24 +276,24 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	indent();
 	printIndent();
 	oss << "// Body of the actual operator code" << std::endl;
-	if (apply_expr->to_func != "") {
+	if (getNameFromFuncExpr(apply_expr->to_func) != "") {
 		printIndent();
-		oss << "if (!" << apply_expr->to_func << "(dst))" << std::endl;
+		oss << "if (!" << getNameFromFuncExpr(apply_expr->to_func) << "(dst))" << std::endl;
 		indent();
 		printIndent();
 		oss << "return;" << std::endl;
 		dedent();
 	}
-	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(getNameFromFuncExpr(apply_expr->input_function));
 	// Enqueueing is disabled from here. We are now enqueing from the UDF 
 	if (apply_expr->is_weighted) {	
 		printIndent();
 		oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
 		printIndent();
-		oss << apply_expr->input_function_name << "(src, dst, weight";
+		oss << getNameFromFuncExpr(apply_expr->input_function) << "(src, dst, weight";
 	} else {
 		printIndent();
-		oss << apply_expr->input_function_name << "(src, dst";
+		oss << getNameFromFuncExpr(apply_expr->input_function) << "(src, dst";
 	}
 	if (apply_expr->requires_output)
 		oss << ", output_frontier";
@@ -308,24 +318,24 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		indent();
 		printIndent();
 		oss << "// Body of the actual operator code" << std::endl;
-		if (apply_expr->to_func != "") {
+		if (getNameFromFuncExpr(apply_expr->to_func) != "") {
 			printIndent();
-			oss << "if (!" << apply_expr->to_func << "(dst))" << std::endl;
+			oss << "if (!" << getNameFromFuncExpr(apply_expr->to_func) << "(dst))" << std::endl;
 			indent();
 			printIndent();
 			oss << "return;" << std::endl;
 			dedent();
 		}
-		mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+		mir::FuncDecl::Ptr input_function = mir_context_->getFunction(getNameFromFuncExpr(apply_expr->input_function));
 		// Enqueueing is disabled from here. We are now enqueing from the UDF 
 		if (apply_expr->is_weighted) {	
 			printIndent();
 			oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
 			printIndent();
-			oss << apply_expr->input_function_name << "(src, dst, weight";
+			oss << getNameFromFuncExpr(apply_expr->input_function) << "(src, dst, weight";
 		} else {
 			printIndent();
-			oss << apply_expr->input_function_name << "(src, dst";
+			oss << getNameFromFuncExpr(apply_expr->input_function) << "(src, dst";
 		}
 		if (apply_expr->requires_output)
 			oss << ", output_frontier";
@@ -344,7 +354,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		printIndent();
 		oss << "// Body of the actual operator" << std::endl;
 		// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
-		if (apply_expr->from_func != "") {	
+		if (getNameFromFuncExpr(apply_expr->from_func) != "") {	
 			if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
 				printIndent();
 				oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
@@ -362,16 +372,16 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 			}
 		}
 
-		mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+		mir::FuncDecl::Ptr input_function = mir_context_->getFunction(getNameFromFuncExpr(apply_expr->input_function));
 		// Enqueueing is disabled from here. We are now enqueing from the UDF 
 		if (apply_expr->is_weighted) {	
 			printIndent();
 			oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
 			printIndent();
-			oss << apply_expr->input_function_name << "(dst, src, weight";
+			oss << getNameFromFuncExpr(apply_expr->input_function) << "(dst, src, weight";
 		} else {
 			printIndent();
-			oss << apply_expr->input_function_name << "(dst, src";
+			oss << getNameFromFuncExpr(apply_expr->input_function) << "(dst, src";
 		}
 		if (apply_expr->requires_output)
 			oss << ", output_frontier";
@@ -394,7 +404,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	printIndent();
 	oss << "// Body of the actual operator" << std::endl;
 	// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
-	if (apply_expr->from_func != "") {	
+	if (getNameFromFuncExpr(apply_expr->from_func) != "") {	
 		if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
 			printIndent();
 			oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
@@ -412,16 +422,16 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 		}
 	}
 
-	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(apply_expr->input_function_name);
+	mir::FuncDecl::Ptr input_function = mir_context_->getFunction(getNameFromFuncExpr(apply_expr->input_function));
 	// Enqueueing is disabled from here. We are now enqueing from the UDF 
 	if (apply_expr->is_weighted) {	
 		printIndent();
 		oss << "EdgeWeightType weight = graph.d_edge_weight[edge_id];" << std::endl;
 		printIndent();
-		oss << apply_expr->input_function_name << "(dst, src, weight";
+		oss << getNameFromFuncExpr(apply_expr->input_function) << "(dst, src, weight";
 	} else {
 		printIndent();
-		oss << apply_expr->input_function_name << "(dst, src";
+		oss << getNameFromFuncExpr(apply_expr->input_function) << "(dst, src";
 	}
 	if (apply_expr->requires_output)
 		oss << ", output_frontier";
@@ -765,7 +775,7 @@ void CodeGenGPUFusedKernel::visit(mir::VarExpr::Ptr var_expr) {
 		oss << var_expr->var.getName();
 }
 void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr::Ptr target) {
-	if (target != nullptr && esae->from_func == "") {
+	if (target != nullptr && getNameFromFuncExpr(esae->from_func) == "") {
 		assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
 	}		
 	// We will assume that the output frontier can reuse the input frontier. 
@@ -796,32 +806,32 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	}
 
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH) {
-		if (esae->from_func != "") {
+		if (getNameFromFuncExpr(esae->from_func) != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_sparse(";
-			oss << esae->from_func;
+			oss << getNameFromFuncExpr(esae->from_func);
 			oss << ");" << std::endl;
 		}
 	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
-		if (esae->from_func != "") {
+		if (getNameFromFuncExpr(esae->from_func) != "") {
 			if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
 				printIndent();
 				oss << "gpu_runtime::vertex_set_prepare_boolmap(";
-				oss << esae->from_func;
+				oss << getNameFromFuncExpr(esae->from_func);
 				oss << ");" << std::endl;
 			} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
 				printIndent();
 				oss << "gpu_runtime::vertex_set_prepare_bitmap(";
-				oss << esae->from_func;
+				oss << getNameFromFuncExpr(esae->from_func);
 				oss << ");" << std::endl;
 			}
 		}
 
-		std::string to_func = esae->to_func;
+		std::string to_func = getNameFromFuncExpr(esae->to_func);
 		if (to_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_host<" << to_func << ">(";
-			oss << esae->from_func << ");" << std::endl;
+			oss << getNameFromFuncExpr(esae->from_func) << ");" << std::endl;
 		}
 
 	}
@@ -832,7 +842,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		if (esae->frontier_reusable) {
 			printIndent();
 			target->accept(this);
-			oss << " = " << esae->from_func << ";" << std::endl;
+			oss << " = " << getNameFromFuncExpr(esae->from_func) << ";" << std::endl;
 		} else {
 			printIndent();
 			target->accept(this);
@@ -865,13 +875,13 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		target_type->weight_type->accept(this);
 
 	std::string accessor_type = "gpu_runtime::AccessorSparse";
-	if (esae->from_func == "")
+	if (getNameFromFuncExpr(esae->from_func) == "")
 		accessor_type = "gpu_runtime::AccessorAll";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && getNameFromFuncExpr(esae->to_func) == "")
 		accessor_type = "gpu_runtime::AccessorAll";
 	std::string src_filter = "gpu_runtime::true_function";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
-		src_filter = esae->to_func;
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && getNameFromFuncExpr(esae->to_func) != "")
+		src_filter = getNameFromFuncExpr(esae->to_func);
 
 	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
@@ -882,8 +892,8 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		oss << "__transposed";
 	}
 	oss << ", ";
-	if (esae->from_func != "")
-		oss << esae->from_func;
+	if (getNameFromFuncExpr(esae->from_func) != "")
+		oss << getNameFromFuncExpr(esae->from_func);
 	else {
 		esae->target->accept(this);
 		oss << ".getFullFrontier()";
@@ -931,7 +941,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 
 }
 void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr::Ptr target) {
-	if (target != nullptr && esae->from_func == "") {
+	if (target != nullptr && getNameFromFuncExpr(esae->from_func) == "") {
 		assert(false && "GPU backend doesn't currently support creating output frontier without input frontier\n");
 	}
 	printIndent();
@@ -955,31 +965,31 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH) {
 		printIndent();
 		oss << "gpu_runtime::vertex_set_prepare_sparse_device(";
-		oss << var_name(esae->from_func);
+		oss << var_name(getNameFromFuncExpr(esae->from_func));
 		oss << ");" << std::endl;
 	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
 		if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_boolmap_device(";
-			oss << var_name(esae->from_func);
+			oss << var_name(getNameFromFuncExpr(esae->from_func));
 			oss << ");" << std::endl;
 		} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_bitmap_device(";
-			oss << var_name(esae->from_func);
+			oss << var_name(getNameFromFuncExpr(esae->from_func));
 			oss << ");" << std::endl;
 		}
-		std::string to_func = esae->to_func;
+		std::string to_func = getNameFromFuncExpr(esae->to_func);
 		if (to_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_device<" << to_func << ">(";
-			oss << var_name(esae->from_func) << ");" << std::endl;
+			oss << var_name(getNameFromFuncExpr(esae->from_func)) << ");" << std::endl;
 		}
 	}
 	if (target != nullptr) {
 		printIndent();
 		target->accept(this);	
-		oss << " = " << var_name(esae->from_func) << ";" << std::endl;
+		oss << " = " << var_name(getNameFromFuncExpr(esae->from_func)) << ";" << std::endl;
 	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(esae);
@@ -1018,15 +1028,15 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		target_type->weight_type->accept(this);
 	
 	std::string accessor_type = "gpu_runtime::AccessorSparse";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && getNameFromFuncExpr(esae->to_func) == "")
 		accessor_type = "gpu_runtime::AccessorAll";
 	std::string src_filter = "gpu_runtime::true_function";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
-		src_filter = esae->to_func;
+	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && getNameFromFuncExpr(esae->to_func) != "")
+		src_filter = getNameFromFuncExpr(esae->to_func);
 
 	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
-	oss << ", " << var_name(esae->from_func) << ", ";
+	oss << ", " << var_name(getNameFromFuncExpr(esae->from_func)) << ", ";
 	if (target != nullptr) 
 		target->accept(this);
 	else 
@@ -1597,7 +1607,7 @@ void CodeGenGPU::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 		oss << "gpu_runtime::AccessorSparse";
 	}
 	oss << ", ";
-	oss << vsae->input_function_name << ">";
+	oss << getNameFromFuncExpr(vsae->input_function) << ">";
 	oss << "<<<NUM_CTA, CTA_SIZE>>>";
 	if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
 		auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
@@ -1634,7 +1644,7 @@ void CodeGenGPUFusedKernel::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 		oss << "gpu_runtime::AccessorSparse";
 	}
 	oss << ", ";
-	oss << vsae->input_function_name << ">";
+	oss << getNameFromFuncExpr(vsae->input_function) << ">";
 	if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
 		auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
 		assert(associated_element_type != nullptr);

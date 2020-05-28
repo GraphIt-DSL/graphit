@@ -37,8 +37,8 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 			mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(this_stmt);
 			if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
 				mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-				if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
-					std::string frontier_name = esae->from_func;
+				if (esae->from_func != nullptr && !mir_context_->isFunction(esae->from_func->function_name->name)) {
+					std::string frontier_name = esae->from_func->function_name->name;
 					if (is_frontier_reusable(stmt_block, i, frontier_name)) {
 						esae->frontier_reusable = true;
 					}
@@ -49,8 +49,8 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 			if (var_decl->initVal != nullptr) {
 				if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
 					mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
-					if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
-						std::string frontier_name = esae->from_func;
+					if (esae->from_func != nullptr && !mir_context_->isFunction(esae->from_func->function_name->name)) {
+						std::string frontier_name = esae->from_func->function_name->name;
 						if (is_frontier_reusable(stmt_block, i, frontier_name)) {
 							esae->frontier_reusable = true;
 						}
@@ -71,17 +71,18 @@ void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::VarExpr::Ptr var_expr)
 }
 void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::PushEdgeSetApplyExpr::Ptr pesae) {
 	mir::MIRVisitor::visit(pesae);
-	if (pesae->from_func == frontier_name)
+	if (pesae->from_func != nullptr && pesae->from_func->function_name->name == frontier_name)
 		is_used = true;
 }
 void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::PullEdgeSetApplyExpr::Ptr pesae) {
 	mir::MIRVisitor::visit(pesae);
-	if (pesae->from_func == frontier_name)
+	if (pesae->from_func != nullptr && pesae->from_func->function_name->name == frontier_name)
 		is_used = true;
 }
 void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::EdgeSetApplyExpr::Ptr esae) {
 	mir::MIRVisitor::visit(esae);
-	if (esae->from_func == frontier_name)
+        
+	if (esae->from_func != nullptr && esae->from_func->function_name->name == frontier_name)
 		is_used = true;
 }
 }

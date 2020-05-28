@@ -100,7 +100,7 @@ namespace graphit {
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
-				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
 				        mir::FuncDecl::Ptr func_decl_v2 = func_decl->clone<mir::FuncDecl>();
 				        func_decl_v2->name = func_decl->name + "_v2"; 
 				        mir_context_->addFunctionFront(func_decl_v2);
@@ -108,7 +108,12 @@ namespace graphit {
 					mir::AssignStmt::Ptr stmt2 = std::make_shared<mir::AssignStmt>();
 					stmt2->lhs = assign_stmt->lhs;
 					stmt2->expr = assign_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
+					//mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name = func_decl_v2->name;
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function = std::make_shared<mir::FuncExpr>();
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name = std::make_shared<mir::IdentDecl>();
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
+
+
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
@@ -123,8 +128,8 @@ namespace graphit {
 					hybrid_node->threshold = hybrid_schedule->threshold;
 					hybrid_node->argv_index = hybrid_schedule->argv_index;
 					hybrid_node->criteria = hybrid_schedule->_hybrid_criteria;
-					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->input_frontier_name = edgeset_apply->from_func;	
+					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != nullptr) {
+						hybrid_node->input_frontier_name = edgeset_apply->from_func->function_name->name;	
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
@@ -205,14 +210,19 @@ namespace graphit {
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
-				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
 				        mir::FuncDecl::Ptr func_decl_v2 = func_decl->clone<mir::FuncDecl>();
 				        func_decl_v2->name = func_decl->name + "_v2"; 
 				        mir_context_->addFunctionFront(func_decl_v2);
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::ExprStmt::Ptr stmt2 = std::make_shared<mir::ExprStmt>();
 					stmt2->expr = expr_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
+					//mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name = func_decl_v2->name;
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function = std::make_shared<mir::FuncExpr>();
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name = std::make_shared<mir::IdentDecl>();
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
+                                        
+					
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
@@ -227,8 +237,8 @@ namespace graphit {
 					hybrid_node->threshold = hybrid_schedule->threshold;
 					hybrid_node->argv_index = hybrid_schedule->argv_index;
 					hybrid_node->criteria = hybrid_schedule->_hybrid_criteria;
-					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->input_frontier_name = edgeset_apply->from_func;	
+					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != nullptr) {
+						hybrid_node->input_frontier_name = edgeset_apply->from_func->function_name->name;	
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
