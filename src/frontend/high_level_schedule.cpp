@@ -277,6 +277,11 @@ namespace graphit {
                 schedule_ = new Schedule();
             }
 
+          if (programSchedule_ == nullptr) {
+            programSchedule_ = new ProgramSchedule(ProgramSchedule::BackendID::CPU);
+          }
+          fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
+
             // If no apply schedule has been constructed, construct a new one
             if (schedule_->apply_schedules == nullptr) {
                 schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
@@ -293,6 +298,15 @@ namespace graphit {
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
                         = ApplySchedule::PullLoadBalance::EDGE_BASED;
                 (*schedule_->apply_schedules)[apply_label].pull_load_balance_edge_grain_size = parameter;
+                if (schedule_object->isComposite()){
+                  auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  first_schedule->configPullLoadBalanceGrainSize(parameter);
+                  second_schedule->configPullLoadBalanceGrainSize(parameter);
+                } else {
+                  schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configPullLoadBalanceGrainSize(parameter);
+                }
+
             } else if (apply_schedule_str == "pull") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
             } else if (apply_schedule_str == "hybrid_dense") {
@@ -357,21 +371,31 @@ namespace graphit {
             } else if (apply_schedule_str == "enable_deduplication") {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Enable;
                 if (schedule_object->isComposite()){
-                  schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configDeduplication(true);
+                  auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  first_schedule->configDeduplication(true);
+                  second_schedule->configDeduplication(true);
                 } else {
                   schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configDeduplication(true);
                 }
+
             } else if (apply_schedule_str == "disable_deduplication") {
                 (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Disable;
                 if (schedule_object->isComposite()){
-                  schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configDeduplication(false);
+                  auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  first_schedule->configDeduplication(false);
+                  second_schedule->configDeduplication(false);
                 } else {
                   schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configDeduplication(false);
                 }
             } else if (apply_schedule_str == "sliding_queue") {
                 (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
                 if (schedule_object->isComposite()){
-                  schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->configQueueType("sliding_queue");
+                  auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+                  first_schedule->configQueueType("sliding_queue");
+                  second_schedule->configQueueType("sliding_queue");
                 } else {
                   schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configQueueType("sliding_queue");
                 }
@@ -667,10 +691,10 @@ namespace graphit {
             if (schedule_object->isComposite()){
               auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
               auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-              if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              if (direction == "all" || first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
                 first_schedule->configApplyParallelization(apply_parallel);
               }
-              if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+              if (direction == "all" || second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
                 second_schedule->configApplyParallelization(apply_parallel);
               }
             } else {
@@ -725,21 +749,21 @@ namespace graphit {
                                                                             std::string vertexset,
                                                                             std::string direction) {
 
+          initGraphIterationSpaceIfNeeded(label);
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(label, direction);
           if (schedule_object->isComposite()){
             auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
             auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               first_schedule->configApplyDenseVertexSet(config);
             }
-            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               second_schedule->configApplyDenseVertexSet(config);
             }
           } else {
             schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyDenseVertexSet(config);
           }
 
-          initGraphIterationSpaceIfNeeded(label);
             auto gis_vec = (*schedule_->graph_iter_spaces)[label];
 
             //right now, we only support configuring the source vertexset in the pull direction
@@ -816,6 +840,8 @@ namespace graphit {
 
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdate(std::string apply_label, std::string config) {
+          initGraphIterationSpaceIfNeeded(apply_label);
+
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label);
           if (schedule_object->isComposite()){
             auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
@@ -825,9 +851,6 @@ namespace graphit {
           } else {
             schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyPriorityUpdate(config);
           }
-
-          initGraphIterationSpaceIfNeeded(apply_label);
-
             // for now, we still use the old setApply API. We will probably switch to full graph iteration space soon
             return setApply(apply_label, config);
         }
@@ -875,21 +898,21 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configApplyNumSSG(std::string apply_label, std::string config,
                                                                     int num_segment, std::string direction) {
 
+          initGraphIterationSpaceIfNeeded(apply_label);
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = programSchedule_->initOrGetScheduleObject(apply_label, direction);
           if (schedule_object->isComposite()){
             auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
             auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               first_schedule->configApplyNumSSG(num_segment);
             }
-            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               second_schedule->configApplyNumSSG(num_segment);
             }
           } else {
             schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNumSSG(num_segment);
           }
 
-            initGraphIterationSpaceIfNeeded(apply_label);
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
 
             for (auto &gis : *gis_vec) {
@@ -941,10 +964,10 @@ namespace graphit {
           if (schedule_object->isComposite()){
             auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
             auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-            if (first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               first_schedule->configApplyNUMA(true);
             }
-            if (second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+            if (direction == "all" || second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
               second_schedule->configApplyNUMA(true);
             }
           } else {
