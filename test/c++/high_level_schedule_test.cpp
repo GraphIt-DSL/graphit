@@ -2638,7 +2638,8 @@ TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
     program->configApplyDirection("s1", "DensePull");
-    program->configApplyParallelization("s1", "dynamic-vertex-parallel", 2);
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    program->setApply("s1", "pull_edge_based_load_balance", 2);
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configBucketMergeThreshold("s1", 800);
 

@@ -30,18 +30,11 @@ class SimpleCPUScheduleObject :
   enum class DirectionType {
     PUSH,
     PULL,
-    HYBRID_DENSE,
-    HYBRID_DENSE_FORWARD,
     SPARSE_PUSH,
     DENSE_PULL,
     DENSE_PUSH
   };
-
-  enum class FrontierType {
-    SPARSE,
-    DENSE
-  };
-
+  
   enum class CPUDeduplicationType {
     ENABLED,
     DISABLED
@@ -121,7 +114,6 @@ class SimpleCPUScheduleObject :
 
   SimpleScheduleObject::Direction getDirection() override {
     if (direction_type == DirectionType::PUSH
-        || direction_type == DirectionType::HYBRID_DENSE_FORWARD
         || direction_type == DirectionType::DENSE_PUSH
         || direction_type == DirectionType::SPARSE_PUSH) {
       return SimpleScheduleObject::Direction::PUSH;
@@ -129,7 +121,7 @@ class SimpleCPUScheduleObject :
         || direction_type == DirectionType::DENSE_PULL) {
       return SimpleScheduleObject::Direction::PULL;
     } else {
-      // TODO(clhsu): Figure out what hybrid dense does
+      assert(false && "Direction does not map to push or pull.");
     }
   }
 
@@ -241,6 +233,10 @@ class SimpleCPUScheduleObject :
     }
   }
 
+  void configPullLoadBalanceGrainSize(int grain_size) {
+    pull_load_balance_grain_size = grain_size;
+  }
+
   CPUParallelType getCPUParallelizationType() {
     return cpu_parallel_type;
   }
@@ -272,16 +268,6 @@ class HybridCPUScheduleObject :
   }
   ScheduleObject::Ptr getSecondScheduleObject() override {
     return second_schedule;
-  }
-
-  void configDeduplication(bool enable) {
-    second_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
-    first_schedule->to<SimpleCPUScheduleObject>()->configDeduplication(enable);
-  }
-
-  void configQueueType(std::string queue_type) {
-    second_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
-    first_schedule->to<SimpleCPUScheduleObject>()->configQueueType(queue_type);
   }
 };
 

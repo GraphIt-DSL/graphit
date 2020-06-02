@@ -35,6 +35,7 @@ namespace graphit {
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
                     schedule_ = nullptr;
+//                    programSchedule_ = nullptr;
                     dirCompatibilityMap_ = {
                             {"SparsePush", "push"},
                             {"DensePull", "pull"},
@@ -253,9 +254,9 @@ namespace graphit {
 		
 
             private:
-                graphit::FIRContext * fir_context_;
-                Schedule * schedule_;
-                ProgramSchedule * programSchedule_;
+                graphit::FIRContext * fir_context_ = nullptr;
+                Schedule * schedule_ = nullptr;
+                ProgramSchedule * programSchedule_ = nullptr;
                 // Maps the new direction to the old directions for backward compatibility for now.
                 // For example, "SparsePush" would be mapped to "push"
                 // This eventually will be deprecated, just keeping it to keep the unit tests working

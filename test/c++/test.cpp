@@ -94,7 +94,9 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSBasicSimpleGPUScheduleTest";
-
-
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleCPUScheduleObjectDefaults_Test";
+//  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleGPUScheduleObjectDefaults_Test";
+//  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleGPUScheduleObject_Test";
+//  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";
     return RUN_ALL_TESTS();
 }
