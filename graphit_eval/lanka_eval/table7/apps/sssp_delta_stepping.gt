@@ -1,0 +1,41 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX
+const pq: priority_queue{Vertex}(int);
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int)
+    var new_dist : int = dist[src] + weight;
+    pq.updatePriorityMin(dst, dist[dst], new_dist);
+end
+
+func printDist(v : Vertex)
+    print dist[v];
+end
+
+func reset(v: Vertex)
+    dist[v] = 2147483647;
+end
+
+func main()
+
+    vertices.apply(reset);
+    startTimer();
+    var start_vertex : int = atoi(argv[2]);
+    dist[start_vertex] = 0;
+    % parameter list in order -- priority type: int
+    % duplication within bucket : false, duplication across bucket: false, priority vector : dist
+    % bucket ordering: 1 -> increasing, priority ordering: 2 -> lower first, init_bucket : false
+    % optional starting node: start_vertex
+    pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);
+    while (pq.finished() == false)
+        var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue lowest priority nodes
+        #s1# edges.from(frontier).applyUpdatePriority(updateEdge);
+        delete frontier;
+    end
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
+
+end
