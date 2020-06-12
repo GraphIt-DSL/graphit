@@ -6,6 +6,8 @@ import os
 import shlex
 import time
 
+from datetime import datetime
+
 #instructions
 # to add an application for GraphIt
 #    (1)  update the graphit_apps
@@ -183,21 +185,29 @@ def print_normalized_execution(frameworks, apps, graphs, results_dict):
                 perf +=  str(results_dict[framework][graph][app]/graphit_time)
             print perf
 
-def print_absolute_execution(frameworks, apps, graphs, results_dict):
+def print_absolute_execution(frameworks, apps, graphs, output_file, results_dict):
+
+    out = open(output_file, "w+")
+
     for app in apps:
-        print app
         for graph in graphs:
-            perf = graph + ", "
+            perf = graph + ","
             first = True
             for framework in frameworks:
                 if first:
                     first = False
                 else:
-                    perf += ", "
+                    perf += ","
                 perf +=  str(results_dict[framework][graph][app])
-            print perf
+            print_line = app + "," + perf
+            print print_line
+            out.write(print_line + "\n")
+    out.close()
+
 
 def main():
+    now = datetime.now()
+    current_date =  now.strftime("%m_%d_%Y")
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--frameworks', nargs='+',
                         default=["graphit"], # "netflix" only used for cf
@@ -206,6 +216,8 @@ def main():
                         default=["road", "urand", "twitter", "web", "kron"], help = "enable graphs with socLive, road-usad, twitter, webGraph, friendster.Defaults to the test graph.")
     parser.add_argument('-a', '--applications', nargs='+',
                         default=["bfs", "pr", "cc", "tc", "bc", "ds"], 
+                        help="applications to benchmark. Defaults to all four applications.")
+    parser.add_argument('-o', '--output', default='references/output_' + current_date + ".csv",
                         help="applications to benchmark. Defaults to all four applications.")
     args = parser.parse_args()
 
@@ -245,7 +257,7 @@ def main():
                     results[framework][g][app] = runtime
     print results
     #print_normalized_execution(args.frameworks, args.applications, args.graphs, results)
-    print_absolute_execution(args.frameworks, args.applications, args.graphs, results)
+    print_absolute_execution(args.frameworks, args.applications, args.graphs, args.output, results)
 
     
 if __name__ == "__main__":
