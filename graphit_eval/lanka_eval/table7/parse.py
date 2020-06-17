@@ -87,7 +87,7 @@ def parse_result(log_file_name, app, time_key, delimiter, index, strip_end, divi
     else: # bfs or sssp
         return sum_time / successes
 
-def process_bfs(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
+def process_bfs_ds(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
     """
     @time_key: used to find the time of execution in the log file
     @delimiter: used to extract the time
@@ -127,7 +127,7 @@ def process_bfs(log_file_name, app, time_key, delimiter, index, strip_end, divid
             successes += 1
     return sum_time / successes
 
-def process_tc(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
+def process_tc_bc_cc(log_file_name, app, time_key, delimiter, index, strip_end, divider, inner_cnt, time_key_own_line):
     """
     @time_key: used to find the time of execution in the log file
     @delimiter: used to extract the time
@@ -185,7 +185,13 @@ def print_normalized_execution(frameworks, apps, graphs, results_dict):
                 perf +=  str(results_dict[framework][graph][app]/graphit_time)
             print perf
 
-def print_absolute_execution(frameworks, apps, graphs, output_file, results_dict):
+def save_absolute_execution(frameworks, apps, graphs, output_file, results_dict):
+    """
+    Saves the current numbers into output_file in CSV format. 
+
+    The CSV format is application, graph, number
+
+    """
 
     out = open(output_file, "w+")
 
@@ -239,15 +245,15 @@ def main():
             for app in args.applications:
                 log_file_name = LOG_PATH + framework + "/" + app + "_" + g + ".txt"
                 if app == "bc":
-                    results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
+                    results[framework][g][app] = process_tc_bc_cc(log_file_name, app, *parse_args[framework])
                 elif app == "tc":
-                    results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
+                    results[framework][g][app] = process_tc_bc_cc(log_file_name, app, *parse_args[framework])
                 elif app == "bfs":
-                    results[framework][g][app] = process_bfs(log_file_name, app, *parse_args[framework])
+                    results[framework][g][app] = process_bfs_ds(log_file_name, app, *parse_args[framework])
                 elif app == "cc":
-                    results[framework][g][app] = process_tc(log_file_name, app, *parse_args[framework])
+                    results[framework][g][app] = process_tc_bc_cc(log_file_name, app, *parse_args[framework])
                 elif app == "ds":
-                    results[framework][g][app] = process_bfs(log_file_name, app, *parse_args[framework])
+                    results[framework][g][app] = process_bfs_ds(log_file_name, app, *parse_args[framework])
                 else:
                     runtime = parse_result(log_file_name, app, *parse_args[framework])
                     if framework == "greenmarl" and app in ["bfs", "sssp"]:
@@ -257,7 +263,7 @@ def main():
                     results[framework][g][app] = runtime
     print results
     #print_normalized_execution(args.frameworks, args.applications, args.graphs, results)
-    print_absolute_execution(args.frameworks, args.applications, args.graphs, args.output, results)
+    save_absolute_execution(args.frameworks, args.applications, args.graphs, args.output, results)
 
     
 if __name__ == "__main__":

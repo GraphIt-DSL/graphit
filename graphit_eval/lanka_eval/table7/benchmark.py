@@ -73,7 +73,7 @@ graphit_binary_map = {"testGraph" : {"pr":"pagerank_pull",
 
 graphit_PATH = "./bin/"
 #DATA_PATH = "../../../data/"
-DATA_PATH = "/data/scratch/tugsuu/"
+DATA_PATH = "/data/commit/graphit/yunming/graphit_benchmark_graphs/devcloud_graphs/"
 OUTPUT_DIR= "./outputs/"
 
 def get_vertex_count(graph):
