@@ -1,0 +1,67 @@
+% assume hypergraph has already been converted to a bipartite graph
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const nv : int;
+const nh : int;
+
+const parent : vector{Vertex}(int) = -1;
+const pq: priority_queue{Vertex}(int);
+
+func reset(v: Vertex)
+    parent[v] = -1;
+end
+
+func toFilter(v : Vertex) -> output : bool
+    output =  parent[v] == -1;
+end
+
+func updateEdge(src : Vertex, dst : Vertex)
+    parent[dst] = src;
+end
+
+func printParent(v: Vertex)
+    if v == parent[v]
+        print v;
+    elif v < nv
+        print parent[v] - nv;
+    else
+        print parent[v];
+    end
+end
+
+func main()
+    nv = atoi(argv[3]);
+    nh = atoi(argv[4]);
+    for trail in 0:1
+        startTimer();
+
+        vertices.apply(reset);
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+	    var start_vertex : int = atoi(argv[2]);
+    	frontier.addVertex(start_vertex);
+    	parent[start_vertex] = start_vertex;
+
+    	while (1)
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+	        delete frontier;
+	        frontier = output;
+            if frontier.getVertexSetSize() == 0
+                break; 
+            end
+
+            output = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+	        delete frontier;
+	        frontier = output;
+            if frontier.getVertexSetSize() == 0
+                break;
+            end
+    	end
+	    delete frontier;
+	vertices.apply(printParent);
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
