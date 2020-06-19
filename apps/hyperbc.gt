@@ -1,0 +1,137 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const nv : int;
+const nh : int;
+const src : int;
+const numPaths : vector{Vertex}(int) = 0;
+const visited : vector{Vertex}(bool) = false;
+const dependencies : vector{Vertex}(double) = 0;
+
+func filterV(v: Vertex) -> output : bool 
+     output = (v < nv); 
+end
+
+func filterH(v: Vertex) -> output : bool 
+     output = (v >= nv); 
+end
+
+func visited_vertex_filter(v: Vertex) -> output : bool
+    output = (visited[v] == false);
+end
+
+func mark_visited(v: Vertex)
+    visited[v] = true;
+end 
+
+func forward_update(src: Vertex, dst: Vertex)
+    numPaths[dst] += numPaths[src];
+end
+
+func backward_mark_visited(v: Vertex)
+    visited[v] = true;
+    dependencies[v] += 1;
+end 
+
+func backward_update(src: Vertex, dst: Vertex)
+    if src < nv % VtoE
+        dependencies[dst] += dependencies[src]/numPaths[src];
+    else  %EtoV
+        dependencies[dst] += dependencies[src] * numPaths[dst];
+    end
+end
+
+func printDep(v: Vertex)
+    print v;
+    print dependencies[v];
+end
+
+func reset(v : Vertex)
+    dependencies[v] = 0;
+    numPaths[v] = 0;
+    visited[v] = false;
+end
+
+func resetMid(v : Vertex)
+    visited[v] = false;
+end
+
+func main()
+    nv = atoi( argv[3] );
+    nh = atoi( argv[4] ); 
+    src = atoi( argv[2] );
+
+    for trail in 0:2
+        startTimer();
+
+        numPaths[src] = 1;
+        visited[src] = true;
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+        frontier.addVertex(src);
+
+        var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
+        frontier_list.append(frontier);
+        
+        var round : int = 0;
+        % forward pass
+        while (1)
+            round = round + 1;
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, numPaths);
+            output.apply(mark_visited);
+            frontier_list.append(output);
+            frontier = output;
+            if (frontier.getVertexSetSize() == 0)
+                break;
+            end
+            
+            round = round + 1;
+            output = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, numPaths);
+            output.apply(mark_visited);
+            frontier_list.append(output);
+            frontier = output;
+            if (frontier.getVertexSetSize() == 0)
+                break;
+            end
+        end
+
+        % delete the empty frontier and the hyperedge one, if ending on hyperedge
+        if (round == ((round / 2) * 2))
+            round = round - 1;
+            frontier = frontier_list.pop();
+            delete frontier;
+        end
+        frontier = frontier_list.pop();
+        delete frontier;
+
+        % reset for backward pass
+        vertices.apply(resetMid);
+        var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
+
+        round = round -1;
+        while (round > 0)
+            frontier = frontier_list.pop();
+            frontier.apply(backward_mark_visited);
+            #s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+            delete frontier;
+            round = round - 1;
+
+            frontier = frontier_list.pop();
+            frontier.apply(backward_mark_visited);
+            transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+            delete frontier;
+            round = round - 1; 
+        end
+        frontier = frontier_list.pop();
+        delete frontier;
+
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+        var toPrint : vertexset{Vertex} = vertices.filter(filterV);
+        toPrint.apply(printDep);
+        vertices.apply(reset);
+    end
+end
