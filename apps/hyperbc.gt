@@ -45,7 +45,6 @@ func backward_update(src: Vertex, dst: Vertex)
 end
 
 func printDep(v: Vertex)
-    print v;
     print dependencies[v];
 end
 
@@ -98,7 +97,7 @@ func main()
         end
 
         % delete the empty frontier and the hyperedge one, if ending on hyperedge
-        if (round == ((round / 2) * 2))
+        if (round == ((round / 2) * 2))  % TODO: replace this with mod
             round = round - 1;
             frontier = frontier_list.pop();
             delete frontier;
@@ -119,7 +118,7 @@ func main()
             round = round - 1;
 
             frontier = frontier_list.pop();
-            frontier.apply(backward_mark_visited);
+            frontier.apply(mark_visited);
             transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
             delete frontier;
             round = round - 1; 
