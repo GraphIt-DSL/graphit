@@ -1,0 +1,78 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const D_original: vector{Vertex}(uint) = edges.getOutDegreesUint();
+const D: vector{Vertex}(uint);
+const removed : vector{Vertex}(bool) = false;
+const pq: priority_queue{Vertex}(uint);
+const nv : int;
+const nh : int;
+const int_max : int = 2147483647; 
+
+func reset_v(v: Vertex) 
+    if v < nv
+        D[v] = D_original[v];
+    else
+        D[v] = int_max;  % trickery to remove Hyperedge from the PQ 
+    end
+
+    removed[v] = false; 
+end 
+ 
+func filterV(v: Vertex) -> output : bool 
+     output = (v < nv); 
+end
+
+func filterH(v: Vertex) -> output : bool 
+     output = (v >= nv); 
+end
+
+func filterHyperedge(v: Vertex) -> output : bool
+    output = (removed[v] == false);
+end
+
+func removeHyperedge(src: Vertex, dst: Vertex)
+    removed[dst] = true; 
+end
+
+func apply_f(src: Vertex, dst: Vertex)
+    var k: int = pq.get_current_priority();
+    pq.updatePrioritySum(dst, -1, k);
+end
+
+func printD(v : Vertex)
+    print D[v];
+end
+
+func main()
+    nv = atoi(argv[2]);
+    nh = atoi(argv[3]);
+
+    for trial in 0:10
+	    vertices.apply(reset_v);
+	    startTimer();
+        % parameter list in order -- priority type: uint
+        % duplication within bucket : false, duplication across bucket: false, priority vector : D
+        % bucket ordering: 1 -> increasing, priority ordering: 2 -> lower first, init_bucket : true
+        % optional starting node: start_vertex
+        pq = new priority_queue{Vertex}(uint)(false, false, D, 1, 0, true, -1);
+        var finished : int = 0;
+        while (finished != nv)   
+            var frontierV: vertexset{Vertex} = pq.dequeue_ready_set();
+            % k = pq.get_current_priority();
+            finished += frontierV.getVertexSetSize();
+            var frontierH : vertexset{Vertex} = edges.from(frontierV).to(filterHyperedge).applyModified(removeHyperedge, removed);
+            #s1# edges.from(frontierH).applyUpdatePriority(apply_f);
+            delete frontierV;
+            delete frontierH;
+        end
+        delete pq;
+	    var elapsed_time: float = stopTimer();
+            print "elapsed time";
+	    print elapsed_time;
+        var V : vertexset{Vertex} = vertices.filter(filterV);
+        V.apply(printD);
+    end
+    
+end

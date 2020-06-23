@@ -1,0 +1,73 @@
+% assume hypergraph has already been converted to a bipartite graph
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const nv : int;
+const nh : int;
+const damping : double = 0.85;
+
+const p : vector{Vertex}(double) = 0;
+const frontier : vector{Vertex}(bool) = true;
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+
+func filterV(v: Vertex) -> output : bool 
+     output = (v < nv); 
+end
+
+func filterH(v: Vertex) -> output : bool 
+     output = (v >= nv); 
+end
+
+func initV(v: Vertex)
+    p[v] = 1.0 /nv;
+end
+
+func updateEdge(src : Vertex, dst : Vertex) 
+    p[dst] += p[src] / out_degree[src];
+end
+
+func updateEdge2(src : Vertex, dst : Vertex) 
+    p[dst] += p[src] / out_degree[src];
+end
+
+func resetVertex(v : Vertex)
+    p[v] = 0;
+end
+
+func updateVertex(v : Vertex)
+    p[v] = damping * p[v] + (1.0-damping)*(1.0/nv);
+end
+
+func printPR(v : Vertex)
+    print p[v];
+end
+
+func main()
+    nv = atoi(argv[3]);
+    nh = atoi(argv[4]);
+    var max_iter: int = atoi(argv[2]);
+    
+    const epsilon : double = 0.0000001;
+    for trail in 0:1
+        startTimer();
+        var frontierV : vertexset{vertex} = vertices.filter(filterV);
+        var frontierH : vertexset{vertex} = vertices.filter(filterH);
+        frontierV.apply(initV);
+    	for i in 0:max_iter
+            frontierH.apply(resetVertex);
+            #s1# edges.from(frontierV).apply(updateEdge);
+            frontierV.apply(resetVertex);
+            edges.from(frontierH).apply(updateEdge2);
+            frontierV.apply(updateVertex); 
+    	end
+
+        frontierV.apply(printPR);
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+schedule:
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");
