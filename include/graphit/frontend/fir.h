@@ -1673,6 +1673,21 @@ namespace graphit {
                virtual void copy(FIRNode::Ptr);
         };
 
+        struct ConstantVectorExpr : public Expr {
+            typedef std::shared_ptr<ConstantVectorExpr> Ptr;
+            std::vector<Expr::Ptr> vectorElements;
+            int numElements;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ConstantVectorExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+
+            virtual void copy(FIRNode::Ptr);
+        };
+
         struct FuncExpr : public Expr {
             typedef std::shared_ptr<FuncExpr> Ptr;
             Identifier::Ptr name;

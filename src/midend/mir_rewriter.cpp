@@ -378,6 +378,19 @@ namespace graphit {
             node = inter_expr;
         }
 
+        void MIRRewriter::visit(ConstantVectorExpr::Ptr const_vector_expr) {
+            const_vector_expr->numElements = const_vector_expr->numElements;
+            std::vector<Expr::Ptr> vectorElements;
+
+            for(auto el: const_vector_expr->vectorElements){
+                vectorElements.push_back(rewrite<Expr>(el));
+            }
+
+            const_vector_expr->vectorElements = vectorElements;
+            node = const_vector_expr;
+
+        }
+
 
         // OG Additions
         void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {

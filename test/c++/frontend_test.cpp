@@ -865,4 +865,29 @@ TEST_F(FrontendTest, LocalVectorInitTest) {
 
 }
 
+TEST_F(FrontendTest, LocalVectorMultiple) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[2](int) = {1, 5};\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+TEST_F(FrontendTest, LocalVectorOneElement) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[1](int) = {1};\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+
 

@@ -1094,6 +1094,21 @@ namespace graphit {
             oss << ") ";
         }
 
+        void FIRPrinter::visit(ConstantVectorExpr::Ptr expr) {
+            oss << "{";
+
+            bool printDelimiter = false;
+            for (auto el : expr->vectorElements) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                el->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << "} ";
+        }
+
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
             oss << "edgeset_load (";
             expr->file_name->accept(this);

@@ -1146,6 +1146,24 @@ namespace graphit {
             return node;
         }
 
+        void ConstantVectorExpr::copy(FIRNode::Ptr node) {
+            const auto constantVectorExpr = to<ConstantVectorExpr>(node);
+            Expr::copy(constantVectorExpr);
+            numElements = constantVectorExpr->numElements;
+
+            for (const auto &el : constantVectorExpr->vectorElements) {
+                vectorElements.push_back(el ? el->clone<Expr>() : Expr::Ptr());
+            }
+
+        }
+
+
+        FIRNode::Ptr ConstantVectorExpr::cloneNode() {
+            const auto node = std::make_shared<ConstantVectorExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void FuncExpr::copy(FIRNode::Ptr node) {
             const auto funcExpr = to<FuncExpr>(node);
             Expr::copy(funcExpr);

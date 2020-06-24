@@ -218,6 +218,8 @@ namespace graphit {
         
         fir::IntersectNeighborExpr::Ptr parseIntersectNeighborExpr();
 
+        fir::ConstantVectorExpr::Ptr parseConstantVectorExpr();
+
         // OG Additions
         fir::PriorityQueueType::Ptr parsePriorityQueueType();
 

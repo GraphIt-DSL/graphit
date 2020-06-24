@@ -878,6 +878,22 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+        struct ConstantVectorExpr : public Expr {
+            int numElements;
+            std::vector<mir::Expr::Ptr> vectorElements;
+            typedef std::shared_ptr<ConstantVectorExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ConstantVectorExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
         
 
         

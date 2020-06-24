@@ -1190,6 +1190,33 @@ TEST_F(BackendTest, LocalVector) {
     EXPECT_EQ(0, basicTest(is));
 }
 
+TEST_F(BackendTest, LocalVectorConstant) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[1](int) = {1};\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(BackendTest, LocalVectorMultiple) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[4](int) = {1, 5, 8, 9};\n"
+                     "    print simpleArray[3];\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleParForLoops) {
     istringstream is("func main() par_for i in 1:10; print i; end end");
     EXPECT_EQ (0,  basicTest(is));
@@ -1206,6 +1233,7 @@ TEST_F(BackendTest, ParForNested) {
                      "end\n");
     EXPECT_EQ (0,  basicTest(is));
 }
+
 
 //TEST_F(BackendTest, LocalVectorFixedSize) {
 //    istringstream is("func main()\n"

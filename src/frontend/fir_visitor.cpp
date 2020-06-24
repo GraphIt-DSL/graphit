@@ -464,6 +464,12 @@ namespace graphit {
 
         }
 
+        void FIRVisitor::visit(std::shared_ptr<ConstantVectorExpr> expr) {
+            for (auto el: expr->vectorElements) {
+                el->accept(this);
+            }
+        }
+
         void FIRVisitor::visit(std::shared_ptr<FuncExpr> expr) {
             expr->name->accept(this);
 

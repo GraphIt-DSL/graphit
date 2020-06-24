@@ -940,6 +940,8 @@ namespace graphit {
                 return parseIntersectionExpr();
             case Token::Type::INTERSECT_NEIGH:
                 return parseIntersectNeighborExpr();
+            case Token::Type::LC:
+                return parseConstantVectorExpr();
             default:
                 return parseOrExpr();
         }
@@ -2725,6 +2727,24 @@ namespace graphit {
 
         consume(Token::Type::RP);
         return intersectionExpr;
+    }
+
+    fir::ConstantVectorExpr::Ptr Parser::parseConstantVectorExpr() {
+        const auto constVector = std::make_shared<fir::ConstantVectorExpr>();
+        std::vector<fir::Expr::Ptr> elements;
+        consume(Token::Type::LC);
+        if (peek().type != Token::Type::RC) {
+            do {
+                const fir::Expr::Ptr element = parseExpr();
+                elements.push_back(element);
+            } while (tryConsume(Token::Type::COMMA));
+        }
+        consume(Token::Type::RC);
+
+        constVector->vectorElements = elements;
+        constVector->numElements = elements.size();
+
+        return constVector;
     }
 
     // intersect_neigh_expr: ('intersection') '(' 'expr', 'expr' ')' ';'

@@ -90,6 +90,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<IntersectNeighborExpr> op);
 
+            virtual void visit(std::shared_ptr<ConstantVectorExpr> op);
+
             virtual void visit(std::shared_ptr<NegExpr>);
 
             virtual void visit(std::shared_ptr<EqExpr>);

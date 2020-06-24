@@ -181,6 +181,25 @@ namespace graphit {
             return node;
         }
 
+
+        void ConstantVectorExpr::copy(MIRNode::Ptr node) {
+            auto expr = to<mir::ConstantVectorExpr>(node);
+
+            for(auto &el : expr->vectorElements) {
+                vectorElements.push_back(el);
+            }
+
+            numElements = expr->numElements;
+
+        }
+
+
+        MIRNode::Ptr ConstantVectorExpr::cloneNode() {
+            const auto node = std::make_shared<ConstantVectorExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void EdgeSetLoadExpr::copy(MIRNode::Ptr node) {
             Expr::copy(node);
             auto expr = to<mir::EdgeSetLoadExpr>(node);

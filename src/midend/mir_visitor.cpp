@@ -358,6 +358,12 @@ namespace graphit {
             inter_expr->vertex_b->accept(this);
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ConstantVectorExpr> const_vector_expr) {
+            for (auto el : const_vector_expr->vectorElements) {
+                el->accept(this);
+            }
+        }
+
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {
             load_expr->file_name->accept(this);
         }

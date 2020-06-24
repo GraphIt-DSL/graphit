@@ -104,6 +104,8 @@ namespace graphit {
 
         virtual void visit(fir::IntersectNeighborExpr::Ptr);
 
+        virtual void visit(fir::ConstantVectorExpr::Ptr);
+
         virtual void visit(fir::EdgeSetLoadExpr::Ptr);
 
         virtual void visit(fir::VarExpr::Ptr);

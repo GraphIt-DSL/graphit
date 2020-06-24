@@ -376,6 +376,15 @@ namespace graphit {
         retExpr = mir_inter_expr;
     }
 
+    void MIREmitter::visit(fir::ConstantVectorExpr::Ptr const_vector_expr) {
+        auto mir_const_vector_expr = std::make_shared<mir::ConstantVectorExpr>();
+
+        mir_const_vector_expr->vectorElements = emitFunctorArgs(const_vector_expr->vectorElements);
+        mir_const_vector_expr->numElements = mir_const_vector_expr->vectorElements.size();
+
+        retExpr = mir_const_vector_expr;
+    }
+
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
         auto mir_load_expr = std::make_shared<mir::EdgeSetLoadExpr>();
         mir_load_expr->file_name = emitExpr(load_expr->file_name);

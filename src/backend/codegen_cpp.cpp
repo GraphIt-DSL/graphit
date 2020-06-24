@@ -508,6 +508,20 @@ namespace graphit {
         }
     }
 
+    void CodeGenCPP::visit(mir::ConstantVectorExpr::Ptr constantVectorExpr) {
+
+        oss << "{";
+        bool printDelimiter = false;
+
+        for (auto el: constantVectorExpr->vectorElements){
+            if (printDelimiter) oss << ",";
+            el->accept(this);
+            printDelimiter = true;
+        }
+
+        oss << "}";
+    }
+
 
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
 
@@ -1406,19 +1420,26 @@ namespace graphit {
         mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
         assert(vector_type != nullptr);
 
-
         vector_type->accept(this);
         oss << name << " ";
 
-
         const auto init_val = var_decl->initVal;
-
         if(init_val != nullptr) {
 
             if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
                 auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
                 oss << " = ";
                 call_expr->accept(this);
+                oss << ";" << std::endl;
+
+            } else if (mir::isa<mir::ConstantVectorExpr>(init_val)) {
+                auto const_expr = mir::to<mir::ConstantVectorExpr>(init_val);
+                oss << " = new ";
+                vector_type->vector_element_type->accept(this);
+                oss << "[";
+                oss << const_expr->numElements;
+                oss << "]";
+                const_expr->accept(this);
                 oss << ";" << std::endl;
 
             } else if (isLiteral(init_val)){
