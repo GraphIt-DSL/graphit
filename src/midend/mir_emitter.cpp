@@ -570,9 +570,18 @@ namespace graphit {
             auto identifier = method_call_expr->method_name->ident;
             if (identifier == "builtin_sum" || identifier == "builtin_max") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
-		//assert(mir::isa<mir::VectorType>(mir_target_type));
-		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
-                const auto size_arg = ctx->getElementCount(vertex_element_type);
+		        //assert(mir::isa<mir::VectorType>(mir_target_type));q
+                mir::Expr::Ptr size_arg;
+                if(vertex_element_type != nullptr && ctx->getElementCount(vertex_element_type)) {
+                    size_arg = ctx->getElementCount(vertex_element_type);
+                }
+                //hack to get the size information for the local vectors since they are not registered in the context
+                else {
+                    auto range =  mir::to<mir::VectorType>(mir_target_type)->range_indexset;
+                    auto mir_range = std::make_shared<mir::IntLiteral>();
+                    mir_range->val = range;
+                    size_arg = mir_range;
+                }
                 args.push_back(size_arg);
             }
 

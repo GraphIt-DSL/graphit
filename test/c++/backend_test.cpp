@@ -1211,7 +1211,7 @@ TEST_F(BackendTest, LocalVectorMultiple) {
                      "const vertices : vertexset{Vertex} = edges.getVertices();\n"
                      "func main()\n"
                      "    var simpleArray: vector[4](int) = {1, 5, 8, 9};\n"
-                     "    print simpleArray[3];\n"
+                     "    print simpleArray.sum();\n"
                      "end\n");
 
     EXPECT_EQ(0, basicTest(is));
