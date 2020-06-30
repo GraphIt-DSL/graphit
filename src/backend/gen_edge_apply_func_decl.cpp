@@ -926,6 +926,10 @@ namespace graphit {
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply) {
         auto func_name = genFunctionName(apply);
+        func_name += mir_context_->getUniqueNameCounterString();
+
+        // Apply the function name to the edge set apply expr to be reused again
+        apply->edgeset_apply_func_name = func_name;
 
         auto mir_var = std::dynamic_pointer_cast<mir::VarExpr>(apply->target);
         vector<string> templates = vector<string>();
