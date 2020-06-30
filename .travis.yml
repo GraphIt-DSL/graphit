@@ -19,6 +19,7 @@ python: "3.7"
 before_install:
         - sudo apt-get update
         - sudo apt-get install python3-pip
+        - sudo pip3 install --upgrade pip
         - sudo pip3 install setuptools
         - sudo pip3 install pybind11
         - sudo pip3 install scipy
