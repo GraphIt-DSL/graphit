@@ -412,8 +412,6 @@ namespace graphit {
             ForDomain::Ptr domain;
             StmtBlock::Ptr body;
             int grain_size;
-            int num_threads;
-            ParForSchedule::ParForType type;
 
             typedef std::shared_ptr<ParForStmt> Ptr;
 

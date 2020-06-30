@@ -610,55 +610,6 @@ namespace graphit {
         }
 
         high_level_schedule::ProgramScheduleNode::Ptr
-        high_level_schedule::ProgramScheduleNode::configParForScheduleType(std::string apply_label, std::string schedule_type) {
-
-            if (schedule_ == nullptr){
-                schedule_ = new Schedule();
-            }
-
-            // If no par for schedule has been constructed, construct a new one
-            if (schedule_->par_for_type_schedules == nullptr) {
-                schedule_->par_for_type_schedules= new std::map<std::string, ParForSchedule::ParForType>();
-            }
-
-            if (schedule_type == "static") {
-                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::STATIC;
-            }
-
-            else if (schedule_type == "dynamic") {
-                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::DYNAMIC;
-            }
-
-            else {
-                std::cout << "unsupported option: " << schedule_type << " using static instead" << std::endl;
-                (*schedule_->par_for_type_schedules)[apply_label] = ParForSchedule::ParForType::STATIC;
-
-            }
-
-            return this->shared_from_this();
-
-
-        }
-
-        high_level_schedule::ProgramScheduleNode::Ptr
-        high_level_schedule::ProgramScheduleNode::configParForNumThreads(std::string apply_label, int num_threads) {
-
-            if (schedule_ == nullptr){
-                schedule_ = new Schedule();
-            }
-
-            // If no par for schedule has been constructed, construct a new one
-            if (schedule_->par_for_num_threads == nullptr) {
-                schedule_->par_for_num_threads = new std::map<std::string, int>();
-            }
-
-            (*schedule_->par_for_num_threads)[apply_label] = num_threads;
-
-            return this->shared_from_this();
-        }
-
-
-        high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configIntersection(std::string intersection_label,
                                                                        std::string intersection_option) {
             // If no schedule has been constructed, construct a new one

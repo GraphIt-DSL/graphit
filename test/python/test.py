@@ -468,6 +468,6 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_local_vector_const'))
+    # suite.addTest(TestGraphitCompiler('test_par_for'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 

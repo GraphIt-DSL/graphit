@@ -274,7 +274,6 @@ namespace graphit {
             }
 
             stmt->grain_size = stmt->grain_size;
-            stmt->type = stmt->type;
         }
 
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {

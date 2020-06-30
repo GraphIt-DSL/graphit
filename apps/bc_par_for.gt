@@ -72,13 +72,16 @@ func main()
     % transposing the edges
     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
 
-    #l1# par_for i in 0:10
+    % starting points
+    var starting_points: vector[8](int) = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    #l1# par_for i in 0:8
 
         var num_paths_local : vector{Vertex}(double) = 0;
         var dependences_local : vector{Vertex}(double) = 0;
         var visited_local : vector{Vertex}(bool) = false;
 
-        var start_vertex : int = atoi(argv[2]);
+        var start_vertex : int = starting_points[i];
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
         frontier.addVertex(start_vertex);
@@ -145,9 +148,7 @@ end
 
 
 schedule:
-    program->configParForGrainSize("l1", 16)
-           ->configParForScheduleType("l1", "static")
-           ->configParForNumThreads("l1", 4);
+    program->configParForGrainSize("l1", 4);
 
     program->configApplyDirection("l1:s2", "SparsePush-DensePull")
            ->configApplyParallelization("l1:s2", "dynamic-vertex-parallel")

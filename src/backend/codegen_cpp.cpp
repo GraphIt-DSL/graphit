@@ -131,35 +131,15 @@ namespace graphit {
         printIndent();
         auto for_domain = par_for_stmt->domain;
         auto loop_var = par_for_stmt->loopVar;
-        oss << "#pragma omp parallel for";
 
         if (par_for_stmt->grain_size != 0){
+            oss << "#pragma cilk grainsize = " << par_for_stmt->grain_size;
 
-            oss << " ";
-
-            if (par_for_stmt->type == ParForSchedule::ParForType::STATIC) {
-                oss << "schedule(static, " << par_for_stmt->grain_size << ")";
-
-            }
-
-            else if (par_for_stmt->type == ParForSchedule::ParForType::DYNAMIC){
-                oss << "schedule(dynamic, " << par_for_stmt->grain_size << ")";
-            }
-
-            else {
-                oss << "schedule(static, " << par_for_stmt->grain_size << ")";
-            }
-
-        }
-
-        if (par_for_stmt->num_threads != 0){
-            oss << " ";
-            oss << "num_threads(" << par_for_stmt->num_threads << ")";
         }
 
         oss << std::endl;
         printIndent();
-        oss << "for ( int " << loop_var << " = ";
+        oss << "cilk_for( int " << loop_var << " = ";
         for_domain->lower->accept(this);
         oss << "; " << loop_var << " < ";
         for_domain->upper->accept(this);

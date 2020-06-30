@@ -2695,7 +2695,7 @@ TEST_F(HighLevelScheduleTest, ParForNestedSchedule){
     fe_->parseStream(is, context_, errors_);
     fir::high_level_schedule::ProgramScheduleNode::Ptr program
             = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-    program->configParForGrainSize("l1", 16)->configParForScheduleType("s1", "dynamic");
+    program->configParForGrainSize("l1", 16);
     program->configApplyParallelization("l1:s2", "dynamic-vertex-parallel");
     program->configApplyParallelization("l1:s3", "dynamic-vertex-parallel");
 

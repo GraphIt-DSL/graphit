@@ -735,8 +735,6 @@ namespace graphit {
             domain = for_node->domain->clone<ForDomain>();
             body = for_node->body->clone<StmtBlock>();
             grain_size = for_node->grain_size;
-            type = for_node->type;
-            num_threads = for_node->num_threads;
         }
 
 

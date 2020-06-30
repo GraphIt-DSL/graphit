@@ -27,29 +27,6 @@ namespace graphit {
                 par_for->grain_size = par_for_schedule->second;
             }
         }
-
-        par_for->type = ParForSchedule::ParForType::STATIC;
-
-        if (schedule_ != nullptr && schedule_->par_for_type_schedules != nullptr) {
-            //TODO: why is there no current scope?
-            //auto current_scope_name = label_scope_.getCurrentScope();
-            auto par_for_schedule = schedule_->par_for_type_schedules->find(par_for->stmt_label);
-            if (par_for_schedule != schedule_->par_for_type_schedules->end()) {
-                //if a schedule for the statement has been found
-                par_for->type = par_for_schedule->second;
-            }
-        }
-
-
-        if (schedule_ != nullptr && schedule_->par_for_num_threads != nullptr) {
-            //TODO: why is there no current scope?
-            //auto current_scope_name = label_scope_.getCurrentScope();
-            auto par_for_schedule = schedule_->par_for_num_threads->find(par_for->stmt_label);
-            if (par_for_schedule != schedule_->par_for_num_threads->end()) {
-                //if a schedule for the statement has been found
-                par_for->num_threads = par_for_schedule->second;
-            }
-        }
         node = par_for;
 
     }
