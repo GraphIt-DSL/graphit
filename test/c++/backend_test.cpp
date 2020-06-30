@@ -1217,6 +1217,20 @@ TEST_F(BackendTest, LocalVectorMultiple) {
     EXPECT_EQ(0, basicTest(is));
 }
 
+TEST_F(BackendTest, GlobalVectorMultiple) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector[4](int) = {1, 5, 8, 9};\n"
+                     "func main()\n"
+                     "    print simpleArray.sum();\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+
 TEST_F(BackendTest, SimpleParForLoops) {
     istringstream is("func main() par_for i in 1:10; print i; end end");
     EXPECT_EQ (0,  basicTest(is));

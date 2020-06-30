@@ -418,7 +418,12 @@ namespace graphit {
                 // varDecl->type = parseTensorType();
                 varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
-                    varDecl->initVal = parseExpr();
+                    if (peek().type == Token::Type::LC) {
+                        varDecl->initVal = parseConstantVectorExpr();
+
+                    } else {
+                        varDecl->initVal = parseExpr();
+                    }
                 }
             } else {
                 consume(Token::Type::ASSIGN);
@@ -460,7 +465,11 @@ namespace graphit {
             //if an initial value is specified
             if (tryConsume(Token::Type::ASSIGN)) {
                 //consume(Token::Type::ASSIGN);
-                constDecl->initVal = parseExpr();
+                if (peek().type == Token::Type::LC) {
+                    constDecl->initVal = parseConstantVectorExpr();
+                } else {
+                    constDecl->initVal = parseExpr();
+                }
             }
 
             const Token endToken = consume(Token::Type::SEMICOL);
@@ -940,8 +949,6 @@ namespace graphit {
                 return parseIntersectionExpr();
             case Token::Type::INTERSECT_NEIGH:
                 return parseIntersectNeighborExpr();
-            case Token::Type::LC:
-                return parseConstantVectorExpr();
             default:
                 return parseOrExpr();
         }

@@ -2402,8 +2402,20 @@ namespace graphit {
 
     void CodeGenCPP::genScalarVectorAlloc(mir::VarDecl::Ptr constant, mir::VectorType::Ptr vector_type) {
         oss << constant->name << " = new ";
-        vector_type->vector_element_type->accept(this);
-        oss << " ();" << std::endl;
+
+        if (mir::isa<mir::ConstantVectorExpr>(constant->initVal)) {
+            auto const_expr = mir::to<mir::ConstantVectorExpr>(constant->initVal);
+            vector_type->vector_element_type->accept(this);
+            oss << "[";
+            oss << const_expr->numElements;
+            oss << "]";
+            const_expr->accept(this);
+            oss << ";" << std::endl;
+        } else {
+            vector_type->vector_element_type->accept(this);
+            oss << " ();" << std::endl;
+        }
+
     }
 
 

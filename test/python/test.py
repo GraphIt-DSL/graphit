@@ -460,6 +460,9 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_local_vector_const(self):
         self.expect_output_val("constant_vector.gt", 10);
 
+    def test_local_vector_const_global(self):
+        self.expect_output_val("const_vector_global.gt", 10);
+
     def test_par_for(self):
         self.expect_output_val("par_for.gt", 50);
 if __name__ == '__main__':
@@ -468,6 +471,6 @@ if __name__ == '__main__':
 
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_par_for'))
+    # suite.addTest(TestGraphitCompiler('test_local_vector_const_global'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
 
