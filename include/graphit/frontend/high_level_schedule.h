@@ -60,10 +60,9 @@ namespace graphit {
                         delete(programSchedule_);
                 }
                 enum class backend_selection_type {
-			CODEGEN_CPU,
+			            CODEGEN_CPU,
                         CODEGEN_GPU,
-
-			CODEGEN_INVALID
+			            CODEGEN_INVALID
                 };
                 
                 backend_selection_type backend_selection = backend_selection_type::CODEGEN_CPU; 
