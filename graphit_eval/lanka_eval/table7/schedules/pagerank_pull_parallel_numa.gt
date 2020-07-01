@@ -1,0 +1,4 @@
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");
+    program->configApplyNumSSG("s1", "fixed-vertex-count", 5)->configApplyNUMA("s1", "static-parallel");
+

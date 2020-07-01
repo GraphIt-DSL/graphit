@@ -1,0 +1,39 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load(argv[1]);
+const triangles : uint_64 = 0;
+const vertices : vertexset{Vertex} = edges.getVertices();
+const vertexArray: vector{Vertex}(uint_64) = 0;
+
+func incrementing_count(src : Vertex, dst : Vertex)
+    if dst < src
+        #s2# vertexArray[src] += intersectNeighbor(edges, src, dst);
+    end
+
+end
+
+func reset(v: Vertex)
+    vertexArray[v] = 0;
+
+end
+
+
+func main()
+
+    for trail in 0:3
+        % this is bit jank
+        edges = load(argv[1]);
+        startTimer();
+        edges = edges.relabel();
+        #s1# edges.apply(incrementing_count);
+        triangles = vertexArray.sum();
+        vertices.apply(reset);
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+        print "Triangles:";
+        print triangles;
+    end
+
+end

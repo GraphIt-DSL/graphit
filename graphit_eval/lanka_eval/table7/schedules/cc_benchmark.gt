@@ -1,0 +1,36 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+const IDs : vector{Vertex}(int) = 1;
+
+func updateEdge(src : Vertex, dst : Vertex)
+    IDs[dst] min= IDs[src];
+end
+
+func init(v : Vertex)
+     IDs[v] = v;
+end
+
+func main()
+
+    var n : int = edges.getVertices();
+    for trail in 0:10
+        startTimer();
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+        vertices.apply(init);
+        while (frontier.getVertexSetSize() != 0)
+            #s1# frontier = edges.from(frontier).applyModified(updateEdge,IDs);
+        end
+
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+
+schedule:
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel")->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
