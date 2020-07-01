@@ -1,0 +1,6 @@
+schedule:
+        program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
+        program->configApplyPriorityUpdateDelta("s1", "argv[4]");
+        program->configBucketMergeThreshold("s1", 1000);
+        program->configApplyParallelization("s2","serial");
+

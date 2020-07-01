@@ -1,0 +1,49 @@
+% This file is copied from a repo - (https://github.com/bespoke-silicon-group/hb_starlite/tree/master/py-graphit-example)
+% author: mrutt92
+
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex, int);
+
+const vertices : vertexset{Vertex};
+
+const SP : vector{Vertex}(int);
+
+func initSP(v : Vertex)
+    SP[v] = 2147483647;
+end
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int)
+     SP[dst] min= (SP[src] + weight);
+end
+
+func printSP(v : Vertex)
+    print SP[v];
+end
+
+export func do_sssp(input_edges : edgeset{Edge}(Vertex,Vertex, int),
+source_vertex : int) -> output : vector{Vertex}(int)
+    edges = input_edges;
+    vertices = edges.getVertices();
+    SP = new vector{Vertex}(int)();
+    vertices.apply(initSP);
+    var n : int = edges.getVertices();
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(source_vertex);
+    SP[source_vertex] = 0;
+    var rounds : int = 0;
+    while (frontier.getVertexSetSize() != 0)
+        var output : vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,SP);
+        delete frontier;
+        frontier = output;
+	    rounds = rounds + 1;
+    	if rounds == n
+	        print "negative cycle";
+	        break;
+	    end
+    end
+    delete frontier;
+    %print rounds;
+    output = SP;
+end

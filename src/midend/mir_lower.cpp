@@ -13,6 +13,7 @@
 #include <graphit/midend/atomics_op_lower.h>
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
+#include <graphit/midend/udf_dup.h>
 #include <graphit/midend/priority_features_lowering.h>
 #include <graphit/midend/frontier_reuse_analysis.h>
 
@@ -23,6 +24,10 @@ namespace graphit {
      * @param schedule
      */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
+    
+        // Duplicate the UDFs that have been used in two different EdgeSetApplyExpr
+        // before performing any analysis
+        UDFReuseFinder(mir_context).lower();
 
         //lower global vector assignment to vector operations
         GlobalFieldVectorLower(mir_context).lower();

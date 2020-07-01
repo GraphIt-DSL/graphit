@@ -984,6 +984,8 @@ namespace graphit {
 
             bool frontier_reusable = false;
 	
+            std::string edgeset_apply_func_name;
+
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {

@@ -148,7 +148,11 @@ In the OOPSLA paper (Table 8), we described the schedules used for each algorith
 each for a total of 24 cores and 48 hyper-threads. The system has 128GB of DDR3-1600 memory
 and 30 MB last level cache on each socket, and runs with Transparent Huge Pages (THP) enabled. The best schedule for a different machine can be different. You might need to try a few different set of schedules for the best performance. 
 
-Detailed instructions for replicating our *CGO 2020* PriorityGraph paper is in the **graphit/graphit_eval/priority_graph_cgo2020_eval** directory. 
+Detailed instructions for replicating the results in our [*CGO 2020 Optimizing Ordered Graph Algorithms with GraphIt*](https://dl.acm.org/doi/10.1145/3368826.3377909) paper is [here](https://github.com/GraphIt-DSL/graphit/tree/master/graphit_eval/priority_graph_cgo2020_eval). We collected the results from the same hardware platform as our OOPSLA 18 paper.
+
+If you just want to replicate the performance of our  *bucket fusion* optimization for SSSP with delta stepping proposed in the [*CGO 2020*](https://dl.acm.org/doi/10.1145/3368826.3377909) paper, you can also just use the [GAP](https://github.com/sbeamer/gapbs) benchmark suite. We have since integrated our optimization into the GAP benchmark suite. You can find a bucket fusion optimized SSSP in the [GAP repo here](https://github.com/sbeamer/gapbs/blob/master/src/sssp.cc).
+
+**A Note on the Performance of SSSP** We used weight 1 for all the weighted graphs in the original *OOPSLA 2018* paper for convenience. We later realized that this decision impacted the performance of SSSP, especially on the road networks. Since then, we have used random weights for the social networks and original weights for the road networks in the *CGO 2020* paper. Please refer to our CGO 2020 paper for the performance of SSSP with BellmanFord and DeltaStepping. We have also improved the performance of SSSP on road networks significantly with our new bucket fusion optimization. Please see this [closed issue](https://github.com/GraphIt-DSL/graphit/issues/135) for more details.
 
 In the schedules shown in Table 8 of the OOPSLA paper, the keyword ’Program’ and the continuation symbol ’->’ are omitted. ’ca’ is the abbreviation for ’configApply’. Note that configApplyNumSSG uses an integer parameter (X) which is dependent on the graph size and the cache size of a system. For example, the complete schedule used for CC on Twitter graph is the following (X is tuned to the cache size)
 
@@ -172,3 +176,8 @@ Autotuning GraphIt Schedules
 ===========
 Pleaes refer to **README.md** in **graphit/auotune** for more details. 
 The auotuner is still somehwat experimental. Please read the [instructions](https://github.com/GraphIt-DSL/graphit/blob/master/autotune/README.md) carefully before trying it out. 
+
+Publications
+===========
+* GraphIt-A High-Performance DSL for Graph Analytics [OOPSLA 2018](https://dl.acm.org/doi/10.1145/3276491)
+* Optimizing ordered graph algorithms with GraphIt [CGO 2020](https://dl.acm.org/doi/10.1145/3368826.3377909)

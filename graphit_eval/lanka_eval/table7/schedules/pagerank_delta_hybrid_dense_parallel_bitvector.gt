@@ -1,0 +1,7 @@
+
+
+schedule:
+    program->configApplyDirection("s1", "SparsePush-DensePull")
+    ->configApplyParallelization("s1","dynamic-vertex-parallel")
+    ->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
+    program->fuseFields("delta", "out_degree");

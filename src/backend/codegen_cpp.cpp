@@ -1769,7 +1769,12 @@ namespace graphit {
         // the arguments order here has to be consistent with genEdgeApplyFunctionSignature in gen_edge_apply_func_decl.cpp
 
 	
-        auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
+        //auto edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
+        // Use the name from the edgeset_apply instead of generating the name again
+        std::string edgeset_apply_func_name = apply->edgeset_apply_func_name;
+        if (edgeset_apply_func_name == "") {
+            edgeset_apply_func_name = edgeset_apply_func_gen_->genFunctionName(apply);
+        }
         oss << edgeset_apply_func_name << "(";
 
         apply->target->accept(this);
