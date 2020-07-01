@@ -1,0 +1,96 @@
+% assume hypergraph has already been converted to a bipartite graph
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const SP : vector{Vertex}(int) = 2147483647 / 2; %should be INT_MAX
+const visited : vector{Vertex}(bool) = false;
+const nv : int;
+const nh : int;
+
+func filterV(v: Vertex) -> output : bool 
+     output = (v < nv); 
+end
+
+func filterH(v: Vertex) -> output : bool 
+     output = (v >= nv); 
+end
+
+func reset(v: Vertex)
+    SP[v] = 2147483647 / 2;
+end
+
+func relaxVtoH(src : Vertex, dst : Vertex, weight: int)
+    SP[dst] min= (SP[src] + weight); 
+
+end
+
+func relaxHtoV(src : Vertex, dst : Vertex, weight : int)
+    SP[dst] min= (SP[src] + 0); 
+end
+
+func set_neg_inf(v : Vertex)
+   SP[v] = - 2147483647 / 2;
+end
+
+func printSP(v: Vertex)
+    print SP[v];
+end
+
+func toFilter(v : Vertex) -> output : bool
+    output = (visited[v] == false);
+end
+
+func resetVisited(v: Vertex)
+    visited[v] = false;
+end
+
+func main()
+    nv = atoi(argv[3]);
+    nh = atoi(argv[4]);
+    for trail in 0:1
+        startTimer();
+
+        var V : vertexset{Vertex} = vertices.filter(filterV);
+        var H : vertexset{Vertex} = vertices.filter(filterH);
+        vertices.apply(reset);
+
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+	    var start_vertex : int = atoi(argv[2]);
+    	frontier.addVertex(start_vertex);
+        SP[start_vertex] = 0;
+
+        var round : int = 0;
+
+    	while (1)
+            if (round == nv - 1)
+              V.apply(set_neg_inf);
+              break;
+            end
+            print frontier.getVertexSetSize();
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(relaxVtoH, SP, true);
+	        delete frontier;
+	        frontier = output;
+            if frontier.getVertexSetSize() == 0
+                break; 
+            end
+
+            print frontier.getVertexSetSize();
+            output = edges.from(frontier).applyModified(relaxHtoV, SP, true);
+	        delete frontier;
+	        frontier = output;
+            if frontier.getVertexSetSize() == 0
+                break;
+            end
+            round = round + 1;
+    	end
+	    delete frontier;
+	    V.apply(printSP);
+        var elapsed_time : double = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+schedule:
+    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");

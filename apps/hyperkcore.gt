@@ -74,5 +74,4 @@ func main()
         var V : vertexset{Vertex} = vertices.filter(filterV);
         V.apply(printD);
     end
-    
 end

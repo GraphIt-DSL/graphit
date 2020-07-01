@@ -13,11 +13,15 @@ func reset(v: Vertex)
     parent[v] = -1;
 end
 
-func toFilter(v : Vertex) -> output : bool
-    output =  parent[v] == -1;
+func toFilter(v : Vertex) -> result : bool
+    result =  parent[v] == -1;
 end
 
-func updateEdge(src : Vertex, dst : Vertex)
+func updateEdgeVtoH(src : Vertex, dst : Vertex)
+    parent[dst] = src;
+end
+
+func updateEdgeHtoV(src : Vertex, dst : Vertex)
     parent[dst] = src;
 end
 
@@ -34,7 +38,7 @@ end
 func main()
     nv = atoi(argv[3]);
     nh = atoi(argv[4]);
-    for trail in 0:1
+    for trail in 0:3
         startTimer();
 
         vertices.apply(reset);
@@ -44,22 +48,24 @@ func main()
     	parent[start_vertex] = start_vertex;
 
     	while (1)
-            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdgeVtoH,parent, true);
 	        delete frontier;
 	        frontier = output;
+            % print frontier.getVertexSetSize();
             if frontier.getVertexSetSize() == 0
                 break; 
             end
 
-            output = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+            #s2# output = edges.from(frontier).to(toFilter).applyModified(updateEdgeHtoV,parent, true);
 	        delete frontier;
 	        frontier = output;
+            % print frontier.getVertexSetSize();
             if frontier.getVertexSetSize() == 0
                 break;
             end
     	end
 	    delete frontier;
-	vertices.apply(printParent);
+	    % vertices.apply(printParent);
         var elapsed_time : double = stopTimer();
         print "elapsed time: ";
         print elapsed_time;

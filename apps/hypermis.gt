@@ -1,0 +1,113 @@
+%%%%%%%%%%%% Incomplete %%%%%%%%%%%% 
+
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const degree: vector{Vertex}(uint) = edges.getOutDegreesUint();
+
+const flags : vector{Vertex}(uint) = 0;
+const counts : vector{Vertex}(uint) = 0;
+const delete : vector{Vertex}(bool) = false;
+
+const pq: priority_queue{Vertex}(uint);
+
+const nv : int;
+const nh : int;
+const int_max : int = 2147483647; 
+const inverse_prob : long = 3;
+var offset : long = 0; 
+var round : int;
+
+func filterV(v: Vertex) -> output : bool 
+    output = (v < nv); 
+end
+
+func filterH(v: Vertex) -> output : bool 
+    output = (v >= nv); 
+end
+
+func printFlags(v: Vertex)
+    print flags[v];
+end
+
+func hashInt(a : int) -> output : int
+    output = a;
+end
+
+func sample(v : Vertex)
+    if (hashInt(v + offset) == 0)
+        flags[i] = round; 
+    end
+end
+
+func reset(v : Vertex)
+    counts[v] = 0;
+end
+
+func checkF(v : Vertex) -> output : bool
+    output = (flags[v] == round);
+end
+
+func count(src: Vertex, dst : Vertex) 
+    counts[src]  += 1;
+end
+
+func ind(v : Vertex) -> output : bool
+    output = (counts[v] == degree);
+end
+
+func resetNgh(v : Vertex) 
+    counts[v] = 0; 
+end
+
+func deleteIfFlagNonzero(src : Vertex, dst : Vertex)
+    if (flags[dst] != 0)
+        delete[dst] = true
+    end
+end
+
+func updatHyperedgeDegree(src: Vertex, dst :Vertex)
+    degree[dst] -= 1;
+end
+
+func endOfRoundFilterH(v : Vertex) -> output: bool
+    if (degree[v] == 0)
+        output = 0;
+    elif (degree[v] == 1)
+        if 
+    else
+        output = 1;
+end
+
+func endOfRoundFilterV(v : Vertex) -> output: bool
+    output = (flags[v] == 0);
+end
+
+func main
+    for trial in 0:2
+        startTimer();
+
+        frontierV : vertexset{Vertex} = vertices.filter(filterV);
+        frontierH : vertexset{Vertex} = vertices.filter(filterH);
+        round = 1; 
+        while (frontierV.getVertexSetSize() > 0)
+            var output : vertexset{Vertex} = frontierV.applyModified(sample, flags);
+            delete frontierV; 
+            frontierV = output; 
+            edges.from(frontierH).to(checkF).apply(count);
+            var fullEdges : vertexSet{Vertex} = frontierH.filter(ind);
+            edges.from(fullEdges).to(checkF).apply(resetNgh);
+            var toDelete : vertexSet{Vertex} = edges.from(frontierH).applyModified(deleteIfNonzero); 
+            edges.from(toDelete).apply();
+            frontierH = frontierH.filter(endOfRoundFilterH);
+            frontierV = frontierV.filter(endOfRoundFilterV); 
+        end
+
+        var elapsed_time : double = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
+        var V : vertexset{Vertex} = verteices.filter(filterV);
+        V.apply(printFlags); 
+    end
+end

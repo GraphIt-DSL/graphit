@@ -31,17 +31,21 @@ func forward_update(src: Vertex, dst: Vertex)
     numPaths[dst] += numPaths[src];
 end
 
+func forward_update2(src: Vertex, dst: Vertex)
+    numPaths[dst] += numPaths[src];
+end
+
 func backward_mark_visited(v: Vertex)
     visited[v] = true;
     dependencies[v] += 1;
 end 
 
 func backward_update(src: Vertex, dst: Vertex)
-    if src < nv % VtoE
         dependencies[dst] += dependencies[src]/numPaths[src];
-    else  %EtoV
+end
+
+func backward_update2(src: Vertex, dst: Vertex)
         dependencies[dst] += dependencies[src] * numPaths[dst];
-    end
 end
 
 func printDep(v: Vertex)
@@ -63,7 +67,7 @@ func main()
     nh = atoi( argv[4] ); 
     src = atoi( argv[2] );
 
-    for trail in 0:2
+    for trail in 0:1
         startTimer();
 
         numPaths[src] = 1;
@@ -87,7 +91,7 @@ func main()
             end
             
             round = round + 1;
-            output = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, numPaths);
+            output = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update2, numPaths);
             output.apply(mark_visited);
             frontier_list.append(output);
             frontier = output;
@@ -119,7 +123,7 @@ func main()
 
             frontier = frontier_list.pop();
             frontier.apply(mark_visited);
-            transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+            transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update2);
             delete frontier;
             round = round - 1; 
         end
@@ -127,8 +131,8 @@ func main()
         delete frontier;
 
         var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
-        print elapsed_time;
+        % print "elapsed time: ";
+        % print elapsed_time;
         var toPrint : vertexset{Vertex} = vertices.filter(filterV);
         toPrint.apply(printDep);
         vertices.apply(reset);
