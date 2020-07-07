@@ -135,6 +135,7 @@ class CSRGraph {
       delete ((*iter).second);
     }
 
+    // when we clear all the resources, we want to clear deduplication flags owned by threads too.
     std::lock_guard<std::mutex> lock(thread_mutex);
     deduplication_flags.clear();
 
@@ -549,6 +550,13 @@ public:
   std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
 
   // thread safe deduplication vectors
+  // It is used to maintain different deduplication flags for different threads
+  // 1. Each thread asks for deduplication flag array whenever it needs one
+  // 2. Each thread gets the deduplication flag from the deduplication flags vector
+  //    (if we are using 4 threads in parallel, there can be 4 deduplication flags at most)
+  // 3. Each thread appends to deduplication_flags vector after they are done.
+  //    Since we only care for a binary update, we don't care about other
+  //    threads' work beforehand.
   std::vector<int*> deduplication_flags;
  
   DestID_** get_out_index_(void) {
@@ -564,9 +572,10 @@ public:
       return in_neighbors_;
   }
 
-
+  // Atomically returns deduplication flag whenever a thread needs one.
   inline int* get_flags_atomic_() {
 
+      // we guarantee correctness by locking the deduplication_flags vector.
       std::lock_guard<std::mutex> lock(thread_mutex);
 
       if (deduplication_flags.size() == 0) {
@@ -582,9 +591,11 @@ public:
       return to_return;
 
   }
-
+  // whenever a thread finishes processing deduplication logic, it immediately returns to flag
+  // into the deduplication flags pool.
   inline void return_flags_atomic_(int * flags) {
 
+      // we guarantee correctness by locking the deduplication_flags vector.
       std::lock_guard<std::mutex> lock(thread_mutex);
       deduplication_flags.push_back(flags);
 

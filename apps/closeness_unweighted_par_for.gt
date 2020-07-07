@@ -52,12 +52,4 @@ func main()
         print elapsed_time;
 end
 
-schedule:
-    program->configParForGrainSize("l1", 16)
-           ->configParForScheduleType("l1", "static")
-           ->configParForNumThreads("l1", 4);
-
-    program->configApplyDirection("l1:s1", "SparsePush-DensePull")
-           ->configApplyParallelization("l1:s1", "dynamic-vertex-parallel")
-           ->configApplyDenseVertexSet("l1:s1","bitvector", "src-vertexset", "DensePull");
 
