@@ -15,7 +15,6 @@
 #include <graphit/midend/merge_reduce_lower.h>
 #include <graphit/midend/udf_dup.h>
 #include <graphit/midend/priority_features_lowering.h>
-#include <graphit/midend/frontier_reuse_analysis.h>
 
 namespace graphit {
     /**

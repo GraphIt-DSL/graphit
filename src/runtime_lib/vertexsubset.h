@@ -269,14 +269,6 @@ struct VertexSubset {
 
     }
 
-
-    inline int* getFlags() {
-        return flags;
-    }
-    inline void setFlags(int *flags) {
-        flags = flags;
-    }
-
 };
 
 #endif //GRAPHIT_VERTEXSUBSET_H
