@@ -39,9 +39,6 @@ namespace graphit {
         //This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
         PriorityFeaturesLower(mir_context, schedule).lower();
 
-        // This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
-        FrontierReuseAnalysis(mir_context).analyze();
-
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
         // deduplication: enable / disable

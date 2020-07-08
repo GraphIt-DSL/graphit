@@ -939,6 +939,9 @@ class TestGraphitCompiler(unittest.TestCase):
 
     def test_par_for_grain_size(self):
         self.expect_output_val_with_separate_schedule("par_for_schedule_testing.gt", "par_for_grain_size.gt", 50, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"]);
+    def test_nested_par_for(self):
+        self.expect_output_val_with_separate_schedule("nested_par_for.gt", "nested_par_for_schedule.gt", 500.0, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"]);
+
 
 
 if __name__ == '__main__':
@@ -967,6 +970,6 @@ if __name__ == '__main__':
     # used for enabling a specific test
     #
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_bc_SparsePushDensePull_bitvector_verified'))
+    # suite.addTest(TestGraphitCompiler('test_nested_par_for'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
     

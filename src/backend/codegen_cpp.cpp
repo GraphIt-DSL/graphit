@@ -128,6 +128,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::ParForStmt::Ptr par_for_stmt) {
+        mir_context_->scope();
         printIndent();
         auto for_domain = par_for_stmt->domain;
         auto loop_var = par_for_stmt->loopVar;
@@ -150,6 +151,7 @@ namespace graphit {
         dedent();
         printEndIndent();
         oss << std::endl;
+        mir_context_->unscope();
 
     }
 

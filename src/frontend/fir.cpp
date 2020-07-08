@@ -1152,7 +1152,7 @@ namespace graphit {
             numElements = constantVectorExpr->numElements;
 
             for (const auto &el : constantVectorExpr->vectorElements) {
-                vectorElements.push_back(el ? el->clone<Expr>() : Expr::Ptr());
+                vectorElements.push_back(el->clone<Expr>());
             }
 
         }

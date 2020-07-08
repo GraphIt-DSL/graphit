@@ -186,7 +186,7 @@ namespace graphit {
             auto expr = to<mir::ConstantVectorExpr>(node);
 
             for(auto &el : expr->vectorElements) {
-                vectorElements.push_back(el);
+                vectorElements.push_back(el->clone<Expr>());
             }
 
             numElements = expr->numElements;

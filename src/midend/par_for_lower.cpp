@@ -16,7 +16,7 @@ namespace graphit {
     }
 
     void ParForLower::LowerParForStmt::visit(mir::ParForStmt::Ptr par_for) {
-
+        mir_context_->scope();
         par_for->grain_size = 0;
         if (schedule_ != nullptr && schedule_->par_for_grain_size_schedules != nullptr) {
             //TODO: why is there no current scope?
@@ -28,6 +28,7 @@ namespace graphit {
             }
         }
         node = par_for;
+        mir_context_->unscope();
 
     }
 
