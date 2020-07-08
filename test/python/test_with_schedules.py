@@ -942,8 +942,6 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_nested_par_for(self):
         self.expect_output_val_with_separate_schedule("nested_par_for.gt", "nested_par_for_schedule.gt", 500.0, [], [GRAPHIT_SOURCE_DIRECTORY + "/test/graphs/test.el"]);
 
-
-
 if __name__ == '__main__':
 
     #while len(sys.argv) > 1:
@@ -970,6 +968,6 @@ if __name__ == '__main__':
     # used for enabling a specific test
     #
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_nested_par_for'))
+    # suite.addTest(TestGraphitCompiler('test_closeness_centrality_unweighted_functor_parallel_for_hybrid_parallel'))
     # unittest.TextTestRunner(verbosity=2).run(suite)
     

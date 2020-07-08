@@ -16,14 +16,15 @@ end
 
 func main()
 
-    var K : int = 5;
+    var starting_vertices : vector[5](int) = {1, 2, 3, 4, 5};
 
-    #s2# par_for i in 0: K
+    #l1# par_for i in 0: 5
+        var start_vertex : int = starting_vertices[i];
         var checked_local : vector{Vertex}(int) = -1;
 
-        checked_local[i]  = 0;
+        checked_local[start_vertex]  = 0;
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
-        frontier.addVertex(i);
+        frontier.addVertex(start_vertex);
 
         while (frontier.getVertexSetSize() != 0)
 
@@ -43,13 +44,13 @@ func main()
 
         sum = sum + amountNotConnected;
 
-        scores[i] = sum;
+        scores[start_vertex] = sum;
 
         delete checked_local;
 
     end
 
-    for i in 0:K
+    for i in 0:5
         print scores[i];
     end
 
