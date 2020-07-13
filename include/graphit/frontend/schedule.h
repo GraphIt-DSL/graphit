@@ -204,25 +204,39 @@ namespace graphit {
             int num_open_buckets;
         };
 
-        class ProgramSchedule {
+        /**
+         * User specified schedule object
+         */
+        class Schedule {
         public:
-            enum class BackendID {
-                CPU,
-                GPU
-            };
 
-            ProgramSchedule(BackendID backendId) {
+          enum class BackendID {
+            CPU,
+            GPU
+          };
+
+
+
+          Schedule(BackendID backendId = BackendID::CPU) {
+                physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
+                apply_schedules = new std::map<std::string, ApplySchedule>();
+                vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
+                graph_iter_spaces = new std::map<std::string, std::vector<GraphIterationSpace> *>();
                 schedule_map = std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr>(); //label to schedule object
                 backend_identifier = backendId ;
+
             };
 
-            ~ProgramSchedule() {
+            ~Schedule() {
+                delete physical_data_layouts;
+                delete apply_schedules;
+		for (auto s = apply_gpu_schedules.begin(); s != apply_gpu_schedules.end(); s++) {
+			delete s->second;
+		}
             }
 
-            std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
-            BackendID backend_identifier;
 
-            // initialize or grab an existing schedule object.
+          // initialize or grab an existing schedule object.
           fir::abstract_schedule::ScheduleObject::Ptr initOrGetScheduleObject(std::string apply_label, std::string direction="all") {
             // if a direction is not specified, then just return the schedule, creating a new one if necessary.
             if (direction == "all") {
@@ -285,28 +299,7 @@ namespace graphit {
             fir::cpu_schedule::HybridCPUScheduleObject::Ptr cpu_hybrid_object = std::make_shared<fir::cpu_schedule::HybridCPUScheduleObject>(simple_schedule, schedule_copy);
             return cpu_hybrid_object;
           }
-        };
 
-        /**
-         * User specified schedule object
-         */
-        class Schedule {
-        public:
-            Schedule() {
-                physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
-                apply_schedules = new std::map<std::string, ApplySchedule>();
-                vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
-                graph_iter_spaces = new std::map<std::string, std::vector<GraphIterationSpace> *>();
-
-            };
-
-            ~Schedule() {
-                delete physical_data_layouts;
-                delete apply_schedules;
-		for (auto s = apply_gpu_schedules.begin(); s != apply_gpu_schedules.end(); s++) {
-			delete s->second;
-		}
-            }
 
             //TODO: what does it mean??
             std::map<std::string, FieldVectorPhysicalDataLayout> *physical_data_layouts;
@@ -318,7 +311,9 @@ namespace graphit {
             std::map<std::string, VertexsetPhysicalLayout> vertexset_data_layout;
 
 
-	    std::map <std::string, graphit::fir::gpu_schedule::GPUSchedule*> apply_gpu_schedules;
+	        std::map <std::string, graphit::fir::gpu_schedule::GPUSchedule*> apply_gpu_schedules;
+            std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
+            BackendID backend_identifier;
         };
     }
 

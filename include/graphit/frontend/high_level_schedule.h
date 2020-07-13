@@ -35,7 +35,6 @@ namespace graphit {
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
                     schedule_ = nullptr;
-//                    programSchedule_ = nullptr;
                     dirCompatibilityMap_ = {
                             {"SparsePush", "push"},
                             {"DensePull", "pull"},
@@ -56,8 +55,6 @@ namespace graphit {
                 ~ ProgramScheduleNode(){
                     if (schedule_ != nullptr)
                         delete(schedule_);
-                    if (programSchedule_ != nullptr)
-                        delete(programSchedule_);
                 }
                 enum class backend_selection_type {
 			            CODEGEN_CPU,
@@ -212,10 +209,6 @@ namespace graphit {
                     return  schedule_;
                 }
 
-                ProgramSchedule * getProgramSchedule() {
-                    return programSchedule_;
-                }
-
 
 		// New GPU Scheduling API
 		// We currently need two different functions to apply simple and hybrid schedules
@@ -224,14 +217,12 @@ namespace graphit {
                 	backend_selection = backend_selection_type::CODEGEN_GPU; 
 
 			if (schedule_ == nullptr)
-				schedule_ = new Schedule();
+				schedule_ = new Schedule(Schedule::BackendID::GPU);
 
-			if (programSchedule_ == nullptr)
-			    programSchedule_ = new ProgramSchedule(ProgramSchedule::BackendID::GPU);
 
 			gpu_schedule::SimpleGPUSchedule *s1_copy = new gpu_schedule::SimpleGPUSchedule(s1);
 
-			programSchedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::SimpleGPUSchedule>(s1);
+			schedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::SimpleGPUSchedule>(s1);
 			schedule_->apply_gpu_schedules[label_name] = s1_copy;
 			
 		}
@@ -241,13 +232,11 @@ namespace graphit {
 			if (schedule_ == nullptr)
 				schedule_ = new Schedule();
 
-            if (programSchedule_ == nullptr)
-                programSchedule_ = new ProgramSchedule(ProgramSchedule::BackendID::GPU);
 
 			gpu_schedule::HybridGPUSchedule *s2_copy = new gpu_schedule::HybridGPUSchedule(s2);
 
 			*s2_copy = s2;
-            programSchedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::HybridGPUSchedule>(s2);
+            schedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::HybridGPUSchedule>(s2);
 			schedule_->apply_gpu_schedules[label_name] = s2_copy;
 		}
 		
@@ -255,7 +244,6 @@ namespace graphit {
             private:
                 graphit::FIRContext * fir_context_ = nullptr;
                 Schedule * schedule_ = nullptr;
-                ProgramSchedule * programSchedule_ = nullptr;
                 // Maps the new direction to the old directions for backward compatibility for now.
                 // For example, "SparsePush" would be mapped to "push"
                 // This eventually will be deprecated, just keeping it to keep the unit tests working

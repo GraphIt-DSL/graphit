@@ -2433,7 +2433,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUTest) {
     program->configApplyPriorityUpdateDelta("s1", 2);
     program->setApply("s1", "disable_deduplication");
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto simple_schedule_object = scheduleObject->to<SimpleScheduleObject>();
 
     EXPECT_EQ(false, simple_schedule_object->isComposite());
@@ -2454,7 +2454,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_CPUDefaultsTest) {
 
     program->setApply("s1", "sliding_queue");
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto simple_cpu_schedule = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
     auto simple_schedule_object = simple_cpu_schedule->self<SimpleScheduleObject>();
 
@@ -2483,7 +2483,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUTest) {
     s1.configDelta(2);
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto simple_schedule_object = scheduleObject->to<SimpleScheduleObject>();
 
     EXPECT_EQ(false, simple_schedule_object->isComposite());
@@ -2509,7 +2509,7 @@ TEST_F(HighLevelScheduleTest, SimpleScheduleObject_GPUDefaultsTest) {
     SimpleGPUSchedule s1;
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto simple_schedule_object = scheduleObject->to<SimpleScheduleObject>();
 
     EXPECT_EQ(false, simple_schedule_object->isComposite());
@@ -2546,7 +2546,7 @@ TEST_F(HighLevelScheduleTest, CompositeScheduleObject_GPUTest) {
     HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
     program->applyGPUSchedule("s1", h1);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto composite_schedule_object = scheduleObject->to<CompositeScheduleObject>();
     EXPECT_EQ(true, composite_schedule_object->isComposite());
 
@@ -2585,7 +2585,7 @@ TEST_F(HighLevelScheduleTest, HybridGPUScheduleObject_Test) {
     HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
     program->applyGPUSchedule("s1", h1);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto composite_schedule_object = scheduleObject->to<CompositeScheduleObject>();
     EXPECT_EQ(true, composite_schedule_object->isComposite());
 
@@ -2613,7 +2613,7 @@ TEST_F(HighLevelScheduleTest, HybridCPUScheduleObject_Test) {
     program->configApplyDirection("s1", "SparsePush-DensePull");
     program->configApplyDenseVertexSet("s1", "bitvector", "src-vertexset", "DensePull");
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto composite_schedule_object = scheduleObject->to<CompositeScheduleObject>();
 
     auto hybrid_cpu_schedule_object = scheduleObject->to<HybridCPUScheduleObject>();
@@ -2643,7 +2643,7 @@ TEST_F(HighLevelScheduleTest, SimpleCPUScheduleObject_Test) {
     program->configApplyPriorityUpdate("s1", "eager_priority_update_with_merge");
     program->configBucketMergeThreshold("s1", 800);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
 
     auto simple_cpu_schedule_object = scheduleObject->to<SimpleCPUScheduleObject>();
     EXPECT_EQ(SimpleCPUScheduleObject::DirectionType::DENSE_PULL, simple_cpu_schedule_object->getCPUDirection());
@@ -2687,7 +2687,7 @@ TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObject_Test) {
     s1.configKernelFusion(ENABLED);
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject::Ptr scheduleObject = (program->getProgramSchedule()->schedule_map)["s1"];
+    ScheduleObject::Ptr scheduleObject = (program->getSchedule()->schedule_map)["s1"];
     auto simple_gpu_schedule_object = scheduleObject->to<SimpleGPUSchedule>();
 
     EXPECT_EQ(SimpleGPUSchedule::load_balancing_type::EDGE_ONLY, simple_gpu_schedule_object->load_balancing);
@@ -2711,7 +2711,7 @@ TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObjectDefaults_Test) {
     SimpleGPUSchedule s1;
     program->applyGPUSchedule("s1", s1);
 
-    ScheduleObject::Ptr scheduleObject = program->getProgramSchedule()->schedule_map["s1"];
+    ScheduleObject::Ptr scheduleObject = program->getSchedule()->schedule_map["s1"];
     auto simple_gpu_schedule_object = scheduleObject->to<SimpleGPUSchedule>();
 
     EXPECT_EQ(SimpleGPUSchedule::load_balancing_type::VERTEX_BASED, simple_gpu_schedule_object->load_balancing);
