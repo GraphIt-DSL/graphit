@@ -620,7 +620,7 @@ namespace graphit {
                 schedule_->schedule_map[apply_label] = schedule_object;
               } else {
                 schedule_object = schedule_->schedule_map[apply_label];
-                assert(!schedule_object->isComposite() && schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(apply_direction));
+                assert(!schedule_object->isComposite());
               }
 
                 auto gis = GraphIterationSpace();
