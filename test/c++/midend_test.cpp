@@ -217,3 +217,37 @@ TEST_F(MidendTest, FunctorMultipleStatesTest) {
     EXPECT_EQ(0, basicTest(is));
 
 }
+
+
+TEST_F(MidendTest, UDFDuplicationBasicTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(3, mir_context_->getFunctionList().size());
+}
+
+TEST_F(MidendTest, UDFDuplicationBasicTestNoDup) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(2, mir_context_->getFunctionList().size());
+}
