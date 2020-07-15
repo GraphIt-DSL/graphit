@@ -48,10 +48,11 @@ namespace graphit {
 
         fir::abstract_schedule::ScheduleObject::Ptr schedule_obj = apply_schedule->second;
         //only support Simple CPU schedule for NUMA optimizations for now
-        if(!std::dynamic_pointer_cast<fir::cpu_schedule::SimpleCPUScheduleObject>(schedule_obj)) {
+        if(!schedule_obj->isa<fir::cpu_schedule::SimpleCPUScheduleObject>()) {
           return;
         }
-        fir::cpu_schedule::SimpleCPUScheduleObject::Ptr simple_cpu_schedule =  std::dynamic_pointer_cast<fir::cpu_schedule::SimpleCPUScheduleObject>(schedule_obj);
+        fir::cpu_schedule::SimpleCPUScheduleObject::Ptr simple_cpu_schedule 
+          = schedule_obj->to<fir::cpu_schedule::SimpleCPUScheduleObject>();
 
 
         if (simple_cpu_schedule->getNumaAware() == true) {
