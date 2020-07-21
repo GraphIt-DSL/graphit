@@ -31,10 +31,6 @@ func forward_update(src: Vertex, dst: Vertex)
     numPaths[dst] += numPaths[src];
 end
 
-func forward_update2(src: Vertex, dst: Vertex)
-    numPaths[dst] += numPaths[src];
-end
-
 func backward_mark_visited(v: Vertex)
     visited[v] = true;
     dependencies[v] += 1;
@@ -67,7 +63,7 @@ func main()
     nh = atoi( argv[4] ); 
     src = atoi( argv[2] );
 
-    for trail in 0:1
+    for trial in 0:4
         startTimer();
 
         numPaths[src] = 1;
@@ -91,7 +87,7 @@ func main()
             end
             
             round = round + 1;
-            output = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update2, numPaths);
+            #s2# output = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, numPaths);
             output.apply(mark_visited);
             frontier_list.append(output);
             frontier = output;
@@ -117,13 +113,13 @@ func main()
         while (round > 0)
             frontier = frontier_list.pop();
             frontier.apply(backward_mark_visited);
-            #s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+            #s3# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
             delete frontier;
             round = round - 1;
 
             frontier = frontier_list.pop();
             frontier.apply(mark_visited);
-            transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update2);
+            #s4# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update2);
             delete frontier;
             round = round - 1; 
         end
@@ -131,10 +127,11 @@ func main()
         delete frontier;
 
         var elapsed_time : double = stopTimer();
-        % print "elapsed time: ";
-        % print elapsed_time;
-        var toPrint : vertexset{Vertex} = vertices.filter(filterV);
-        toPrint.apply(printDep);
+        % var toPrint : vertexset{Vertex} = vertices.filter(filterV);
+        % #s5# vertices.apply(printDep);
         vertices.apply(reset);
+	    % print "elapsed time: ";
+        print elapsed_time;
+
     end
 end

@@ -1,0 +1,3 @@
+schedule:
+    program->configApplyDirection("s1", "DensePush-SparsePush")->configApplyParallelization("s1","edge-aware-dynamic-vertex-parallel");
+    program->configApplyDirection("s2", "DensePush-SparsePush")->configApplyParallelization("s2","edge-aware-dynamic-vertex-parallel");

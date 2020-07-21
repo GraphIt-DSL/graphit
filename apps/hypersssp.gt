@@ -26,7 +26,7 @@ func relaxVtoH(src : Vertex, dst : Vertex, weight: int)
 end
 
 func relaxHtoV(src : Vertex, dst : Vertex, weight : int)
-    SP[dst] min= (SP[src] + 0); 
+    SP[dst] min= (SP[src] + weight); 
 end
 
 func set_neg_inf(v : Vertex)
@@ -48,7 +48,7 @@ end
 func main()
     nv = atoi(argv[3]);
     nh = atoi(argv[4]);
-    for trail in 0:1
+    for trail in 0:4
         startTimer();
 
         var V : vertexset{Vertex} = vertices.filter(filterV);
@@ -67,16 +67,14 @@ func main()
               V.apply(set_neg_inf);
               break;
             end
-            print frontier.getVertexSetSize();
-            #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(relaxVtoH, SP, true);
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(relaxVtoH, SP);
 	        delete frontier;
 	        frontier = output;
             if frontier.getVertexSetSize() == 0
                 break; 
             end
 
-            print frontier.getVertexSetSize();
-            output = edges.from(frontier).applyModified(relaxHtoV, SP, true);
+            #s2# output = edges.from(frontier).applyModified(relaxHtoV, SP);
 	        delete frontier;
 	        frontier = output;
             if frontier.getVertexSetSize() == 0
@@ -85,12 +83,8 @@ func main()
             round = round + 1;
     	end
 	    delete frontier;
-	    V.apply(printSP);
         var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
         print elapsed_time;
     end
 end
 
-schedule:
-    program->configApplyDirection("s1", "DensePull")->configApplyParallelization("s1","dynamic-vertex-parallel");

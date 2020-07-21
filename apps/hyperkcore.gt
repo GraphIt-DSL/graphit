@@ -49,7 +49,7 @@ func main()
     nv = atoi(argv[2]);
     nh = atoi(argv[3]);
 
-    for trial in 0:10
+    for trial in 0:4
 	    vertices.apply(reset_v);
 	    startTimer();
         % parameter list in order -- priority type: uint
@@ -62,16 +62,15 @@ func main()
             var frontierV: vertexset{Vertex} = pq.dequeue_ready_set();
             % k = pq.get_current_priority();
             finished += frontierV.getVertexSetSize();
-            var frontierH : vertexset{Vertex} = edges.from(frontierV).to(filterHyperedge).applyModified(removeHyperedge, removed);
-            #s1# edges.from(frontierH).applyUpdatePriority(apply_f);
+            #s1# var frontierH : vertexset{Vertex} = edges.from(frontierV).to(filterHyperedge).applyModified(removeHyperedge, removed);
+            #s2# edges.from(frontierH).applyUpdatePriority(apply_f);
             delete frontierV;
             delete frontierH;
         end
         delete pq;
 	    var elapsed_time: float = stopTimer();
-            print "elapsed time";
+        % print "elapsed time";
 	    print elapsed_time;
-        var V : vertexset{Vertex} = vertices.filter(filterV);
-        V.apply(printD);
+        % #s3# vertices.apply(printD);
     end
 end

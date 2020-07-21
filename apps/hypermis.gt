@@ -85,7 +85,7 @@ func endOfRoundFilterV(v : Vertex) -> output: bool
 end
 
 func main
-    for trial in 0:2
+    for trial in 0:4
         startTimer();
 
         frontierV : vertexset{Vertex} = vertices.filter(filterV);

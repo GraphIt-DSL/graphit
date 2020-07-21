@@ -31,8 +31,12 @@ int parallel_main(int argc, char* argv[]) {
   commandLine P(argc,argv," [-w] <inFile>");
   char* iFile = P.getArgument(0);
   bool weighted = P.getOptionValue("-w");
-
-  char* outS = (char*) ".el";
+  char* outS;
+  if (weighted){
+    outS = (char*) ".wel";
+  } else {
+    outS = (char*) ".el";
+  }
   char outFile[strlen(iFile) + strlen(outS) + 1];
   *outFile = '\0';
   strcat(outFile, iFile);

@@ -49,7 +49,7 @@ func main()
     var max_iter: int = atoi(argv[2]);
     
     const epsilon : double = 0.0000001;
-    for trail in 0:1
+    for trail in 0:4
         startTimer();
         var frontierV : vertexset{vertex} = vertices.filter(filterV);
         var frontierH : vertexset{vertex} = vertices.filter(filterH);
@@ -58,16 +58,13 @@ func main()
             frontierH.apply(resetVertex);
             #s1# edges.from(frontierV).apply(updateEdge);
             frontierV.apply(resetVertex);
-            edges.from(frontierH).apply(updateEdge2);
+            #s2# edges.from(frontierH).apply(updateEdge2);
             frontierV.apply(updateVertex); 
     	end
-
-        frontierV.apply(printPR);
+        % #s3# vertices.apply(printPR);
         var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
+        %print "elapsed time: ";
         print elapsed_time;
     end
 end
 
-schedule:
-    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");

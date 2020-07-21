@@ -38,7 +38,7 @@ end
 func main()
     nv = atoi(argv[3]);
     nh = atoi(argv[4]);
-    for trail in 0:3
+    for trail in 0:4
         startTimer();
 
         vertices.apply(reset);
@@ -48,18 +48,16 @@ func main()
     	parent[start_vertex] = start_vertex;
 
     	while (1)
-            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdgeVtoH,parent, true);
+            #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdgeVtoH,parent);
 	        delete frontier;
 	        frontier = output;
-            % print frontier.getVertexSetSize();
             if frontier.getVertexSetSize() == 0
                 break; 
             end
 
-            #s2# output = edges.from(frontier).to(toFilter).applyModified(updateEdgeHtoV,parent, true);
+            #s2# output = edges.from(frontier).to(toFilter).applyModified(updateEdgeHtoV,parent);
 	        delete frontier;
 	        frontier = output;
-            % print frontier.getVertexSetSize();
             if frontier.getVertexSetSize() == 0
                 break;
             end
@@ -67,7 +65,7 @@ func main()
 	    delete frontier;
 	    % vertices.apply(printParent);
         var elapsed_time : double = stopTimer();
-        print "elapsed time: ";
+        % print "elapsed time: ";
         print elapsed_time;
     end
 end

@@ -1,0 +1,5 @@
+schedule:
+    program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1","edge-aware-dynamic-vertex-parallel");
+    program->configApplyDenseVertexSet("s1","bitvector", "src-vertexset", "DensePull");
+    program->configApplyDirection("s2", "SparsePush-DensePull")->configApplyParallelization("s2","edge-aware-dynamic-vertex-parallel");
+    program->configApplyDenseVertexSet("s2","bitvector", "src-vertexset", "DensePull");
