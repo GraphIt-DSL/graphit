@@ -47,6 +47,20 @@ protected:
         graphit::Backend *be = new graphit::Backend(mir_context_);
         return be->emitCPP();
     }
+    std::string basicTestToString(std::istream &is) {
+        fe_->parseStream(is, context_, errors_);
+        graphit::Midend *me = new graphit::Midend(context_);
+
+        std::cout << "fir: " << std::endl;
+        std::cout << *(context_->getProgram());
+        std::cout << std::endl;
+
+        me->emitMIR(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
+        std::ostringstream oss;
+        be->emitCPP(oss);
+        return oss.str();
+    }
 
     std::vector<ParseError> *errors_;
     graphit::FIRContext *context_;
@@ -1189,6 +1203,18 @@ TEST_F(BackendTest, LocalVector) {
 
     EXPECT_EQ(0, basicTest(is));
 }
+// Function implementation borrowed from https://stackoverflow.com/a/22489127/2858773
+int countSubstring(const std::string& str, const std::string& sub)
+{
+    if (sub.length() == 0) return 0;
+    int count = 0;
+    for (size_t offset = str.find(sub); offset != std::string::npos;
+     offset = str.find(sub, offset + sub.length()))
+    {
+        ++count;
+    }
+    return count;
+}
 
 TEST_F(BackendTest, LocalVectorConstant) {
 
@@ -1256,3 +1282,37 @@ TEST_F(BackendTest, ParForNested) {
 //                     "end\n");
 //    EXPECT_EQ (0,  basicTest(is));
 //}
+TEST_F(BackendTest, UDFDuplicationBasicTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    std::string output = basicTestToString(is);
+    EXPECT_EQ(2, countSubstring(output, "struct apply_edge"));
+    EXPECT_EQ(2, countSubstring(output, "void edgeset_apply_push_serial"));
+}
+
+TEST_F(BackendTest, UDFDuplicationBasicTestNoDup) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    std::string output = basicTestToString(is);
+    EXPECT_EQ(1, countSubstring(output, "struct apply_edge"));
+    EXPECT_EQ(1, countSubstring(output, "void edgeset_apply_push_serial"));
+}
