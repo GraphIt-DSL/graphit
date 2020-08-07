@@ -457,10 +457,13 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_local_vector_call_expr(self):
         self.expect_output_val("local_vector_call_expr.gt", 20);
 
+    def test_vertex_size(self):
+        self.expect_output_val("vertex_size.gt", 7);
+
 if __name__ == '__main__':
 
     unittest.main(verbosity=2)
     #used for enabling a specific test
     # suite = unittest.TestSuite()
-    # suite.addTest(TestGraphitCompiler('test_vertexset_filter'))
+    # suite.addTest(TestGraphitCompiler('test_vertex_size'))
     # unittest.TextTestRunner(verbosity=2).run(suite)

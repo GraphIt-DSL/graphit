@@ -259,7 +259,7 @@ static Graph builtin_relabel(Graph &edges) {
 }
 
 static VertexSubset<NodeID>* builtin_getNgh(Graph &edges, NodeID src){
-    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src), edges.out_degree(src));
     v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
     return v;
 }
