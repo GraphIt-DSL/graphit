@@ -13,14 +13,18 @@
 #include <graphit/midend/mir_context.h>
 #include <graphit/midend/var.h>
 #include <vector>
-
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
 
 
     class MIREmitter : public fir::FIRVisitor {
     public:
-        MIREmitter(MIRContext *ctx) : ctx(ctx) {}
+        MIREmitter(MIRContext *ctx) : ctx(ctx) {
+          schedule = nullptr;
+        }
+
+        MIREmitter(MIRContext *ctx, Schedule * schedule) : ctx(ctx), schedule(schedule) {}
 
         ~MIREmitter() {}
 
@@ -141,6 +145,7 @@ namespace graphit {
 
 
         MIRContext *ctx;
+        Schedule* schedule = nullptr;
 
         mir::Expr::Ptr retExpr;
         mir::Stmt::Ptr retStmt;
@@ -167,8 +172,6 @@ namespace graphit {
         mir::FuncDecl::Type getMirFuncDeclType(fir::FuncDecl::Type);
 
         mir::Stmt::Ptr makeNoOPStmt();
-
-
     };
 
 }

@@ -13,15 +13,26 @@ namespace graphit {
     };
 
     void MIREmitter::visit(fir::VarDecl::Ptr var_decl) {
-        addVarOrConst(var_decl, false);
-        auto mir_var_decl = std::make_shared<mir::VarDecl>();
-        mir_var_decl->name = var_decl->name->ident;
-        if (var_decl->initVal != nullptr)
-            mir_var_decl->initVal = emitExpr(var_decl->initVal);
-        else
-            mir_var_decl->initVal = nullptr;
-        mir_var_decl->type = emitType(var_decl->type);
-        mir_var_decl->stmt_label = var_decl->stmt_label;
+      addVarOrConst(var_decl, false);
+      auto mir_var_decl = std::make_shared<mir::VarDecl>();
+      mir_var_decl->name = var_decl->name->ident;
+      if (var_decl->initVal != nullptr)
+        mir_var_decl->initVal = emitExpr(var_decl->initVal);
+
+      else
+        mir_var_decl->initVal = nullptr;
+      mir_var_decl->type = emitType(var_decl->type);
+      mir_var_decl->stmt_label = var_decl->stmt_label;
+      if (schedule != nullptr && mir_var_decl->stmt_label != "") {
+        if (schedule->schedule_map.find(mir_var_decl->stmt_label) != schedule->schedule_map.end()) {
+          if (mir::isa<mir::VertexSetApplyExpr>(mir_var_decl->initVal) ||
+              mir::isa<mir::EdgeSetApplyExpr>(mir_var_decl->initVal)) {
+            mir_var_decl->initVal->setMetadata("apply_schedule",
+                                               schedule->schedule_map[mir_var_decl->stmt_label]);
+          }
+          mir_var_decl->setMetadata("apply_schedule", schedule->schedule_map[mir_var_decl->stmt_label]);
+        }
+      }
 
         retStmt = mir_var_decl;
     };
@@ -30,13 +41,20 @@ namespace graphit {
         auto mir_expr_stmt = std::make_shared<mir::ExprStmt>();
         mir_expr_stmt->expr = emitExpr(expr_stmt->expr);
         mir_expr_stmt->stmt_label = expr_stmt->stmt_label;
+        if (schedule != nullptr && mir_expr_stmt->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_expr_stmt->stmt_label) != schedule->schedule_map.end()) {
+            if (mir::isa<mir::VertexSetApplyExpr>(mir_expr_stmt->expr) ||
+                mir::isa<mir::EdgeSetApplyExpr>(mir_expr_stmt->expr)) {
+              mir_expr_stmt->expr->setMetadata("apply_schedule",
+                                                 schedule->schedule_map[mir_expr_stmt->stmt_label]);
+            }
+            mir_expr_stmt->setMetadata("apply_schedule",schedule->schedule_map[mir_expr_stmt->stmt_label]);
+          }
+        }
         retStmt = mir_expr_stmt;
     }
 
     void MIREmitter::visit(fir::AssignStmt::Ptr assign_stmt) {
-
-
-
         auto mir_assign_stmt = std::make_shared<mir::AssignStmt>();
         //we only have one expression on the left hand size
         assert(assign_stmt->lhs.size() == 1);
@@ -59,6 +77,17 @@ namespace graphit {
 
         mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
         mir_assign_stmt->stmt_label = assign_stmt->stmt_label;
+        if (schedule != nullptr && mir_assign_stmt->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_assign_stmt->stmt_label) != schedule->schedule_map.end()) {
+            if (mir::isa<mir::VertexSetApplyExpr>(mir_assign_stmt->expr) ||
+                mir::isa<mir::EdgeSetApplyExpr>(mir_assign_stmt->expr)) {
+              mir_assign_stmt->expr->setMetadata("apply_schedule",
+                  schedule->schedule_map[mir_assign_stmt->stmt_label]);
+            }
+            mir_assign_stmt->setMetadata("apply_schedule",
+                schedule->schedule_map[mir_assign_stmt->stmt_label]);
+          }
+        }
         retStmt = mir_assign_stmt;
     }
 
@@ -70,6 +99,17 @@ namespace graphit {
         mir_reduce_stmt->lhs = emitExpr(reduce_stmt->lhs.front());
         mir_reduce_stmt->expr = emitExpr(reduce_stmt->expr);
         mir_reduce_stmt->stmt_label = reduce_stmt->stmt_label;
+        if (schedule != nullptr && mir_reduce_stmt->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_reduce_stmt->stmt_label) != schedule->schedule_map.end()) {
+            if (mir::isa<mir::VertexSetApplyExpr>(mir_reduce_stmt->expr) ||
+                mir::isa<mir::EdgeSetApplyExpr>(mir_reduce_stmt->expr)) {
+              mir_reduce_stmt->expr->setMetadata("apply_schedule",
+                                                 schedule->schedule_map[mir_reduce_stmt->stmt_label]);
+            }
+            mir_reduce_stmt->setMetadata("apply_schedule",
+                schedule->schedule_map[mir_reduce_stmt->stmt_label]);
+          }
+        }
         switch (reduce_stmt->reduction_op) {
             case fir::ReduceStmt::ReductionOp::SUM:
                 mir_reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::SUM;
@@ -231,6 +271,12 @@ namespace graphit {
         ctx->scope();
         auto mir_name_node = std::make_shared<mir::NameNode>();
         mir_name_node->stmt_label = name_node->stmt_label;
+        if (schedule != nullptr && mir_name_node->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_name_node->stmt_label) != schedule->schedule_map.end()) {
+            mir_name_node->setMetadata("apply_schedule",
+                schedule->schedule_map[mir_name_node->stmt_label]);
+          }
+        }
         mir_name_node->body = mir::to<mir::StmtBlock>(emitStmt(name_node->body));
         ctx->unscope();
         retStmt = mir_name_node;
@@ -245,6 +291,11 @@ namespace graphit {
         auto mir_var = mir::Var(for_stmt->loopVar->ident, loop_var_type);
         //copy over the label from fir
         mir_for_stmt->stmt_label = for_stmt->stmt_label;
+        if (schedule != nullptr && mir_for_stmt->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_for_stmt->stmt_label) != schedule->schedule_map.end()) {
+            mir_for_stmt->setMetadata("apply_schedule", schedule->schedule_map[mir_for_stmt->stmt_label]);
+          }
+        }
         ctx->addSymbol(mir_var);
 
         mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(for_stmt->body));
@@ -266,6 +317,12 @@ namespace graphit {
         mir_while_stmt->cond = emitExpr(while_stmt->cond);
         mir_while_stmt->body = mir::to<mir::StmtBlock>(emitStmt(while_stmt->body));
         mir_while_stmt->stmt_label = while_stmt->stmt_label;
+        if (schedule != nullptr && mir_while_stmt->stmt_label != "") {
+          if (schedule->schedule_map.find(mir_while_stmt->stmt_label) != schedule->schedule_map.end()) {
+            mir_while_stmt->setMetadata("apply_schedule",
+                schedule->schedule_map[mir_while_stmt->stmt_label]);
+          }
+        }
         retStmt = mir_while_stmt;
     }
 

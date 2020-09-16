@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SrcFilterDstFilterApply";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.SimpleBFSPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.UninitializedVertexProperty";
-//    ::testing::GTEST_FLAG(filter) = "BackendTest.VectorVertexProperty";
-//
+//    ::testing::GTEST_FLAG(filter) = "BackendTest.CF";
+
 //    ::testing::GTEST_FLAG(filter) = "BackendTest.GlobalConstantSizeVectorTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SimpleLoadGraphFromFileTest";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.*";
@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
 
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.serialMSTTest2";
 //    ::testing::GTEST_FLAG(filter) = "RuntimeLibTest.SweepCutTest";
-
 //
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleEdgesetApplyPushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "LowLevelScheduleTest.SimpleLoopFusion";
