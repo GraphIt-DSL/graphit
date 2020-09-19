@@ -21,7 +21,7 @@ namespace graphit {
     class MIREmitter : public fir::FIRVisitor {
     public:
         MIREmitter(MIRContext *ctx) : ctx(ctx) {
-          schedule = nullptr;
+          schedule = new Schedule();
         }
 
         MIREmitter(MIRContext *ctx, Schedule * schedule) : ctx(ctx), schedule(schedule) {}
