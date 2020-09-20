@@ -6,6 +6,7 @@
 #include <graphit/midend/physical_data_layout_lower.h>
 #include <graphit/midend/apply_expr_lower.h>
 #include <graphit/midend/intersection_expr_lower.h>
+#include <graphit/midend/par_for_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/vector_field_properties_analyzer.h>
@@ -51,6 +52,9 @@ namespace graphit {
         // intersection types: HiroshiIntersection, Naive, Multiskip, Binary, Combined
         // If there is no schedule specified, it just chooses naive intersection.
         IntersectionExprLower(mir_context, schedule).lower();
+
+        // This pass sets grain size of the parallel for. If nothing is given, it will use default OPENMP for loop.
+        ParForLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)

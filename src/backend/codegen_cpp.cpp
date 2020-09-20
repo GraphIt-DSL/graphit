@@ -127,6 +127,34 @@ namespace graphit {
 
     }
 
+    void CodeGenCPP::visit(mir::ParForStmt::Ptr par_for_stmt) {
+        mir_context_->scope();
+        printIndent();
+        auto for_domain = par_for_stmt->domain;
+        auto loop_var = par_for_stmt->loopVar;
+
+        if (par_for_stmt->grain_size != 0){
+            oss << "#pragma cilk grainsize = " << par_for_stmt->grain_size;
+
+        }
+
+        oss << std::endl;
+        printIndent();
+        oss << "cilk_for( int " << loop_var << " = ";
+        for_domain->lower->accept(this);
+        oss << "; " << loop_var << " < ";
+        for_domain->upper->accept(this);
+        oss << "; " << loop_var << "++ )" << std::endl;
+        printBeginIndent();
+        indent();
+        par_for_stmt->body->accept(this);
+        dedent();
+        printEndIndent();
+        oss << std::endl;
+        mir_context_->unscope();
+
+    }
+
     void CodeGenCPP::visit(mir::WhileStmt::Ptr while_stmt) {
         printIndent();
         oss << "while ( ";
@@ -460,6 +488,20 @@ namespace graphit {
             oss << ")";
 
         }
+    }
+
+    void CodeGenCPP::visit(mir::ConstantVectorExpr::Ptr constantVectorExpr) {
+
+        oss << "{";
+        bool printDelimiter = false;
+
+        for (auto el: constantVectorExpr->vectorElements){
+            if (printDelimiter) oss << ",";
+            el->accept(this);
+            printDelimiter = true;
+        }
+
+        oss << "}";
     }
 
 
@@ -1007,7 +1049,6 @@ namespace graphit {
         }
         oss << call_expr->name;
 
-
         if (call_expr->generic_type != nullptr) {
             oss << " < ";
             call_expr->generic_type->accept(this);
@@ -1361,19 +1402,26 @@ namespace graphit {
         mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
         assert(vector_type != nullptr);
 
-
         vector_type->accept(this);
         oss << name << " ";
 
-
         const auto init_val = var_decl->initVal;
-
         if(init_val != nullptr) {
 
             if (std::dynamic_pointer_cast<mir::Call>(init_val)) {
                 auto call_expr = std::dynamic_pointer_cast<mir::Call>(init_val);
                 oss << " = ";
                 call_expr->accept(this);
+                oss << ";" << std::endl;
+
+            } else if (mir::isa<mir::ConstantVectorExpr>(init_val)) {
+                auto const_expr = mir::to<mir::ConstantVectorExpr>(init_val);
+                oss << " = new ";
+                vector_type->vector_element_type->accept(this);
+                oss << "[";
+                oss << const_expr->numElements;
+                oss << "]";
+                const_expr->accept(this);
                 oss << ";" << std::endl;
 
             } else if (isLiteral(init_val)){
@@ -2361,8 +2409,20 @@ namespace graphit {
 
     void CodeGenCPP::genScalarVectorAlloc(mir::VarDecl::Ptr constant, mir::VectorType::Ptr vector_type) {
         oss << constant->name << " = new ";
-        vector_type->vector_element_type->accept(this);
-        oss << " ();" << std::endl;
+
+        if (mir::isa<mir::ConstantVectorExpr>(constant->initVal)) {
+            auto const_expr = mir::to<mir::ConstantVectorExpr>(constant->initVal);
+            vector_type->vector_element_type->accept(this);
+            oss << "[";
+            oss << const_expr->numElements;
+            oss << "]";
+            const_expr->accept(this);
+            oss << ";" << std::endl;
+        } else {
+            vector_type->vector_element_type->accept(this);
+            oss << " ();" << std::endl;
+        }
+
     }
 
 

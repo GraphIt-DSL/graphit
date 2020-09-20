@@ -377,6 +377,8 @@ namespace graphit {
                 return parseDoWhileStmt();
             case Token::Type::FOR:
                 return parseForStmt();
+            case Token::Type::PAR_FOR:
+                return parseParForStmt();
             case Token::Type::PRINT:
             case Token::Type::PRINTLN:
                 return parsePrintStmt();
@@ -416,7 +418,12 @@ namespace graphit {
                 // varDecl->type = parseTensorType();
                 varDecl->type = parseType();
                 if (tryConsume(Token::Type::ASSIGN)) {
-                    varDecl->initVal = parseExpr();
+                    if (peek().type == Token::Type::LC) {
+                        varDecl->initVal = parseConstantVectorExpr();
+
+                    } else {
+                        varDecl->initVal = parseExpr();
+                    }
                 }
             } else {
                 consume(Token::Type::ASSIGN);
@@ -458,7 +465,11 @@ namespace graphit {
             //if an initial value is specified
             if (tryConsume(Token::Type::ASSIGN)) {
                 //consume(Token::Type::ASSIGN);
-                constDecl->initVal = parseExpr();
+                if (peek().type == Token::Type::LC) {
+                    constDecl->initVal = parseConstantVectorExpr();
+                } else {
+                    constDecl->initVal = parseExpr();
+                }
             }
 
             const Token endToken = consume(Token::Type::SEMICOL);
@@ -661,7 +672,39 @@ namespace graphit {
         }
     }
 
-// DEPRECATED: for_domain: set_index_set | (expr ':' expr)
+    fir::ParForStmt::Ptr Parser::parseParForStmt() {
+        try {
+            auto parForStmt = std::make_shared<fir::ParForStmt>();
+
+            const Token parForToken = consume(Token::Type::PAR_FOR);
+            parForStmt->setBeginLoc(parForToken);
+
+            parForStmt->loopVar = parseIdent();
+            consume(Token::Type::IN);
+            parForStmt->domain = parseForDomain();
+
+            decls.scope();
+            decls.insert(parForStmt->loopVar->ident, IdentType::OTHER);
+
+            parForStmt->body = parseStmtBlock();
+            decls.unscope();
+
+            const Token endToken = consume(Token::Type::BLOCKEND);
+            parForStmt->setEndLoc(endToken);
+
+            return parForStmt;
+        } catch (const SyntaxError &) {
+            skipTo({Token::Type::BLOCKEND});
+            consume(Token::Type::BLOCKEND);
+
+            return fir::ParForStmt::Ptr();
+        }
+    }
+
+
+
+
+    // DEPRECATED: for_domain: set_index_set | (expr ':' expr)
     // for_domain: (expr ':' expr)
     fir::ForDomain::Ptr Parser::parseForDomain() {
 //        GraphIt currently do not support for loop over set_index_set
@@ -2693,6 +2736,24 @@ namespace graphit {
         return intersectionExpr;
     }
 
+    fir::ConstantVectorExpr::Ptr Parser::parseConstantVectorExpr() {
+        const auto constVector = std::make_shared<fir::ConstantVectorExpr>();
+        std::vector<fir::Expr::Ptr> elements;
+        consume(Token::Type::LC);
+        if (peek().type != Token::Type::RC) {
+            do {
+                const fir::Expr::Ptr element = parseExpr();
+                elements.push_back(element);
+            } while (tryConsume(Token::Type::COMMA));
+        }
+        consume(Token::Type::RC);
+
+        constVector->vectorElements = elements;
+        constVector->numElements = elements.size();
+
+        return constVector;
+    }
+
     // intersect_neigh_expr: ('intersection') '(' 'expr', 'expr' ')' ';'
     fir::IntersectNeighborExpr::Ptr Parser::parseIntersectNeighborExpr() {
         const auto intersectNeighExpr = std::make_shared<fir::IntersectNeighborExpr>();
@@ -2746,6 +2807,7 @@ namespace graphit {
         decls.insert("to_double", IdentType::FUNCTION);
         decls.insert("max", IdentType::FUNCTION);
         decls.insert("writeMin", IdentType::FUNCTION);
+        decls.insert("atomicAdd", IdentType::FUNCTION);
 	    decls.insert("getRandomOutNgh", IdentType::FUNCTION);
         decls.insert("getRandomInNgh", IdentType::FUNCTION);
         decls.insert("serialMinimumSpanningTree", IdentType::FUNCTION);

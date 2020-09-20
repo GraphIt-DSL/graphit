@@ -1,0 +1,10 @@
+schedule:
+    program->configParForGrainSize("l1", 16);
+
+    program->configApplyDirection("l1:s2", "SparsePush-DensePull")
+           ->configApplyParallelization("l1:s2", "dynamic-vertex-parallel")
+           ->configApplyDenseVertexSet("l1:s2","bitvector", "src-vertexset", "DensePull");
+
+    program->configApplyDirection("l1:s3", "SparsePush-DensePull")
+            ->configApplyParallelization("l1:s3", "dynamic-vertex-parallel")
+            ->configApplyDenseVertexSet("l1:s3","bitvector", "src-vertexset", "DensePull");

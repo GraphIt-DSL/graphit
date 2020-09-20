@@ -83,6 +83,8 @@ namespace graphit {
 
         fir::ForStmt::Ptr parseForStmt();
 
+        fir::ParForStmt::Ptr parseParForStmt();
+
         fir::ForDomain::Ptr parseForDomain();
 
         fir::PrintStmt::Ptr parsePrintStmt();
@@ -215,6 +217,8 @@ namespace graphit {
         fir::IntersectionExpr::Ptr parseIntersectionExpr();
         
         fir::IntersectNeighborExpr::Ptr parseIntersectNeighborExpr();
+
+        fir::ConstantVectorExpr::Ptr parseConstantVectorExpr();
 
         // OG Additions
         fir::PriorityQueueType::Ptr parsePriorityQueueType();

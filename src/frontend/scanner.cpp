@@ -42,6 +42,7 @@ namespace graphit {
         if (token == "elif") return Token::Type::ELIF;
         if (token == "else") return Token::Type::ELSE;
         if (token == "for") return Token::Type::FOR;
+        if (token == "par_for") return Token::Type::PAR_FOR;
         if (token == "in") return Token::Type::IN;
         if (token == "end") return Token::Type::BLOCKEND;
         if (token == "return") return Token::Type::RETURN;

@@ -573,6 +573,14 @@ TEST_F(RuntimeLibTest, BuiltInMax){
     EXPECT_EQ(5, maxVal);
 }
 
+TEST_F(RuntimeLibTest, AtomicAdd){
+
+    auto A = new NodeID[5]{1, 2, 3, 4, 5};
+    atomicAdd(A, 3, 4);
+    EXPECT_EQ(8, A[3]);
+}
+
+
 
 
 TEST_F(RuntimeLibTest, IntersectSortedNodeSetHiroshiBasicTest){

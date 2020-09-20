@@ -21,6 +21,8 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<ForStmt>);
 
+            virtual void visit(std::shared_ptr<ParForStmt>);
+
             virtual void visit(std::shared_ptr<WhileStmt>);
 
             virtual void visit(std::shared_ptr<IfStmt>);
@@ -87,6 +89,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IntersectionExpr> op);
 
             virtual void visit(std::shared_ptr<IntersectNeighborExpr> op);
+
+            virtual void visit(std::shared_ptr<ConstantVectorExpr> op);
 
             virtual void visit(std::shared_ptr<NegExpr>);
 

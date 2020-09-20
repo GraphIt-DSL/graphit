@@ -262,6 +262,20 @@ namespace graphit {
             }
         }
 
+        void MIRRewriter::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain = rewrite<ForDomain>(stmt->domain);
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            node = stmt;
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+
+            stmt->grain_size = stmt->grain_size;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {
             for_domain->lower = rewrite<Expr>(for_domain->lower);
             for_domain->upper = rewrite<Expr>(for_domain->upper);
@@ -361,6 +375,19 @@ namespace graphit {
 
             inter_expr->intersectionType = inter_expr->intersectionType;
             node = inter_expr;
+        }
+
+        void MIRRewriter::visit(ConstantVectorExpr::Ptr const_vector_expr) {
+            const_vector_expr->numElements = const_vector_expr->numElements;
+            std::vector<Expr::Ptr> vectorElements;
+
+            for(auto el: const_vector_expr->vectorElements){
+                vectorElements.push_back(rewrite<Expr>(el));
+            }
+
+            const_vector_expr->vectorElements = vectorElements;
+            node = const_vector_expr;
+
         }
 
 

@@ -258,6 +258,24 @@ namespace graphit {
         retStmt = mir_for_stmt;
     }
 
+    void MIREmitter::visit(fir::ParForStmt::Ptr par_for_stmt) {
+        ctx->scope();
+        auto mir_for_stmt = std::make_shared<mir::ParForStmt>();
+        mir_for_stmt->loopVar = par_for_stmt->loopVar->ident;
+        auto loop_var_type = std::make_shared<mir::ScalarType>();
+        loop_var_type->type = mir::ScalarType::Type::INT;
+        auto mir_var = mir::Var(par_for_stmt->loopVar->ident, loop_var_type);
+        //copy over the label from fir
+        mir_for_stmt->stmt_label = par_for_stmt->stmt_label;
+        ctx->addSymbol(mir_var);
+
+        mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(par_for_stmt->body));
+        mir_for_stmt->domain = emitDomain(par_for_stmt->domain);
+        ctx->unscope();
+
+        retStmt = mir_for_stmt;
+    }
+
     void MIREmitter::visit(fir::RangeDomain::Ptr for_domain) {
         auto mir_for_domain = std::make_shared<mir::ForDomain>();
         mir_for_domain->upper = emitExpr(for_domain->upper);
@@ -356,6 +374,15 @@ namespace graphit {
         mir_inter_expr->vertex_a = emitExpr(intersection_expr->vertex_a);
         mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
         retExpr = mir_inter_expr;
+    }
+
+    void MIREmitter::visit(fir::ConstantVectorExpr::Ptr const_vector_expr) {
+        auto mir_const_vector_expr = std::make_shared<mir::ConstantVectorExpr>();
+
+        mir_const_vector_expr->vectorElements = emitFunctorArgs(const_vector_expr->vectorElements);
+        mir_const_vector_expr->numElements = mir_const_vector_expr->vectorElements.size();
+
+        retExpr = mir_const_vector_expr;
     }
 
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
@@ -543,9 +570,18 @@ namespace graphit {
             auto identifier = method_call_expr->method_name->ident;
             if (identifier == "builtin_sum" || identifier == "builtin_max") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
-		//assert(mir::isa<mir::VectorType>(mir_target_type));
-		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
-                const auto size_arg = ctx->getElementCount(vertex_element_type);
+		        //assert(mir::isa<mir::VectorType>(mir_target_type));q
+                mir::Expr::Ptr size_arg;
+                if(vertex_element_type != nullptr && ctx->getElementCount(vertex_element_type)) {
+                    size_arg = ctx->getElementCount(vertex_element_type);
+                }
+                //hack to get the size information for the local vectors since they are not registered in the context
+                else {
+                    auto range =  mir::to<mir::VectorType>(mir_target_type)->range_indexset;
+                    auto mir_range = std::make_shared<mir::IntLiteral>();
+                    mir_range->val = range;
+                    size_arg = mir_range;
+                }
                 args.push_back(size_arg);
             }
 

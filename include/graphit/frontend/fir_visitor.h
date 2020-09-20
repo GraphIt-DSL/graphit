@@ -49,6 +49,7 @@ namespace graphit {
         struct IndexSetDomain;
         struct RangeDomain;
         struct ForStmt;
+        struct ParForStmt;
         struct PrintStmt;
         struct NameNode;
 
@@ -103,6 +104,8 @@ namespace graphit {
         struct IntersectionExpr;
 
         struct IntersectNeighborExpr;
+
+        struct ConstantVectorExpr;
 
         struct EdgeSetLoadExpr;
 
@@ -203,6 +206,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<RangeDomain>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
+            virtual void visit(std::shared_ptr<ParForStmt>);
 
             virtual void visit(std::shared_ptr<NameNode>);
 
@@ -307,6 +312,7 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<IntersectionExpr>);
             virtual void visit(std::shared_ptr<IntersectNeighborExpr>);
+            virtual void visit(std::shared_ptr<ConstantVectorExpr>);
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
             virtual void visit(std::shared_ptr<FuncExpr>);

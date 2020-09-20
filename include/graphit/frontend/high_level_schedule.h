@@ -103,7 +103,11 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configIntersection(std::string apply_label, std::string intersection_option);
 
-
+                // High level API for configuring par_for grain_size
+                // Currently it supports OPENMP parallel for
+                // If nothing is provided, it generates default OPENMP for loop.
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configParForGrainSize(std::string apply_label, int grain_size=0);
 
                 // High lvel API for speicifying parallelization scheduling options for apply
                 // A wrapper around setApply for now.

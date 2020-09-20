@@ -1,0 +1,5 @@
+func main()
+    var simple_array: vector[4](int) = {1, 2, 3, 4};
+    var value: int = simple_array.sum();
+    print value;
+end

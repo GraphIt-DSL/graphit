@@ -258,6 +258,17 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain->accept(this);
+            stmt->body->accept(this);
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
             if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
@@ -345,6 +356,12 @@ namespace graphit {
             inter_expr->edges->accept(this);
             inter_expr->vertex_a->accept(this);
             inter_expr->vertex_b->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<ConstantVectorExpr> const_vector_expr) {
+            for (auto el : const_vector_expr->vectorElements) {
+                el->accept(this);
+            }
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {

@@ -50,6 +50,7 @@ namespace graphit {
             virtual void visit(IndexSetDomain::Ptr);
             virtual void visit(RangeDomain::Ptr);
             virtual void visit(ForStmt::Ptr);
+            virtual void visit(ParForStmt::Ptr);
             virtual void visit(PrintStmt::Ptr);
 
             virtual void visit(BreakStmt::Ptr);
@@ -108,6 +109,7 @@ namespace graphit {
             virtual void visit(WhereExpr::Ptr);
             virtual void visit(IntersectionExpr::Ptr);
             virtual void visit(IntersectNeighborExpr::Ptr);
+            virtual void visit(ConstantVectorExpr::Ptr);
             virtual void visit(EdgeSetLoadExpr::Ptr);
             virtual void visit(StringLiteral::Ptr);
 

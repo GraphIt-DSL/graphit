@@ -484,6 +484,21 @@ namespace graphit {
             return node;
         }
 
+        void ParForStmt::copy(FIRNode::Ptr node) {
+            const auto parForStmt = to<ParForStmt>(node);
+            Stmt::copy(parForStmt);
+            loopVar = parForStmt->loopVar->clone<Identifier>();
+            domain = parForStmt->domain->clone<ForDomain>();
+            body = parForStmt->body->clone<StmtBlock>();
+            stmt_label = parForStmt->stmt_label;
+        }
+
+        FIRNode::Ptr ParForStmt::cloneNode() {
+            const auto node = std::make_shared<ParForStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void NameNode::copy(FIRNode::Ptr node) {
             const auto name_node = to<NameNode>(node);
             Stmt::copy(name_node);
@@ -1127,6 +1142,24 @@ namespace graphit {
 
         FIRNode::Ptr MethodCallExpr::cloneNode() {
             const auto node = std::make_shared<MethodCallExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ConstantVectorExpr::copy(FIRNode::Ptr node) {
+            const auto constantVectorExpr = to<ConstantVectorExpr>(node);
+            Expr::copy(constantVectorExpr);
+            numElements = constantVectorExpr->numElements;
+
+            for (const auto &el : constantVectorExpr->vectorElements) {
+                vectorElements.push_back(el->clone<Expr>());
+            }
+
+        }
+
+
+        FIRNode::Ptr ConstantVectorExpr::cloneNode() {
+            const auto node = std::make_shared<ConstantVectorExpr>();
             node->copy(shared_from_this());
             return node;
         }

@@ -16,13 +16,11 @@ end
 func main()
         startTimer();
        
-	checked[1] = 0;
+	    checked[1] = 0;
 
         var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
 
         frontier.addVertex(1);
-
-
 
         while (frontier.getVertexSetSize() != 0)
              

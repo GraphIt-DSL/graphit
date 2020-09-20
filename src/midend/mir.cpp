@@ -181,6 +181,25 @@ namespace graphit {
             return node;
         }
 
+
+        void ConstantVectorExpr::copy(MIRNode::Ptr node) {
+            auto expr = to<mir::ConstantVectorExpr>(node);
+
+            for(auto &el : expr->vectorElements) {
+                vectorElements.push_back(el->clone<Expr>());
+            }
+
+            numElements = expr->numElements;
+
+        }
+
+
+        MIRNode::Ptr ConstantVectorExpr::cloneNode() {
+            const auto node = std::make_shared<ConstantVectorExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
         void EdgeSetLoadExpr::copy(MIRNode::Ptr node) {
             Expr::copy(node);
             auto expr = to<mir::EdgeSetLoadExpr>(node);
@@ -706,6 +725,21 @@ namespace graphit {
 
         MIRNode::Ptr ForStmt::cloneNode() {
             const auto node = std::make_shared<ForStmt>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void ParForStmt::copy(MIRNode::Ptr node) {
+            auto for_node = to<mir::ParForStmt>(node);
+            loopVar = for_node->loopVar;
+            domain = for_node->domain->clone<ForDomain>();
+            body = for_node->body->clone<StmtBlock>();
+            grain_size = for_node->grain_size;
+        }
+
+
+        MIRNode::Ptr ParForStmt::cloneNode() {
+            const auto node = std::make_shared<ParForStmt>();
             node->copy(shared_from_this());
             return node;
         }

@@ -407,6 +407,27 @@ namespace graphit {
         };
 
 
+        struct ParForStmt : public Stmt {
+            std::string loopVar;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
+            int grain_size;
+
+            typedef std::shared_ptr<ParForStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ParForStmt>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+
         struct WhileStmt : public Stmt {
             Expr::Ptr cond;
             StmtBlock::Ptr body;
@@ -855,6 +876,22 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+        struct ConstantVectorExpr : public Expr {
+            int numElements;
+            std::vector<mir::Expr::Ptr> vectorElements;
+            typedef std::shared_ptr<ConstantVectorExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ConstantVectorExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
         
 
         
@@ -944,6 +981,9 @@ namespace graphit {
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 
+
+            bool frontier_reusable = false;
+	
             std::string edgeset_apply_func_name;
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
@@ -976,6 +1016,7 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
+                frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1002,6 +1043,7 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
+                frontier_reusable = edgeset_apply->frontier_reusable;
             }
 
             virtual void accept(MIRVisitor *visitor) {

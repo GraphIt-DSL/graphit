@@ -9,9 +9,13 @@
 #include <iostream>
 #include <type_traits>
 #include <map>
+#include <thread>
+#include <mutex>
 
 #include "pvector.h"
 #include "util.h"
+
+#include "infra_ligra/ligra/parallel.h"
 
 #include "segmentgraph.h"
 #include <memory>
@@ -28,6 +32,8 @@ Simple container for graph in CSR format
  - MakeInverse parameter controls whether graph stores its inverse
 */
 
+//static lock for deduplication flags (only created once)
+static std::mutex thread_mutex;
 
 // Used to hold node & weight, with another node it makes a weighted edge
 template <typename NodeID_=int32_t, typename WeightT_=int32_t>
@@ -128,6 +134,11 @@ class CSRGraph {
     for (auto iter = label_to_segment.begin(); iter != label_to_segment.end(); iter++) {
       delete ((*iter).second);
     }
+
+    // when we clear all the resources, we want to clear deduplication flags owned by threads too.
+    std::lock_guard<std::mutex> lock(thread_mutex);
+    deduplication_flags.clear();
+
   }
 
 
@@ -537,6 +548,16 @@ public:
   std::shared_ptr<DestID_> in_neighbors_shared_;
 
   std::map<std::string, GraphSegments<DestID_,NodeID_>*> label_to_segment;
+
+  // thread safe deduplication vectors
+  // It is used to maintain different deduplication flags for different threads
+  // 1. Each thread asks for deduplication flag array whenever it needs one
+  // 2. Each thread gets the deduplication flag from the deduplication flags vector
+  //    (if we are using 4 threads in parallel, there can be 4 deduplication flags at most)
+  // 3. Each thread appends to deduplication_flags vector after they are done.
+  //    Since we only care for a binary update, we don't care about other
+  //    threads' work beforehand.
+  std::vector<int*> deduplication_flags;
  
   DestID_** get_out_index_(void) {
       return out_index_;
@@ -550,6 +571,36 @@ public:
   DestID_* get_in_neighbors_(void) {
       return in_neighbors_;
   }
+
+  // Atomically returns deduplication flag whenever a thread needs one.
+  inline int* get_flags_atomic_() {
+
+      // we guarantee correctness by locking the deduplication_flags vector.
+      std::lock_guard<std::mutex> lock(thread_mutex);
+
+      if (deduplication_flags.size() == 0) {
+
+          deduplication_flags.push_back(new int[num_nodes_]);
+          ligra::parallel_for_lambda(0, (int)num_nodes_, [&] (int i) { deduplication_flags.back()[i]=0; });
+      }
+
+      int * to_return = deduplication_flags.back();
+
+      deduplication_flags.pop_back();
+
+      return to_return;
+
+  }
+  // whenever a thread finishes processing deduplication logic, it immediately returns to flag
+  // into the deduplication flags pool.
+  inline void return_flags_atomic_(int * flags) {
+
+      // we guarantee correctness by locking the deduplication_flags vector.
+      std::lock_guard<std::mutex> lock(thread_mutex);
+      deduplication_flags.push_back(flags);
+
+  }
+
   inline int* get_flags_() {
       return flags_;
   }

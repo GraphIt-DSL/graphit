@@ -45,6 +45,8 @@ namespace graphit {
 
         virtual void visit(fir::ForStmt::Ptr);
 
+        virtual void visit(fir::ParForStmt::Ptr);
+
         virtual void visit(fir::RangeDomain::Ptr);
 
         virtual void visit(fir::WhileStmt::Ptr);
@@ -101,6 +103,8 @@ namespace graphit {
         virtual void visit(fir::IntersectionExpr::Ptr);
 
         virtual void visit(fir::IntersectNeighborExpr::Ptr);
+
+        virtual void visit(fir::ConstantVectorExpr::Ptr);
 
         virtual void visit(fir::EdgeSetLoadExpr::Ptr);
 

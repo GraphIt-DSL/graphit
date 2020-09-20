@@ -412,6 +412,26 @@ namespace graphit {
             oss << "end";
         }
 
+        void FIRPrinter::visit(ParForStmt::Ptr stmt) {
+            printIndent();
+
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
+            oss << "par_for ";
+            stmt->loopVar->accept(this);
+            oss << " in ";
+            stmt->domain->accept(this);
+            oss << std::endl;
+
+            indent();
+            stmt->body->accept(this);
+            dedent();
+
+            printIndent();
+            oss << "end";
+        }
+
         void FIRPrinter::visit(PrintStmt::Ptr stmt) {
             printIndent();
 
@@ -1072,6 +1092,21 @@ namespace graphit {
             oss << ", ";
             expr->vertex_b->accept(this);
             oss << ") ";
+        }
+
+        void FIRPrinter::visit(ConstantVectorExpr::Ptr expr) {
+            oss << "{";
+
+            bool printDelimiter = false;
+            for (auto el : expr->vectorElements) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                el->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << "} ";
         }
 
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {
