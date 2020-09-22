@@ -5,6 +5,7 @@
 #include <graphit/midend/priority_features_lowering.h>
 
 namespace graphit {
+    using fir::cpu_schedule::SimpleCPUScheduleObject;
 
     void PriorityFeaturesLower::lower() {
 
@@ -75,54 +76,51 @@ namespace graphit {
 
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityEdgeSetApplyExpr::Ptr update_priority_edgeset_apply_expr) {
-        if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
-            auto current_label = label_scope_.getCurrentScope();
-            setPrioritySchedule(current_label);
+        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+          if (update_priority_edgeset_apply_expr->hasMetadata<SimpleCPUScheduleObject>("apply_schedule")) {
+            setPrioritySchedule(update_priority_edgeset_apply_expr->getMetadata<SimpleCPUScheduleObject>("apply_schedule"));
+          } else {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
+          }
         }
     }
 
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityExternVertexSetApplyExpr::Ptr update_priority_extern_vertexset_apply_expr) {
-        if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
-            auto current_label = label_scope_.getCurrentScope();
-            setPrioritySchedule(current_label);
+        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+          if (update_priority_extern_vertexset_apply_expr->hasMetadata<SimpleCPUScheduleObject>("apply_schedule")) {
+            setPrioritySchedule(update_priority_extern_vertexset_apply_expr->getMetadata<SimpleCPUScheduleObject>("apply_schedule"));
+          } else {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
+          }
         }
     }
 
-    void PriorityFeaturesLower::PriorityUpdateScheduleFinder::setPrioritySchedule(std::string current_label) {
-        auto apply_schedule = schedule_->apply_schedules->find(current_label);
-        if (apply_schedule != schedule_->apply_schedules->end()) { //a schedule is found
+    void PriorityFeaturesLower::PriorityUpdateScheduleFinder::setPrioritySchedule(SimpleCPUScheduleObject schedule_object) {
+        if (schedule_object.getDelta().getIntVal() != 1) {
+            mir_context_->delta_ = schedule_object.getDelta().getIntVal();
+        }
 
-            if (apply_schedule->second.delta != 1) {
-                mir_context_->delta_ = apply_schedule->second.delta;
-            }
-
-
-            if (apply_schedule->second.priority_update_type
-                == ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE) {
-                mir_context_->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
-                mir_context_->num_open_buckets = apply_schedule->second.num_open_buckets;
-            } else if (apply_schedule->second.priority_update_type
-                       == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
-                mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
-            } else if (apply_schedule->second.priority_update_type
-                       == ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
-                mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
-                mir_context_->num_open_buckets = apply_schedule->second.num_open_buckets;
-            } else if (apply_schedule->second.priority_update_type
-                       == ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
-                mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
-
-                if (apply_schedule->second.merge_threshold != 0) {
-                    mir_context_->bucket_merge_threshold_ = apply_schedule->second.merge_threshold;
-                }
-            } else {
-                mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
+        if (schedule_object.getPriorityUpdateType() ==
+        SimpleCPUScheduleObject::PriorityUpdateType::REDUCTION_BEFORE_UPDATE) {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::ReduceBeforePriorityUpdate;
+            mir_context_->num_open_buckets = schedule_object.getNumOpenBuckets().getIntVal();
+        } else if (schedule_object.getPriorityUpdateType()
+                   == SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE) {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdate;
+        } else if (schedule_object.getPriorityUpdateType()
+                   == SimpleCPUScheduleObject::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate;
+            mir_context_->num_open_buckets = schedule_object.getNumOpenBuckets().getIntVal();
+        } else if (schedule_object.getPriorityUpdateType()
+                   == SimpleCPUScheduleObject::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE) {
+            mir_context_->priority_update_type = mir::PriorityUpdateType::EagerPriorityUpdateWithMerge;
+            if (schedule_object.getMergeThreshold().getIntVal() != 0) {
+                mir_context_->bucket_merge_threshold_ = schedule_object.getMergeThreshold().getIntVal();
             }
         } else {
             mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
         }
-
     }
 
     void PriorityFeaturesLower::LowerUpdatePriorityExternVertexSetApplyExpr::visit(mir::ExprStmt::Ptr expr_stmt) {
@@ -286,12 +284,11 @@ namespace graphit {
             label_scope_.scope(stmt->stmt_label);
         }
         auto expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr);
-        if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
-            auto current_label = label_scope_.getCurrentScope();
-            auto apply_schedule = schedule_->apply_schedules->find(current_label);
-            if (apply_schedule != schedule_->apply_schedules->end()) { //a schedule is found
-                if (apply_schedule->second.priority_update_type ==
-                    ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
+        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+              if (expr->hasMetadata<SimpleCPUScheduleObject>("apply_schedule")) {
+                auto apply_schedule = expr->getMetadata<SimpleCPUScheduleObject>("apply_schedule");
+                if (apply_schedule.getPriorityUpdateType() ==
+                    SimpleCPUScheduleObject::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {
                     auto new_expr = std::make_shared<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>();
                     new_expr->copyFrom(expr);
                     //new_expr->lambda_name = "place_holder_lamda";
@@ -312,8 +309,8 @@ namespace graphit {
 
                     node = stmt_block;
 
-                } else if (apply_schedule->second.priority_update_type ==
-                           ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE){
+                } else if (apply_schedule.getPriorityUpdateType() ==
+                           SimpleCPUScheduleObject::PriorityUpdateType::REDUCTION_BEFORE_UPDATE){
                     lowerReduceBeforeUpdateEdgeSetApply(stmt);
                 }
             }

@@ -13,11 +13,18 @@ namespace graphit {
 namespace fir {
 namespace abstract_schedule {
 class FlexIntVal {
+ public:
+  enum class FlexIntType {
+    CONSTANT,
+    ARG
+  };
  private:
   int val;
+  FlexIntType type;
  public:
   FlexIntVal(int intVal = 0) {
     val = intVal;
+    type = FlexIntType ::CONSTANT;
   }
 
   int getIntVal() {
@@ -28,6 +35,7 @@ class FlexIntVal {
     if (sscanf(d, "argv[%i]", &val) != 1) {
       assert(false && "Invalid option for FlexIntVal str argument.");
     }
+    type = FlexIntType ::ARG;
   }
 };
 

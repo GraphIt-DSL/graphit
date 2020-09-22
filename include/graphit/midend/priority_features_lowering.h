@@ -33,7 +33,7 @@ namespace graphit {
 
             void visit(mir::UpdatePriorityExternVertexSetApplyExpr::Ptr update_priority_extern_vertexset_apply_expr);
 
-            void setPrioritySchedule(std::string current_label);
+            void setPrioritySchedule(fir::cpu_schedule::SimpleCPUScheduleObject schedule_object);
 
             Schedule *schedule_ = nullptr;
             MIRContext *mir_context_ = nullptr;
