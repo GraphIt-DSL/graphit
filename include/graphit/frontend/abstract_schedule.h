@@ -31,6 +31,10 @@ class FlexIntVal {
     return val;
   }
 
+  FlexIntType getType() {
+    return type;
+  }
+
   FlexIntVal(const char *d) {
     if (sscanf(d, "argv[%i]", &val) != 1) {
       assert(false && "Invalid option for FlexIntVal str argument.");

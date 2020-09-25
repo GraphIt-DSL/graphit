@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushSerial";
 //
+//  :: testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleLoopIndexSplit";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
 
 
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelNumaAware";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.BFSBasicSimpleGPUScheduleTest";
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleCPUScheduleObjectDefaults_Test";
+    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PRPullParallelRuntimeSegmentArgs";
 //  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleGPUScheduleObjectDefaults_Test";
 //  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleGPUScheduleObject_Test";
 //  ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SimpleStructHighLevelSchedule";

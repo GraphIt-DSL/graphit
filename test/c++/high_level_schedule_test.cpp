@@ -1104,6 +1104,15 @@ TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+
+    // check metadata
+    EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+        fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
+    EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),
+        fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::SPARSE_PUSH);
 }
 
 
@@ -1122,6 +1131,12 @@ TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
+
+    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+              fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
+    EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
+        fir::cpu_schedule::SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR);
 }
 
 
@@ -1200,6 +1215,12 @@ TEST_F(HighLevelScheduleTest, CCNoSchedule) {
 
     //generate c++ code successfully
     EXPECT_EQ (0, basicTestWithSchedule(program));
+
+    // metadata
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+    mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    EXPECT_EQ(false, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
 }
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
@@ -1264,6 +1285,17 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
+
+    // metadata for hybrid
+    EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    EXPECT_EQ(true, attached_schedule->isa<fir::abstract_schedule::CompositeScheduleObject>());
+
+    auto pull_schedule = attached_schedule->to<fir::abstract_schedule::CompositeScheduleObject>()->getSecondScheduleObject();
+    EXPECT_EQ(pull_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUPullFrontierType(),
+              fir::cpu_schedule::SimpleCPUScheduleObject::CPUPullFrontierType::BITVECTOR);
+    EXPECT_EQ(pull_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getNumSSG().getIntVal(), 4);
 }
 
 TEST_F(HighLevelScheduleTest, CCPullSchedule) {
@@ -1382,6 +1414,14 @@ TEST_F(HighLevelScheduleTest, PRPullParallelRuntimeSegmentArgs) {
     mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
 
+    // expected metadata
+    EXPECT_EQ(true, expr_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+    auto attached_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+              fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
+    EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getNumSSG().getType(),
+        fir::abstract_schedule::FlexIntVal::FlexIntType::ARG);
 }
 
 
@@ -1448,6 +1488,14 @@ TEST_F(HighLevelScheduleTest, PRPushParallel) {
     mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(for_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(expr_stmt->expr));
 
+    // expected metadata
+    EXPECT_EQ(true, expr_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+    auto attached_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+              fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
+    EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
+        fir::cpu_schedule::SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR);
 }
 
 

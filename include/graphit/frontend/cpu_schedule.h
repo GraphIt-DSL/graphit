@@ -157,6 +157,10 @@ class SimpleCPUScheduleObject :
     return num_open_buckets;
   }
 
+  abstract_schedule::FlexIntVal getNumSSG() {
+    return num_segment;
+  }
+
   bool getNumaAware() {
     return numa_aware;
   }
@@ -239,6 +243,10 @@ class SimpleCPUScheduleObject :
 
   CPUParallelType getCPUParallelizationType() {
     return cpu_parallel_type;
+  }
+
+  CPUPullFrontierType getCPUPullFrontierType() {
+    return cpu_pull_frontier_type;
   }
 
   PriorityUpdateType getPriorityUpdateType() {
