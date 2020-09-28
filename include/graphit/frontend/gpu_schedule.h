@@ -126,6 +126,11 @@ class SimpleGPUSchedule : public GPUSchedule,
   }
 
  public:
+  SimpleGPUSchedule::Ptr cloneSchedule() {
+    SimpleGPUSchedule::Ptr new_object = std::make_shared<SimpleGPUSchedule>(*this);
+    return new_object;
+  }
+
   SimpleScheduleObject::ParallelizationType getParallelizationType() override {
     switch (load_balancing) {
       case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
