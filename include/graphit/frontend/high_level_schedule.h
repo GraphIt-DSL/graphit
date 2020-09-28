@@ -34,7 +34,7 @@ namespace graphit {
 
                 ProgramScheduleNode(graphit::FIRContext *fir_context)
                         : fir_context_(fir_context) {
-                    schedule_ = nullptr;
+                    schedule_ = new Schedule();
                     dirCompatibilityMap_ = {
                             {"SparsePush", "push"},
                             {"DensePull", "pull"},
@@ -230,7 +230,7 @@ namespace graphit {
                 	backend_selection = backend_selection_type::CODEGEN_GPU; 
 
 			if (schedule_ == nullptr)
-				schedule_ = new Schedule();
+				schedule_ = new Schedule(Schedule::BackendID::GPU);
 
 
 			gpu_schedule::HybridGPUSchedule *s2_copy = new gpu_schedule::HybridGPUSchedule(s2);

@@ -849,6 +849,21 @@ namespace graphit {
                                                                     string num_segment_argv, std::string direction) {
 
             initGraphIterationSpaceIfNeeded(apply_label);
+
+            fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label, direction);
+            if (schedule_object->isComposite()){
+              auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              if (direction == "all" || first_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+                first_schedule->configApplyNumSSG(num_segment_argv);
+              }
+              if (direction == "all" || second_schedule->getCPUDirection() == fir::cpu_schedule::SimpleCPUScheduleObject::translateDirection(direction)) {
+                second_schedule->configApplyNumSSG(num_segment_argv);
+              }
+            } else {
+              schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyNumSSG(num_segment_argv);
+            }
+
             auto gis_vec = (*schedule_->graph_iter_spaces)[apply_label];
             int argv_number;
 
@@ -991,8 +1006,10 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label, int delta) {
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
           if (schedule_object->isComposite()){
-            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                ->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                ->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
             first_schedule->configApplyPriorityUpdateDelta(delta);
             second_schedule->configApplyPriorityUpdateDelta(delta);
           } else {
@@ -1005,8 +1022,10 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, int threshold) {
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
           if (schedule_object->isComposite()){
-            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
-            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                ->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+            auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                ->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
             first_schedule->configBucketMergeThreshold(threshold);
             second_schedule->configBucketMergeThreshold(threshold);
           } else {
@@ -1018,6 +1037,17 @@ namespace graphit {
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configApplyPriorityUpdateDelta(std::string apply_label,
                                                                                  std::string delta_argv) {
+            fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
+            if (schedule_object->isComposite()){
+              auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                  ->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                  ->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              first_schedule->configApplyPriorityUpdateDelta(delta_argv);
+              second_schedule->configApplyPriorityUpdateDelta(delta_argv);
+            } else {
+              schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configApplyPriorityUpdateDelta(delta_argv);
+            }
 
             int argv_num = extractArgvNumFromStringArg(delta_argv);
             return setApply(apply_label, "delta", argv_num);
@@ -1025,6 +1055,18 @@ namespace graphit {
 
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::configBucketMergeThreshold(std::string apply_label, string threshold_argv) {
+            fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
+            if (schedule_object->isComposite()){
+              auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                  ->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()
+                  ->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
+              first_schedule->configBucketMergeThreshold(threshold_argv);
+              second_schedule->configBucketMergeThreshold(threshold_argv);
+            } else {
+              schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configBucketMergeThreshold(threshold_argv);
+            }
+
             int argv_num = extractArgvNumFromStringArg(threshold_argv);
             return setApply(apply_label, "bucket_merge_threshold", argv_num);
         }

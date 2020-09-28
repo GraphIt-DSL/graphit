@@ -42,14 +42,17 @@ namespace graphit {
         mir_expr_stmt->expr = emitExpr(expr_stmt->expr);
         mir_expr_stmt->stmt_label = expr_stmt->stmt_label;
         if (mir_expr_stmt->stmt_label != "") {
-          if (schedule->schedule_map.find(mir_expr_stmt->stmt_label) != schedule->schedule_map.end()) {
+          label_scope_.scope(mir_expr_stmt->stmt_label);
+          std::string current_scope = label_scope_.getCurrentScope();
+          if (schedule->schedule_map.find(current_scope) != schedule->schedule_map.end()) {
             if (mir::isa<mir::ApplyExpr>(mir_expr_stmt->expr)) {
               mir_expr_stmt->expr->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-                                                 schedule->schedule_map[mir_expr_stmt->stmt_label]);
+                                                 schedule->schedule_map[current_scope]);
             }
             mir_expr_stmt->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-                schedule->schedule_map[mir_expr_stmt->stmt_label]);
+                schedule->schedule_map[current_scope]);
           }
+          label_scope_.unscope();
         }
         retStmt = mir_expr_stmt;
     }

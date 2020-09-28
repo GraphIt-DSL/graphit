@@ -185,12 +185,24 @@ class SimpleCPUScheduleObject :
     merge_threshold = abstract_schedule::FlexIntVal(threshold);
   }
 
+  void configBucketMergeThreshold(std::string threshold) {
+    merge_threshold = abstract_schedule::FlexIntVal(threshold.c_str());
+  }
+
   void configApplyPriorityUpdateDelta(int update_delta) {
     delta = abstract_schedule::FlexIntVal(update_delta);
   }
 
+  void configApplyPriorityUpdateDelta(std::string update_delta) {
+    delta = abstract_schedule::FlexIntVal(update_delta.c_str());
+  }
+
   void configApplyNumSSG(int ssg) {
     num_segment = abstract_schedule::FlexIntVal(ssg);
+  }
+
+  void configApplyNumSSG(std::string ssg) {
+    num_segment = abstract_schedule::FlexIntVal(ssg.c_str());
   }
 
   void configApplyNUMA(bool aware) {
