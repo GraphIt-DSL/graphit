@@ -29,14 +29,14 @@ namespace graphit {
             return;
         };
 
-      if (schedule_ == nullptr || schedule_->apply_schedules == nullptr) {
+      if (schedule_ == nullptr || schedule_->backend_identifier == Schedule::BackendID::GPU) {
         return;
       };
 
         // We assume that there is only one apply in each statement
         auto current_scope_name = label_scope_.getCurrentScope();
         // check that this is a CPU schedule
-        assert(schedule_->backend_identifier == Schedule::BackendID::CPU);
+//        assert(schedule_->backend_identifier == Schedule::BackendID::CPU);
         auto apply_schedule = schedule_->schedule_map.find(current_scope_name);
         if (apply_schedule == schedule_->schedule_map.end()) {
             return;

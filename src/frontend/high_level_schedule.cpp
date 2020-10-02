@@ -7,6 +7,8 @@
 namespace graphit {
     namespace fir {
 
+    using fir::cpu_schedule::SimpleCPUScheduleObject;
+
         high_level_schedule::ProgramScheduleNode::Ptr
         high_level_schedule::ProgramScheduleNode::splitForLoop(std::string original_loop_label,
                                                                std::string split_loop1_label,
@@ -352,8 +354,10 @@ namespace graphit {
 
           if (apply_schedule_str == "push") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
+                schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::SPARSE_PUSH);
             } else if (apply_schedule_str == "pull") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
+                schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::DENSE_PULL);
             } else if (apply_schedule_str == "hybrid_dense_forward") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD;
             } else if (apply_schedule_str == "hybrid_dense") {
