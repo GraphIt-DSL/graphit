@@ -457,7 +457,6 @@ class TestGraphitCompiler(unittest.TestCase):
     def test_local_vector_call_expr(self):
         self.expect_output_val("local_vector_call_expr.gt", 20);
 
-<<<<<<< HEAD
     def test_local_vector_const(self):
         self.expect_output_val("constant_vector.gt", 10);
 
