@@ -62,6 +62,12 @@ namespace graphit {
 			var_expr->var = var;
 			assign_stmt->lhs = var_expr;
 			assign_stmt->stmt_label = var_decl->stmt_label;
+
+			// copy over any schedule from the var_decl to the new assign stmt.
+			if (var_decl->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
+			  assign_stmt->setMetadata<ScheduleObject::Ptr>("apply_schedule",
+			      var_decl->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
+			}
 			insert_after_stmt = assign_stmt;
 			node = var_decl;
 			return;	
@@ -98,7 +104,10 @@ namespace graphit {
 					fir::gpu_schedule::SimpleGPUSchedule * schedule1 = new fir::gpu_schedule::SimpleGPUSchedule();
 					*schedule1 = hybrid_schedule->s1;
 					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid1"] = schedule1;
-					schedule_->schedule_map[current_scope_name + ":hybrid1"] = std::make_shared<SimpleGPUSchedule>(*schedule1);
+                    auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
+                        ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+					stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
+                    assign_stmt->expr->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
@@ -109,14 +118,19 @@ namespace graphit {
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::AssignStmt::Ptr stmt2 = std::make_shared<mir::AssignStmt>();
 					stmt2->lhs = assign_stmt->lhs;
-					stmt2->expr = assign_stmt->expr;
+					mir::Expr::Ptr ptr_copy = assign_stmt->expr->clone<mir::Expr>();
+					stmt2->expr = ptr_copy;
+
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
 					*schedule2 = hybrid_schedule->s2;
 					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid2"] = schedule2;
-                    schedule_->schedule_map[current_scope_name + ":hybrid2"] = std::make_shared<SimpleGPUSchedule>(*schedule2);
+                    auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
+                        ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
+                    ptr_copy->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
 					stmt_block_2 = rewrite<mir::StmtBlock>(stmt_block_2);
 					
 					// Finally create a hybrid statement and replace - 
@@ -204,8 +218,10 @@ namespace graphit {
 					fir::gpu_schedule::SimpleGPUSchedule * schedule1 = new fir::gpu_schedule::SimpleGPUSchedule();
 					*schedule1 = hybrid_schedule->s1;
 					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid1"] = schedule1;
-                    schedule_->schedule_map[current_scope_name + ":hybrid1"] = hybrid_schedule->getFirstScheduleObject()
+                    auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
+                    expr_stmt->expr->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
@@ -215,15 +231,18 @@ namespace graphit {
 				        mir_context_->addFunctionFront(func_decl_v2);
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::ExprStmt::Ptr stmt2 = std::make_shared<mir::ExprStmt>();
-					stmt2->expr = expr_stmt->expr;
+                    mir::Expr::Ptr ptr_copy = expr_stmt->expr->clone<mir::Expr>();
+					stmt2->expr = ptr_copy;
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
 					*schedule2 = hybrid_schedule->s2;
 					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid2"] = schedule2;
-                    schedule_->schedule_map[current_scope_name + ":hybrid2"] = hybrid_schedule->getSecondScheduleObject()
+                    auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
+                    ptr_copy->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
 
 					stmt_block_2 = rewrite<mir::StmtBlock>(stmt_block_2);
 					
