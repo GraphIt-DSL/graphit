@@ -42,7 +42,7 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 		    upesae->is_weighted = true;
 		}
 		// Now apply the schedule to the operator
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (upesae->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                 auto apply_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule");
                 if (apply_schedule->isa<SimpleGPUSchedule>()) {
@@ -56,6 +56,7 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
                 }
 			}
 		}
+
 		PriorityUpdateOperatorRewriter rewriter(mir_context_, upesae);
 		rewriter.rewrite(udf);
 		if (expr_stmt->stmt_label != "") {

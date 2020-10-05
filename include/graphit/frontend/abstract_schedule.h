@@ -45,9 +45,15 @@ class FlexIntVal {
 
 class ScheduleObject : public std::enable_shared_from_this<ScheduleObject> {
  public:
+  enum class BackendID {
+    CPU,
+    GPU
+  };
+
   typedef std::shared_ptr<ScheduleObject> Ptr;
 
   virtual bool isComposite() {}
+  virtual BackendID getBackendId() {}
 
   template<typename T>
   inline bool isa() {
@@ -71,10 +77,6 @@ class SimpleScheduleObject : public ScheduleObject {
   // Abstract class has no functions for now
  public:
   typedef std::shared_ptr<SimpleScheduleObject> Ptr;
-  enum class BackendID {
-    CPU,
-    GPU
-  };
 
   enum class Direction {
     PUSH,
@@ -106,6 +108,8 @@ class SimpleScheduleObject : public ScheduleObject {
 
   virtual PullFrontierType getPullFrontierType() {}
 
+  virtual BackendID getBackendId() override {}
+
   bool isComposite() override {
     return false;
   }
@@ -118,6 +122,8 @@ class CompositeScheduleObject : public ScheduleObject {
   virtual ScheduleObject::Ptr getFirstScheduleObject() {}
 
   virtual ScheduleObject::Ptr getSecondScheduleObject() {}
+
+  virtual BackendID getBackendId() override {}
 
   bool isComposite() override {
     return true;

@@ -176,6 +176,10 @@ class SimpleGPUSchedule : public GPUSchedule,
     }
   }
 
+  ScheduleObject::BackendID getBackendId() override {
+    return ScheduleObject::BackendID ::GPU;
+  }
+
   void configDirection(enum gpu_schedule_options o,
       enum gpu_schedule_options r = BOOLMAP) {
     switch (o) {
@@ -357,6 +361,10 @@ class HybridGPUSchedule : public GPUSchedule,
       assert(false && "Invalid threshold option\n");
     }
     threshold = -100;
+  }
+
+  ScheduleObject::BackendID getBackendId() override {
+    return ScheduleObject::BackendID ::GPU;
   }
 
   ScheduleObject::Ptr getFirstScheduleObject() override {

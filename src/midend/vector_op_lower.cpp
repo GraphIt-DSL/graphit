@@ -30,7 +30,7 @@ namespace  graphit {
                 if (mir::isa<mir::Call>(var_decl->initVal)) {
                     // Special case if this is GPU lowering
                     
-					if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+					if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 					   // Do nothing for GPU
 					} else {
 						auto orig_init_val = var_decl->initVal;

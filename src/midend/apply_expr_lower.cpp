@@ -24,7 +24,7 @@ namespace graphit {
         //default the vertexset apply expression to parallel (serial needs to be manually specified)
         vertexset_apply->is_parallel = true;
 
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
             if (vertexset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
               auto apply_schedule = vertexset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->to<SimpleScheduleObject>();
@@ -51,7 +51,7 @@ namespace graphit {
 	node = stmt_block;
     }
     void ApplyExprLower::LowerApplyExpr::visit(mir::VarDecl::Ptr var_decl) {
-	if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 		if (mir::isa<mir::EdgeSetApplyExpr> (var_decl->initVal) || mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
 			auto init_val = var_decl->initVal;
 			var_decl->initVal = nullptr;
@@ -86,9 +86,7 @@ namespace graphit {
 	// Check for Hybrid stmt
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			auto current_scope_name = label_scope_.getCurrentScope();
-			auto apply_schedule_iter = schedule_->apply_gpu_schedules.find(current_scope_name);
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (assign_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
 				auto apply_schedule = assign_stmt->getMetadata<ScheduleObject::Ptr>("apply_schedule");
 				if (apply_schedule->isComposite()) {
@@ -101,9 +99,6 @@ namespace graphit {
 					stmt1->expr = assign_stmt->expr;
 					stmt1->stmt_label = "hybrid1";	
 					stmt_block_1->insertStmtEnd(stmt1);
-					fir::gpu_schedule::SimpleGPUSchedule * schedule1 = new fir::gpu_schedule::SimpleGPUSchedule();
-					*schedule1 = hybrid_schedule->s1;
-					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid1"] = schedule1;
                     auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
 					stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
@@ -124,9 +119,6 @@ namespace graphit {
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
-					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
-					*schedule2 = hybrid_schedule->s2;
-					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid2"] = schedule2;
                     auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
                     stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
@@ -166,7 +158,7 @@ namespace graphit {
 	assign_stmt = mir::to<mir::AssignStmt>(node);
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = true;
@@ -179,7 +171,7 @@ namespace graphit {
 				dedup_expr->perfect_dedup = true;
 				edgeset_apply->fused_dedup = false;
 			}
-		} else if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = false;
@@ -202,8 +194,7 @@ namespace graphit {
         }
 	if (mir::isa<mir::EdgeSetApplyExpr> (expr_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			auto current_scope_name = label_scope_.getCurrentScope();
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (expr_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
               auto apply_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
               if (apply_schedule->isComposite()) {
@@ -215,9 +206,6 @@ namespace graphit {
 					stmt1->expr = expr_stmt->expr;
 					stmt1->stmt_label = "hybrid1";	
 					stmt_block_1->insertStmtEnd(stmt1);
-					fir::gpu_schedule::SimpleGPUSchedule * schedule1 = new fir::gpu_schedule::SimpleGPUSchedule();
-					*schedule1 = hybrid_schedule->s1;
-					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid1"] = schedule1;
                     auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
                     stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
@@ -236,9 +224,6 @@ namespace graphit {
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
-					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
-					*schedule2 = hybrid_schedule->s2;
-					schedule_->apply_gpu_schedules[current_scope_name + ":hybrid2"] = schedule2;
                     auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
                     stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
@@ -294,7 +279,7 @@ namespace graphit {
 
 
 	// First check if the program has a GPU Schedule, if yes, the defaults are different
-	if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 		// Always parallelize all operators for GPU schedules
 		edgeset_apply->is_parallel = true;
 		if (edgeset_apply->tracking_field != "")
@@ -328,7 +313,7 @@ namespace graphit {
 
         // check if the schedule contains entry for the current edgeset apply expressions
 
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
               if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                 auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");

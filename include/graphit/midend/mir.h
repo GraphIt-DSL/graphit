@@ -986,6 +986,7 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
+                metadata_map = edgeset_apply->metadata_map;
 		
 		applied_schedule = edgeset_apply->applied_schedule;
 		frontier_reusable = edgeset_apply->frontier_reusable;
@@ -1023,6 +1024,7 @@ namespace graphit {
 		requires_output = edgeset_apply->requires_output;
 		fused_dedup = edgeset_apply->fused_dedup;
 		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
+              metadata_map = edgeset_apply->metadata_map;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1052,6 +1054,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                metadata_map = edgeset_apply->metadata_map;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1082,6 +1085,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
+                metadata_map = edgeset_apply->metadata_map;
             }
 
             virtual void accept(MIRVisitor *visitor) {

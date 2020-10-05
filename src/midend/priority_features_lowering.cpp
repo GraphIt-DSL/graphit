@@ -77,7 +77,7 @@ namespace graphit {
 
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityEdgeSetApplyExpr::Ptr update_priority_edgeset_apply_expr) {
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
           if (update_priority_edgeset_apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             setPrioritySchedule(update_priority_edgeset_apply_expr
             ->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
@@ -89,7 +89,7 @@ namespace graphit {
 
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityExternVertexSetApplyExpr::Ptr update_priority_extern_vertexset_apply_expr) {
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
           if (update_priority_extern_vertexset_apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             setPrioritySchedule(update_priority_extern_vertexset_apply_expr
             ->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
@@ -293,7 +293,7 @@ namespace graphit {
             label_scope_.scope(stmt->stmt_label);
         }
         auto expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr);
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
               if (expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                   SimpleCPUScheduleObject::Ptr apply_schedule;
                   if (expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->isComposite()) {

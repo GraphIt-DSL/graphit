@@ -145,6 +145,10 @@ class SimpleCPUScheduleObject :
     }
   }
 
+  ScheduleObject::BackendID getBackendId() override {
+    return ScheduleObject::BackendID ::CPU;
+  }
+
   abstract_schedule::FlexIntVal getPullLoadBalanceGrainSize() {
     return pull_load_balance_grain_size;
   }
@@ -283,6 +287,11 @@ class HybridCPUScheduleObject :
     first_schedule = first;
     second_schedule = second;
   }
+
+  ScheduleObject::BackendID getBackendId() override {
+    return ScheduleObject::BackendID ::CPU;
+  }
+
   ScheduleObject::Ptr getFirstScheduleObject() override {
     return first_schedule;
   }
