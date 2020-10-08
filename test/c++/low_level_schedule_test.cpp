@@ -159,10 +159,9 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyPullSchedule) {
                              "end\n"
     );
     Schedule *schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
-    (*apply_schedules)["s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
+    schedule->schedule_map["s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
@@ -196,10 +195,9 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyPushSchedule) {
                              "end\n"
     );
     Schedule *schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PUSH};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
-    (*apply_schedules)["s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
+    schedule->schedule_map["s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
@@ -233,12 +231,11 @@ TEST_F(LowLevelScheduleTest, SimpleEdgesetApplyNestedLabelsPullSchedule) {
                              "end\n"
     );
     Schedule *schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
-
     //We are constructing a nested scope label this time
-    (*apply_schedules)["l1:s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
+    schedule->schedule_map["l1:s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
@@ -275,12 +272,11 @@ TEST_F(LowLevelScheduleTest, SimpleForEdgesetApplyNoNestedLabelsPullSchedule) {
                              "end\n"
     );
     Schedule *schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PULL};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
-    (*apply_schedules)["s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
+    schedule->schedule_map["s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
@@ -328,12 +324,11 @@ TEST_F(LowLevelScheduleTest, SimpleBFSPushSchedule) {
                              "print \"finished running BFS\"; \n"
                              "end");
     Schedule *schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType::PUSH};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
-    (*apply_schedules)["s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PUSH);
+    schedule->schedule_map["s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
@@ -422,12 +417,11 @@ TEST_F(LowLevelScheduleTest, LoopBodyApplyCloning) {
                              "end\n"
     );
     Schedule * schedule = new Schedule();
-    ApplySchedule s1_apply_schedule = {"s1", ApplySchedule::DirectionType ::PULL};
-    auto apply_schedules = new std::map<std::string, ApplySchedule>();
 
     //We are constructing a nested scope label this time
-    (*apply_schedules)["l1:s1"] = s1_apply_schedule;
-    schedule->apply_schedules = apply_schedules;
+    fir::cpu_schedule::SimpleCPUScheduleObject::Ptr schedule_object = std::make_shared<fir::cpu_schedule::SimpleCPUScheduleObject>();
+    schedule_object->configCPUDirection(fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::PULL);
+    schedule->schedule_map["l1:s1"] = schedule_object;
 
     fe_->parseStream(is, context_, errors_);
 
