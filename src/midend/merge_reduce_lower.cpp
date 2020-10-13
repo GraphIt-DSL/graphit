@@ -8,6 +8,8 @@
 
 namespace graphit {
 
+using fir::abstract_schedule::ScheduleObject;
+
     void MergeReduceLower::lower() {
         auto apply_expr_visitor = ApplyExprVisitor(mir_context_, schedule_);
         std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
@@ -25,37 +27,32 @@ namespace graphit {
     }
 
     void MergeReduceLower::ApplyExprVisitor::processMergeReduce(mir::EdgeSetApplyExpr::Ptr apply_expr) {
-        if (schedule_ == nullptr || schedule_->schedule_map.size() == 0) {
+        if (schedule_->schedule_map.size() == 0 || schedule_->backend_identifier == Schedule::BackendID::GPU) {
             return;
         };
-
-      if (schedule_ == nullptr || schedule_->apply_schedules == nullptr) {
-        return;
-      };
 
         // We assume that there is only one apply in each statement
         auto current_scope_name = label_scope_.getCurrentScope();
         // check that this is a CPU schedule
-        assert(schedule_->backend_identifier == Schedule::BackendID::CPU);
-        auto apply_schedule = schedule_->schedule_map.find(current_scope_name);
-        if (apply_schedule == schedule_->schedule_map.end()) {
+
+        if (!apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             return;
         }
+        auto apply_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule");
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function_name);
         auto edgeset_str = mir::to<mir::VarExpr>(apply_expr->target)->var.getName();
         auto merge_reduce = std::make_shared<mir::MergeReduceField>();
         mir_context_->edgeset_to_label_to_merge_reduce[edgeset_str][current_scope_name] = merge_reduce;
 
-        fir::abstract_schedule::ScheduleObject::Ptr schedule_obj = apply_schedule->second;
         //only support Simple CPU schedule for NUMA optimizations for now
-        if(!schedule_obj->isa<fir::cpu_schedule::SimpleCPUScheduleObject>()) {
+        if(!apply_schedule->isa<fir::cpu_schedule::SimpleCPUScheduleObject>()) {
           return;
         }
         fir::cpu_schedule::SimpleCPUScheduleObject::Ptr simple_cpu_schedule 
-          = schedule_obj->to<fir::cpu_schedule::SimpleCPUScheduleObject>();
+          = apply_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>();
 
 
-        if (simple_cpu_schedule->getNumaAware() == true) {
+        if (simple_cpu_schedule->getNumaAware()) {
             auto int_type = std::make_shared<mir::ScalarType>();
             int_type->type = mir::ScalarType::Type::INT;
             apply_func_decl->args.push_back(mir::Var("socketId", int_type));

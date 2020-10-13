@@ -216,7 +216,7 @@ namespace graphit {
 		void applyGPUSchedule(std::string label_name, gpu_schedule::SimpleGPUSchedule &s1) {
                 	backend_selection = backend_selection_type::CODEGEN_GPU; 
 
-			if (schedule_ == nullptr)
+			if (schedule_ == nullptr || schedule_->backend_identifier == Schedule::BackendID::CPU)
 				schedule_ = new Schedule(Schedule::BackendID::GPU);
 
 
@@ -229,7 +229,7 @@ namespace graphit {
 		void applyGPUSchedule(std::string label_name, gpu_schedule::HybridGPUSchedule &s2) {
                 	backend_selection = backend_selection_type::CODEGEN_GPU; 
 
-			if (schedule_ == nullptr)
+			if (schedule_ == nullptr || schedule_->backend_identifier == Schedule::BackendID::CPU)
 				schedule_ = new Schedule(Schedule::BackendID::GPU);
 
 

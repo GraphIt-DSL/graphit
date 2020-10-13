@@ -12,6 +12,9 @@ void GPUPriorityFeaturesLowering::lower(void) {
 	}
 }
 void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprStmt::Ptr expr_stmt) {
+	if (expr_stmt->stmt_label != "") {
+		label_scope_.scope(expr_stmt->stmt_label);
+	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr)) {
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr);
 		mir::FuncDecl::Ptr udf = mir_context_->getFunction(upesae->input_function_name);
@@ -39,7 +42,7 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 		    upesae->is_weighted = true;
 		}
 		// Now apply the schedule to the operator
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (upesae->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                 auto apply_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule");
                 if (apply_schedule->isa<SimpleGPUSchedule>()) {
@@ -53,9 +56,16 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
                 }
 			}
 		}
+
 		PriorityUpdateOperatorRewriter rewriter(mir_context_, upesae);
 		rewriter.rewrite(udf);
+		if (expr_stmt->stmt_label != "") {
+			label_scope_.unscope();
+		}
 		return;
+	}
+	if (expr_stmt->stmt_label != "") {
+		label_scope_.unscope();
 	}
 	mir::MIRRewriter::visit(expr_stmt);
 	return;

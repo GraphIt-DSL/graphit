@@ -24,14 +24,17 @@ namespace graphit {
       mir_var_decl->type = emitType(var_decl->type);
       mir_var_decl->stmt_label = var_decl->stmt_label;
       if (schedule != nullptr && mir_var_decl->stmt_label != "") {
-        if (schedule->schedule_map.find(mir_var_decl->stmt_label) != schedule->schedule_map.end()) {
+        label_scope_.scope(mir_var_decl->stmt_label);
+        std::string current_scope = label_scope_.getCurrentScope();
+        if (schedule->schedule_map.find(current_scope) != schedule->schedule_map.end()) {
           if (mir::isa<mir::ApplyExpr>(mir_var_decl->initVal)) {
             mir_var_decl->initVal->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-                                               schedule->schedule_map[mir_var_decl->stmt_label]);
+                                               schedule->schedule_map[current_scope]);
           }
           mir_var_decl->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-              schedule->schedule_map[mir_var_decl->stmt_label]);
+              schedule->schedule_map[current_scope]);
         }
+        label_scope_.unscope();
       }
 
         retStmt = mir_var_decl;
@@ -81,14 +84,17 @@ namespace graphit {
         mir_assign_stmt->expr = emitExpr(assign_stmt->expr);
         mir_assign_stmt->stmt_label = assign_stmt->stmt_label;
         if (schedule != nullptr && mir_assign_stmt->stmt_label != "") {
-          if (schedule->schedule_map.find(mir_assign_stmt->stmt_label) != schedule->schedule_map.end()) {
+          label_scope_.scope(mir_assign_stmt->stmt_label);
+          std::string current_scope = label_scope_.getCurrentScope();
+          if (schedule->schedule_map.find(current_scope) != schedule->schedule_map.end()) {
             if (mir::isa<mir::ApplyExpr>(mir_assign_stmt->expr)) {
               mir_assign_stmt->expr->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-                  schedule->schedule_map[mir_assign_stmt->stmt_label]);
+                  schedule->schedule_map[current_scope]);
             }
             mir_assign_stmt->setMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule",
-                schedule->schedule_map[mir_assign_stmt->stmt_label]);
+                schedule->schedule_map[current_scope]);
           }
+          label_scope_.unscope();
         }
         retStmt = mir_assign_stmt;
     }

@@ -6,6 +6,7 @@
 
 namespace graphit {
     namespace fir {
+
     using fir::cpu_schedule::SimpleCPUScheduleObject;
 
         high_level_schedule::ProgramScheduleNode::Ptr
@@ -351,7 +352,7 @@ namespace graphit {
             fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
 
 
-            if (apply_schedule_str == "push") {
+          if (apply_schedule_str == "push") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
                 schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::SPARSE_PUSH);
             } else if (apply_schedule_str == "pull") {
@@ -359,16 +360,8 @@ namespace graphit {
                 schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::DENSE_PULL);
             } else if (apply_schedule_str == "hybrid_dense_forward") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD;
-                if (!schedule_object->isComposite()) {
-                  auto new_schedule = schedule_->convertSimpleToHybrid(schedule_object, "DensePush-SparsePush");
-                  schedule_->schedule_map[apply_label] = new_schedule;
-                }
             } else if (apply_schedule_str == "hybrid_dense") {
                 (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
-                if (!schedule_object->isComposite()) {
-                  auto new_schedule = schedule_->convertSimpleToHybrid(schedule_object, "SparsePush-DensePull");
-                  schedule_->schedule_map[apply_label] = new_schedule;
-                }
             } else if (apply_schedule_str == "serial") {
                 (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Serial;
             } else if (apply_schedule_str == "parallel") {

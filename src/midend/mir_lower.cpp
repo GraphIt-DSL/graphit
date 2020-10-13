@@ -35,7 +35,7 @@ namespace graphit {
 
 
 	// We use the GPU version when the GPU Scheules are set
-	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::GPU) {
 		GPUPriorityFeaturesLowering(mir_context, schedule).lower();
 	} else  {
 		//This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
@@ -59,7 +59,7 @@ namespace graphit {
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)
         // access type: shared or local
-	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::GPU) {
 		GPUVectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
 	} else {
 		VectorFieldPropertiesAnalyzer(mir_context, schedule).analyze();
@@ -76,7 +76,7 @@ namespace graphit {
         // This pass generates code for tracking if a field has been modified
         // during the execution of the edgeset apply functions.
         // It return values for implicit tracking of changes to certain field
-	if (schedule != nullptr && !schedule->apply_gpu_schedules.empty()) {
+	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::GPU) {
 		// No change tracking lower for GPUs
 		GPUChangeTrackingLower(mir_context, schedule).lower();
 	} else {	

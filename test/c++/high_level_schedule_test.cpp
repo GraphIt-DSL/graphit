@@ -2769,3 +2769,76 @@ TEST_F(HighLevelScheduleTest, SimpleGPUScheduleObjectDefaults_Test) {
     EXPECT_EQ(SimpleGPUSchedule::edge_blocking_type::UNBLOCKED, simple_gpu_schedule_object->edge_blocking);
     EXPECT_EQ(0, simple_gpu_schedule_object->edge_blocking_size);
 }
+
+TEST_F(HighLevelScheduleTest, AssignStmtMetadataScheduleTest){
+  istringstream is("element Vertex end\n"
+                   "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                   "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                   "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                   "func main()\n"
+                   "var count : int = 0;\n"
+                   "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                   "#l1# while (count < 3)\n"
+                   "    #s1# frontier = vertices.apply(addone);\n"
+                   "    print vector_a.sum();\n"
+                   "    count = count + 1;\n"
+                   "end\nend");
+
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  program->configApplyDirection("l1:s1", "DensePull");
+  program->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+  fe_->parseStream(is, context_, errors_);
+
+  EXPECT_EQ (0,  basicTestWithSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+
+  // check metadata
+  EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+  auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+  EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+            fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
+  EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),
+            fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PULL);
+  EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
+            fir::cpu_schedule::SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR);
+}
+
+TEST_F(HighLevelScheduleTest, VarDeclMetadataScheduleTest){
+  istringstream is("element Vertex end\n"
+                   "const vector_a : vector{Vertex}(float) = 1.0;\n"
+                   "const vertices : vertexset{Vertex} = new vertexset{Vertex}(5);\n"
+                   "func addone(v : Vertex) vector_a[v] = vector_a[v] + 1; end \n"
+                   "func main()\n"
+                   "var count : int = 0;\n"
+                   "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                   "#l1# while (count < 3)\n"
+                   "    #s1# var output : vertexset{Vertex} = vertices;\n"
+                   "    count = count + 1;\n"
+                   "end\nend");
+
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  program->configApplyDirection("l1:s1", "DensePull");
+  program->configApplyParallelization("l1:s1", "dynamic-vertex-parallel");
+  fe_->parseStream(is, context_, errors_);
+
+  EXPECT_EQ (0,  basicTestWithSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
+
+  // check metadata
+  EXPECT_EQ(true, var_decl->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+
+  auto attached_schedule = var_decl->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+  EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
+            fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
+  EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),
+            fir::cpu_schedule::SimpleCPUScheduleObject::DirectionType::DENSE_PULL);
+  EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
+            fir::cpu_schedule::SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR);
+}

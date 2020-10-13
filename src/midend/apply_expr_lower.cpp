@@ -6,9 +6,10 @@
 
 namespace graphit {
 
-using fir::abstract_schedule::ScheduleObject;
-using fir::abstract_schedule::SimpleScheduleObject;
-using fir::cpu_schedule::SimpleCPUScheduleObject;
+    using fir::abstract_schedule::ScheduleObject;
+    using fir::abstract_schedule::SimpleScheduleObject;
+    using fir::cpu_schedule::SimpleCPUScheduleObject;
+    using fir::gpu_schedule::SimpleGPUSchedule;
 
     //lowers vertexset apply and edgeset apply expressions according to schedules
     void ApplyExprLower::lower() {
@@ -23,10 +24,8 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
         //default the vertexset apply expression to parallel (serial needs to be manually specified)
         vertexset_apply->is_parallel = true;
 
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
-            auto current_scope_name = label_scope_.getCurrentScope();
-            auto apply_schedule = schedule_->apply_schedules->find(current_scope_name);
             if (vertexset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
               auto apply_schedule = vertexset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->to<SimpleScheduleObject>();
               vertexset_apply->is_parallel =
@@ -52,7 +51,7 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 	node = stmt_block;
     }
     void ApplyExprLower::LowerApplyExpr::visit(mir::VarDecl::Ptr var_decl) {
-	if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 		if (mir::isa<mir::EdgeSetApplyExpr> (var_decl->initVal) || mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
 			auto init_val = var_decl->initVal;
 			var_decl->initVal = nullptr;
@@ -63,6 +62,12 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 			var_expr->var = var;
 			assign_stmt->lhs = var_expr;
 			assign_stmt->stmt_label = var_decl->stmt_label;
+
+			// copy over any schedule from the var_decl to the new assign stmt.
+			if (var_decl->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
+			  assign_stmt->setMetadata<ScheduleObject::Ptr>("apply_schedule",
+			      var_decl->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
+			}
 			insert_after_stmt = assign_stmt;
 			node = var_decl;
 			return;	
@@ -81,12 +86,10 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 	// Check for Hybrid stmt
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			auto current_scope_name = label_scope_.getCurrentScope();
-			auto apply_schedule_iter = schedule_->apply_gpu_schedules.find(current_scope_name);
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (assign_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-			  auto apply_schedule = assign_stmt->getMetadata<ScheduleObject::Ptr>("apply_schedule");
-			  if (apply_schedule->isComposite()) {
+				auto apply_schedule = assign_stmt->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+				if (apply_schedule->isComposite()) {
                     auto hybrid_schedule = apply_schedule->to<fir::gpu_schedule::HybridGPUSchedule>();
 					// This EdgeSetApply has a Hybrid Schedule attached to it
 					// Create the first Stmt block
@@ -96,9 +99,10 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 					stmt1->expr = assign_stmt->expr;
 					stmt1->stmt_label = "hybrid1";	
 					stmt_block_1->insertStmtEnd(stmt1);
-                    auto schedule1 = std::make_shared<fir::gpu_schedule::SimpleGPUSchedule>();
-					*schedule1 = hybrid_schedule->s1;
-					schedule_->schedule_map[current_scope_name + ":hybrid1"] = schedule1;
+                    auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
+                        ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+					stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
+                    assign_stmt->expr->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
@@ -109,13 +113,16 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::AssignStmt::Ptr stmt2 = std::make_shared<mir::AssignStmt>();
 					stmt2->lhs = assign_stmt->lhs;
-					stmt2->expr = assign_stmt->expr;
+					mir::Expr::Ptr ptr_copy = assign_stmt->expr->clone<mir::Expr>();
+					stmt2->expr = ptr_copy;
+
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
-                    auto schedule2 = std::make_shared<fir::gpu_schedule::SimpleGPUSchedule>();
-					*schedule2 = hybrid_schedule->s2;
-					schedule_->schedule_map[current_scope_name + ":hybrid2"] = schedule2;
+                    auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
+                        ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
+                    ptr_copy->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
 					stmt_block_2 = rewrite<mir::StmtBlock>(stmt_block_2);
 					
 					// Finally create a hybrid statement and replace - 
@@ -151,7 +158,7 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 	assign_stmt = mir::to<mir::AssignStmt>(node);
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID ::GPU && edgeset_apply->enable_deduplication == true && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = true;
@@ -164,7 +171,7 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 				dedup_expr->perfect_dedup = true;
 				edgeset_apply->fused_dedup = false;
 			}
-		} else if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID ::GPU && edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = false;
@@ -187,12 +194,11 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
         }
 	if (mir::isa<mir::EdgeSetApplyExpr> (expr_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
-		if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID ::GPU) {
-			auto current_scope_name = label_scope_.getCurrentScope();
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 			if (expr_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-			  auto apply_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
-				  if (apply_schedule->isComposite()) {
-					fir::gpu_schedule::HybridGPUSchedule::Ptr hybrid_schedule = apply_schedule->to<fir::gpu_schedule::HybridGPUSchedule>();
+              auto apply_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+              if (apply_schedule->isComposite()) {
+                    fir::gpu_schedule::HybridGPUSchedule::Ptr hybrid_schedule = apply_schedule->to<fir::gpu_schedule::HybridGPUSchedule>();
 					// This EdgeSetApply has a Hybrid Schedule attached to it
 					// Create the first Stmt block
 					mir::StmtBlock::Ptr stmt_block_1 = std::make_shared<mir::StmtBlock>();	
@@ -200,8 +206,10 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 					stmt1->expr = expr_stmt->expr;
 					stmt1->stmt_label = "hybrid1";	
 					stmt_block_1->insertStmtEnd(stmt1);
-					schedule_->schedule_map[current_scope_name + ":hybrid1"] = hybrid_schedule->getFirstScheduleObject()
-					    ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    auto schedule1_copy = hybrid_schedule->getFirstScheduleObject()
+                        ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt1->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
+                    expr_stmt->expr->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule1_copy);
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
@@ -211,12 +219,16 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 				        mir_context_->addFunctionFront(func_decl_v2);
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::ExprStmt::Ptr stmt2 = std::make_shared<mir::ExprStmt>();
-					stmt2->expr = expr_stmt->expr;
+                    mir::Expr::Ptr ptr_copy = expr_stmt->expr->clone<mir::Expr>();
+					stmt2->expr = ptr_copy;
 					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
-                    schedule_->schedule_map[current_scope_name + ":hybrid2"] = hybrid_schedule->getSecondScheduleObject()
+                    auto schedule2_copy = hybrid_schedule->getSecondScheduleObject()
                         ->self<fir::gpu_schedule::SimpleGPUSchedule>()->cloneSchedule();
+                    stmt2->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
+                    ptr_copy->setMetadata<ScheduleObject::Ptr>("apply_schedule", schedule2_copy);
+
 					stmt_block_2 = rewrite<mir::StmtBlock>(stmt_block_2);
 					
 					// Finally create a hybrid statement and replace - 
@@ -267,17 +279,16 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 
 
 	// First check if the program has a GPU Schedule, if yes, the defaults are different
-	if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 		// Always parallelize all operators for GPU schedules
 		edgeset_apply->is_parallel = true;
 		if (edgeset_apply->tracking_field != "")
 			edgeset_apply->requires_output = true;
 		// Check if there is a GPU schedule attached to this statement - 
-            	auto current_scope_name = label_scope_.getCurrentScope();
-        if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule"))    {
+          if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");
             if (!apply_schedule->isComposite()) {
-				edgeset_apply->applied_schedule = *(apply_schedule->self<fir::gpu_schedule::SimpleGPUSchedule>());
+              edgeset_apply->applied_schedule = *(apply_schedule->self<fir::gpu_schedule::SimpleGPUSchedule>());
 			} else {
 				assert(false && "Schedule applied to EdgeSetApply must be a Simple Schedule");
 			}
@@ -302,7 +313,7 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
 
         // check if the schedule contains entry for the current edgeset apply expressions
 
-        if (schedule_ != nullptr && schedule_->backend_identifier == Schedule::BackendID::CPU) {
+        if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
               if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                 auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");
@@ -320,30 +331,30 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
                   }
                 }
                 else {
-                    auto hybrid_schedule = apply_schedule->self<fir::abstract_schedule::CompositeScheduleObject>();
-                    // Slightly hacky, but basically infer whether it's HYBRID_DENSE_FORWARD from whether one of the
-                    // schedules is a Pull schedule. Both schedules in HYBRID_DENSE_FORWARD are push schedules.
-                    if (hybrid_schedule->getFirstScheduleObject()->self<SimpleScheduleObject>()->getDirection()
-                        != SimpleScheduleObject::Direction::PULL &&
-                        hybrid_schedule->getSecondScheduleObject()->self<SimpleScheduleObject>()->getDirection()
-                            != SimpleScheduleObject::Direction::PULL) {
-                      //Hybrid dense forward (switching between push and dense forward push)
-                      node = std::make_shared<mir::HybridDenseForwardEdgeSetApplyExpr>(edgeset_apply);
-                    } else {
-                      //Hybrid dense (switching between push and pull)
-                      auto hybrid_dense_edgeset_apply =
-                          std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
-                      //clone the function declaration for push, use the original func for pull
-                      auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
-                      mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
-                      push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-                      hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
-                      //insert into MIR context
-                      mir_context_->addFunctionFront(push_apply_func_decl);
+                  auto hybrid_schedule = apply_schedule->self<fir::abstract_schedule::CompositeScheduleObject>();
+                  // Slightly hacky, but basically infer whether it's HYBRID_DENSE_FORWARD from whether one of the
+                  // schedules is a Pull schedule. Both schedules in HYBRID_DENSE_FORWARD are push schedules.
+                  if (hybrid_schedule->getFirstScheduleObject()->self<SimpleScheduleObject>()->getDirection()
+                      != SimpleScheduleObject::Direction::PULL &&
+                      hybrid_schedule->getSecondScheduleObject()->self<SimpleScheduleObject>()->getDirection()
+                          != SimpleScheduleObject::Direction::PULL) {
+                    //Hybrid dense forward (switching between push and dense forward push)
+                    node = std::make_shared<mir::HybridDenseForwardEdgeSetApplyExpr>(edgeset_apply);
+                  } else {
+                    //Hybrid dense (switching between push and pull)
+                    auto hybrid_dense_edgeset_apply =
+                        std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
+                    //clone the function declaration for push, use the original func for pull
+                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+                    mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
+                    push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
+                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
+                    //insert into MIR context
+                    mir_context_->addFunctionFront(push_apply_func_decl);
 
-                      node = hybrid_dense_edgeset_apply;
-                    }
+                    node = hybrid_dense_edgeset_apply;
                   }
+                }
 
                 SimpleCPUScheduleObject::Ptr simple_schedule;
                 if (!apply_schedule->isComposite()) {
@@ -358,10 +369,11 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
                 // it can't be 0 as well, which indicates that this schedule is not needed
                 if (simple_schedule->getNumSSG().getType() == fir::abstract_schedule::FlexIntVal::FlexIntType::ARG ||
                     simple_schedule->getNumSSG().getIntVal() != -100) {
-//                    mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = apply_schedule->second.scope_label_name;
-//                  mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][apply_schedule->second.scope_label_name] =
-//                      apply_schedule->second.num_segment;
-                    std::string label_scope = label_scope_.getCurrentScope();
+
+                  std::string label_scope = label_scope_.getCurrentScope();
+                  mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
+                      simple_schedule->getNumSSG().getIntVal();
+                  mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = label_scope;
                   mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
                       simple_schedule->getNumSSG().getIntVal();
                 }
@@ -412,5 +424,4 @@ using fir::cpu_schedule::SimpleCPUScheduleObject;
             return;
         }
     }
-
 }
