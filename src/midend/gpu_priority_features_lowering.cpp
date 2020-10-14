@@ -46,9 +46,8 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 			if (upesae->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
                 auto apply_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule");
                 if (apply_schedule->isa<SimpleGPUSchedule>()) {
-                    upesae->applied_schedule = *(apply_schedule->to<SimpleGPUSchedule>());
-                    mir_context_->delta_ = upesae->applied_schedule.delta;
-                    if (upesae->applied_schedule.direction == SimpleGPUSchedule::direction_type::DIR_PULL) {
+                    mir_context_->delta_ = apply_schedule->self<SimpleGPUSchedule>()->delta;
+                    if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PULL) {
                         mir_context_->graphs_with_transpose[mir::to<mir::VarExpr>(upesae->target)->var.getName()] = true;
                     }
                 } else {

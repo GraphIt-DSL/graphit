@@ -281,22 +281,7 @@ namespace graphit {
 
           fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
 
-            // If no apply schedule has been constructed, construct a new one
-            if (schedule_->apply_schedules == nullptr) {
-                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
-            }
-
-            // If no schedule has been specified for the current label, create a new one
-            if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
-                //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
-                (*schedule_->apply_schedules)[apply_label]
-                        = createDefaultSchedule(apply_label);
-            }
-
             if (apply_schedule_str == "pull_edge_based_load_balance") {
-                (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
-                        = ApplySchedule::PullLoadBalance::EDGE_BASED;
-                (*schedule_->apply_schedules)[apply_label].pull_load_balance_edge_grain_size = parameter;
                 if (schedule_object->isComposite()){
                   auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
                   auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
@@ -307,17 +292,17 @@ namespace graphit {
                 }
 
             } else if (apply_schedule_str == "pull") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
             } else if (apply_schedule_str == "hybrid_dense") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "num_segment") {
-                (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
+//                (*schedule_->apply_schedules)[apply_label].num_segment = parameter;
             } else if (apply_schedule_str == "delta") {
-                (*schedule_->apply_schedules)[apply_label].delta = parameter;
+//                (*schedule_->apply_schedules)[apply_label].delta = parameter;
             } else if (apply_schedule_str == "bucket_merge_threshold"){
-                (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
+//                (*schedule_->apply_schedules)[apply_label].merge_threshold = parameter;
             } else if (apply_schedule_str == "num_open_buckets"){
-                (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
+//                (*schedule_->apply_schedules)[apply_label].num_open_buckets = parameter;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);
@@ -335,39 +320,24 @@ namespace graphit {
                 schedule_ = new Schedule();
             }
 
-
-            // If no apply schedule has been constructed, construct a new one
-            if (schedule_->apply_schedules == nullptr) {
-                schedule_->apply_schedules = new std::map<std::string, ApplySchedule>();
-            }
-
-            // If no schedule has been specified for the current label, create a new one
-
-            if (schedule_->apply_schedules->find(apply_label) == schedule_->apply_schedules->end()) {
-                //Default schedule pull, serial, -100 for number of segments (we use -1 to -10 for argv)
-                (*schedule_->apply_schedules)[apply_label]
-                        = createDefaultSchedule(apply_label);
-            }
-
             fir::abstract_schedule::ScheduleObject::Ptr schedule_object = schedule_->initOrGetScheduleObject(apply_label);
 
 
           if (apply_schedule_str == "push") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PUSH;
                 schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::SPARSE_PUSH);
             } else if (apply_schedule_str == "pull") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::PULL;
                 schedule_object->self<SimpleCPUScheduleObject>()->configCPUDirection(SimpleCPUScheduleObject::DirectionType ::DENSE_PULL);
             } else if (apply_schedule_str == "hybrid_dense_forward") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE_FORWARD;
             } else if (apply_schedule_str == "hybrid_dense") {
-                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
+//                (*schedule_->apply_schedules)[apply_label].direction_type = ApplySchedule::DirectionType::HYBRID_DENSE;
             } else if (apply_schedule_str == "serial") {
-                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Serial;
+//                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Serial;
             } else if (apply_schedule_str == "parallel") {
-                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Parallel;
+//                (*schedule_->apply_schedules)[apply_label].parallel_type = ApplySchedule::ParType::Parallel;
             } else if (apply_schedule_str == "enable_deduplication") {
-                (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Enable;
                 if (schedule_object->isComposite()){
                   auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
                   auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
@@ -378,7 +348,6 @@ namespace graphit {
                 }
 
             } else if (apply_schedule_str == "disable_deduplication") {
-                (*schedule_->apply_schedules)[apply_label].deduplication_type = ApplySchedule::DeduplicationType::Disable;
                 if (schedule_object->isComposite()){
                   auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
                   auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
@@ -388,7 +357,6 @@ namespace graphit {
                   schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configDeduplication(false);
                 }
             } else if (apply_schedule_str == "sliding_queue") {
-                (*schedule_->apply_schedules)[apply_label].opt = ApplySchedule::OtherOpt::SLIDING_QUEUE;
                 if (schedule_object->isComposite()){
                   auto first_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getFirstScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
                   auto second_schedule = schedule_object->self<fir::cpu_schedule::HybridCPUScheduleObject>()->getSecondScheduleObject()->self<fir::cpu_schedule::SimpleCPUScheduleObject>();
@@ -398,24 +366,24 @@ namespace graphit {
                   schedule_object->self<fir::cpu_schedule::SimpleCPUScheduleObject>()->configQueueType("sliding_queue");
                 }
             } else if (apply_schedule_str == "pull_frontier_bitvector") {
-                (*schedule_->apply_schedules)[apply_label].pull_frontier_type = ApplySchedule::PullFrontierType::BITVECTOR;
+//                (*schedule_->apply_schedules)[apply_label].pull_frontier_type = ApplySchedule::PullFrontierType::BITVECTOR;
             } else if (apply_schedule_str == "pull_edge_based_load_balance") {
-                (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
-                        = ApplySchedule::PullLoadBalance::EDGE_BASED;
+//                (*schedule_->apply_schedules)[apply_label].pull_load_balance_type
+//                        = ApplySchedule::PullLoadBalance::EDGE_BASED;
             } else if (apply_schedule_str == "numa_aware") {
-                (*schedule_->apply_schedules)[apply_label].numa_aware = true;
+//                (*schedule_->apply_schedules)[apply_label].numa_aware = true;
             } else if (apply_schedule_str == "lazy_priority_update"){
-                (*schedule_->apply_schedules)[apply_label].priority_update_type
-                        = ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE;
+//                (*schedule_->apply_schedules)[apply_label].priority_update_type
+//                        = ApplySchedule::PriorityUpdateType::REDUCTION_BEFORE_UPDATE;
             } else if (apply_schedule_str == "eager_priority_update") {
-                (*schedule_->apply_schedules)[apply_label].priority_update_type
-                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
+//                (*schedule_->apply_schedules)[apply_label].priority_update_type
+//                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE;
             } else if (apply_schedule_str == "eager_priority_update_with_merge") {
-                (*schedule_->apply_schedules)[apply_label].priority_update_type
-                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE;
+//                (*schedule_->apply_schedules)[apply_label].priority_update_type
+//                        = ApplySchedule::PriorityUpdateType::EAGER_PRIORITY_UPDATE_WITH_MERGE;
 	    } else if (apply_schedule_str == "constant_sum_reduce_before_update") {
-	        (*schedule_->apply_schedules)[apply_label].priority_update_type
-		        = ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE;
+//	        (*schedule_->apply_schedules)[apply_label].priority_update_type
+//		        = ApplySchedule::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE;
             } else {
                 std::cout << "unrecognized schedule for apply: " << apply_schedule_str << std::endl;
                 exit(0);

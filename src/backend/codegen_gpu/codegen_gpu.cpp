@@ -10,6 +10,11 @@
 #include <iostream>
 
 namespace graphit {
+
+using fir::abstract_schedule::ScheduleObject;
+using fir::abstract_schedule::SimpleScheduleObject;
+using fir::gpu_schedule::SimpleGPUSchedule;
+
 int CodeGenGPU::genGPU() {
 	AssignFunctionContext assign_function_context(mir_context_);
 	assign_function_context.assign_function_context();
@@ -297,9 +302,8 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
 void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr apply_expr) {
 
-
-
-	if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH) {
+    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleScheduleObject>();
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PUSH) {
 		// First we generate the function that is passed to the load balancing function
 		std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
 
@@ -334,7 +338,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		printIndent();
 		oss << "}" << std::endl;	
 		apply_expr->device_function = load_balancing_arg;	
-	} else if (apply_expr->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
+	} else if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL) {
 		// First we generate the function that is passed to the load balancing function
 		std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
 		
@@ -345,14 +349,14 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		oss << "// Body of the actual operator" << std::endl;
 		// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
 		if (apply_expr->from_func != "") {	
-			if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+			if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BOOLMAP) {
 				printIndent();
 				oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
 				indent();
 				printIndent();
 				oss << "return;" << std::endl;
 				dedent();
-			} else if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+			} else if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BITMAP) {
 				printIndent();
 				oss << "if (!gpu_runtime::checkBit(input_frontier.d_bit_map_input, dst))" << std::endl;
 				indent();
@@ -385,6 +389,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 
 void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 
+    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleScheduleObject>();
 	// First we generate the function that is passed to the load balancing function
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
 	
@@ -395,14 +400,14 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	oss << "// Body of the actual operator" << std::endl;
 	// Before we generate the call to the UDF, we have to check if the dst is on the input frontier
 	if (apply_expr->from_func != "") {	
-		if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+		if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BOOLMAP) {
 			printIndent();
 			oss << "if (!input_frontier.d_byte_map_input[dst])" << std::endl;
 			indent();
 			printIndent();
 			oss << "return;" << std::endl;
 			dedent();
-		} else if (apply_expr->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+		} else if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BITMAP) {
 			printIndent();
 			oss << "if (!gpu_runtime::checkBit(input_frontier.d_bit_map_input, dst))" << std::endl;
 			indent();
@@ -716,11 +721,12 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	frontier_expr->var = var;	
 	
 	evp->vertex_frontier = frontier_expr;
-	if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+	SimpleGPUSchedule::Ptr applied_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 		evp->type = mir::EnqueueVertex::Type::SPARSE;
-	} else if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
 		evp->type = mir::EnqueueVertex::Type::BOOLMAP;
-	} else if (upesae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
 		evp->type = mir::EnqueueVertex::Type::BITMAP;
 	} 
 	
@@ -781,35 +787,36 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	indent();
 	
 	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+    SimpleGPUSchedule::Ptr applied_schedule = esae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWCE) {
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
 		load_balance_function = "gpu_runtime::edge_only_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWC) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWC) {
 		load_balance_function = "gpu_runtime::TWC_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::CM) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::CM) {
 		load_balance_function = "gpu_runtime::CM_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::STRICT) {
 		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 
-	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH) {
+	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PUSH) {
 		if (esae->from_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_sparse(";
 			oss << esae->from_func;
 			oss << ");" << std::endl;
 		}
-	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
+	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PULL) {
 		if (esae->from_func != "") {
-			if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+			if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType ::BOOLMAP) {
 				printIndent();
 				oss << "gpu_runtime::vertex_set_prepare_boolmap(";
 				oss << esae->from_func;
 				oss << ");" << std::endl;
-			} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+			} else if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BITMAP) {
 				printIndent();
 				oss << "gpu_runtime::vertex_set_prepare_bitmap(";
 				oss << esae->from_func;
@@ -865,20 +872,22 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 		target_type->weight_type->accept(this);
 
 	std::string accessor_type = "gpu_runtime::AccessorSparse";
+
 	if (esae->from_func == "")
 		accessor_type = "gpu_runtime::AccessorAll";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PULL && esae->to_func == "")
 		accessor_type = "gpu_runtime::AccessorAll";
 	std::string src_filter = "gpu_runtime::true_function";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PULL && esae->to_func != "")
 		src_filter = esae->to_func;
 
 	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
-	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY && esae->applied_schedule.edge_blocking == fir::gpu_schedule::SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
-		oss << "__blocked_" << esae->applied_schedule.edge_blocking_size;
+	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY &&
+	    applied_schedule->edge_blocking == SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
+		oss << "__blocked_" << applied_schedule->edge_blocking_size;
 	}
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL) {
 		oss << "__transposed";
 	}
 	oss << ", ";
@@ -899,7 +908,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	printIndent();
 	oss << "cudaDeviceSynchronize();" << std::endl;
 	if (target != nullptr) {
-		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			printIndent();
 			oss << "gpu_runtime::swap_queues(";
 			target->accept(this);
@@ -907,7 +916,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
-		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+		} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bitmaps(";
 			target->accept(this);
@@ -915,7 +924,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
-		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+		} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bytemaps(";
 			target->accept(this);
@@ -938,32 +947,33 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	oss << "{" << std::endl;
 	indent();
 	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-	if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWCE) {
+	SimpleGPUSchedule::Ptr applied_schedule = esae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWCE) {
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
 		load_balance_function = "gpu_runtime::edge_only_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::TWC) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWC) {
 		load_balance_function = "gpu_runtime::TWC_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::CM) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::CM) {
 		load_balance_function = "gpu_runtime::CM_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::WM) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::WM) {
 		load_balance_function = "gpu_runtime::WM_load_balance";
-	} else if (esae->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::STRICT) {
+	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::STRICT) {
 		load_balance_function = "gpu_runtime::strict_load_balance";
 	}
 	
-	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH) {
+	if (mir::isa<mir::PushEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PUSH) {
 		printIndent();
 		oss << "gpu_runtime::vertex_set_prepare_sparse_device(";
 		oss << var_name(esae->from_func);
 		oss << ");" << std::endl;
-	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
-		if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BOOLMAP) {
+	} else if (mir::isa<mir::PullEdgeSetApplyExpr>(esae) || mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae) && applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL) {
+		if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType ::BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_boolmap_device(";
 			oss << var_name(esae->from_func);
 			oss << ");" << std::endl;
-		} else if (esae->applied_schedule.pull_frontier_rep == fir::gpu_schedule::SimpleGPUSchedule::pull_frontier_rep_type::BITMAP) {
+		} else if (applied_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType ::BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_prepare_bitmap_device(";
 			oss << var_name(esae->from_func);
@@ -1018,10 +1028,10 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		target_type->weight_type->accept(this);
 	
 	std::string accessor_type = "gpu_runtime::AccessorSparse";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func == "")
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL && esae->to_func == "")
 		accessor_type = "gpu_runtime::AccessorAll";
 	std::string src_filter = "gpu_runtime::true_function";
-	if (esae->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL && esae->to_func != "")
+	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL && esae->to_func != "")
 		src_filter = esae->to_func;
 
 	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
@@ -1035,7 +1045,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	
 	if (target != nullptr) {
 		mir::VarExpr::Ptr target_expr = mir::to<mir::VarExpr>(target);
-		if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			printIndent();
 			oss << "gpu_runtime::swap_queues_device(";
 			target->accept(this);
@@ -1043,7 +1053,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::SPARSE;" << std::endl;
-		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+		} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bitmaps_device(";
 			target->accept(this);
@@ -1051,7 +1061,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 			printIndent();
 			target->accept(this);
 			oss << ".format_ready = gpu_runtime::VertexFrontier::BITMAP;" << std::endl;
-		} else if (esae->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+		} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
 			printIndent();
 			oss << "gpu_runtime::swap_bytemaps_device(";
 			target->accept(this);

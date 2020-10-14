@@ -1,6 +1,9 @@
 #include <graphit/midend/gpu_vector_field_properties_analyzer.h>
 
 namespace graphit {
+using fir::gpu_schedule::SimpleGPUSchedule;
+using fir::abstract_schedule::ScheduleObject;
+
 void GPUVectorFieldPropertiesAnalyzer::analyze(void) {
 	ApplyExprVisitor visitor(mir_context_);
 	for (auto func: mir_context_->getFunctionList()) {
@@ -16,8 +19,9 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PushEdgeSetA
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-	switch (pesae->applied_schedule.load_balancing) {
-		case fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
+    SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	switch (applied_schedule->load_balancing) {
+		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(src_name);
 			break;
 		default:
@@ -37,8 +41,9 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PullEdgeSetA
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-	switch (pesae->applied_schedule.load_balancing) {
-		case fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
+	SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	switch (applied_schedule->load_balancing) {
+		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(dst_name);
 			break;
 		default:
@@ -58,8 +63,9 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::UpdatePriori
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-	switch (pesae->applied_schedule.load_balancing) {
-		case fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
+    SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	switch (applied_schedule->load_balancing) {
+		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(src_name);
 			break;
 		default:

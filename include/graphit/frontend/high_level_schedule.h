@@ -223,8 +223,7 @@ namespace graphit {
 			gpu_schedule::SimpleGPUSchedule *s1_copy = new gpu_schedule::SimpleGPUSchedule(s1);
 
 			schedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::SimpleGPUSchedule>(s1);
-			schedule_->apply_gpu_schedules[label_name] = s1_copy;
-			
+
 		}
 		void applyGPUSchedule(std::string label_name, gpu_schedule::HybridGPUSchedule &s2) {
                 	backend_selection = backend_selection_type::CODEGEN_GPU; 
@@ -237,7 +236,6 @@ namespace graphit {
 
 			*s2_copy = s2;
             schedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::HybridGPUSchedule>(s2);
-			schedule_->apply_gpu_schedules[label_name] = s2_copy;
 		}
 		
 

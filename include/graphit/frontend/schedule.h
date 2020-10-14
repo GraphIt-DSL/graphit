@@ -219,7 +219,6 @@ namespace graphit {
 
           Schedule(BackendID backendId = BackendID::CPU) {
                 physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
-                apply_schedules = new std::map<std::string, ApplySchedule>();
                 vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
                 graph_iter_spaces = new std::map<std::string, std::vector<GraphIterationSpace> *>();
                 schedule_map = std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr>(); //label to schedule object
@@ -229,10 +228,6 @@ namespace graphit {
 
             ~Schedule() {
                 delete physical_data_layouts;
-                delete apply_schedules;
-		for (auto s = apply_gpu_schedules.begin(); s != apply_gpu_schedules.end(); s++) {
-			delete s->second;
-		}
             }
 
 
@@ -303,15 +298,11 @@ namespace graphit {
 
             //TODO: what does it mean??
             std::map<std::string, FieldVectorPhysicalDataLayout> *physical_data_layouts;
-            //will be slowly replaced with graph iteration space
-            std::map<std::string, ApplySchedule> *apply_schedules;
 
             // this is a vector of graph iteration spaces because we can have up to two graph iteration spaces (for hybrid directions)
             std::map<std::string, std::vector<GraphIterationSpace> *> *graph_iter_spaces;
             std::map<std::string, VertexsetPhysicalLayout> vertexset_data_layout;
 
-
-	        std::map <std::string, graphit::fir::gpu_schedule::GPUSchedule*> apply_gpu_schedules;
             std::map<std::string, fir::abstract_schedule::ScheduleObject::Ptr> schedule_map; //label to schedule object
             BackendID backend_identifier;
         };

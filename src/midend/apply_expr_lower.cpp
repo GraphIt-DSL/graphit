@@ -158,8 +158,13 @@ namespace graphit {
 	assign_stmt = mir::to<mir::AssignStmt>(node);
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
+
+		auto applied_schedule = std::make_shared<SimpleGPUSchedule>();
+        if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
+          applied_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+        }
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && applied_schedule->frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+			if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = true;
 			} else {
@@ -171,8 +176,8 @@ namespace graphit {
 				dedup_expr->perfect_dedup = true;
 				edgeset_apply->fused_dedup = false;
 			}
-		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->applied_schedule.deduplication == fir::gpu_schedule::SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && edgeset_apply->applied_schedule.frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-			if (edgeset_apply->applied_schedule.deduplication_strategy == fir::gpu_schedule::SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
+		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && applied_schedule->deduplication == SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+			if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
 				edgeset_apply->fused_dedup = true;
 				edgeset_apply->fused_dedup_perfect = false;
 			} else {
@@ -287,21 +292,19 @@ namespace graphit {
 		// Check if there is a GPU schedule attached to this statement - 
           if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");
-            if (!apply_schedule->isComposite()) {
-              edgeset_apply->applied_schedule = *(apply_schedule->self<fir::gpu_schedule::SimpleGPUSchedule>());
-			} else {
-				assert(false && "Schedule applied to EdgeSetApply must be a Simple Schedule");
-			}
-			if (edgeset_apply->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PUSH)
+
+			if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PUSH)
 				node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
-			else if (edgeset_apply->applied_schedule.direction == fir::gpu_schedule::SimpleGPUSchedule::direction_type::DIR_PULL) {
+			else if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PULL) {
 				node = std::make_shared<mir::PullEdgeSetApplyExpr>(edgeset_apply);
 				mir_context_->graphs_with_transpose[mir::to<mir::VarExpr>(edgeset_apply->target)->var.getName()] = true;
 			} else 
 				assert(false && "Invalid option for direction\n");
 			
-			if (edgeset_apply->applied_schedule.load_balancing == fir::gpu_schedule::SimpleGPUSchedule::load_balancing_type::EDGE_ONLY && edgeset_apply->applied_schedule.edge_blocking == fir::gpu_schedule::SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
-				mir_context_->graphs_with_blocking[mir::to<mir::VarExpr>(edgeset_apply->target)->var.getName()] = edgeset_apply->applied_schedule.edge_blocking_size;
+			if (apply_schedule->self<SimpleGPUSchedule>()->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY &&
+			    apply_schedule->self<SimpleGPUSchedule>()->edge_blocking == SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
+				mir_context_->graphs_with_blocking[mir::to<mir::VarExpr>(edgeset_apply->target)->var.getName()] =
+				    apply_schedule->self<SimpleGPUSchedule>()->edge_blocking_size;
 			}
 						
 		} else {
