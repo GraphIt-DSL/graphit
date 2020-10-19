@@ -80,8 +80,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
-					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup");
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect");
 
 					SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
 					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
@@ -132,8 +132,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
-					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup");
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect");
 
                     SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
 					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
@@ -162,8 +162,8 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->fused_dedup;
-					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->fused_dedup_perfect;
+					enqueue_vertex->fused_dedup = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup");
+					enqueue_vertex->fused_dedup_perfect = current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect");
 
                   SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
                   if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {

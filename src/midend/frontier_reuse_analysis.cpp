@@ -40,7 +40,7 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 				if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
 					std::string frontier_name = esae->from_func;
 					if (is_frontier_reusable(stmt_block, i, frontier_name)) {
-						esae->frontier_reusable = true;
+						esae->setMetadata("frontier_reusable", true);
 					}
 				}
 			}
@@ -52,7 +52,7 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 					if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
 						std::string frontier_name = esae->from_func;
 						if (is_frontier_reusable(stmt_block, i, frontier_name)) {
-							esae->frontier_reusable = true;
+							esae->setMetadata("frontier_reusable", true);
 						}
 					}
 				}	

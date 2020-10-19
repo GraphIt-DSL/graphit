@@ -152,7 +152,7 @@ namespace graphit {
 
 
         //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
-        if (apply->enable_deduplication && apply_expr_gen_frontier) {
+        if (apply->getMetadata<bool>("enable_deduplication") && apply_expr_gen_frontier) {
             oss_ << "    if (g.get_flags_() == nullptr){\n"
 //                    "      g.flags_ = new int[numVertices]();\n"
                     "      g.set_flags_(new int[numVertices]());\n"
@@ -262,7 +262,7 @@ namespace graphit {
 
 
             //need to return a frontier
-            if (apply->enable_deduplication && apply_expr_gen_frontier) {
+            if (apply->getMetadata<bool>("enable_deduplication") && apply_expr_gen_frontier) {
                 oss_ << " && CAS(&(g.get_flags_()[" << dst_type << "]), 0, 1) ";
             }
 
@@ -332,7 +332,7 @@ namespace graphit {
                     "  next_frontier->dense_vertex_set_ = nextIndices;\n";
 
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
-            if (apply->enable_deduplication && from_vertexset_specified) {
+            if (apply->getMetadata<bool>("enable_deduplication") && from_vertexset_specified) {
                 //clear up the indices that are set
                     oss_ << "  parallel_for(int i = 0; i < nextM; i++){\n"
                             "     g.get_flags_()[nextIndices[i]] = 0;\n"
@@ -389,7 +389,7 @@ namespace graphit {
             } else {
 
                 //the input expression is a vertex subset
-                if (! apply->use_pull_frontier_bitvector){
+                if (! apply->getMetadata<bool>("use_pull_frontier_bitvector")){
                     oss_ << " (from_vertexset->bool_map_[" << src_type <<  "] ";
                 } else {
                     oss_ << " (bitmap.get_bit(" << src_type << ")";
@@ -458,17 +458,17 @@ namespace graphit {
     void EdgesetApplyFunctionDeclGenerator::printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply) {
         oss_ << "}// end of per-socket parallel region\n\n";
         auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
-        auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
+        auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->getMetadata<std::string>("scope_label_name")];
         oss_ << "  parallel_for (int n = 0; n < numVertices; n++) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-        oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
-        switch (apply->merge_reduce->reduce_op) {
+        oss_ << "      " << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name << "[n] ";
+        switch (apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->reduce_op) {
 	case mir::ReduceStmt::ReductionOp::SUM:
-	  oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+	  oss_ << "+= local_" << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name  << "[socketId][n];\n";
 	  break;
 	case mir::ReduceStmt::ReductionOp::MIN:
-	  oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
-	       << apply->merge_reduce->field_name  << "[socketId][n]);\n";
+	  oss_ << "= min(" << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name << "[n], local_"
+	       << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name  << "[socketId][n]);\n";
 	  break;
 	default:
 	  // TODO: fill in the missing operators when they are actually used
@@ -480,8 +480,8 @@ namespace graphit {
     void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
         oss_ << "parallel_for (int n = 0; n < numVertices; n++) {\n";
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
-        oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
-             << apply->merge_reduce->field_name << "[n];\n";
+        oss_ << "      local_" << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name  << "[socketId][n] = "
+             << apply->getMetadata<mir::MergeReduceField::Ptr>("merge_reduce")->field_name << "[n];\n";
         oss_ << "    }\n  }\n";
     }
 
@@ -516,7 +516,7 @@ namespace graphit {
         }
 
         //generate a bitvector from the dense vertexset (bool map)
-        if (from_vertexset_specified && apply->use_pull_frontier_bitvector){
+        if (from_vertexset_specified && apply->getMetadata<bool>("use_pull_frontier_bitvector")){
             oss_ << "  Bitmap bitmap(numVertices);\n"
                     "  bitmap.reset();\n"
                     "  parallel_for(int i = 0; i < numVertices; i+=64){\n"
@@ -538,7 +538,7 @@ namespace graphit {
             for (auto label_iter = (*edge_iter).second.begin();
             label_iter != (*edge_iter).second.end();
             label_iter++) {
-                if ((*label_iter).first == apply->scope_label_name)
+                if ((*label_iter).first == apply->getMetadata<std::string>("scope_label_name"))
                     cache_aware = true;
             }
         }
@@ -562,9 +562,9 @@ namespace graphit {
 
         if (numa_aware || cache_aware) {
             if (numa_aware) {
-                std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
+                std::string num_segment_str = "g.getNumSegments(\"" + apply->getMetadata<std::string>("scope_label_name") + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
-                oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
+                oss_ << "    int numSegments = g.getNumSegments(\"" + apply->getMetadata<std::string>("scope_label_name") + "\");\n";
 		oss_ << "    int segmentsPerSocket = (numSegments + numPlaces - 1) / numPlaces;\n";
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
                 oss_ << "    int socketId = omp_get_place_num();\n";
@@ -572,16 +572,16 @@ namespace graphit {
                 oss_ << "      int segmentId = socketId + i * numPlaces;\n";
                 oss_ << "      if (segmentId >= numSegments) break;\n";
             } else {
-                oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
+                oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->getMetadata<std::string>("scope_label_name")
                      << "\"); segmentId++) {\n";
             }
-            oss_ << "      auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), segmentId);\n";
+            oss_ << "      auto sg = g.getSegmentedGraph(std::string(\"" << apply->getMetadata<std::string>("scope_label_name") << "\"), segmentId);\n";
             outer_end = "sg->numVertices";
             iter = "localId";
         }
 
         //genearte the outer for loop
-        if (! apply->use_pull_edge_based_load_balance) {
+        if (! apply->getMetadata<bool>("use_pull_edge_based_load_balance")) {
             std::string for_type = "for";
             if (numa_aware) {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
@@ -610,7 +610,7 @@ namespace graphit {
                  << "&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
-                if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
+                if(apply->getMetadata<bool>("use_pull_frontier_bitvector")) oss_ << ", &bitmap ";
                 else oss_ << ", &from_vertexset";
             }
             if (apply_expr_gen_frontier) oss_ << ", &next ";
@@ -632,7 +632,7 @@ namespace graphit {
             dst_type, apply_func_name, cache_aware, numa_aware);
 
 
-        if (! apply->use_pull_edge_based_load_balance) {
+        if (! apply->getMetadata<bool>("use_pull_edge_based_load_balance")) {
             //end of outer for loop
             dedent();
             printIndent();
@@ -646,7 +646,7 @@ namespace graphit {
                     "                  recursive_lambda(start + ((end-start)>>1), end, grain_size);\n"
                     "        } \n"
                     "    }; //end of lambda function\n";
-            oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n"
+            oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->getMetadata<int>("pull_edge_based_load_balance_grain_size") << ");\n"
                     "    cilk_sync; \n";
         }
 
@@ -934,7 +934,7 @@ namespace graphit {
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != "") {
+            if (apply_expr->getMetadata<std::string>("push_to_function_") != "") {
                 templates.push_back("typename PUSH_TO_FUNC");
                 arguments.push_back("PUSH_TO_FUNC push_to_func");
             }
@@ -1011,7 +1011,7 @@ namespace graphit {
             output_name += "_serial";
         }
 
-        if (apply->use_sliding_queue) {
+        if (apply->getMetadata<bool>("use_sliding_queue")) {
             output_name += "_sliding_queue";
         }
 
@@ -1021,7 +1021,7 @@ namespace graphit {
         }
 
         // check for deduplication
-        if (apply->enable_deduplication && apply_func->result.isInitialized()) {
+        if (apply->getMetadata<bool>("enable_deduplication") && apply_func->result.isInitialized()) {
             output_name += "_deduplicatied";
         }
 
@@ -1047,7 +1047,7 @@ namespace graphit {
 
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            if (apply_expr->push_to_function_ != "") {
+            if (apply_expr->getMetadata<std::string>("push_to_function_") != "") {
                 if (mir_context_->isFunction(apply->to_func)) {
                     // the schedule is an input to function
                     output_name += "_push_to_filter_func";
@@ -1064,11 +1064,11 @@ namespace graphit {
             output_name += "_with_frontier";
         }
 
-        if (apply->use_pull_frontier_bitvector){
+        if (apply->getMetadata<bool>("use_pull_frontier_bitvector")){
             output_name += "_pull_frontier_bitvector";
         }
 
-        if (apply->use_pull_edge_based_load_balance){
+        if (apply->getMetadata<bool>("use_pull_edge_based_load_balance")){
             output_name += "_pull_edge_based_load_balance";
         }
 

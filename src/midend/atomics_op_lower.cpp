@@ -26,14 +26,14 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseE
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
         auto pull_func_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
-        auto push_func_name = apply_expr->push_function_;
+        auto push_func_name = apply_expr->getMetadata<std::string>("push_function_");
         mir::FuncDecl::Ptr push_func_decl = mir_context_->getFunction(push_func_name);
 
         pull_func_decl->accept(&reduce_stmt_lower);
         push_func_decl->accept(&reduce_stmt_lower);
 
         lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
-        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->push_function_, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->getMetadata<std::string>("push_function_"), apply_expr);
 
     }
 }
@@ -167,7 +167,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                             if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply_expr)){
                                 //if this is hybrid, just remove the push_to, and keep the other to for pull
                                 //TODO: this is a bit hacky, think about how to do it better later
-                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->setMetadata<std::string>("push_to_function_", "");
                             } else {
                                 apply_expr->to_func = "";
                             }

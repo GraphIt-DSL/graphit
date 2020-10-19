@@ -29,7 +29,7 @@ namespace graphit {
 
     void ChangeTrackingLower::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
         processSingleFunctionApplyExpr(apply_expr->input_function_name, apply_expr->tracking_field);
-        processSingleFunctionApplyExpr(apply_expr->push_function_, apply_expr->tracking_field);
+        processSingleFunctionApplyExpr(apply_expr->getMetadata<std::string>("push_function_"), apply_expr->tracking_field);
 
     }
 

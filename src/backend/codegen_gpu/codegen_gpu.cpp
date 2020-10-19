@@ -296,7 +296,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;	
-	apply_expr->device_function = load_balancing_arg;
+	apply_expr->setMetadata("device_function", load_balancing_arg);
 	
 }
 
@@ -337,7 +337,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;	
-		apply_expr->device_function = load_balancing_arg;	
+		apply_expr->setMetadata("device_function", load_balancing_arg);
 	} else if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL) {
 		// First we generate the function that is passed to the load balancing function
 		std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -383,7 +383,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;	
-		apply_expr->device_function = load_balancing_arg;
+		apply_expr->setMetadata("device_function", load_balancing_arg);
 	}
 }
 
@@ -434,7 +434,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;	
-	apply_expr->device_function = load_balancing_arg;
+	apply_expr->setMetadata("device_function", load_balancing_arg);
 
 }
 
@@ -836,7 +836,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	// We will have to create a new frontier in case the frontier cannot be reused
 	// If the frontier is reusable, we simply assign the old to the new
 	if (target != nullptr) {
-		if (esae->frontier_reusable) {
+		if (esae->getMetadata<bool>("frontier_reusable")) {
 			printIndent();
 			target->accept(this);
 			oss << " = " << esae->from_func << ";" << std::endl;
@@ -856,7 +856,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	}
 
 	// Before the load balance if the update requires dedup, then update the counters
-	if (esae->fused_dedup && target != nullptr) {
+	if (esae->getMetadata<bool>("fused_dedup") && target != nullptr) {
 		printIndent();
 		target->accept(this);
 		oss << ".curr_dedup_counter++;" << std::endl;
@@ -881,7 +881,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction ::PULL && esae->to_func != "")
 		src_filter = esae->to_func;
 
-	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
+	oss << ", " << esae->getMetadata<std::string>("device_function") << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
 	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY &&
 	    applied_schedule->edge_blocking == SimpleGPUSchedule::edge_blocking_type::BLOCKED) {
@@ -1012,7 +1012,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 */
 	}
 	// Before the load balance if the update requires dedup, then update the counters
-	if (esae->fused_dedup && target != nullptr) {
+	if (esae->getMetadata<bool>("fused_dedup") && target != nullptr) {
 		printIndent();
 		target->accept(this);
 		oss << ".curr_dedup_counter++;" << std::endl;
@@ -1034,7 +1034,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL && esae->to_func != "")
 		src_filter = esae->to_func;
 
-	oss << ", " << esae->device_function << ", " << accessor_type << ", " << src_filter << ">(";
+	oss << ", " << esae->getMetadata<std::string>("device_function") << ", " << accessor_type << ", " << src_filter << ">(";
 	esae->target->accept(this);
 	oss << ", " << var_name(esae->from_func) << ", ";
 	if (target != nullptr) 

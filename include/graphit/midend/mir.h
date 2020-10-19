@@ -887,7 +887,6 @@ namespace graphit {
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
-	    std::string device_function;
 	    std::string kernel_function;
 	    ApplyExpr() {
 	      this->setMetadata("requires_output", false);
@@ -942,19 +941,18 @@ namespace graphit {
             std::string from_func = "";
             std::string to_func = "";
             bool is_parallel = false;
-            bool enable_deduplication = false;
             bool is_weighted = false;
-            bool use_sliding_queue = false;
-            bool use_pull_frontier_bitvector = false;
-            bool use_pull_edge_based_load_balance = false;
-            //hard coded default value for grain size
-            int pull_edge_based_load_balance_grain_size = 4096;
-            std::string scope_label_name;
-            MergeReduceField::Ptr merge_reduce;
 
-	    bool frontier_reusable = false;
-	    bool fused_dedup = false;
-	    bool fused_dedup_perfect = false;
+            EdgeSetApplyExpr() {
+              this->setMetadata("enable_deduplication", false);
+              this->setMetadata("use_sliding_queue", false);
+              this->setMetadata("use_pull_frontier_bitvector", false);
+              this->setMetadata("use_pull_edge_based_load_balance", false);
+              this->setMetadata("pull_edge_based_load_balance_grain_size", 4096);
+              this->setMetadata("frontier_reusable", false);
+              this->setMetadata("fused_dedup", false);
+              this->setMetadata("fused_dedup_perfect", false);
+            }
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
@@ -985,11 +983,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
-                enable_deduplication = edgeset_apply->enable_deduplication;
                 metadata_map = edgeset_apply->metadata_map;
-		frontier_reusable = edgeset_apply->frontier_reusable;
-		fused_dedup = edgeset_apply->fused_dedup;
-		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1015,10 +1009,6 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
-                enable_deduplication = edgeset_apply->enable_deduplication;
-		frontier_reusable = edgeset_apply->frontier_reusable;
-		fused_dedup = edgeset_apply->fused_dedup;
-		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
               metadata_map = edgeset_apply->metadata_map;
             }
 
@@ -1064,8 +1054,6 @@ namespace graphit {
 
         struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
-            std::string push_function_;
-            std::string push_to_function_;
 
             HybridDenseEdgeSetApplyExpr() {}
 
@@ -1076,11 +1064,11 @@ namespace graphit {
                 input_function_name = edgeset_apply->input_function_name;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
-                push_to_function_ = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 metadata_map = edgeset_apply->metadata_map;
+                this->setMetadata("push_to_function_", edgeset_apply->to_func);
             }
 
             virtual void accept(MIRVisitor *visitor) {

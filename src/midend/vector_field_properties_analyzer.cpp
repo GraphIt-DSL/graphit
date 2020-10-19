@@ -31,7 +31,7 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
         analyzeSingleFunctionEdgesetApplyExpr(apply_expr->input_function_name, "pull");
-        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->push_function_, "push");
+        analyzeSingleFunctionEdgesetApplyExpr(apply_expr->getMetadata<std::string>("push_function_"), "push");
     }
 
     // Analyze the read / write properties for the priority update edgeset apply function

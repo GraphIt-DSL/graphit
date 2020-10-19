@@ -345,7 +345,7 @@ namespace graphit {
         assert (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr));
         mir::EdgeSetApplyExpr::Ptr regular_edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
         regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
-        regular_edgeset_apply_expr->enable_deduplication = true;
+        regular_edgeset_apply_expr->setMetadata<bool>("enable_deduplication", true);
         regular_edgeset_apply_expr->tracking_field = mir_context_->getPriorityVectorName();
 
         // Create a new VarDecl statement that returns a frontier

@@ -163,10 +163,10 @@ namespace graphit {
         if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
           applied_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
         }
-		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->enable_deduplication == true && applied_schedule->frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->getMetadata<bool>("enable_deduplication") && applied_schedule->frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
-				edgeset_apply->fused_dedup = true;
-				edgeset_apply->fused_dedup_perfect = true;
+				edgeset_apply->setMetadata("fused_dedup", true);
+				edgeset_apply->setMetadata("fused_dedup_perfect", true);
 			} else {
 				mir::VertexSetDedupExpr::Ptr dedup_expr = std::make_shared<mir::VertexSetDedupExpr>();
 				mir::ExprStmt::Ptr expr_stmt = std::make_shared<mir::ExprStmt>();
@@ -174,12 +174,12 @@ namespace graphit {
 				expr_stmt->expr = dedup_expr;
 				insert_after_stmt = expr_stmt;
 				dedup_expr->perfect_dedup = true;
-				edgeset_apply->fused_dedup = false;
+				edgeset_apply->setMetadata("fused_dedup", false);
 			}
 		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && applied_schedule->deduplication == SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
-				edgeset_apply->fused_dedup = true;
-				edgeset_apply->fused_dedup_perfect = false;
+				edgeset_apply->setMetadata("fused_dedup", true);
+				edgeset_apply->setMetadata("fused_dedup_perfect", false);
 			} else {
 				mir::VertexSetDedupExpr::Ptr dedup_expr = std::make_shared<mir::VertexSetDedupExpr>();
 				mir::ExprStmt::Ptr expr_stmt = std::make_shared<mir::ExprStmt>();
@@ -187,7 +187,7 @@ namespace graphit {
 				expr_stmt->expr = dedup_expr;
 				insert_after_stmt = expr_stmt;
 				dedup_expr->perfect_dedup = false;
-				edgeset_apply->fused_dedup = false;
+				edgeset_apply->setMetadata("fused_dedup", false);
 			}
 		}
 	}
@@ -351,7 +351,7 @@ namespace graphit {
                     auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
                     push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
+                    hybrid_dense_edgeset_apply->setMetadata("push_function_", push_apply_func_decl->name);
                     //insert into MIR context
                     mir_context_->addFunctionFront(push_apply_func_decl);
 
@@ -376,7 +376,7 @@ namespace graphit {
                   std::string label_scope = label_scope_.getCurrentScope();
                   mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
                       simple_schedule->getNumSSG().getIntVal();
-                  mir::to<mir::EdgeSetApplyExpr>(node)->scope_label_name = label_scope;
+                  mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("scope_label_name", label_scope);
                   mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
                       simple_schedule->getNumSSG().getIntVal();
                 }
@@ -389,30 +389,30 @@ namespace graphit {
                 }
 
                 if (simple_schedule->getOutputQueueType() == SimpleCPUScheduleObject::OutputQueueType ::SLIDING_QUEUE) {
-                    mir::to<mir::EdgeSetApplyExpr>(node)->use_sliding_queue = true;
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_sliding_queue", true);
                 }
 
                 if (simple_schedule->getPullFrontierType() == SimpleScheduleObject::PullFrontierType::BITMAP) {
-                    mir::to<mir::EdgeSetApplyExpr>(node)->use_pull_frontier_bitvector = true;
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_frontier_bitvector", true);
                 }
 
                 if (simple_schedule->getParallelizationType() == SimpleScheduleObject::ParallelizationType ::EDGE_BASED){
-                    mir::to<mir::EdgeSetApplyExpr>(node)->use_pull_edge_based_load_balance = true;
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_edge_based_load_balance", true);
                     if (simple_schedule->getPullLoadBalanceGrainSize().getIntVal() > 0){
-                        mir::to<mir::EdgeSetApplyExpr>(node)->pull_edge_based_load_balance_grain_size
-                                = simple_schedule->getPullLoadBalanceGrainSize().getIntVal();
+                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("pull_edge_based_load_balance_grain_size",
+                                simple_schedule->getPullLoadBalanceGrainSize().getIntVal());
                     }
                 }
 
                 //if this is applyModified with a tracking field
                 if (edgeset_apply->tracking_field != "") {
                     // only enable deduplication when the argument to ApplyModified is True (disable deduplication), or the user manually set disable
-                    if (edgeset_apply->enable_deduplication && simple_schedule->getDeduplication() == SimpleScheduleObject::Deduplication ::ENABLED) {
+                    if (edgeset_apply->getMetadata<bool>("enable_deduplication") && simple_schedule->getDeduplication() == SimpleScheduleObject::Deduplication ::ENABLED) {
                         //only enable deduplication if there is needed for tracking
-                        mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = true;
+                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("enable_deduplication", true);
                     }
                 } else {
-                    mir::to<mir::EdgeSetApplyExpr>(node)->enable_deduplication = false;
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("enable_deduplication", false);
                 }
             } else {
                 //There is a schedule, but nothing is specified for the current apply

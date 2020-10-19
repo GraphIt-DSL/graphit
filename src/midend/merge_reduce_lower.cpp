@@ -62,7 +62,7 @@ using fir::abstract_schedule::ScheduleObject;
 
         auto reduce_stmt_visitor = ReduceStmtVisitor(mir_context_, merge_reduce);
         apply_func_decl->accept(&reduce_stmt_visitor);
-        apply_expr->merge_reduce = merge_reduce;
+        apply_expr->setMetadata<mir::MergeReduceField::Ptr>("merge_reduce", merge_reduce);
     }
 
     void MergeReduceLower::ReduceStmtVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {

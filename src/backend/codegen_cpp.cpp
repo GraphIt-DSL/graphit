@@ -1597,8 +1597,8 @@ namespace graphit {
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
 
-            if (apply_expr->push_to_function_ != ""){
-                arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_to_function_));
+            if (apply_expr->getMetadata<std::string>("push_to_function_") != ""){
+                arguments.push_back(genFuncNameAsArgumentString(apply_expr->getMetadata<std::string>("push_to_function_")));
 
             }
         }
@@ -1606,7 +1606,7 @@ namespace graphit {
         // the push direction apply function for hybrid schedule
         if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply)) {
             auto apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply);
-            arguments.push_back(genFuncNameAsArgumentString(apply_expr->push_function_));
+            arguments.push_back(genFuncNameAsArgumentString(apply_expr->getMetadata<std::string>("push_function_")));
         }
 
         // the edgeset that is being applied over (target)

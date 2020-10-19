@@ -191,11 +191,8 @@ namespace graphit {
             from_func = expr->from_func;
             to_func = expr->to_func;
             is_parallel = expr->is_parallel;
-            enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;
-            scope_label_name = expr->scope_label_name;
-            frontier_reusable = expr->frontier_reusable;
-	
+
         }
 
 
@@ -232,7 +229,6 @@ namespace graphit {
         void HybridDenseEdgeSetApplyExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<HybridDenseEdgeSetApplyExpr>(node);
             EdgeSetApplyExpr::copy(expr);
-            push_function_ = expr->push_function_;
         }
 
 
