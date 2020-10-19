@@ -11,7 +11,7 @@ void GPUChangeTrackingLower::lower(void) {
 	}
 }
 void GPUChangeTrackingLower::UdfArgChangeVisitor::updateUdf(mir::FuncDecl::Ptr func_decl, mir::EdgeSetApplyExpr::Ptr esae) {
-	if (esae->requires_output == false)
+	if (!esae->getMetadata<bool>("requires_output"))
 		return;
 
 	mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(esae->target);	

@@ -33,7 +33,7 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 		node = assign;
 
 		upesae->is_parallel = true;
-		upesae->requires_output = true;
+		upesae->setMetadata<bool>("requires_output", true);
 		upesae->priority_queue_used = pq;
 		mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(upesae->target);
 		mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_expr->var.getType());

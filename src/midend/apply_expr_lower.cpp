@@ -288,7 +288,7 @@ namespace graphit {
 		// Always parallelize all operators for GPU schedules
 		edgeset_apply->is_parallel = true;
 		if (edgeset_apply->tracking_field != "")
-			edgeset_apply->requires_output = true;
+			edgeset_apply->setMetadata<bool>("requires_output", true);
 		// Check if there is a GPU schedule attached to this statement - 
           if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
             auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");

@@ -290,7 +290,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 		printIndent();
 		oss << apply_expr->input_function_name << "(src, dst";
 	}
-	if (apply_expr->requires_output)
+	if (apply_expr->getMetadata<bool>("requires_output"))
 		oss << ", output_frontier";
 	oss << ");" << std::endl;
 	dedent();
@@ -331,7 +331,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 			printIndent();
 			oss << apply_expr->input_function_name << "(src, dst";
 		}
-		if (apply_expr->requires_output)
+		if (apply_expr->getMetadata<bool>("requires_output"))
 			oss << ", output_frontier";
 		oss << ");" << std::endl;
 		dedent();
@@ -377,7 +377,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 			printIndent();
 			oss << apply_expr->input_function_name << "(dst, src";
 		}
-		if (apply_expr->requires_output)
+		if (apply_expr->getMetadata<bool>("requires_output"))
 			oss << ", output_frontier";
 		oss << ");" << std::endl;
 		dedent();
@@ -428,7 +428,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 		printIndent();
 		oss << apply_expr->input_function_name << "(dst, src";
 	}
-	if (apply_expr->requires_output)
+	if (apply_expr->getMetadata<bool>("requires_output"))
 		oss << ", output_frontier";
 	oss << ");" << std::endl;
 	dedent();

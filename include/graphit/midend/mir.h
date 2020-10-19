@@ -889,8 +889,9 @@ namespace graphit {
 
 	    std::string device_function;
 	    std::string kernel_function;
-	
-	    bool requires_output = false;
+	    ApplyExpr() {
+	      this->setMetadata("requires_output", false);
+	    }
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -986,9 +987,7 @@ namespace graphit {
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
                 metadata_map = edgeset_apply->metadata_map;
-		
 		frontier_reusable = edgeset_apply->frontier_reusable;
-		requires_output = edgeset_apply->requires_output;
 		fused_dedup = edgeset_apply->fused_dedup;
 		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
@@ -1018,7 +1017,6 @@ namespace graphit {
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
 		frontier_reusable = edgeset_apply->frontier_reusable;
-		requires_output = edgeset_apply->requires_output;
 		fused_dedup = edgeset_apply->fused_dedup;
 		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
               metadata_map = edgeset_apply->metadata_map;
