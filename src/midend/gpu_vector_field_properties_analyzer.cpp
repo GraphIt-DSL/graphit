@@ -116,7 +116,7 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Tens
 	} else {
 		property.access_type_ = FieldVectorProperty::AccessType::SHARED;
 	}
-	tre->field_vector_prop_  = property;
+	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
 	enclosing_function->field_vector_properties_map_[target] = property;
 }
@@ -137,7 +137,7 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Assi
 	} else {
 		property.access_type_ = FieldVectorProperty::AccessType::SHARED;
 	}
-	tre->field_vector_prop_ = property;
+	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
 	enclosing_function->field_vector_properties_map_[target] = property;	
 }
@@ -155,7 +155,7 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Redu
 	} else {
 		property.access_type_ = FieldVectorProperty::AccessType::SHARED;
 	}
-	tre->field_vector_prop_ = property;
+	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
 	enclosing_function->field_vector_properties_map_[target] = property;	
 	
@@ -164,7 +164,7 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Prio
 	mir::MIRVisitor::visit(puo);
 	mir::Expr::Ptr index_expr = puo->destination_node_id;
 	if (!is_independent_index(index_expr)) {
-		puo->is_atomic = true;	
+		puo->setMetadata("is_atomic", true);
 	}
 }
 }

@@ -49,27 +49,27 @@ namespace graphit {
                     : mir_context_(mir_context), schedule_(schedule) {};
 
             void visit(mir::PriorityQueueType::Ptr priority_queue_type) {
-                priority_queue_type->priority_update_type = mir_context_->priority_update_type;
+                priority_queue_type->setMetadata("priority_update_type", mir_context_->priority_update_type);
             }
 
             void visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
-                priority_queue_alloc_expr->priority_update_type = mir_context_->priority_update_type;
-                priority_queue_alloc_expr->delta = mir_context_->delta_;
+                priority_queue_alloc_expr->setMetadata("priority_update_type", mir_context_->priority_update_type);
+                priority_queue_alloc_expr->setMetadata("delta", mir_context_->delta_);
                 mir_context_->optional_starting_source_node = priority_queue_alloc_expr->starting_node;
                 mir_context_->priority_queue_alloc_list_.push_back(priority_queue_alloc_expr);
                 mir_context_->nodes_init_in_buckets = priority_queue_alloc_expr->init_bucket;
             }
 
             void visit(mir::EdgeSetLoadExpr::Ptr edgeset_load_expr) {
-                edgeset_load_expr->priority_update_type = mir_context_->priority_update_type;
+                edgeset_load_expr->setMetadata("priority_update_type", mir_context_->priority_update_type);
             }
 
             void visit(mir::VertexSetType::Ptr vertex_set_type) {
-                vertex_set_type->priority_update_type = mir_context_->priority_update_type;
+                vertex_set_type->setMetadata("priority_update_type", mir_context_->priority_update_type);
             }
 
             void visit(mir::EdgeSetType::Ptr edge_set_type) {
-                edge_set_type->priority_update_type = mir_context_->priority_update_type;
+                edge_set_type->setMetadata("priority_update_type", mir_context_->priority_update_type);
             }
 
             Schedule *schedule_ = nullptr;

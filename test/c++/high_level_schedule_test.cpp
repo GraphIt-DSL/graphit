@@ -1754,7 +1754,7 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithPushParallelCASSchedule){
     //check that the apply expr is push and parallel
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
     mir::PushEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::PushEdgeSetApplyExpr>(assign_stmt->expr);
-    EXPECT_EQ(true, apply_expr->is_parallel);
+    EXPECT_EQ(true, apply_expr->getMetadata<bool>("is_parallel"));
 }
 
 TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
@@ -1773,7 +1773,7 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseParallelCASSchedule){
     //check that the apply expr is push and parallel
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
     mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr);
-    EXPECT_EQ(true, apply_expr->is_parallel);
+    EXPECT_EQ(true, apply_expr->getMetadata<bool>("is_parallel"));
 }
 
 TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseForwardSerialSchedule){
@@ -1793,7 +1793,7 @@ TEST_F(HighLevelScheduleTest, SimpleBFSWithHyrbidDenseForwardSerialSchedule){
     //check that the apply expr is push and parallel
     EXPECT_EQ(true, mir::isa<mir::HybridDenseForwardEdgeSetApplyExpr>(assign_stmt->expr));
     mir::HybridDenseForwardEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::HybridDenseForwardEdgeSetApplyExpr>(assign_stmt->expr);
-    EXPECT_EQ(false, apply_expr->is_parallel);
+    EXPECT_EQ(false, apply_expr->getMetadata<bool>("is_parallel"));
 }
 
 TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){
@@ -1812,7 +1812,7 @@ TEST_F(HighLevelScheduleTest, BFSWithPullParallelSchedule){
     //check that the apply expr is push and parallel
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(assign_stmt->expr));
     mir::PullEdgeSetApplyExpr::Ptr apply_expr = mir::to<mir::PullEdgeSetApplyExpr>(assign_stmt->expr);
-    EXPECT_EQ(true, apply_expr->is_parallel);
+    EXPECT_EQ(true, apply_expr->getMetadata<bool>("is_parallel"));
 }
 
 

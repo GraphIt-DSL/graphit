@@ -132,10 +132,11 @@ namespace graphit {
                         //Generate TensorStructReadExpr
                         auto tensor_struct_read = std::make_shared<mir::TensorStructReadExpr>();
                         tensor_struct_read->index = rewrite<mir::Expr>(tensor_read->index);
-                        tensor_struct_read->field_target = rewrite<mir::Expr>(tensor_read->target);
-                        tensor_struct_read->array_of_struct_target =
-                                "array_of_" + physical_data_layout->second.fused_struct_name;
-                        tensor_struct_read->field_vector_prop_ = tensor_read->field_vector_prop_;
+                        tensor_struct_read->setMetadata("field_target", rewrite<mir::Expr>(tensor_read->target));
+                        tensor_struct_read->setMetadata("array_of_struct_target",
+                                "array_of_" + physical_data_layout->second.fused_struct_name);
+                        if (tensor_read->hasMetadata<FieldVectorProperty>("field_vector_prop_"))
+                          tensor_struct_read->setMetadata<FieldVectorProperty>("field_vector_prop_", tensor_read->getMetadata<FieldVectorProperty>("field_vector_prop_"));
                         node = tensor_struct_read;
                         return;
                     }
@@ -147,7 +148,8 @@ namespace graphit {
         auto tensor_array_read = std::make_shared<mir::TensorArrayReadExpr>();
         tensor_array_read->index = rewrite<mir::Expr>(tensor_read->index);
         tensor_array_read->target = rewrite<mir::Expr>(tensor_read->target);
-        tensor_array_read->field_vector_prop_ = tensor_read->field_vector_prop_;
+        if (tensor_read->hasMetadata<FieldVectorProperty>("field_vector_prop_"))
+          tensor_array_read->setMetadata<FieldVectorProperty>("field_vector_prop_", tensor_read->getMetadata<FieldVectorProperty>("field_vector_prop_"));
         node = tensor_array_read;
 
 
@@ -165,10 +167,10 @@ namespace graphit {
                     //TODO: involve label scope, right now, this vertexset assumes that it would be in the root scope
                     switch (schedule_->vertexset_data_layout[var_decl->name].data_layout_type) {
                         case VertexsetPhysicalLayout::DataLayout::SPARSE :
-                            vertexset_alloc_expr->layout = mir::VertexSetAllocExpr::Layout::SPARSE;
+                            vertexset_alloc_expr->setMetadata("layout", mir::VertexSetAllocExpr::Layout::SPARSE);
                             break;
                         case VertexsetPhysicalLayout::DataLayout::DENSE:
-                            vertexset_alloc_expr->layout = mir::VertexSetAllocExpr::Layout::DENSE;
+                            vertexset_alloc_expr->setMetadata("layout", mir::VertexSetAllocExpr::Layout::DENSE);
                             break;
 
                     }

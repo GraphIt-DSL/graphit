@@ -29,7 +29,6 @@ namespace graphit {
             auto expr = to<mir::TensorReadExpr>(node);
             index = expr->index->clone<Expr>();
             target = expr->target->clone<Expr>();
-            field_vector_prop_ = expr->field_vector_prop_;
         }
 
 
@@ -42,8 +41,6 @@ namespace graphit {
         void TensorStructReadExpr::copy(MIRNode::Ptr node) {
             auto expr = to<mir::TensorStructReadExpr>(node);
             TensorReadExpr::copy(node);
-            field_target = expr->field_target;
-            array_of_struct_target = expr->array_of_struct_target;
         }
 
 
@@ -71,10 +68,6 @@ namespace graphit {
             for (const auto &arg: expr->args) {
                 args.push_back(arg);
             }
-
-            if (generic_type != nullptr){
-                generic_type = expr->generic_type->clone<Type>();
-            }
         }
 
 
@@ -90,7 +83,6 @@ namespace graphit {
             Call::copy(node);
             destination_node_id = expr->destination_node_id;
             priority_queue = expr->priority_queue;
-            edgeset_apply_expr = expr->edgeset_apply_expr;
         }
 
 
@@ -190,7 +182,6 @@ namespace graphit {
             ApplyExpr::copy(expr);
             from_func = expr->from_func;
             to_func = expr->to_func;
-            is_parallel = expr->is_parallel;
             is_weighted = expr->is_weighted;
 
         }
@@ -294,7 +285,6 @@ namespace graphit {
         void VertexSetAllocExpr::copy(MIRNode::Ptr node) {
             const auto expr = mir::to<VertexSetAllocExpr>(node);
             size_expr = expr->size_expr->clone<Expr>();
-            layout = expr->layout;
             element_type = expr->element_type;
         }
 
@@ -706,8 +696,6 @@ namespace graphit {
             expr = stmt->expr->clone<Expr>();
             lhs = stmt->lhs->clone<Expr>();
             reduce_op_ = stmt->reduce_op_;
-            tracking_var_name_ = stmt->tracking_var_name_;
-            is_atomic_ = stmt->is_atomic_;
         }
 
 
@@ -924,8 +912,6 @@ namespace graphit {
             while_cond_expr = op->while_cond_expr;
             optional_source_node = op->optional_source_node;
             priority_queue_name = op->priority_queue_name;
-            priority_udpate_type = op->priority_udpate_type;
-            merge_threshold = op->merge_threshold;
         }
 
         MIRNode::Ptr OrderedProcessingOperator::cloneNode() {
@@ -972,7 +958,6 @@ namespace graphit {
 		const auto op = mir::to<EnqueueVertex>(node);
 		vertex_id = op->vertex_id;
 		vertex_frontier = op->vertex_frontier;
-		type = op->type;
 	}
 	MIRNode::Ptr EnqueueVertex::cloneNode() {
 		const auto node = std::make_shared<EnqueueVertex>();

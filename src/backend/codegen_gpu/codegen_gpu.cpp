@@ -153,21 +153,21 @@ void KernelVariableExtractor::visit(mir::VarDecl::Ptr var_decl) {
 }
 void KernelVariableExtractor::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr esae) {
 	mir::MIRVisitor::visit(esae);
-	hoisted_pqs.push_back(esae->priority_queue_used);	
+	hoisted_pqs.push_back(esae->getMetadata<mir::Var>("priority_queue_used"));
 }
 void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	
 	// First we generate a unique function name for this fused kernel
 	std::string fused_kernel_name = "fused_kernel_body_" + mir_context_->getUniqueNameCounterString();
-	while_stmt->fused_kernel_name = fused_kernel_name;
+	while_stmt->setMetadata("fused_kernel_name", fused_kernel_name);
 
 	// Now we extract the list of variables that are used in the kernel that are not const 
 	// So we can hoist them
 	KernelVariableExtractor extractor(mir_context_);
 	while_stmt->accept(&extractor);
 
-	while_stmt->hoisted_vars = extractor.hoisted_vars;
-	while_stmt->hoisted_decls = extractor.hoisted_decls;
+	while_stmt->setMetadata("hoisted_vars", extractor.hoisted_vars);
+	while_stmt->setMetadata("hoisted_decls", extractor.hoisted_decls);
 	
 	CodeGenGPUFusedKernel codegen (oss, mir_context_, module_name, "");
 	codegen.current_while_stmt = while_stmt;
@@ -556,12 +556,12 @@ void CodeGenGPU::visit(mir::ScalarType::Ptr scalar_type) {
 void CodeGenGPU::genHybridThresholds(void) {
 	for (auto stmt: mir_context_->hybrid_gpu_stmts) {
 		std::string var_name = stmt->threshold_var_name;
-		if (stmt->threshold < 0) {
+		if (!stmt->hasMetadata<int>("threshold") || stmt->getMetadata<int>("threshold") < 0) {
 			printIndent();
-			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->argv_index << "]);" << std::endl;
+			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->getMetadata<int32_t>("argv_index") << "]);" << std::endl;
 		} else {
 			printIndent();
-			oss << stmt->threshold_var_name << " = " << stmt->threshold << ";" << std::endl;
+			oss << stmt->threshold_var_name << " = " << stmt->getMetadata<int>("threshold") << ";" << std::endl;
 		}
 		printIndent();
 		oss << "cudaMemcpyToSymbol(__device_" << stmt->threshold_var_name << ", &" << stmt->threshold_var_name << ", sizeof(float), 0);" << std::endl;
@@ -688,7 +688,7 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	oss << "if (";
 	if (mir::isa<mir::PriorityUpdateOperatorMin>(puo)) {
 		mir::PriorityUpdateOperatorMin::Ptr puom = mir::to<mir::PriorityUpdateOperatorMin>(puo);
-		if (puom->is_atomic) {
+		if (puom->getMetadata<bool>("is_atomic")) {
 			oss << "gpu_runtime::writeMin";
 		} else {
 			assert(false && "Currently only atomic priority update is supported");
@@ -711,8 +711,10 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	oss << ") {" << std::endl;
 	indent();
 
-	mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = puo->edgeset_apply_expr;	
+	mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = puo->getMetadata<mir::UpdatePriorityEdgeSetApplyExpr::Ptr>("edgeset_apply_expr");
 	mir::EnqueueVertex::Ptr evp = std::make_shared<mir::EnqueueVertex>();
+    evp->setMetadata("fused_dedup", false);
+    evp->setMetadata("fused_dedup_perfect", false);
 	evp->vertex_id = puo->destination_node_id;
 	mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(puo->priority_queue);
 	// Since this variable is created temporarily, we don;t need type
@@ -723,11 +725,11 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	evp->vertex_frontier = frontier_expr;
 	SimpleGPUSchedule::Ptr applied_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
 	if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-		evp->type = mir::EnqueueVertex::Type::SPARSE;
+		evp->setMetadata("type", mir::EnqueueVertex::Type::SPARSE);
 	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-		evp->type = mir::EnqueueVertex::Type::BOOLMAP;
+        evp->setMetadata("type", mir::EnqueueVertex::Type::BOOLMAP);
 	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-		evp->type = mir::EnqueueVertex::Type::BITMAP;
+        evp->setMetadata("type", mir::EnqueueVertex::Type::BITMAP);
 	} 
 	
 	evp->accept(this);
@@ -836,7 +838,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	// We will have to create a new frontier in case the frontier cannot be reused
 	// If the frontier is reusable, we simply assign the old to the new
 	if (target != nullptr) {
-		if (esae->getMetadata<bool>("frontier_reusable")) {
+		if (esae->hasMetadata<bool>("frontier_reusable") && esae->getMetadata<bool>("frontier_reusable")) {
 			printIndent();
 			target->accept(this);
 			oss << " = " << esae->from_func << ";" << std::endl;
@@ -852,7 +854,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(esae);
 		printIndent();
-		oss << "cudaMemcpyToSymbol(" << upesae->priority_queue_used.getName() << ", &__host_" << upesae->priority_queue_used.getName() << ", sizeof(" << upesae->priority_queue_used.getName() << "), 0);" << std::endl;
+		oss << "cudaMemcpyToSymbol(" << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << ", &__host_" << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << ", sizeof(" << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << "), 0);" << std::endl;
 	}
 
 	// Before the load balance if the update requires dedup, then update the counters
@@ -993,7 +995,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(esae);
-		insertUsedPq(upesae->priority_queue_used);
+		insertUsedPq(upesae->getMetadata<mir::Var>("priority_queue_used"));
 	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(esae)) {
 /*
@@ -1002,13 +1004,13 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 		oss << "if (_thread_id == 0) {" << std::endl;
 		indent();
 		printIndent();
-		oss << upesae->priority_queue_used.getName() << " = __local_" << upesae->priority_queue_used.getName() << ";" << std::endl;
+		oss << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << " = __local_" << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << ";" << std::endl;
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;
 		printIndent();
 		oss << "_grid.sync();" << std::endl;
-		//oss << "cudaMemcpyToSymbol(" << upesae->priority_queue_used.getName() << ", &__host_" << upesae->priority_queue_used.getName() << ", sizeof(" << upesae->priority_queue_used.getName() << "), 0);" << std::endl;
+		//oss << "cudaMemcpyToSymbol(" << upesae->getMetadata<mir::Var>("priority_queue_used").getName() << ", &__host_" << upesae->priority_queue_used.getName() << ", sizeof(" << upesae->priority_queue_used.getName() << "), 0);" << std::endl;
 */
 	}
 	// Before the load balance if the update requires dedup, then update the counters
@@ -1226,9 +1228,9 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			oss << " += ";
 			reduce_stmt->expr->accept(this);
 			oss << ";" << std::endl;
-			if (reduce_stmt->tracking_var_name_ != "") {
+			if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
 				printIndent();
-				oss << reduce_stmt->tracking_var_name_ << " = true;" << std::endl;
+				oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true;" << std::endl;
 			}
 			break;
 		case mir::ReduceStmt::ReductionOp::MIN:
@@ -1245,9 +1247,9 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			reduce_stmt->expr->accept(this);
 			oss << ";" << std::endl;
 
-			if (reduce_stmt->tracking_var_name_ != "") {
+			if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
 				printIndent();
-				oss << reduce_stmt->tracking_var_name_ << " = true;" << std::endl;
+				oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true;" << std::endl;
 			}
 			dedent();
 			printIndent();
@@ -1267,9 +1269,9 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			reduce_stmt->expr->accept(this);
 			oss << ";" << std::endl;
 
-			if (reduce_stmt->tracking_var_name_ != "") {
+			if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
 				printIndent();
-				oss << reduce_stmt->tracking_var_name_ << " = true;" << std::endl;
+				oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true;" << std::endl;
 			}
 			dedent();
 			printIndent();
@@ -1277,8 +1279,8 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			break;
 		case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
 			printIndent();
-			if (reduce_stmt->tracking_var_name_ != "") 
-				oss << reduce_stmt->tracking_var_name_ << " = ";
+			if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_"))
+				oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
 			oss << "gpu_runtime::writeMin(&";
 			reduce_stmt->lhs->accept(this);
 			oss << ", ";
@@ -1286,9 +1288,9 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 			oss << ");" << std::endl;
 			break;
 		case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
-			if (reduce_stmt->tracking_var_name_ != "") {
+			if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
 				printIndent();
-				oss << reduce_stmt->tracking_var_name_ << " = true;" << std::endl;
+				oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true;" << std::endl;
 			}
 			printIndent();
 			oss << "gpu_runtime::writeAdd(&";
@@ -1303,22 +1305,22 @@ void CodeGenGPU::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 
 void CodeGenGPU::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
 	printIndent();
-	if (enqueue_vertex->type == mir::EnqueueVertex::Type::SPARSE) {
+	if (enqueue_vertex->getMetadata<mir::EnqueueVertex::Type>("type") == mir::EnqueueVertex::Type::SPARSE) {
 		oss << "gpu_runtime::enqueueVertexSparseQueue";
-		if (enqueue_vertex->fused_dedup) {
+		if (enqueue_vertex->getMetadata<bool>("fused_dedup")) {
 			oss << "Dedup";
-			if (enqueue_vertex->fused_dedup_perfect) {
+			if (enqueue_vertex->getMetadata<bool>("fused_dedup_perfect")) {
 				oss <<"Perfect";
 			}
 		}
 		oss << "(";
 		enqueue_vertex->vertex_frontier->accept(this);
 		oss << ".d_sparse_queue_output";
-	} else if (enqueue_vertex->type == mir::EnqueueVertex::Type::BOOLMAP) {
+	} else if (enqueue_vertex->getMetadata<mir::EnqueueVertex::Type>("type") == mir::EnqueueVertex::Type::BOOLMAP) {
 		oss << "gpu_runtime::enqueueVertexBytemap(";
 		enqueue_vertex->vertex_frontier->accept(this);
 		oss << ".d_byte_map_output";
-	} else if (enqueue_vertex->type == mir::EnqueueVertex::Type::BITMAP) {
+	} else if (enqueue_vertex->getMetadata<mir::EnqueueVertex::Type>("type") == mir::EnqueueVertex::Type::BITMAP) {
 		oss << "gpu_runtime::enqueueVertexBitmap(";
 		enqueue_vertex->vertex_frontier->accept(this);
 		oss << ".d_bit_map_output";
@@ -1327,7 +1329,7 @@ void CodeGenGPU::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
 	enqueue_vertex->vertex_frontier->accept(this);
 	oss << ".d_num_elems_output, ";
 	enqueue_vertex->vertex_id->accept(this);
-	if (enqueue_vertex->type == mir::EnqueueVertex::Type::SPARSE && enqueue_vertex->fused_dedup == true) {
+	if (enqueue_vertex->getMetadata<mir::EnqueueVertex::Type>("type") == mir::EnqueueVertex::Type::SPARSE && enqueue_vertex->getMetadata<bool>("fused_dedup")) {
 		oss << ", ";
 		enqueue_vertex->vertex_frontier->accept(this);	
 	}
@@ -1383,7 +1385,7 @@ void CodeGenGPUFusedKernel::visit(mir::VarDecl::Ptr var_decl) {
 	}
 }
 void CodeGenGPU::visit(mir::VertexSetDedupExpr::Ptr vsde) {
-	if (vsde->perfect_dedup)
+	if (vsde->getMetadata<bool>("perfect_dedup"))
 		oss << "gpu_runtime::dedup_frontier_perfect(";
 	else
 		oss << "gpu_runtime::dedup_frontier(";
@@ -1412,33 +1414,38 @@ void CodeGenGPU::visit(mir::ForStmt::Ptr for_stmt) {
 	oss << "}" << std::endl;
 }
 void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
-	if (while_stmt->is_fused == true) {
-		for (auto var: while_stmt->hoisted_vars) {
-			bool to_copy = true;
-			for (auto decl: while_stmt->hoisted_decls) {
-				if (decl->name == var.getName()) {
-					to_copy = false;
-					break;
-				}
-			}
-			if (!to_copy)
-				continue;
-			printIndent();
-			oss << "cudaMemcpyToSymbol(" << while_stmt->fused_kernel_name << "_" << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName() << "), 0, cudaMemcpyHostToDevice);" << std::endl;
-		}
-		for (auto var: while_stmt->used_priority_queues) {
+	if (while_stmt->getMetadata<bool>("is_fused")) {
+	    if (while_stmt->hasMetadata<std::vector<mir::Var>>("hoisted_vars") &&
+	        while_stmt->hasMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
+          for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("hoisted_vars")) {
+            bool to_copy = true;
+            for (auto decl: while_stmt->getMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
+              if (decl->name == var.getName()) {
+                to_copy = false;
+                break;
+              }
+            }
+            if (!to_copy)
+              continue;
+            printIndent();
+            oss << "cudaMemcpyToSymbol(" << while_stmt->getMetadata<std::string>("fused_kernel_name") << "_"
+                << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName()
+                << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+          }
+        }
+		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
 			printIndent();
 			oss << "cudaMemcpyToSymbol(" << var.getName() << ", &__host_" << var.getName() << ", sizeof(__host_" << var.getName() << "), 0);" << std::endl;
 		}
 		printIndent();
-		oss << "cudaLaunchCooperativeKernel((void*)" << while_stmt->fused_kernel_name << ", NUM_CTA, CTA_SIZE, gpu_runtime::no_args);" << std::endl;
-		for (auto var: while_stmt->used_priority_queues) {
+		oss << "cudaLaunchCooperativeKernel((void*)" << while_stmt->getMetadata<std::string>("fused_kernel_name") << ", NUM_CTA, CTA_SIZE, gpu_runtime::no_args);" << std::endl;
+		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
 			printIndent();
 			oss << "cudaMemcpyFromSymbol(&__host_" << var.getName() << ", " << var.getName() << ", sizeof(__host_" << var.getName() << "), 0);" << std::endl;
 		}
-		for (auto var: while_stmt->hoisted_vars) {
+		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("hoisted_vars")) {
 			bool to_copy = true;
-			for (auto decl: while_stmt->hoisted_decls) {
+			for (auto decl: while_stmt->getMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
 				if (decl->name == var.getName()) {
 					to_copy = false;
 					break;
@@ -1447,7 +1454,7 @@ void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
 			if (!to_copy)
 				continue;
 			printIndent();
-			oss << "cudaMemcpyFromSymbol(&" << var.getName() << ", " << while_stmt->fused_kernel_name << "_" << var.getName() << ", sizeof(" << var.getName() << "), 0, cudaMemcpyDeviceToHost);" << std::endl;
+			oss << "cudaMemcpyFromSymbol(&" << var.getName() << ", " << while_stmt->getMetadata<std::string>("fused_kernel_name") << "_" << var.getName() << ", sizeof(" << var.getName() << "), 0, cudaMemcpyDeviceToHost);" << std::endl;
 		}
 		return;
 	}
@@ -1713,9 +1720,9 @@ void CodeGenGPUHost::visit(mir::StmtBlock::Ptr stmt_block) {
 	}
 }
 void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
-	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
+	if (stmt->getMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria") == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
-		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->input_frontier_name << ") < " << stmt->input_frontier_name << ".max_num_elems * ";
+		oss << "if (gpu_runtime::builtin_getVertexSetSize(" << stmt->getMetadata<std::string>("input_frontier_name") << ") < " << stmt->getMetadata<std::string>("input_frontier_name") << ".max_num_elems * ";
 		oss << stmt->threshold_var_name;
 		oss << ") {" << std::endl;
 		indent();
@@ -1733,9 +1740,9 @@ void CodeGenGPU::visit(mir::HybridGPUStmt::Ptr stmt) {
 	}
 }
 void CodeGenGPUFusedKernel::visit(mir::HybridGPUStmt::Ptr stmt) {
-	if (stmt->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
+	if (stmt->getMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria") == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE) {
 		printIndent();
-		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->input_frontier_name) << ") < " << var_name(stmt->input_frontier_name) << ".max_num_elems * ";
+		oss << "if (gpu_runtime::device_builtin_getVertexSetSize(" << var_name(stmt->getMetadata<std::string>("input_frontier_name")) << ") < " << var_name(stmt->getMetadata<std::string>("input_frontier_name")) << ".max_num_elems * ";
 		oss << "__device_" << stmt->threshold_var_name;
 		oss << ") {" << std::endl;
 		indent();

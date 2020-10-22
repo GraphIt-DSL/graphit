@@ -159,7 +159,7 @@ namespace graphit {
             addFieldTrackingVariable(field_vector_name, field_vector_tracking_var_name);
 
             //assign the tracking variable name to the assign statement (used for storing the output of CAS)
-            reduce_stmt->tracking_var_name_ = field_vector_tracking_var_name;
+            reduce_stmt->setMetadata("tracking_var_name_", field_vector_tracking_var_name);
         }
     }
 

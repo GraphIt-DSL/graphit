@@ -227,7 +227,10 @@ namespace graphit {
             auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
             genEdgesetApplyFunctionCall(edgeset_apply_expr);
 
-        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) && (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
+        } else if (mir::isa<mir::EdgeSetLoadExpr>(assign_stmt->expr) &&
+            (mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ExternPriorityUpdate ||
+            mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
+            ) { // Add other checks here
 	    printIndent();
 	    oss << "{" << std::endl;
             indent();
@@ -308,10 +311,10 @@ namespace graphit {
                     reduce_stmt->expr->accept(this);
                     oss << ";" << std::endl;
 
-                    if (reduce_stmt->tracking_var_name_ != "") {
+                    if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
                         // need to set the tracking variable
                         printIndent();
-                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                        oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true ; " << std::endl;
                     }
 
                     break;
@@ -330,10 +333,10 @@ namespace graphit {
                     oss << "; " << std::endl;
 
 
-                    if (reduce_stmt->tracking_var_name_ != "") {
+                    if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_")) {
                         // need to generate a tracking variable
                         printIndent();
-                        oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                        oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = true ; " << std::endl;
                     }
 
                     dedent();
@@ -347,7 +350,7 @@ namespace graphit {
                     break;
                 case mir::ReduceStmt::ReductionOp::ATOMIC_MIN:
                     printIndent();
-                    oss << reduce_stmt->tracking_var_name_ << " = ";
+                    oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
                     oss << "writeMin( &";
                     reduce_stmt->lhs->accept(this);
                     oss << ", ";
@@ -356,8 +359,8 @@ namespace graphit {
                     break;
                 case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
                     printIndent();
-                    if (reduce_stmt->tracking_var_name_ != "")
-                        oss << reduce_stmt->tracking_var_name_ << " =  true;\n";
+                    if (reduce_stmt->hasMetadata<std::string>("tracking_var_name_"))
+                        oss << reduce_stmt->getMetadata<std::string>("tracking_var_name_") << " =  true;\n";
                     oss << "writeAdd( &";
                     reduce_stmt->lhs->accept(this);
                     oss << ", ";
@@ -458,11 +461,11 @@ namespace graphit {
 
         // Generate function signature
         if (func_decl->name == "main") {
-            func_decl->isFunctor = false;
+            func_decl->setMetadata("isFunctor", false);
             oss << "int " << func_decl->name << "(int argc, char * argv[])";
         } else {
             // Use functors for better compiler inlining
-            func_decl->isFunctor = true;
+            func_decl->setMetadata("isFunctor" , true);
             oss << "struct " << func_decl->name << std::endl;
             printBeginIndent();
             indent();
@@ -639,7 +642,7 @@ namespace graphit {
 
         }
 
-        if (func_decl->isFunctor) {
+        if (func_decl->getMetadata<bool>("isFunctor")) {
             dedent();
             printEndIndent();
             oss << ";";
@@ -781,7 +784,7 @@ namespace graphit {
 		    oss << "__" << func_decl->result.getName() << " = ";
 	    }
 	    oss << func_decl->name;
-	    if (func_decl->isFunctor)
+	    if (func_decl->getMetadata<bool>("isFunctor"))
 		    oss << "()";
 	    oss << "(";
 	    printDelimiter = false;
@@ -929,15 +932,16 @@ namespace graphit {
         oss << call_expr->name;
 
 
-        if (call_expr->generic_type != nullptr) {
+        if (call_expr->hasMetadata<mir::Type::Ptr>("generic_type") &&
+            call_expr->getMetadata<mir::Type::Ptr>("generic_type") != nullptr) {
             oss << " < ";
-            call_expr->generic_type->accept(this);
+            call_expr->getMetadata<mir::Type::Ptr>("generic_type")->accept(this);
             oss << " > ";
         }
 
         if (mir_context_->isFunction(call_expr->name)) {
             auto mir_func_decl = mir_context_->getFunction(call_expr->name);
-            if (mir_func_decl->isFunctor)
+            if (mir_func_decl->hasMetadata<bool>("isFunctor") && mir_func_decl->getMetadata<bool>("isFunctor"))
                 oss << "()";
         }
 
@@ -1029,17 +1033,17 @@ namespace graphit {
  */
     void CodeGenCPP::visit(mir::TensorStructReadExpr::Ptr expr) {
         //for dense array tensor read
-        oss << expr->array_of_struct_target << "[";
+        oss << expr->getMetadata<std::string>("array_of_struct_target") << "[";
         expr->index->accept(this);
         oss << "].";
-        expr->field_target->accept(this);
+        expr->getMetadata<mir::Expr::Ptr>("field_target")->accept(this);
         oss << " ";
     };
 
 
     void CodeGenCPP::visit(mir::VarExpr::Ptr expr) {
         if (mir::isa<mir::EdgeSetType>(expr->var.getType())) {  
-            mir::PriorityUpdateType update_type = mir::to<mir::EdgeSetType>(expr->var.getType())->priority_update_type;
+            mir::PriorityUpdateType update_type = mir::to<mir::EdgeSetType>(expr->var.getType())->getMetadata<mir::PriorityUpdateType>("priority_update_type");
             if (update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate || update_type == mir::PriorityUpdateType::ExternPriorityUpdate) {
                 oss << expr->var.getName() << ".julienne_graph";
                 return;
@@ -1378,7 +1382,7 @@ namespace graphit {
             assert(associated_element_type);
             auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
             assert(associated_element_type_size);
-            std::string for_type = apply_expr->is_parallel ? "parallel_for" : "for";
+            std::string for_type = apply_expr->getMetadata<bool>("is_parallel") ? "parallel_for" : "for";
             oss << for_type << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
             associated_element_type_size->accept(this);
             oss << "; vertexsetapply_iter++) {" << std::endl;
@@ -1541,7 +1545,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::VertexSetType::Ptr vertexset_type) {
-	if (vertexset_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate || vertexset_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
+	if (vertexset_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ExternPriorityUpdate || vertexset_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
 	    oss << "julienne::vertexSubset ";
 	else 
 	    oss << "VertexSubset<int> *  ";
@@ -1692,16 +1696,16 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::PriorityQueueType::Ptr priority_queue_type) {
-        if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
-            || priority_queue_type->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+        if (priority_queue_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdate
+            || priority_queue_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
 
             oss << "EagerPriorityQueue < ";
             priority_queue_type->priority_type->accept(this);
             oss << " >* ";
 
-        } else if (priority_queue_type->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
-        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
-        || priority_queue_type->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) { // Add rest of the cases here as required
+        } else if (priority_queue_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) { // Add rest of the cases here as required
             oss << "julienne::PriorityQueue < ";
 	    priority_queue_type->priority_type->accept(this);
 	    oss << " >* ";
@@ -1712,35 +1716,35 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::PriorityQueueAllocExpr::Ptr priority_queue_alloc_expr) {
 
-        if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate
+        if (priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdate
             ||
-            priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
+            priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
 
 
             oss << "new EagerPriorityQueue <";
-            priority_queue_alloc_expr->priority_type->accept(this);
+            priority_queue_alloc_expr->getMetadata<mir::ScalarType::Ptr>("priority_type")->accept(this);
             oss << "> ( ";
             oss << priority_queue_alloc_expr->vector_function;
 
 
-            if (priority_queue_alloc_expr->delta < 0 ){
-                oss << ", stoi(argv[" << -1*priority_queue_alloc_expr->delta << "])";
+            if (priority_queue_alloc_expr->getMetadata<int>("delta") < 0 ){
+                oss << ", stoi(argv[" << -1*priority_queue_alloc_expr->getMetadata<int>("delta") << "])";
             } else {
-                oss << ", " << priority_queue_alloc_expr->delta;
+                oss << ", " << priority_queue_alloc_expr->getMetadata<int>("delta");
             }
             oss << "); ";
 
-        } else if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ExternPriorityUpdate
-        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
-        || priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) {  // Add other types here
+        } else if (priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ExternPriorityUpdate
+        || priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate
+        || priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ReduceBeforePriorityUpdate) {  // Add other types here
 
             oss << "new julienne::PriorityQueue <";
-            priority_queue_alloc_expr->priority_type->accept(this);
+            priority_queue_alloc_expr->getMetadata<mir::ScalarType::Ptr>("priority_type")->accept(this);
             oss << " > ( ";
 	
             oss << mir_context_->getEdgeSets()[0]->name;
 
-            if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
+            if (priority_queue_alloc_expr->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){
                 oss << ".num_nodes(), ";
             } else {
                 oss << ".julienne_graph.n, ";
@@ -1786,9 +1790,9 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::OrderedProcessingOperator::Ptr ordered_op) {
         printIndent();
-        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdate){
+        if (ordered_op->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdate){
             oss << "OrderedProcessingOperatorNoMerge(";
-        } else if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+        } else if (ordered_op->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
             oss << "OrderedProcessingOperatorWithMerge(";
         } else {
             std::cout << "Error: Unsupported Schedule for OrderedProcessingOperator" << std::endl;
@@ -1808,12 +1812,12 @@ namespace graphit {
 
 
         // supply the merge threshold argument for EagerPriorityUpdateWithMerge schedule
-        if (ordered_op->priority_udpate_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
+        if (ordered_op->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge){
 
-            if (ordered_op->bucket_merge_threshold < 0){
-                oss << " stoi(argv[" << -1*ordered_op->bucket_merge_threshold << "]), ";
+            if (ordered_op->getMetadata<int>("bucket_merge_threshold") < 0){
+                oss << " stoi(argv[" << -1*ordered_op->getMetadata<int>("bucket_merge_threshold") << "]), ";
             } else {
-                oss << ordered_op->bucket_merge_threshold << ", ";
+                oss << ordered_op->getMetadata<int>("bucket_merge_threshold") << ", ";
             }
         }
 
@@ -1829,9 +1833,9 @@ namespace graphit {
             oss << priority_update_op->name;
 
 
-            if (priority_update_op->generic_type != nullptr) {
+            if (priority_update_op->hasMetadata<mir::Type::Ptr>("generic_type")) {
                 oss << " < ";
-                priority_update_op->generic_type->accept(this);
+                priority_update_op->getMetadata<mir::Type::Ptr>("generic_type")->accept(this);
                 oss << " > ";
             }
 
@@ -1865,7 +1869,7 @@ namespace graphit {
             oss << ") ";
         } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate) {
             priority_update_op->priority_queue->accept(this);
-            if (priority_update_op->is_atomic){
+            if (priority_update_op->getMetadata<bool>("is_atomic")){
                 oss << "->updatePriorityMinAtomic(";
             } else {
                 oss << "->updatePriorityMin(";
@@ -1957,10 +1961,10 @@ namespace graphit {
             oss << update_call->lambda_name << ", ";
             oss << update_call->priority_queue_name << ", ";
             oss << update_call->nodes_init_in_bucket << ", ";
-            if (update_call->delta > 0){
-                oss << update_call->delta;
+            if (update_call->getMetadata<int>("delta") > 0){
+                oss << update_call->getMetadata<int>("delta");
             } else {
-                oss << "stoi(argv[" << -1*update_call->delta << "])";
+                oss << "stoi(argv[" << -1*update_call->getMetadata<int>("delta") << "])";
             }
             oss << ");" << std::endl;
         } else {
@@ -2085,7 +2089,7 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::PriorityUpdateOperatorSum::Ptr update_op) {
         update_op->priority_queue->accept(this);
-        if (update_op->is_atomic){
+        if (update_op->getMetadata<bool>("is_atomic")){
             oss << "->updatePrioritySumAtomic(";
         } else {
             oss << "->updatePrioritySum(";

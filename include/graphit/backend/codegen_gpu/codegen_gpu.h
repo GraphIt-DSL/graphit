@@ -179,11 +179,11 @@ public:
 
 	mir::WhileStmt::Ptr current_while_stmt;
 	void insertUsedPq(mir::Var var) {
-		for (auto v: current_while_stmt->used_priority_queues) {
+		for (auto v: current_while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
 			if (v.getName() == var.getName())
 				return;
 		}
-		current_while_stmt->used_priority_queues.push_back(var);
+		current_while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues").push_back(var);
 	}
 	virtual void genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr, mir::Expr::Ptr) override;
 	virtual void visit(mir::StmtBlock::Ptr) override;

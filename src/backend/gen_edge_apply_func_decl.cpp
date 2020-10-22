@@ -185,7 +185,7 @@ namespace graphit {
         printIndent();
 
         std::string for_type = "for";
-        if (apply->is_parallel)
+        if (apply->getMetadata<bool>("is_parallel"))
             for_type = "parallel_for";
 
         std::string node_id_type = "NodeID";
@@ -586,7 +586,7 @@ namespace graphit {
             if (numa_aware) {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
                 oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
-            } else if (apply->is_parallel) {
+            } else if (apply->getMetadata<bool>("is_parallel")) {
                 for_type = "parallel_for";
             }
 
@@ -632,7 +632,7 @@ namespace graphit {
             dst_type, apply_func_name, cache_aware, numa_aware);
 
 
-        if (! apply->getMetadata<bool>("use_pull_edge_based_load_balance")) {
+        if (!apply->hasMetadata<bool>("use_pull_edge_based_load_balance") || !apply->getMetadata<bool>("use_pull_edge_based_load_balance")) {
             //end of outer for loop
             dedent();
             printIndent();
@@ -722,7 +722,7 @@ namespace graphit {
         printIndent();
 
         std::string for_type = "for";
-        if (apply->is_parallel)
+        if (apply->getMetadata<bool>("is_parallel"))
             for_type = "parallel_for";
 
         std::string node_id_type = "NodeID";
@@ -1005,13 +1005,13 @@ namespace graphit {
         }
 
         //check parallelism specification
-        if (apply->is_parallel) {
+        if (apply->getMetadata<bool>("is_parallel")) {
             output_name += "_parallel";
         } else {
             output_name += "_serial";
         }
 
-        if (apply->getMetadata<bool>("use_sliding_queue")) {
+        if (apply->hasMetadata<bool>("use_sliding_queue") && apply->getMetadata<bool>("use_sliding_queue")) {
             output_name += "_sliding_queue";
         }
 
@@ -1064,11 +1064,11 @@ namespace graphit {
             output_name += "_with_frontier";
         }
 
-        if (apply->getMetadata<bool>("use_pull_frontier_bitvector")){
+        if (apply->hasMetadata<bool>("use_pull_frontier_bitvector") && apply->getMetadata<bool>("use_pull_frontier_bitvector")){
             output_name += "_pull_frontier_bitvector";
         }
 
-        if (apply->getMetadata<bool>("use_pull_edge_based_load_balance")){
+        if (apply->hasMetadata<bool>("use_pull_edge_based_load_balance") && apply->getMetadata<bool>("use_pull_edge_based_load_balance")){
             output_name += "_pull_edge_based_load_balance";
         }
 

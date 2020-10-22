@@ -166,6 +166,7 @@ namespace graphit {
 
     void MIREmitter::visit(fir::VertexSetType::Ptr vertex_set_type) {
         const auto mir_vertex_set_type = std::make_shared<mir::VertexSetType>();
+        mir_vertex_set_type->setMetadata("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
         mir_vertex_set_type->element = std::dynamic_pointer_cast<mir::ElementType>(
                 emitType(vertex_set_type->element));
         if (!mir_vertex_set_type) {
@@ -554,7 +555,7 @@ namespace graphit {
         } else if (mir::isa<mir::ListType>(mir_target_type)) {
             //if this is a List type
             auto mir_list_type = mir::to<mir::ListType>(mir_target_type);
-            mir_call_expr->generic_type = mir_list_type->element_type;
+            mir_call_expr->setMetadata("generic_type", mir_list_type->element_type);
             mir_call_expr->name = method_call_expr->method_name->ident;
 
             std::vector<mir::Expr::Ptr> args;
@@ -572,7 +573,7 @@ namespace graphit {
         } else {
             // If target is a vector or an edgeset (actual concrete object)
 
-            mir_call_expr->generic_type = ctx->getVectorItemType(target_expr->ident);
+            mir_call_expr->setMetadata("generic_type", ctx->getVectorItemType(target_expr->ident));
             mir_call_expr->name = method_call_expr->method_name->ident;
 
             std::vector<mir::Expr::Ptr> args;
@@ -1009,8 +1010,8 @@ namespace graphit {
         }
 
         mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);
-        mir_priority_queue_alloc_expr->priority_type = std::dynamic_pointer_cast<mir::ScalarType>(
-                emitType(expr->priority_type));
+        mir_priority_queue_alloc_expr->setMetadata("priority_type", std::dynamic_pointer_cast<mir::ScalarType>(
+                emitType(expr->priority_type)));
 
         retExpr = mir_priority_queue_alloc_expr;
     }

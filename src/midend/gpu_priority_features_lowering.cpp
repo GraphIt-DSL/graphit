@@ -32,9 +32,9 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 		assign->expr = expr_stmt->expr;
 		node = assign;
 
-		upesae->is_parallel = true;
+		upesae->setMetadata("is_parallel", true);
 		upesae->setMetadata<bool>("requires_output", true);
-		upesae->priority_queue_used = pq;
+		upesae->setMetadata("priority_queue_used", pq);
 		mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(upesae->target);
 		mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(edgeset_expr->var.getType());
 		assert(edgeset_type->vertex_element_type_list->size() == 2);
@@ -108,7 +108,7 @@ void GPUPriorityFeaturesLowering::PriorityUpdateOperatorRewriter::visit(mir::Cal
 		update_op->destination_node_id = call->args[1];
 		update_op->old_val = call->args[2];
 		update_op->new_val = call->args[3];
-		update_op->edgeset_apply_expr = puesae_;
+		update_op->setMetadata("edgeset_apply_expr", puesae_);
 		node = update_op;
 	} else if (call->name == "updatePrioritySum") {
 		mir::PriorityUpdateOperatorSum::Ptr update_op = std::make_shared<mir::PriorityUpdateOperatorSum>();
@@ -116,7 +116,7 @@ void GPUPriorityFeaturesLowering::PriorityUpdateOperatorRewriter::visit(mir::Cal
 		update_op->destination_node_id = call->args[1];
 		update_op->delta = call->args[2];
 		update_op->minimum_val = call->args[3];
-		update_op->edgeset_apply_expr = puesae_;
+		update_op->setMetadata("edgeset_apply_expr", puesae_);
 		node = update_op;
 	}
 }

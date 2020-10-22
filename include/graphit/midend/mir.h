@@ -340,8 +340,6 @@ namespace graphit {
         struct VertexSetType : public Type {
             ElementType::Ptr element;
 
-	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
-
             typedef std::shared_ptr<VertexSetType> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -376,7 +374,10 @@ namespace graphit {
             ScalarType::Ptr weight_type;
             std::vector<ElementType::Ptr> *vertex_element_type_list;
 
-	        PriorityUpdateType priority_update_type = NoPriorityUpdate;
+            EdgeSetType() {
+              this->setMetadata("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
+            }
+
             typedef std::shared_ptr<EdgeSetType> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -448,12 +449,6 @@ namespace graphit {
 
             typedef std::shared_ptr<WhileStmt> Ptr;
 
-	    bool is_fused;
-	    std::string fused_kernel_name;
-	    std::vector<mir::Var> hoisted_vars;
-	    std::vector<std::shared_ptr<mir::VarDecl>> hoisted_decls;
-	    std::vector<mir::Var> used_priority_queues;
-
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());
             }
@@ -506,11 +501,12 @@ namespace graphit {
                 MIN, SUM, MAX, ATOMIC_MIN, ATOMIC_MAX, ATOMIC_SUM
             };
             ReductionOp reduce_op_;
-            std::string tracking_var_name_ = "";
-            bool is_atomic_ = false;
 
             typedef std::shared_ptr<ReduceStmt> Ptr;
 
+            ReduceStmt() {
+              this->setMetadata("is_atomic_", false);
+            }
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ReduceStmt>());
             }
@@ -647,7 +643,6 @@ namespace graphit {
             std::vector<mir::Var> args;
             mir::Var result;
             std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
-            bool isFunctor;
             Type type;
 
             //TODO: replace this with a statement
@@ -681,7 +676,6 @@ namespace graphit {
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
             Expr::Ptr target;
-            FieldVectorProperty field_vector_prop_;
 
             //convenience constructor for building a tensor read expr using code
             TensorReadExpr(std::string input_target,
@@ -732,9 +726,6 @@ namespace graphit {
         };
 
         struct TensorStructReadExpr : TensorReadExpr {
-            Expr::Ptr field_target;
-            std::string array_of_struct_target;
-
             typedef std::shared_ptr<TensorStructReadExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -766,7 +757,6 @@ namespace graphit {
         struct Call : public Expr {
             std::string name;
             std::vector<Expr::Ptr> args;
-            Type::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -786,9 +776,10 @@ namespace graphit {
             //the node whose priority is going to be updated
             Expr::Ptr destination_node_id;
             std::string tracking_var;
-            bool is_atomic = false;
 
-	    std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> edgeset_apply_expr;
+            PriorityUpdateOperator() {
+              this->setMetadata("is_atomic", false);
+            }
 
             typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
 
@@ -867,7 +858,6 @@ namespace graphit {
         struct EdgeSetLoadExpr : public Expr {
             Expr::Ptr file_name;
             bool is_weighted_ = false;
-            PriorityUpdateType priority_update_type = NoPriorityUpdate;
             typedef std::shared_ptr<EdgeSetLoadExpr> Ptr;
      
 
@@ -902,14 +892,14 @@ namespace graphit {
 
         struct VertexSetApplyExpr : public ApplyExpr {
             typedef std::shared_ptr<VertexSetApplyExpr> Ptr;
-            //default to parallel
-            bool is_parallel = true;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<VertexSetApplyExpr>());
             }
 
-            VertexSetApplyExpr() {}
+            VertexSetApplyExpr() {
+              this->setMetadata("is_parallel", true);
+            }
 
             VertexSetApplyExpr(std::string target_name,
                                mir::Type::Ptr target_type,
@@ -919,6 +909,7 @@ namespace graphit {
                 target_expr->var = target_var;
                 target = target_expr;
                 input_function_name = function_name;
+                this->setMetadata("is_parallel", true);
             }
 
         protected:
@@ -940,18 +931,11 @@ namespace graphit {
         struct EdgeSetApplyExpr : public ApplyExpr {
             std::string from_func = "";
             std::string to_func = "";
-            bool is_parallel = false;
             bool is_weighted = false;
 
             EdgeSetApplyExpr() {
               this->setMetadata("enable_deduplication", false);
-              this->setMetadata("use_sliding_queue", false);
-              this->setMetadata("use_pull_frontier_bitvector", false);
-              this->setMetadata("use_pull_edge_based_load_balance", false);
-              this->setMetadata("pull_edge_based_load_balance_grain_size", 4096);
-              this->setMetadata("frontier_reusable", false);
-              this->setMetadata("fused_dedup", false);
-              this->setMetadata("fused_dedup_perfect", false);
+              this->setMetadata("is_parallel", false);
             }
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
@@ -982,7 +966,6 @@ namespace graphit {
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
-                is_parallel = edgeset_apply->is_parallel;
                 metadata_map = edgeset_apply->metadata_map;
             }
 
@@ -1008,8 +991,7 @@ namespace graphit {
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
-                is_parallel = edgeset_apply->is_parallel;
-              metadata_map = edgeset_apply->metadata_map;
+                metadata_map = edgeset_apply->metadata_map;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1038,7 +1020,6 @@ namespace graphit {
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
-                is_parallel = edgeset_apply->is_parallel;
                 metadata_map = edgeset_apply->metadata_map;
             }
 
@@ -1066,7 +1047,6 @@ namespace graphit {
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
-                is_parallel = edgeset_apply->is_parallel;
                 metadata_map = edgeset_apply->metadata_map;
                 this->setMetadata("push_to_function_", edgeset_apply->to_func);
             }
@@ -1133,7 +1113,6 @@ namespace graphit {
                 SPARSE,
                 DENSE
             };
-            Layout layout;
             typedef std::shared_ptr<VertexSetAllocExpr> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1385,7 +1364,6 @@ namespace graphit {
 
         struct PriorityQueueType : public Type {
             ElementType::Ptr element;
-            PriorityUpdateType priority_update_type;
             ScalarType::Ptr priority_type;
 
             typedef std::shared_ptr<PriorityQueueType> Ptr;
@@ -1411,10 +1389,6 @@ namespace graphit {
             int priority_ordering;
             bool init_bucket;
             Expr::Ptr starting_node;
-            int delta;
-
-            PriorityUpdateType priority_update_type;
-            mir::ScalarType::Ptr priority_type;
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<PriorityQueueAllocExpr>());
@@ -1431,7 +1405,6 @@ namespace graphit {
             typedef std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> Ptr;
 
             UpdatePriorityEdgeSetApplyExpr() {}
-	    mir::Var priority_queue_used;
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -1440,7 +1413,6 @@ namespace graphit {
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
-                is_parallel = edgeset_apply->is_parallel;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1477,13 +1449,13 @@ namespace graphit {
             std::string priority_queue_name;
             std::string lambda_name;
             std::string modified_vertexsubset_name;
-            mir::PriorityUpdateType priority_update_type;
             bool nodes_init_in_bucket;
-            int delta = 1;
 
             typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
 
-            UpdatePriorityUpdateBucketsCall() {}
+            UpdatePriorityUpdateBucketsCall() {
+              this->setMetadata("delta", 1);
+            }
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<UpdatePriorityUpdateBucketsCall>());
@@ -1543,17 +1515,13 @@ namespace graphit {
             std::string priority_queue_name;
             Expr::Ptr optional_source_node;
             Expr::Ptr graph_name;
-            int bucket_merge_threshold;
-
-            //need to know if the merge optimization is needed or not
-            PriorityUpdateType priority_udpate_type;
-
-            //the threshold used for merging buckets
-            int merge_threshold = 0;
 
             typedef std::shared_ptr<OrderedProcessingOperator> Ptr;
 
-            OrderedProcessingOperator() {}
+            OrderedProcessingOperator() {
+              //the threshold used for merging buckets
+              this->setMetadata("merge_threshold", 0);
+            }
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<OrderedProcessingOperator>());
@@ -1570,7 +1538,6 @@ namespace graphit {
 	// GPU Specific operators
 	struct VertexSetDedupExpr: Expr {
 		Expr::Ptr target;
-		bool perfect_dedup;
 		typedef std::shared_ptr<VertexSetDedupExpr> Ptr;
 		virtual void accept(MIRVisitor *visitor) {
 			visitor->visit(self<VertexSetDedupExpr>());
@@ -1582,12 +1549,7 @@ namespace graphit {
 	struct HybridGPUStmt: Stmt {
 		StmtBlock::Ptr stmt1;
 		StmtBlock::Ptr stmt2;
-		float threshold;
-		int32_t argv_index;
 		std::string threshold_var_name;
-		fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria criteria;
-			
-		std::string input_frontier_name;
 
 		typedef std::shared_ptr<HybridGPUStmt> Ptr;
 		virtual void accept(MIRVisitor *visitor) {
@@ -1600,10 +1562,9 @@ namespace graphit {
 	struct EnqueueVertex: Stmt {
 		Expr::Ptr vertex_id;
 		Expr::Ptr vertex_frontier;
-		bool fused_dedup;
-		bool fused_dedup_perfect;
+
 		enum class Type {SPARSE, BOOLMAP, BITMAP};
-		Type type;
+
 		typedef std::shared_ptr<EnqueueVertex> Ptr;
 		virtual void accept(MIRVisitor *visitor) {
 			visitor->visit(self<EnqueueVertex>());

@@ -22,7 +22,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::UpdatePriori
 
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
-    if (apply_expr->is_parallel){
+    if (apply_expr->getMetadata<bool>("is_parallel")){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
         auto pull_func_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
@@ -39,7 +39,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseE
 }
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){
-    if (apply_expr->is_parallel){
+    if (apply_expr->getMetadata<bool>("is_parallel")){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
         auto apply_func_decl_name = apply_expr->input_function_name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
@@ -138,7 +138,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                 std::string field_name = tensor_array_read_expr->getTargetNameStr();
                 //TODO: here we assume the destination is named "dst", later we might need to update this logic
                 std::string index = tensor_array_read_expr->getIndexNameStr();
-                FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
+                FieldVectorProperty field_vector_prop = tensor_array_read_expr->getMetadata<FieldVectorProperty>("field_vector_prop_");
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
 
                 //condition 3
@@ -220,7 +220,7 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
     }
 
     std::string field_name = tensor_array_read_expr->getTargetNameStr();
-    FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
+    FieldVectorProperty field_vector_prop = tensor_array_read_expr->getMetadata<FieldVectorProperty>("field_vector_prop_");
     mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
 
     //if the property is a shared (must be read_write since it is reduce stmt)
@@ -232,7 +232,7 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                 || scalar_type->type == mir::ScalarType::Type::FLOAT
                 || scalar_type->type == mir::ScalarType::Type::DOUBLE) {
                 //update the type to atomic op
-                reduce_stmt->is_atomic_ = true;
+                reduce_stmt->setMetadata("is_atomic_", true);
                 switch (reduce_stmt->reduce_op_){
                     case mir::ReduceStmt::ReductionOp::MIN:
                         reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;
