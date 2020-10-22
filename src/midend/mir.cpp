@@ -68,6 +68,9 @@ namespace graphit {
             for (const auto &arg: expr->args) {
                 args.push_back(arg);
             }
+            if (generic_type != nullptr){
+              generic_type = expr->generic_type->clone<Type>();
+            }
         }
 
 

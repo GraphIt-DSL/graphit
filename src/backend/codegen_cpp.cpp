@@ -932,10 +932,9 @@ namespace graphit {
         oss << call_expr->name;
 
 
-        if (call_expr->hasMetadata<mir::Type::Ptr>("generic_type") &&
-            call_expr->getMetadata<mir::Type::Ptr>("generic_type") != nullptr) {
+        if (call_expr->generic_type != nullptr) {
             oss << " < ";
-            call_expr->getMetadata<mir::Type::Ptr>("generic_type")->accept(this);
+            call_expr->generic_type->accept(this);
             oss << " > ";
         }
 
@@ -1833,9 +1832,9 @@ namespace graphit {
             oss << priority_update_op->name;
 
 
-            if (priority_update_op->hasMetadata<mir::Type::Ptr>("generic_type")) {
+            if (priority_update_op->generic_type != nullptr) {
                 oss << " < ";
-                priority_update_op->getMetadata<mir::Type::Ptr>("generic_type")->accept(this);
+                priority_update_op->generic_type->accept(this);
                 oss << " > ";
             }
 

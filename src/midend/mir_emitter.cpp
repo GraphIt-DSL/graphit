@@ -555,7 +555,7 @@ namespace graphit {
         } else if (mir::isa<mir::ListType>(mir_target_type)) {
             //if this is a List type
             auto mir_list_type = mir::to<mir::ListType>(mir_target_type);
-            mir_call_expr->setMetadata("generic_type", mir_list_type->element_type);
+            mir_call_expr->generic_type = mir_list_type->element_type;
             mir_call_expr->name = method_call_expr->method_name->ident;
 
             std::vector<mir::Expr::Ptr> args;
@@ -573,7 +573,7 @@ namespace graphit {
         } else {
             // If target is a vector or an edgeset (actual concrete object)
 
-            mir_call_expr->setMetadata("generic_type", ctx->getVectorItemType(target_expr->ident));
+            mir_call_expr->generic_type = ctx->getVectorItemType(target_expr->ident);
             mir_call_expr->name = method_call_expr->method_name->ident;
 
             std::vector<mir::Expr::Ptr> args;

@@ -258,7 +258,7 @@ namespace graphit {
             mir::ScalarType::Ptr priority_value_type
                     = (mir::to<mir::PriorityQueueType>(priority_queue_decl->type))->priority_type;
 
-            priority_update_min->setMetadata("generic_type", priority_value_type);
+            priority_update_min->generic_type = priority_value_type;
 
             node = priority_update_min;
         } else if (call->name == "updatePrioritySum") {
