@@ -1415,24 +1415,22 @@ void CodeGenGPU::visit(mir::ForStmt::Ptr for_stmt) {
 }
 void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
 	if (while_stmt->getMetadata<bool>("is_fused")) {
-	    if (while_stmt->hasMetadata<std::vector<mir::Var>>("hoisted_vars") &&
-	        while_stmt->hasMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
-          for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("hoisted_vars")) {
-            bool to_copy = true;
-            for (auto decl: while_stmt->getMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
-              if (decl->name == var.getName()) {
-                to_copy = false;
-                break;
-              }
-            }
-            if (!to_copy)
-              continue;
-            printIndent();
-            oss << "cudaMemcpyToSymbol(" << while_stmt->getMetadata<std::string>("fused_kernel_name") << "_"
-                << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName()
-                << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+      for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("hoisted_vars")) {
+        bool to_copy = true;
+        for (auto decl: while_stmt->getMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
+          if (decl->name == var.getName()) {
+            to_copy = false;
+            break;
           }
         }
+        if (!to_copy)
+          continue;
+        printIndent();
+        oss << "cudaMemcpyToSymbol(" << while_stmt->getMetadata<std::string>("fused_kernel_name") << "_"
+            << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName()
+            << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+      }
+
 		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
 			printIndent();
 			oss << "cudaMemcpyToSymbol(" << var.getName() << ", &__host_" << var.getName() << ", sizeof(__host_" << var.getName() << "), 0);" << std::endl;
