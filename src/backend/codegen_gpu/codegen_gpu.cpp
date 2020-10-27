@@ -556,12 +556,12 @@ void CodeGenGPU::visit(mir::ScalarType::Ptr scalar_type) {
 void CodeGenGPU::genHybridThresholds(void) {
 	for (auto stmt: mir_context_->hybrid_gpu_stmts) {
 		std::string var_name = stmt->threshold_var_name;
-		if (!stmt->hasMetadata<int>("threshold") || stmt->getMetadata<int>("threshold") < 0) {
+		if (!stmt->hasMetadata<float>("threshold") || stmt->getMetadata<float>("threshold") < 0) {
 			printIndent();
 			oss << stmt->threshold_var_name << " = gpu_runtime::str_to_float(argv[" << stmt->getMetadata<int32_t>("argv_index") << "]);" << std::endl;
 		} else {
 			printIndent();
-			oss << stmt->threshold_var_name << " = " << stmt->getMetadata<int>("threshold") << ";" << std::endl;
+			oss << stmt->threshold_var_name << " = " << stmt->getMetadata<float>("threshold") << ";" << std::endl;
 		}
 		printIndent();
 		oss << "cudaMemcpyToSymbol(__device_" << stmt->threshold_var_name << ", &" << stmt->threshold_var_name << ", sizeof(float), 0);" << std::endl;

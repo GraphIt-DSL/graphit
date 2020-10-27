@@ -129,11 +129,11 @@ namespace graphit {
 					mir::HybridGPUStmt::Ptr hybrid_node = std::make_shared<mir::HybridGPUStmt>();
 					hybrid_node->stmt1 = stmt_block_1;
 					hybrid_node->stmt2 = stmt_block_2;
-					hybrid_node->setMetadata("threshold", hybrid_schedule->threshold);
-					hybrid_node->setMetadata("argv_index", hybrid_schedule->argv_index);
-					hybrid_node->setMetadata("criteria", hybrid_schedule->_hybrid_criteria);
+					hybrid_node->setMetadata<float>("threshold", hybrid_schedule->threshold);
+					hybrid_node->setMetadata<int32_t>("argv_index", hybrid_schedule->argv_index);
+					hybrid_node->setMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria", hybrid_schedule->_hybrid_criteria);
 					if (hybrid_node->getMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria") == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->setMetadata("input_frontier_name", edgeset_apply->from_func);
+						hybrid_node->setMetadata<std::string>("input_frontier_name", edgeset_apply->from_func);
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
@@ -163,33 +163,33 @@ namespace graphit {
         if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
           applied_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
         }
-        edgeset_apply->setMetadata("fused_dedup", false);
-        edgeset_apply->setMetadata("fused_dedup_perfect", false);
+        edgeset_apply->setMetadata<bool>("fused_dedup", false);
+        edgeset_apply->setMetadata<bool>("fused_dedup_perfect", false);
 		if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->getMetadata<bool>("enable_deduplication") && applied_schedule->frontier_creation == fir::gpu_schedule::SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
             if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
-				edgeset_apply->setMetadata("fused_dedup", true);
-				edgeset_apply->setMetadata("fused_dedup_perfect", true);
+				edgeset_apply->setMetadata<bool>("fused_dedup", true);
+				edgeset_apply->setMetadata<bool>("fused_dedup_perfect", true);
 			} else {
 				mir::VertexSetDedupExpr::Ptr dedup_expr = std::make_shared<mir::VertexSetDedupExpr>();
 				mir::ExprStmt::Ptr expr_stmt = std::make_shared<mir::ExprStmt>();
 				dedup_expr->target = assign_stmt->lhs;	
 				expr_stmt->expr = dedup_expr;
 				insert_after_stmt = expr_stmt;
-				dedup_expr->setMetadata("perfect_dedup", true);
-				edgeset_apply->setMetadata("fused_dedup", false);
+				dedup_expr->setMetadata<bool>("perfect_dedup", true);
+				edgeset_apply->setMetadata<bool>("fused_dedup", false);
 			}
 		} else if (schedule_->backend_identifier == Schedule::BackendID::GPU && applied_schedule->deduplication == SimpleGPUSchedule::deduplication_type::DEDUP_ENABLED && applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 			if (applied_schedule->deduplication_strategy == SimpleGPUSchedule::deduplication_strategy_type::DEDUP_FUSED) {
-				edgeset_apply->setMetadata("fused_dedup", true);
-				edgeset_apply->setMetadata("fused_dedup_perfect", false);
+				edgeset_apply->setMetadata<bool>("fused_dedup", true);
+				edgeset_apply->setMetadata<bool>("fused_dedup_perfect", false);
 			} else {
 				mir::VertexSetDedupExpr::Ptr dedup_expr = std::make_shared<mir::VertexSetDedupExpr>();
 				mir::ExprStmt::Ptr expr_stmt = std::make_shared<mir::ExprStmt>();
 				dedup_expr->target = assign_stmt->lhs;	
 				expr_stmt->expr = dedup_expr;
 				insert_after_stmt = expr_stmt;
-				dedup_expr->setMetadata("perfect_dedup", false);
-				edgeset_apply->setMetadata("fused_dedup", false);
+				dedup_expr->setMetadata<bool>("perfect_dedup", false);
+				edgeset_apply->setMetadata<bool>("fused_dedup", false);
 			}
 		}
 	}
@@ -242,11 +242,11 @@ namespace graphit {
 					mir::HybridGPUStmt::Ptr hybrid_node = std::make_shared<mir::HybridGPUStmt>();
 					hybrid_node->stmt1 = stmt_block_1;
 					hybrid_node->stmt2 = stmt_block_2;
-					hybrid_node->setMetadata("threshold", hybrid_schedule->threshold);
-					hybrid_node->setMetadata("argv_index", hybrid_schedule->argv_index);
-					hybrid_node->setMetadata("criteria", hybrid_schedule->_hybrid_criteria);
+					hybrid_node->setMetadata<float>("threshold", hybrid_schedule->threshold);
+					hybrid_node->setMetadata<int32_t>("argv_index", hybrid_schedule->argv_index);
+					hybrid_node->setMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria", hybrid_schedule->_hybrid_criteria);
 					if (hybrid_node->getMetadata<fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria>("criteria") == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->setMetadata("input_frontier_name", edgeset_apply->from_func);
+						hybrid_node->setMetadata<std::string>("input_frontier_name", edgeset_apply->from_func);
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
