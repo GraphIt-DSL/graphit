@@ -59,10 +59,9 @@ namespace graphit {
     ChangeTrackingLower::ApplyExprVisitor::insertSerialReturnStmtForTrackingChange(mir::FuncDecl::Ptr apply_func_decl,
                                                                                    std::string tracking_field,
                                                                                    mir::Expr::Ptr tracking_var) {
-
-        if (apply_func_decl->field_vector_properties_map_.find(tracking_field)
-            != apply_func_decl->field_vector_properties_map_.end()) {
-            auto field_read_write_type = apply_func_decl->field_vector_properties_map_[tracking_field].read_write_type;
+        auto field_vec_props = apply_func_decl->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+        if (field_vec_props.find(tracking_field) != field_vec_props.end()) {
+            auto field_read_write_type = field_vec_props[tracking_field].read_write_type;
             if (field_read_write_type == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
                     field_read_write_type == FieldVectorProperty::ReadWriteType::READ_AND_WRITE) {
                 //if the tracking field has been updated, then add the return

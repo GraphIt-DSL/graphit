@@ -118,7 +118,10 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Tens
 	}
 	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
-	enclosing_function->field_vector_properties_map_[target] = property;
+
+    auto field_vec_props = enclosing_function->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+    field_vec_props[target] = property;
+    enclosing_function->setMetadata("field_vector_properties_map_", field_vec_props);
 }
 void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
 
@@ -139,8 +142,11 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Assi
 	}
 	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
-	enclosing_function->field_vector_properties_map_[target] = property;	
+    auto field_vec_props = enclosing_function->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+    field_vec_props[target] = property;
+    enclosing_function->setMetadata("field_vector_properties_map_", field_vec_props);
 }
+
 void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::ReduceStmt::Ptr reduce_stmt) {
 	reduce_stmt->expr->accept(this);
 	
@@ -157,8 +163,9 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Redu
 	}
 	tre->setMetadata<FieldVectorProperty>("field_vector_prop_", property);
 	std::string target = tre->getTargetNameStr();
-	enclosing_function->field_vector_properties_map_[target] = property;	
-	
+    auto field_vec_props = enclosing_function->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+    field_vec_props[target] = property;
+    enclosing_function->setMetadata("field_vector_properties_map_", field_vec_props);
 }
 void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr puo) {
 	mir::MIRVisitor::visit(puo);

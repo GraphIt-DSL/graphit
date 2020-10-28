@@ -67,7 +67,7 @@ namespace graphit {
         } else {
             op->setMetadata<bool>("is_atomic", false);
         }
-        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr op) {
@@ -76,7 +76,7 @@ namespace graphit {
         } else {
             op->setMetadata<bool>("is_atomic", false);
         }
-        enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
 
@@ -105,7 +105,9 @@ namespace graphit {
             std::string index = tensor_read->getIndexNameStr();
             auto field_vector_prop = determineFieldVectorProperty(target, in_write_phase,
                                                                   in_read_phase, index, direction_);
-            enclosing_func_decl_->field_vector_properties_map_[target] = field_vector_prop;
+            auto field_vec_props = enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+            field_vec_props[target] = field_vector_prop;
+            enclosing_func_decl_->setMetadata("field_vector_properties_map_", field_vec_props);
             tensor_read->setMetadata<FieldVectorProperty>("field_vector_prop_", field_vector_prop);
         }
     }
@@ -122,13 +124,13 @@ namespace graphit {
         FieldVectorProperty output;
 
         // if it is not a read property, just return the current property (only need to detect write or read_and_write)
-        if (enclosing_func_decl_->field_vector_properties_map_.find(field_vector_name)
-            != enclosing_func_decl_->field_vector_properties_map_.end()) {
+        auto field_vec_props = enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+        if (field_vec_props.find(field_vector_name) != field_vec_props.end()) {
             FieldVectorProperty::ReadWriteType existing_readwrite_access
-                    = enclosing_func_decl_->field_vector_properties_map_[field_vector_name].read_write_type;
+                    = field_vec_props[field_vector_name].read_write_type;
             if (existing_readwrite_access == FieldVectorProperty::ReadWriteType::WRITE_ONLY ||
                 existing_readwrite_access == FieldVectorProperty::ReadWriteType::READ_AND_WRITE) {
-                return enclosing_func_decl_->field_vector_properties_map_[field_vector_name];
+                return field_vec_props[field_vector_name];
             }
 
         }

@@ -12,34 +12,34 @@ int AssignFunctionContext::assign_function_context(void) {
 }
 void AssignFunctionContext::visit(mir::PushEdgeSetApplyExpr::Ptr pesae) {
 	if (mir_context_->isFunction(pesae->input_function_name))
-		mir_context_->getFunction(pesae->input_function_name)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->input_function_name)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->from_func))
-		mir_context_->getFunction(pesae->from_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->from_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->to_func))
-		mir_context_->getFunction(pesae->to_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->to_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 }
 void AssignFunctionContext::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr pesae) {
 	if (mir_context_->isFunction(pesae->input_function_name))
-		mir_context_->getFunction(pesae->input_function_name)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->input_function_name)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->from_func))
-		mir_context_->getFunction(pesae->from_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->from_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->to_func))
-		mir_context_->getFunction(pesae->to_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->to_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 }
 void AssignFunctionContext::visit(mir::PullEdgeSetApplyExpr::Ptr pesae) {
 	if (mir_context_->isFunction(pesae->input_function_name))
-		mir_context_->getFunction(pesae->input_function_name)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->input_function_name)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->from_func))
-		mir_context_->getFunction(pesae->from_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->from_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 	if (mir_context_->isFunction(pesae->to_func))
-		mir_context_->getFunction(pesae->to_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(pesae->to_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 }
 void AssignFunctionContext::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 	if (mir_context_->isFunction(vsae->input_function_name))
-		mir_context_->getFunction(vsae->input_function_name)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(vsae->input_function_name)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 }
 void AssignFunctionContext::visit(mir::VertexSetWhereExpr::Ptr vswe) {
 	if (mir_context_->isFunction(vswe->input_func))
-		mir_context_->getFunction(vswe->input_func)->function_context = mir::FuncDecl::function_context_type::CONTEXT_DEVICE;
+		mir_context_->getFunction(vswe->input_func)->setMetadata<mir::FuncDecl::function_context_type>("function_context", mir::FuncDecl::function_context_type::CONTEXT_DEVICE);
 }
 }

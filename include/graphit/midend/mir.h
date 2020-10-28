@@ -640,21 +640,21 @@ namespace graphit {
 		CONTEXT_BOTH = 0x3,
 	    };
 
-	    enum function_context_type function_context = function_context_type::CONTEXT_HOST;
-
             std::string name;
             std::vector<mir::Var> args;
             mir::Var result;
-            std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
             Type type;
-
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
 	
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 
-
+            FuncDecl() {
+              std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
+              this->setMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_", field_vector_properties_map_);
+              this->setMetadata<function_context_type>("function_context", function_context_type::CONTEXT_HOST);
+            }
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<FuncDecl>());
             }

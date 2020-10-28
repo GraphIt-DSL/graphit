@@ -814,8 +814,8 @@ namespace graphit {
             body = decl->body->clone<StmtBlock>();
             if (decl->result.isInitialized())
                 result = mir::Var(decl->result.getName(), decl->result.getType());
-            //I am not sure, I think this just copies over everything
-            field_vector_properties_map_ = decl->field_vector_properties_map_;
+            this->setMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_",
+                decl->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_"));
         }
 
 

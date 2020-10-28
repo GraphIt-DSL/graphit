@@ -59,9 +59,9 @@ int CodeGenGPU::genGPU() {
 		genFusedWhileLoop(while_loop);
 
 	for (auto function: functions) {
-		if (function->function_context & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
+		if (function->getMetadata<mir::FuncDecl::function_context_type>("function_context") & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
 			function->accept(this);
-		if (function->function_context & mir::FuncDecl::function_context_type::CONTEXT_HOST)
+		if (function->getMetadata<mir::FuncDecl::function_context_type>("function_context") & mir::FuncDecl::function_context_type::CONTEXT_HOST)
 			function->accept(&code_gen_gpu_host);
 	}
 
@@ -245,7 +245,7 @@ void CodeGenGPU::genFuncDecl(mir::FuncDecl::Ptr func_decl) {
 		oss << "void";
 	}
 
-	if (func_decl->function_context & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
+	if (func_decl->getMetadata<mir::FuncDecl::function_context_type>("function_context") & mir::FuncDecl::function_context_type::CONTEXT_DEVICE)
 		oss << " " << "__device__" << " " << func_decl->name << "(";
 	else
 		oss << " " << func_decl->name << "(";
