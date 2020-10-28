@@ -136,7 +136,7 @@ namespace graphit {
         if (mir::isa<mir::UpdatePriorityExternVertexSetApplyExpr>(expr_stmt->expr)) {
 
             mir::to<mir::PriorityQueueType>(
-                    mir_context_->getPriorityQueueDecl()->type)->setMetadata("priority_update_type", mir::PriorityUpdateType::ExternPriorityUpdate);
+                    mir_context_->getPriorityQueueDecl()->type)->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::ExternPriorityUpdate);
             mir_context_->priority_update_type = mir::PriorityUpdateType::ExternPriorityUpdate;
 
             mir::UpdatePriorityExternVertexSetApplyExpr::Ptr expr = mir::to<mir::UpdatePriorityExternVertexSetApplyExpr>(
@@ -192,7 +192,7 @@ namespace graphit {
 
             if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge) {
                 ordered_op->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::EagerPriorityUpdateWithMerge);
-                ordered_op->setMetadata("bucket_merge_threshold", mir_context_->bucket_merge_threshold_);
+                ordered_op->setMetadata<int>("bucket_merge_threshold", mir_context_->bucket_merge_threshold_);
             } else {
                 ordered_op->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::EagerPriorityUpdate);
             }
@@ -317,7 +317,7 @@ namespace graphit {
                     update_call->lambda_name = new_expr->moved_object_name + ".get_fn_repr()";
                     update_call->modified_vertexsubset_name = new_expr->moved_object_name;
                     update_call->priority_queue_name = new_expr->priority_queue_name;
-                    update_call->setMetadata("priority_update_type", mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate);
+                    update_call->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate);
 
                     mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
                     stmt_block->insertStmtEnd(stmt);
@@ -354,7 +354,7 @@ namespace graphit {
         new_var_decl->initVal = regular_edgeset_apply_expr;
         new_var_decl->name = modified_vertexset_name;
         mir::VertexSetType::Ptr vertexset_type = std::make_shared<mir::VertexSetType>();
-        vertexset_type->setMetadata("priority_update_type", mir::ReduceBeforePriorityUpdate);
+        vertexset_type->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::ReduceBeforePriorityUpdate);
         mir::VarExpr::Ptr edgeset_target = mir::to<mir::VarExpr>(regular_edgeset_apply_expr->target);
         // The new variable declaration inherits the label from the original expr stmt (such as "s1")
         // This allows the schedules to be assigned to the newly created vardecl stmt.
@@ -371,8 +371,8 @@ namespace graphit {
         update_call->lambda_name = modified_vertexset_name;
         update_call->modified_vertexsubset_name = modified_vertexset_name;
         update_call->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
-        update_call->setMetadata("priority_update_type", mir::PriorityUpdateType::ReduceBeforePriorityUpdate);
-        update_call->setMetadata("delta", mir_context_->delta_);
+        update_call->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::ReduceBeforePriorityUpdate);
+        update_call->setMetadata<int>("delta", mir_context_->delta_);
         update_call->nodes_init_in_bucket = mir_context_->nodes_init_in_buckets;
         mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
         stmt_block->insertStmtEnd(new_var_decl);

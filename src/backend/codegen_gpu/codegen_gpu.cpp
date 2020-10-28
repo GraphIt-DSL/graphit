@@ -166,8 +166,8 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	KernelVariableExtractor extractor(mir_context_);
 	while_stmt->accept(&extractor);
 
-	while_stmt->setMetadata("hoisted_vars", extractor.hoisted_vars);
-	while_stmt->setMetadata("hoisted_decls", extractor.hoisted_decls);
+	while_stmt->setMetadata<std::vector<mir::Var>>("hoisted_vars", extractor.hoisted_vars);
+	while_stmt->setMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls", extractor.hoisted_decls);
 	
 	CodeGenGPUFusedKernel codegen (oss, mir_context_, module_name, "");
 	codegen.current_while_stmt = while_stmt;
@@ -296,7 +296,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;	
-	apply_expr->setMetadata("device_function", load_balancing_arg);
+	apply_expr->setMetadata<std::string>("device_function", load_balancing_arg);
 	
 }
 
@@ -337,7 +337,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;	
-		apply_expr->setMetadata("device_function", load_balancing_arg);
+		apply_expr->setMetadata<std::string>("device_function", load_balancing_arg);
 	} else if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PULL) {
 		// First we generate the function that is passed to the load balancing function
 		std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -383,7 +383,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;	
-		apply_expr->setMetadata("device_function", load_balancing_arg);
+		apply_expr->setMetadata<std::string>("device_function", load_balancing_arg);
 	}
 }
 
@@ -434,7 +434,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;	
-	apply_expr->setMetadata("device_function", load_balancing_arg);
+	apply_expr->setMetadata<std::string>("device_function", load_balancing_arg);
 
 }
 
@@ -713,8 +713,8 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 
 	mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = puo->getMetadata<mir::UpdatePriorityEdgeSetApplyExpr::Ptr>("edgeset_apply_expr");
 	mir::EnqueueVertex::Ptr evp = std::make_shared<mir::EnqueueVertex>();
-    evp->setMetadata("fused_dedup", false);
-    evp->setMetadata("fused_dedup_perfect", false);
+    evp->setMetadata<bool>("fused_dedup", false);
+    evp->setMetadata<bool>("fused_dedup_perfect", false);
 	evp->vertex_id = puo->destination_node_id;
 	mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(puo->priority_queue);
 	// Since this variable is created temporarily, we don;t need type
@@ -725,11 +725,11 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	evp->vertex_frontier = frontier_expr;
 	SimpleGPUSchedule::Ptr applied_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
 	if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-		evp->setMetadata("type", mir::EnqueueVertex::Type::SPARSE);
+		evp->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
 	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-        evp->setMetadata("type", mir::EnqueueVertex::Type::BOOLMAP);
+        evp->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
 	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-        evp->setMetadata("type", mir::EnqueueVertex::Type::BITMAP);
+        evp->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
 	} 
 	
 	evp->accept(this);

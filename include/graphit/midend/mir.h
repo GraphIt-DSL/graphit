@@ -378,7 +378,7 @@ namespace graphit {
             std::vector<ElementType::Ptr> *vertex_element_type_list;
 
             EdgeSetType() {
-              this->setMetadata("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
+              this->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
             }
 
             typedef std::shared_ptr<EdgeSetType> Ptr;
@@ -508,7 +508,7 @@ namespace graphit {
             typedef std::shared_ptr<ReduceStmt> Ptr;
 
             ReduceStmt() {
-              this->setMetadata("is_atomic_", false);
+              this->setMetadata<bool>("is_atomic_", false);
             }
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ReduceStmt>());
@@ -782,7 +782,7 @@ namespace graphit {
             std::string tracking_var;
 
             PriorityUpdateOperator() {
-              this->setMetadata("is_atomic", false);
+              this->setMetadata<bool>("is_atomic", false);
             }
 
             typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
@@ -883,7 +883,7 @@ namespace graphit {
 
 	    std::string kernel_function;
 	    ApplyExpr() {
-	      this->setMetadata("requires_output", false);
+	      this->setMetadata<bool>("requires_output", false);
 	    }
 
         protected:
@@ -902,7 +902,7 @@ namespace graphit {
             }
 
             VertexSetApplyExpr() {
-              this->setMetadata("is_parallel", true);
+              this->setMetadata<bool>("is_parallel", true);
             }
 
             VertexSetApplyExpr(std::string target_name,
@@ -913,7 +913,7 @@ namespace graphit {
                 target_expr->var = target_var;
                 target = target_expr;
                 input_function_name = function_name;
-                this->setMetadata("is_parallel", true);
+                this->setMetadata<bool>("is_parallel", true);
             }
 
         protected:
@@ -938,8 +938,8 @@ namespace graphit {
             bool is_weighted = false;
 
             EdgeSetApplyExpr() {
-              this->setMetadata("enable_deduplication", false);
-              this->setMetadata("is_parallel", false);
+              this->setMetadata<bool>("enable_deduplication", false);
+              this->setMetadata<bool>("is_parallel", false);
             }
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
@@ -1052,7 +1052,7 @@ namespace graphit {
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 metadata_map = edgeset_apply->metadata_map;
-                this->setMetadata("push_to_function_", edgeset_apply->to_func);
+                this->setMetadata<std::string>("push_to_function_", edgeset_apply->to_func);
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1458,7 +1458,7 @@ namespace graphit {
             typedef std::shared_ptr<UpdatePriorityUpdateBucketsCall> Ptr;
 
             UpdatePriorityUpdateBucketsCall() {
-              this->setMetadata("delta", 1);
+              this->setMetadata<int>("delta", 1);
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1524,7 +1524,7 @@ namespace graphit {
 
             OrderedProcessingOperator() {
               //the threshold used for merging buckets
-              this->setMetadata("merge_threshold", 0);
+              this->setMetadata<int>("merge_threshold", 0);
             }
 
             virtual void accept(MIRVisitor *visitor) {

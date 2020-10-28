@@ -164,7 +164,7 @@ void GPUVectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::Prio
 	mir::MIRVisitor::visit(puo);
 	mir::Expr::Ptr index_expr = puo->destination_node_id;
 	if (!is_independent_index(index_expr)) {
-		puo->setMetadata("is_atomic", true);
+		puo->setMetadata<bool>("is_atomic", true);
 	}
 }
 }

@@ -37,11 +37,11 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 			mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(this_stmt);
 			if (mir::isa<mir::EdgeSetApplyExpr>(assign_stmt->expr)) {
 				mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
-                esae->setMetadata("frontier_reusable", false);
+                esae->setMetadata<bool>("frontier_reusable", false);
 				if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
 					std::string frontier_name = esae->from_func;
 					if (is_frontier_reusable(stmt_block, i, frontier_name)) {
-						esae->setMetadata("frontier_reusable", true);
+						esae->setMetadata<bool>("frontier_reusable", true);
 					}
 				}
 			}
@@ -50,11 +50,11 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 			if (var_decl->initVal != nullptr) {
 				if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
 					mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
-                    esae->setMetadata("frontier_reusable", false);
+                    esae->setMetadata<bool>("frontier_reusable", false);
 					if (esae->from_func != "" && !mir_context_->isFunction(esae->from_func)) {
 						std::string frontier_name = esae->from_func;
 						if (is_frontier_reusable(stmt_block, i, frontier_name)) {
-							esae->setMetadata("frontier_reusable", true);
+							esae->setMetadata<bool>("frontier_reusable", true);
 						}
 					}
 				}	

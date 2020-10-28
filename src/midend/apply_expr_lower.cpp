@@ -22,13 +22,13 @@ namespace graphit {
 
     void ApplyExprLower::LowerApplyExpr::visit(mir::VertexSetApplyExpr::Ptr vertexset_apply) {
         //default the vertexset apply expression to parallel (serial needs to be manually specified)
-        vertexset_apply->setMetadata("is_parallel", true);
+        vertexset_apply->setMetadata<bool>("is_parallel", true);
 
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
             if (vertexset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
               auto apply_schedule = vertexset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->to<SimpleScheduleObject>();
-              vertexset_apply->setMetadata("is_parallel",
+              vertexset_apply->setMetadata<bool>("is_parallel",
                   !(apply_schedule->to<SimpleCPUScheduleObject>()->getCPUParallelizationType()
                       == SimpleCPUScheduleObject::CPUParallelType::SERIAL));
             }
@@ -288,7 +288,7 @@ namespace graphit {
 	// First check if the program has a GPU Schedule, if yes, the defaults are different
 	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
 		// Always parallelize all operators for GPU schedules
-		edgeset_apply->setMetadata("is_parallel", true);
+		edgeset_apply->setMetadata<bool>("is_parallel", true);
 		if (edgeset_apply->tracking_field != "")
 			edgeset_apply->setMetadata<bool>("requires_output", true);
 		// Check if there is a GPU schedule attached to this statement - 
@@ -354,7 +354,7 @@ namespace graphit {
                     auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
                     push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-                    hybrid_dense_edgeset_apply->setMetadata("push_function_", push_apply_func_decl->name);
+                    hybrid_dense_edgeset_apply->setMetadata<std::string>("push_function_", push_apply_func_decl->name);
                     //insert into MIR context
                     mir_context_->addFunctionFront(push_apply_func_decl);
 
@@ -379,16 +379,16 @@ namespace graphit {
                   std::string label_scope = label_scope_.getCurrentScope();
                   mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
                       simple_schedule->getNumSSG().getIntVal();
-                  mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("scope_label_name", label_scope);
+                  mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<std::string>("scope_label_name", label_scope);
                   mir_context_->edgeset_to_label_to_num_segment[edgeset_expr->var.getName()][label_scope] =
                       simple_schedule->getNumSSG().getIntVal();
                 }
 
                 //Check to see if it is parallel or serial
                 if (simple_schedule->getCPUParallelizationType() != SimpleCPUScheduleObject::CPUParallelType::SERIAL) {
-                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("is_parallel", true);
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("is_parallel", true);
                 } else if (simple_schedule->getCPUParallelizationType() == SimpleCPUScheduleObject::CPUParallelType::SERIAL) {
-                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("is_parallel", false);
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("is_parallel", false);
                 }
 
                 if (simple_schedule->getOutputQueueType() == SimpleCPUScheduleObject::OutputQueueType ::SLIDING_QUEUE) {
@@ -406,14 +406,14 @@ namespace graphit {
                 if (simple_schedule->getParallelizationType() == SimpleScheduleObject::ParallelizationType ::EDGE_BASED){
                     mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_edge_based_load_balance", true);
                     if (simple_schedule->getPullLoadBalanceGrainSize().getIntVal() > 0){
-                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("pull_edge_based_load_balance_grain_size",
+                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<int>("pull_edge_based_load_balance_grain_size",
                                 simple_schedule->getPullLoadBalanceGrainSize().getIntVal());
                     } else {
-                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("pull_edge_based_load_balance_grain_size", 4096);
+                        mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<int>("pull_edge_based_load_balance_grain_size", 4096);
                     }
                 } else {
                     mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_edge_based_load_balance", false);
-                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("pull_edge_based_load_balance_grain_size", 4096);
+                    mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<int>("pull_edge_based_load_balance_grain_size", 4096);
                 }
 
                 //if this is applyModified with a tracking field
@@ -432,7 +432,7 @@ namespace graphit {
                 mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_sliding_queue", false);
                 mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_frontier_bitvector", false);
                 mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<bool>("use_pull_edge_based_load_balance", false);
-                mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata("pull_edge_based_load_balance_grain_size", 4096);
+                mir::to<mir::EdgeSetApplyExpr>(node)->setMetadata<int>("pull_edge_based_load_balance_grain_size", 4096);
                 return;
             }
 

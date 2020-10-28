@@ -166,7 +166,7 @@ namespace graphit {
 
     void MIREmitter::visit(fir::VertexSetType::Ptr vertex_set_type) {
         const auto mir_vertex_set_type = std::make_shared<mir::VertexSetType>();
-        mir_vertex_set_type->setMetadata("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
+        mir_vertex_set_type->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::NoPriorityUpdate);
         mir_vertex_set_type->element = std::dynamic_pointer_cast<mir::ElementType>(
                 emitType(vertex_set_type->element));
         if (!mir_vertex_set_type) {
@@ -1010,7 +1010,7 @@ namespace graphit {
         }
 
         mir_priority_queue_alloc_expr->starting_node = emitExpr(expr->starting_node);
-        mir_priority_queue_alloc_expr->setMetadata("priority_type", std::dynamic_pointer_cast<mir::ScalarType>(
+        mir_priority_queue_alloc_expr->setMetadata<mir::ScalarType::Ptr>("priority_type", std::dynamic_pointer_cast<mir::ScalarType>(
                 emitType(expr->priority_type)));
 
         retExpr = mir_priority_queue_alloc_expr;

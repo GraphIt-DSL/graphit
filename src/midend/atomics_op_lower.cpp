@@ -232,7 +232,7 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                 || scalar_type->type == mir::ScalarType::Type::FLOAT
                 || scalar_type->type == mir::ScalarType::Type::DOUBLE) {
                 //update the type to atomic op
-                reduce_stmt->setMetadata("is_atomic_", true);
+                reduce_stmt->setMetadata<bool>("is_atomic_", true);
                 switch (reduce_stmt->reduce_op_){
                     case mir::ReduceStmt::ReductionOp::MIN:
                         reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;

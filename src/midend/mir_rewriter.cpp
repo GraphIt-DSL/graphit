@@ -229,7 +229,7 @@ namespace graphit {
         void MIRRewriter::visit(std::shared_ptr<TensorStructReadExpr> expr) {
             expr->target = rewrite<Expr>(expr->target);
             expr->index = rewrite<Expr>(expr->index);
-            expr->setMetadata("field_target", rewrite<Expr>(expr->getMetadata<Expr::Ptr>("field_target")));
+            expr->setMetadata<mir::Expr::Ptr>("field_target", rewrite<Expr>(expr->getMetadata<Expr::Ptr>("field_target")));
             node = expr;
         }
 
@@ -356,7 +356,7 @@ namespace graphit {
         void MIRRewriter::visit(PriorityQueueAllocExpr::Ptr expr) {
             expr->element_type = rewrite<ElementType>(expr->element_type);
             expr->starting_node = rewrite<Expr>(expr->starting_node);
-            expr->setMetadata("priority_type", rewrite<ScalarType>(expr->getMetadata<mir::ScalarType::Ptr>("priority_type")));
+            expr->setMetadata<mir::ScalarType::Ptr>("priority_type", rewrite<ScalarType>(expr->getMetadata<mir::ScalarType::Ptr>("priority_type")));
             node = expr;
         }
 

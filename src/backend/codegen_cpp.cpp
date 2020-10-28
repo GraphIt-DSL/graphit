@@ -461,11 +461,11 @@ namespace graphit {
 
         // Generate function signature
         if (func_decl->name == "main") {
-            func_decl->setMetadata("isFunctor", false);
+            func_decl->setMetadata<bool>("isFunctor", false);
             oss << "int " << func_decl->name << "(int argc, char * argv[])";
         } else {
             // Use functors for better compiler inlining
-            func_decl->setMetadata("isFunctor" , true);
+            func_decl->setMetadata<bool>("isFunctor" , true);
             oss << "struct " << func_decl->name << std::endl;
             printBeginIndent();
             indent();

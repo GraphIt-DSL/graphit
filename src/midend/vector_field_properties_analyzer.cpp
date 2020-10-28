@@ -63,18 +63,18 @@ namespace graphit {
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorSum::Ptr op) {
         if (direction_ == "push") {
-            op->setMetadata("is_atomic", true);
+            op->setMetadata<bool>("is_atomic", true);
         } else {
-            op->setMetadata("is_atomic", false);
+            op->setMetadata<bool>("is_atomic", false);
         }
         enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr op) {
         if (direction_ == "push") {
-            op->setMetadata("is_atomic", true);
+            op->setMetadata<bool>("is_atomic", true);
         } else {
-            op->setMetadata("is_atomic", false);
+            op->setMetadata<bool>("is_atomic", false);
         }
         enclosing_func_decl_->field_vector_properties_map_[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
     }
