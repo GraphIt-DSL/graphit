@@ -9,7 +9,7 @@ void graphit::WhileLoopFusion::lower(void) {
     }
 }
 void graphit::WhileLoopFusion::visit(mir::WhileStmt::Ptr while_stmt) {
-    while_stmt->setMetadata("is_fused", false);
+    while_stmt->setMetadata<bool>("is_fused", false);
 	if (while_stmt->stmt_label != "") {
 		label_scope_.scope(while_stmt->stmt_label);
 	}
@@ -21,7 +21,7 @@ void graphit::WhileLoopFusion::visit(mir::WhileStmt::Ptr while_stmt) {
         if (!apply_schedule->isComposite()) {
             auto applied_simple_schedule = apply_schedule->self<fir::gpu_schedule::SimpleGPUSchedule>();
             if (applied_simple_schedule->kernel_fusion == fir::gpu_schedule::SimpleGPUSchedule::kernel_fusion_type::FUSION_ENABLED) {
-                while_stmt->setMetadata("is_fused", true);
+                while_stmt->setMetadata<bool>("is_fused", true);
                 mir_context_->fused_while_loops.push_back(while_stmt);
             }
         }

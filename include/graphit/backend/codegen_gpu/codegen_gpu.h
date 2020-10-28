@@ -179,6 +179,11 @@ public:
 
 	mir::WhileStmt::Ptr current_while_stmt;
 	void insertUsedPq(mir::Var var) {
+	    // initialize empty vector for used_priority_queues if not seen before.
+	    if (!current_while_stmt->hasMetadata<std::vector<mir::Var>>("used_priority_queues")) {
+            std::vector<mir::Var> used_priority_queues;
+            current_while_stmt->setMetadata<std::vector<mir::Var>>("used_priority_queues", used_priority_queues);
+	    }
 		for (auto v: current_while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
 			if (v.getName() == var.getName())
 				return;

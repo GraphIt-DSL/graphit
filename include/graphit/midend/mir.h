@@ -93,7 +93,10 @@ namespace graphit {
             // metadata with the given name exists
             template <typename T>
             T getMetadata(std::string mdname) {
-                assert(hasMetadata<T>(mdname));
+                if (!hasMetadata<T>(mdname)) {
+                  printf("No metadata for name: %s", mdname.c_str());
+                  assert(false);
+                }
                 typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
                 return mdnode->to<T>()->val;
             } 

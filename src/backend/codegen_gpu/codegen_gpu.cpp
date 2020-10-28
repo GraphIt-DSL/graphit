@@ -159,7 +159,7 @@ void CodeGenGPU::genFusedWhileLoop(mir::WhileStmt::Ptr while_stmt) {
 	
 	// First we generate a unique function name for this fused kernel
 	std::string fused_kernel_name = "fused_kernel_body_" + mir_context_->getUniqueNameCounterString();
-	while_stmt->setMetadata("fused_kernel_name", fused_kernel_name);
+	while_stmt->setMetadata<std::string>("fused_kernel_name", fused_kernel_name);
 
 	// Now we extract the list of variables that are used in the kernel that are not const 
 	// So we can hoist them
@@ -1430,17 +1430,22 @@ void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
             << var.getName() << ", &" << var.getName() << ", sizeof(" << var.getName()
             << "), 0, cudaMemcpyHostToDevice);" << std::endl;
       }
-
-		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
-			printIndent();
-			oss << "cudaMemcpyToSymbol(" << var.getName() << ", &__host_" << var.getName() << ", sizeof(__host_" << var.getName() << "), 0);" << std::endl;
-		}
+        if (while_stmt->hasMetadata<std::vector<mir::Var>>("used_priority_queues")) {
+          for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
+            printIndent();
+            oss << "cudaMemcpyToSymbol(" << var.getName() << ", &__host_" << var.getName() << ", sizeof(__host_"
+                << var.getName() << "), 0);" << std::endl;
+          }
+        }
 		printIndent();
 		oss << "cudaLaunchCooperativeKernel((void*)" << while_stmt->getMetadata<std::string>("fused_kernel_name") << ", NUM_CTA, CTA_SIZE, gpu_runtime::no_args);" << std::endl;
-		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
-			printIndent();
-			oss << "cudaMemcpyFromSymbol(&__host_" << var.getName() << ", " << var.getName() << ", sizeof(__host_" << var.getName() << "), 0);" << std::endl;
-		}
+        if (while_stmt->hasMetadata<std::vector<mir::Var>>("used_priority_queues")) {
+          for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("used_priority_queues")) {
+            printIndent();
+            oss << "cudaMemcpyFromSymbol(&__host_" << var.getName() << ", " << var.getName() << ", sizeof(__host_"
+                << var.getName() << "), 0);" << std::endl;
+          }
+        }
 		for (auto var: while_stmt->getMetadata<std::vector<mir::Var>>("hoisted_vars")) {
 			bool to_copy = true;
 			for (auto decl: while_stmt->getMetadata<std::vector<std::shared_ptr<mir::VarDecl>>>("hoisted_decls")) {
