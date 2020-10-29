@@ -67,7 +67,10 @@ namespace graphit {
         } else {
             op->setMetadata<bool>("is_atomic", false);
         }
-        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+//        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+        auto field_vec_props = enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+        field_vec_props[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+        enclosing_func_decl_->setMetadata("field_vector_properties_map_", field_vec_props);
     }
 
     void VectorFieldPropertiesAnalyzer::PropertyAnalyzingVisitor::visit(mir::PriorityUpdateOperatorMin::Ptr op) {
@@ -76,7 +79,10 @@ namespace graphit {
         } else {
             op->setMetadata<bool>("is_atomic", false);
         }
-        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+//        enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_")[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+      auto field_vec_props = enclosing_func_decl_->getMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_");
+      field_vec_props[mir_context_->getPriorityVectorName()] = buildLocalReadWriteFieldProperty();
+      enclosing_func_decl_->setMetadata("field_vector_properties_map_", field_vec_props);
     }
 
 
