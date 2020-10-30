@@ -302,7 +302,7 @@ void CodeGenGPUKernelEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr apply_expr) {
 
 void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr apply_expr) {
 
-    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleScheduleObject>();
+    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getApplySchedule<SimpleScheduleObject>();
 	if (applied_schedule->getDirection() == SimpleScheduleObject::Direction::PUSH) {
 		// First we generate the function that is passed to the load balancing function
 		std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
@@ -389,7 +389,7 @@ void CodeGenGPUKernelEmitter::visit(mir::UpdatePriorityEdgeSetApplyExpr::Ptr app
 
 void CodeGenGPUKernelEmitter::visit(mir::PullEdgeSetApplyExpr::Ptr apply_expr) {
 
-    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleScheduleObject>();
+    SimpleScheduleObject::Ptr applied_schedule = apply_expr->getApplySchedule<SimpleScheduleObject>();
 	// First we generate the function that is passed to the load balancing function
 	std::string load_balancing_arg = "gpu_operator_body_" + mir_context_->getUniqueNameCounterString();
 	
@@ -723,7 +723,7 @@ void CodeGenGPU::genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr puo)
 	frontier_expr->var = var;	
 	
 	evp->vertex_frontier = frontier_expr;
-	SimpleGPUSchedule::Ptr applied_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	SimpleGPUSchedule::Ptr applied_schedule = upesae->getApplySchedule<SimpleGPUSchedule>();
 	if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 		evp->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
 	} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
@@ -789,7 +789,7 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 	indent();
 	
 	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-    SimpleGPUSchedule::Ptr applied_schedule = esae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+    SimpleGPUSchedule::Ptr applied_schedule = esae->getApplySchedule<SimpleGPUSchedule>();
 	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWCE) {
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
 	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {
@@ -949,7 +949,7 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 	oss << "{" << std::endl;
 	indent();
 	std::string load_balance_function = "gpu_runtime::vertex_based_load_balance";
-	SimpleGPUSchedule::Ptr applied_schedule = esae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	SimpleGPUSchedule::Ptr applied_schedule = esae->getApplySchedule<SimpleGPUSchedule>();
 	if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::TWCE) {
 		load_balance_function = "gpu_runtime::TWCE_load_balance";
 	} else if (applied_schedule->load_balancing == SimpleGPUSchedule::load_balancing_type::EDGE_ONLY) {

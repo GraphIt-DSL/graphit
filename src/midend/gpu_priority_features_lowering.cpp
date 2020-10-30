@@ -43,8 +43,8 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 		}
 		// Now apply the schedule to the operator
 		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			if (upesae->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-                auto apply_schedule = upesae->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+			if (upesae->hasApplySchedule()) {
+                auto apply_schedule = upesae->getApplySchedule();
                 if (apply_schedule->isa<SimpleGPUSchedule>()) {
                     mir_context_->delta_ = apply_schedule->self<SimpleGPUSchedule>()->delta;
                     if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PULL) {

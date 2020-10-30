@@ -26,8 +26,8 @@ namespace graphit {
 
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
             // We assume that there is only one apply in each statement
-            if (vertexset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-              auto apply_schedule = vertexset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->to<SimpleScheduleObject>();
+            if (vertexset_apply->hasApplySchedule()) {
+              auto apply_schedule = vertexset_apply->getApplySchedule<SimpleScheduleObject>();
               vertexset_apply->setMetadata<bool>("is_parallel",
                   !(apply_schedule->to<SimpleCPUScheduleObject>()->getCPUParallelizationType()
                       == SimpleCPUScheduleObject::CPUParallelType::SERIAL));
@@ -64,9 +64,8 @@ namespace graphit {
 			assign_stmt->stmt_label = var_decl->stmt_label;
 
 			// copy over any schedule from the var_decl to the new assign stmt.
-			if (var_decl->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-			  assign_stmt->setMetadata<ScheduleObject::Ptr>("apply_schedule",
-			      var_decl->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
+			if (var_decl->hasApplySchedule()) {
+			  assign_stmt->setMetadata<ScheduleObject::Ptr>("apply_schedule", var_decl->getApplySchedule());
 			}
 			insert_after_stmt = assign_stmt;
 			node = var_decl;
@@ -87,8 +86,8 @@ namespace graphit {
 	if (mir::isa<mir::EdgeSetApplyExpr> (assign_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
 		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			if (assign_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-				auto apply_schedule = assign_stmt->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+			if (assign_stmt->hasApplySchedule()) {
+				auto apply_schedule = assign_stmt->getApplySchedule();
 				if (apply_schedule->isComposite()) {
                     auto hybrid_schedule = apply_schedule->to<fir::gpu_schedule::HybridGPUSchedule>();
 					// This EdgeSetApply has a Hybrid Schedule attached to it
@@ -160,8 +159,8 @@ namespace graphit {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(assign_stmt->expr);
 
 		auto applied_schedule = std::make_shared<SimpleGPUSchedule>();
-        if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-          applied_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+        if (schedule_->backend_identifier == Schedule::BackendID::GPU && edgeset_apply->hasApplySchedule()) {
+          applied_schedule = edgeset_apply->getApplySchedule<SimpleGPUSchedule>();
         }
         edgeset_apply->setMetadata<bool>("fused_dedup", false);
         edgeset_apply->setMetadata<bool>("fused_dedup_perfect", false);
@@ -202,8 +201,8 @@ namespace graphit {
 	if (mir::isa<mir::EdgeSetApplyExpr> (expr_stmt->expr)) {
 		mir::EdgeSetApplyExpr::Ptr edgeset_apply = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
 		if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
-			if (expr_stmt->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-              auto apply_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+			if (expr_stmt->hasApplySchedule()) {
+              auto apply_schedule = expr_stmt->getApplySchedule();
               if (apply_schedule->isComposite()) {
                     fir::gpu_schedule::HybridGPUSchedule::Ptr hybrid_schedule = apply_schedule->to<fir::gpu_schedule::HybridGPUSchedule>();
 					// This EdgeSetApply has a Hybrid Schedule attached to it
@@ -292,8 +291,8 @@ namespace graphit {
 		if (edgeset_apply->tracking_field != "")
 			edgeset_apply->setMetadata<bool>("requires_output", true);
 		// Check if there is a GPU schedule attached to this statement - 
-          if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-            auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+          if (edgeset_apply->hasApplySchedule()) {
+            auto apply_schedule = edgeset_apply->getApplySchedule();
 
 			if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PUSH)
 				node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
@@ -321,8 +320,8 @@ namespace graphit {
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
 
             // We assume that there is only one apply in each statement
-              if (edgeset_apply->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-                auto apply_schedule = edgeset_apply->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+              if (edgeset_apply->hasApplySchedule()) {
+                auto apply_schedule = edgeset_apply->getApplySchedule();
                 // a schedule is found
 
                 //First figure out the direction, and allocate the relevant edgeset expression

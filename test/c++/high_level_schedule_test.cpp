@@ -1106,9 +1106,9 @@ TEST_F(HighLevelScheduleTest, BFSPushSerialSchedule) {
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
 
     // check metadata
-    EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+    EXPECT_EQ(true, assign_stmt->hasApplySchedule());
 
-    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    auto attached_schedule = assign_stmt->getApplySchedule();
     EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
         fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
     EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),
@@ -1132,7 +1132,7 @@ TEST_F(HighLevelScheduleTest, BFSPushParallelSchedule) {
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(assign_stmt->expr));
 
-    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    auto attached_schedule = assign_stmt->getApplySchedule();
     EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
               fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
     EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
@@ -1220,7 +1220,7 @@ TEST_F(HighLevelScheduleTest, CCNoSchedule) {
     mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
     mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
     mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
-    EXPECT_EQ(false, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+    EXPECT_EQ(false, assign_stmt->hasApplySchedule());
 }
 
 TEST_F(HighLevelScheduleTest, CCHybridDenseSchedule) {
@@ -1287,9 +1287,9 @@ TEST_F(HighLevelScheduleTest, CCHybridDenseBitvectorFrontierScheduleNewAPI) {
     EXPECT_EQ(true, mir::isa<mir::HybridDenseEdgeSetApplyExpr>(assign_stmt->expr));
 
     // metadata for hybrid
-    EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+    EXPECT_EQ(true, assign_stmt->hasApplySchedule());
 
-    auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    auto attached_schedule = assign_stmt->getApplySchedule();
     EXPECT_EQ(true, attached_schedule->isa<fir::abstract_schedule::CompositeScheduleObject>());
 
     auto pull_schedule = attached_schedule->to<fir::abstract_schedule::CompositeScheduleObject>()->getSecondScheduleObject();
@@ -1415,9 +1415,9 @@ TEST_F(HighLevelScheduleTest, PRPullParallelRuntimeSegmentArgs) {
     EXPECT_EQ(true, mir::isa<mir::PullEdgeSetApplyExpr>(expr_stmt->expr));
 
     // expected metadata
-    EXPECT_EQ(true, expr_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+    EXPECT_EQ(true, expr_stmt->hasApplySchedule());
 
-    auto attached_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    auto attached_schedule = expr_stmt->getApplySchedule();
     EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
               fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
     EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getNumSSG().getType(),
@@ -1489,9 +1489,9 @@ TEST_F(HighLevelScheduleTest, PRPushParallel) {
     EXPECT_EQ(true, mir::isa<mir::PushEdgeSetApplyExpr>(expr_stmt->expr));
 
     // expected metadata
-    EXPECT_EQ(true, expr_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+    EXPECT_EQ(true, expr_stmt->hasApplySchedule());
 
-    auto attached_schedule = expr_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+    auto attached_schedule = expr_stmt->getApplySchedule();
     EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
               fir::abstract_schedule::SimpleScheduleObject::Direction::PUSH);
     EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUParallelizationType(),
@@ -2796,9 +2796,9 @@ TEST_F(HighLevelScheduleTest, AssignStmtMetadataScheduleTest){
   mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
 
   // check metadata
-  EXPECT_EQ(true, assign_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+  EXPECT_EQ(true, assign_stmt->hasApplySchedule());
 
-  auto attached_schedule = assign_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+  auto attached_schedule = assign_stmt->getApplySchedule();
   EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
             fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
   EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),
@@ -2832,9 +2832,9 @@ TEST_F(HighLevelScheduleTest, VarDeclMetadataScheduleTest){
   mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
 
   // check metadata
-  EXPECT_EQ(true, var_decl->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule"));
+  EXPECT_EQ(true, var_decl->hasApplySchedule());
 
-  auto attached_schedule = var_decl->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+  auto attached_schedule = var_decl->getApplySchedule();
   EXPECT_EQ(attached_schedule->to<fir::abstract_schedule::SimpleScheduleObject>()->getDirection(),
             fir::abstract_schedule::SimpleScheduleObject::Direction::PULL);
   EXPECT_EQ(attached_schedule->to<fir::cpu_schedule::SimpleCPUScheduleObject>()->getCPUDirection(),

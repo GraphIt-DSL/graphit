@@ -19,7 +19,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PushEdgeSetA
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-    SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+    SimpleGPUSchedule::Ptr applied_schedule = pesae->getApplySchedule<SimpleGPUSchedule>();
 	switch (applied_schedule->load_balancing) {
 		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(src_name);
@@ -41,7 +41,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::PullEdgeSetA
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-	SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+	SimpleGPUSchedule::Ptr applied_schedule = pesae->getApplySchedule<SimpleGPUSchedule>();
 	switch (applied_schedule->load_balancing) {
 		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(dst_name);
@@ -63,7 +63,7 @@ void GPUVectorFieldPropertiesAnalyzer::ApplyExprVisitor::visit(mir::UpdatePriori
 	std::string src_name = func->args[0].getName();
 	std::string dst_name = func->args[1].getName();
 
-    SimpleGPUSchedule::Ptr applied_schedule = pesae->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+    SimpleGPUSchedule::Ptr applied_schedule = pesae->getApplySchedule<SimpleGPUSchedule>();
 	switch (applied_schedule->load_balancing) {
 		case SimpleGPUSchedule::load_balancing_type::VERTEX_BASED:
 			idp_set.insert(src_name);

@@ -94,12 +94,21 @@ namespace graphit {
             template <typename T>
             T getMetadata(std::string mdname) {
                 if (!hasMetadata<T>(mdname)) {
-                  printf("No metadata for name: %s", mdname.c_str());
+                  std::cout << "No metadata for name: " << mdname.c_str() << std::endl;
                   assert(false);
                 }
                 typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
                 return mdnode->to<T>()->val;
-            } 
+            }
+
+            bool hasApplySchedule() {
+              return this->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+            }
+
+            template<typename T = fir::abstract_schedule::ScheduleObject>
+            std::shared_ptr<T> getApplySchedule() {
+              return this->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<T>();
+            }
         };
 
         struct Expr : public MIRNode {

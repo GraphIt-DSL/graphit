@@ -16,8 +16,8 @@ void graphit::WhileLoopFusion::visit(mir::WhileStmt::Ptr while_stmt) {
 	while_stmt->cond->accept(this);
 	while_stmt->body->accept(this);
 	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
-      if (while_stmt->hasMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")) {
-        auto apply_schedule = while_stmt->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule");
+      if (while_stmt->hasApplySchedule()) {
+        auto apply_schedule = while_stmt->getApplySchedule();
         if (!apply_schedule->isComposite()) {
             auto applied_simple_schedule = apply_schedule->self<fir::gpu_schedule::SimpleGPUSchedule>();
             if (applied_simple_schedule->kernel_fusion == fir::gpu_schedule::SimpleGPUSchedule::kernel_fusion_type::FUSION_ENABLED) {

@@ -78,9 +78,8 @@ namespace graphit {
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityEdgeSetApplyExpr::Ptr update_priority_edgeset_apply_expr) {
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
-          if (update_priority_edgeset_apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-            setPrioritySchedule(update_priority_edgeset_apply_expr
-            ->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
+          if (update_priority_edgeset_apply_expr->hasApplySchedule()) {
+            setPrioritySchedule(update_priority_edgeset_apply_expr->getApplySchedule());
           } else {
             mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
           }
@@ -90,9 +89,8 @@ namespace graphit {
     void PriorityFeaturesLower::PriorityUpdateScheduleFinder::visit(
             mir::UpdatePriorityExternVertexSetApplyExpr::Ptr update_priority_extern_vertexset_apply_expr) {
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
-          if (update_priority_extern_vertexset_apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
-            setPrioritySchedule(update_priority_extern_vertexset_apply_expr
-            ->getMetadata<ScheduleObject::Ptr>("apply_schedule"));
+          if (update_priority_extern_vertexset_apply_expr->hasApplySchedule()) {
+            setPrioritySchedule(update_priority_extern_vertexset_apply_expr->getApplySchedule());
           } else {
             mir_context_->priority_update_type = mir::PriorityUpdateType::NoPriorityUpdate;
           }
@@ -294,14 +292,13 @@ namespace graphit {
         }
         auto expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr);
         if (schedule_->backend_identifier == Schedule::BackendID::CPU) {
-              if (expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
+              if (expr->hasApplySchedule()) {
                   SimpleCPUScheduleObject::Ptr apply_schedule;
-                  if (expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->isComposite()) {
-                      apply_schedule = expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")
-                          ->self<fir::abstract_schedule::CompositeScheduleObject>()
+                  if (expr->getApplySchedule()->isComposite()) {
+                      apply_schedule = expr->getApplySchedule<fir::abstract_schedule::CompositeScheduleObject>()
                               ->getFirstScheduleObject()->self<SimpleCPUScheduleObject>();
                   } else {
-                      apply_schedule = expr->getMetadata<ScheduleObject::Ptr>("apply_schedule")->self<SimpleCPUScheduleObject>();
+                      apply_schedule = expr->getApplySchedule<SimpleCPUScheduleObject>();
                   }
                 if (apply_schedule->getPriorityUpdateType() ==
                     SimpleCPUScheduleObject::PriorityUpdateType::CONST_SUM_REDUCTION_BEFORE_UPDATE) {

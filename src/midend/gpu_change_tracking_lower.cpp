@@ -83,7 +83,7 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
 					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
 
-					SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+					SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
 					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
 					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
@@ -135,7 +135,7 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
 					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
 
-                    SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+                    SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
 					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
 					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
@@ -165,7 +165,7 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
 					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
 
-                  SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getMetadata<fir::abstract_schedule::ScheduleObject::Ptr>("apply_schedule")->self<SimpleGPUSchedule>();
+                  SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
                   if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
 						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
 					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {

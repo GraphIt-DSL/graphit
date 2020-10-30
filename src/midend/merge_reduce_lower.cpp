@@ -35,10 +35,10 @@ using fir::abstract_schedule::ScheduleObject;
         auto current_scope_name = label_scope_.getCurrentScope();
         // check that this is a CPU schedule
 
-        if (!apply_expr->hasMetadata<ScheduleObject::Ptr>("apply_schedule")) {
+        if (!apply_expr->hasApplySchedule()) {
             return;
         }
-        auto apply_schedule = apply_expr->getMetadata<ScheduleObject::Ptr>("apply_schedule");
+        auto apply_schedule = apply_expr->getApplySchedule();
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_expr->input_function_name);
         auto edgeset_str = mir::to<mir::VarExpr>(apply_expr->target)->var.getName();
         auto merge_reduce = std::make_shared<mir::MergeReduceField>();
