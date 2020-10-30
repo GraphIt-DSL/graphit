@@ -395,8 +395,8 @@ namespace graphit {
         void MIRRewriter::visit(std::shared_ptr<PriorityUpdateOperatorSum> op) {
             rewrite_call_args(op);
             rewrite_priority_update_operator(op);
-            op->delta = rewrite<Expr>(op->delta);
-            op->minimum_val = rewrite<Expr>(op->minimum_val);
+            op->setMetadata<mir::Expr::Ptr>("delta", rewrite<Expr>(op->getMetadata<mir::Expr::Ptr>("delta")));
+            op->setMetadata<mir::Expr::Ptr>("minimum_val", rewrite<Expr>(op->getMetadata<mir::Expr::Ptr>("minimum_val")));
             node = op;
         }
 

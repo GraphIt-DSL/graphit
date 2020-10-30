@@ -112,8 +112,6 @@ namespace graphit {
         void PriorityUpdateOperatorSum::copy(MIRNode::Ptr node) {
             auto expr = to<mir::PriorityUpdateOperatorSum>(node);
             PriorityUpdateOperator::copy(node);
-            delta = expr->delta;
-            minimum_val = expr->minimum_val;
         }
 
 

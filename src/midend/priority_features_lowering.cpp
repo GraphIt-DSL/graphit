@@ -272,8 +272,8 @@ namespace graphit {
                 priority_udpate_sum->name = call->name;
                 priority_udpate_sum->priority_queue = call_args[0];
                 priority_udpate_sum->destination_node_id = call_args[1];
-                priority_udpate_sum->delta = call_args[2];
-                priority_udpate_sum->minimum_val = call_args[3];
+                priority_udpate_sum->setMetadata<mir::Expr::Ptr>("delta", call->args[2]);
+                priority_udpate_sum->setMetadata<mir::Expr::Ptr>("minimum_val", call->args[3]);
                 node = priority_udpate_sum;
             }
         } else {

@@ -364,8 +364,8 @@ namespace graphit {
             op->priority_queue->accept(this);
             op->destination_node_id->accept(this);
 
-            op->minimum_val->accept(this);
-            op->delta->accept(this);
+            op->getMetadata<mir::Expr::Ptr>("minimum_val")->accept(this);
+            op->getMetadata<mir::Expr::Ptr>("delta")->accept(this);
 
         }
 

@@ -2095,9 +2095,9 @@ namespace graphit {
         }
         update_op->destination_node_id->accept(this);
         oss << ", ";
-        update_op->delta->accept(this);
+        update_op->getMetadata<mir::Expr::Ptr>("delta")->accept(this);
         oss << ", ";
-        update_op->minimum_val->accept(this);
+        update_op->getMetadata<mir::Expr::Ptr>("minimum_val")->accept(this);
         oss << ")";
     }
 

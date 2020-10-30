@@ -114,8 +114,8 @@ void GPUPriorityFeaturesLowering::PriorityUpdateOperatorRewriter::visit(mir::Cal
 		mir::PriorityUpdateOperatorSum::Ptr update_op = std::make_shared<mir::PriorityUpdateOperatorSum>();
 		update_op->priority_queue = call->args[0];
 		update_op->destination_node_id = call->args[1];
-		update_op->delta = call->args[2];
-		update_op->minimum_val = call->args[3];
+		update_op->setMetadata<mir::Expr::Ptr>("delta", call->args[2]);
+		update_op->setMetadata<mir::Expr::Ptr>("minimum_val", call->args[3]);
 		update_op->setMetadata<mir::UpdatePriorityEdgeSetApplyExpr::Ptr>("edgeset_apply_expr", puesae_);
 		node = update_op;
 	}

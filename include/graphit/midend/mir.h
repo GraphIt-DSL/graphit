@@ -822,11 +822,6 @@ namespace graphit {
 
 
         struct PriorityUpdateOperatorSum : public PriorityUpdateOperator {
-            Expr::Ptr delta;
-            // a minimum value for how low the priority can be reduced to (optional)
-            Expr::Ptr minimum_val;
-
-
             typedef std::shared_ptr<PriorityUpdateOperatorSum> Ptr;
 
             virtual void accept(MIRVisitor *visitor) {
