@@ -457,14 +457,17 @@ void CodeGenGPU::genEdgeSets(void) {
 		edge_set_type->accept(this);
 		oss << " " << "__host_" << edgeset->name << ";" << std::endl;
 
-
+		bool requires_transpose = false;
+		bool requires_blocking = false;
+		uint32_t blocking_size = 0;
 		if (mir_context_->graphs_with_blocking.find(edgeset->name) != mir_context_->graphs_with_blocking.end()) {
-			uint32_t blocking_size = mir_context_->graphs_with_blocking[edgeset->name];
+			blocking_size = mir_context_->graphs_with_blocking[edgeset->name];
 			auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
 			edge_set_type->accept(this);
 			oss << " __device__ " << edgeset->name << "__blocked_" << blocking_size << ";" << std::endl;
 			edge_set_type->accept(this);
 			oss << " " << "__host_" << edgeset->name << "__blocked_" << blocking_size << ";" << std::endl;
+			requires_blocking = true;
 		}
 
 		if (mir_context_->graphs_with_transpose.find(edgeset->name) != mir_context_->graphs_with_transpose.end() && mir_context_->graphs_with_transpose[edgeset->name]) {
@@ -473,8 +476,18 @@ void CodeGenGPU::genEdgeSets(void) {
 			oss << " __device__ " << edgeset->name << "__transposed" << ";" << std::endl;
 			edge_set_type->accept(this);
 			oss << " __host_" << edgeset->name << "__transposed" << ";" << std::endl;
+			requires_transpose = true;
 			
 		}
+		if (requires_transpose && requires_blocking) {
+			auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
+			edge_set_type->accept(this);
+			oss << " __device__ " << edgeset->name << "__blocked_" << blocking_size << "__transposed" << ";" << std::endl;
+			edge_set_type->accept(this);
+			oss << " __host_" << edgeset->name << "__blocked_" << blocking_size << "__transposed" << ";" << std::endl;
+		}
+		
+		
 	}
 }
 
@@ -613,8 +626,12 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 				printIndent();
 				oss << "cudaMemcpyToSymbol(";
 				oss << var_name << ", &__host_" << var_name << ", sizeof(__host_" << var_name << "), 0, cudaMemcpyHostToDevice);" << std::endl;
+				bool requires_blocking = false;
+				bool requires_transpose = false;
+				uint32_t blocking_size = 0;
 				if (mir_context_->graphs_with_blocking.find(var_name) != mir_context_->graphs_with_blocking.end()) {
-					uint32_t blocking_size = mir_context_->graphs_with_blocking[var_name];		
+					blocking_size = mir_context_->graphs_with_blocking[var_name];		
+					requires_blocking = true;
 					printIndent();
 					oss << "gpu_runtime::block_graph_edges(__host_" << var_name << ", __host_" << var_name << "__blocked_" << blocking_size << ", " << blocking_size << ");" << std::endl;
 					printIndent();
@@ -623,11 +640,20 @@ void CodeGenGPU::visit(mir::FuncDecl::Ptr func_decl) {
 				}
 
 				if (mir_context_->graphs_with_transpose.find(var_name) != mir_context_->graphs_with_transpose.end() && mir_context_->graphs_with_transpose[var_name]) {
+					requires_transpose = true;
 					printIndent();
 					oss << "__host_" << var_name << "__transposed = gpu_runtime::builtin_transpose(__host_" << var_name << ");" << std::endl;
 					printIndent();
 					oss << "cudaMemcpyToSymbol(";
 					oss << var_name << "__transposed" << ", &__host_" << var_name << "__transposed, sizeof(__host_" << var_name << "__transposed), 0, cudaMemcpyHostToDevice);" << std::endl;
+				}
+				if (requires_transpose && requires_blocking) {
+					printIndent();
+					oss << "gpu_runtime::block_graph_edges(__host_" << var_name << "__transposed, __host_" << var_name << "__blocked_" << blocking_size << "__transposed, " << blocking_size << ");" << std::endl;
+					printIndent();
+					oss << "cudaMemcpyToSymbol(";
+					oss << var_name << "__blocked_" << blocking_size << "__transposed, &__host_" << var_name << "__blocked_" << blocking_size << "__transposed, sizeof(__host_" << var_name << "__blocked_" << blocking_size << "__transposed), 0, cudaMemcpyHostToDevice);" << std::endl;
+					
 				}
 				
 

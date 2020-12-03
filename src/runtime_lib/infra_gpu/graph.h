@@ -105,7 +105,7 @@ static void block_graph_edges(GraphT<EdgeWeightType> &input_graph, GraphT<EdgeWe
 	output_graph.h_edge_weight = new EdgeWeightType[input_graph.num_edges];
 
 	int32_t num_blocks = (input_graph.num_vertices + blocking_size - 1)/blocking_size;
-	std::cout << "num blocks " << num_blocks << std::endl;	
+	//std::cout << "num blocks " << num_blocks << std::endl;	
 	int32_t *block_sizes = new int32_t[num_blocks+1];		
 	for (int32_t id = 0; id < num_blocks+1; id++)
 		block_sizes[id] = 0;
