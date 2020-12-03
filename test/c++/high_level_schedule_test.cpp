@@ -226,6 +226,31 @@ protected:
                                                      "    vertices.apply(printID);\n"
                                                      "end");
 
+        const char* gpu_cc_char = ("element Vertex end\n"
+                                                     "element Edge end\n"
+                                                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/4.el\");\n"
+                                                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                     "const IDs : vector{Vertex}(int) = 1;\n"
+                                                     "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                                     "    IDs[dst] min= IDs[src];\n"
+                                                     "end\n"
+                                                     "func init(v : Vertex)\n"
+                                                     "     IDs[v] = v;\n"
+                                                     "end\n"
+                                                     "func printID(v : Vertex)\n"
+                                                     "    print IDs[v];\n"
+                                                     "end\n"
+                                                     "func main()\n"
+                                                     "    var n : int = edges.getVertices();\n"
+                                                     "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                                     "    vertices.apply(init);\n"
+                                                     "    #s0# while (frontier.getVertexSetSize() != 0)\n"
+                                                     "        #s1# frontier = edges.from(frontier).applyModified(updateEdge, IDs);\n"
+                                                     "    end\n"
+                                                     "    vertices.apply(printID);\n"
+                                                     "end");
+
+
 
 
         const char* cf_char = ( "element Vertex end\n"
@@ -471,7 +496,89 @@ protected:
                 "    end\n"
                 "    vertices.apply(final_vertex_f);\n"
                 "end");
-
+        const char* gpu_bc_char = (
+		"element Vertex end"
+		"element Edge end"
+		"const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);"
+		"const vertices : vertexset{Vertex} = edges.getVertices();"
+		"const num_paths : vector{Vertex}(int) = 0;"
+		"const dependences : vector{Vertex}(float) = 0;"
+		"const visited : vector{Vertex}(bool) = false;"
+		"func forward_update(src : Vertex, dst : Vertex)"
+		"    num_paths[dst] +=  num_paths[src];"
+		"end"
+		"func visited_vertex_filter(v : Vertex) -> output : bool"
+		"    output = (visited[v] == false);"
+		"end"
+		"func mark_visited(v : Vertex)"
+		"    visited[v] = true;"
+		"end"
+		"func mark_unvisited(v : Vertex)"
+		"    visited[v] = false;"
+		"end"
+		"func backward_vertex_f(v : Vertex)"
+		"    visited[v] = true;"
+		"    dependences[v] += 1.0 / num_paths[v];"
+		"end"
+		"func backward_update(src : Vertex, dst : Vertex)"
+		"    dependences[dst] += dependences[src];"
+		"end"
+		"func final_vertex_f(v : Vertex)"
+		"    if num_paths[v] != 0"
+		"        dependences[v] = (dependences[v] - 1.0 / num_paths[v]) * num_paths[v];"
+		"    else"
+		"        dependences[v] = 0;"
+		"    end"
+		"end"
+		"func reset(v : Vertex)"
+		"    dependences[v] = 0;"
+		"    num_paths[v] = 0;"
+		"end"
+		"func main()"
+		""
+		"    % transposing the edges"
+		"    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();"
+		"    for trail in 0:1"
+		"	 startTimer();"
+		"    	 var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);"
+		"    	 var start_vertex : int = atoi(argv[2]);"
+		"    	 frontier.addVertex(start_vertex);"
+		"    	 num_paths[start_vertex] = 1;"
+		"    	 visited[start_vertex] = true;"
+		"    	 var round : int = 0;"
+		"    	 var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();"
+		"    	 frontier_list.insert(frontier);"
+		"    	 % foward pass to propagate num_paths"
+		"    	 while (frontier.getVertexSetSize() != 0)"
+		"               round = round + 1;"
+		"               #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);"
+		"	       delete frontier;"
+		"               output.apply(mark_visited);"
+		"               frontier_list.insert(output);"
+		"               frontier = output;"
+		"    	 end"
+		"   	  % resetting the visited information for the backward pass"
+		"    	  vertices.apply(mark_unvisited);"
+		"    	  % pop off the empty frontier"
+		"    	  frontier_list.retrieve(frontier);"
+		"    	  frontier_list.retrieve(frontier);"
+		"    	  frontier.apply(backward_vertex_f);"
+		"    	  round = round - 1;"
+		"    	  % backward pass to accumulate the dependencies"
+		"    	  while (round > 0)"
+		"          	#s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);"
+		"        	frontier_list.retrieve(frontier);"
+		"        	frontier.apply(backward_vertex_f);"
+		"        	round = round - 1;"
+		"    	  end"
+		"    	  delete frontier;"
+		"    	  vertices.apply(final_vertex_f);"
+		"	  var elapsed_time : float = stopTimer();"
+		"          print "elapsed time: ";"
+		"          print elapsed_time;"
+		"	  vertices.apply(reset);"
+		"    end"
+		"end");
         const char* closeness_centrality_weighted_char = (
                 "element Vertex end\n"
                 "element Edge end\n"
@@ -527,6 +634,27 @@ protected:
                              " dist[start_vertex] = 0;"
                              "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
                              "  while (pq.finished() == false) "
+                             "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
+                             "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
+                             "    delete frontier; "
+                             "  end\n"
+                             "end");
+        const char* gpu_delta_stepping_char = ("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"argv[1]\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const dist : vector{Vertex}(int) = 2147483647; %should be INT_MAX\n"
+                             "const pq: priority_queue{Vertex}(int);"
+
+                             "func updateEdge(src : Vertex, dst : Vertex, weight : int) \n"
+                             "  var new_dist : int = dist[src] + weight; "
+                             "  pq.updatePriorityMin(dst, dist[dst], new_dist); "
+                             "end\n"
+                             "func main() "
+                             "  var start_vertex : int = atoi(argv[2]);"
+                             " dist[start_vertex] = 0;"
+                             "  pq = new priority_queue{Vertex}(int)(false, false, dist, 1, 2, false, start_vertex);"
+                             "  #s0# while (pq.finished() == false) "
                              "    var frontier : vertexset{Vertex} = pq.dequeue_ready_set(); % dequeue_ready_set() \n"
                              "    #s1# edges.from(frontier).applyUpdatePriority(updateEdge);  \n"
                              "    delete frontier; "
@@ -2416,4 +2544,143 @@ TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
     HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
     program->applyGPUSchedule("s1", h1);
     EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+}
+
+
+// GPU tests with different scheduels for 5 applications
+TEST_F(HighLevelScheduleTest, GPUPageRankScheduleTest) {
+    using namespace fir::gpu_schedule;
+    istringstream is (std::string(pr_char));
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    SimpleGPUSchedule s1;
+    s1.configDirection(PULL); 
+    s1.configLoadBalance(EDGE_ONLY, BLOCKED, 0x42000); 
+    program->applyGPUSchedule("s1", s1);	 
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+}
+
+TEST_F(HightLevelScheduleTest, GPUBFSPowerLawScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    SimpleGPUSchedule s1;
+    s1.configDeduplication(DISABLED);
+    s1.configLoadBalance(ETWC);
+    s1.configDirection(PUSH);
+    s1.configFrontierCreation(FUSED);
+    SimpleGPUSchedule s2 = s1;
+    s2.configLoadBalance(VERTEX_BASED);
+    s2.configDirection(PULL, BITMAP);
+    s2.configDeduplication(DISABLED);
+    s2.configFrontierCreation(UNFUSED_BITMAP);
+    HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, "argv[3]", s1, s2);
+    program->applyGPUSchedule("s0:s1", h1);
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+    
+}
+
+TEST_F(HightLevelScheduleTest, GPUBFSRoadScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+   
+    SimpleGPUSchedule s1;
+    s1.configDeduplication(DISABLED);
+    s1.configLoadBalance(ETWC);
+    s1.configDirection(PUSH);
+    s1.configFrontierCreation(FUSED);
+    program->applyGPUSchedule("s0:s1", s1);
+    SimpleGPUSchedule s0;
+    s0.configKernelFusion(ENABLED);
+    program->applyGPUSchedule("s0", s0);
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program)); 
+}
+
+TEST_F(HightLevelScheduleTest, GPUDSPowerLawScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (std::string(gpu_delta_stepping_char));
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    SimpleGPUSchedule s1;
+    s1.configLoadBalance(ETWC);
+    s1.configFrontierCreation(UNFUSED_BOOLMAP);
+    s1.configDelta("argv[3]");
+    program->applyGPUSchedule("s0:s1", s1);
+   
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+    
+}
+
+TEST_F(HightLevelScheduleTest, GPUDSRoadScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (std::string(gpu_delta_stepping_char));
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    SimpleGPUSchedule s1;
+    s1.configLoadBalance(ETWC);
+    s1.configFrontierCreation(FUSED);
+    s1.configDelta("argv[3]");
+    program->applyGPUSchedule("s0:s1", s1);
+    SimpleGPUSchedule s0;
+    s0.configKernelFusion(ENABLED);
+    program->applyGPUSchedule("s0", s0);
+    
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+    
+}
+
+TEST_F(HightLevelScheduleTest, GPUCCScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (std::string(gpu_cc_char));
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+
+    SimpleGPUSchedule s1;
+    s1.configLoadBalance(ETWC);
+    s1.configDeduplication(ENABLED);
+    s1.configFrontierCreation(UNFUSED_BITMAP);
+    program->applyGPUSchedule("s0:s1", s1);
+    
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+    
+}
+
+TEST_F(HightLevelScheduleTest, GPUBCPowerLawScheduleTest) {
+    using namespace fir::gpu_schedule;
+
+    istringstream is (std::string(gpu_bc_char));
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    SimpleGPUSchedule s1;
+    s1.configLoadBalance(ETWC);
+    s1.configFrontierCreation(FUSED);
+    s1.configDeduplication(ENABLED, FUSED);
+    SimpleGPUSchedule s2;
+    s2.configLoadBalance(ETWC);
+    s2.configDirection(PULL, BITMAP);
+    s2.configFrontierCreation(UNFUSED_BITMAP);
+    HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, "argv[3]", s1, s2);
+    program->applyGPUSchedule("s1", s1);
+    program->applyGPUSchedule("s2", s1);
+   
+    
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+    
 }
