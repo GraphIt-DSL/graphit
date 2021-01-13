@@ -212,7 +212,8 @@ namespace graphit {
 
           enum class BackendID {
             CPU,
-            GPU
+            GPU,
+            SWARM
           };
 
 

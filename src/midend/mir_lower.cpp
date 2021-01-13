@@ -16,7 +16,9 @@
 #include <graphit/midend/priority_features_lowering.h>
 #include <graphit/midend/gpu_priority_features_lowering.h>
 #include <graphit/midend/while_loop_fusion.h>
+#include <graphit/midend/frontier_dedup_lower.h>
 #include <graphit/midend/frontier_reuse_analysis.h>
+#include <graphit/midend/swarm_frontier_convert.h>
 
 namespace graphit {
     /**
@@ -44,6 +46,11 @@ namespace graphit {
 
 	// This pass finds EdgeSetApplyExpressions that allow frontiers to be reused and removes the corresponding deletes
 	FrontierReuseAnalysis(mir_context).analyze();
+
+	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::SWARM) {
+      FrontierDedupLower(mir_context).lower();
+	}
+
 
         // This pass sets properties of edgeset apply expressions based on the schedules including
         // edge traversal direction: push, pull, denseforward, hybrid_dense, hybrid_denseforward
@@ -88,7 +95,11 @@ namespace graphit {
         MergeReduceLower(mir_context, schedule).lower();
 
 	// This pass lowers while loops that have fusion schedule attached to them 
-	WhileLoopFusion(mir_context, schedule).lower();	
+	WhileLoopFusion(mir_context, schedule).lower();
+
+      if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::SWARM) {
+        SwarmFrontierConvert(mir_context).analyze();
+      }
 
     }
 }

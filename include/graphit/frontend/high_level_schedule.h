@@ -18,6 +18,7 @@
 
 #include <graphit/frontend/gpu_schedule.h>
 #include <graphit/frontend/cpu_schedule.h>
+#include <graphit/frontend/swarm_schedule.h>
 #include <graphit/frontend/abstract_schedule.h>
 
 
@@ -59,6 +60,7 @@ namespace graphit {
                 enum class backend_selection_type {
 			            CODEGEN_CPU,
                         CODEGEN_GPU,
+                        CODEGEN_SWARM,
 			            CODEGEN_INVALID
                 };
                 
@@ -237,6 +239,18 @@ namespace graphit {
 			*s2_copy = s2;
             schedule_->schedule_map[label_name] = std::make_shared<gpu_schedule::HybridGPUSchedule>(s2);
 		}
+
+
+        void applySwarmSchedule(std::string label_name, swarm_schedule::SimpleSwarmSchedule &s1) {
+          backend_selection = backend_selection_type::CODEGEN_SWARM;
+
+          if (schedule_ == nullptr || schedule_->backend_identifier == Schedule::BackendID::CPU) {
+            schedule_ = new Schedule(Schedule::BackendID::SWARM);
+          }
+
+          swarm_schedule::SimpleSwarmSchedule *s1_copy = new swarm_schedule::SimpleSwarmSchedule(s1);
+          schedule_->schedule_map[label_name] = std::make_shared<swarm_schedule::SimpleSwarmSchedule>(s1);
+        }
 		
 
             private:

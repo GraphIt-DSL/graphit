@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) {
         
     if (program->backend_selection == fir::high_level_schedule::ProgramScheduleNode::backend_selection_type::CODEGEN_GPU)
     	be->emitGPU(output_file, python_module_name);
+    else if (program->backend_selection == fir::high_level_schedule::ProgramScheduleNode::backend_selection_type::CODEGEN_SWARM)
+        be->emitSwarm(output_file, python_module_name);
     else
     	be->emitCPP(output_file, python_module_name);
     output_file.close();

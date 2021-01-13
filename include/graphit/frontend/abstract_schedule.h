@@ -47,7 +47,8 @@ class ScheduleObject : public std::enable_shared_from_this<ScheduleObject> {
  public:
   enum class BackendID {
     CPU,
-    GPU
+    GPU,
+    SWARM
   };
 
   typedef std::shared_ptr<ScheduleObject> Ptr;

@@ -1,0 +1,3 @@
+schedule:
+	SimpleSwarmSchedule s1;
+	program->applySwarmSchedule("s1", s1);

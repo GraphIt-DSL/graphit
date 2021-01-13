@@ -21,4 +21,10 @@ namespace graphit{
         CodeGenGPU code_gen_gpu(oss, mir_context_, module_name, module_path);
 	return code_gen_gpu.genGPU();
     }
+    int Backend::emitSwarm(std::ostream &oss, std::string module_name) {
+      CodeGenSwarm* codegen_swarm = new CodeGenSwarm(oss, mir_context_, module_name);
+      int flag = codegen_swarm->genSwarmCode();
+      delete codegen_swarm;
+      return flag;
+    }
 }
