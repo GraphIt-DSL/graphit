@@ -472,6 +472,71 @@ protected:
                 "    vertices.apply(final_vertex_f);\n"
                 "end");
 
+      const char* bc_swarm_char = ("element Vertex end\n"
+                             "element Edge end\n"
+                             "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../test/graphs/4.el\");\n"
+                             "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                             "const num_paths : vector{Vertex}(double) = 0;\n"
+                             "const dependences : vector{Vertex}(double) = 0;\n"
+                             "const visited : vector{Vertex}(bool) = false;\n"
+                             "func forward_update(src : Vertex, dst : Vertex)\n"
+                             "    num_paths[dst] +=  num_paths[src];\n"
+                             "end\n"
+                             "func visited_vertex_filter(v : Vertex) -> output : bool\n"
+                             "    output = (visited[v] == false);\n"
+                             "end\n"
+                             "func mark_visited(v : Vertex)\n"
+                             "    visited[v] = true;\n"
+                             "end\n"
+                             "func mark_unvisited(v : Vertex)\n"
+                             "    visited[v] = false;\n"
+                             "end\n"
+                             "func backward_vertex_f(v : Vertex)\n"
+                             "    visited[v] = true;\n"
+                             "    dependences[v] += 1 / num_paths[v];\n"
+                             "end\n"
+                             "func backward_update(src : Vertex, dst : Vertex)\n"
+                             "    dependences[dst] += dependences[src];\n"
+                             "end\n"
+                             "func final_vertex_f(v : Vertex)\n"
+                             "    dependences[v] = (dependences[v] - 1 / num_paths[v]) * num_paths[v];\n"
+                             "end\n"
+                             "func main()\n"
+                             "    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();\n"
+                             "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                             "    frontier.addVertex(8);\n"
+                             "    num_paths[8] = 1;\n"
+                             "    visited[8] = true;\n"
+                             "    var round : int = 0;\n"
+                             "    var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();\n"
+                             "    frontier_list.insert(frontier);\n"
+                             "    % foward pass to propagate num_paths\n"
+                             "    while (frontier.getVertexSetSize() != 0)\n"
+                             "        round = round + 1;\n"
+                             "        #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);\n"
+                             "        delete frontier;\n"
+                             "        output.apply(mark_visited);\n"
+                             "        frontier_list.insert(output);\n"
+                             "        frontier = output;\n"
+                             "    end\n"
+                             "    % resetting the visited information for the backward pass\n"
+                             "    vertices.apply(mark_unvisited);\n"
+                             "    frontier_list.retrieve(frontier);\n"
+                             "    frontier_list.retrieve(frontier);\n"
+                             "    frontier.apply(backward_vertex_f);\n"
+                             "    frontier_list.pop();\n"
+                             "    round = round - 1;\n"
+                             "    % backward pass to accumulate the dependencies\n"
+                             "    while (round > 0)\n"
+                             "        #s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);\n"
+                             "        frontier_list.retrieve(frontier);\n"
+                             "        frontier.apply(backward_vertex_f);\n"
+                             "        round = round - 1;\n"
+                             "    end\n"
+                             "    delete frontier;\n"
+                             "    vertices.apply(final_vertex_f);\n"
+                             "end");
+
         const char* closeness_centrality_weighted_char = (
                 "element Vertex end\n"
                 "element Edge end\n"
@@ -775,6 +840,7 @@ protected:
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
         bc_str_ = string(bc_char);
+        bc_swarm_str_ = string(bc_swarm_char);
         closeness_centrality_weighted_str_ = string(closeness_centrality_weighted_char);
         delta_stepping_str_ = string(delta_stepping_char);
         ppsp_str_ = string(ppsp_char);
@@ -880,6 +946,7 @@ protected:
     string prd_double_str_;
     string pr_cc_str_;
     string bc_str_;
+    string bc_swarm_str_;
     string closeness_centrality_weighted_str_;
     string delta_stepping_str_;
     string ppsp_str_;
@@ -2856,20 +2923,6 @@ TEST_F(HighLevelScheduleTest, VarDeclMetadataScheduleTest){
             fir::cpu_schedule::SimpleCPUScheduleObject::CPUParallelType::WORK_STEALING_PAR);
 }
 
-TEST_F(HighLevelScheduleTest, PR_Swarm) {
-  using namespace fir::swarm_schedule;
-  using namespace fir::abstract_schedule;
-  using namespace fir;
-  istringstream is (pr_str_);
-  fe_->parseStream(is, context_, errors_);
-  fir::high_level_schedule::ProgramScheduleNode::Ptr program
-      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-  SimpleSwarmSchedule s1;
-  program->applySwarmSchedule("s1", s1);
-  //generate swarm code successfully
-  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
-}
-
 TEST_F(HighLevelScheduleTest, WhileStmtFrontierConvert_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
@@ -2903,43 +2956,74 @@ TEST_F(HighLevelScheduleTest, WhileStmtFrontierConvert_Swarm) {
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
 }
 
-//TEST_F(HighLevelScheduleTest, WhileStmtFrontierSwitchConvert_Swarm) {
-//using namespace fir::swarm_schedule;
-//using namespace fir::abstract_schedule;
-//using namespace fir;
-//istringstream is("element Vertex end\n"
-//                 "element Edge end\n"
-//                 "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
-//                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-//                 "const num_paths : vector{Vertex}(int) = 0;\n"
-//                 "const visited : vector{Vertex}(bool) = false;\n"
-//                 "func mark_visited(src : Vertex) "
-//                 "visited[src] = true; end\n"
-//                 "func visited_vertex_filter(v : Vertex) -> output : bool\n"
-//                 "output = (visited[v] == false); end\n"
-//                 "func forward_update(src : Vertex, dst : Vertex) "
-//                 "num_paths[dst] +=  num_paths[src]; end\n"
-//                 "func main()\n"
-//                 "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
-//                 "var round : int = 0;\n"
-//                 "while (frontier.getVertexSetSize() != 0)\n"
-//                 "    round = round + 1;\n"
-//                 "    #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);\n"
-//                 "    delete frontier;\n"
-//                 "    output.apply(mark_visited);\n"
-//                 "    frontier = output;\n"
-//                 "end\nend");
-//fe_->parseStream(is, context_, errors_);
-//fir::high_level_schedule::ProgramScheduleNode::Ptr program
-//    = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-//SimpleSwarmSchedule s1;
-//program->applySwarmSchedule("s1", s1);
-////generate swarm code successfully
-//
-////TODO(clhsu): check the while stmt metadata and number of stmts in the while body
-//EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
-//mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-//mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[1]);
-//EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
-//EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
-//}
+TEST_F(HighLevelScheduleTest, WhileStmtFrontierSwitchConvert_Swarm) {
+using namespace fir::swarm_schedule;
+using namespace fir::abstract_schedule;
+using namespace fir;
+istringstream is("element Vertex end\n"
+                 "element Edge end\n"
+                 "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
+                 "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                 "const num_paths : vector{Vertex}(int) = 0;\n"
+                 "const visited : vector{Vertex}(bool) = false;\n"
+                 "func mark_visited(src : Vertex) "
+                 "visited[src] = true; end\n"
+                 "func visited_vertex_filter(v : Vertex) -> output : bool\n"
+                 "output = (visited[v] == false); end\n"
+                 "func forward_update(src : Vertex, dst : Vertex) "
+                 "num_paths[dst] +=  num_paths[src]; end\n"
+                 "func main()\n"
+                 "var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                 "var round : int = 0;\n"
+                 "while (frontier.getVertexSetSize() != 0)\n"
+                 "    round = round + 1;\n"
+                 "    #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);\n"
+                 "    delete frontier;\n"
+                 "    output.apply(mark_visited);\n"
+                 "    frontier = output;\n"
+                 "end\nend");
+fe_->parseStream(is, context_, errors_);
+fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+SimpleSwarmSchedule s1;
+program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+//TODO(clhsu): check the while stmt metadata and number of stmts in the while body
+EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
+EXPECT_EQ (3,  while_stmt->body->stmts->size());
+}
+
+TEST_F(HighLevelScheduleTest, BC_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bc_swarm_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, PR_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(pr_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}

@@ -116,6 +116,9 @@ namespace graphit {
 	struct VertexSetDedupExpr;
 	struct HybridGPUStmt;
 	struct EnqueueVertex;
+
+	// Swarm additions
+	struct SwarmSwitchStmt;
 	
 
         struct MIRVisitor {
@@ -266,6 +269,9 @@ namespace graphit {
 	    virtual void visit(std::shared_ptr<VertexSetDedupExpr>); 
 	    virtual void visit(std::shared_ptr<HybridGPUStmt>); 
 	    virtual void visit(std::shared_ptr<EnqueueVertex>);
+
+	    // Swarm Addition
+        virtual void visit(std::shared_ptr<SwarmSwitchStmt>);
 
        	    protected:
 

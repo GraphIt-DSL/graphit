@@ -30,6 +30,7 @@ class FrontierDedupLower {
     virtual void visit(mir::AssignStmt::Ptr) override;
     virtual void visit(mir::VarDecl::Ptr) override;
     virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
+    virtual void visit(mir::Call::Ptr) override;
   };
 };
 

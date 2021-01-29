@@ -1568,19 +1568,32 @@ namespace graphit {
 		virtual MIRNode::Ptr cloneNode();
 	};
 	struct EnqueueVertex: Stmt {
-		Expr::Ptr vertex_id;
-		Expr::Ptr vertex_frontier;
+      Expr::Ptr vertex_id;
+      Expr::Ptr vertex_frontier;
 
-		enum class Type {SPARSE, BOOLMAP, BITMAP};
+      enum class Type {SPARSE, BOOLMAP, BITMAP};
 
-		typedef std::shared_ptr<EnqueueVertex> Ptr;
-		virtual void accept(MIRVisitor *visitor) {
-			visitor->visit(self<EnqueueVertex>());
-		}
-	protected:
-		virtual void copy(MIRNode::Ptr);
-		virtual MIRNode::Ptr cloneNode();
-	};
+      typedef std::shared_ptr<EnqueueVertex> Ptr;
+      virtual void accept(MIRVisitor *visitor) {
+        visitor->visit(self<EnqueueVertex>());
+      }
+     protected:
+      virtual void copy(MIRNode::Ptr);
+      virtual MIRNode::Ptr cloneNode();
+    };
+
+    struct SwarmSwitchStmt: Stmt {
+      int round;
+      Stmt::Ptr stmt;
+
+      typedef std::shared_ptr<SwarmSwitchStmt> Ptr;
+      virtual void accept(MIRVisitor *visitor) {
+        visitor->visit(self<SwarmSwitchStmt>());
+      }
+     protected:
+      virtual void copy(MIRNode::Ptr);
+      virtual MIRNode::Ptr cloneNode();
+    };
     }
 
 }

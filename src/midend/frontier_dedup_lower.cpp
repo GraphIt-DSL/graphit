@@ -90,4 +90,15 @@ void FrontierDedupLower::FrontierVarChangeVisitor::visit(mir::VertexSetApplyExpr
   }
 }
 
+void FrontierDedupLower::FrontierVarChangeVisitor::visit(mir::Call::Ptr call_expr) {
+  for (auto arg : call_expr->args) {
+    if (mir::isa<mir::VarExpr>(arg)) {
+      mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(arg);
+      if (var_expr->var.getName() == old_frontier_name) {
+        var_expr->var = mir::Var(frontier_name, var_expr->var.getType());
+      }
+    }
+  }
+}
+
 }
