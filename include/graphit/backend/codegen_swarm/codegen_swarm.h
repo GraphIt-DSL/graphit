@@ -133,7 +133,9 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::WhileStmt::Ptr) override;
   void visit(mir::VarDecl::Ptr) override;
   void visit(mir::VarExpr::Ptr) override;
+  void visit(mir::VertexSetType::Ptr) override;
   void visit(mir::SwarmSwitchStmt::Ptr);
+  void visit(mir::AssignStmt::Ptr) override;
 };
 
 }

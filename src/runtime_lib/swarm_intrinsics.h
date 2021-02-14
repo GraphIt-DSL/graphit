@@ -15,6 +15,18 @@ bool sum_reduce(T& dst, T src) {
   return true;
 }
 
+template <typename T>
+int min_reduce(T& dst, T& src) {
+  if (dst > src) {
+    dst = src;
+    return 0;
+  } else if (dst < src) {
+    src = dst;
+    return 1;
+  }
+  return 2;
+}
+
 void startTimer() {
   // Currently left empty
   // Insert appropriate timing code for swarm
@@ -31,6 +43,11 @@ template <typename T>
 void print(T& t) {
   //std::cout << t << std::endl;
 }
+
+void deleteObject(VertexFrontier &frontier) {
+  vector<int32_t>().swap(frontier.elems);
+}
+
 
 
 

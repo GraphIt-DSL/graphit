@@ -43,8 +43,9 @@ int CodeGenSwarm::genSwarmFrontiers() {
   for (std::string frontier_name : frontier_finder->swarm_frontier_vars) {
     auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
     auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
-    oss << "swarm::PrioQueue<";
-    vertex_set_type->accept(this);  // currently not working yet
+    oss << "swarm_runtime::VertexFrontier<";
+//    vertex_set_type->accept(this);  // currently not working yet
+    oss << "int32_t";
     oss << "> " << frontier_name << ";" << std::endl;
   }
 }
@@ -457,6 +458,46 @@ void CodeGenSwarmQueueEmitter::visit(mir::VarDecl::Ptr stmt) {
   oss << ";" << std::endl;
 }
 
+void CodeGenSwarmQueueEmitter::visit(mir::AssignStmt::Ptr stmt) {
+  if (mir::isa<mir::VarExpr>(stmt->lhs)) {
+    auto lhs_name = mir::to<mir::VarExpr>(stmt->lhs)->var.getName();
+    if (lhs_name == current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName()) {
+      stmt->expr->accept(this);
+      return;
+    }
+  }
+  if (mir::isa<mir::PriorityQueueAllocExpr>(stmt->expr)) {
+    mir::PriorityQueueAllocExpr::Ptr pqae = mir::to<mir::PriorityQueueAllocExpr>(stmt->expr);
+    auto associated_element_type_size = mir_context_->getElementCount(pqae->element_type);
+    printIndent();
+    stmt->lhs->accept(this);
+    oss << ".init(";
+    associated_element_type_size->accept(this);
+    oss << ");" << std::endl;
+    printIndent();
+    stmt->lhs->accept(this);
+    oss << "_delta = ";
+    if (pqae->getMetadata<int>("delta") > 0) {
+      oss << pqae->getMetadata<int>("delta");
+    } else {
+      oss << "atoi(__argv[" << -pqae->getMetadata<int>("delta") << "])";
+    }
+    oss << ";" << std::endl;
+    printIndent();
+    stmt->lhs->accept(this);
+    oss << ".push(0, ";
+    pqae->starting_node->accept(this);
+    oss << ");" << std::endl;
+
+    return;
+  }
+  printIndent();
+  stmt->lhs->accept(this);
+  oss << " = ";
+  stmt->expr->accept(this);
+  oss << ";" << std::endl;
+}
+
 void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   printIndent();
   oss << "case " << std::to_string(switch_stmt->round) << ": {" << std::endl;
@@ -486,6 +527,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::VarExpr::Ptr expr) {
     oss << expr->var.getName();
 }
 
+void CodeGenSwarmQueueEmitter::visit(mir::VertexSetType::Ptr vertexset_type) {
+  vertexset_type->element->accept(this);
+}
+
 void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
   if (!while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
     printIndent();
@@ -508,7 +553,7 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
   printIndent();
-  oss << frontier_name.getName() << ".for_each_prio([](unsigned level, ";
+  oss << frontier_name.getName() << ".swarm_frontier.for_each_prio([](unsigned level, ";
   frontier_name.getType()->accept(this);
   oss << " src, auto push) {" << std::endl;
   indent();
@@ -580,8 +625,17 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     printIndent();
     oss << "}";
   } else {
-//    assert(false && "Swarm backend doesn't support vertex set apply on frontiers\n");
-    oss << "Do something here for vertexset apply on frontier "<< mir_var->var.getName() << std::endl;
+    oss << "int frontier_size = " << mir_var->var.getName() << ".size();" << std::endl;
+    printIndent();
+    oss << "for (int i = 0; i < frontier_size; i++) {" << std::endl;
+    indent();
+    printIndent();
+    oss << "int32_t current = " << mir_var->var.getName() << "[i];" << std::endl;
+    printIndent();
+    oss << vsae->input_function_name << "(current);" << std::endl;
+    dedent();
+    printIndent();
+    oss << "}";
   }
 }
 
@@ -624,7 +678,42 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     printIndent();
     oss << "}";
   } else {
-    oss << "Do something here for edgeset apply on frontier "<< esae->from_func << std::endl;
+    oss << "int frontier_size = " << esae->from_func << ".size();" << std::endl;
+    printIndent();
+    oss << "for (int i = 0; i < frontier_size; i++) {" << std::endl;
+    indent();
+    printIndent();
+    oss << "int32_t current = " << esae->from_func << "[i];" << std::endl;
+    printIndent();
+    oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[current];" << std::endl;
+    printIndent();
+    oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[current+1];" << std::endl;
+    printIndent();
+    oss << "for (int j = edgeZero; j < edgeLast; j++) {" << std::endl;
+    indent();
+    printIndent();
+    oss << "int ngh = " << mir_var->var.getName() << ".h_edge_dst[j];" << std::endl;
+    if (esae->to_func != "") {
+      printIndent();
+      oss << "if (" << esae->to_func << "(ngh)) {" << std::endl;
+      indent();
+    }
+    printIndent();
+    oss << esae->input_function_name << "(current, ngh";
+    if (esae->is_weighted)
+      oss << ", _weight";
+    oss << ");" << std::endl;
+    if (esae->to_func != "") {
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    }
+    dedent();
+    printIndent();
+    oss << "}" << std::endl;
+    dedent();
+    printIndent();
+    oss << "}";
   }
 }
 

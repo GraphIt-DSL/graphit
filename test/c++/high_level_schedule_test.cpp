@@ -524,7 +524,6 @@ protected:
                              "    frontier_list.retrieve(frontier);\n"
                              "    frontier_list.retrieve(frontier);\n"
                              "    frontier.apply(backward_vertex_f);\n"
-                             "    frontier_list.pop();\n"
                              "    round = round - 1;\n"
                              "    % backward pass to accumulate the dependencies\n"
                              "    while (round > 0)\n"
@@ -2954,6 +2953,7 @@ TEST_F(HighLevelScheduleTest, WhileStmtFrontierConvert_Swarm) {
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[1]);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
 }
 
 TEST_F(HighLevelScheduleTest, WhileStmtFrontierSwitchConvert_Swarm) {
@@ -2996,6 +2996,10 @@ mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body
 EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
 EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
 EXPECT_EQ (3,  while_stmt->body->stmts->size());
+
+EXPECT_EQ(true, mir::isa<mir::SwarmSwitchStmt>((*(while_stmt->body->stmts))[0]));
+EXPECT_EQ(1, while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size());
+EXPECT_EQ(2, while_stmt->getMetadata<std::vector<int>>("swarm_single_level").size());
 }
 
 TEST_F(HighLevelScheduleTest, BC_Swarm) {
@@ -3026,4 +3030,44 @@ TEST_F(HighLevelScheduleTest, PR_Swarm) {
 //generate swarm code successfully
 
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, BFS_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bfs_str_gpu_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
+  EXPECT_EQ (1,  while_stmt->body->stmts->size());
+}
+
+TEST_F(HighLevelScheduleTest, CC_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(cc_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
+  EXPECT_EQ (1,  while_stmt->body->stmts->size());
 }
