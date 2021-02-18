@@ -7,13 +7,18 @@ namespace swarm_runtime {
 class VertexFrontier {
  public:
   std::vector<int32_t> elems;
-  swarm::PrioQueue<int32_t> swarm_frontier;
 
   int& operator[](int);
   int size() {
     return elems.size();
   }
 };
+
+static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_elems = 0) {
+  VertexFrontier frontier;
+  frontier.max_num_elems = num_vertices;
+  return frontier;
+}
 
 // this is chaotic
 int& VertexFrontier::operator[](int idx) {

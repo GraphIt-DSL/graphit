@@ -43,10 +43,9 @@ int CodeGenSwarm::genSwarmFrontiers() {
   for (std::string frontier_name : frontier_finder->swarm_frontier_vars) {
     auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
     auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
-    oss << "swarm_runtime::VertexFrontier<";
-//    vertex_set_type->accept(this);  // currently not working yet
+    oss << "swarm::PrioQueue<";
     oss << "int32_t";
-    oss << "> " << frontier_name << ";" << std::endl;
+    oss << "> swarm_" << frontier_name << ";" << std::endl;
   }
 }
 
@@ -250,10 +249,7 @@ void CodeGenSwarm::visit(mir::EdgeSetLoadExpr::Ptr expr) {
 }
 
 void CodeGenSwarm::visit(mir::VertexSetType::Ptr vertexset_type) {
-//  if (vertexset_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ExternPriorityUpdate || vertexset_type->getMetadata<mir::PriorityUpdateType>("priority_update_type") == mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)
-//    oss << "julienne::vertexSubset ";
-//  else
-//    oss << "VertexSubset<int> *  ";
+  oss << "swarm_runtime::VertexFrontier";
 }
 
 void CodeGenSwarm::visit(mir::ListType::Ptr list_type) {
@@ -420,12 +416,22 @@ void CodeGenSwarm::visit(mir::EqExpr::Ptr eq_expr) {
   }
 }
 
+void CodeGenSwarm::visit(mir::VertexSetAllocExpr::Ptr vsae) {
+  mir::Expr::Ptr size_expr = mir_context_->getElementCount(vsae->element_type);
+  oss << "swarm_runtime::create_new_vertex_set(";
+  size_expr->accept(this);
+  oss << ", ";
+  if (vsae->size_expr == nullptr)
+    oss << "0";
+  else
+    vsae->size_expr->accept(this);
+  oss << ")";
+}
+
 void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
   // don't need to reinitialize the frontiers declaration if already declared outside in swarm
   if (std::find(frontier_finder->swarm_frontier_vars.begin(),
       frontier_finder->swarm_frontier_vars.end(), stmt->name) != frontier_finder->swarm_frontier_vars.end()) {
-    // Don't need to reallocate swarm frontiers, since declared outside
-    if (mir::isa<mir::VertexSetAllocExpr>(stmt->initVal)) return;
 
     // Just generate the Edgeset apply operator code
     if (mir::isa<mir::EdgeSetApplyExpr>(stmt->initVal)) {
@@ -553,7 +559,9 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
   printIndent();
-  oss << frontier_name.getName() << ".swarm_frontier.for_each_prio([](unsigned level, ";
+  oss << "swarm_runtime::populate_swarm_frontier(" << frontier_name.getName() << ", swarm_" << frontier_name.getName() << ");" << std::endl;
+  printIndent();
+  oss << "swarm_" << frontier_name.getName() << ".for_each_prio([](unsigned level, ";
   frontier_name.getType()->accept(this);
   oss << " src, auto push) {" << std::endl;
   indent();
@@ -563,9 +571,15 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
     oss << "switch (level % " << std::to_string(rounds) << ") {" << std::endl;
   }
   while_stmt->body->accept(this);
+  if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
+    printIndent();
+    oss << "}" << std::endl;
+  }
   dedent();
   printIndent();
   oss << "}" << std::endl;
+  printIndent();
+  oss << "swarm_runtime::clear_frontier(" << frontier_name.getName() << ");" << std::endl;
 }
 
 void CodeGenSwarm::visit(mir::ForStmt::Ptr stmt) {
@@ -642,8 +656,10 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 void CodeGenSwarmQueueEmitter::visit(mir::StmtBlock::Ptr stmts) {
   for (auto stmt: *(stmts->stmts)) {
     stmt->accept(this);
-    stmt_idx++;
-    push_inserted = false;
+    if (mir::isa<mir::SwarmSwitchStmt>(stmt)) {
+      stmt_idx++;
+      push_inserted = false;
+    }
   }
 }
 
@@ -717,6 +733,26 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   }
 }
 
+void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
+  func_decl->body->accept(this);
+  if (func_decl->result.isInitialized()) {
+    if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
+      if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
+        printIndent();
+        oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
+        indent();
+        printIndent();
+        int pushIncrement = getPushIncrement(stmt_idx);
+        oss << "push(level + " << std::to_string(pushIncrement) << ", dst);" << std::endl;
+        push_inserted = true;
+        dedent();
+        printIndent();
+        oss << "}" << std::endl;
+      }
+    }
+  }
+}
+
 void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   auto mir_var = mir::to<mir::VarExpr>(esae->target);
   printIndent();
@@ -732,16 +768,22 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     printIndent();
     oss << "if (" << esae->to_func << "(dst)) {" << std::endl;
     indent();
-    printIndent();
-    oss << esae->input_function_name << "(src, dst);" << std::endl;
-  } else {
-    printIndent();
-    oss << esae->input_function_name << "(src, dst);" << std::endl;
   }
+
   printIndent();
-  int pushIncrement = getPushIncrement(stmt_idx);
-  oss << "push(level + " << std::to_string(pushIncrement) << ", dst);" << std::endl;
-  push_inserted = true;
+  oss << "{" << std::endl;
+  indent();
+  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
+  func_decl->accept(this);
+  dedent();
+  printIndent();
+  oss << "}" << std::endl;
+
+  if (esae->to_func != "") {
+    dedent();
+    printIndent();
+    oss << "}" << std::endl;
+  }
 
   dedent();
   printIndent();

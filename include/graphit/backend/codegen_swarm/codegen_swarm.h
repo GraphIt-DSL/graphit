@@ -59,6 +59,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   virtual void visit(mir::ExprStmt::Ptr);
   virtual void visit(mir::EdgeSetLoadExpr::Ptr);
   virtual void visit(mir::ListType::Ptr);
+  virtual void visit(mir::VertexSetAllocExpr::Ptr);
   virtual void visit(mir::ListAllocExpr::Ptr);
   virtual void visit(mir::VertexSetType::Ptr);
   virtual void visit(mir::AssignStmt::Ptr);
@@ -136,6 +137,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::VertexSetType::Ptr) override;
   void visit(mir::SwarmSwitchStmt::Ptr);
   void visit(mir::AssignStmt::Ptr) override;
+  void visit(mir::FuncDecl::Ptr) override;
 };
 
 }
