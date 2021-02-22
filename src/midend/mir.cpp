@@ -969,7 +969,7 @@ namespace graphit {
     void SwarmSwitchStmt::copy(MIRNode::Ptr node) {
       const auto op = mir::to<SwarmSwitchStmt>(node);
       round = op->round;
-      stmt = op->stmt;
+      stmt_block = op->stmt_block->clone<StmtBlock>();
     }
     MIRNode::Ptr SwarmSwitchStmt::cloneNode() {
       const auto node = std::make_shared<SwarmSwitchStmt>();

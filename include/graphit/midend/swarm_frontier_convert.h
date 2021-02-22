@@ -42,6 +42,36 @@ namespace graphit {
    virtual void visit(mir::AssignStmt::Ptr) override;
    virtual void visit(mir::VarDecl::Ptr) override;
    virtual void visit(mir::Call::Ptr) override;
+   void setup_switch_cases(void);
+
+   // create a blank switch statement with no body.
+   mir::SwarmSwitchStmt::Ptr create_blank_switch_stmt(int round, bool is_vertex_level) {
+     mir::SwarmSwitchStmt::Ptr switch_stmt = std::make_shared<mir::SwarmSwitchStmt>();
+     mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+     switch_stmt->round = round;
+     switch_stmt->stmt_block = stmt_block;
+     switch_stmt->setMetadata<bool>("is_vertex_level", is_vertex_level);
+     return switch_stmt;
+   }
+
+   // create a switch statement with the statement of stmt_idx in the while loop
+   mir::SwarmSwitchStmt::Ptr convert_to_switch_stmt(int stmt_idx, int round, bool is_vertex_level) {
+     mir::Stmt::Ptr stmt = (*(current_while_stmt->body->stmts))[stmt_idx];
+     mir::SwarmSwitchStmt::Ptr switch_stmt = std::make_shared<mir::SwarmSwitchStmt>();
+     mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+     stmt_block->insertStmtEnd(stmt);
+     switch_stmt->round = round;
+     switch_stmt->stmt_block = stmt_block;
+     switch_stmt->setMetadata<bool>("is_vertex_level", is_vertex_level);
+     return switch_stmt;
+   }
+
+   // assert whether current_while_stmt should be converted to a bucket queue by looking at
+   // whether it should be converted to switch statements and if there are frontier level statements.
+   bool is_bucket_queue() {
+     return (current_while_stmt->getMetadata<bool>("swarm_switch_convert")
+         && current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0);
+   }
 
    void insert_single_source_case(int i) {
      std::vector<int> single;

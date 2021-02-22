@@ -40,10 +40,17 @@ int CodeGenSwarm::genEdgeSets(void) {
 }
 
 int CodeGenSwarm::genSwarmFrontiers() {
-  for (std::string frontier_name : frontier_finder->swarm_frontier_vars) {
+  for (std::string frontier_name : frontier_finder->swarm_frontier_prioq_vars) {
     auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
     auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
     oss << "swarm::PrioQueue<";
+    oss << "int32_t";
+    oss << "> swarm_" << frontier_name << ";" << std::endl;
+  }
+  for (std::string frontier_name : frontier_finder->swarm_frontier_bucketq_vars) {
+    auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
+    auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
+    oss << "swarm::BucketQueue<";
     oss << "int32_t";
     oss << "> swarm_" << frontier_name << ";" << std::endl;
   }
@@ -59,9 +66,21 @@ void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
 void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
   if (while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
     auto frontier_var = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
-    if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
-      swarm_frontier_vars.push_back(frontier_var.getName());
+
+    // if converting to switch statements, then you might need to use the BucketQueue.
+    if (while_stmt->getMetadata<bool>("swarm_switch_convert")
+        && while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0) {
+      // why is this here
+      if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
+        swarm_frontier_bucketq_vars.push_back(frontier_var.getName());
+      }
+    } else {
+      // why is this here
+      if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
+        swarm_frontier_prioq_vars.push_back(frontier_var.getName());
+      }
     }
+
   }
 }
 
@@ -430,9 +449,9 @@ void CodeGenSwarm::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 
 void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
   // don't need to reinitialize the frontiers declaration if already declared outside in swarm
-  if (std::find(frontier_finder->swarm_frontier_vars.begin(),
-      frontier_finder->swarm_frontier_vars.end(), stmt->name) != frontier_finder->swarm_frontier_vars.end()) {
-
+  // If a frontier is declared, then just declare the array version of the frontier.
+  // Edgeset operations should be applied on the Swarm frontier, so no need to generate frontier array.
+  if (frontier_finder->isa_frontier(stmt->name)) {
     // Just generate the Edgeset apply operator code
     if (mir::isa<mir::EdgeSetApplyExpr>(stmt->initVal)) {
       stmt->initVal->accept(this);
@@ -508,11 +527,14 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   printIndent();
   oss << "case " << std::to_string(switch_stmt->round) << ": {" << std::endl;
   indent();
-  switch_stmt->stmt->accept(this);
-  if (!push_inserted) {
-    printIndent();
-    int pushIncrement = getPushIncrement(stmt_idx);
-    oss << "push(level + " << std::to_string(pushIncrement) << ", src);" << std::endl;
+  switch_stmt->stmt_block->accept(this);
+  if (switch_stmt->getMetadata<bool>("is_vertex_level")) {
+    if (!push_inserted) {
+      printIndent();
+//    int pushIncrement = getPushIncrement(stmt_idx);
+//    oss << "push(level + " << std::to_string(pushIncrement) << ", src);" << std::endl;
+      oss << "push(level + 1, src);" << std::endl;
+    }
   }
 
   printIndent();
@@ -557,6 +579,8 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
+  // Includes checks for swarm_switch_convert and bucket queue to include switch case setup or multiple lambdas
+  // if necessary.
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
   printIndent();
   oss << "swarm_runtime::populate_swarm_frontier(" << frontier_name.getName() << ", swarm_" << frontier_name.getName() << ");" << std::endl;
@@ -567,17 +591,42 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   indent();
   if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
     int rounds = while_stmt->body->stmts->size();
+    if (is_bucket_queue()) rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size();
     printIndent();
     oss << "switch (level % " << std::to_string(rounds) << ") {" << std::endl;
   }
-  while_stmt->body->accept(this);
+
+  if (is_bucket_queue()) {
+    while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->accept(this);
+  } else {
+    while_stmt->body->accept(this);
+  }
+
   if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
     printIndent();
     oss << "}" << std::endl;
   }
+
+  // follow up check to see whether there are frontier level switch cases that need to be processed in a separate
+  // lambda.
+  if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
+    if (is_bucket_queue()) {
+      dedent();
+      printIndent();
+      oss << "},[](unsigned level) {" << std::endl;
+      indent();
+      int rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size();
+      printIndent();
+      oss << "switch (level % " << std::to_string(rounds) << ") {" << std::endl;
+      while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->accept(this);
+      printIndent();
+      oss << "}" << std::endl;
+    }
+  }
+
   dedent();
   printIndent();
-  oss << "}" << std::endl;
+  oss << "});" << std::endl;
   printIndent();
   oss << "swarm_runtime::clear_frontier(" << frontier_name.getName() << ");" << std::endl;
 }
@@ -654,8 +703,12 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::StmtBlock::Ptr stmts) {
+  if (stmts->stmts == nullptr) return;
   for (auto stmt: *(stmts->stmts)) {
     stmt->accept(this);
+
+    // count how many switch cases we've gone through so far. Also to make sure a push is
+    // inserted in each case.
     if (mir::isa<mir::SwarmSwitchStmt>(stmt)) {
       stmt_idx++;
       push_inserted = false;
@@ -667,8 +720,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
   oss << vsae->input_function_name << "(src);" << std::endl;
   printIndent();
-  int pushIncrement = getPushIncrement(stmt_idx);
-  oss << "push(level + " << std::to_string(pushIncrement) << ", src)";
+//  int pushIncrement = getPushIncrement(stmt_idx);
+//  oss << "push(level + " << std::to_string(pushIncrement) << ", src)";
+  oss << "push(level + 1, src)";
   push_inserted = true;
 }
 
@@ -742,8 +796,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
         oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
         indent();
         printIndent();
-        int pushIncrement = getPushIncrement(stmt_idx);
-        oss << "push(level + " << std::to_string(pushIncrement) << ", dst);" << std::endl;
+//        int pushIncrement = getPushIncrement(stmt_idx);
+//        oss << "push(level + " << std::to_string(pushIncrement) << ", dst);" << std::endl;
+        oss << "push(level + 1, dst);" << std::endl;
         push_inserted = true;
         dedent();
         printIndent();

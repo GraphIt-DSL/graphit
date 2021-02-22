@@ -383,7 +383,7 @@ namespace graphit {
       op->vertex_frontier->accept(this);
     }
     void MIRVisitor::visit(std::shared_ptr<SwarmSwitchStmt> stmt) {
-      stmt->stmt->accept(this);
+      stmt->stmt_block->accept(this);
     }
     }
 }

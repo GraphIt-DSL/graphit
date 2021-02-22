@@ -38,6 +38,7 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
               while_stmt->body->accept(&runtime_convert);
               while_stmt->body = runtime_convert.new_stmt_block;
 
+              // Figure out which statements are vertex vs frontier level.
               SwarmSwitchCaseSeparator separator;
               separator.current_while_stmt = while_stmt;
               for (auto stmt: *(while_stmt->body->stmts)) {
@@ -47,18 +48,10 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
               }
               separator.fill_frontier_stmts();
 
-              // Then wrap each stmt in a SwarmSwitchStmt.
-              int round = 0;
-              std::vector<mir::Stmt::Ptr> new_stmts;
-              for (int i = 0; i < while_stmt->body->stmts->size(); i++) {
-                mir::Stmt::Ptr stmt = (*(while_stmt->body->stmts))[i];
-                mir::SwarmSwitchStmt::Ptr switch_stmt = std::make_shared<mir::SwarmSwitchStmt>();
-                switch_stmt->round = round;
-                switch_stmt->stmt = stmt;
-                new_stmts.push_back(switch_stmt);
-                round++;
-              }
-              (*(while_stmt->body->stmts)) = new_stmts;
+              // Converts statements to switch statements and stores them in either the while body
+              // or in while stmt metadata
+              separator.setup_switch_cases();
+
               mir::MIRVisitor::visit(while_stmt->body);
             }
           }
@@ -155,6 +148,54 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::visit(mir::Call::Ptr call_e
         insert_single_source_case(idx);
       }
     }
+  }
+}
+
+void SwarmFrontierConvert::SwarmSwitchCaseSeparator::setup_switch_cases() {
+  // If vertex / frontier statements need to be separated, then store new stmtblocks in the metadata
+  // and build up each by iterating through each statement, inserting blank statements when necessary.
+  if (is_bucket_queue()) {
+    int s_ptr = 0;  // ptr in single vertex statements
+    int f_ptr = 0;  // ptr in frontier level statements
+    int round_num = 0;
+
+    auto single_level = current_while_stmt->getMetadata<std::vector<int>>("swarm_single_level");
+    auto frontier_level = current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level");
+
+    mir::StmtBlock::Ptr new_single_level = std::make_shared<mir::StmtBlock>();
+    mir::StmtBlock::Ptr new_frontier_level = std::make_shared<mir::StmtBlock>();
+
+    while (s_ptr < single_level.size() || f_ptr < frontier_level.size()) {
+      // if vertex level is ahead of frontier level, then insert a blank into the vertex level block.
+      if (s_ptr >= single_level.size() || single_level[s_ptr] > frontier_level[f_ptr]) {
+        new_frontier_level->insertStmtEnd(convert_to_switch_stmt(frontier_level[f_ptr], round_num, false));
+        new_single_level->insertStmtEnd(create_blank_switch_stmt(round_num, true));
+        f_ptr++;
+       // if frontier level is ahead of vertex level, then check to see whether frontier task immediately
+       // follows vertex level (which is ok). Otherwise, push a blank into frontier level block.
+      } else if (f_ptr >= frontier_level.size() || single_level[s_ptr] < frontier_level[f_ptr]) {
+        if (f_ptr >= frontier_level.size() || frontier_level[f_ptr] - single_level[s_ptr] > 1) {
+          new_frontier_level->insertStmtEnd(create_blank_switch_stmt(round_num, false));
+          new_single_level->insertStmtEnd(convert_to_switch_stmt(single_level[s_ptr], round_num, true));
+          s_ptr++;
+        } else {
+          new_frontier_level->insertStmtEnd(convert_to_switch_stmt(frontier_level[f_ptr], round_num, false));
+          new_single_level->insertStmtEnd(convert_to_switch_stmt(single_level[s_ptr], round_num, true));
+          s_ptr++;
+          f_ptr++;
+        }
+      }
+      round_num++;
+    }
+    current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_single_bucket", new_single_level);
+    current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket", new_frontier_level);
+  } else {
+    // if no statements are frontier level, then simply modify while stmt block in-place.
+    std::vector<mir::Stmt::Ptr> new_stmts;
+    for (int i = 0; i < current_while_stmt->body->stmts->size(); i++) {
+      new_stmts.push_back(convert_to_switch_stmt(i, i, true));
+    }
+    (*(current_while_stmt->body->stmts)) = new_stmts;
   }
 }
 

@@ -2997,7 +2997,9 @@ EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
 EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
 EXPECT_EQ (3,  while_stmt->body->stmts->size());
 
-EXPECT_EQ(true, mir::isa<mir::SwarmSwitchStmt>((*(while_stmt->body->stmts))[0]));
+EXPECT_EQ(3, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
+EXPECT_EQ(3, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
+
 EXPECT_EQ(1, while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size());
 EXPECT_EQ(2, while_stmt->getMetadata<std::vector<int>>("swarm_single_level").size());
 }

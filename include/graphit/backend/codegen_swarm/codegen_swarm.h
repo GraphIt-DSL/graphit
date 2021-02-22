@@ -13,8 +13,18 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
  public:
   CodeGenSwarmFrontierFinder() {};
 
-  std::vector<std::string> swarm_frontier_vars;
+  std::vector<std::string> swarm_frontier_prioq_vars;
+  std::vector<std::string> swarm_frontier_bucketq_vars;
   std::map<std::string, mir::VarDecl::Ptr> edgeset_var_map;
+
+  // helper to check if frontier is in either of the swarm frontier vectors.
+  bool isa_frontier(std::string frontier_name) {
+    if (std::find(swarm_frontier_prioq_vars.begin(), swarm_frontier_prioq_vars.end(), frontier_name) != swarm_frontier_prioq_vars.end()) {
+      return true;
+    }
+    return std::find(swarm_frontier_bucketq_vars.begin(), swarm_frontier_bucketq_vars.end(), frontier_name)
+        != swarm_frontier_bucketq_vars.end();
+  }
 
   void visit(mir::WhileStmt::Ptr);
   void visit(mir::VarDecl::Ptr);
@@ -102,6 +112,11 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   bool push_inserted = false;
 
   int round = 0;
+
+  bool is_bucket_queue() {
+    return (current_while_stmt->getMetadata<bool>("swarm_switch_convert")
+        && current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0);
+  }
 
   void setIndentLevel(unsigned level) {
     indentLevel = level;

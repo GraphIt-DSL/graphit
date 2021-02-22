@@ -1584,7 +1584,7 @@ namespace graphit {
 
     struct SwarmSwitchStmt: Stmt {
       int round;
-      Stmt::Ptr stmt;
+      StmtBlock::Ptr stmt_block;
 
       typedef std::shared_ptr<SwarmSwitchStmt> Ptr;
       virtual void accept(MIRVisitor *visitor) {
