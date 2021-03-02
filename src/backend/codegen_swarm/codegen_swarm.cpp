@@ -854,7 +854,16 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
+  // this prints the "bool output" thing
+  if (func_decl->result.isInitialized()) {
+    printIndent();
+    func_decl->result.getType()->accept(this);
+    oss << " " << func_decl->result.getName() << ";" << std::endl;
+  }
+
   func_decl->body->accept(this);
+
+  // this prints the "if(output) then {do something}" thing
   if (func_decl->result.isInitialized()) {
     if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
       if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
