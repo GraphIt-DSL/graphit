@@ -64,6 +64,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   virtual void visit(mir::DivExpr::Ptr expr);
   virtual void visit(mir::AddExpr::Ptr expr);
   virtual void visit(mir::SubExpr::Ptr expr);
+  virtual void visit(mir::NegExpr::Ptr expr);
   virtual void visit(mir::VarExpr::Ptr expr);
   virtual void visit(mir::Call::Ptr);
   virtual void visit(mir::ExprStmt::Ptr);

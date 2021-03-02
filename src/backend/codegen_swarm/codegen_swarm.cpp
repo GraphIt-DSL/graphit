@@ -187,6 +187,13 @@ void CodeGenSwarm::visit(mir::AddExpr::Ptr expr) {
 void CodeGenSwarm::visit(mir::SubExpr::Ptr expr) {
   visitBinaryExpr(expr, "-");
 }
+void CodeGenSwarm::visit(mir::NegExpr::Ptr expr) {
+  if (expr->negate)
+    oss << "-";
+  oss << "(";
+  expr->operand->accept(this);
+  oss << ")";
+}
 void CodeGenSwarm::visit(mir::VarExpr::Ptr expr) {
   if (expr->var.getName() == "argc")
     oss << "__argc";
