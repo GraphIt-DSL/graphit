@@ -2,13 +2,9 @@
 #define SWARM_INTRINSICS_H
 #include <iostream>
 
-#include "pls/pls_api.h"
-#include "pls/algorithm.h"
-#include "thread_local_queues.h"
-
 #include "infra_swarm/graph.h"
-#include "infra_swarm/list.h"
 #include "infra_swarm/vertex_frontier.h"
+#include "infra_swarm/list.h"
 
 #define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, swarmify, assertswarmified))
 namespace swarm_runtime {
@@ -48,7 +44,7 @@ void print(T& t) {
 }
 
 void deleteObject(VertexFrontier &frontier) {
-  vector<int32_t>().swap(frontier.elems);
+	std::vector<int32_t>().swap(frontier.elems);
 }
 
 

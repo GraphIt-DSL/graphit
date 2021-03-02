@@ -22,8 +22,8 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_e
 // this is chaotic
 int& VertexFrontier::operator[](int idx) {
   if (idx >= elems.size()) {
-    cout << "Vertex frontier out of bounds.";
-    exit(0);
+	  std::cout << "Vertex frontier out of bounds.";
+    	  exit(0);
   }
   return elems[idx];
 }
@@ -44,7 +44,7 @@ static void clear_frontier(VertexFrontier &frontier) {
 
 template <typename SwarmQueueType>
 static void populate_swarm_frontier(VertexFrontier &frontier, SwarmQueueType &swarm_queue) {
-  for (auto elem : frontier) {
+  for (auto elem : frontier.elems) {
     swarm_queue.push_init(0, elem);
   }
 }

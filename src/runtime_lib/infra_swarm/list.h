@@ -2,6 +2,8 @@
 #define GRAPHIT_SRC_RUNTIME_LIB_INFRA_SWARM_LIST_H_
 
 #include <vector>
+#include "vertex_frontier.h"
+
 namespace swarm_runtime {
 class VertexFrontierList {
  public:
@@ -19,21 +21,21 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
 
   return vl;
 }
-void builtin_insert(VertexFrontierList &vl, VertexFrontier &frontier) {
+void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   for (int i = 0; i < frontier.elems.size(); i++) {
     v1.vertices.push_back(frontier.elems[i]);
   }
-  frontier_separator_idxs.push_back(frontier.elems.size());
+  v1.frontier_separator_idxs.push_back(frontier.elems.size());
   v1.current_level++;
 }
 
-void builtin_insert(VertexFrontierList &vl, int vertex) {
+void builtin_insert(VertexFrontierList &v1, int vertex) {
   v1.vertices.push_back(vertex);
 }
 
-void builtin_retrieve(VertexFrontierList &vl, VertexFrontier &frontier) {
+void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   if (frontier.elems.size() > 0) {
-    vector<int32_t>().swap(frontier.elems); // empty out the existing frontier
+	  std::vector<int32_t>().swap(frontier.elems); // empty out the existing frontier
   }
   int32_t start_idx = 0;
   int32_t end_idx = v1.vertices.size();
@@ -45,7 +47,7 @@ void builtin_retrieve(VertexFrontierList &vl, VertexFrontier &frontier) {
   v1.current_level--;
 }
 
-void builtin_increment_round(VertexFrontierList &vl) {
+void builtin_increment_round(VertexFrontierList &v1) {
   int32_t v_size = v1.vertices.size();
   v1.frontier_separator_idxs.push_back(v_size);
   v1.current_level++;
