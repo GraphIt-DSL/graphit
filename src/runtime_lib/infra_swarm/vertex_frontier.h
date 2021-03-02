@@ -16,7 +16,6 @@ class VertexFrontier {
 
 static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_elems = 0) {
   VertexFrontier frontier;
-  frontier.max_num_elems = num_vertices;
   return frontier;
 }
 
@@ -31,7 +30,23 @@ int& VertexFrontier::operator[](int idx) {
 
 static void builtin_addVertex(VertexFrontier &frontier, int32_t vid) {
   frontier.elems.push_back(vid);
-  frontier.swarm_frontier.push_init(0, vid);
+}
+
+static void clear_frontier(VertexFrontier &frontier) {
+  frontier.elems.clear();
+}
+
+//template <typename SwarmQueueType>
+//static void builtin_addVertex(VertexFrontier &frontier, SwarmQueueType &swarm_queue, int32_t vid) {
+//  frontier.elems.push_back(vid);
+//  swarm_queue.push_init(vid);
+//}
+
+template <typename SwarmQueueType>
+static void populate_swarm_frontier(VertexFrontier &frontier, SwarmQueueType &swarm_queue) {
+  for (auto elem : frontier) {
+    swarm_queue.push_init(0, elem);
+  }
 }
 
 }

@@ -7,6 +7,9 @@
 #include "thread_local_queues.h"
 
 #include "infra_swarm/graph.h"
+#include "infra_swarm/list.h"
+#include "infra_swarm/vertex_frontier.h"
+
 #define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, swarmify, assertswarmified))
 namespace swarm_runtime {
 template <typename T>

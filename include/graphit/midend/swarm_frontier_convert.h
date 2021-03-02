@@ -32,10 +32,20 @@ namespace graphit {
     virtual void visit(mir::Call::Ptr) override;
   };
 
+  struct RoundParamEmitter : public mir::MIRVisitor {
+    using mir::MIRVisitor::visit;
+    mir::WhileStmt::Ptr current_while_stmt;
+    int curr_no = 0;
+
+    virtual void visit(mir::Call::Ptr) override;
+  };
+
   // Separates frontier from vertex level operations (later for generating correct push calls)
  struct SwarmSwitchCaseSeparator: public mir::MIRVisitor {
    using mir::MIRVisitor::visit;
    mir::WhileStmt::Ptr current_while_stmt;
+   std::vector<int> swarm_single_level;
+   std::vector<int> swarm_frontier_level;
    int idx = 0;
 
    virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
@@ -69,30 +79,21 @@ namespace graphit {
    // assert whether current_while_stmt should be converted to a bucket queue by looking at
    // whether it should be converted to switch statements and if there are frontier level statements.
    bool is_bucket_queue() {
-     return (current_while_stmt->getMetadata<bool>("swarm_switch_convert")
-         && current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0);
+     return (current_while_stmt->getMetadata<bool>("swarm_switch_convert") && !swarm_frontier_level.empty());
    }
 
    void insert_single_source_case(int i) {
-     std::vector<int> single;
-     if (current_while_stmt->hasMetadata<std::vector<int>>("swarm_single_level")) {
-       single = current_while_stmt->getMetadata<std::vector<int>>("swarm_single_level");
-     }
-     single.push_back(i);
-     current_while_stmt->setMetadata<std::vector<int>>("swarm_single_level", single);
+     swarm_single_level.push_back(i);
    }
 
    // backfills frontier level operations based on the idxs that did not appear in the single vertex level ops.
    void fill_frontier_stmts() {
-     std::vector<int> frontier_idxs;
      int num_stmts = current_while_stmt->body->stmts->size();
-     std::vector<int> single_idxs = current_while_stmt->getMetadata<std::vector<int>>("swarm_single_level");
      for (int i = 0; i < num_stmts; i++) {
-       if (std::find(single_idxs.begin(), single_idxs.end(), i) == single_idxs.end()) {
-         frontier_idxs.push_back(i);
+       if (std::find(swarm_single_level.begin(), swarm_single_level.end(), i) == swarm_single_level.end()) {
+         swarm_frontier_level.push_back(i);
        }
      }
-     current_while_stmt->setMetadata<std::vector<int>>("swarm_frontier_level", frontier_idxs);
    }
  };
 

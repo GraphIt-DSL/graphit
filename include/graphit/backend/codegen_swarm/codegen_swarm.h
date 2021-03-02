@@ -110,37 +110,56 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   mir::WhileStmt::Ptr current_while_stmt;
   int stmt_idx = 0;
   bool push_inserted = false;
+  bool is_insert_call = false;
 
   int round = 0;
 
+  // prints the codegen for the src vertex
+  void printSrcVertex() {
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << "std::get<0>(src_pair)";
+    } else {
+      oss << "src";
+    }
+  }
+
+  // prints a push statement, where the push increment is 1, and there is an option to increment
+  // a frontier round, and an option to push a different vertex (dst or src)
+  void printPushStatement(bool increment_round, bool same_vertex, std::string next_vertex="") {
+    printIndent();
+    oss << "push(level + 1, ";
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      if(current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() > 2) {
+        assert(false && "more passed variables (> 2) not supported yet");
+      }
+    }
+
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << "std::make_pair<int, ";
+      for (int i = 0; i < current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
+        auto add_var = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")[i];
+        add_var.getType()->accept(this);
+        if (i < current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() - 1) {
+          oss << ", ";
+        }
+      }
+      oss << ">(";
+      oss << (same_vertex ? "std::get<0>(src_pair)" : next_vertex) << ", std::get<1>(src_pair)";
+      if (increment_round) oss << "+ 1";
+      oss << ")";
+    } else {
+      oss << (same_vertex ? "src" : next_vertex);
+    }
+    oss << ");" << std::endl;
+  }
+
   bool is_bucket_queue() {
     return (current_while_stmt->getMetadata<bool>("swarm_switch_convert")
-        && current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0);
+        && current_while_stmt->hasMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket"));
   }
 
   void setIndentLevel(unsigned level) {
     indentLevel = level;
-  }
-
-  int getPushIncrement(int idx) {
-    if (!current_while_stmt->getMetadata<bool>("swarm_switch_convert")) return 1;
-    std::vector<int> single_idxs = current_while_stmt->getMetadata<std::vector<int>>("swarm_single_level");
-    std::vector<int> frontier_idxs = current_while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level");
-    int num_stmts = current_while_stmt->body->stmts->size();
-
-    // if the statement is a single vertex stmt
-    if (std::find(single_idxs.begin(), single_idxs.end(), idx) != single_idxs.end()) {
-      if (single_idxs.size() == 1) return num_stmts;
-      int curr_idx = std::find(single_idxs.begin(), single_idxs.end(), idx) - single_idxs.begin();
-      int inc = single_idxs[(curr_idx + 1) % single_idxs.size()] - single_idxs[curr_idx];
-      return inc < 0 ? inc + num_stmts : inc;
-    }
-
-    // if the statement should be evaluated per frontier
-    if (frontier_idxs.size() == 1) return num_stmts;
-    int curr_idx = std::find(frontier_idxs.begin(), frontier_idxs.end(), idx) - frontier_idxs.begin();
-    int inc = frontier_idxs[(curr_idx + 1) % frontier_idxs.size()] - frontier_idxs[curr_idx];
-    return inc < 0 ? inc + num_stmts : inc;
   }
 
   void visit(mir::StmtBlock::Ptr) override;
@@ -153,6 +172,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::SwarmSwitchStmt::Ptr);
   void visit(mir::AssignStmt::Ptr) override;
   void visit(mir::FuncDecl::Ptr) override;
+  void visit(mir::Call::Ptr) override;
 };
 
 }

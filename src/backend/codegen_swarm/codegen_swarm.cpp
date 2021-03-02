@@ -27,10 +27,11 @@ int CodeGenSwarm::genSwarmCode(void) {
 }
 
 int CodeGenSwarm::genIncludeStmts(void) {
-  oss << "#include \"graph.h\"" << std::endl;
+  oss << "#include \"swarm_intrinsics.h\"" << std::endl;
   oss << "#include \"scc/queues.h\"" << std::endl;
   oss << "#include \"scc/autoparallel.h\"" << std::endl;
 }
+
 int CodeGenSwarm::genEdgeSets(void) {
   for (auto edgeset : mir_context_->getEdgeSets()) {
     auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
@@ -69,7 +70,7 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
 
     // if converting to switch statements, then you might need to use the BucketQueue.
     if (while_stmt->getMetadata<bool>("swarm_switch_convert")
-        && while_stmt->getMetadata<std::vector<int>>("swarm_frontier_level").size() > 0) {
+        && while_stmt->hasMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")) {
       // why is this here
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
         swarm_frontier_bucketq_vars.push_back(frontier_var.getName());
@@ -86,7 +87,7 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
 
 void CodeGenSwarm::visit(mir::EdgeSetType::Ptr edge_set_type) {
   if (edge_set_type->weight_type == nullptr) {
-    oss << "swarm_runtime::GraphT<char>";
+    oss << "swarm_runtime::GraphT<int>";
   } else {
     oss << "swarm_runtime::GraphT<";
     edge_set_type->weight_type->accept(this);
@@ -203,6 +204,14 @@ void CodeGenSwarm::visit(mir::Call::Ptr call) {
     if (printDelimeter)
       oss << ", ";
     expr->accept(this);
+
+//    // lowkey hack to add an extra parameter into the runtime lib call to add a vertex into the swarm frontier too.
+//    if (call->name == "builtin_addVertex" && mir::isa<mir::VarExpr>(expr)) {
+//      auto var_expr = mir::to<mir::VarExpr>(expr);
+//      if (frontier_finder->isa_frontier(var_expr->var.getName())) {
+//        oss << ", swarm_" << var_expr->var.getName();
+//      }
+//    }
     printDelimeter = true;
   }
   oss << ")";
@@ -358,7 +367,7 @@ void CodeGenSwarm::visit(mir::FuncDecl::Ptr func) {
       printDelim = true;
     }
   } else {
-    oss << "pls::Timestamp";
+//    oss << "pls::Timestamp";
   }
   oss << ") {" << std::endl;
   indent();
@@ -530,10 +539,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   switch_stmt->stmt_block->accept(this);
   if (switch_stmt->getMetadata<bool>("is_vertex_level")) {
     if (!push_inserted) {
-      printIndent();
-//    int pushIncrement = getPushIncrement(stmt_idx);
-//    oss << "push(level + " << std::to_string(pushIncrement) << ", src);" << std::endl;
-      oss << "push(level + 1, src);" << std::endl;
+      printPushStatement(is_insert_call, true);
+      is_insert_call = false;
     }
   }
 
@@ -543,6 +550,26 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   printIndent();
   oss << "}" << std::endl;
 }
+
+void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
+  if (call->name == "builtin_insert") {
+    if (call->hasMetadata<mir::Var>("increment_round_var")) {
+      is_insert_call = true;
+    }
+  }
+  if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer")
+    oss << "swarm_runtime::";
+  oss << call->name << "(";
+  bool printDelimeter = false;
+  for (auto expr: call->args) {
+    if (printDelimeter)
+      oss << ", ";
+    expr->accept(this);
+    printDelimeter = true;
+  }
+  oss << ")";
+}
+
 
 void CodeGenSwarmQueueEmitter::visit(mir::VarExpr::Ptr expr) {
   if (expr->var.getName() == "argc")
@@ -585,9 +612,34 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   printIndent();
   oss << "swarm_runtime::populate_swarm_frontier(" << frontier_name.getName() << ", swarm_" << frontier_name.getName() << ");" << std::endl;
   printIndent();
-  oss << "swarm_" << frontier_name.getName() << ".for_each_prio([](unsigned level, ";
+  oss << "swarm_" << frontier_name.getName() << ".for_each_prio([";
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars")) {
+    for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size(); i++) {
+      mir::Var global_var = while_stmt->getMetadata<std::vector<mir::Var>>("global_vars")[i];
+      oss << "&" << global_var.getName();
+      if (i < while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size() - 1) {
+        oss << ", ";
+      }
+    }
+  }
+  oss << "](unsigned level, ";
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+    oss << "std::pair<";
+  }
   frontier_name.getType()->accept(this);
-  oss << " src, auto push) {" << std::endl;
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+    oss << ", ";
+    for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
+      auto add_var = while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")[i];
+      add_var.getType()->accept(this);
+      if (i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() - 1) {
+        oss << ", ";
+      }
+    }
+    oss << ">";
+  }
+  oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_pair" : " src");
+  oss << ", auto push) {" << std::endl;
   indent();
   if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
     int rounds = while_stmt->body->stmts->size();
@@ -613,7 +665,17 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
     if (is_bucket_queue()) {
       dedent();
       printIndent();
-      oss << "},[](unsigned level) {" << std::endl;
+      oss << "}, [";
+      if (while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars")) {
+        for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size(); i++) {
+          mir::Var global_var = while_stmt->getMetadata<std::vector<mir::Var>>("global_vars")[i];
+          oss << "&" << global_var.getName();
+          if (i < while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size() - 1) {
+            oss << ", ";
+          }
+        }
+      }
+      oss << "](unsigned level) {" << std::endl;
       indent();
       int rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size();
       printIndent();
@@ -718,12 +780,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::StmtBlock::Ptr stmts) {
 
 void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
-  oss << vsae->input_function_name << "(src);" << std::endl;
-  printIndent();
-//  int pushIncrement = getPushIncrement(stmt_idx);
-//  oss << "push(level + " << std::to_string(pushIncrement) << ", src)";
-  oss << "push(level + 1, src)";
-  push_inserted = true;
+  oss << vsae->input_function_name << "(";
+  printSrcVertex();
+  oss << ");" << std::endl;
 }
 
 void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
@@ -795,10 +854,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
         printIndent();
         oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
         indent();
-        printIndent();
-//        int pushIncrement = getPushIncrement(stmt_idx);
-//        oss << "push(level + " << std::to_string(pushIncrement) << ", dst);" << std::endl;
-        oss << "push(level + 1, dst);" << std::endl;
+        printPushStatement(false, false, "dst");
         push_inserted = true;
         dedent();
         printIndent();
@@ -811,14 +867,22 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
 void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   auto mir_var = mir::to<mir::VarExpr>(esae->target);
   printIndent();
-  oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[src];" << std::endl;
+  oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[";
+  printSrcVertex();
+  oss << "];" << std::endl;
   printIndent();
-  oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[src+1];" << std::endl;
+  oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[";
+  printSrcVertex();
+  oss << "+1];" << std::endl;
   printIndent();
   oss << "for (int i = edgeZero; i < edgeLast; i++) {" << std::endl;
   indent();
   printIndent();
   oss << "int dst = " << mir_var->var.getName() << ".h_edge_dst[i];" << std::endl;
+  printIndent();
+  oss << "int src = ";
+  printSrcVertex();
+  oss << ";" << std::endl;
   if (esae->to_func != "") {
     printIndent();
     oss << "if (" << esae->to_func << "(dst)) {" << std::endl;
