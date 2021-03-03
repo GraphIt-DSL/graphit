@@ -6,7 +6,7 @@
 #include "infra_swarm/vertex_frontier.h"
 #include "infra_swarm/list.h"
 
-#define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, swarmify, assertswarmified))
+#define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, assertswarmified))
 namespace swarm_runtime {
 template <typename T>
 bool sum_reduce(T& dst, T src) {
