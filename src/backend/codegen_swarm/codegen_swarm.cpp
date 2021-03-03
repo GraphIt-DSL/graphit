@@ -895,10 +895,14 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   indent();
   printIndent();
   oss << "int dst = " << mir_var->var.getName() << ".h_edge_dst[i];" << std::endl;
-  printIndent();
-  oss << "int src = ";
-  printSrcVertex();
-  oss << ";" << std::endl;
+
+  if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+    printIndent();
+    oss << "int src = ";
+    printSrcVertex();
+    oss << ";" << std::endl;
+  }
+
   if (esae->to_func != "") {
     printIndent();
     oss << "if (" << esae->to_func << "(dst)) {" << std::endl;
