@@ -44,7 +44,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   int genSwarmCode(void);
   int genIncludeStmts(void);
   int genEdgeSets(void);
-  int genSwarmFrontiers();
+//  int genSwarmFrontiers();
   int genConstants(void);
   int genMainFunction(void);
 
@@ -121,6 +121,14 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
       oss << "std::get<0>(src_pair)";
     } else {
       oss << "src";
+    }
+  }
+
+  void printRoundIncrement() {
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << "std::get<1>(src_pair)";
+    } else {
+      assert (false && "Don't get here please");
     }
   }
 

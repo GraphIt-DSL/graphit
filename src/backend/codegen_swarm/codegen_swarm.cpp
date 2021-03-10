@@ -16,7 +16,7 @@ int CodeGenSwarm::genSwarmCode(void) {
     it->get()->accept(frontier_finder);
   }
 
-  genSwarmFrontiers();
+//  genSwarmFrontiers();
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
     it->get()->accept(this);
@@ -40,26 +40,26 @@ int CodeGenSwarm::genEdgeSets(void) {
   }
 }
 
-int CodeGenSwarm::genSwarmFrontiers() {
-  for (std::string frontier_name : frontier_finder->swarm_frontier_prioq_vars) {
-    auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
-    auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
-    oss << "swarm::PrioQueue<";
-    oss << "int32_t";
-    oss << "> swarm_" << frontier_name << ";" << std::endl;
-  }
-  for (std::string frontier_name : frontier_finder->swarm_frontier_bucketq_vars) {
-    auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
-    auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
-    oss << "swarm::BucketQueue<";
-    oss << "int32_t";
-    oss << "> swarm_" << frontier_name << ";" << std::endl;
-  }
-}
+//int CodeGenSwarm::genSwarmFrontiers() {
+//  for (std::string frontier_name : frontier_finder->swarm_frontier_prioq_vars) {
+//    auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
+//    auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
+//    oss << "swarm::PrioQueue<";
+//    oss << "int32_t";
+//    oss << "> swarm_" << frontier_name << ";" << std::endl;
+//  }
+//  for (std::string frontier_name : frontier_finder->swarm_frontier_bucketq_vars) {
+//    auto frontier_var = frontier_finder->edgeset_var_map[frontier_name];
+//    auto vertex_set_type = mir::to<mir::VertexSetType>(frontier_var->type);
+//    oss << "swarm::BucketQueue<";
+//    oss << "int32_t";
+//    oss << "> swarm_" << frontier_name << ";" << std::endl;
+//  }
+//}
 
 void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
   if (mir::isa<mir::VertexSetType>(var_decl->type)) {
-    std::string name = var_decl->name;
+    std::string name = var_decl->name;\
     edgeset_var_map[name] = var_decl;
   }
 }
@@ -80,6 +80,10 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
         swarm_frontier_prioq_vars.push_back(frontier_var.getName());
       }
+    }
+    if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
+      bool is_pair = while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars");
+      edgeset_var_map[frontier_var.getName()]->setMetadata<bool>("pair_type", is_pair);
     }
 
   }
@@ -473,6 +477,11 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
       stmt->initVal->accept(this);
       return;
     }
+    printIndent();
+    oss << "swarm::BucketQueue<";
+    // hardcoded as int int pair for now.
+    oss << (stmt->getMetadata<bool>("pair_type") ? "std::pair<int, int>" : "int32_t");
+    oss << "> swarm_" << stmt->name << ";" << std::endl;
   }
   printIndent();
   stmt->type->accept(this);
@@ -546,7 +555,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   switch_stmt->stmt_block->accept(this);
   if (switch_stmt->getMetadata<bool>("is_vertex_level")) {
     if (!push_inserted) {
-      printPushStatement(is_insert_call, true);
+      printPushStatement(false, true);
       is_insert_call = false;
     }
   }
@@ -573,6 +582,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
       oss << ", ";
     expr->accept(this);
     printDelimeter = true;
+  }
+  if (call->hasMetadata<mir::Var>("increment_round_var")) {
+    oss << ", ";
+    printRoundIncrement();
   }
   oss << ")";
 }
@@ -870,7 +883,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
         printIndent();
         oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
         indent();
-        printPushStatement(false, false, "dst");
+        printPushStatement(true, false, "dst");
         push_inserted = true;
         dedent();
         printIndent();

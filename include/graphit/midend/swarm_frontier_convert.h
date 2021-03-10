@@ -24,14 +24,6 @@ namespace graphit {
 
    };
 
-  struct RuntimeInsertConvert : public mir::MIRVisitor {
-    mir::StmtBlock::Ptr new_stmt_block = std::make_shared<mir::StmtBlock>();
-    using mir::MIRVisitor::visit;
-
-    virtual void visit(mir::StmtBlock::Ptr) override;
-    virtual void visit(mir::Call::Ptr) override;
-  };
-
   struct RoundParamEmitter : public mir::MIRVisitor {
     using mir::MIRVisitor::visit;
     mir::WhileStmt::Ptr current_while_stmt;

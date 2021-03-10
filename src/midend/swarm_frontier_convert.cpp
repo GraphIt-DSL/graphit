@@ -70,10 +70,6 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
               // by separating vertex from frontier level operators/exprs.
               while_stmt->setMetadata<bool>("swarm_switch_convert", true);
 
-//              RuntimeInsertConvert runtime_convert;
-//              while_stmt->body->accept(&runtime_convert);
-//              while_stmt->body = runtime_convert.new_stmt_block;
-
               // Figure out which statements are vertex vs frontier level.
               SwarmSwitchCaseSeparator separator;
               separator.current_while_stmt = while_stmt;
@@ -126,20 +122,6 @@ void SwarmFrontierConvert::SwitchWhileCaseFinder::visit(mir::VarDecl::Ptr var_de
   }
 }
 
-void SwarmFrontierConvert::RuntimeInsertConvert::visit(mir::StmtBlock::Ptr stmt_block) {
-  for (auto stmt : *stmt_block->stmts) {
-    stmt->accept(this);
-    if (mir::isa<mir::ExprStmt>(stmt)) {
-      mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>(stmt);
-      if (!mir::isa<mir::Call>(expr_stmt->expr)) {
-        new_stmt_block->insertStmtEnd(stmt);
-      }
-    } else {
-      new_stmt_block->insertStmtEnd(stmt);
-    }
-  }
-}
-
 void SwarmFrontierConvert::RoundParamEmitter::visit(mir::Call::Ptr call_ptr) {
   if (call_ptr->name == "builtin_insert") {
     std::vector<mir::Var> round_vars;
@@ -154,20 +136,6 @@ void SwarmFrontierConvert::RoundParamEmitter::visit(mir::Call::Ptr call_ptr) {
     round_vars.push_back(new_var);
     current_while_stmt->setMetadata<std::vector<mir::Var>>("add_src_vars", round_vars);
     curr_no++;
-  }
-}
-
-void SwarmFrontierConvert::RuntimeInsertConvert::visit(mir::Call::Ptr call_ptr) {
-  mir::ExprStmt::Ptr call_stmt = std::make_shared<mir::ExprStmt>();
-  call_stmt->expr = call_ptr;
-  new_stmt_block->insertStmtEnd(call_stmt);
-  if (call_ptr->name == "builtin_insert") {
-    mir::Call::Ptr new_round_inc_call = std::make_shared<mir::Call>();
-    new_round_inc_call->name = "builtin_increment_round";
-    new_round_inc_call->args.push_back(call_ptr->args[0]);
-    mir::ExprStmt::Ptr stmt1 = std::make_shared<mir::ExprStmt>();
-    stmt1->expr = new_round_inc_call;
-    new_stmt_block->insertStmtEnd(stmt1);
   }
 }
 
@@ -229,13 +197,12 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::setup_switch_cases() {
         if (f_ptr >= frontier_level.size() || frontier_level[f_ptr] - single_level[s_ptr] > 1) {
           new_frontier_level->insertStmtEnd(create_blank_switch_stmt(round_num, false));
           new_single_level->insertStmtEnd(convert_to_switch_stmt(single_level[s_ptr], round_num, true));
-          s_ptr++;
         } else {
           new_frontier_level->insertStmtEnd(convert_to_switch_stmt(frontier_level[f_ptr], round_num, false));
           new_single_level->insertStmtEnd(convert_to_switch_stmt(single_level[s_ptr], round_num, true));
-          s_ptr++;
           f_ptr++;
         }
+        s_ptr++;
       }
       round_num++;
     }

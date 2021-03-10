@@ -10,8 +10,14 @@ class VertexFrontierList {
   int32_t max_num_elems;
   int32_t current_level;
 
-  std::vector<int32_t> frontier_separator_idxs;
-  std::vector<int32_t> vertices;
+  std::vector<std::vector<int32_t>> frontiers;
+
+  void extend_frontier_list() {
+    for (int i = 0; i < 10; i++) {
+      std::vector<int32_t> new_frontier;
+      frontiers.push_back(new_frontier);
+    }
+  }
 };
 
 VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
@@ -19,38 +25,35 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
   vl.max_num_elems = max_elems;
   vl.current_level = 0;
 
+  vl.extend_frontier_list();
   return vl;
 }
+
+
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   for (int i = 0; i < frontier.elems.size(); i++) {
-    v1.vertices.push_back(frontier.elems[i]);
+    v1[v1.current_level].push_back(frontier[i]);
   }
-  v1.frontier_separator_idxs.push_back(frontier.elems.size());
   v1.current_level++;
+  if (v1.current_level >= v1.frontiers.size()) {
+    v1.extend_frontier_list();
+  }
 }
 
-void builtin_insert(VertexFrontierList &v1, int vertex) {
-  v1.vertices.push_back(vertex);
+void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
+  v1.frontiers[round].push_back(vertex);
+  if (round >= v1.frontiers.size()) v1.extend_frontier_list();
 }
 
 void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   if (frontier.elems.size() > 0) {
 	  std::vector<int32_t>().swap(frontier.elems); // empty out the existing frontier
   }
-  int32_t start_idx = 0;
-  int32_t end_idx = v1.vertices.size();
-  if (v1.current_level > 0) start_idx = v1.frontier_separator_idxs[v1.current_level - 1];
-  if (v1.current_level > 0 && v1.current_level < v1.frontier_separator_idxs.size()) end_idx = v1.frontier_separator_idxs[v1.current_level];
-  for (int32_t i = start_idx; i < end_idx; i++) {
-    frontier.elems.push_back(v1.vertices[i]);
+  int32_t round = v1.frontiers.size() - 1;
+  for (int32_t i : v1[round]) {
+    frontier.elems.push_back(i);
   }
   v1.current_level--;
-}
-
-void builtin_increment_round(VertexFrontierList &v1) {
-  int32_t v_size = v1.vertices.size();
-  v1.frontier_separator_idxs.push_back(v_size);
-  v1.current_level++;
 }
 
 }
