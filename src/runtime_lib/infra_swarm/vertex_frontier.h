@@ -1,5 +1,6 @@
-#include "scc/queues.h"
-
+//#include "scc/queues.h"
+//#include <scc/autoparallel.h>
+#include <vector>
 #ifndef GRAPHIT_SRC_RUNTIME_LIB_INFRA_SWARM_VERTEX_FRONTIER_H_
 #define GRAPHIT_SRC_RUNTIME_LIB_INFRA_SWARM_VERTEX_FRONTIER_H_
 namespace swarm_runtime {
@@ -43,7 +44,7 @@ static void clear_frontier(VertexFrontier &frontier) {
 //}
 
 template <typename SwarmQueueType>
-static void populate_swarm_frontier(VertexFrontier &frontier, SwarmQueueType &swarm_queue) {
+static void populate_swarm_frontier(VertexFrontier &frontier, SwarmQueueType &swarm_queue, int tuple_elems) {
   for (auto elem : frontier.elems) {
     swarm_queue.push_init(0, elem);
   }

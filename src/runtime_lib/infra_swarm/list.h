@@ -32,7 +32,7 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
 
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   for (int i = 0; i < frontier.elems.size(); i++) {
-    v1[v1.current_level].push_back(frontier[i]);
+    v1.frontiers[v1.current_level].push_back(frontier[i]);
   }
   v1.current_level++;
   if (v1.current_level >= v1.frontiers.size()) {
@@ -50,7 +50,7 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
 	  std::vector<int32_t>().swap(frontier.elems); // empty out the existing frontier
   }
   int32_t round = v1.frontiers.size() - 1;
-  for (int32_t i : v1[round]) {
+  for (int32_t i : v1.frontiers[round]) {
     frontier.elems.push_back(i);
   }
   v1.current_level--;

@@ -8,8 +8,9 @@
 
 #define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, assertswarmified))
 namespace swarm_runtime {
-template <typename T>
-bool sum_reduce(T& dst, T src) {
+
+template <typename T1, typename T2>
+bool sum_reduce(T1& dst, T2 src) {
   dst += src;
   return true;
 }

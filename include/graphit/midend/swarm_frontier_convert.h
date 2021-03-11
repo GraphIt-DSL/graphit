@@ -32,6 +32,18 @@ namespace graphit {
     virtual void visit(mir::Call::Ptr) override;
   };
 
+  struct GlobalVariableFinder: public mir::MIRVisitor {
+    using mir::MIRVisitor::visit;
+    mir::WhileStmt::Ptr current_while_stmt;
+    std::vector<std::string> declared_vars;
+    std::vector<mir::Var> global_vars;
+    std::string frontier_name;
+
+    virtual void visit(mir::Call::Ptr);
+    virtual void visit(mir::AssignStmt::Ptr);
+    virtual void visit(mir::VarDecl::Ptr);
+  };
+
   // Separates frontier from vertex level operations (later for generating correct push calls)
  struct SwarmSwitchCaseSeparator: public mir::MIRVisitor {
    using mir::MIRVisitor::visit;

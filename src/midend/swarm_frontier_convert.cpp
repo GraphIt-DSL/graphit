@@ -7,6 +7,39 @@ void SwarmFrontierConvert::analyze(void) {
   }
 }
 
+void SwarmFrontierConvert::GlobalVariableFinder::visit(mir::Call::Ptr call_ptr) {
+  for (auto expr : call_ptr->args) {
+    if (mir::isa<mir::VarExpr>(expr)) {
+      auto var_expr = mir::to<mir::VarExpr>(expr);
+      std::string var_name = var_expr->var.getName();
+      if (std::find(declared_vars.begin(), declared_vars.end(), var_name) == declared_vars.end()) {
+        if (var_name != frontier_name) {
+          global_vars.push_back(var_expr->var);
+        }
+      }
+    }
+  }
+}
+
+void SwarmFrontierConvert::GlobalVariableFinder::visit(mir::VarDecl::Ptr var_decl) {
+  if (std::find(declared_vars.begin(), declared_vars.end(), var_decl->name) == declared_vars.end()) {
+      declared_vars.push_back(var_decl->name);
+  }
+}
+
+void SwarmFrontierConvert::GlobalVariableFinder::visit(mir::AssignStmt::Ptr assign_stmt) {
+    if (mir::isa<mir::VarExpr>(assign_stmt->lhs)) {
+        mir::VarExpr::Ptr lhs = mir::to<mir::VarExpr>(assign_stmt->lhs);
+        if (mir::isa<mir::ScalarType>(lhs->var.getType())) {
+          if (std::find(declared_vars.begin(), declared_vars.end(), lhs->var.getName()) == declared_vars.end()) {
+            if (lhs->var.getName() != frontier_name) {
+              global_vars.push_back(lhs->var);
+            }
+          }
+        }
+    }
+}
+/*
 // searches for global variables in the while body to put in the metadata so they can be passed in thru
 // lambda in codegen
 void attachGlobalVarToMetadata(mir::WhileStmt::Ptr while_stmt, std::string frontier_name) {
@@ -37,7 +70,7 @@ void attachGlobalVarToMetadata(mir::WhileStmt::Ptr while_stmt, std::string front
     while_stmt->setMetadata<std::vector<mir::Var>>("global_vars", global_vars);
   }
 }
-
+*/
 void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
   while_stmt->setMetadata<bool>("swarm_frontier_convert", false);
   while_stmt->setMetadata<bool>("swarm_switch_convert", false);
@@ -48,14 +81,20 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
       mir::Call::Ptr first_operand_call = mir::to<mir::Call>(cond_expr->operands[0]);
       if (mir::isa<mir::VarExpr>(first_operand_call->args[0])){
         mir::VarExpr::Ptr var_expr = mir::to<mir::VarExpr>(first_operand_call->args[0]);
-        if (mir::isa<mir::VertexSetType>(var_expr->var.getType())) {
+        if (mir::isa<mir::VertexSetType>(var_expr->var.getType()) || mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
           // if the while stmt condition is tracking if a frontier is empty or not, then we are in a convertible
           // while loop.
           while_stmt->setMetadata<bool>("swarm_frontier_convert", true);
           while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var);
-          attachGlobalVarToMetadata(while_stmt, var_expr->var.getName());
+          //attachGlobalVarToMetadata(while_stmt, var_expr->var.getName());
+	  GlobalVariableFinder global_variable_finder;
+	  global_variable_finder.current_while_stmt = while_stmt;
+	  global_variable_finder.frontier_name = var_expr->var.getName();
 
-          RoundParamEmitter round_param_emitter;
+ 	  while_stmt->body->accept(&global_variable_finder);
+    	  while_stmt->setMetadata<std::vector<mir::Var>>("global_vars", global_variable_finder.global_vars);
+          
+	  RoundParamEmitter round_param_emitter;
           round_param_emitter.current_while_stmt = while_stmt;
           while_stmt->body->accept(&round_param_emitter);
           if (while_stmt->body->stmts->size() > 1) {
@@ -174,6 +213,9 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::visit(mir::Call::Ptr call_e
 void SwarmFrontierConvert::SwarmSwitchCaseSeparator::setup_switch_cases() {
   // If vertex / frontier statements need to be separated, then store new stmtblocks in the metadata
   // and build up each by iterating through each statement, inserting blank statements when necessary.
+  mir::StmtBlock::Ptr new_single_level = std::make_shared<mir::StmtBlock>();
+  mir::StmtBlock::Ptr new_frontier_level = std::make_shared<mir::StmtBlock>();
+
   if (is_bucket_queue()) {
     int s_ptr = 0;  // ptr in single vertex statements
     int f_ptr = 0;  // ptr in frontier level statements
@@ -181,9 +223,6 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::setup_switch_cases() {
 
     auto single_level = swarm_single_level;
     auto frontier_level = swarm_frontier_level;
-
-    mir::StmtBlock::Ptr new_single_level = std::make_shared<mir::StmtBlock>();
-    mir::StmtBlock::Ptr new_frontier_level = std::make_shared<mir::StmtBlock>();
 
     while (s_ptr < single_level.size() || f_ptr < frontier_level.size()) {
       // if vertex level is ahead of frontier level, then insert a blank into the vertex level block.
@@ -206,16 +245,18 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::setup_switch_cases() {
       }
       round_num++;
     }
-    current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_single_bucket", new_single_level);
-    current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket", new_frontier_level);
   } else {
     // if no statements are frontier level, then simply modify while stmt block in-place.
-    std::vector<mir::Stmt::Ptr> new_stmts;
+    //std::vector<mir::Stmt::Ptr> new_stmts;
     for (int i = 0; i < current_while_stmt->body->stmts->size(); i++) {
-      new_stmts.push_back(convert_to_switch_stmt(i, i, true));
+      //new_stmts.push_back(convert_to_switch_stmt(i, i, true));
+      new_single_level->insertStmtEnd(convert_to_switch_stmt(i, i, true));
     }
-    (*(current_while_stmt->body->stmts)) = new_stmts;
+    //(*(current_while_stmt->body->stmts)) = new_stmts;
+    new_frontier_level->stmts = new std::vector<mir::Stmt::Ptr>();
   }
+  current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_single_bucket", new_single_level);
+  current_while_stmt->setMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket", new_frontier_level);
 }
 
 }

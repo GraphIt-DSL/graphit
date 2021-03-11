@@ -23,12 +23,11 @@ struct GraphT { // Field names are according to CSR, reuse for CSC
         int32_t *h_edge_dst; // num_edges;
         EdgeWeightType *h_edge_weight; // num_edges;
 	int32_t *out_degrees;
-
+	GraphT<EdgeWeightType> *transposed_graph;
 
         int32_t h_get_degree(int32_t vertex_id) {
                 return h_src_offsets[vertex_id + 1] - h_src_offsets[vertex_id];
         }
-
 };
 
 template <typename EdgeWeightType>
@@ -102,6 +101,49 @@ static void load_graph(GraphT<EdgeWeightType> &graph, std::string filename, bool
                 assert(false && "Only bin files are supported\n");
 	}
 }
-}
 
+template <typename EdgeWeightType>
+static GraphT<EdgeWeightType> builtin_transpose(GraphT<EdgeWeightType> &graph) {
+	if (graph.transposed_graph != nullptr)
+		return *(graph.transposed_graph);
+	// For now we will return the same graph
+	GraphT<EdgeWeightType> output_graph;
+	output_graph.num_vertices = graph.num_vertices;
+	output_graph.num_edges = graph.num_edges;
+	
+	output_graph.h_src_offsets = new int32_t[graph.num_vertices+2];
+	output_graph.h_edge_src = new int32_t[graph.num_edges];
+	output_graph.h_edge_dst = new int32_t[graph.num_edges];
+	output_graph.h_edge_weight = new EdgeWeightType[graph.num_edges];
+	
+	for (int32_t i = 0; i < graph.num_vertices + 2; i++)
+		output_graph.h_src_offsets[i] = 0;
+	
+	// This will count the degree for each vertex in the transposed graph
+	for (int32_t i = 0; i < graph.num_edges; i++) {
+		int32_t dst = graph.h_edge_dst[i];
+		output_graph.h_src_offsets[dst+2]++;
+	}
+
+	// We will now create cummulative sums
+	for (int32_t i = 0; i < graph.num_vertices; i++) {
+		output_graph.h_src_offsets[i+2] += output_graph.h_src_offsets[i+1];	
+	}
+	
+	// Finally fill in the edges and the weights for the new graph		
+	for (int32_t i = 0; i < graph.num_edges; i++) {
+		int32_t dst = graph.h_edge_dst[i];
+		int32_t pos = output_graph.h_src_offsets[dst+1];
+		output_graph.h_src_offsets[dst+1]++;
+		output_graph.h_edge_src[pos] = dst;
+		output_graph.h_edge_dst[pos] = graph.h_edge_src[i];
+		output_graph.h_edge_weight[pos] = graph.h_edge_weight[i];
+	}
+	output_graph.transposed_graph = &graph;
+	graph.transposed_graph = new GraphT<EdgeWeightType>(output_graph);
+
+	
+	return output_graph;
+}
+}
 #endif

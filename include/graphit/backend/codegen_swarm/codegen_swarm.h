@@ -78,6 +78,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   virtual void visit(mir::FuncDecl::Ptr);
   virtual void visit(mir::ElementType::Ptr);
   virtual void visit(mir::StmtBlock::Ptr);
+  virtual void visit(mir::IfStmt::Ptr);
   virtual void visit(mir::PrintStmt::Ptr);
   virtual void visit(mir::EqExpr::Ptr);
   virtual void visit(mir::VarDecl::Ptr);
@@ -97,6 +98,8 @@ class CodeGenSwarm: public mir::MIRVisitor {
   void indent() { ++indentLevel; }
   void dedent() { --indentLevel; }
   void printIndent() { oss << std::string(indentLevel, '\t'); }
+  virtual void visit_assign_stmt(mir::AssignStmt::Ptr);
+  virtual void visit_puom(mir::PriorityUpdateOperatorMin::Ptr);
   std::ostream &oss;
   std::string module_name;
   unsigned      indentLevel;
@@ -106,19 +109,32 @@ class CodeGenSwarm: public mir::MIRVisitor {
 // Generates code specific to swarm-convertible while loops that involve frontiers.
 class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
  public:
+  enum QueueType {
+  	PRIOQUEUE,
+	BUCKETQUEUE
+  };
+
   using CodeGenSwarm::CodeGenSwarm;
   using CodeGenSwarm::visit;
+  using CodeGenSwarm::visit_assign_stmt;
+  using CodeGenSwarm::visit_puom;
+
   mir::WhileStmt::Ptr current_while_stmt;
   int stmt_idx = 0;
   bool push_inserted = false;
   bool is_insert_call = false;
-
+  QueueType swarm_queue_type = QueueType::BUCKETQUEUE;
   int round = 0;
+
+  // sets queue type to some QueueType. Probably can later use a scheduling parameter to change this
+  void setQueueType(QueueType queue_type) {
+  	swarm_queue_type = queue_type;
+  }
 
   // prints the codegen for the src vertex
   void printSrcVertex() {
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::get<0>(src_pair)";
+      oss << "std::get<0>(src_tuple)";
     } else {
       oss << "src";
     }
@@ -126,7 +142,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
 
   void printRoundIncrement() {
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::get<1>(src_pair)";
+      oss << "std::get<1>(src_tuple)";
     } else {
       assert (false && "Don't get here please");
     }
@@ -144,7 +160,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
     }
 
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::make_pair<int, ";
+      oss << "std::tuple<int, ";
       for (int i = 0; i < current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
         auto add_var = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")[i];
         add_var.getType()->accept(this);
@@ -153,7 +169,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
         }
       }
       oss << ">(";
-      oss << (same_vertex ? "std::get<0>(src_pair)" : next_vertex) << ", std::get<1>(src_pair)";
+      oss << (same_vertex ? "std::get<0>(src_tuple)" : next_vertex) << ", std::get<1>(src_tuple)";
       if (increment_round) oss << "+ 1";
       oss << ")";
     } else {
@@ -182,6 +198,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::AssignStmt::Ptr) override;
   void visit(mir::FuncDecl::Ptr) override;
   void visit(mir::Call::Ptr) override;
+  void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
 };
 
 }
