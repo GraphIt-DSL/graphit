@@ -663,7 +663,8 @@ namespace graphit {
               std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
               this->setMetadata<std::unordered_map<std::string, FieldVectorProperty>>("field_vector_properties_map_", field_vector_properties_map_);
               this->setMetadata<function_context_type>("function_context", function_context_type::CONTEXT_HOST);
-            }
+              type = Type::INTERNAL;
+	    }
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<FuncDecl>());
             }

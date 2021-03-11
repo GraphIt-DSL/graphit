@@ -3034,7 +3034,7 @@ TEST_F(HighLevelScheduleTest, BC_Swarm) {
   EXPECT_EQ(true, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
   EXPECT_EQ(1, while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size());
   EXPECT_EQ(true, while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars"));
-  EXPECT_EQ(1, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
+  EXPECT_EQ(2, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
 }
 
 TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
@@ -3054,7 +3054,7 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[1]);
 
-  EXPECT_EQ(true, frontier_decl->getMetadata<bool>("pair_type"));
+  EXPECT_EQ(true, frontier_decl->getMetadata<bool>("tuple_type"));
 }
 
 TEST_F(HighLevelScheduleTest, FrontierDeclarationBFS_NotPair_Swarm) {
@@ -3074,7 +3074,7 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBFS_NotPair_Swarm) {
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[0]);
 
-  EXPECT_EQ(false, frontier_decl->getMetadata<bool>("pair_type"));
+  EXPECT_EQ(false, frontier_decl->getMetadata<bool>("tuple_type"));
 }
 
 TEST_F(HighLevelScheduleTest, PR_Swarm) {
@@ -3109,7 +3109,7 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm) {
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
-  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars"));
+  EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
   EXPECT_EQ (1,  while_stmt->body->stmts->size());
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
@@ -3131,6 +3131,6 @@ TEST_F(HighLevelScheduleTest, CC_Swarm) {
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
-  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars"));
+  EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
   EXPECT_EQ (1,  while_stmt->body->stmts->size());
 }
