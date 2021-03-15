@@ -3053,8 +3053,8 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
 
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[1]);
-
-  EXPECT_EQ(true, frontier_decl->getMetadata<bool>("tuple_type"));
+  EXPECT_EQ(true, frontier_decl->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+  EXPECT_EQ(1, frontier_decl->getMetadata<std::vector<mir::Var>>("add_src_vars").size());
 }
 
 TEST_F(HighLevelScheduleTest, FrontierDeclarationBFS_NotPair_Swarm) {
@@ -3074,7 +3074,7 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBFS_NotPair_Swarm) {
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[0]);
 
-  EXPECT_EQ(false, frontier_decl->getMetadata<bool>("tuple_type"));
+  EXPECT_EQ(false, frontier_decl->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
 
 TEST_F(HighLevelScheduleTest, PR_Swarm) {

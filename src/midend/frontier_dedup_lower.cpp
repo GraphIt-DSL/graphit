@@ -73,9 +73,11 @@ void FrontierDedupLower::ReuseFrontierFinderVisitor::visit(mir::StmtBlock::Ptr s
 }
 
 void FrontierDedupLower::FrontierVarChangeVisitor::visit(mir::AssignStmt::Ptr assign_stmt) {
-  mir::VarExpr::Ptr lhs_var = mir::to<mir::VarExpr>(assign_stmt->lhs);
-  old_frontier_name = lhs_var->var.getName();
-  lhs_var->var = mir::Var(frontier_name, lhs_var->var.getType());
+  if (mir::isa<mir::VarExpr>(assign_stmt->lhs)) {
+    mir::VarExpr::Ptr lhs_var = mir::to<mir::VarExpr>(assign_stmt->lhs);
+    old_frontier_name = lhs_var->var.getName();
+    lhs_var->var = mir::Var(frontier_name, lhs_var->var.getType());
+  }
 }
 
 void FrontierDedupLower::FrontierVarChangeVisitor::visit(mir::VarDecl::Ptr var_decl) {

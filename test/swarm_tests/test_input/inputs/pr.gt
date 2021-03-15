@@ -36,17 +36,8 @@ func reset(v: Vertex)
 end
 
 func main()
-    for trail in 0:10
-    	startTimer();
-        vertices.apply(reset);
-    	for i in 0:20
-    	    vertices.apply(computeContrib);
-            #s1# edges.apply(updateEdge);
-            vertices.apply(updateVertex);
-    	end
-
-    	var elapsed_time : double = stopTimer();
-    	print "elapsed time: ";
-    	print elapsed_time;
-    end
+    vertices.apply(reset);
+    vertices.apply(computeContrib);
+    #s1# edges.apply(updateEdge);
+    vertices.apply(updateVertex);
 end

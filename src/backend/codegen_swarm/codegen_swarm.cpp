@@ -83,10 +83,12 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
       }
     }
     if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
-      bool is_tuple = while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars");
-      edgeset_var_map[frontier_var.getName()]->setMetadata<bool>("tuple_type", is_tuple);
+      if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+        auto add_src_vars = while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
+        edgeset_var_map[frontier_var.getName()]->setMetadata<std::vector<mir::Var>>("add_src_vars", add_src_vars);
+      }
+      edgeset_var_map[frontier_var.getName()]->setMetadata<mir::Var>("swarm_frontier_var", while_stmt->getMetadata<mir::Var>("swarm_frontier_var"));
     }
-
   }
 }
 
@@ -500,8 +502,20 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
     }
     printIndent();
     oss << "swarm::BucketQueue<";
-    // hardcoded as int int pair for now.
-    oss << (stmt->getMetadata<bool>("tuple_type") ? "std::tuple<int, int>" : "int32_t");
+    // The vertex type (usually) for the frontier
+    if (stmt->hasMetadata<mir::Var>("frontier_var")) {
+      stmt->getMetadata<mir::Var>("frontier_var").getType()->accept(this);
+    } else {
+      oss << "int";
+    }
+
+    // The extra types that are passed task to task
+    if (stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      for (auto add_src_var : stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")) {
+        oss << ", ";
+	add_src_var.getType()->accept(this);
+      }
+    }    
     oss << "> swarm_" << stmt->name << ";" << std::endl;
   }
   printIndent();
@@ -646,7 +660,6 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   printIndent();
   oss << "}" << std::endl;
   
-  //oss << "swarm_runtime::populate_swarm_frontier(" << frontier_name.getName() << ", swarm_" << frontier_name.getName() << ");" << std::endl;
   printIndent();
   oss << "swarm_" << frontier_name.getName() << ".for_each_prio([";
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars")) {
@@ -792,8 +805,6 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     printIndent();
     oss << "}";
   } else {
-    //oss << "int frontier_size = " << mir_var->var.getName() << ".size();" << std::endl;
-    printIndent();
     oss << "for (int i = 0; i < "<<mir_var->var.getName() << ".size(); i++) {" << std::endl;
     indent();
     printIndent();
@@ -849,8 +860,6 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     printIndent();
     oss << "}";
   } else {
-    //oss << "int frontier_size = " << esae->from_func << ".size();" << std::endl;
-    printIndent();
     oss << "for (int i = 0; i < "<< esae->from_func <<".size(); i++) {" << std::endl;
     indent();
     printIndent();

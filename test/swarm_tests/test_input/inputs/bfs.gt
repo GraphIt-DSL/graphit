@@ -18,7 +18,6 @@ func reset(v: Vertex)
 end
 
 func main()
-    vertices.apply(reset);
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
     var start_vertex : int = atoi(argv[2]);
     frontier.addVertex(start_vertex);
