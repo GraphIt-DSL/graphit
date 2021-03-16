@@ -19,6 +19,7 @@
 #include <graphit/midend/frontier_dedup_lower.h>
 #include <graphit/midend/frontier_reuse_analysis.h>
 #include <graphit/midend/swarm_frontier_convert.h>
+#include <graphit/midend/swarm_priority_features_lowering.h>
 
 namespace graphit {
     /**
@@ -39,6 +40,9 @@ namespace graphit {
 	// We use the GPU version when the GPU Scheules are set
 	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::GPU) {
 		GPUPriorityFeaturesLowering(mir_context, schedule).lower();
+	} else if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::SWARM) {
+		SwarmPriorityFeaturesLowering(mir_context).lower();
+		PriorityFeaturesLower(mir_context, schedule).lower();
 	} else  {
 		//This pass needs to happen before ApplyExprLower pass because the default ReduceBeforeUpdate uses ApplyExprLower
 		PriorityFeaturesLower(mir_context, schedule).lower();

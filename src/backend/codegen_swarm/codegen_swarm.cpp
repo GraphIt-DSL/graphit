@@ -142,7 +142,7 @@ int CodeGenSwarm::genConstants(void) {
       oss << " " << constant->name;
       oss << ";" << std::endl;
     } else if (mir::isa<mir::PriorityQueueType>(constant->type)) {
-      oss << "swarm::PrioQueue<int> swarm_" << constant->name << ";" << std::endl;
+      oss << "swarm::BucketQueue<int> swarm_" << constant->name << ";" << std::endl;
       oss << "int swarm_" << constant->name << "_delta;" << std::endl;
     }
   }
@@ -636,30 +636,31 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   // if necessary.
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
   
-  // Flush any vertices in the frontier into the swarm Queue
-  printIndent();
-  oss << "for (int i = 0; i < " << frontier_name.getName() << ".size(); i++){" << std::endl;
-  indent();
-  printIndent();
-  oss << "swarm_" <<frontier_name.getName() << ".push_init(0, ";
+  if (!while_stmt->hasMetadata<bool>("update_priority_queue") || !while_stmt->getMetadata<bool>("update_priority_queue")) {
+    // Flush any vertices in the frontier into the swarm Queue
+    printIndent();
+    oss << "for (int i = 0; i < " << frontier_name.getName() << ".size(); i++){" << std::endl;
+    indent();
+    printIndent();
+    oss << "swarm_" <<frontier_name.getName() << ".push_init(0, ";
 
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-	  oss << "std::make_tuple(";
-  }
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-    for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
-      oss << "0, ";
+    if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << "std::make_tuple(";
     }
+    if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
+        oss << "0, ";
+      }
+    }
+    if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << frontier_name.getName() << "[i]));" << std::endl;
+    } else {
+      oss << frontier_name.getName() << "[i]);" << std::endl;
+    }
+    dedent();
+    printIndent();
+    oss << "}" << std::endl;
   }
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-    oss << frontier_name.getName() << "[i]));" << std::endl;
-  } else {
-    oss << frontier_name.getName() << "[i]);" << std::endl;
-  }
-  dedent();
-  printIndent();
-  oss << "}" << std::endl;
-  
   printIndent();
   oss << "swarm_" << frontier_name.getName() << ".for_each_prio([";
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars")) {
@@ -744,8 +745,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   dedent();
   printIndent();
   oss << "});" << std::endl;
-  printIndent();
-  oss << "swarm_runtime::clear_frontier(" << frontier_name.getName() << ");" << std::endl;
+  if (!while_stmt->hasMetadata<bool>("update_priority_queue") || !while_stmt->getMetadata<bool>("update_priority_queue")) {
+    printIndent();
+    oss << "swarm_runtime::clear_frontier(" << frontier_name.getName() << ");" << std::endl;
+  }
 }
 
 void CodeGenSwarm::visit(mir::ForStmt::Ptr stmt) {
@@ -943,6 +946,11 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   printIndent();
   oss << "int dst = " << mir_var->var.getName() << ".h_edge_dst[i];" << std::endl;
 
+  if (esae->is_weighted) {
+    printIndent();
+    oss << "int weight = " << mir_var->var.getName() << ".h_edge_weight[i];" << std::endl;
+  }
+
   if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
     printIndent();
     oss << "int src = ";
@@ -1016,7 +1024,24 @@ void CodeGenSwarm::visit(mir::OrderedProcessingOperator::Ptr opo) {
   oss << "}" << std::endl;
 }
 
-void CodeGenSwarm::visit_puom(mir::PriorityUpdateOperatorMin::Ptr puom) {
+void CodeGenSwarm::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
+  oss << "if (";
+  puom->old_val->accept(this);
+  oss << " > ";
+  puom->new_val->accept(this);
+  oss << ") {" << std::endl;
+  indent();
+  printIndent();
+  puom->old_val->accept(this);
+  oss << " = ";
+  puom->new_val->accept(this);
+  oss << ";" << std::endl;
+  dedent();
+  printIndent();
+  oss << "}";
+}
+
+void CodeGenSwarmQueueEmitter::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
   oss << "if (";
   puom->old_val->accept(this);
   oss << " > ";
@@ -1039,14 +1064,6 @@ void CodeGenSwarm::visit_puom(mir::PriorityUpdateOperatorMin::Ptr puom) {
   dedent();
   printIndent();
   oss << "}";
-}
-
-void CodeGenSwarm::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
-  visit_puom(puom);
-}
-
-void CodeGenSwarmQueueEmitter::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
-  visit_puom(puom);
   push_inserted = true;
 }
 

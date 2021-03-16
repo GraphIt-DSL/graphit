@@ -338,12 +338,34 @@ namespace graphit {
 
     void PriorityFeaturesLower::LowerUpdatePriorityEdgeSetApplyExpr::lowerReduceBeforeUpdateEdgeSetApply(
             mir::ExprStmt::Ptr stmt) {
-        // convert it back to a normal edgeset apply expression but with a tracking variable
-        assert (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr));
+	assert (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr));
         mir::EdgeSetApplyExpr::Ptr regular_edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
         regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
         regular_edgeset_apply_expr->setMetadata<bool>("enable_deduplication", true);
         regular_edgeset_apply_expr->tracking_field = mir_context_->getPriorityVectorName();
+        // convert it back to a normal edgeset apply expression but with a tracking variable
+        if (schedule_->backend_identifier == Schedule::BackendID::SWARM) {
+		// Create a new VarDecl statement that returns a frontier
+		mir::VarDecl::Ptr new_var_decl = std::make_shared<mir::VarDecl>();
+		new_var_decl->initVal = regular_edgeset_apply_expr;
+		new_var_decl->name = mir_context_->getPriorityQueueDecl()->name;
+		mir::VertexSetType::Ptr vertexset_type = std::make_shared<mir::VertexSetType>();
+		vertexset_type->setMetadata<mir::PriorityUpdateType>("priority_update_type", mir::PriorityUpdateType::ReduceBeforePriorityUpdate);
+		mir::VarExpr::Ptr edgeset_target = mir::to<mir::VarExpr>(regular_edgeset_apply_expr->target);
+		// The new variable declaration inherits the label from the original expr stmt (such as "s1")
+		// This allows the schedules to be assigned to the newly created vardecl stmt.
+		new_var_decl->stmt_label = stmt->stmt_label;
+
+		auto var = mir_context_->getSymbol(edgeset_target->var.getName());
+		auto type = var.getType();
+		mir::EdgeSetType::Ptr edgeset_type = mir::to<mir::EdgeSetType>(type);
+		vertexset_type->element = edgeset_type->vertex_element_type_list->at(0);
+		new_var_decl->type = vertexset_type;
+		mir::StmtBlock::Ptr stmt_block = std::make_shared<mir::StmtBlock>();
+		stmt_block->insertStmtEnd(new_var_decl);
+		node = stmt_block;
+		return;
+	}
 
         // Create a new VarDecl statement that returns a frontier
         mir::VarDecl::Ptr new_var_decl = std::make_shared<mir::VarDecl>();

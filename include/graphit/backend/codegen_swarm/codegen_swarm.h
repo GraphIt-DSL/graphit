@@ -99,7 +99,6 @@ class CodeGenSwarm: public mir::MIRVisitor {
   void dedent() { --indentLevel; }
   void printIndent() { oss << std::string(indentLevel, '\t'); }
   virtual void visit_assign_stmt(mir::AssignStmt::Ptr);
-  virtual void visit_puom(mir::PriorityUpdateOperatorMin::Ptr);
   std::ostream &oss;
   std::string module_name;
   unsigned      indentLevel;
@@ -117,7 +116,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   using CodeGenSwarm::CodeGenSwarm;
   using CodeGenSwarm::visit;
   using CodeGenSwarm::visit_assign_stmt;
-  using CodeGenSwarm::visit_puom;
 
   mir::WhileStmt::Ptr current_while_stmt;
   int stmt_idx = 0;
