@@ -5,13 +5,16 @@
 #include "infra_swarm/graph.h"
 #include "infra_swarm/vertex_frontier.h"
 #include "infra_swarm/list.h"
+#include "scc/opt.h"
 
 #define SWARM_FUNC_ATTRIBUTES __attribute__((noinline, assertswarmified))
 namespace swarm_runtime {
 
 template <typename T1, typename T2>
 bool sum_reduce(T1& dst, T2 src) {
-  dst += src;
+  SCC_OPT_TASK_CACHELINEHINT(&dst, {
+    dst += src;
+    });
   return true;
 }
 
@@ -41,7 +44,7 @@ float stopTimer() {
 
 template <typename T>
 void print(T& t) {
-  //std::cout << t << std::endl;
+	std::cout << t << std::endl;
 }
 
 void deleteObject(VertexFrontier &frontier) {
