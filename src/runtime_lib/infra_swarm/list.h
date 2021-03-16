@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "vertex_frontier.h"
+#include "scc/queues.h"
 
 namespace swarm_runtime {
 class VertexFrontierList {
@@ -10,12 +11,11 @@ class VertexFrontierList {
   int32_t max_num_elems;
   int32_t current_level;
 
-  std::vector<std::vector<int32_t>> frontiers;
+  std::vector<swarm::UnorderedQueue<int>> frontiers;
 
   void extend_frontier_list() {
     for (int i = 0; i < 10; i++) {
-      std::vector<int32_t> new_frontier;
-      frontiers.push_back(new_frontier);
+      frontiers.emplace_back();
     }
   }
 };
@@ -32,7 +32,7 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
 
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   for (int i = 0; i < frontier.elems.size(); i++) {
-    v1.frontiers[v1.current_level].push_back(frontier[i]);
+    v1.frontiers[v1.current_level].push(frontier[i]);
   }
   v1.current_level++;
   if (v1.current_level >= v1.frontiers.size()) {
@@ -40,19 +40,17 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   }
 }
 
+// insert, given an explicit round to insert into.
 void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
-  v1.frontiers[round].push_back(vertex);
+  v1.frontiers[round].push(vertex);
   if (round >= v1.frontiers.size()) v1.extend_frontier_list();
 }
 
+// pop the last frontier
 void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
-  if (frontier.elems.size() > 0) {
-	  std::vector<int32_t>().swap(frontier.elems); // empty out the existing frontier
-  }
   int32_t round = v1.frontiers.size() - 1;
-  for (int32_t i : v1.frontiers[round]) {
-    frontier.elems.push_back(i);
-  }
+  int32_t* a = &frontier.elems[0];
+  int total = v1.frontiers[round].materialize(a);
   v1.current_level--;
 }
 
