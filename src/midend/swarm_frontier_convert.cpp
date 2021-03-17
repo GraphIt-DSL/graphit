@@ -85,8 +85,11 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
           // if the while stmt condition is tracking if a frontier is empty or not, then we are in a convertible
           // while loop.
           while_stmt->setMetadata<bool>("swarm_frontier_convert", true);
-          while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var);
-          //attachGlobalVarToMetadata(while_stmt, var_expr->var.getName());
+	  if (mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
+            while_stmt->setMetadata<bool>("update_priority_queue", true);
+	  }
+	  while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var); 
+	  //attachGlobalVarToMetadata(while_stmt, var_expr->var.getName());
 	  GlobalVariableFinder global_variable_finder;
 	  global_variable_finder.current_while_stmt = while_stmt;
 	  global_variable_finder.frontier_name = var_expr->var.getName();

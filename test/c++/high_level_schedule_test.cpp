@@ -3114,6 +3114,21 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm) {
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
 
+TEST_F(HighLevelScheduleTest, DS_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(delta_stepping_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, CC_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
