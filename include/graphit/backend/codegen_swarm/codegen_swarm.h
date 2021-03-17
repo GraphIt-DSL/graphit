@@ -47,7 +47,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
 //  int genSwarmFrontiers();
   int genConstants(void);
   int genMainFunction(void);
-
+  int genSwarmStructs(void);
 
   void visitBinaryExpr(mir::BinaryExpr::Ptr, std::string);
   virtual void visit(mir::EdgeSetType::Ptr);
@@ -134,15 +134,17 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   // prints the codegen for the src vertex
   void printSrcVertex() {
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::get<0>(src_tuple)";
+      // this is always src inside the struct.
+      oss << "src_struct.src"; 
     } else {
       oss << "src";
     }
   }
 
-  void printRoundIncrement() {
+  void printRoundIncrement(std::string var_name) {
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::get<1>(src_tuple)";
+      // check that there are additional arguments in this while stmt struct.
+      oss << "src_struct." << current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName() << "_" << var_name;
     } else {
       assert (false && "Don't get here please");
     }
@@ -151,7 +153,8 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   // prints a push statement, where the push increment is 1, and there is an option to increment
   // a frontier round, and an option to push a different vertex (dst or src)
   void printPushStatement(bool increment_round, bool same_vertex, std::string next_vertex="") {
-    printIndent();
+	  std::string frontier_name = current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName();
+	  printIndent();
     oss << "push(level + 1, ";
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
       if(current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() > 2) {
@@ -160,18 +163,17 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
     }
 
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      oss << "std::tuple<int, ";
-      for (int i = 0; i < current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
-        auto add_var = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")[i];
-        add_var.getType()->accept(this);
-        if (i < current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() - 1) {
-          oss << ", ";
-        }
+      std::vector<mir::Var> add_src_vars = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
+      oss << frontier_name << "_struct{";
+      oss << "src_struct.src, ";
+      for (int i = 0 ; i < add_src_vars.size(); i++) {
+	auto add_src_var = add_src_vars[i];
+        oss << "src_struct." << frontier_name << "_" << add_src_var.getName();
+	if (i != add_src_vars.size() - 1) oss << ", ";
       }
-      oss << ">(";
-      oss << (same_vertex ? "std::get<0>(src_tuple)" : next_vertex) << ", std::get<1>(src_tuple)";
-      if (increment_round) oss << "+ 1";
-      oss << ")";
+      // i think this is hard-coded to assume increment round is the last elemn in the struct
+      if (increment_round) oss << " + 1";
+      oss << "}";
     } else {
       oss << (same_vertex ? "src" : next_vertex);
     }

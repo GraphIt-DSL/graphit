@@ -16,7 +16,7 @@ int CodeGenSwarm::genSwarmCode(void) {
     it->get()->accept(frontier_finder);
   }
 
-//  genSwarmFrontiers();
+  genSwarmStructs();
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
     it->get()->accept(this);
@@ -27,7 +27,6 @@ int CodeGenSwarm::genSwarmCode(void) {
 }
 
 int CodeGenSwarm::genIncludeStmts(void) {
-  oss << "#include <tuple>" << std::endl;
   oss << "#include \"swarm_intrinsics.h\"" << std::endl;
   oss << "#include \"scc/queues.h\"" << std::endl;
   oss << "#include \"scc/autoparallel.h\"" << std::endl;
@@ -58,9 +57,36 @@ int CodeGenSwarm::genEdgeSets(void) {
 //  }
 //}
 
+int CodeGenSwarm::genSwarmStructs() {
+  for (auto const& edgeset_var : frontier_finder->edgeset_var_map) {
+    std::string edgeset_name = edgeset_var.first;
+    mir::VarDecl::Ptr var = edgeset_var.second;
+    if (var->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      oss << "struct " << (edgeset_name + "_struct") << " {" << std::endl;
+      indent();
+      // the first src vertex
+      printIndent();
+      if (mir::isa<mir::VertexSetType>(var->type)) {
+        mir::to<mir::VertexSetType>(var->type)->element->accept(this);
+      } else {
+        var->type->accept(this);
+      }
+      oss << " src;" << std::endl;
+      // the rest of the additional attributes
+      for (auto add_src_var : var->getMetadata<std::vector<mir::Var>>("add_src_vars")) {
+        printIndent();
+	add_src_var.getType()->accept(this);
+	oss << " " << edgeset_name << "_" << add_src_var.getName() << ";" << std::endl;
+      }
+      dedent();
+      oss << "};" << std::endl;
+    }
+  }
+}
+
 void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
   if (mir::isa<mir::VertexSetType>(var_decl->type)) {
-    std::string name = var_decl->name;\
+    std::string name = var_decl->name;
     edgeset_var_map[name] = var_decl;
   }
 }
@@ -502,19 +528,24 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
     }
     printIndent();
     oss << "swarm::BucketQueue<";
+    /*
     // The vertex type (usually) for the frontier
     if (stmt->hasMetadata<mir::Var>("frontier_var")) {
-      stmt->getMetadata<mir::Var>("frontier_var").getType()->accept(this);
+      if (mir::isa<mir::VertexSetType>(stmt->getMetadata<mir::Var>("frontier_var").getType())) {
+        mir::to<mir::VertexSetType>(stmt->getMetadata<mir::Var>("frontier_var").getType())->element->accept(this);
+      } else {
+        stmt->getMetadata<mir::Var>("frontier_var").getType()->accept(this);
+      }
     } else {
       oss << "int";
     }
+    */
 
     // The extra types that are passed task to task
     if (stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-      for (auto add_src_var : stmt->getMetadata<std::vector<mir::Var>>("add_src_vars")) {
-        oss << ", ";
-	add_src_var.getType()->accept(this);
-      }
+      oss << stmt->name << "_struct";
+    } else {
+      oss << "int"; 
     }    
     oss << "> swarm_" << stmt->name << ";" << std::endl;
   }
@@ -591,7 +622,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
   }
   if (call->hasMetadata<mir::Var>("increment_round_var")) {
     oss << ", ";
-    printRoundIncrement();
+    printRoundIncrement(call->getMetadata<mir::Var>("increment_round_var").getName());
   }
   oss << ")";
 }
@@ -644,17 +675,18 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   oss << "swarm_" <<frontier_name.getName() << ".push_init(0, ";
 
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-	  oss << "std::make_tuple(";
+	  oss << frontier_name.getName() << "_struct{";
+  }
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+    oss << frontier_name.getName() << "[i]";
+  } else {
+    oss << frontier_name.getName() << "[i]);" << std::endl;
   }
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
     for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
-      oss << "0, ";
+      oss << ", 0";
     }
-  }
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-    oss << frontier_name.getName() << "[i]));" << std::endl;
-  } else {
-    oss << frontier_name.getName() << "[i]);" << std::endl;
+    oss << "});" << std::endl;
   }
   dedent();
   printIndent();
@@ -673,8 +705,11 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   }
   oss << "](unsigned level, ";
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
-    oss << "std::tuple<";
+    oss << frontier_name.getName() << "_struct";
+  } else {
+    frontier_name.getType()->accept(this);
   }
+  /*
   frontier_name.getType()->accept(this);
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
     oss << ", ";
@@ -687,7 +722,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
     }
     oss << ">";
   }
-  oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_tuple" : " src");
+  */
+  oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_struct" : " src");
   oss << ", auto push) {" << std::endl;
   indent();
   if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
