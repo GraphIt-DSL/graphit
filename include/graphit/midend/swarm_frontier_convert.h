@@ -27,9 +27,39 @@ namespace graphit {
   struct RoundParamEmitter : public mir::MIRVisitor {
     using mir::MIRVisitor::visit;
     mir::WhileStmt::Ptr current_while_stmt;
+    std::vector<int> insert_stmt_idxs; // where in the while stmt body the insert vertex calls are.
+    std::vector<mir::Expr::Ptr> insert_stmt_frontier_list_vars; // the VarExpr representing the VFL for each insert_vertex call.
+    std::vector<mir::Var> insert_stmt_incr_vars; // The Var with the variable representing the frontier list round.
+    bool insert_found = false;
     int curr_no = 0;
 
     virtual void visit(mir::Call::Ptr) override;
+    virtual void visit(mir::StmtBlock::Ptr) override;
+   
+   // Modify while stmt body by adding an update size call to frontier lists after ach frontier list insert call. 
+    void fill_update_size_stmts() {
+	    if (insert_stmt_idxs.size() == 0) return;
+	    int insert_stmt_idx = 0;
+	    auto body = current_while_stmt->body;
+	    std::vector<mir::Stmt::Ptr> new_stmts;
+	
+	// Insert update_size calls after each insert_vertex statement, whose idx's are indicated in the insert_stmt_idxs vector.
+        for (int i = 0; i < body->stmts->size() ; i++) {
+		new_stmts.push_back((*(body->stmts))[i]);
+		if (i == insert_stmt_idxs[insert_stmt_idx]) {
+			mir::Call::Ptr new_call = std::make_shared<mir::Call>();
+			new_call->name = "builtin_update_size";
+			auto vfl_varexpr = insert_stmt_frontier_list_vars[insert_stmt_idx];
+			new_call->args.push_back(vfl_varexpr);
+			new_call->setMetadata<mir::Var>("increment_round_var", insert_stmt_incr_vars[insert_stmt_idx]);
+			auto new_expr_stmt = std::make_shared<mir::ExprStmt>();
+			new_expr_stmt->expr = new_call;
+			new_stmts.push_back(new_expr_stmt);
+			insert_stmt_idx++;
+		}
+	}
+	(*(body->stmts)) = new_stmts;
+    }
   };
 
   struct GlobalVariableFinder: public mir::MIRVisitor {

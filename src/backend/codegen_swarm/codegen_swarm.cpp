@@ -592,7 +592,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   switch_stmt->stmt_block->accept(this);
   if (switch_stmt->getMetadata<bool>("is_vertex_level")) {
     if (!push_inserted) {
-      printPushStatement(false, true);
+      // is_insert_call is analogous to whether we need to increment the VFL round or not.
+      // enq same vertex.
+      printPushStatement(is_insert_call, true);
       is_insert_call = false;
     }
   }
@@ -668,14 +670,14 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
   
   if (!while_stmt->hasMetadata<bool>("update_priority_queue") || !while_stmt->getMetadata<bool>("update_priority_queue")) {
-    // Flush any vertices in the frontier into the swarm Queue
+    // Flush any vertices in the frontier into the swarm Queue. You don't need to do this for pq
     printIndent();
     oss << "for (int i = 0; i < " << frontier_name.getName() << ".size(); i++){" << std::endl;
     indent();
     printIndent();
     oss << "swarm_" <<frontier_name.getName() << ".push_init(0, ";
 
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) { // option convert type to struct
 	  oss << frontier_name.getName() << "_struct{";
   }
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
@@ -683,16 +685,22 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   } else {
     oss << frontier_name.getName() << "[i]);" << std::endl;
   }
+
+  // if struct, then produce initial states of the additional variables to be passed in the struct.
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+    assert(while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() == while_stmt->getMetadata<std::vector<mir::Expr::Ptr>>("init_expr_stmts").size());
     for (int i = 0; i < while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size(); i++) {
-      oss << ", 0";
+      oss << ", ";
+      while_stmt->getMetadata<std::vector<mir::Expr::Ptr>>("init_expr_stmts")[i]->accept(this);
     }
     oss << "});" << std::endl;
   }
   dedent();
   printIndent();
   oss << "}" << std::endl;
-  
+  }
+
+  // Now produce code for the for_each_prio lambda
   printIndent();
   oss << "swarm_" << frontier_name.getName() << ".for_each_prio([";
   if (while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars")) {
@@ -705,10 +713,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
     }
   }
   oss << "](unsigned level, ";
-  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+  if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) { // option struct
     oss << frontier_name.getName() << "_struct";
   } else {
-    frontier_name.getType()->accept(this);
+    frontier_name.getType()->accept(this); // else just the type of the vertex
   }
   /*
   frontier_name.getType()->accept(this);
@@ -727,6 +735,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_struct" : " src");
   oss << ", auto push) {" << std::endl;
   indent();
+
+  // optionally produce switch statement structure
   if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
     int rounds = while_stmt->body->stmts->size();
     if (swarm_queue_type == QueueType::BUCKETQUEUE) rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size();
@@ -734,6 +744,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
     oss << "switch (level % " << std::to_string(rounds) << ") {" << std::endl;
   }
 
+  // Produce first lambda with tasks that process single vertices.
   if (while_stmt->hasMetadata<mir::StmtBlock::Ptr>("new_single_bucket")) {
     if (swarm_queue_type != QueueType::BUCKETQUEUE) assert(false && "Requires using bucket queue.");
     while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->accept(this);
@@ -764,7 +775,18 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
           }
         }
       }
-      oss << "](unsigned level) {" << std::endl;
+      oss << "](unsigned level";
+      
+      if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) { // option struct
+        oss << ", " << frontier_name.getName() << "_struct";
+      } else {
+        oss << ", ";
+	frontier_name.getType()->accept(this);  // option just type of vertex
+      }
+      
+      oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_struct" : " src");
+
+      oss << ") {" << std::endl;
       indent();
       if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
 	      int rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size();
@@ -954,7 +976,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
 		printIndent();
 		oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
 		indent();
-		printPushStatement(true, false, "dst");
+		// No increment VFL round, and we are queuing the next vertex which is the dst vertex.
+		printPushStatement(false, false, "dst");
 		push_inserted = true;
 		dedent();
 		printIndent();

@@ -100,7 +100,9 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
 	  RoundParamEmitter round_param_emitter;
           round_param_emitter.current_while_stmt = while_stmt;
           while_stmt->body->accept(&round_param_emitter);
-          if (while_stmt->body->stmts->size() > 1) {
+          round_param_emitter.fill_update_size_stmts();
+
+	  if (while_stmt->body->stmts->size() > 1) {
             // First, determine whether the while loop can be converted to switch cases.
             SwitchWhileCaseFinder finder;
             finder.frontier_name = var_expr->var.getName();
@@ -164,12 +166,30 @@ void SwarmFrontierConvert::SwitchWhileCaseFinder::visit(mir::VarDecl::Ptr var_de
   }
 }
 
+void SwarmFrontierConvert::RoundParamEmitter::visit(mir::StmtBlock::Ptr stmt_block) {
+	int i = 0;
+	for (auto stmt: *(stmt_block->stmts)) {
+		stmt->accept(this);
+		if (insert_found) {
+			insert_stmt_idxs.push_back(i);
+		}
+		insert_found = false;
+		i++;
+	}
+
+}
 void SwarmFrontierConvert::RoundParamEmitter::visit(mir::Call::Ptr call_ptr) {
   if (call_ptr->name == "builtin_insert") {
     std::vector<mir::Var> round_vars;
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
       round_vars = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
     }
+    std::vector<mir::Expr::Ptr> init_expr_stmts;
+    if (current_while_stmt->hasMetadata<std::vector<mir::Expr::Ptr>>("init_expr_stmts")) {
+      init_expr_stmts = current_while_stmt->getMetadata<std::vector<mir::Expr::Ptr>>("init_expr_stmts");
+    }
+
+    // Push an additional variable indicating the VFL round, which will be incremented on, to the whilestmt metadata.
     auto int_type = std::make_shared<mir::ScalarType>();
     int_type->type = mir::ScalarType::Type::INT;
     mir::Var new_var = mir::Var("insert_round_" + std::to_string(curr_no), int_type);
@@ -177,7 +197,21 @@ void SwarmFrontierConvert::RoundParamEmitter::visit(mir::Call::Ptr call_ptr) {
 
     round_vars.push_back(new_var);
     current_while_stmt->setMetadata<std::vector<mir::Var>>("add_src_vars", round_vars);
+    
+    // Queue the initial state of the above variable to metadata, which should be VFL size, so codegen
+    // can correctly queue initial vertices as {src, VFL.get_size()}
+    mir::Call::Ptr get_size_call = std::make_shared<mir::Call>();
+    get_size_call->name = "builtin_get_size";
+    get_size_call->args.push_back(call_ptr->args[0]);
+    
+    init_expr_stmts.push_back(get_size_call);
+    current_while_stmt->setMetadata<std::vector<mir::Expr::Ptr>>("init_expr_stmts", init_expr_stmts);
     curr_no++;
+
+    // Update state to add VFL.update_size calls later in second pass.
+    insert_stmt_frontier_list_vars.push_back(call_ptr->args[0]);
+    insert_stmt_incr_vars.push_back(new_var);
+    insert_found = true;
   }
 }
 

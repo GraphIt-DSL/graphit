@@ -1,4 +1,3 @@
-#include <tuple>
 #include "swarm_intrinsics.h"
 #include "scc/queues.h"
 #include "scc/autoparallel.h"
@@ -8,6 +7,10 @@ swarm_runtime::GraphT<int> edges;
 int *num_paths;
 float *dependences;
 bool *visited;
+struct frontier_struct {
+	int src;
+	int frontier_insert_round_0;
+};
 void visited_generated_vector_op_apply_func_2(int v) {
 	visited[v] = (bool)0;
 }
@@ -59,7 +62,7 @@ void swarm_main() {
 	swarm_runtime::GraphT<int> transposed_edges = swarm_runtime::builtin_transpose(edges);
 	for(int trail = 0; trail < 1; trail++) {
 		swarm_runtime::startTimer();
-		swarm::BucketQueue<std::tuple<int, int>> swarm_frontier;
+		swarm::BucketQueue<frontier_struct> swarm_frontier;
 		swarm_runtime::VertexFrontier frontier = swarm_runtime::create_new_vertex_set(swarm_runtime::builtin_getVertices(edges), 0);
 		int start_vertex = atoi(__argv[2]);
 		swarm_runtime::builtin_addVertex(frontier, start_vertex);
@@ -69,20 +72,20 @@ void swarm_main() {
 		swarm_runtime::VertexFrontierList frontier_list = swarm_runtime::create_new_vertex_frontier_list(swarm_runtime::builtin_getVertices(edges));
 		swarm_runtime::builtin_insert(frontier_list, frontier);
 		for (int i = 0; i < frontier.size(); i++){
-			swarm_frontier.push_init(0, std::make_tuple(0, frontier[i]));		
+			swarm_frontier.push_init(0, frontier_struct{frontier[i], swarm_runtime::builtin_get_size(frontier_list)});
 		}
-		swarm_frontier.for_each_prio([&round, &frontier_list](unsigned level, std::tuple<int, int> src_tuple, auto push) {
+		swarm_frontier.for_each_prio([&round, &frontier_list](unsigned level, frontier_struct src_struct, auto push) {
 			switch (level % 4) {
 			case 0: {
-				push(level + 1, std::tuple<int, int>(std::get<0>(src_tuple), std::get<1>(src_tuple)));
+				push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
 				break;
 			}
 			case 1: {
-				int32_t edgeZero = edges.h_src_offsets[std::get<0>(src_tuple)];
-				int32_t edgeLast = edges.h_src_offsets[std::get<0>(src_tuple)+1];
+				int32_t edgeZero = edges.h_src_offsets[src_struct.src];
+				int32_t edgeLast = edges.h_src_offsets[src_struct.src+1];
 				for (int i = edgeZero; i < edgeLast; i++) {
 					int dst = edges.h_edge_dst[i];
-					int src = std::get<0>(src_tuple);
+					int src = src_struct.src;
 					if (visited_vertex_filter(dst)) {
 						{
 							bool output4;
@@ -90,7 +93,7 @@ void swarm_main() {
 							num_paths_trackving_var_3 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
 							output4 = num_paths_trackving_var_3;
 							if (output4) {
-								push(level + 1, std::tuple<int, int>(dst, std::get<1>(src_tuple)+ 1));
+								push(level + 1, frontier_struct{dst, src_struct.frontier_insert_round_0});
 							}
 						}
 					}
@@ -98,18 +101,18 @@ void swarm_main() {
 				break;
 			}
 			case 2: {
-				mark_visited(std::get<0>(src_tuple));
+				mark_visited(src_struct.src);
 ;
-				push(level + 1, std::tuple<int, int>(std::get<0>(src_tuple), std::get<1>(src_tuple)));
+				push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
 				break;
 			}
 			case 3: {
-				swarm_runtime::builtin_insert(frontier_list, std::get<0>(src_tuple), std::get<1>(src_tuple));
-				push(level + 1, std::tuple<int, int>(std::get<0>(src_tuple), std::get<1>(src_tuple)));
+				swarm_runtime::builtin_insert(frontier_list, src_struct.src, src_struct.frontier_insert_round_0);
+				push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0 + 1});
 				break;
 			}
 			}
-		}, [&round, &frontier_list](unsigned level) {
+		}, [&round, &frontier_list](unsigned level, frontier_struct src_struct) {
 			switch (level % 4) {
 			case 0: {
 				round = (round + 1);
@@ -122,6 +125,7 @@ void swarm_main() {
 				break;
 			}
 			case 3: {
+				swarm_runtime::builtin_update_size(frontier_list, src_struct.frontier_insert_round_0);
 				break;
 			}
 		}
@@ -132,13 +136,13 @@ void swarm_main() {
 		};
 		swarm_runtime::builtin_retrieve(frontier_list, frontier);
 		swarm_runtime::builtin_retrieve(frontier_list, frontier);
-				for (int i = 0; i < frontier.size(); i++) {
+		for (int i = 0; i < frontier.size(); i++) {
 			int32_t current = frontier[i];
 			backward_vertex_f(current);
 		};
 		round = (round - 1);
 		while ((round) > (0)) {
-						for (int i = 0; i < frontier.size(); i++) {
+			for (int i = 0; i < frontier.size(); i++) {
 				int32_t current = frontier[i];
 				int32_t edgeZero = transposed_edges.h_src_offsets[current];
 				int32_t edgeLast = transposed_edges.h_src_offsets[current+1];
@@ -150,7 +154,7 @@ void swarm_main() {
 				}
 			};
 			swarm_runtime::builtin_retrieve(frontier_list, frontier);
-						for (int i = 0; i < frontier.size(); i++) {
+			for (int i = 0; i < frontier.size(); i++) {
 				int32_t current = frontier[i];
 				backward_vertex_f(current);
 			};

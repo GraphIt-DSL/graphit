@@ -163,7 +163,8 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
     if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
       std::vector<mir::Var> add_src_vars = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
       oss << frontier_name << "_struct{";
-      oss << "src_struct.src, ";
+      
+      oss << (same_vertex ? "src_struct.src, " : next_vertex + ", ");
       for (int i = 0 ; i < add_src_vars.size(); i++) {
 	auto add_src_var = add_src_vars[i];
         oss << "src_struct." << frontier_name << "_" << add_src_var.getName();

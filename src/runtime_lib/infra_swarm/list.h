@@ -23,7 +23,7 @@ class VertexFrontierList {
 VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
   VertexFrontierList vl;
   vl.max_num_elems = max_elems;
-  vl.current_level = 0;
+  vl.current_level = -1; // Points at the current head. If there is one frontier in the VFL, then this will be 0.
 
   vl.extend_frontier_list();
   return vl;
@@ -31,11 +31,11 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
 
 
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
+  v1.current_level++;
   for (int i = 0; i < frontier.elems.size(); i++) {
     v1.frontiers[v1.current_level].push(frontier[i]);
   }
-  v1.current_level++;
-  if (v1.current_level >= v1.frontiers.size()) {
+  if (v1.current_level >= v1.frontiers.size() - 1) {
     v1.extend_frontier_list();
   }
 }
@@ -43,15 +43,26 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
 // insert, given an explicit round to insert into.
 void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
   v1.frontiers[round].push(vertex);
-  if (round >= v1.frontiers.size()) v1.extend_frontier_list();
 }
 
 // pop the last frontier
 void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
-  int32_t round = v1.frontiers.size() - 1;
+  if (v1.current_level < 0) {
+    return;
+  }
   int32_t* a = &frontier.elems[0];
-  int total = v1.frontiers[round].materialize(a);
+  int total = v1.frontiers[v1.current_level].materialize(a);
   v1.current_level--;
+}
+
+void builtin_update_size(VertexFrontierList &v1, int new_head) {
+  v1.current_level = new_head;
+  if (new_head >= v1.frontiers.size() - 1) v1.extend_frontier_list();
+}
+
+// v1.current_level points to the current head. So we have to add 1 to get the actual size.
+int builtin_get_size(VertexFrontierList &v1) {
+  return v1.current_level + 1;
 }
 
 }
