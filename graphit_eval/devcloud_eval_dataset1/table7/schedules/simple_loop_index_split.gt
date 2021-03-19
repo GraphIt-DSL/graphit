@@ -1,0 +1,9 @@
+func main()
+    # l1 # for i in 1:10;
+        # s1 # print i;
+    end
+end
+
+schedule:
+
+program->splitForLoop("l1", "l2", "l3", 2, 8);

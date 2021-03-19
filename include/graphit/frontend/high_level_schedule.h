@@ -102,6 +102,22 @@ namespace graphit {
                 high_level_schedule::ProgramScheduleNode::Ptr
                 configApplyDirection(std::string apply_label, std::string apply_direction);
 
+                // High level API for specifying which intersection method to use
+                // Currently it supports five intersection methods:
+                //   1. MultiSkipIntersection
+                //   2. HiroshiIntersection
+                //   3. NaiveIntersection
+                //   4. BinarySearch
+                //   5. Combination of MultiSkip and Hiroshi
+                // If nothing is provided, it uses naive intersection by default
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configIntersection(std::string apply_label, std::string intersection_option);
+
+                // High level API for configuring par_for grain_size
+                // Currently it supports OPENMP parallel for
+                // If nothing is provided, it generates default OPENMP for loop.
+                high_level_schedule::ProgramScheduleNode::Ptr
+                configParForGrainSize(std::string apply_label, int grain_size=0);
 
                 // High lvel API for speicifying parallelization scheduling options for apply
                 // A wrapper around setApply for now.

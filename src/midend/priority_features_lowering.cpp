@@ -137,7 +137,7 @@ namespace graphit {
 
             mir::UpdatePriorityExternCall::Ptr call_stmt = std::make_shared<mir::UpdatePriorityExternCall>();
             call_stmt->input_set = expr->target;
-            call_stmt->apply_function_name = expr->input_function_name;
+            call_stmt->apply_function_name = expr->input_function->function_name->name;
             call_stmt->lambda_name = "generate_lambda_function_" + mir_context_->getUniqueNameCounterString();
             call_stmt->output_set_name = "generated_vertex_subset_" + mir_context_->getUniqueNameCounterString();
             call_stmt->priority_queue_name = mir_context_->getPriorityQueueDecl()->name;
@@ -170,9 +170,15 @@ namespace graphit {
             mir::Stmt::Ptr second_stmt = (*(stmt_blk->stmts))[1];
             mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>(second_stmt);
             auto update_priority_edgesetapply_expr = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr);
-            auto edge_update_func_name = update_priority_edgesetapply_expr->input_function_name;
 
-            ordered_op->edge_update_func = edge_update_func_name;
+            auto edge_update_func_name = update_priority_edgesetapply_expr->input_function->function_name->name;
+            auto identDecl = std::make_shared<mir::IdentDecl>();
+            identDecl->name = edge_update_func_name;
+            auto funcExpr = std::make_shared<mir::FuncExpr>();
+            funcExpr->function_name = identDecl;
+            funcExpr->functorArgs = update_priority_edgesetapply_expr->input_function->functorArgs;
+            ordered_op->edge_update_func = funcExpr;
+
             auto graph_name = update_priority_edgesetapply_expr->target;
             mir_context_->eager_priority_update_edge_function_name = edge_update_func_name;
 

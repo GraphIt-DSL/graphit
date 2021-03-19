@@ -54,6 +54,15 @@ TEST_F(MidendTest, SimpleVarDecl ) {
 }
 
 
+TEST_F(MidendTest, UINTDecl ) {
+    istringstream is("const a : uint = 3 + 4;");
+    EXPECT_EQ (0 , basicTest(is));
+}
+
+TEST_F(MidendTest, UINT64Decl ) {
+    istringstream is("const a : uint_64 = 3 + 4;");
+    EXPECT_EQ (0 , basicTest(is));
+}
 //tests mid end
 TEST_F(MidendTest, SimpleFunctionDecl) {
     istringstream is("func add(a : int, b: int) -> c : int  end");
@@ -182,4 +191,158 @@ TEST_F(MidendTest, SimpleMetadataTestMIRNodeVectorAsMD) {
     
     EXPECT_EQ(true, main_func->hasMetadata<std::vector<mir::VarDecl::Ptr>>("used_vars_md"));
     EXPECT_EQ(2, main_func->getMetadata<std::vector<mir::VarDecl::Ptr>>("used_vars_md").size());
+}
+TEST_F(MidendTest, SimpleIntersectionOperator) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex,Vertex);\n"
+                     "const vertices1 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const vertices2 : vertexset{Vertex} = edges.getVertices();\n"
+                     "const inter: uint_64 = intersection(vertices1, vertices2, 0, 0);\n");
+    EXPECT_EQ (0, basicTest(is));
+}
+
+TEST_F(MidendTest, FunctorOneStateDeclTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+TEST_F(MidendTest, FunctorOneStateTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](v: Vertex)\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    vertices.apply(addStuff[test]);\n"
+                     "    addStuff[test](0); \n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+TEST_F(MidendTest, FunctorOneStateEdgesetTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](src : Vertex, dst : Vertex)\n"
+                     "    simpleArray[src] += a;\n"
+                     "    simpleArray[dst] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    edges.apply(addStuff[test]);\n"
+                     "    addStuff[test](0); \n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+
+
+TEST_F(MidendTest, FunctorMultipleStatesTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int, b: float](v: Vertex)\n"
+                     "    print b;\n"
+                     "    simpleArray[v] += a;\n"
+                     "end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    var test_v2: float = 5.0;\n"
+                     "    vertices.apply(addStuff[test, test_v2]);\n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}
+
+TEST_F(MidendTest, LocalVectorMultiple) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[2](int) = {1, 5};\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+TEST_F(MidendTest, LocalVectorOneElement) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "func main()\n"
+                     "    var simpleArray: vector[1](int) = {1};\n"
+                     "end\n");
+
+    EXPECT_EQ(0, basicTest(is));
+}
+
+TEST_F(MidendTest, UDFDuplicationBasicTest) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(3, mir_context_->getFunctionList().size());
+}
+
+TEST_F(MidendTest, UDFDuplicationBasicTestNoDup) {
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load(argv[1]);\n"
+                     "const array: vector{Vertex}(int) = 0;\n"
+                     "func apply_edge(src: Vertex, dst: Vertex)\n"
+                     "    array[src] += array[dst];\n"
+                     "end\n"
+                     "func main()\n"
+                     "    edges.apply(apply_edge);\n"
+                     "end\n"
+    );
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(2, mir_context_->getFunctionList().size());
 }

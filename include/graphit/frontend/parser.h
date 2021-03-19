@@ -51,6 +51,10 @@ namespace graphit {
 
         fir::GenericParam::Ptr parseGenericParam();
 
+        std::vector<fir::Argument::Ptr> parseFunctorArgs();
+
+        fir::FuncExpr::Ptr parseFunctorExpr();
+
         std::vector<fir::Argument::Ptr> parseArguments();
 
         fir::Argument::Ptr parseArgumentDecl();
@@ -78,6 +82,8 @@ namespace graphit {
         fir::Stmt::Ptr parseElseClause();
 
         fir::ForStmt::Ptr parseForStmt();
+
+        fir::ParForStmt::Ptr parseParForStmt();
 
         fir::ForDomain::Ptr parseForDomain();
 
@@ -208,6 +214,11 @@ namespace graphit {
 
         fir::LoadExpr::Ptr parseLoadExpr();
 
+        fir::IntersectionExpr::Ptr parseIntersectionExpr();
+        
+        fir::IntersectNeighborExpr::Ptr parseIntersectNeighborExpr();
+
+        fir::ConstantVectorExpr::Ptr parseConstantVectorExpr();
 
         // OG Additions
         fir::PriorityQueueType::Ptr parsePriorityQueueType();
@@ -216,6 +227,8 @@ namespace graphit {
         void reportError(const Token &, std::string);
 
         Token peek(unsigned k = 0) const { return tokens.peek(k); }
+
+        int findFirstOccurence(Token::Type type) const { return tokens.findFirstOccurence(type); }
 
         void skipTo(std::vector<Token::Type>);
 

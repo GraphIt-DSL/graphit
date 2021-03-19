@@ -72,9 +72,9 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 
 
 #include <vector>
-
 #include "infra_gapbs/builder.h"
 #include "infra_gapbs/benchmark.h"
+#include "infra_gapbs/intersections.h"
 #include "infra_gapbs/bitmap.h"
 #include "infra_gapbs/command_line.h"
 #include "infra_gapbs/graph.h"
@@ -82,7 +82,6 @@ static julienne::graph<julienne::symmetricVertex> __julienne_null_graph(NULL, 0,
 #include "infra_gapbs/pvector.h"
 #include "infra_gapbs/eager_priority_queue.h"
 #include <queue>
-#include <curses.h>
 #include "infra_gapbs/timer.h"
 #include "infra_gapbs/sliding_queue.h"
 #include "infra_gapbs/ordered_processing.h"
@@ -119,12 +118,26 @@ static T builtin_sum(T* input_vector, int num_elem){
     return reduce_sum;
 }
 
+template <typename T>
+static T builtin_max(T* input_vector, int num_elem){
+
+    T reduce_max = sequence::maxReduce(input_vector, num_elem);
+
+    return reduce_max;
+}
+
+
 static int max(double val1, int val2){
     return max(int(val1), val2);
 }
 
 static bool writeMin(int * val_array, int index, int new_val){
     return writeMin(&val_array[index], new_val);
+}
+
+template <typename T>
+static void atomicAdd(T * val_array, int index, T new_val){
+    writeAdd(&val_array[index], new_val);
 }
 
 //For now, assume the weights are ints, this would be good enough for now
@@ -145,28 +158,63 @@ static Graph builtin_loadEdgesFromFile(std::string file_name){
 
 
 static Graph builtin_loadEdgesFromCSR(const int32_t* indptr, const NodeID* indices, int num_nodes, int num_edges) {
-	typedef EdgePair<NodeID, NodeID> Edge;
-	typedef pvector<Edge> EdgeList;
-	EdgeList el;
-	for (NodeID x = 0; x < num_nodes; x++)
-		for(int32_t _y = indptr[x]; _y < indptr[x+1]; _y++)
-			el.push_back(Edge(x, indices[_y]));
-	CLBase cli(0, NULL);
-	BuilderBase<NodeID> bb(cli);
-	return bb.MakeGraphFromEL(el);
+
+    typedef EdgePair<NodeID, NodeID> Edge;
+    typedef pvector<Edge> EdgeList;
+    typedef pvector<int32_t> DegreeList;
+    EdgeList el;
+    el.resize(num_edges);
+    DegreeList dl;
+    dl.resize(num_nodes);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        int32_t degree = indptr[x+1] - indptr[x];
+        dl[x] = degree;
+    }
+
+    CLBase cli(0, NULL);
+    BuilderBase<NodeID> bb(cli);
+    auto prefSum = bb.ParallelPrefixSum(dl);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        auto startOffset = prefSum[x];
+        for(int32_t i = 0; i < dl[x]; i++) {
+            el[startOffset+i] = Edge(x, indices[startOffset + i]);
+        }
+    }
+
+    return bb.MakeGraphFromEL(el);
 }
 static WGraph builtin_loadWeightedEdgesFromCSR(const int32_t *data, const int32_t *indptr, const NodeID *indices, int num_nodes, int num_edges) {
 	typedef EdgePair<NodeID, WNode> Edge;
 	typedef pvector<Edge> EdgeList;
+    typedef pvector<int32_t> DegreeList;
 	EdgeList el;
-	for (NodeID x = 0; x < num_nodes; x++) {
-		for (int32_t _y = indptr[x]; _y < indptr[x+1]; _y++) {
-			el.push_back(Edge(x, NodeWeight<NodeID, WeightT>(indices[_y], data[_y])));
-		}
-	}	
-	CLBase cli(0, NULL);
-	BuilderBase<NodeID, WNode, WeightT> bb(cli);
-	bb.needs_weights_ = false;
+	el.resize(num_edges);
+	DegreeList dl;
+	dl.resize(num_nodes);
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        int32_t degree = indptr[x+1] - indptr[x];
+        dl[x] = degree;
+    }
+
+    CLBase cli(0, NULL);
+    BuilderBase<NodeID, WNode, WeightT> bb(cli);
+    auto prefSum = bb.ParallelPrefixSum(dl);
+    bb.needs_weights_ = false;
+
+    #pragma omp parallel for schedule(dynamic, 64)
+    for (NodeID x = 0; x < num_nodes; x++) {
+        auto startOffset = prefSum[x];
+        for(int32_t i = 0; i < dl[x]; i++) {
+            el[startOffset+i] = Edge(x, NodeWeight<NodeID, WeightT>(indices[startOffset + i], data[startOffset + i]));
+        }
+    }
+
 	return bb.MakeGraphFromEL(el);	
 }
 
@@ -177,6 +225,130 @@ static int builtin_getVertices(Graph &edges){
 static int builtin_getVertices(WGraph &edges){
     return edges.num_nodes();
 }
+
+static NodeID builtin_getOutDegree(Graph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static NodeID builtin_getOutDegree(WGraph &edges, NodeID src){
+    return edges.out_degree(src);
+}
+
+static Graph builtin_relabel(Graph &edges) {
+
+    // GAPBS way to figure out if the graph is worth relabelling
+    auto worthLabelling = [](Graph &g) {
+        int64_t average_degree = g.num_edges() / g.num_nodes();
+        if (average_degree < 10)
+            return false;
+        SourcePicker<Graph> sp(g);
+        int64_t num_samples = min(int64_t(1000), g.num_nodes());
+        int64_t sample_total = 0;
+        pvector<int64_t> samples(num_samples);
+        for (int64_t trial=0; trial < num_samples; trial++) {
+            samples[trial] = g.out_degree(sp.PickNext());
+            sample_total += samples[trial];
+        }
+        sort(samples.begin(), samples.end());
+        double sample_average = static_cast<double>(sample_total) / num_samples;
+        double sample_median = samples[num_samples/2];
+        return sample_average / 1.3 > sample_median;
+    };
+
+    if (worthLabelling(edges)) {
+        Graph relabeledGraph = Builder::RelabelByDegree(edges);
+        return relabeledGraph;
+    }
+
+    return edges;
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(Graph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src), edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+static VertexSubset<NodeID>* builtin_getNgh(WGraph &edges, NodeID src){
+    auto v =  new VertexSubset<NodeID>(edges.out_degree(src));
+    v->dense_vertex_set_ = (unsigned int*) edges.out_neigh(src).begin();
+    return v;
+}
+
+
+static size_t hiroshiVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetHiroshi((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
+}
+
+static size_t multiSkipVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetMultipleSkip((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+
+}
+
+static size_t naiveVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB, NodeID dest) {
+    return intersectSortedNodeSetNaive((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, dest);
+}
+
+static size_t combinedVertexIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    // currently just has fixed thresholds
+    return intersectSortedNodeSetCombined((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB, 1000, 0.1);
+}
+
+static size_t binarySearchIntersection(VertexSubset<NodeID>* A, VertexSubset<NodeID>* B, size_t totalA, size_t totalB) {
+    return intersectSortedNodeSetBinarySearch((NodeID *) A->dense_vertex_set_, (NodeID *) B->dense_vertex_set_, totalA, totalB);
+}
+
+static size_t hiroshiVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetHiroshi(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t multiSkipVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetMultipleSkip(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t naiveVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetNaive(iter_src, iter_dest, srcTotal, destTotal, dest);
+
+}
+
+static size_t combinedVertexIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetCombined(iter_src, iter_dest, srcTotal, destTotal, 1000, 0.1);
+
+}
+
+static size_t binarySearchIntersectionNeighbor(Graph &edges, NodeID src, NodeID dest) {
+    auto iter_src = edges.out_neigh(src).begin();
+    auto iter_dest = edges.out_neigh(dest).begin();
+    auto srcTotal = edges.out_degree(src);
+    auto destTotal = edges.out_degree(dest);
+
+    return intersectSortedNodeSetBinarySearch(iter_src, iter_dest, srcTotal, destTotal);
+
+}
+
 
 template <typename T>
 static int builtin_getVertices(julienne::graph<T> &edges) {
@@ -345,20 +517,20 @@ static Graph builtin_transpose(Graph &graph){
 
 template<typename APPLY_FUNC> static void builtin_vertexset_apply(VertexSubset<int>* vertex_subset, APPLY_FUNC apply_func){
    if (vertex_subset->is_dense){
-       parallel_for (int v = 0; v < vertex_subset->vertices_range_; v++){
-           if(vertex_subset->bool_map_[v]){
-               apply_func(v);
-           }
-       }
+       ligra::parallel_for_lambda((int)0, (int)vertex_subset->vertices_range_, [&] (int v) {
+               if(vertex_subset->bool_map_[v]){
+                   apply_func(v);
+               }
+           });
    } else {
        if(vertex_subset->dense_vertex_set_ == nullptr && vertex_subset->tmp.size() > 0) {
-           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+            ligra::parallel_for_lambda((int)0, (int)vertex_subset->num_vertices_, [&] (int i){
                apply_func(vertex_subset->tmp[i]);
-           }
+           });
        }else  {
-           parallel_for (int i = 0; i < vertex_subset->num_vertices_; i++){
+           ligra::parallel_for_lambda((int)0, (int)vertex_subset->num_vertices_, [&] (int i){
                apply_func(vertex_subset->dense_vertex_set_[i]);
-           }
+           });
        }
    }
 }

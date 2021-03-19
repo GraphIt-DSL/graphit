@@ -1,0 +1,48 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex, int) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX
+
+func updateEdge(src : Vertex, dst : Vertex, weight : int)
+     SP[dst] min= (SP[src] + weight);
+end
+
+func reset(v: Vertex)
+    SP[v] = 2147483647;
+end
+
+func main()
+    for trail in 0:1
+        startTimer();
+        vertices.apply(reset);
+        var n : int = edges.getVertices();
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+	    var start_vertex : int = atoi(argv[2]);
+        frontier.addVertex(start_vertex); %add source vertex
+        SP[start_vertex] = 0;
+
+        var rounds : int = 0;
+        while (frontier.getVertexSetSize() != 0)
+            #s1# var output: vertexset{Vertex}  = edges.from(frontier).applyModified(updateEdge, SP);
+            delete frontier;
+            frontier = output;
+            rounds = rounds + 1;
+    	    if rounds == n
+	            print "negative cycle";
+	            break;
+	    end
+        end
+        delete frontier;
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
+        print "rounds";
+        print rounds;
+    end
+end
+
+% specify schedules here or use a separate schedule file
+
+

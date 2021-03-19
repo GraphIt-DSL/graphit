@@ -1,0 +1,19 @@
+element Vertex end
+element Edge end
+const edges: edgeset{Edge}(Vertex,Vertex) = load("../test/graphs/test.el");
+const vertices: vertexset{Vertex} = edges.getVertices();
+
+const vertexSizeArray: vector{Vertex}(int) = 0;
+
+func incrementing_count(src: Vertex, dst: Vertex)
+        var src_ngs : vertexset{Vertex} = edges.getNgh(src);
+		var src_ngs_size: uint_64 = src_ngs.getVertexSetSize();
+		vertexSizeArray[src] = src_ngs_size;
+end
+
+func main()
+    edges = edges.relabel();
+	#s1# edges.apply(incrementing_count);
+	print vertexSizeArray.sum();
+end
+

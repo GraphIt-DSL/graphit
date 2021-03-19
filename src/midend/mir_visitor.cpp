@@ -79,9 +79,14 @@ namespace graphit {
 
         void MIRVisitor::visit(FuncDecl::Ptr func_decl) {
 
+            for (auto arg : func_decl->functorArgs) {
+                arg.accept(this);
+            }
+
             for (auto arg : func_decl->args) {
                 arg.accept(this);
             }
+
             func_decl->result.accept(this);
 
             enclosing_func_decl_ = func_decl;
@@ -91,7 +96,21 @@ namespace graphit {
             enclosing_func_decl_ = nullptr;
         }
 
+
+        void MIRVisitor::visit(FuncExpr::Ptr func_expr) {
+
+            for (auto arg : func_expr->functorArgs) {
+                arg->accept(this);
+            }
+
+
+            func_expr->function_name->accept(this);
+        }
+
         void MIRVisitor::visit(Call::Ptr expr) {
+            for(auto arg : expr->functorArgs){
+                arg->accept(this);
+            }
             for (auto arg : expr->args) {
                 arg->accept(this);
             }
@@ -239,6 +258,17 @@ namespace graphit {
             }
         }
 
+        void MIRVisitor::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain->accept(this);
+            stmt->body->accept(this);
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+        }
+
         void MIRVisitor::visit(std::shared_ptr<NameNode> stmt) {
             if (stmt->stmt_label != "") {
                 label_scope_.scope(stmt->stmt_label);
@@ -310,6 +340,28 @@ namespace graphit {
 
         void MIRVisitor::visit(std::shared_ptr<NegExpr> expr) {
             expr->operand->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<IntersectionExpr> inter_expr) {
+            inter_expr->vertex_a->accept(this);
+            inter_expr->vertex_b->accept(this);
+            inter_expr->numA->accept(this);
+            inter_expr->numB->accept(this);
+            if (inter_expr->reference != nullptr){
+                inter_expr->reference->accept(this);
+            }
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<IntersectNeighborExpr> inter_expr) {
+            inter_expr->edges->accept(this);
+            inter_expr->vertex_a->accept(this);
+            inter_expr->vertex_b->accept(this);
+        }
+
+        void MIRVisitor::visit(std::shared_ptr<ConstantVectorExpr> const_vector_expr) {
+            for (auto el : const_vector_expr->vectorElements) {
+                el->accept(this);
+            }
         }
 
         void MIRVisitor::visit(std::shared_ptr<EdgeSetLoadExpr> load_expr) {

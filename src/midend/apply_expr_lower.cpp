@@ -100,7 +100,7 @@ namespace graphit {
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
-				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
 				        mir::FuncDecl::Ptr func_decl_v2 = func_decl->clone<mir::FuncDecl>();
 				        func_decl_v2->name = func_decl->name + "_v2"; 
 				        mir_context_->addFunctionFront(func_decl_v2);
@@ -108,7 +108,7 @@ namespace graphit {
 					mir::AssignStmt::Ptr stmt2 = std::make_shared<mir::AssignStmt>();
 					stmt2->lhs = assign_stmt->lhs;
 					stmt2->expr = assign_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
@@ -123,8 +123,8 @@ namespace graphit {
 					hybrid_node->threshold = hybrid_schedule->threshold;
 					hybrid_node->argv_index = hybrid_schedule->argv_index;
 					hybrid_node->criteria = hybrid_schedule->_hybrid_criteria;
-					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->input_frontier_name = edgeset_apply->from_func;	
+					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func->function_name->name != "") {
+						hybrid_node->input_frontier_name = edgeset_apply->from_func->function_name->name;	
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
@@ -205,14 +205,14 @@ namespace graphit {
 					stmt_block_1 = rewrite<mir::StmtBlock>(stmt_block_1);
 					
 					// Now create the second Stmt block
-				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+				        auto func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
 				        mir::FuncDecl::Ptr func_decl_v2 = func_decl->clone<mir::FuncDecl>();
 				        func_decl_v2->name = func_decl->name + "_v2"; 
 				        mir_context_->addFunctionFront(func_decl_v2);
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::ExprStmt::Ptr stmt2 = std::make_shared<mir::ExprStmt>();
 					stmt2->expr = expr_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function_name = func_decl_v2->name;
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
@@ -227,8 +227,8 @@ namespace graphit {
 					hybrid_node->threshold = hybrid_schedule->threshold;
 					hybrid_node->argv_index = hybrid_schedule->argv_index;
 					hybrid_node->criteria = hybrid_schedule->_hybrid_criteria;
-					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func != "") {
-						hybrid_node->input_frontier_name = edgeset_apply->from_func;	
+					if (hybrid_node->criteria == fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria::INPUT_VERTEXSET_SIZE && edgeset_apply->from_func->function_name->name != "") {
+						hybrid_node->input_frontier_name = edgeset_apply->from_func->function_name->name;	
 					} else {
 						assert(false && "Invalid criteria for Hybrid Node\n");
 					}
@@ -252,7 +252,6 @@ namespace graphit {
     }
 
     void ApplyExprLower::LowerApplyExpr::visit(mir::EdgeSetApplyExpr::Ptr edgeset_apply) {
-
         // use the target var expressionto figure out the edgeset type
         mir::VarExpr::Ptr edgeset_expr = mir::to<mir::VarExpr>(edgeset_apply->target);
         //mir::VarDecl::Ptr edgeset_var_decl = mir_context_->getConstEdgeSetByName(edgeset_expr->var.getName());
@@ -303,12 +302,11 @@ namespace graphit {
 	}
 
         // check if the schedule contains entry for the current edgeset apply expressions
-
         if (schedule_ != nullptr && schedule_->apply_schedules != nullptr) {
+
             // We assume that there is only one apply in each statement
             auto current_scope_name = label_scope_.getCurrentScope();
             auto apply_schedule = schedule_->apply_schedules->find(current_scope_name);
-
 
             if (apply_schedule != schedule_->apply_schedules->end()) {
                 // a schedule is found
@@ -327,10 +325,14 @@ namespace graphit {
                     //Hybrid dense (switching betweeen push and pull)
                     auto hybrid_dense_edgeset_apply = std::make_shared<mir::HybridDenseEdgeSetApplyExpr>(edgeset_apply);
                     //clone the function delcaration for push, use the original func for pull
-                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function_name);
+                    auto pull_apply_func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
                     mir::FuncDecl::Ptr push_apply_func_decl = pull_apply_func_decl->clone<mir::FuncDecl>();
                     push_apply_func_decl->name = push_apply_func_decl->name + "_push_ver";
-                    hybrid_dense_edgeset_apply->push_function_ = push_apply_func_decl->name;
+                    hybrid_dense_edgeset_apply->push_function_ = std::make_shared<mir::FuncExpr>();
+                    hybrid_dense_edgeset_apply->push_function_->function_name = std::make_shared<mir::IdentDecl>();
+                    hybrid_dense_edgeset_apply->push_function_->function_name->name = push_apply_func_decl->name;
+                    //TODO is this correct assumption to make?
+                    hybrid_dense_edgeset_apply->push_function_->functorArgs = edgeset_apply->input_function->functorArgs;
                     //insert into MIR context
                     mir_context_->addFunctionFront(push_apply_func_decl);
 
@@ -369,6 +371,10 @@ namespace graphit {
                     }
                 }
 
+
+                mir::to<mir::EdgeSetApplyExpr>(node)->grain_size = apply_schedule->second.grain_size;
+
+
                 //if this is applyModified with a tracking field
                 if (edgeset_apply->tracking_field != "") {
                     // only enable deduplication when the argument to ApplyModified is True (disable deduplication), or the user manually set disable
@@ -385,6 +391,7 @@ namespace graphit {
                 return;
             }
 
+            //mir::to<mir::EdgeSetApplyExpr>(node)->grain_size = stuff->second->
             return;
         } else {
             //setting the default direction to push if no schedule is specified

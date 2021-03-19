@@ -23,6 +23,7 @@ namespace graphit {
 
         struct WhileStmt;
         struct ForStmt;
+        struct ParForStmt;
         struct IfStmt;
 
         struct ForDomain;
@@ -57,6 +58,11 @@ namespace graphit {
         struct TensorArrayReadExpr;
         struct TensorStructReadExpr;
 
+        struct IntersectionExpr;
+        struct IntersectNeighborExpr;
+
+        struct ConstantVectorExpr;
+
         struct LoadExpr;
         struct EdgeSetLoadExpr;
 
@@ -88,6 +94,7 @@ namespace graphit {
         struct VarDecl;
         struct IdentDecl;
         struct FuncDecl;
+        struct FuncExpr;
 
 
         struct ElementType;
@@ -126,6 +133,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<NameNode>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
+            virtual void visit(std::shared_ptr<ParForStmt>);
 
             virtual void visit(std::shared_ptr<WhileStmt>);
 
@@ -191,6 +200,11 @@ namespace graphit {
 
             virtual void visit(std::shared_ptr<VarExpr>) {};
 
+            virtual void visit(std::shared_ptr<IntersectionExpr>);
+            virtual void visit(std::shared_ptr<IntersectNeighborExpr>);
+
+            virtual void visit(std::shared_ptr<ConstantVectorExpr>);
+
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
 
@@ -222,6 +236,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<IdentDecl>) {};
 
             virtual void visit(std::shared_ptr<FuncDecl>);
+
+            virtual void visit(std::shared_ptr<FuncExpr>);
 
             virtual void visit(std::shared_ptr<ElementType>) {};
 

@@ -173,6 +173,10 @@ namespace graphit {
                 output->type = mir::ScalarType::Type::UINT;
                 retType = output;
                 break;
+            case fir::ScalarType::Type::UINT_64:
+                output->type = mir::ScalarType::Type::UINT_64;
+                retType = output;
+                break;
             case fir::ScalarType::Type::FLOAT:
                 output->type = mir::ScalarType::Type::FLOAT;
                 retType = output;
@@ -249,6 +253,24 @@ namespace graphit {
 
         mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(for_stmt->body));
         mir_for_stmt->domain = emitDomain(for_stmt->domain);
+        ctx->unscope();
+
+        retStmt = mir_for_stmt;
+    }
+
+    void MIREmitter::visit(fir::ParForStmt::Ptr par_for_stmt) {
+        ctx->scope();
+        auto mir_for_stmt = std::make_shared<mir::ParForStmt>();
+        mir_for_stmt->loopVar = par_for_stmt->loopVar->ident;
+        auto loop_var_type = std::make_shared<mir::ScalarType>();
+        loop_var_type->type = mir::ScalarType::Type::INT;
+        auto mir_var = mir::Var(par_for_stmt->loopVar->ident, loop_var_type);
+        //copy over the label from fir
+        mir_for_stmt->stmt_label = par_for_stmt->stmt_label;
+        ctx->addSymbol(mir_var);
+
+        mir_for_stmt->body = mir::to<mir::StmtBlock>(emitStmt(par_for_stmt->body));
+        mir_for_stmt->domain = emitDomain(par_for_stmt->domain);
         ctx->unscope();
 
         retStmt = mir_for_stmt;
@@ -332,6 +354,35 @@ namespace graphit {
             mir_listalloc_expr->size_expr = emitExpr(expr->numElements);
         mir_listalloc_expr->element_type = mir::to<mir::Type>(emitType(expr->general_element_type));
         retExpr = mir_listalloc_expr;
+    }
+
+    void MIREmitter::visit(fir::IntersectionExpr::Ptr intersection_expr) {
+        auto mir_inter_expr = std::make_shared<mir::IntersectionExpr>();
+        mir_inter_expr->vertex_a = emitExpr(intersection_expr->vertex_a);
+        mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
+        mir_inter_expr->numA = emitExpr(intersection_expr->numA);
+        mir_inter_expr->numB = emitExpr(intersection_expr->numB);
+        if (intersection_expr->reference != nullptr) {
+            mir_inter_expr->reference = emitExpr(intersection_expr->reference);
+        }
+        retExpr = mir_inter_expr;
+    }
+
+    void MIREmitter::visit(fir::IntersectNeighborExpr::Ptr intersection_expr) {
+        auto mir_inter_expr = std::make_shared<mir::IntersectNeighborExpr>();
+        mir_inter_expr->edges = emitExpr(intersection_expr->edges);
+        mir_inter_expr->vertex_a = emitExpr(intersection_expr->vertex_a);
+        mir_inter_expr->vertex_b = emitExpr(intersection_expr->vertex_b);
+        retExpr = mir_inter_expr;
+    }
+
+    void MIREmitter::visit(fir::ConstantVectorExpr::Ptr const_vector_expr) {
+        auto mir_const_vector_expr = std::make_shared<mir::ConstantVectorExpr>();
+
+        mir_const_vector_expr->vectorElements = emitFunctorArgs(const_vector_expr->vectorElements);
+        mir_const_vector_expr->numElements = mir_const_vector_expr->vectorElements.size();
+
+        retExpr = mir_const_vector_expr;
     }
 
     void MIREmitter::visit(fir::EdgeSetLoadExpr::Ptr load_expr) {
@@ -456,6 +507,13 @@ namespace graphit {
         }
         mir_expr->args = args;
 
+        std::vector<mir::Expr::Ptr> functorArgs;
+        for (auto &fir_arg : call_expr->functorArgs) {
+            const mir::Expr::Ptr mir_arg = emitExpr(fir_arg);
+            functorArgs.push_back(mir_arg);
+        }
+        mir_expr->functorArgs = functorArgs;
+
         retExpr = mir_expr;
     };
 
@@ -508,12 +566,22 @@ namespace graphit {
             //add the target to the argument
             args.push_back(self_arg);
 
-            //adds an additional argument for Builtin Sum
-            if (method_call_expr->method_name->ident == "builtin_sum") {
+            //adds an additional argument for Builtin Sum and Max
+            auto identifier = method_call_expr->method_name->ident;
+            if (identifier == "builtin_sum" || identifier == "builtin_max") {
                 auto vertex_element_type = ctx->getElementTypeFromVectorOrSetName(target_expr->ident);
-		//assert(mir::isa<mir::VectorType>(mir_target_type));
-		//auto vertex_element_type = mir::to<mir::VectorType>(mir_target_type)->element_type;
-                const auto size_arg = ctx->getElementCount(vertex_element_type);
+		        //assert(mir::isa<mir::VectorType>(mir_target_type));q
+                mir::Expr::Ptr size_arg;
+                if(vertex_element_type != nullptr && ctx->getElementCount(vertex_element_type)) {
+                    size_arg = ctx->getElementCount(vertex_element_type);
+                }
+                //hack to get the size information for the local vectors since they are not registered in the context
+                else {
+                    auto range =  mir::to<mir::VectorType>(mir_target_type)->range_indexset;
+                    auto mir_range = std::make_shared<mir::IntLiteral>();
+                    mir_range->val = range;
+                    size_arg = mir_range;
+                }
                 args.push_back(size_arg);
             }
 
@@ -556,7 +624,10 @@ namespace graphit {
                 //dense vertexset apply
                 auto vertexset_apply_expr = std::make_shared<mir::VertexSetApplyExpr>();
                 vertexset_apply_expr->target = target_expr;
-                vertexset_apply_expr->input_function_name = apply_expr->input_function->ident;
+
+                auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->input_function));
+                vertexset_apply_expr->input_function = funcExpr;
+
                 if (apply_expr->change_tracking_field != nullptr)
                     vertexset_apply_expr->tracking_field = fir::to<fir::Identifier>(
                             apply_expr->change_tracking_field)->ident;
@@ -564,7 +635,10 @@ namespace graphit {
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityExternVertexSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
-                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
+
+                auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->input_function));
+                apply_update_priority_expr->input_function = funcExpr;
+
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with vertex set" << std::endl;
@@ -579,11 +653,18 @@ namespace graphit {
             if (apply_expr->type == fir::ApplyExpr::Type::REGULAR_APPLY) {
                 auto edgeset_apply_expr = std::make_shared<mir::EdgeSetApplyExpr>();
                 edgeset_apply_expr->target = target_expr;
-                edgeset_apply_expr->input_function_name = apply_expr->input_function->ident;
-                if (apply_expr->to_expr) edgeset_apply_expr->to_func = apply_expr->to_expr->input_func->ident;
+
+                auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->input_function));
+                edgeset_apply_expr->input_function = funcExpr;
+
+                if (apply_expr->to_expr) {
+                    auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->to_expr));
+                    edgeset_apply_expr->to_func = funcExpr;
+                }
                 if (apply_expr->from_expr) {
                     //TODO: move the checking from expr is a function or vertexsubset logic here
-                    edgeset_apply_expr->from_func = apply_expr->from_expr->input_func->ident;
+                    auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->from_expr));
+                    edgeset_apply_expr->from_func = funcExpr;
                 }
                 if (apply_expr->change_tracking_field != nullptr)
                     edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(
@@ -591,14 +672,27 @@ namespace graphit {
                 if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
                 else edgeset_apply_expr->enable_deduplication = true;
                 retExpr = edgeset_apply_expr;
+
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
                 apply_update_priority_expr->target = target_expr;
-                apply_update_priority_expr->input_function_name = apply_expr->input_function->ident;
-                if (apply_expr->to_expr)
-                    apply_update_priority_expr->to_func = apply_expr->to_expr->input_func->ident;
-                if (apply_expr->from_expr)
-                    apply_update_priority_expr->from_func = apply_expr->from_expr->input_func->ident;
+                auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->input_function));
+                apply_update_priority_expr->input_function = funcExpr;
+
+                if (apply_expr->to_expr) {
+
+                    auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->to_expr));
+                    apply_update_priority_expr->to_func = funcExpr;
+
+                }
+
+                if (apply_expr->from_expr) {
+
+                    auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->from_expr));
+                    apply_update_priority_expr->from_func = funcExpr;
+
+                }
+
                 retExpr = apply_update_priority_expr;
             } else {
                 std::cout << "Unsupported apply type with edge set" << std::endl;
@@ -619,7 +713,9 @@ namespace graphit {
         //if (ctx->isConstVertexSet(fir_target_var_name)) {
         auto verteset_where_expr = std::make_shared<mir::VertexSetWhereExpr>();
         verteset_where_expr->target = fir_target_var_name;
-        verteset_where_expr->input_func = where_expr->input_func->ident;
+        auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(where_expr->input_func));
+        verteset_where_expr->input_func = funcExpr;
+
         if (ctx->isConstVertexSet(fir_target_var_name))
             verteset_where_expr->is_constant_set = true;
         else
@@ -642,18 +738,31 @@ namespace graphit {
         //TODO: retField in the future ??
     }
 
+    void MIREmitter::visit(fir::FuncExpr::Ptr func_expr) {
+
+        const auto mir_func_expr = std::make_shared<mir::FuncExpr>();
+        const auto mir_ident = std::make_shared<mir::IdentDecl>();
+
+        mir_ident->name = func_expr->name->ident;
+        mir_func_expr->function_name = mir_ident;
+
+        mir_func_expr->functorArgs = emitFunctorArgs(func_expr->args);
+
+        retExpr = mir_func_expr;
+
+    }
+
     void MIREmitter::visit(fir::FuncDecl::Ptr func_decl) {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
         ctx->scope();
-        std::vector<mir::Var> arguments;
+        std::vector<mir::Var> arguments = emitArgumentVariables(func_decl->args);
+        std::vector<mir::Var> functorArguments = emitArgumentVariables(func_decl->functorArgs);
+
 
         //processing the arguments to the function declaration
-        for (auto arg : func_decl->args) {
-            const mir::Var arg_var = emitVar(arg);
-            arguments.push_back(arg_var);
-            ctx->addSymbol(arg_var);
-        }
+
         mir_func_decl->args = arguments;
+        mir_func_decl->functorArgs = functorArguments;
 
         //Processing the output of the function declaration
         //we assume there is only one argument for easy C++ code generation
@@ -839,6 +948,17 @@ namespace graphit {
                         const auto init_val = mir::to<mir::EdgeSetLoadExpr>(mir_var_decl->initVal);
                         mir_var_decl->initVal = init_val;
                         ctx->updateElementInputFilename(type->element, init_val->file_name);
+                        // need to construct a MethodCallExpr to get the size of vertex type
+                        // need to update the count with "updateElementCount() "
+                        auto mirCallExpr = std::make_shared<mir::Call>();
+                        mirCallExpr->name = "builtin_getVertices";
+                        std::vector<mir::Expr::Ptr> args;
+                        auto mirCallExprArg = std::make_shared<mir::VarExpr>();
+                        mirCallExprArg->var = ctx->getSymbol(mir_var_decl->name);
+                        args.push_back(mirCallExprArg);
+                        mirCallExpr->args = args;
+                        ctx->updateElementCount(type->vertex_element_type_list->at(0), mirCallExpr);
+
                     }
                 }
                 ctx->addEdgeSet(mir_var_decl);
@@ -860,6 +980,32 @@ namespace graphit {
 
     void MIREmitter::addElementType(mir::ElementType::Ptr element_type) {
         ctx->addElementType(element_type);
+    }
+
+
+    std::vector<mir::Var> MIREmitter::emitArgumentVariables(std::vector<fir::Argument::Ptr> args) {
+
+        std::vector<mir::Var> result;
+
+        for (auto arg : args) {
+            const mir::Var arg_var = emitVar(arg);
+            result.push_back(arg_var);
+            ctx->addSymbol(arg_var);
+        }
+
+        return result;
+    }
+
+    std::vector<mir::Expr::Ptr> MIREmitter::emitFunctorArgs(std::vector<fir::Expr::Ptr> functorArgs) {
+
+        std::vector<mir::Expr::Ptr> result;
+
+        for (auto &fir_arg : functorArgs){
+            auto mir_arg = emitExpr(fir_arg);
+            result.push_back(mir_arg);
+        }
+
+        return result;
     }
 
     mir::FuncDecl::Type MIREmitter::getMirFuncDeclType(fir::FuncDecl::Type t) {

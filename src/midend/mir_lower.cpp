@@ -5,6 +5,8 @@
 #include <graphit/midend/mir_lower.h>
 #include <graphit/midend/physical_data_layout_lower.h>
 #include <graphit/midend/apply_expr_lower.h>
+#include <graphit/midend/intersection_expr_lower.h>
+#include <graphit/midend/par_for_lower.h>
 #include <graphit/midend/vector_op_lower.h>
 #include <graphit/midend/change_tracking_lower.h>
 #include <graphit/midend/gpu_change_tracking_lower.h>
@@ -13,6 +15,7 @@
 #include <graphit/midend/atomics_op_lower.h>
 #include <graphit/midend/vertex_edge_set_lower.h>
 #include <graphit/midend/merge_reduce_lower.h>
+#include <graphit/midend/udf_dup.h>
 #include <graphit/midend/priority_features_lowering.h>
 #include <graphit/midend/gpu_priority_features_lowering.h>
 #include <graphit/midend/while_loop_fusion.h>
@@ -25,6 +28,10 @@ namespace graphit {
      * @param schedule
      */
     void MIRLower::lower(MIRContext* mir_context, Schedule* schedule){
+    
+        // Duplicate the UDFs that have been used in two different EdgeSetApplyExpr
+        // before performing any analysis
+        UDFReuseFinder(mir_context).lower();
 
         //lower global vector assignment to vector operations
         GlobalFieldVectorLower(mir_context, schedule).lower();
@@ -54,7 +61,13 @@ namespace graphit {
         //  sets the flags for other parts of the lowering process
         ApplyExprLower(mir_context, schedule).lower();
 
+        // This pass sets properties of intersection operations based on scheduling languages.
+        // intersection types: HiroshiIntersection, Naive, Multiskip, Binary, Combined
+        // If there is no schedule specified, it just chooses naive intersection.
+        IntersectionExprLower(mir_context, schedule).lower();
 
+        // This pass sets grain size of the parallel for. If nothing is given, it will use default OPENMP for loop.
+        ParForLower(mir_context, schedule).lower();
 
         // Use program analysis to figure out the properties of each tensor access
         // read write type: read/write/read and write (reduction)

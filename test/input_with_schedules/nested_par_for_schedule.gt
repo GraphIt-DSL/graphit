@@ -1,0 +1,2 @@
+schedule:
+    program->configApplyDirection("l1:l2:s1", "SparsePush")->configApplyParallelization("l1:l2:s1", "dynamic-vertex-parallel");

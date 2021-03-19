@@ -24,15 +24,15 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::UpdatePriori
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
     if (apply_expr->is_parallel){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-        auto pull_func_name = apply_expr->input_function_name;
+        auto pull_func_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
-        auto push_func_name = apply_expr->push_function_;
+        auto push_func_name = apply_expr->push_function_->function_name->name;
         mir::FuncDecl::Ptr push_func_decl = mir_context_->getFunction(push_func_name);
 
         pull_func_decl->accept(&reduce_stmt_lower);
         push_func_decl->accept(&reduce_stmt_lower);
 
-        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function, apply_expr);
         lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->push_function_, apply_expr);
 
     }
@@ -41,10 +41,10 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseE
 void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){
     if (apply_expr->is_parallel){
         ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
-        auto apply_func_decl_name = apply_expr->input_function_name;
+        auto apply_func_decl_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&reduce_stmt_lower);
-        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function_name, apply_expr);
+        lowerCompareAndSwap(apply_expr->to_func, apply_expr->from_func, apply_expr->input_function, apply_expr);
     }
 }
 
@@ -56,18 +56,18 @@ void graphit::AtomicsOpLower::lower() {
     }
 }
 
-bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string to_func,
-                                                  std::string from_func,
-                                                  std::string apply_func,
+bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(mir::FuncExpr::Ptr to_func,
+                                                  mir::FuncExpr::Ptr from_func,
+                                                  mir::FuncExpr::Ptr apply_func,
                                                   mir::EdgeSetApplyExpr::Ptr apply_expr) {
-    if (to_func != ""){
+    if (to_func != nullptr){
         //pattern 1:
         // condition 1: to function reads field[v] (v is dst) (the only stmt in to_func), field read is tensorArrayRead
         // condition 2: apply function has one assignment only
         // condition 3: assignment is on the same field and on dst, and this is a shared write
         // condition 4: the data must be of a supported type
 
-        auto to_func_decl = mir_context_->getFunction(to_func);
+        auto to_func_decl = mir_context_->getFunction(to_func->function_name->name);
         auto to_func_body = to_func_decl->body;
         std::string compare_filed;
         // this is the value that the CAS is going to compare to if the CAS is to be generated
@@ -97,8 +97,27 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                         = mir::to<mir::TensorArrayReadExpr>(eq_expr->operands[0]);
                 std::string field_name = tensor_array_read_expr->getTargetNameStr();
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
-                if (mir::isa<mir::ScalarType>(field_type)){
-                    mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(field_type);
+
+                //TODO this is hack to access local array type since it is not registered in the context map
+                //it has to be scalar tensor read to have lower to atomic operations
+                if (! mir::isa<mir::VarExpr>(tensor_array_read_expr->target)){
+                    return false;
+                }
+                auto var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+                mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+                mir::Type::Ptr local_element_type;
+                if(mir::isa<mir::VectorType>(local_vector_field_type)){
+                    local_element_type = (mir::to<mir::VectorType>(local_vector_field_type))->vector_element_type;
+                }
+
+                if (mir::isa<mir::ScalarType>(field_type) || mir::isa<mir::ScalarType>(local_element_type)){
+                    mir::ScalarType::Ptr scalar_type;
+                    if (mir::isa<mir::ScalarType>(field_type)) {
+                        scalar_type = mir::to<mir::ScalarType>(field_type);
+                    } else {
+                        scalar_type = mir::to<mir::ScalarType>(local_element_type);
+                    }
+
                     if (scalar_type->type == mir::ScalarType::Type::INT
                         || scalar_type->type == mir::ScalarType::Type::FLOAT){
                         // the tensor has to be of CAS compaitlbe type, currently we only do int and floats
@@ -120,7 +139,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
             // to_func did not fit the pattern
             return false;
 
-        auto apply_func_decl = mir_context_->getFunction(apply_func);
+        auto apply_func_decl = mir_context_->getFunction(apply_func->function_name->name);
         auto apply_func_body = apply_func_decl->body;
 
         if (apply_func_body->stmts->size() == 1){
@@ -141,13 +160,31 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                 FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
                 mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
 
+                //TODO this is hack to access local array type since it is not registered in the context map
+                //it has to be scalar tensor read to have lower to atomic operations
+                if (! mir::isa<mir::VarExpr>(tensor_array_read_expr->target)){
+                    return false;
+                }
+                auto var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+                mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+                mir::Type::Ptr local_element_type;
+                if(mir::isa<mir::VectorType>(local_vector_field_type)){
+                    local_element_type = (mir::to<mir::VectorType>(local_vector_field_type))->vector_element_type;
+                }
+
                 //condition 3
                 if (field_name == compare_filed
                     && index == "dst"
                     && field_vector_prop.access_type_ == FieldVectorProperty::AccessType::SHARED){
                     // condition 4 checks
-                    if (mir::isa<mir::ScalarType>(field_type)){
-                        mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(field_type);
+                    if (mir::isa<mir::ScalarType>(field_type) || mir::isa<mir::ScalarType>(local_element_type)){
+                        mir::ScalarType::Ptr scalar_type;
+                        if (mir::isa<mir::ScalarType>(field_type)) {
+                            scalar_type = mir::to<mir::ScalarType>(field_type);
+                        } else {
+                            scalar_type = mir::to<mir::ScalarType>(local_element_type);
+                        }
+
                         if (scalar_type->type == mir::ScalarType::Type::INT
                             || scalar_type->type == mir::ScalarType::Type::FLOAT){
                             // the tensor has to be of CAS compaitlbe type, currently we only do int and floats
@@ -167,9 +204,14 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
                             if (mir::isa<mir::HybridDenseEdgeSetApplyExpr>(apply_expr)){
                                 //if this is hybrid, just remove the push_to, and keep the other to for pull
                                 //TODO: this is a bit hacky, think about how to do it better later
-                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                                //(mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = "";
+                                // maybe there is better way to do this
+                                //TODO: ask Yunming about this?
+                                (mir::to<mir::HybridDenseEdgeSetApplyExpr>(apply_expr))->push_to_function_ = nullptr;
+
                             } else {
-                                apply_expr->to_func = "";
+                                //apply_expr->to_func = "";
+                                apply_expr->to_func = nullptr;
                             }
                             return true;
 
@@ -189,7 +231,7 @@ bool graphit::AtomicsOpLower::ApplyExprVisitor::lowerCompareAndSwap(std::string 
 
     }
 
-    if (from_func != ""){
+    if (from_func != nullptr){
         //TODO: support this other pattern
         //pattern 2:
         // condition 1: from function reads field[v] (v is src) (the only stmt in from_func)
@@ -219,6 +261,11 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
         return;
     }
 
+    mir::VarExpr::Ptr var_target = mir::to<mir::VarExpr>(tensor_array_read_expr->target);
+
+    //TODO this is hack to access local array type since it is not registered in the context map
+    mir::Type::Ptr local_vector_field_type = var_target->var.getType();
+
     std::string field_name = tensor_array_read_expr->getTargetNameStr();
     FieldVectorProperty field_vector_prop = tensor_array_read_expr->field_vector_prop_;
     mir::Type::Ptr field_type = mir_context_->getVectorItemType(field_name);
@@ -245,6 +292,37 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                         exit(0);
                 }
             }
+        }
+
+        //If it is local vector, we still need to add atomic
+        else if(mir::isa<mir::VectorType>(local_vector_field_type)) {
+            mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(local_vector_field_type);
+            mir::Type::Ptr local_field_type = vector_type->vector_element_type;
+
+            if (mir::isa<mir::ScalarType>(local_field_type)){
+                //check if it is an supported type for atomic operations
+                mir::ScalarType::Ptr scalar_type = mir::to<mir::ScalarType>(local_field_type);
+                    if (scalar_type->type == mir::ScalarType::Type::INT
+                        || scalar_type->type == mir::ScalarType::Type::FLOAT
+                        || scalar_type->type == mir::ScalarType::Type::DOUBLE) {
+                        //update the type to atomic op
+                        reduce_stmt->is_atomic_ = true;
+                        switch (reduce_stmt->reduce_op_){
+                            case mir::ReduceStmt::ReductionOp::MIN:
+                                reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_MIN;
+                                break;
+                            case mir::ReduceStmt::ReductionOp::SUM:
+                                reduce_stmt->reduce_op_ = mir::ReduceStmt::ReductionOp::ATOMIC_SUM;
+                                break;
+                            default:
+                                std::cout << "not supported for atomics" << std::endl;
+                                exit(0);
+                        }
+                    }
+
+
+            }
+
         }
     }
 

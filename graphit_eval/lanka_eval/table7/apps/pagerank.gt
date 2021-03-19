@@ -1,0 +1,59 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const old_rank : vector{Vertex}(float) = 1.0/vertices.size();
+const new_rank : vector{Vertex}(float) = 0.0;
+const out_degree : vector {Vertex}(int) = edges.getOutDegrees();
+const contrib : vector{Vertex}(float) = 0.0;
+const error : vector{Vertex}(float) = 0.0;
+const damp : float = 0.85;
+const epsilon : float = 0.0001;
+const beta_score : float = (1.0 - damp) / vertices.size();
+
+func computeContrib(v : Vertex)
+    contrib[v] = old_rank[v] / out_degree[v];
+end
+
+func updateEdge(src : Vertex, dst : Vertex)
+    new_rank[dst] += contrib[src];
+end
+
+func updateVertex(v : Vertex)
+    var old_score : float = old_rank[v];
+    new_rank[v] = beta_score + damp*(new_rank[v]);
+    error[v] = fabs(new_rank[v] - old_rank[v]);
+    old_rank[v] = new_rank[v];
+    new_rank[v] = 0.0;
+end
+
+func printRank(v : Vertex)
+    print old_rank[v];
+end
+
+func reset(v: Vertex)
+    old_rank[v] = 1.0/vertices.size();
+    new_rank[v] = 0.0;
+end
+
+func main()
+    for trail in 0:16
+    	startTimer();
+        vertices.apply(reset);
+    	for i in 0:20
+    	    vertices.apply(computeContrib);
+            #s1# edges.apply(updateEdge);
+            vertices.apply(updateVertex);
+            % if nothing is getting updated, we stop the iteration
+            if error.sum() < epsilon
+                break;
+            end
+    	end
+
+    	var elapsed_time : float = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
+    end
+end
+
+% specify schedules here or use a separate schedule file

@@ -1,0 +1,26 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func initArray[a: vector{Vertex}(int)](v: Vertex)
+    a[v] = 0;
+end
+
+func addSomeAmount[a: vector{Vertex}(int), b: vector{Vertex}(int), c: int](v: Vertex)
+    b[v] += c;
+    a[v] += 2*b[v];
+end
+
+func main()
+
+    var simpleArray1 : vector{Vertex}(int) = new vector{Vertex}(int)();
+    var simpleArray2: vector{Vertex}(int) = 0;
+
+    vertices.apply(initArray[simpleArray1]);
+    vertices.apply(addSomeAmount[simpleArray1, simpleArray2, 6]);
+
+    print simpleArray1.sum();
+    delete simpleArray1;
+    delete simpleArray2;
+end

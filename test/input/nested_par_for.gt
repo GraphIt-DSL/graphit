@@ -1,0 +1,22 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex, Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func addOne[a: vector{Vertex}(int)](v: Vertex)
+    atomicAdd(a, v, 1);
+end
+
+func main()
+
+    var simpleArray: vector{Vertex}(int) = 0;
+
+    #l1# par_for i in 0:10
+        #l2# par_for j in 0:10
+            #s1# vertices.apply(addOne[simpleArray]);
+        end
+    end
+
+    print simpleArray.sum();
+    delete simpleArray;
+end

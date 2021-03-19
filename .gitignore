@@ -8,3 +8,4 @@ build/
 autotune/*.json
 *.graphit_bin
 *.graphit_sbin
+cmake-build-debug/

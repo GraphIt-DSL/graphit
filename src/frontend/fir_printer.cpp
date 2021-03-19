@@ -261,6 +261,22 @@ namespace graphit {
                 oss << ">";
             }
 
+            if (!decl->functorArgs.empty()) {
+                oss << "[";
+
+                bool printDelimiter = false;
+                for (auto functorArg : decl->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    functorArg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << "]";
+            }
+
             oss << "(";
 
             bool printDelimiter = false;
@@ -383,6 +399,26 @@ namespace graphit {
                 oss << " # " << stmt->stmt_label << " # ";
 
             oss << "for ";
+            stmt->loopVar->accept(this);
+            oss << " in ";
+            stmt->domain->accept(this);
+            oss << std::endl;
+
+            indent();
+            stmt->body->accept(this);
+            dedent();
+
+            printIndent();
+            oss << "end";
+        }
+
+        void FIRPrinter::visit(ParForStmt::Ptr stmt) {
+            printIndent();
+
+            if (stmt->stmt_label != "")
+                oss << " # " << stmt->stmt_label << " # ";
+
+            oss << "par_for ";
             stmt->loopVar->accept(this);
             oss << " in ";
             stmt->domain->accept(this);
@@ -608,6 +644,22 @@ namespace graphit {
                 }
 
                 oss << ">";
+            }
+
+            if (!expr->functorArgs.empty()) {
+                oss << "[";
+
+                bool printDelimiter = false;
+                for (auto functorArg : expr->functorArgs) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+
+                    functorArg->accept(this);
+                    printDelimiter = true;
+                }
+
+                oss << "]";
             }
 
             oss << "(";
@@ -959,6 +1011,24 @@ namespace graphit {
             oss << ")";
         }
 
+        void FIRPrinter::visit(FuncExpr::Ptr expr) {
+            expr->name->accept(this);
+
+            if (!expr->args.empty()){
+                oss << "[";
+                bool printDelimiter = false;
+                for (auto arg : expr->args) {
+                    if (printDelimiter) {
+                        oss << ", ";
+                    }
+                    arg->accept(this);
+                    printDelimiter = true;
+                }
+                oss << "]";
+
+            }
+        }
+
         void FIRPrinter::visit(ApplyExpr::Ptr expr) {
             expr->target->accept(this);
 
@@ -996,6 +1066,47 @@ namespace graphit {
             expr->input_func->accept(this);
             oss << ")";
 
+        }
+
+        void FIRPrinter::visit(IntersectionExpr::Ptr expr) {
+            oss << "intersection(";
+            expr->vertex_a->accept(this);
+            oss << ", ";
+            expr->vertex_b->accept(this);
+            oss << ", ";
+            expr->numA->accept(this);
+            oss << ", ";
+            expr->numB->accept(this);
+            if (expr->reference != nullptr) {
+                oss << ", ";
+                expr->reference->accept(this);
+            }
+            oss << ") ";
+        }
+
+        void FIRPrinter::visit(IntersectNeighborExpr::Ptr expr) {
+            oss << "intersectNeighbor(";
+            expr->edges->accept(this);
+            oss << ", ";
+            expr->vertex_a->accept(this);
+            oss << ", ";
+            expr->vertex_b->accept(this);
+            oss << ") ";
+        }
+
+        void FIRPrinter::visit(ConstantVectorExpr::Ptr expr) {
+            oss << "{";
+
+            bool printDelimiter = false;
+            for (auto el : expr->vectorElements) {
+                if (printDelimiter) {
+                    oss << ", ";
+                }
+                el->accept(this);
+                printDelimiter = true;
+            }
+
+            oss << "} ";
         }
 
         void FIRPrinter::visit(EdgeSetLoadExpr::Ptr expr) {

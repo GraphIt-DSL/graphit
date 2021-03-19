@@ -1,0 +1,40 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const parent : vector{Vertex}(int) = -1;
+
+
+func updateEdge(src : Vertex, dst : Vertex)
+    parent[dst] = src;
+end
+
+func toFilter(v : Vertex) -> output : bool
+    output =  parent[v] == -1;
+end
+
+func reset(v: Vertex)
+    parent[v] = -1;
+end
+
+func main()
+    for trail in 0:10
+	startTimer();
+        vertices.apply(reset);
+    	var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    	frontier.addVertex(14);
+    	parent[14] = 14;
+
+    	while (frontier.getVertexSetSize() != 0)
+            #s1# frontier = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+    	end
+
+        var elapsed_time : float = stopTimer();
+    	print "elapsed time: ";
+    	print elapsed_time;
+    end
+end
+
+schedule:
+     program->configApplyDirection("s1", "SparsePush-DensePull")->configApplyParallelization("s1", "dynamic-vertex-parallel");

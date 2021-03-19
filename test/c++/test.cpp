@@ -68,11 +68,12 @@ int main(int argc, char **argv) {
 
 
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SSSP_LabelProp_GPUScheduleTest";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.AStarDeltaSteppingWithEagerPriorityUpdateWithMergeArgv";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSumReduceBeforeUpdate";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDefaultSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithEagerPriorityUpdate";
 
-//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.SetCoverUintDefaultSchedule";
+//    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.CCPJUMPNoSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.KCoreSparsePushDensePullParallel";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.DeltaSteppingWithDeltaSparsePushSchedule";
 //    ::testing::GTEST_FLAG(filter) = "HighLevelScheduleTest.PageRankDeltaDoubleHybridDenseParallelFuseFieldsLoadBalance";

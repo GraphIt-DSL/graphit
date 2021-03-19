@@ -71,6 +71,25 @@ namespace graphit {
 
     };
 
+    struct IntersectionSchedule {
+        enum class IntersectionType {
+            HIROSHI,
+            MULTISKIP,
+            COMBINED,
+            BINARY,
+            NAIVE,
+        };
+
+    };
+
+    struct ParForSchedule {
+        enum class ParForType {
+            STATIC,
+            DYNAMIC,
+        };
+
+    };
+
     struct GraphIterationSpace {
 
         enum class Direction {
@@ -198,6 +217,7 @@ namespace graphit {
             int pull_load_balance_edge_grain_size;
             int num_segment;
             int delta;
+            int grain_size;
             bool numa_aware;
             int merge_threshold;
             int num_open_buckets;
@@ -210,9 +230,12 @@ namespace graphit {
         public:
             Schedule() {
                 physical_data_layouts = new std::map<std::string, FieldVectorPhysicalDataLayout>();
+                intersection_schedules = new std::map<std::string, IntersectionSchedule::IntersectionType >();
+                par_for_grain_size_schedules = new std::map<std::string, int>();
                 apply_schedules = new std::map<std::string, ApplySchedule>();
                 vertexset_data_layout = std::map<std::string, VertexsetPhysicalLayout>();
                 graph_iter_spaces = new std::map<std::string, std::vector<GraphIterationSpace> *>();
+
 
             };
 
@@ -232,6 +255,11 @@ namespace graphit {
             // this is a vector of graph iteration spaces because we can have up to two graph iteration spaces (for hybrid directions)
             std::map<std::string, std::vector<GraphIterationSpace> *> *graph_iter_spaces;
             std::map<std::string, VertexsetPhysicalLayout> vertexset_data_layout;
+
+            std::map<std::string, IntersectionSchedule::IntersectionType> *intersection_schedules;
+            std::map<std::string, int> *par_for_grain_size_schedules;
+            std::map<std::string, ParForSchedule::ParForType> *par_for_type_schedules;
+            std::map<std::string, int> *par_for_num_threads;
 
 
 	    std::map <std::string, graphit::fir::gpu_schedule::GPUSchedule*> apply_gpu_schedules;

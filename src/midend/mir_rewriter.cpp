@@ -262,6 +262,20 @@ namespace graphit {
             }
         }
 
+        void MIRRewriter::visit(std::shared_ptr<ParForStmt> stmt) {
+            if (stmt->stmt_label != "") {
+                label_scope_.scope(stmt->stmt_label);
+            }
+            stmt->domain = rewrite<ForDomain>(stmt->domain);
+            stmt->body = rewrite<StmtBlock>(stmt->body);
+            node = stmt;
+            if (stmt->stmt_label != "") {
+                label_scope_.unscope();
+            }
+
+            stmt->grain_size = stmt->grain_size;
+        }
+
         void MIRRewriter::visit(std::shared_ptr<ForDomain> for_domain) {
             for_domain->lower = rewrite<Expr>(for_domain->lower);
             for_domain->upper = rewrite<Expr>(for_domain->upper);
@@ -340,6 +354,42 @@ namespace graphit {
             load_expr->file_name = rewrite<Expr>(load_expr->file_name);
             node = load_expr;
         }
+
+        void MIRRewriter::visit(IntersectNeighborExpr::Ptr inter_neigh_expr) {
+            inter_neigh_expr->edges = rewrite<Expr>(inter_neigh_expr->edges);
+            inter_neigh_expr->vertex_a = rewrite<Expr>(inter_neigh_expr->vertex_a);
+            inter_neigh_expr->vertex_b = rewrite<Expr>(inter_neigh_expr->vertex_b);
+            inter_neigh_expr->intersectionType = inter_neigh_expr->intersectionType;
+            node = inter_neigh_expr;
+        }
+
+
+        void MIRRewriter::visit(IntersectionExpr::Ptr inter_expr) {
+            inter_expr->vertex_a = rewrite<Expr>(inter_expr->vertex_a);
+            inter_expr->vertex_b = rewrite<Expr>(inter_expr->vertex_b);
+            inter_expr->numA = rewrite<Expr>(inter_expr->numA);
+            inter_expr->numB = rewrite<Expr>(inter_expr->numB);
+            if (inter_expr->reference != nullptr) {
+                inter_expr->reference = rewrite<Expr>(inter_expr->reference);
+            }
+
+            inter_expr->intersectionType = inter_expr->intersectionType;
+            node = inter_expr;
+        }
+
+        void MIRRewriter::visit(ConstantVectorExpr::Ptr const_vector_expr) {
+            const_vector_expr->numElements = const_vector_expr->numElements;
+            std::vector<Expr::Ptr> vectorElements;
+
+            for(auto el: const_vector_expr->vectorElements){
+                vectorElements.push_back(rewrite<Expr>(el));
+            }
+
+            const_vector_expr->vectorElements = vectorElements;
+            node = const_vector_expr;
+
+        }
+
 
         // OG Additions
         void MIRRewriter::visit(UpdatePriorityExternVertexSetApplyExpr::Ptr apply_expr) {

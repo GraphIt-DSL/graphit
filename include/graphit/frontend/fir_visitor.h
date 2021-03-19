@@ -49,6 +49,7 @@ namespace graphit {
         struct IndexSetDomain;
         struct RangeDomain;
         struct ForStmt;
+        struct ParForStmt;
         struct PrintStmt;
         struct NameNode;
 
@@ -100,6 +101,12 @@ namespace graphit {
         struct EdgeSetType;
         struct ListType;
 
+        struct IntersectionExpr;
+
+        struct IntersectNeighborExpr;
+
+        struct ConstantVectorExpr;
+
         struct EdgeSetLoadExpr;
 
         // Expression that allocates a new vertexset (new vertexset(node_id));
@@ -111,6 +118,7 @@ namespace graphit {
         // Experession that allocates a new vector
         struct VectorAllocExpr;
 
+        struct FuncExpr;
         struct MethodCallExpr;
         struct ApplyExpr;
         struct WhereExpr;
@@ -198,6 +206,8 @@ namespace graphit {
             virtual void visit(std::shared_ptr<RangeDomain>);
 
             virtual void visit(std::shared_ptr<ForStmt>);
+
+            virtual void visit(std::shared_ptr<ParForStmt>);
 
             virtual void visit(std::shared_ptr<NameNode>);
 
@@ -300,9 +310,12 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ListAllocExpr>);
             virtual void visit(std::shared_ptr<VectorAllocExpr>);
 
-
+            virtual void visit(std::shared_ptr<IntersectionExpr>);
+            virtual void visit(std::shared_ptr<IntersectNeighborExpr>);
+            virtual void visit(std::shared_ptr<ConstantVectorExpr>);
             virtual void visit(std::shared_ptr<EdgeSetLoadExpr>);
 
+            virtual void visit(std::shared_ptr<FuncExpr>);
             virtual void visit(std::shared_ptr<MethodCallExpr>);
             virtual void visit(std::shared_ptr<ApplyExpr>);
             virtual void visit(std::shared_ptr<WhereExpr>);

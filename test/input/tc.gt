@@ -1,0 +1,25 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load(argv[1]);
+const triangles : uint_64 = 0;
+const vertices : vertexset{Vertex} = edges.getVertices();
+const vertexArray: vector{Vertex}(uint) = 0;
+
+func incrementing_count(src : Vertex, dst : Vertex)
+    var src_nghs : vertexset{Vertex} = edges.getNgh(src);
+    var dst_nghs : vertexset{Vertex} = edges.getNgh(dst);
+    var src_ngh_size : int = edges.getOutDegree(src);
+    var dst_ngh_size : int = edges.getOutDegree(dst);
+    if dst < src
+        #s2# vertexArray[src] += intersection(src_nghs, dst_nghs, src_ngh_size, dst_ngh_size, dst);
+    end
+
+end
+
+
+func main()
+    #s1# edges.apply(incrementing_count);
+    triangles = vertexArray.sum();
+    print triangles;
+end

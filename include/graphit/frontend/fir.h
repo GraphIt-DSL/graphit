@@ -402,7 +402,7 @@ namespace graphit {
 
         struct ScalarType : public TensorType {
             enum class Type {
-                INT, UINT, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
+                INT, UINT, UINT_64, FLOAT, BOOL, DOUBLE, COMPLEX, STRING
             };
 
             Type type;
@@ -601,6 +601,7 @@ namespace graphit {
 
             Identifier::Ptr name;
             std::vector<GenericParam::Ptr> genericParams;
+            std::vector<Argument::Ptr> functorArgs;
             std::vector<Argument::Ptr> args;
             std::vector<IdentDecl::Ptr> results;
             StmtBlock::Ptr body;
@@ -755,6 +756,23 @@ namespace graphit {
 
             virtual void accept(FIRVisitor *visitor) {
                 visitor->visit(self<ForStmt>());
+            }
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
+        struct ParForStmt : public Stmt {
+            Identifier::Ptr loopVar;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
+
+            typedef std::shared_ptr<ParForStmt> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ParForStmt>());
             }
 
         protected:
@@ -1209,6 +1227,7 @@ namespace graphit {
             Identifier::Ptr func;
             std::vector<IndexSet::Ptr> genericArgs;
             std::vector<Expr::Ptr> args;
+            std::vector<Expr::Ptr> functorArgs;
 
             typedef std::shared_ptr<CallExpr> Ptr;
 
@@ -1621,6 +1640,71 @@ namespace graphit {
             virtual void copy(FIRNode::Ptr);
         };
 
+        struct IntersectionExpr : public Expr {
+            typedef std::shared_ptr<IntersectionExpr> Ptr;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            Expr::Ptr numA;
+            Expr::Ptr numB;
+            Expr::Ptr reference;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<IntersectionExpr>());
+            }
+
+            protected:
+                virtual FIRNode::Ptr cloneNode();
+
+                virtual void copy(FIRNode::Ptr);
+        };
+
+        struct IntersectNeighborExpr : public Expr {
+            typedef std::shared_ptr<IntersectNeighborExpr> Ptr;
+            Expr::Ptr edges;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<IntersectNeighborExpr>());
+            }
+
+            protected:
+               virtual FIRNode::Ptr cloneNode();
+
+               virtual void copy(FIRNode::Ptr);
+        };
+
+        struct ConstantVectorExpr : public Expr {
+            typedef std::shared_ptr<ConstantVectorExpr> Ptr;
+            std::vector<Expr::Ptr> vectorElements;
+            int numElements;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<ConstantVectorExpr>());
+            }
+
+        protected:
+            virtual FIRNode::Ptr cloneNode();
+
+            virtual void copy(FIRNode::Ptr);
+        };
+
+        struct FuncExpr : public Expr {
+            typedef std::shared_ptr<FuncExpr> Ptr;
+            Identifier::Ptr name;
+            std::vector<Expr::Ptr> args;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<FuncExpr>());
+            }
+
+            protected:
+                virtual FIRNode::Ptr cloneNode();
+
+                virtual void copy(FIRNode::Ptr);
+
+        };
+
         struct LoadExpr : public Expr {
             typedef std::shared_ptr<LoadExpr> Ptr;
             //Currently unused for cleaner syntax
@@ -1665,9 +1749,10 @@ namespace graphit {
         };
 
 
+
         struct WhereExpr : public Expr {
             Expr::Ptr target;
-            Identifier::Ptr input_func;
+            FuncExpr::Ptr input_func;
 
             typedef std::shared_ptr<WhereExpr> Ptr;
 
@@ -1684,7 +1769,9 @@ namespace graphit {
 
 
         struct FromExpr : public Expr {
-            Identifier::Ptr input_func;
+            //Identifier::Ptr input_func;
+
+            FuncExpr::Ptr input_func;
 
             typedef std::shared_ptr<FromExpr> Ptr;
 
@@ -1701,7 +1788,9 @@ namespace graphit {
 
 
         struct ToExpr : public Expr {
-            Identifier::Ptr input_func;
+            //Identifier::Ptr input_func;
+
+            FuncExpr::Ptr input_func;
 
             typedef std::shared_ptr<ToExpr> Ptr;
 
@@ -1724,7 +1813,8 @@ namespace graphit {
             };
 
             Expr::Ptr target;
-            Identifier::Ptr input_function;
+            //Identifier::Ptr input_function;
+            FuncExpr::Ptr input_function;
             FromExpr::Ptr from_expr;
             ToExpr::Ptr to_expr;
             Identifier::Ptr change_tracking_field;

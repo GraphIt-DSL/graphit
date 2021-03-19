@@ -1,0 +1,49 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex) = load ("../../test/graphs/test.el");
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+func updateEdge[checked_local: vector{Vertex}(int)](src : Vertex, dst : Vertex)
+     checked_local[dst] = checked_local[src] + 1;
+end
+
+func toFilter[checked_local: vector{Vertex}(int)](v : Vertex) -> output : bool
+     output = checked_local[v] == -1;
+end
+
+func main()
+
+    var checked_local : vector{Vertex}(int) = -1;
+
+
+	checked_local[1] = 0;
+
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    frontier.addVertex(1);
+
+    while (frontier.getVertexSetSize() != 0)
+
+
+        #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter[checked_local]).applyModified(updateEdge[checked_local], checked_local);
+        delete frontier;
+        frontier = output;
+
+    end
+    delete frontier;
+
+    var notConnected : vertexset{Vertex} = vertices.filter(toFilter[checked_local]);
+
+    var amountNotConnected : int = notConnected.getVertexSetSize();
+
+    var sum: int = checked_local.sum();
+
+    sum = sum + amountNotConnected;
+
+	print "sum: ";
+	print sum;
+
+	delete checked_local;
+
+
+end

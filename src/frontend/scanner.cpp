@@ -9,6 +9,7 @@ namespace graphit {
     Token::Type Scanner::getTokenType(const std::string token) {
         if (token == "int") return Token::Type::INT;
         if (token == "uint") return Token::Type::UINT;
+        if (token == "uint_64") return Token::Type::UINT_64;
         if (token == "float") return Token::Type::FLOAT;
         if (token == "double") return Token::Type::DOUBLE;
         if (token == "bool") return Token::Type::BOOL;
@@ -41,6 +42,7 @@ namespace graphit {
         if (token == "elif") return Token::Type::ELIF;
         if (token == "else") return Token::Type::ELSE;
         if (token == "for") return Token::Type::FOR;
+        if (token == "par_for") return Token::Type::PAR_FOR;
         if (token == "in") return Token::Type::IN;
         if (token == "end") return Token::Type::BLOCKEND;
         if (token == "return") return Token::Type::RETURN;
@@ -48,6 +50,8 @@ namespace graphit {
         if (token == "println") return Token::Type::PRINTLN;
         if (token == "new") return Token::Type::NEW;
         if (token == "delete") return Token::Type::DELETE;
+        if (token == "intersection") return Token::Type::INTERSECTION;
+        if (token == "intersectNeighbor") return Token::Type::INTERSECT_NEIGH;
         if (token == "and") return Token::Type::AND;
         if (token == "or") return Token::Type::OR;
         if (token == "not") return Token::Type::NOT;

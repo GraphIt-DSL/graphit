@@ -13,7 +13,7 @@ void GPUPriorityFeaturesLowering::EdgeSetApplyPriorityRewriter::visit(mir::ExprS
 	}
 	if (mir::isa<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr)) {
 		mir::UpdatePriorityEdgeSetApplyExpr::Ptr upesae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(expr_stmt->expr);
-		mir::FuncDecl::Ptr udf = mir_context_->getFunction(upesae->input_function_name);
+		mir::FuncDecl::Ptr udf = mir_context_->getFunction(upesae->input_function->function_name->name);
 		UDFPriorityQueueFinder finder(mir_context_);
 		udf->accept(&finder);
 		mir::Var pq = finder.getPriorityQueue();

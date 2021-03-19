@@ -66,9 +66,8 @@ void quickSort(E* A, intT n, BinPred f) {
       if (f(*M,p)) std::swap(*M,*(L++));
       M++;
     }
-    cilk_spawn quickSort(A, L-A, f);
-    quickSort(M, A+n-M, f); // Exclude all elts that equal pivot
-    cilk_sync;
+    ligra::parallel_invoke([&] { quickSort(A, L-A, f); },
+                           [&] { quickSort(M, A+n-M, f); }); // Exclude all elts that equal pivot
   }
 }
 

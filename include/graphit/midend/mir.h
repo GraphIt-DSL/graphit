@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <graphit/frontend/gpu_schedule.h>
 
+#include <graphit/frontend/schedule.h>
 
 namespace graphit {
     namespace mir {
@@ -254,7 +255,7 @@ namespace graphit {
 
         struct ScalarType : public Type {
             enum class Type {
-                INT, UINT, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
+                INT, UINT, UINT_64, FLOAT, DOUBLE, BOOL, COMPLEX, STRING
             };
             Type type;
             typedef std::shared_ptr<ScalarType> Ptr;
@@ -440,6 +441,27 @@ namespace graphit {
 
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ForStmt>());
+            }
+
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+
+        };
+
+
+        struct ParForStmt : public Stmt {
+            std::string loopVar;
+            ForDomain::Ptr domain;
+            StmtBlock::Ptr body;
+            int grain_size;
+
+            typedef std::shared_ptr<ParForStmt> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ParForStmt>());
             }
 
 
@@ -653,6 +675,7 @@ namespace graphit {
 	    enum function_context_type function_context = function_context_type::CONTEXT_HOST;
 
             std::string name;
+            std::vector<mir::Var> functorArgs;
             std::vector<mir::Var> args;
             mir::Var result;
             std::unordered_map<std::string, FieldVectorProperty> field_vector_properties_map_;
@@ -686,6 +709,25 @@ namespace graphit {
 		return a;
 	}
 	
+
+
+        struct FuncExpr : public Expr {
+
+            IdentDecl::Ptr function_name;
+            std::vector<mir::Expr::Ptr> functorArgs;
+
+            typedef std::shared_ptr<FuncExpr> Ptr;
+
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<FuncExpr>());
+            }
+
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
 
         struct TensorReadExpr : public Expr {
             Expr::Ptr index;
@@ -774,6 +816,7 @@ namespace graphit {
         /// Calls a function that may any number of arguments.
         struct Call : public Expr {
             std::string name;
+            std::vector<Expr::Ptr> functorArgs;
             std::vector<Expr::Ptr> args;
             Type::Ptr generic_type;
             typedef std::shared_ptr<Call> Ptr;
@@ -870,6 +913,58 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+
+        struct IntersectionExpr : public Expr {
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            Expr::Ptr numA;
+            Expr::Ptr numB;
+            Expr::Ptr reference;
+            IntersectionSchedule::IntersectionType intersectionType;
+
+            typedef std::shared_ptr<IntersectionExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntersectionExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct IntersectNeighborExpr : public Expr {
+            Expr::Ptr edges;
+            Expr::Ptr vertex_a;
+            Expr::Ptr vertex_b;
+            IntersectionSchedule::IntersectionType intersectionType;
+
+            typedef std::shared_ptr<IntersectNeighborExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<IntersectNeighborExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+        struct ConstantVectorExpr : public Expr {
+            int numElements;
+            std::vector<mir::Expr::Ptr> vectorElements;
+            typedef std::shared_ptr<ConstantVectorExpr> Ptr;
+
+            virtual void accept(MIRVisitor *visitor) {
+                visitor->visit(self<ConstantVectorExpr>());
+            }
+        protected:
+            virtual void copy(MIRNode::Ptr);
+
+            virtual MIRNode::Ptr cloneNode();
+        };
+
+
         
 
         
@@ -892,7 +987,7 @@ namespace graphit {
 
         struct ApplyExpr : public Expr {
             Expr::Ptr target;
-            std::string input_function_name = "";
+            FuncExpr::Ptr input_function = nullptr;
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
@@ -923,13 +1018,12 @@ namespace graphit {
 
             VertexSetApplyExpr(std::string target_name,
                                mir::Type::Ptr target_type,
-                               std::string function_name) {
+                               mir::FuncExpr::Ptr input_func) {
                 mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
                 mir::Var target_var = mir::Var(target_name, target_type);
                 target_expr->var = target_var;
                 target = target_expr;
-                input_function_name = function_name;
-            }
+                input_function = input_func;}
 
         protected:
             virtual void copy(MIRNode::Ptr);
@@ -948,8 +1042,11 @@ namespace graphit {
         };
 
         struct EdgeSetApplyExpr : public ApplyExpr {
-            std::string from_func = "";
-            std::string to_func = "";
+
+
+            FuncExpr::Ptr from_func = nullptr;
+            FuncExpr::Ptr to_func = nullptr;
+
             bool is_parallel = false;
             bool enable_deduplication = false;
             bool is_weighted = false;
@@ -958,12 +1055,16 @@ namespace graphit {
             bool use_pull_edge_based_load_balance = false;
             //hard coded default value for grain size
             int pull_edge_based_load_balance_grain_size = 4096;
+            //grain size for parallel for
+            int grain_size = 256;
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 
-	    bool frontier_reusable = false;
 	    bool fused_dedup = false;
 	    bool fused_dedup_perfect = false;
+            bool frontier_reusable = false;
+	
+            std::string edgeset_apply_func_name;
 
             typedef std::shared_ptr<EdgeSetApplyExpr> Ptr;
 
@@ -988,7 +1089,7 @@ namespace graphit {
 
             PushEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
@@ -1020,7 +1121,7 @@ namespace graphit {
 
             PullEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
@@ -1055,7 +1156,7 @@ namespace graphit {
                 target = edgeset_apply->target;
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
@@ -1075,8 +1176,8 @@ namespace graphit {
 
         struct HybridDenseEdgeSetApplyExpr : EdgeSetApplyExpr {
             typedef std::shared_ptr<HybridDenseEdgeSetApplyExpr> Ptr;
-            std::string push_function_;
-            std::string push_to_function_;
+            FuncExpr::Ptr push_function_ = nullptr;
+            FuncExpr::Ptr push_to_function_ = nullptr;
 
             HybridDenseEdgeSetApplyExpr() {}
 
@@ -1084,7 +1185,7 @@ namespace graphit {
                 target = edgeset_apply->target;
                 // for hybrid dense  forward, it is always using the push function (atomics on dst)
                 // it is ok with just one direction
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 push_to_function_ = edgeset_apply->to_func;
@@ -1107,7 +1208,7 @@ namespace graphit {
         struct WhereExpr : public Expr {
             std::string target;
             bool is_constant_set = false;
-            std::string input_func;
+            FuncExpr::Ptr input_func = nullptr;
             typedef std::shared_ptr<WhereExpr> Ptr;
 
         protected:
@@ -1457,7 +1558,7 @@ namespace graphit {
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
-                input_function_name = edgeset_apply->input_function_name;
+                input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
@@ -1481,7 +1582,7 @@ namespace graphit {
 
             UpdatePriorityExternVertexSetApplyExpr(VertexSetApplyExpr::Ptr vertexset_apply) {
                 target = vertexset_apply->target;
-                input_function_name = vertexset_apply->input_function_name;
+                input_function= vertexset_apply->input_function;
                 tracking_field = vertexset_apply->tracking_field;
             }
 
@@ -1561,7 +1662,7 @@ namespace graphit {
 
         struct OrderedProcessingOperator : Stmt {
             Expr::Ptr while_cond_expr;
-            std::string edge_update_func;
+            FuncExpr::Ptr edge_update_func = nullptr;
             std::string priority_queue_name;
             Expr::Ptr optional_source_node;
             Expr::Ptr graph_name;

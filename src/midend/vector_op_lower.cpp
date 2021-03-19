@@ -97,13 +97,19 @@ namespace  graphit {
 				    //insert the utility function back into function list
 				    mir_context_->insertFuncDeclFront(copy_over_apply_func);
 
+				    //make funcExpr to pass in to VertexSetApplyExpr
+				    mir::FuncExpr::Ptr funcExprApply = std::make_shared<mir::FuncExpr>();
+				    mir::IdentDecl::Ptr funcExprApplyIdentifier = std::make_shared<mir::IdentDecl>();
+				    funcExprApplyIdentifier->name = copy_over_apply_func->name;
+				    funcExprApply->function_name = funcExprApplyIdentifier;
+
 
 				    // Lastly, insert a vertexset apply expression at the beginning of main
 				    mir::VarDecl::Ptr global_vertex_set_var_decl = mir_context_->getGlobalConstVertexSet();
 				    mir::VertexSetApplyExpr::Ptr vertex_set_apply_expr =
 					    std::make_shared<mir::VertexSetApplyExpr>(global_vertex_set_var_decl->name,
 										      global_vertex_set_var_decl->type,
-										      copy_over_apply_func->name);
+										      funcExprApply);
 				    mir::ExprStmt::Ptr apply_stmt = std::make_shared<mir::ExprStmt>();
 				    apply_stmt->expr = vertex_set_apply_expr;
 
@@ -172,13 +178,19 @@ namespace  graphit {
                         //insert the utility function back into function list
                         mir_context_->insertFuncDeclFront(copy_over_apply_func);
 
+                        //make funcExpr to pass in to VertexSetApplyExpr
+                        mir::FuncExpr::Ptr funcExprApply = std::make_shared<mir::FuncExpr>();
+                        mir::IdentDecl::Ptr funcExprApplyIdentifier = std::make_shared<mir::IdentDecl>();
+                        funcExprApplyIdentifier->name = copy_over_apply_func->name;
+                        funcExprApply->function_name = funcExprApplyIdentifier;
+
 
                         // Lastly, insert a vertexset apply expression at the beginning of main
                         mir::VarDecl::Ptr global_vertex_set_var_decl = mir_context_->getGlobalConstVertexSet();
                         mir::VertexSetApplyExpr::Ptr vertex_set_apply_expr =
                                 std::make_shared<mir::VertexSetApplyExpr>(global_vertex_set_var_decl->name,
                                                                           global_vertex_set_var_decl->type,
-                                                                          copy_over_apply_func->name);
+                                                                          funcExprApply);
                         mir::ExprStmt::Ptr apply_stmt = std::make_shared<mir::ExprStmt>();
                         apply_stmt->expr = vertex_set_apply_expr;
 
