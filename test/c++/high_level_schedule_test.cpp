@@ -226,6 +226,43 @@ protected:
                                                      "    vertices.apply(printID);\n"
                                                      "end");
 
+        const char* cc_pjump_char = ("element Vertex end\n"
+                                     "element Edge end\n"
+                                     "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                     "const IDs : vector{Vertex}(int) = 1;\n"
+                                     "const update: vector[1](int);\n"
+                                     "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                     "    IDs[dst] min= IDs[src];\n"
+                                     "end\n"
+                                     "func init(v : Vertex)\n"
+                                     "     IDs[v] = v;\n"
+                                     "end\n"
+                                     "func pjump(v: Vertex)\n"
+                                     "    var y: Vertex = IDs[v];\n"
+                                     "    var x: Vertex = IDs[y];\n"
+                                     "    if x != y\n"
+                                     "        IDs[v] = x;\n"
+                                     "        update[0] = 1;\n"
+                                     "    end\n"
+                                     "end\n"
+                                     "func main()\n"
+                                     "    var n : int = edges.getVertices();\n"
+                                     "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                     "    vertices.apply(init);\n"
+                                     "    while (frontier.getVertexSetSize() != 0)\n"
+                                     "        #s1# var output: vertexset{Vertex} = edges.applyModified(updateEdge,IDs);\n"
+                                     "        delete frontier;\n"
+                                     "        frontier = output;\n"
+                                     "        update[0] = 1;\n"
+                                     "        while update[0] != 0\n"
+                                     "            update[0] = 0;\n"
+                                     "            vertices.apply(pjump);\n"
+                                     "        end\n"
+                                     "        delete frontier;\n"
+                                     "    end\n"
+                                     "end");
+
 
 
         const char* cf_char = ( "element Vertex end\n"
@@ -835,6 +872,7 @@ protected:
         sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
+        cc_pjump_str_ = string (cc_pjump_char);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
@@ -940,6 +978,7 @@ protected:
     string sssp_str_gpu_;
     string sssp_async_str_;
     string cf_str_;
+    string cc_pjump_str_;
     string cc_str_;
     string prd_str_;
     string prd_double_str_;
@@ -3129,11 +3168,22 @@ TEST_F(HighLevelScheduleTest, DS_Swarm) {
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, CC_pjump_cpu) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(cc_pjump_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  EXPECT_EQ (0, basicTestWithSchedule(program));
+}
+
 TEST_F(HighLevelScheduleTest, CC_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
   using namespace fir;
-  istringstream is(cc_str_);
+  istringstream is(cc_pjump_str_);
   fe_->parseStream(is, context_, errors_);
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
@@ -3142,10 +3192,4 @@ TEST_F(HighLevelScheduleTest, CC_Swarm) {
 //generate swarm code successfully
 
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
-  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
-  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
-  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
-  EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
-  EXPECT_EQ (1,  while_stmt->body->stmts->size());
 }
