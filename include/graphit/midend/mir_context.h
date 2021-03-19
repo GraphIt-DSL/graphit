@@ -152,6 +152,7 @@ namespace graphit {
         std::vector<mir::VarDecl::Ptr> getEdgeSets() {
             return const_edge_sets_;
         }
+	
 
         mir::VarDecl::Ptr getConstEdgeSetByName(std::string var_name) {
 
@@ -168,6 +169,34 @@ namespace graphit {
             }
             return false;
         }
+        bool isLoweredConstTensor(std::string var_name) {
+            for (auto tensor: lowered_constants_) {
+		if (tensor->name == var_name) 
+			return true;
+	    }
+	    return false;
+	}
+	bool isLoweredConst(std::string var_name) {
+		size_t dot_pos = var_name.find(".");
+		if (dot_pos != std::string::npos) {
+			var_name.resize(dot_pos);
+		}
+		
+		for (auto var: lowered_constants_) {
+			if (var->name == var_name)
+				return true;	
+		}
+		for (auto var: const_edge_sets_) {
+			if (var->name == var_name)
+				return true;
+		}
+		for (auto var: const_priority_queues_) {
+			if (var->name == var_name) 
+				return true;
+		}
+		
+		return false;
+	}
 
         void addConstVertexSet(mir::VarDecl::Ptr vertexset) {
             const_vertex_sets_.push_back(vertexset);
@@ -249,6 +278,21 @@ namespace graphit {
                 assert(false && "Cannot indentify type of vector or set\n");
             }
         }
+
+	mir::VarDecl::Ptr getEdgeSetFromElementType(mir::ElementType::Ptr element_type) {
+		for (auto decl: getEdgeSets()) {
+			mir::Type::Ptr type = decl->type;
+			assert(mir::isa<mir::EdgeSetType>(type));
+			mir::EdgeSetType::Ptr edge_set_type = mir::to<mir::EdgeSetType>(type);
+			if (edge_set_type->vertex_element_type_list == nullptr)
+				continue;
+			if (edge_set_type->vertex_element_type_list->size() !=2)
+				continue;
+			if ((*(edge_set_type->vertex_element_type_list))[0]->ident == element_type->ident && (*(edge_set_type->vertex_element_type_list))[1]->ident == element_type->ident)
+				return decl; 
+		}
+		return nullptr;	
+	}
 
         bool updateElementInputFilename(mir::ElementType::Ptr element_type, mir::Expr::Ptr file_name) {
             input_filename_map_[element_type->ident] = file_name;
@@ -347,6 +391,7 @@ namespace graphit {
         // These are global sets that are loaded from outside sources and cannot be modified
         std::vector<mir::VarDecl::Ptr> const_vertex_sets_;
         std::vector<mir::VarDecl::Ptr> const_edge_sets_;
+	std::vector<mir::VarDecl::Ptr> const_priority_queues_;
 
         //maps a vector to the Element it is associated with;
         std::map<std::string, mir::ElementType::Ptr> vector_set_element_type_map_;
@@ -416,6 +461,13 @@ namespace graphit {
         std::vector<mir::Type::Ptr> types_requiring_typedef;
 
 
+	// Used by kernel fusion optimization
+	std::vector<mir::WhileStmt::Ptr> fused_while_loops;
+	std::vector<mir::HybridGPUStmt::Ptr> hybrid_gpu_stmts;
+	
+	// Used by blocking optimization
+	std::unordered_map<std::string, uint32_t> graphs_with_blocking;
+	std::unordered_map<std::string, bool> graphs_with_transpose;
     };
 
 }

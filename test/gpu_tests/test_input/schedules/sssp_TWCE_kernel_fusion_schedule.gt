@@ -1,0 +1,8 @@
+schedule:
+	SimpleGPUSchedule s1;
+	s1.configLoadBalance(TWCE);
+	program->applyGPUSchedule("s0:s1", s1);
+
+	SimpleGPUSchedule s0;
+	s0.configKernelFusion(ENABLED);
+	program->applyGPUSchedule("s0", s0);

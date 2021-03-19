@@ -2045,7 +2045,7 @@ namespace graphit {
             oss << "new julienne::PriorityQueue <";
             priority_queue_alloc_expr->priority_type->accept(this);
             oss << " > ( ";
-
+	
             oss << mir_context_->getEdgeSets()[0]->name;
 
             if (priority_queue_alloc_expr->priority_update_type == mir::PriorityUpdateType::ReduceBeforePriorityUpdate){

@@ -17,4 +17,8 @@ namespace graphit{
 	delete codegen_python;
 	return flag;
     }
+    int Backend::emitGPU(std::ostream &oss, std::string module_name, std::string module_path) {
+        CodeGenGPU code_gen_gpu(oss, mir_context_, module_name, module_path);
+	return code_gen_gpu.genGPU();
+    }
 }

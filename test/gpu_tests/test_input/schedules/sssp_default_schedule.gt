@@ -1,0 +1,3 @@
+schedule:
+	SimpleGPUSchedule s1;
+	program->applyGPUSchedule("s0:s1", s1);

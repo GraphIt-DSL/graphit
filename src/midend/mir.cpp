@@ -94,6 +94,7 @@ namespace graphit {
             Call::copy(node);
             destination_node_id = expr->destination_node_id;
             priority_queue = expr->priority_queue;
+            edgeset_apply_expr = expr->edgeset_apply_expr;
         }
 
 
@@ -258,6 +259,8 @@ namespace graphit {
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;
             scope_label_name = expr->scope_label_name;
+            frontier_reusable = expr->frontier_reusable;
+	
         }
 
 
@@ -1047,6 +1050,40 @@ namespace graphit {
 	}
 	MIRNode::Ptr UpdatePriorityEdgeCountEdgeSetApplyExpr::cloneNode() {
 		const auto node = std::make_shared<UpdatePriorityEdgeCountEdgeSetApplyExpr>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
+	void VertexSetDedupExpr::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<VertexSetDedupExpr>(node);
+		target = op->target;	
+	}
+	MIRNode::Ptr VertexSetDedupExpr::cloneNode() {
+		const auto node = std::make_shared<VertexSetDedupExpr>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
+
+	void HybridGPUStmt::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<HybridGPUStmt>(node);
+		stmt1 = op->stmt1;
+		stmt2 = op->stmt2;
+	}
+	MIRNode::Ptr HybridGPUStmt::cloneNode() {
+		const auto node = std::make_shared<HybridGPUStmt>();
+		node->copy(shared_from_this());
+		return node;
+	}
+
+	void EnqueueVertex::copy(MIRNode::Ptr node) {
+		const auto op = mir::to<EnqueueVertex>(node);
+		vertex_id = op->vertex_id;
+		vertex_frontier = op->vertex_frontier;
+		type = op->type;
+	}
+	MIRNode::Ptr EnqueueVertex::cloneNode() {
+		const auto node = std::make_shared<EnqueueVertex>();
 		node->copy(shared_from_this());
 		return node;
 	}

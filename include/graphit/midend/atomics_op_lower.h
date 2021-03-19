@@ -17,7 +17,7 @@ namespace graphit {
     class AtomicsOpLower {
 
     public:
-        AtomicsOpLower(MIRContext *mir_context) : mir_context_(mir_context) {};
+        AtomicsOpLower(MIRContext *mir_context, Schedule * s) : mir_context_(mir_context), schedule_(s){};
 
         struct ApplyExprVisitor : public mir::MIRVisitor {
             ApplyExprVisitor(MIRContext *mir_context) :
@@ -47,7 +47,7 @@ namespace graphit {
         };
 
         struct ReduceStmtLower : public mir::MIRVisitor {
-            ReduceStmtLower(MIRContext* mir_context) : mir_context_(mir_context){
+            ReduceStmtLower(MIRContext* mir_context, Schedule* s) : mir_context_(mir_context), schedule_(s){
             }
 
 
@@ -55,6 +55,7 @@ namespace graphit {
 
         private:
             MIRContext *mir_context_ = nullptr;
+            Schedule *schedule_ = nullptr;
 
         };
 
@@ -63,6 +64,7 @@ namespace graphit {
 
     private:
         MIRContext *mir_context_ = nullptr;
+        Schedule *schedule_ = nullptr;
 
 
 

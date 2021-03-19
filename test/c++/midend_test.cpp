@@ -121,6 +121,77 @@ TEST_F(MidendTest, SimpleVertexSetDeclAllocWithMain) {
     EXPECT_EQ (0, basicTest(is));
 }
 
+// Test cases for the MIRMetadata API
+TEST_F(MidendTest, SimpleMetadataTest) {
+    istringstream is("func main() print 4; end");
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(true, mir_context_->isFunction("main"));
+
+    mir::FuncDecl::Ptr main_func = mir_context_->getFunction("main");
+
+    main_func->setMetadata<bool>("basic_boolean_md", true);
+    main_func->setMetadata<int>("basic_int_md", 42);
+    EXPECT_EQ(true, main_func->hasMetadata<bool>("basic_boolean_md"));
+    EXPECT_EQ(true, main_func->getMetadata<bool>("basic_boolean_md"));
+    
+    EXPECT_EQ(true, main_func->hasMetadata<int>("basic_int_md"));
+    EXPECT_EQ(42, main_func->getMetadata<int>("basic_int_md"));
+
+}
+TEST_F(MidendTest, SimpleMetadataTestNoExist) {
+    istringstream is("func main() print 4; end");
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(true, mir_context_->isFunction("main"));
+
+    mir::FuncDecl::Ptr main_func = mir_context_->getFunction("main");
+
+    main_func->setMetadata<int>("basic_int_md", 42);
+    EXPECT_EQ(false, main_func->hasMetadata<int>("other_int_md"));
+    EXPECT_EQ(false, main_func->hasMetadata<bool>("basic_int_md")); 
+}
+
+TEST_F(MidendTest, SimpleMetadataTestString) {
+    istringstream is("func main() print 4; end");
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(true, mir_context_->isFunction("main"));
+
+    mir::FuncDecl::Ptr main_func = mir_context_->getFunction("main");
+
+    main_func->setMetadata<std::string>("basic_str_md", "md value");
+    EXPECT_EQ(true, main_func->hasMetadata<std::string>("basic_str_md"));
+    EXPECT_EQ("md value", main_func->getMetadata<std::string>("basic_str_md"));
+}
+
+TEST_F(MidendTest, SimpleMetadataTestMIRNodeAsMD) {
+    istringstream is("const val:int = 42;\nfunc main() print val; end");
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(true, mir_context_->isFunction("main"));
+    EXPECT_EQ(1, mir_context_->getConstants().size());
+     
+    mir::FuncDecl::Ptr main_func = mir_context_->getFunction("main");
+    mir::VarDecl::Ptr decl = mir_context_->getConstants()[0];
+
+    main_func->setMetadata<mir::MIRNode::Ptr>("used_var_md", decl);
+    
+    EXPECT_EQ(true, main_func->hasMetadata<mir::MIRNode::Ptr>("used_var_md"));
+    mir::MIRNode::Ptr mdnode = main_func->getMetadata<mir::MIRNode::Ptr>("used_var_md");
+    EXPECT_EQ(true, mir::isa<mir::VarDecl>(mdnode)); 
+}
+
+TEST_F(MidendTest, SimpleMetadataTestMIRNodeVectorAsMD) {
+    istringstream is("const val:int = 42;\nconst val2: int = 55;\nfunc main() print val + val2; end");
+    EXPECT_EQ(0, basicTest(is));
+    EXPECT_EQ(true, mir_context_->isFunction("main"));
+    EXPECT_EQ(2, mir_context_->getConstants().size());
+     
+    mir::FuncDecl::Ptr main_func = mir_context_->getFunction("main");
+    std::vector<mir::VarDecl::Ptr> decls = mir_context_->getConstants();
+
+    main_func->setMetadata<std::vector<mir::VarDecl::Ptr>>("used_vars_md", decls);
+    
+    EXPECT_EQ(true, main_func->hasMetadata<std::vector<mir::VarDecl::Ptr>>("used_vars_md"));
+    EXPECT_EQ(2, main_func->getMetadata<std::vector<mir::VarDecl::Ptr>>("used_vars_md").size());
+}
 TEST_F(MidendTest, SimpleIntersectionOperator) {
     istringstream is("element Vertex end\n"
                      "element Edge end\n"

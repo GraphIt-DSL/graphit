@@ -1,0 +1,1 @@
+python3 graphit_gpu_autotuner.py --graph /local/ajaybr/graph-dataset/clean_general/soc-LiveJournal1.mtx --algo_file gpu_apps/sssp_delta_stepping.gt --killed_process_report_runtime_limit 1 --max_delta 100 --runtime_limit 10 --stop-after 900

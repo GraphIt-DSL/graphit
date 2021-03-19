@@ -1,0 +1,55 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+
+const vertices : vertexset{Vertex} = edges.getVertices();
+const IDs : vector{Vertex}(int) = 1;
+
+const update: vector[1](int);
+
+func updateEdge(src : Vertex, dst : Vertex)
+    var src_id: Vertex = IDs[src];
+    var dst_id: Vertex = IDs[dst];
+
+    IDs[dst_id] min= IDs[src_id];
+    IDs[src_id] min= IDs[dst_id];
+end
+
+func init(v : Vertex)
+     IDs[v] = v;
+end
+
+func pjump(v: Vertex) 
+    var y: Vertex = IDs[v];
+    var x: Vertex = IDs[y];
+    if x != y
+        IDs[v] = x;
+        update[0] = 1;
+    end
+end
+
+func main()
+    var n : int = edges.getVertices();
+    for trail in 0:10
+        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+        startTimer();
+        vertices.apply(init);
+        while (frontier.getVertexSetSize() != 0)
+            #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
+	    delete frontier;
+	    frontier = output;
+            update[0] = 1;
+            while update[0] != 0
+		update[0] = 0;
+		vertices.apply(pjump);
+            end
+        end
+        var elapsed_time : float = stopTimer();
+	delete frontier;
+        print "elapsed time: ";
+        print elapsed_time;
+    end
+end
+
+

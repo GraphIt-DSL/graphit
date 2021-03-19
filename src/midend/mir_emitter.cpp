@@ -963,7 +963,10 @@ namespace graphit {
                 }
                 ctx->addEdgeSet(mir_var_decl);
                 ctx->addEdgesetType(mir_var_decl->name, type);
-
+	    } else if (std::dynamic_pointer_cast<mir::PriorityQueueType>(mir_var_decl->type) != nullptr) {
+		ctx->const_priority_queues_.push_back(mir_var_decl);
+                mir_var_decl->modifier = "const";
+                ctx->addConstant(mir_var_decl);
             } else {
                 mir_var_decl->modifier = "const";
                 ctx->addConstant(mir_var_decl);

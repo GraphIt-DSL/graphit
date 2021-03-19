@@ -75,6 +75,7 @@ if __name__ == '__main__':
 
         compile_file.write("#include <graphit/frontend/high_level_schedule.h>\n")
         compile_file.write("namespace graphit {\n")
+        compile_file.write("using namespace graphit::fir::gpu_schedule;\n")
         compile_file.write("void user_defined_schedule (graphit::fir::high_level_schedule::ProgramScheduleNode::Ptr program) {\n")
         for schedule_cmd in schedule_cmd_list:
             compile_file.write(schedule_cmd)

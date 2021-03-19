@@ -1,0 +1,4 @@
+schedule:
+	SimpleGPUSchedule s1;
+	s1.configLoadBalance(TWC);
+	program->applyGPUSchedule("s0:s1", s1);

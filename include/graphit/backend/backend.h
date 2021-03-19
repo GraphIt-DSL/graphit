@@ -8,6 +8,7 @@
 #include <graphit/midend/mir_context.h>
 #include <graphit/backend/codegen_cpp.h>
 #include <graphit/backend/codegen_python.h>
+#include <graphit/backend/codegen_gpu/codegen_gpu.h>
 
 namespace graphit {
     class Backend {
@@ -18,6 +19,7 @@ namespace graphit {
 
         int emitCPP(std::ostream &oss = std::cout, std::string module_name="");
     	int emitPython(std::ostream &oss = std::cout, std::string module_name="", std::string module_path="");
+	    int emitGPU(std::ostream &oss = std::cout, std::string module_name="", std::string module_path="");
 
     private:
         MIRContext* mir_context_;
