@@ -843,7 +843,11 @@ void CodeGenGPU::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae, mir::Expr:
 			}
 		}
 
-		std::string to_func = esae->to_func->function_name->name;
+		std::string to_func ;
+		if (esae->to_func)
+			to_func = esae->to_func->function_name->name;
+		else 
+			to_func = "";
 		if (to_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_host<" << to_func << ">(";
@@ -995,7 +999,12 @@ void CodeGenGPUFusedKernel::genEdgeSetApplyExpr(mir::EdgeSetApplyExpr::Ptr esae,
 			oss << var_name(esae->from_func->function_name->name);
 			oss << ");" << std::endl;
 		}
-		std::string to_func = esae->to_func->function_name->name;
+		std::string to_func;
+		if (esae->to_func)
+			to_func = esae->to_func->function_name->name;
+		else
+			to_func = "";
+                
 		if (to_func != "") {
 			printIndent();
 			oss << "gpu_runtime::vertex_set_create_reverse_sparse_queue_device<" << to_func << ">(";

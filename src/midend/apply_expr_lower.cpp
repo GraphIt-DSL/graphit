@@ -108,7 +108,13 @@ namespace graphit {
 					mir::AssignStmt::Ptr stmt2 = std::make_shared<mir::AssignStmt>();
 					stmt2->lhs = assign_stmt->lhs;
 					stmt2->expr = assign_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
+						
+					mir::FuncExpr::Ptr new_func_expr = std::make_shared<mir::FuncExpr>();
+					new_func_expr->function_name = std::make_shared<mir::IdentDecl>();
+					new_func_expr->function_name->name = func_decl_v2->name;
+
+
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function= new_func_expr;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();
@@ -212,7 +218,12 @@ namespace graphit {
 					mir::StmtBlock::Ptr stmt_block_2 = std::make_shared<mir::StmtBlock>();
 					mir::ExprStmt::Ptr stmt2 = std::make_shared<mir::ExprStmt>();
 					stmt2->expr = expr_stmt->expr;
-					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function->function_name->name = func_decl_v2->name;
+
+					mir::FuncExpr::Ptr new_func_expr = std::make_shared<mir::FuncExpr>();
+					new_func_expr->function_name = std::make_shared<mir::IdentDecl>();
+					new_func_expr->function_name->name = func_decl_v2->name;
+
+					mir::to<mir::EdgeSetApplyExpr>(stmt2->expr)->input_function = new_func_expr;
 					stmt2->stmt_label = "hybrid2";
 					stmt_block_2->insertStmtEnd(stmt2);
 					fir::gpu_schedule::SimpleGPUSchedule * schedule2 = new fir::gpu_schedule::SimpleGPUSchedule();

@@ -23,7 +23,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::UpdatePriori
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseEdgeSetApplyExpr::Ptr apply_expr) {
     if (apply_expr->is_parallel){
-        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
+        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_, schedule_);
         auto pull_func_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr pull_func_decl = mir_context_->getFunction(pull_func_name);
         auto push_func_name = apply_expr->push_function_->function_name->name;
@@ -40,7 +40,7 @@ void graphit::AtomicsOpLower::ApplyExprVisitor::visit(graphit::mir::HybridDenseE
 
 void graphit::AtomicsOpLower::ApplyExprVisitor::singleFunctionEdgeSetApplyExprAtomicsLower(graphit::mir::EdgeSetApplyExpr::Ptr apply_expr){
     if (apply_expr->is_parallel){
-        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_);
+        ReduceStmtLower reduce_stmt_lower = ReduceStmtLower(mir_context_, schedule_);
         auto apply_func_decl_name = apply_expr->input_function->function_name->name;
         mir::FuncDecl::Ptr apply_func_decl = mir_context_->getFunction(apply_func_decl_name);
         apply_func_decl->accept(&reduce_stmt_lower);
@@ -289,13 +289,16 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                         break;
                     default:
                         std::cout << "not supported for atomics" << std::endl;
-                        exit(0);
+			assert(false);
                 }
             }
         }
 
         //If it is local vector, we still need to add atomic
-        else if(mir::isa<mir::VectorType>(local_vector_field_type)) {
+	// This is definitely a bug. Not all local vectors require an atomic access
+	// It also seems that the mechanism to check if the acccess is atomic seems to be broken. 
+	// This will just add atomics everywhere
+        else if(!(schedule_ != nullptr && !schedule_->apply_gpu_schedules.empty()) && mir::isa<mir::VectorType>(local_vector_field_type)) {
             mir::VectorType::Ptr vector_type = mir::to<mir::VectorType>(local_vector_field_type);
             mir::Type::Ptr local_field_type = vector_type->vector_element_type;
 
@@ -316,7 +319,7 @@ void graphit::AtomicsOpLower::ReduceStmtLower::visit(graphit::mir::ReduceStmt::P
                                 break;
                             default:
                                 std::cout << "not supported for atomics" << std::endl;
-                                exit(0);
+				assert(false);
                         }
                     }
 

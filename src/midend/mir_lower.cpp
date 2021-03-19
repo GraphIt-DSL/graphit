@@ -84,7 +84,7 @@ namespace graphit {
 
         // This pass inserts atomic operations, including CAS, writeMin, writeAdd
         // This pass does not need the schedule
-        AtomicsOpLower(mir_context).lower();
+        AtomicsOpLower(mir_context, schedule).lower();
 
         // This pass generates code for tracking if a field has been modified
         // during the execution of the edgeset apply functions.

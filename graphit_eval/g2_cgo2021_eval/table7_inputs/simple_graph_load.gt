@@ -1,0 +1,13 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex, Vertex, int) = load (argv[1]);
+
+func main()
+	#s1# print edges.getVertices();	
+end
+
+
+schedule:
+	SimpleGPUSchedule s1;
+	program->applyGPUSchedule("s1", s1);
