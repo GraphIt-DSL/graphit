@@ -289,8 +289,12 @@ int CodeGenSwarm::genMainFunction(void) {
       oss << " = new ";
       vector_type->vector_element_type->accept(this);
       oss << "[";
-      mir_context_->getElementCount(vector_type->element_type)->accept(this);
-      oss << "];" << std::endl;
+      if (vector_type->element_type != nullptr) {
+        mir_context_->getElementCount(vector_type->element_type)->accept(this);
+      } else {
+        oss << std::to_string(vector_type->range_indexset);
+      }  
+    oss << "];" << std::endl;
     }
 
   }
@@ -298,9 +302,6 @@ int CodeGenSwarm::genMainFunction(void) {
     stmt->accept(this);
   }
   printIndent();
-//  oss << "pls::enqueue(swarm_main, 0, NOHINT);" << std::endl;
-  printIndent();
-//  oss << "pls::run();" << std::endl;
   oss << "SCC_PARALLEL( swarm_main(); );" << std::endl;
   dedent();
   oss << "}" << std::endl;
@@ -665,6 +666,18 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
+  if (!while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
+    printIndent();
+    oss << "while (";
+    while_stmt->cond->accept(this);
+    oss << ") {" << std::endl;
+    indent();
+    while_stmt->body->accept(this);
+    dedent();
+    printIndent();
+    oss << "}" << std::endl;
+    return;
+  }
   // Includes checks for swarm_switch_convert and bucket queue to include switch case setup or multiple lambdas
   // if necessary.
   auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");

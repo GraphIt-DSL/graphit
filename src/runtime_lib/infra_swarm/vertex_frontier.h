@@ -8,10 +8,10 @@ namespace swarm_runtime {
 class VertexFrontier {
  public:
   std::vector<int32_t> elems;
-
+  int num_elems = 0;
   int& operator[](int);
   int size() {
-    return elems.size();
+    return num_elems;
   }
 };
 
@@ -22,7 +22,7 @@ static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_e
 
 // this is chaotic
 int& VertexFrontier::operator[](int idx) {
-  if (idx >= elems.size()) {
+  if (idx >= num_elems) {
 	  std::cout << "Vertex frontier out of bounds.";
     	  exit(0);
   }
@@ -31,10 +31,13 @@ int& VertexFrontier::operator[](int idx) {
 
 static void builtin_addVertex(VertexFrontier &frontier, int32_t vid) {
   frontier.elems.push_back(vid);
+  frontier.num_elems++;
 }
 
 static void clear_frontier(VertexFrontier &frontier) {
   frontier.elems.clear();
+  frontier.num_elems = 0;
+	//std::vector<int32_t>().swap(frontier.elems);
 }
 
 //template <typename SwarmQueueType>
