@@ -47,7 +47,7 @@ void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
 
 // pop the last frontier
 void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
-  printf("v1.current_level = %d\n", v1.current_level);
+  //printf("v1.current_level = %d\n", v1.current_level);
   if (v1.current_level < 0) {
     return;
   }
@@ -55,7 +55,7 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   int total = v1.frontiers[v1.current_level].materialize(a);
   frontier.num_elems = total;
   v1.current_level--;
-  printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
+  //printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
 }
 
 void builtin_update_size(VertexFrontierList &v1, int new_head) {

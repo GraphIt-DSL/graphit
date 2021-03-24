@@ -50,28 +50,20 @@ void reset(int v) {
 }
 SWARM_FUNC_ATTRIBUTES
 void swarm_main() {
-	for(int trail = 0; trail < 10; trail++) {
-		swarm_runtime::startTimer();
-		for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-			reset(_iter);
-		};
-		for(int i = 0; i < 20; i++) {
-			for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-				computeContrib(_iter);
-			};
-			for (int _iter = 0; _iter < edges.num_edges; _iter++) {
-				int _src = edges.h_edge_src[_iter];
-				int _dst = edges.h_edge_dst[_iter];
-				updateEdge(_src, _dst);
-			};
-			for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-				updateVertex(_iter);
-			};
-		}
-		double elapsed_time = swarm_runtime::stopTimer();
-		swarm_runtime::print("elapsed time: ");
-		swarm_runtime::print(elapsed_time);
-	}
+	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+		reset(_iter);
+	};
+	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+		computeContrib(_iter);
+	};
+	for (int _iter = 0; _iter < edges.num_edges; _iter++) {
+		int _src = edges.h_edge_src[_iter];
+		int _dst = edges.h_edge_dst[_iter];
+		updateEdge(_src, _dst);
+	};
+	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+		updateVertex(_iter);
+	};
 }
 int main(int argc, char* argv[]) {
 	__argc = argc;
