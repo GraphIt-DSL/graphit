@@ -90,6 +90,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
 
   virtual void visit(mir::OrderedProcessingOperator::Ptr);
   virtual void visit(mir::PriorityUpdateOperatorMin::Ptr);
+  virtual void visit(mir::EnqueueVertex::Ptr) override;
 
   unsigned getIndentLevel() {
     return indentLevel;
@@ -231,6 +232,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::ReduceStmt::Ptr) override;
   void visit(mir::Call::Ptr) override;
   void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
+  void visit(mir::EnqueueVertex::Ptr) override;
 };
 
 }

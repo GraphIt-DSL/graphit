@@ -79,18 +79,27 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					mir::VarExpr::Ptr frontier_expr = std::make_shared<mir::VarExpr>();
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
-					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
-					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
+					enqueue_vertex->vertex_frontier = frontier_expr;
 
-					SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
-					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
+                    // GPU specific things
+					if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {
+                      enqueue_vertex->setMetadata<bool>("fused_dedup",
+                                                        current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
+                      enqueue_vertex->setMetadata<bool>("fused_dedup_perfect",
+                                                        current_edge_set_apply_expr->getMetadata<bool>(
+                                                            "fused_dedup_perfect"));
+                    }
+					if (current_edge_set_apply_expr->hasApplySchedule() && current_edge_set_apply_expr->getApplySchedule()->isa<SimpleGPUSchedule>()) {
+                      SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
+                      if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
+                      } else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
+                      } else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
+                      }
 					}
+
 					stmt_block->insertStmtEnd(enqueue_vertex);
 					if_stmt->elseBody = nullptr;
 					new_stmts.push_back(if_stmt);
@@ -131,18 +140,30 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					mir::VarExpr::Ptr frontier_expr = std::make_shared<mir::VarExpr>();
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
-					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
-					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
+					enqueue_vertex->vertex_frontier = frontier_expr;
 
-                    SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
-					if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
-					}
+					// GPU specific things
+                    if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {
+                      enqueue_vertex->setMetadata<bool>("fused_dedup",
+                                                        current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
+                      enqueue_vertex->setMetadata<bool>("fused_dedup_perfect",
+                                                        current_edge_set_apply_expr->getMetadata<bool>(
+                                                            "fused_dedup_perfect"));
+                    }
+                    if (current_edge_set_apply_expr->hasApplySchedule() && current_edge_set_apply_expr->getApplySchedule()->isa<SimpleGPUSchedule>()) {
+                      SimpleGPUSchedule::Ptr
+                          applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
+                      if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
+                      } else if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
+                      } else if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
+                      }
+                    }
 					stmt_block->insertStmtEnd(enqueue_vertex);
 					if_stmt->elseBody = nullptr;
 					new_stmts.push_back(if_stmt);
@@ -161,18 +182,30 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					mir::VarExpr::Ptr frontier_expr = std::make_shared<mir::VarExpr>();
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
-					enqueue_vertex->vertex_frontier = frontier_expr;	
-					enqueue_vertex->setMetadata<bool>("fused_dedup", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
-					enqueue_vertex->setMetadata<bool>("fused_dedup_perfect", current_edge_set_apply_expr->getMetadata<bool>("fused_dedup_perfect"));
+					enqueue_vertex->vertex_frontier = frontier_expr;
 
-                  SimpleGPUSchedule::Ptr applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
-                  if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
-					} else if (applied_schedule->frontier_creation == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
-						enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
-					}
+                    // GPU specific things
+                    if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {
+                      enqueue_vertex->setMetadata<bool>("fused_dedup",
+                                                        current_edge_set_apply_expr->getMetadata<bool>("fused_dedup"));
+                      enqueue_vertex->setMetadata<bool>("fused_dedup_perfect",
+                                                        current_edge_set_apply_expr->getMetadata<bool>(
+                                                            "fused_dedup_perfect"));
+                    }
+                    if (current_edge_set_apply_expr->hasApplySchedule() && current_edge_set_apply_expr->getApplySchedule()->isa<SimpleGPUSchedule>()) {
+                      SimpleGPUSchedule::Ptr
+                          applied_schedule = current_edge_set_apply_expr->getApplySchedule<SimpleGPUSchedule>();
+                      if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::FRONTIER_FUSED) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::SPARSE);
+                      } else if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BOOLMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BOOLMAP);
+                      } else if (applied_schedule->frontier_creation
+                          == SimpleGPUSchedule::frontier_creation_type::UNFUSED_BITMAP) {
+                        enqueue_vertex->setMetadata<mir::EnqueueVertex::Type>("type", mir::EnqueueVertex::Type::BITMAP);
+                      }
+                    }
 					new_stmts.push_back(enqueue_vertex);
 					stmt_added = true;
 				}

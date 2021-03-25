@@ -851,6 +851,7 @@ void CodeGenSwarm::visit(mir::ReduceStmt::Ptr stmt) {
       stmt->expr->accept(this);
       oss << ");" << std::endl;
       break;
+    case mir::ReduceStmt::ReductionOp ::ATOMIC_SUM:
     case mir::ReduceStmt::ReductionOp::SUM:
       printIndent();
       if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
@@ -868,6 +869,8 @@ void CodeGenSwarm::visit(mir::ReduceStmt::Ptr stmt) {
 void CodeGenSwarmQueueEmitter::visit(mir::ReduceStmt::Ptr stmt) {
   switch(stmt->reduce_op_) {
     case mir::ReduceStmt::ReductionOp::MIN:
+      // manually inline min reductions because the item to be pushed onto the frontier must be inferred from the
+      // lhs of the reduce stmt
       printIndent();
       oss << "if ( ( ";
       stmt->lhs->accept(this);
@@ -886,28 +889,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::ReduceStmt::Ptr stmt) {
       dedent();
       printIndent();
       oss << "}" << std::endl;
-      /*
-      printIndent();
-      oss << "if ( ( ";
-      stmt->expr->accept(this);
-      oss << ") > ( ";
-      stmt->lhs->accept(this);
-      oss << ") ) { " << std::endl;
-      indent();
-      printIndent();
-      stmt->expr->accept(this);
-      oss << " = ";
-      stmt->lhs->accept(this);
-      oss << ";" << std::endl;
-      if (mir::isa<mir::TensorArrayReadExpr>(stmt->expr)) {
-        printPushStatement(false, false, stmt->expr); 
-      }
-      dedent();
-      printIndent();
-      oss << "}" << std::endl;
-      */
       push_inserted = true;
       break;
+    case mir::ReduceStmt::ReductionOp ::ATOMIC_SUM:
     case mir::ReduceStmt::ReductionOp::SUM:
       printIndent();
       if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
@@ -1044,6 +1028,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
   if (!push_inserted && func_decl->result.isInitialized()) {
     if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
       if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
+
+        // check to make sure the push wasn't already inserted in processing the function body.
         if (!push_inserted) {
 		printIndent();
 		oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
@@ -1196,6 +1182,22 @@ void CodeGenSwarmQueueEmitter::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
   printIndent();
   oss << "}";
   push_inserted = true;
+}
+
+// This will not produce anything right now, probably need to push into the enqueue vertex frontier,
+// but not implemented yet bc nothing is using it, as most frontier pushes occur in the SwarmQueueEmitter while loops.
+void CodeGenSwarm::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
+  return;
+}
+
+// handles enqueueVertex's in while loops, where push statements must be inserted.
+// Checks to see if there is a push already inserted, as some cases insert pushes manually (e.g. min reductions)
+void CodeGenSwarmQueueEmitter::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
+  if (!push_inserted) {
+    printPushStatement(false, false,
+        mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName());
+    push_inserted = true;
+  }
 }
 
 }

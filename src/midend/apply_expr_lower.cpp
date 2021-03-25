@@ -282,16 +282,21 @@ namespace graphit {
             edgeset_apply->is_weighted = true;
         }
 
-
-
+        // GPU change tracking pass requires this flag to process ESAE's so attach it in Swarm case too.
+    if (schedule_->backend_identifier == Schedule::BackendID::SWARM) {
+      if (edgeset_apply->tracking_field != "")
+        edgeset_apply->setMetadata<bool>("requires_output", true);
+      node = std::make_shared<mir::PushEdgeSetApplyExpr>(edgeset_apply);
+      return;
+    }
 	// First check if the program has a GPU Schedule, if yes, the defaults are different
-	if (schedule_->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule_->backend_identifier == Schedule::BackendID::GPU ) {
 		// Always parallelize all operators for GPU schedules
 		edgeset_apply->setMetadata<bool>("is_parallel", true);
-		if (edgeset_apply->tracking_field != "")
-			edgeset_apply->setMetadata<bool>("requires_output", true);
+        if (edgeset_apply->tracking_field != "")
+          edgeset_apply->setMetadata<bool>("requires_output", true);
 		// Check if there is a GPU schedule attached to this statement - 
-          if (edgeset_apply->hasApplySchedule()) {
+          if (edgeset_apply->hasApplySchedule() && schedule_->backend_identifier == Schedule::BackendID::GPU) {
             auto apply_schedule = edgeset_apply->getApplySchedule();
 
 			if (apply_schedule->self<SimpleGPUSchedule>()->direction == SimpleGPUSchedule::direction_type::DIR_PUSH)
