@@ -1,6 +1,7 @@
 //#include "scc/queues.h"
 //#include <scc/autoparallel.h>
 #include <vector>
+
 #ifndef GRAPHIT_SRC_RUNTIME_LIB_INFRA_SWARM_VERTEX_FRONTIER_H_
 #define GRAPHIT_SRC_RUNTIME_LIB_INFRA_SWARM_VERTEX_FRONTIER_H_
 namespace swarm_runtime {

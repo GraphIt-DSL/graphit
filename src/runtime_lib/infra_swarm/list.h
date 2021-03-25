@@ -51,9 +51,12 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   if (v1.current_level < 0) {
     return;
   }
+  int total = v1.frontiers[v1.current_level].startMaterialize();
+  frontier.elems.resize(total);
   int32_t* a = frontier.elems.data();
-  int total = v1.frontiers[v1.current_level].materialize(a);
+  v1.frontiers[v1.current_level].finishMaterialize(total, a);
   frontier.num_elems = total;
+  
   v1.current_level--;
   //printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
 }

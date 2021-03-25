@@ -236,7 +236,7 @@ void CodeGenSwarm::visit(mir::VarExpr::Ptr expr) {
     oss << expr->var.getName();
 }
 void CodeGenSwarm::visit(mir::Call::Ptr call) {
-  if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer")
+  if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer" || call->name == "deleteObject")
     oss << "swarm_runtime::";
   oss << call->name << "(";
   bool printDelimeter = false;
@@ -613,7 +613,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
       is_insert_call = true;
     }
   }
-  if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer")
+  if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer" || call->name == "deleteObject")
     oss << "swarm_runtime::";
   oss << call->name << "(";
   bool printDelimeter = false;
