@@ -608,7 +608,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
-  if (call->name == "builtin_insert") {
+  if (call->name == "builtin_insert" || call->name == "builtin_update_size") {
     if (call->hasMetadata<mir::Var>("increment_round_var")) {
       is_insert_call = true;
     }
@@ -626,6 +626,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
   if (call->hasMetadata<mir::Var>("increment_round_var")) {
     oss << ", ";
     printRoundIncrement(call->getMetadata<mir::Var>("increment_round_var").getName());
+    if (call->name == "builtin_update_size") {
+      oss << " + 1";
+    }
   }
   oss << ")";
 }
@@ -862,6 +865,62 @@ void CodeGenSwarm::visit(mir::ReduceStmt::Ptr stmt) {
 
 }
 
+void CodeGenSwarmQueueEmitter::visit(mir::ReduceStmt::Ptr stmt) {
+  switch(stmt->reduce_op_) {
+    case mir::ReduceStmt::ReductionOp::MIN:
+      printIndent();
+      oss << "if ( ( ";
+      stmt->lhs->accept(this);
+      oss << ") > ( ";
+      stmt->expr->accept(this);
+      oss << ") ) { " << std::endl;
+      indent();
+      printIndent();
+      stmt->lhs->accept(this);
+      oss << " = ";
+      stmt->expr->accept(this);
+      oss << ";" << std::endl;
+      if (mir::isa<mir::TensorArrayReadExpr>(stmt->lhs)) {
+        printPushStatement(false, false, stmt->lhs); 
+      }
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+      /*
+      printIndent();
+      oss << "if ( ( ";
+      stmt->expr->accept(this);
+      oss << ") > ( ";
+      stmt->lhs->accept(this);
+      oss << ") ) { " << std::endl;
+      indent();
+      printIndent();
+      stmt->expr->accept(this);
+      oss << " = ";
+      stmt->lhs->accept(this);
+      oss << ";" << std::endl;
+      if (mir::isa<mir::TensorArrayReadExpr>(stmt->expr)) {
+        printPushStatement(false, false, stmt->expr); 
+      }
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+      */
+      push_inserted = true;
+      break;
+    case mir::ReduceStmt::ReductionOp::SUM:
+      printIndent();
+      if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
+        oss << stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
+      oss << "swarm_runtime::sum_reduce(";
+      stmt->lhs->accept(this);
+      oss << ", ";
+      stmt->expr->accept(this);
+      oss << ");" << std::endl;
+      break;
+  }
+}
+
 void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
 
@@ -980,9 +1039,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
   }
 
   func_decl->body->accept(this);
-
+  
   // this prints the "if(output) then {do something}" thing
-  if (func_decl->result.isInitialized()) {
+  if (!push_inserted && func_decl->result.isInitialized()) {
     if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
       if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
         if (!push_inserted) {

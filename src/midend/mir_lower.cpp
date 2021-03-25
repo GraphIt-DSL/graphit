@@ -87,7 +87,7 @@ namespace graphit {
         // This pass generates code for tracking if a field has been modified
         // during the execution of the edgeset apply functions.
         // It return values for implicit tracking of changes to certain field
-	if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::GPU) {
+	if (schedule != nullptr && (schedule->backend_identifier == Schedule::BackendID::SWARM || schedule->backend_identifier == Schedule::BackendID::GPU)) {
 		// No change tracking lower for GPUs
 		GPUChangeTrackingLower(mir_context, schedule).lower();
 	} else {	

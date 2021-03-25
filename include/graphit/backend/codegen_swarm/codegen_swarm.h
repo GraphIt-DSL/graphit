@@ -178,6 +178,36 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
     }
     oss << ");" << std::endl;
   }
+  
+  // prints a push statement, where the push increment is 1, and there is an option to increment
+  // a frontier round, and an option to push a different expr
+  void printPushStatement(bool increment_round, bool same_vertex, mir::Expr::Ptr next_vertex_expr) {
+	  std::string frontier_name = current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName();
+	  printIndent();
+    oss << "push(level + 1, ";
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      if(current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size() > 2) {
+        assert(false && "more passed variables (> 2) not supported yet");
+      }
+    }
+
+    if (current_while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+      std::vector<mir::Var> add_src_vars = current_while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
+      oss << frontier_name << "_struct{";
+      next_vertex_expr->accept(this);
+      for (int i = 0 ; i < add_src_vars.size(); i++) {
+	auto add_src_var = add_src_vars[i];
+        oss << "src_struct." << frontier_name << "_" << add_src_var.getName();
+	if (i != add_src_vars.size() - 1) oss << ", ";
+      }
+      // i think this is hard-coded to assume increment round is the last elemn in the struct
+      if (increment_round) oss << " + 1";
+      oss << "}";
+    } else {
+      next_vertex_expr->accept(this);
+    }
+    oss << ");" << std::endl;
+  }
 
   bool is_bucket_queue() {
     return (current_while_stmt->getMetadata<bool>("swarm_switch_convert")
@@ -198,6 +228,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::SwarmSwitchStmt::Ptr);
   void visit(mir::AssignStmt::Ptr) override;
   void visit(mir::FuncDecl::Ptr) override;
+  void visit(mir::ReduceStmt::Ptr) override;
   void visit(mir::Call::Ptr) override;
   void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
 };
