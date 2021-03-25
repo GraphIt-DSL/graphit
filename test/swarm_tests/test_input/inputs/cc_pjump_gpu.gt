@@ -31,23 +31,19 @@ end
 
 func main()
     var n : int = edges.getVertices();
-    for trail in 0:10
-        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
-        startTimer();
-        vertices.apply(init);
-        while (frontier.getVertexSetSize() != 0)
-            #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
-	    delete frontier;
-	    frontier = output;
-            update[0] = 1;
-            while update[0] != 0
-		update[0] = 0;
-		vertices.apply(pjump);
-            end
-        end
-        var elapsed_time : float = stopTimer();
+    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
+    var start_vertex : int = atoi(argv[2]);
+    frontier.addVertex(start_vertex);
+    vertices.apply(init);
+    while (frontier.getVertexSetSize() != 0)
+	#s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
 	delete frontier;
-        print "elapsed time: ";
-        print elapsed_time;
+	frontier = output;
+	update[0] = 1;
+	while update[0] != 0
+	    update[0] = 0;
+	    vertices.apply(pjump);
+	end
     end
+    delete frontier;
 end
