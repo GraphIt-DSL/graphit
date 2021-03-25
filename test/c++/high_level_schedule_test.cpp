@@ -263,6 +263,46 @@ protected:
                                      "    end\n"
                                      "end");
 
+      const char* cc_pjump_swarm_char = ("element Vertex end\n"
+                                   "element Edge end\n"
+                                   "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                   "const IDs : vector{Vertex}(int) = 1;\n"
+                                   "const update: vector[1](int);\n"
+                                   "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                   "    var src_id: Vertex = IDs[src];\n"
+                                   "    var dst_id: Vertex = IDs[dst];\n"
+                                   "    IDs[dst_id] min= IDs[src_id];\n"
+                                   "    IDs[src_id] min= IDs[dst_id];\n"
+                                   "end\n"
+                                   "func init(v : Vertex)\n"
+                                   "     IDs[v] = v;\n"
+                                   "end\n"
+                                   "func pjump(v: Vertex)\n"
+                                   "    var y: Vertex = IDs[v];\n"
+                                   "    var x: Vertex = IDs[y];\n"
+                                   "    if x != y\n"
+                                   "        IDs[v] = x;\n"
+                                   "        update[0] = 1;\n"
+                                   "    end\n"
+                                   "end\n"
+                                   "func main()\n"
+                                   "    var n : int = edges.getVertices();\n"
+                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                   "    vertices.apply(init);\n"
+                                   "    while (frontier.getVertexSetSize() != 0)\n"
+                                   "        #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);\n"
+                                   "        delete frontier;\n"
+                                   "        frontier = output;\n"
+                                   "        update[0] = 1;\n"
+                                   "        while update[0] != 0\n"
+                                   "            update[0] = 0;\n"
+                                   "            vertices.apply(pjump);\n"
+                                   "        end\n"
+                                   "        delete frontier;\n"
+                                   "    end\n"
+                                   "end");
+
 
 
         const char* cf_char = ( "element Vertex end\n"
@@ -550,7 +590,7 @@ protected:
                              "    % foward pass to propagate num_paths\n"
                              "    while (frontier.getVertexSetSize() != 0)\n"
                              "        round = round + 1;\n"
-                             "        #s1# var output : vertexset{Vertex} = edges.from(frontier).applyModified(forward_update, num_paths);\n"
+                             "        #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);\n"
                              "        delete frontier;\n"
                              "        output.apply(mark_visited);\n"
                              "        frontier_list.insert(output);\n"
@@ -873,6 +913,7 @@ protected:
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
         cc_pjump_str_ = string (cc_pjump_char);
+        cc_pjump_swarm_str_ = string (cc_pjump_swarm_char);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
@@ -979,6 +1020,7 @@ protected:
     string sssp_async_str_;
     string cf_str_;
     string cc_pjump_str_;
+    string cc_pjump_swarm_str_;
     string cc_str_;
     string prd_str_;
     string prd_double_str_;
@@ -3183,7 +3225,7 @@ TEST_F(HighLevelScheduleTest, CC_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
   using namespace fir;
-  istringstream is(cc_pjump_str_);
+  istringstream is(cc_pjump_swarm_str_);
   fe_->parseStream(is, context_, errors_);
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
