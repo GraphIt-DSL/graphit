@@ -48,7 +48,10 @@ void print(T& t) {
 }
 
 void deleteObject(VertexFrontier &frontier) {
-	std::vector<int32_t>().swap(frontier.elems);
+	frontier.elems.clear();
+	frontier.elems.shrink_to_fit();
+//	std::vector<int32_t>().swap(frontier.elems);
+	frontier.num_elems = 0;
 }
 
 
