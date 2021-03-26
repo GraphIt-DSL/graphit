@@ -18,6 +18,12 @@ class VertexFrontier {
 
 static VertexFrontier create_new_vertex_set(int32_t num_vertices, int32_t init_elems = 0) {
   VertexFrontier frontier;
+  if (init_elems == num_vertices) {
+    for (int i = 0, e = init_elems; i < e; i++) {
+      frontier.elems.push_back(i);
+    }
+    frontier.num_elems = init_elems;
+  }
   return frontier;
 }
 

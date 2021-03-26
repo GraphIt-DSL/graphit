@@ -32,8 +32,6 @@ end
 func main()
     var n : int = edges.getVertices();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
-    var start_vertex : int = atoi(argv[2]);
-    frontier.addVertex(start_vertex);
     vertices.apply(init);
     while (frontier.getVertexSetSize() != 0)
 	#s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
