@@ -10,15 +10,11 @@ int swarm_pq_delta;
 void dist_generated_vector_op_apply_func_0(int v) {
 	dist[v] = 2147483647;
 }
-bool updateEdge(int src, int dst, int weight) {
-	bool output2;
-	bool dist_trackving_var_1 = (bool)0;
+void updateEdge(int src, int dst, int weight, swarm_runtime::VertexFrontier __output_frontier) {
 	int new_dist = (dist[src] + weight);
 	if (dist[dst] > new_dist) {
 		dist[dst] = new_dist;
 	};
-	output2 = dist_trackving_var_1;
-	return output2;
 }
 void printDist(int v) {
 	swarm_runtime::print(dist[v]);
@@ -42,61 +38,19 @@ void swarm_main() {
 			int dst = edges.h_edge_dst[i];
 			int weight = edges.h_edge_weight[i];
 			{
-				bool output2;
-				bool dist_trackving_var_1 = (bool)0;
 				int new_dist = (dist[src] + weight);
 				if (dist[dst] > new_dist) {
 					dist[dst] = new_dist;
 					push((new_dist)/swarm_pq_delta, dst);
 				};
-				output2 = dist_trackving_var_1;
 			}
 		}
 	}, [](unsigned level, int src) {
 	});
 }
-#include <queue>
-#include <utility>
-// Compares against simple serial implementation
-bool verify() {
-    int start_vertex = atoi(__argv[2]);
-    // Serial Dijkstra's algorithm implementation to get oracle distances
-    int* oracle_dist = new int[edges.num_vertices];
-    for (int _iter = 0; _iter < edges.num_vertices; _iter++) {
-        oracle_dist[_iter] = 2147483647;
-    };
-    using entry = std::pair<int, int>;
-    using namespace std;
-    std::priority_queue<entry, std::vector<entry>, std::greater<entry>> mq;
-    mq.push(make_pair(0, start_vertex));
-    while (!mq.empty()) {
-        int td = mq.top().first;
-        int u = mq.top().second;
-        mq.pop();
-        //printf("checking node %d at tentative distance %d\n", u, td);
-        if (oracle_dist[u] == 2147483647) {
-            //printf("setting node %d to distance %d\n", u, td);
-            oracle_dist[u] = td;
-            for (int eid = edges.h_src_offsets[u]; eid < edges.h_src_offsets[u+1]; eid++) {
-                int neigh = edges.h_edge_dst[eid];
-                int weight = edges.h_edge_weight[eid];
-                int new_dist = td + weight;
-                //printf("pushing node %d at tentative distance %d\n", neigh, new_dist);
-                mq.push(std::make_pair(new_dist, neigh));
-            }
-        }
-    }
-    // Report any mismatches
-    bool all_ok = true;
-    for (int n = 0; n < edges.num_vertices; n++) {
-        if (dist[n] != oracle_dist[n]) {
-            cout << n << ": " << dist[n] << " != " << oracle_dist[n] << endl;
-            all_ok = false;
-        }
-    }
-    return all_ok;
-}
 
+#include <fstream>
+#include <iostream>
 int main(int argc, char* argv[]) {
 	__argc = argc;
 	__argv = argv;
@@ -107,8 +61,14 @@ int main(int argc, char* argv[]) {
 	};
 	SCC_PARALLEL( swarm_main(); );
 
-	if (verify())
-                std::cout << "SUCCESS!!!!!!!!!!!!!!" << std::endl;
-        else
-                std::cout << "FAILED!!!!!!!!!!!!!!!" << std::endl;
+	std::ofstream f("ds_answers.txt");
+        if (!f.is_open()) {
+                printf("file open failed.\n");
+                return -1;
+        }
+
+        for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
+                f << dist[i] << std::endl;
+        }
+        f.close();	
 }
