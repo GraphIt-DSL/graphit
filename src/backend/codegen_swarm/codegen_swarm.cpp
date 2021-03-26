@@ -950,9 +950,24 @@ void CodeGenSwarmQueueEmitter::visit(mir::StmtBlock::Ptr stmts) {
 
 void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
-  oss << vsae->input_function_name << "(";
-  printSrcVertex();
-  oss << ");" << std::endl;
+  if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
+    // This is iterating over all the vertices of the graph
+    auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
+    auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
+    oss << "for (int _iter = 0; _iter < ";
+    associated_element_type_size->accept(this);
+    oss << "; _iter++) {" << std::endl;
+    indent();
+    printIndent();
+    oss << vsae->input_function_name << "(_iter);" << std::endl;
+    dedent();
+    printIndent();
+    oss << "}";
+  } else {
+    oss << vsae->input_function_name << "(";
+    printSrcVertex();
+    oss << ");" << std::endl;
+  }
 }
 
 void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {

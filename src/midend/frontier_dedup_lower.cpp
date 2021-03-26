@@ -61,8 +61,18 @@ void FrontierDedupLower::ReuseFrontierFinderVisitor::visit(mir::StmtBlock::Ptr s
           }
         }
       }
-    } else if (visitor.old_frontier_name != "") {
+    } else if (mir::isa<mir::ExprStmt>(this_stmt)) {
+      mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(stmt_block->stmts))[i]);
+      if (mir::isa<mir::Call>(expr_stmt->expr)) {
+        mir::Call::Ptr call_expr = mir::to<mir::Call>(expr_stmt->expr);
+        if (call_expr->name == "deleteObject" && mir::isa<mir::VarExpr>(call_expr->args[0]) && mir::to<mir::VarExpr>(call_expr->args[0])->var.getName() == visitor.frontier_name) {
+          to_deletes.push_back(expr_stmt);
+          continue;
+        }
+      }
       this_stmt->accept(&visitor);
+    } else if (visitor.old_frontier_name != "") {
+        this_stmt->accept(&visitor);
     }
     if (std::find(to_deletes.begin(), to_deletes.end(), this_stmt) == to_deletes.end()) {
       new_stmts.push_back(this_stmt);

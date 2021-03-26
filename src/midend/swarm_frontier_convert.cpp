@@ -104,7 +104,7 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
 
 	  if (while_stmt->body->stmts->size() > 1) {
             // First, determine whether the while loop can be converted to switch cases.
-            SwitchWhileCaseFinder finder;
+            SwitchWhileCaseFinder finder(mir_context_);
             finder.frontier_name = var_expr->var.getName();
             for (auto stmt: *(while_stmt->body->stmts)) {
               stmt->accept(&finder);
@@ -143,7 +143,8 @@ void SwarmFrontierConvert::SwitchWhileCaseFinder::visit(mir::EdgeSetApplyExpr::P
 }
 
 void SwarmFrontierConvert::SwitchWhileCaseFinder::visit(mir::VertexSetApplyExpr::Ptr vsae) {
-  if (mir::to<mir::VarExpr>(vsae->target)->var.getName() != frontier_name) {
+  auto target_name = mir::to<mir::VarExpr>(vsae->target)->var.getName();
+  if (target_name != frontier_name && !mir_context_->isConstVertexSet(target_name)) {
     can_switch = false;
   }
 }
@@ -228,6 +229,11 @@ void SwarmFrontierConvert::SwarmSwitchCaseSeparator::visit(mir::AssignStmt::Ptr 
       insert_single_source_case(idx);
     }
   }
+}
+
+void SwarmFrontierConvert::SwarmSwitchCaseSeparator::visit(mir::WhileStmt::Ptr while_stmt) {
+  // Don't visit while statements inside other whilestmts right now?
+  return;
 }
 
 void SwarmFrontierConvert::SwarmSwitchCaseSeparator::visit(mir::VarDecl::Ptr var_decl) {

@@ -16,11 +16,15 @@ namespace graphit {
      using mir::MIRVisitor::visit;
      bool can_switch = true;
      std::string frontier_name;
+    SwitchWhileCaseFinder (MIRContext* mir_context): mir_context_(mir_context) {
+      }
 
      virtual void visit(mir::EdgeSetApplyExpr::Ptr) override;
      virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
      virtual void visit(mir::AssignStmt::Ptr) override;
      virtual void visit(mir::VarDecl::Ptr) override;
+   private:
+    MIRContext *mir_context_ = nullptr;
 
    };
 
@@ -86,6 +90,7 @@ namespace graphit {
    virtual void visit(mir::AssignStmt::Ptr) override;
    virtual void visit(mir::VarDecl::Ptr) override;
    virtual void visit(mir::Call::Ptr) override;
+   virtual void visit(mir::WhileStmt::Ptr) override;
    void setup_switch_cases(void);
 
    // create a blank switch statement with no body.
