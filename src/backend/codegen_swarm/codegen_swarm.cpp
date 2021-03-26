@@ -869,27 +869,14 @@ void CodeGenSwarm::visit(mir::ReduceStmt::Ptr stmt) {
 void CodeGenSwarmQueueEmitter::visit(mir::ReduceStmt::Ptr stmt) {
   switch(stmt->reduce_op_) {
     case mir::ReduceStmt::ReductionOp::MIN:
-      // manually inline min reductions because the item to be pushed onto the frontier must be inferred from the
-      // lhs of the reduce stmt
       printIndent();
-      oss << "if ( ( ";
+      if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
+        oss << stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
+      oss << "swarm_runtime::min_reduce(";
       stmt->lhs->accept(this);
-      oss << ") > ( ";
+      oss << ", ";
       stmt->expr->accept(this);
-      oss << ") ) { " << std::endl;
-      indent();
-      printIndent();
-      stmt->lhs->accept(this);
-      oss << " = ";
-      stmt->expr->accept(this);
-      oss << ";" << std::endl;
-      if (mir::isa<mir::TensorArrayReadExpr>(stmt->lhs)) {
-        printPushStatement(false, false, stmt->lhs); 
-      }
-      dedent();
-      printIndent();
-      oss << "}" << std::endl;
-      push_inserted = true;
+      oss << ");" << std::endl;
       break;
     case mir::ReduceStmt::ReductionOp ::ATOMIC_SUM:
     case mir::ReduceStmt::ReductionOp::SUM:
@@ -1208,11 +1195,9 @@ void CodeGenSwarm::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
 // handles enqueueVertex's in while loops, where push statements must be inserted.
 // Checks to see if there is a push already inserted, as some cases insert pushes manually (e.g. min reductions)
 void CodeGenSwarmQueueEmitter::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
-  if (!push_inserted) {
     printPushStatement(false, false,
         mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName());
     push_inserted = true;
-  }
 }
 
 }

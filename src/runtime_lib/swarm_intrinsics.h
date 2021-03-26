@@ -19,15 +19,12 @@ bool sum_reduce(T1& dst, T2 src) {
 }
 
 template <typename T>
-int min_reduce(T& dst, T& src) {
+bool min_reduce(T& dst, T& src) {
   if (dst > src) {
     dst = src;
-    return 0;
-  } else if (dst < src) {
-    src = dst;
-    return 1;
+    return true;
   }
-  return 2;
+  return false;
 }
 
 void startTimer() {

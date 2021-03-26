@@ -40,6 +40,7 @@ void swarm_main() {
 	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
 		init(_iter);
 	};
+	#pragma clang loop swarmify (disable)
 	for (int i = 0; i < frontier.size(); i++){
 		swarm_frontier.push_init(0, frontier[i]);
 	}
@@ -54,18 +55,14 @@ void swarm_main() {
 					int src_id = IDs[src];
 					int dst_id = IDs[dst];
 					bool result_var1 = (bool)0;
-					if ( ( IDs[dst_id]) > ( IDs[src_id]) ) { 
-						IDs[dst_id] = IDs[src_id];
-						push(level + 1, IDs[dst_id]);
-					}
+					result_var1 = swarm_runtime::min_reduce(IDs[dst_id], IDs[src_id]);
 					if (result_var1) {
+						push(level + 1, dst_id);
 					}
 					bool result_var2 = (bool)0;
-					if ( ( IDs[src_id]) > ( IDs[dst_id]) ) { 
-						IDs[src_id] = IDs[dst_id];
-						push(level + 1, IDs[src_id]);
-					}
+					result_var2 = swarm_runtime::min_reduce(IDs[src_id], IDs[dst_id]);
 					if (result_var2) {
+						push(level + 1, src_id);
 					}
 				}
 			}
@@ -96,6 +93,8 @@ void swarm_main() {
 swarm_runtime::clear_frontier(frontier);
 	swarm_runtime::deleteObject(frontier);
 }
+#include <iostream>
+#include <fstream>
 int main(int argc, char* argv[]) {
 	__argc = argc;
 	__argv = argv;
@@ -106,4 +105,14 @@ int main(int argc, char* argv[]) {
 		IDs_generated_vector_op_apply_func_0(_iter);
 	};
 	SCC_PARALLEL( swarm_main(); );
+	std::ofstream f("cc_answers.txt");
+        if (!f.is_open()) {
+                printf("file open failed.\n");
+                return -1;
+        }
+
+        for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
+                f << IDs[i] << std::endl;
+        }
+        f.close();
 }
