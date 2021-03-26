@@ -41,47 +41,61 @@ void swarm_main() {
 		init(_iter);
 	};
 	for (int i = 0; i < frontier.size(); i++){
-		std::cout<<"pushing " << frontier[i] << std::endl;
 		swarm_frontier.push_init(0, frontier[i]);
 	}
 	swarm_frontier.for_each_prio([](unsigned level, int src, auto push) {
-		int32_t edgeZero = edges.h_src_offsets[src];
-		int32_t edgeLast = edges.h_src_offsets[src+1];
-		for (int i = edgeZero; i < edgeLast; i++) {
-			int dst = edges.h_edge_dst[i];
-			{
-				int src_id = IDs[src];
-				int dst_id = IDs[dst];
-				bool result_var1 = (bool)0;
-				if ( ( IDs[dst_id]) > ( IDs[src_id]) ) { 
-					IDs[dst_id] = IDs[src_id];
-					push(level + 1, IDs[dst_id]);
-				}
-				if (result_var1) {
-				}
-				bool result_var2 = (bool)0;
-				if ( ( IDs[src_id]) > ( IDs[dst_id]) ) { 
-					IDs[src_id] = IDs[dst_id];
-					push(level + 1, IDs[src_id]);
-				}
-				if (result_var2) {
+		switch (level % 2) {
+		case 0: {
+			int32_t edgeZero = edges.h_src_offsets[src];
+			int32_t edgeLast = edges.h_src_offsets[src+1];
+			for (int i = edgeZero; i < edgeLast; i++) {
+				int dst = edges.h_edge_dst[i];
+				{
+					int src_id = IDs[src];
+					int dst_id = IDs[dst];
+					bool result_var1 = (bool)0;
+					if ( ( IDs[dst_id]) > ( IDs[src_id]) ) { 
+						IDs[dst_id] = IDs[src_id];
+						push(level + 1, IDs[dst_id]);
+					}
+					if (result_var1) {
+					}
+					bool result_var2 = (bool)0;
+					if ( ( IDs[src_id]) > ( IDs[dst_id]) ) { 
+						IDs[src_id] = IDs[dst_id];
+						push(level + 1, IDs[src_id]);
+					}
+					if (result_var2) {
+					}
 				}
 			}
+			break;
 		}
-		update[0] = 1;
-		while ((update[0]) != (0)) {
-			update[0] = 0;
-			pjump(src);
-;
+		case 1: {
+			push(level + 1, src);
+			break;
+		}
 		}
 	}, [](unsigned level, int src) {
-	});
-	swarm_runtime::clear_frontier(frontier);
+		switch (level % 2) {
+		case 0: {
+			update[0] = 1;
+			break;
+		}
+		case 1: {
+			while ((update[0]) != (0)) {
+				update[0] = 0;
+				for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+					pjump(_iter);
+				};
+			}
+			break;
+		}
+	}
+});
+swarm_runtime::clear_frontier(frontier);
 	swarm_runtime::deleteObject(frontier);
 }
-
-#include <fstream>
-#include <iostream>
 int main(int argc, char* argv[]) {
 	__argc = argc;
 	__argv = argv;
@@ -92,14 +106,4 @@ int main(int argc, char* argv[]) {
 		IDs_generated_vector_op_apply_func_0(_iter);
 	};
 	SCC_PARALLEL( swarm_main(); );
-	std::ofstream f("cc_answers.txt");
-        if (!f.is_open()) {
-                printf("file open failed.\n");
-                return -1;
-        }
-
-        for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
-                f << IDs[i] << std::endl;
-        }
-        f.close();	
 }
