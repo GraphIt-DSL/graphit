@@ -5,7 +5,9 @@ namespace graphit {
 void FrontierDedupLower::lower(void) {
   for (auto func: mir_context_->getFunctionList()) {
     ReuseFrontierFinderVisitor visitor(mir_context_);
+    VertexDeduplicationVisitor vertex_deduplication_visitor(mir_context_);
     func->accept(&visitor);
+    func->accept(&vertex_deduplication_visitor);
   }
 }
 
@@ -20,6 +22,58 @@ bool FrontierDedupLower::ReuseFrontierFinderVisitor::is_reflexive_expr(mir::Assi
     }
   }
   return false;
+}
+
+void FrontierDedupLower::VertexDeduplicationVisitor::visit(mir::StmtBlock::Ptr stmt_block) {
+  std::vector<mir::Stmt::Ptr> new_stmts;
+  for (int i = 0; i < stmt_block->stmts->size(); i++) {
+    mir::Stmt::Ptr this_stmt = (*(stmt_block->stmts))[i];
+    new_stmts.push_back(this_stmt);
+    // if this statement is an AssignStmt or a VarDecl, check to see if it uses a reusable frontier.
+    if (mir::isa<mir::VarDecl>(this_stmt)) {
+      mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>(this_stmt);
+      if (mir::isa<mir::EdgeSetApplyExpr>(var_decl->initVal)) {
+        mir::EdgeSetApplyExpr::Ptr esae = mir::to<mir::EdgeSetApplyExpr>(var_decl->initVal);
+        if (esae->getMetadata<bool>("enable_deduplication") && esae->from_func != "") {
+          frontier_name = esae->from_func;
+          auto inFrontierType = std::make_shared<mir::ScalarType>();
+          std::string array_name = "in_frontier_" + mir_context_->getUniqueNameCounterString();
+          esae->setMetadata<std::string>("dedup_vector", array_name);
+
+          std::string new_reset_frontier_fxn_name = "reset_" + array_name;
+          inFrontierType->type = mir::ScalarType::Type ::BOOL;
+          mir::VertexSetApplyExpr::Ptr dedup_vsae = std::make_shared<mir::VertexSetApplyExpr>(frontier_name,
+                                                                                              inFrontierType,
+                                                                                              new_reset_frontier_fxn_name);
+          dedup_vsae->setMetadata<bool>("requires_output", false);
+          dedup_vsae->setMetadata<bool>("inline_function", true);
+          auto new_expr_stmt = std::make_shared<mir::ExprStmt>();
+          new_expr_stmt->expr = dedup_vsae;
+
+          auto new_func_decl = std::make_shared<mir::FuncDecl>();
+          new_func_decl->name = new_reset_frontier_fxn_name;
+          mir::ElementType::Ptr v_type = std::make_shared<mir::ElementType>();
+          mir::VectorType::Ptr vector_type = std::make_shared<mir::VectorType>();
+          v_type->ident = "Vertex";
+          new_func_decl->args.push_back(mir::Var("v", v_type));
+          vector_type->element_type = v_type->clone<mir::ElementType>();
+
+          auto assign_stmt = std::make_shared<mir::AssignStmt>();
+          assign_stmt->lhs = std::make_shared<mir::TensorReadExpr>(array_name,
+              "v",vector_type,
+              v_type->clone<mir::ElementType>());
+          assign_stmt->expr = std::make_shared<mir::BoolLiteral>();
+          new_func_decl->body = std::make_shared<mir::StmtBlock>();
+          new_func_decl->body->insertStmtEnd(assign_stmt);
+          new_func_decl->setMetadata<bool>("inline_only", true);  // don't declare a global version in codegen
+          mir_context_->addFunction(new_func_decl);
+          new_stmts.push_back(new_expr_stmt);
+        }
+      }
+    }
+  }
+  (*(stmt_block->stmts)) = new_stmts;
+  mir::MIRVisitor::visit(stmt_block);
 }
 
 void FrontierDedupLower::ReuseFrontierFinderVisitor::visit(mir::StmtBlock::Ptr stmt_block) {

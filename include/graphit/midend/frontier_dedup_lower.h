@@ -32,6 +32,17 @@ class FrontierDedupLower {
     virtual void visit(mir::VertexSetApplyExpr::Ptr) override;
     virtual void visit(mir::Call::Ptr) override;
   };
+
+  struct VertexDeduplicationVisitor: public mir::MIRVisitor {
+    using mir::MIRVisitor::visit;
+    MIRContext *mir_context_;
+    std::string frontier_name;
+
+    VertexDeduplicationVisitor(MIRContext* mir_context): mir_context_(mir_context) {
+    }
+
+    virtual void visit(mir::StmtBlock::Ptr) override;
+  };
 };
 
 }

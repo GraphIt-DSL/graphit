@@ -3102,8 +3102,8 @@ TEST_F(HighLevelScheduleTest, BC_Swarm) {
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[8]);
 
-  EXPECT_EQ(4, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
-  EXPECT_EQ(4, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
+  EXPECT_EQ(5, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
+  EXPECT_EQ(5, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
 
   std::vector<mir::Stmt::Ptr> *single_stmts = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts;
   mir::SwarmSwitchStmt::Ptr switch_stmt = mir::to<mir::SwarmSwitchStmt>((*single_stmts)[0]);

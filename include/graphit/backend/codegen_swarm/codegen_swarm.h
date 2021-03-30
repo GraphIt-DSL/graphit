@@ -30,6 +30,15 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
   void visit(mir::VarDecl::Ptr);
 };
 
+//class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
+// public:
+//  CodeGenSwarmDedupFinder() {};
+//  int curr_dedup_counter = 0;
+//  std::vector<mir::Var> dedup_frontiers;
+//
+//  void visit(mir::PushEdgeSetApplyExpr::Ptr);
+//};
+
 
 class CodeGenSwarm: public mir::MIRVisitor {
  private:
@@ -108,6 +117,9 @@ class CodeGenSwarm: public mir::MIRVisitor {
 
 // Generates code specific to swarm-convertible while loops that involve frontiers.
 class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
+ private:
+//  CodeGenSwarmDedupFinder dedup_finder;
+
  public:
   enum QueueType {
   	PRIOQUEUE,

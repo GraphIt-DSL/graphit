@@ -1,7 +1,6 @@
 #include <graphit/backend/codegen_swarm/codegen_swarm.h>
 #include <graphit/midend/mir.h>
 
-
 namespace graphit {
 int CodeGenSwarm::genSwarmCode(void) {
   genIncludeStmts();
@@ -19,7 +18,10 @@ int CodeGenSwarm::genSwarmCode(void) {
   genSwarmStructs();
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
-    it->get()->accept(this);
+    auto fxn_ptr = it->get();
+    if (!fxn_ptr->hasMetadata<bool>("inline_only") || !fxn_ptr->getMetadata<bool>("inline_only")) {
+      fxn_ptr->accept(this);
+    }
   }
 
   genMainFunction();
@@ -668,6 +670,18 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
   }
 }
 
+//void CodeGenSwarmDedupFinder::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
+//  if (esae->getMetadata<bool>("enable_deduplication")) {
+//    std::string vector_name = "inFrontier_" + curr_dedup_counter;
+//    curr_dedup_counter++;
+//    auto vector_type = std::make_shared<mir::VectorType>();
+//    vector_type->vector_element_type = std::make_shared<mir::ScalarType::Type::BOOL>();
+//    mir::Var new_frontier_vector(vector_name, vector_type);
+//    dedup_frontiers.push_back(new_frontier_vector);
+//    esae->setMetadata<mir::Var>("dedup_vector", new_frontier_vector);
+//  }
+//}
+
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   if (!while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
     printIndent();
@@ -715,6 +729,9 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   printIndent();
   oss << "}" << std::endl;
   }
+
+  // TODO(clhsu): Generate code for any deduplication vectors. Stored as dedup_vector in ESAE metadata.
+  // TODO(clhsu): Eventually cleanup this code? There's a lot going on here.
 
   // Now produce code for the for_each_prio lambda
   printIndent();
@@ -902,20 +919,44 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     oss << "for (int _iter = 0; _iter < ";
     associated_element_type_size->accept(this);
     oss << "; _iter++) {" << std::endl;
-    indent();
-    printIndent();
-    oss << vsae->input_function_name << "(_iter);" << std::endl;
-    dedent();
+
+    if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
+      oss << "int v = _iter;" << std::endl;
+      printIndent();
+      oss << "{" << std::endl;
+      indent();
+      mir_context_->getFunction(vsae->input_function_name)->body->accept(this);
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    } else {
+      indent();
+      printIndent();
+      oss << vsae->input_function_name << "(_iter);" << std::endl;
+      dedent();
+    }
+
     printIndent();
     oss << "}";
   } else {
     oss << "for (int i = 0; i < "<<mir_var->var.getName() << ".size(); i++) {" << std::endl;
-    indent();
-    printIndent();
-    oss << "int32_t current = " << mir_var->var.getName() << "[i];" << std::endl;
-    printIndent();
-    oss << vsae->input_function_name << "(current);" << std::endl;
-    dedent();
+    if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
+      oss << "int v = " << mir_var->var.getName() << "[i];" << std::endl;
+      printIndent();
+      oss << "{" << std::endl;
+      indent();
+      mir_context_->getFunction(vsae->input_function_name)->body->accept(this);
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    } else {
+      indent();
+      printIndent();
+      oss << "int32_t current = " << mir_var->var.getName() << "[i];" << std::endl;
+      printIndent();
+      oss << vsae->input_function_name << "(current);" << std::endl;
+      dedent();
+    }
     printIndent();
     oss << "}";
   }
@@ -944,16 +985,40 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     oss << "for (int _iter = 0; _iter < ";
     associated_element_type_size->accept(this);
     oss << "; _iter++) {" << std::endl;
-    indent();
-    printIndent();
-    oss << vsae->input_function_name << "(_iter);" << std::endl;
-    dedent();
+    if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
+      oss << "int v = _iter;" << std::endl;
+      printIndent();
+      oss << "{" << std::endl;
+      indent();
+      mir_context_->getFunction(vsae->input_function_name)->body->accept(this);
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    } else {
+      indent();
+      printIndent();
+      oss << vsae->input_function_name << "(_iter);" << std::endl;
+      dedent();
+    }
     printIndent();
     oss << "}";
   } else {
-    oss << vsae->input_function_name << "(";
-    printSrcVertex();
-    oss << ");" << std::endl;
+    if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
+      oss << "int v = ";
+      printSrcVertex();
+      oss << ";" << std::endl;
+      printIndent();
+      oss << "{" << std::endl;
+      indent();
+      mir_context_->getFunction(vsae->input_function_name)->body->accept(this);
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    } else {
+      oss << vsae->input_function_name << "(";
+      printSrcVertex();
+      oss << ");" << std::endl;
+    }
   }
 }
 
