@@ -75,7 +75,7 @@ bool BCVerifier(const Graph &g, NodeID source, NodeID num_iters,
                  << " (diff: " << diff << ")" << endl;
             all_ok = false;
         }
-        if (abs(diff) > abs(max_diff) max_diff = diff;
+        if (abs(diff) > abs(max_diff)) max_diff = diff;
     }
     cout << "Largest diff was: " << max_diff << endl;
     return all_ok;
