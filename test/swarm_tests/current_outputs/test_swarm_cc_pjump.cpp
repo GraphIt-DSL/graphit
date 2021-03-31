@@ -40,7 +40,6 @@ void swarm_main() {
 	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
 		init(_iter);
 	};
-	#pragma clang loop swarmify (disable)
 	for (int i = 0; i < frontier.size(); i++){
 		swarm_frontier.push_init(0, frontier[i]);
 	}
@@ -73,10 +72,11 @@ void swarm_main() {
 			break;
 		}
 		}
-	}, [](unsigned level, int src) {
+	}, [](unsigned level, int src, auto push) {  // manually inserted the push
 		switch (level % 2) {
 		case 0: {
 			update[0] = 1;
+			push(level+1, src);  // manually inserted
 			break;
 		}
 		case 1: {

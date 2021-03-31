@@ -11,6 +11,7 @@ struct frontier_struct {
 	int src;
 	int frontier_insert_round_0;
 };
+bool* in_frontier_3;
 void visited_generated_vector_op_apply_func_2(int v) {
 	visited[v] = (bool)0;
 }
@@ -21,9 +22,9 @@ void num_paths_generated_vector_op_apply_func_0(int v) {
 	num_paths[v] = 0;
 }
 void forward_update(int src, int dst, swarm_runtime::VertexFrontier __output_frontier) {
-	bool result_var3 = (bool)0;
-	result_var3 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
-	if (result_var3) {
+	bool result_var4 = (bool)0;
+	result_var4 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
+	if (result_var4) {
 	}
 }
 bool visited_vertex_filter(int v) {
@@ -71,8 +72,9 @@ void swarm_main() {
 	for (int i = 0; i < frontier.size(); i++){
 		swarm_frontier.push_init(0, frontier_struct{frontier[i], swarm_runtime::builtin_get_size(frontier_list)});
 	}
+	in_frontier_3 = new bool [swarm_runtime::builtin_getVertices(edges)]();
 	swarm_frontier.for_each_prio([&round, &frontier_list](unsigned level, frontier_struct src_struct, auto push) {
-		switch (level % 4) {
+		switch (level % 5) {
 		case 0: {
 			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
 			break;
@@ -82,13 +84,17 @@ void swarm_main() {
 			int32_t edgeLast = edges.h_src_offsets[src_struct.src+1];
 			for (int i = edgeZero; i < edgeLast; i++) {
 				int dst = edges.h_edge_dst[i];
+				printf("looking at %d\n", dst);
 				int src = src_struct.src;
 				if (visited_vertex_filter(dst)) {
 					{
-						bool result_var3 = (bool)0;
-						result_var3 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
-						if (result_var3) {
-							push(level + 1, frontier_struct{dst, src_struct.frontier_insert_round_0});
+						bool result_var4 = (bool)0;
+						result_var4 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
+						if (result_var4) {
+							if (!in_frontier_3[dst]) {
+								in_frontier_3[dst] = true;
+								push(level + 1, frontier_struct{dst, src_struct.frontier_insert_round_0});
+							}
 						}
 					}
 				}
@@ -96,47 +102,67 @@ void swarm_main() {
 			break;
 		}
 		case 2: {
-			mark_visited(src_struct.src);
+			int v = src_struct.src;
+			{
+				in_frontier_3[v] = (bool)0;
+			}
 ;
 			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
 			break;
 		}
 		case 3: {
+			mark_visited(src_struct.src);
+;
+			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
+			break;
+		}
+		case 4: {
+			printf("inserting %d into the frontier list at round %d\n", src_struct.src, src_struct.frontier_insert_round_0);
 			swarm_runtime::builtin_insert(frontier_list, src_struct.src, src_struct.frontier_insert_round_0);
 			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0 + 1});
 			break;
 		}
 		}
-	}, [&round, &frontier_list](unsigned level, frontier_struct src_struct) {
-		switch (level % 4) {
+	}, [&round, &frontier_list](unsigned level, frontier_struct src_struct, auto push) { // CLHSU add
+		switch (level % 5) {
 		case 0: {
 			round = (round + 1);
+			push(level+1, src_struct); //clhsu add
 			break;
 		}
 		case 1: {
+			push(level+1, src_struct); // clshu add
 			break;
 		}
 		case 2: {
+			push(level+1, src_struct); // clshu add
 			break;
 		}
 		case 3: {
+			push(level+1, src_struct); //clhsu add
+			break;
+		}
+		case 4: {
 			swarm_runtime::builtin_update_size(frontier_list, src_struct.frontier_insert_round_0 + 1);
 			break;
 		}
 	}
 });
-printf("Done with first half\n");
+delete[] in_frontier_3;
 swarm_runtime::clear_frontier(frontier);
 	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
 		mark_unvisited(_iter);
 	};
 	swarm_runtime::builtin_retrieve(frontier_list, frontier);
+	swarm_runtime::builtin_retrieve(frontier_list, frontier); // claire add bc now adding another increment?
 	swarm_runtime::builtin_retrieve(frontier_list, frontier);
+	printf("Round: %d\n with frontier.size = %d\n", round, frontier.size());
 	for (int i = 0; i < frontier.size(); i++) {
 		int32_t current = frontier[i];
 		backward_vertex_f(current);
 	};
 	round = (round - 1);
+	printf("Round: %d\n with frontier size: %d\n", round, frontier.size());
 	while ((round) > (0)) {
 		for (int i = 0; i < frontier.size(); i++) {
 			int32_t current = frontier[i];
@@ -155,6 +181,7 @@ swarm_runtime::clear_frontier(frontier);
 			backward_vertex_f(current);
 		};
 		round = (round - 1);
+		printf("Round: %d\n", round);
 	}
 	swarm_runtime::deleteObject(frontier);
 	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
@@ -162,26 +189,27 @@ swarm_runtime::clear_frontier(frontier);
 	};
 }
 
+
 #include <iostream>
 #include <fstream>
 int main(int argc, char* argv[]) {
-	__argc = argc;
-	__argv = argv;
-	swarm_runtime::load_graph(edges, __argv[1]);
-	num_paths = new double[swarm_runtime::builtin_getVertices(edges)];
-	dependences = new double[swarm_runtime::builtin_getVertices(edges)];
-	visited = new bool[swarm_runtime::builtin_getVertices(edges)];
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-		num_paths_generated_vector_op_apply_func_0(_iter);
-	};
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-		dependences_generated_vector_op_apply_func_1(_iter);
-	};
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-		visited_generated_vector_op_apply_func_2(_iter);
-	};
-	SCC_PARALLEL( swarm_main(); );
-	std::ofstream f("bc_answers.txt");
+        __argc = argc;
+        __argv = argv;
+        swarm_runtime::load_graph(edges, __argv[1]);
+        num_paths = new double[swarm_runtime::builtin_getVertices(edges)];
+        dependences = new double[swarm_runtime::builtin_getVertices(edges)];
+        visited = new bool[swarm_runtime::builtin_getVertices(edges)];
+        for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+                num_paths_generated_vector_op_apply_func_0(_iter);
+        };
+        for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+                dependences_generated_vector_op_apply_func_1(_iter);
+        };
+        for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+                visited_generated_vector_op_apply_func_2(_iter);
+        };
+        SCC_PARALLEL( swarm_main(); );
+        std::ofstream f("bc_answers.txt");
         if (!f.is_open()) {
                 printf("file open failed.\n");
                 return -1;
