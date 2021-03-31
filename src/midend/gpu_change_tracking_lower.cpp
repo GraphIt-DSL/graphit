@@ -81,6 +81,9 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;
 
+		    if (current_edge_set_apply_expr->hasMetadata<mir::Var>("dedup_vector")) {
+		      enqueue_vertex->setMetadata<mir::Var>("dedup_vector", current_edge_set_apply_expr->getMetadata<mir::Var>("dedup_vector"));
+		    }
                     // GPU specific things
 					if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {
                       enqueue_vertex->setMetadata<bool>("fused_dedup",
@@ -141,6 +144,9 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;
+		    if (current_edge_set_apply_expr->hasMetadata<mir::Var>("dedup_vector")) {
+		      enqueue_vertex->setMetadata<mir::Var>("dedup_vector", current_edge_set_apply_expr->getMetadata<mir::Var>("dedup_vector"));
+		    }
 
 					// GPU specific things
                     if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {
@@ -183,6 +189,9 @@ void GPUChangeTrackingLower::ReductionOpChangeVisitor::visit(mir::StmtBlock::Ptr
 					frontier_expr->var = frontier_var;
 					enqueue_vertex->vertex_id = tre->index;
 					enqueue_vertex->vertex_frontier = frontier_expr;
+		    if (current_edge_set_apply_expr->hasMetadata<mir::Var>("dedup_vector")) {
+		      enqueue_vertex->setMetadata<mir::Var>("dedup_vector", current_edge_set_apply_expr->getMetadata<mir::Var>("dedup_vector"));
+		    }
 
                     // GPU specific things
                     if (current_edge_set_apply_expr->hasMetadata<bool>("fused_dedup")) {

@@ -13,9 +13,11 @@ int CodeGenSwarm::genSwarmCode(void) {
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
     it->get()->accept(frontier_finder);
+    it->get()->accept(dedup_finder);
   }
 
   genSwarmStructs();
+  genDedupVectors();
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
     auto fxn_ptr = it->get();
@@ -39,6 +41,13 @@ int CodeGenSwarm::genEdgeSets(void) {
     auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
     edge_set_type->accept(this);
     oss << " " << edgeset->name << ";" << std::endl;
+  }
+}
+
+int CodeGenSwarm::genDedupVectors(void) {
+  for (auto vector_var : dedup_finder->get_vector_vars()) {
+    vector_var.getType()->accept(this);
+    oss << "* " << vector_var.getName() << ";" << std::endl;
   }
 }
 
@@ -664,6 +673,7 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
     oss << "}" << std::endl;
   } else {
     CodeGenSwarmQueueEmitter swarm_queue_emitter(oss, mir_context_, module_name);
+    swarm_queue_emitter.dedup_finder = dedup_finder;
     swarm_queue_emitter.current_while_stmt = while_stmt;
     swarm_queue_emitter.setIndentLevel(this->getIndentLevel());
     while_stmt->accept(&swarm_queue_emitter);
@@ -681,6 +691,16 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 //    esae->setMetadata<mir::Var>("dedup_vector", new_frontier_vector);
 //  }
 //}
+
+void CodeGenSwarmDedupFinder::visit(mir::PushEdgeSetApplyExpr::Ptr pesae) {
+  if (pesae->hasMetadata<mir::Var>("dedup_vector")) {
+    vector_vars.push_back(pesae->getMetadata<mir::Var>("dedup_vector"));
+    mir::Call::Ptr size_call = std::make_shared<mir::Call>();
+    size_call->name = "builtin_getVertices";
+    size_call->args.push_back(pesae->target);
+    vector_size_calls.push_back(size_call);
+  }
+}
 
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   if (!while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
@@ -732,6 +752,14 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
 
   // TODO(clhsu): Generate code for any deduplication vectors. Stored as dedup_vector in ESAE metadata.
   // TODO(clhsu): Eventually cleanup this code? There's a lot going on here.
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << dedup_finder->get_vector_vars()[i].getName() << " = new ";
+    dedup_finder->get_vector_vars()[i].getType()->accept(this);
+    oss << " [";
+    dedup_finder->get_vector_size_calls()[i]->accept(this);
+    oss << "]();" << std::endl;
+  }
 
   // Now produce code for the for_each_prio lambda
   printIndent();
@@ -836,6 +864,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
   dedent();
   printIndent();
   oss << "});" << std::endl;
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << "delete[] " << dedup_finder->get_vector_vars()[i].getName() << ";" << std::endl;	
+  }
   if (!while_stmt->hasMetadata<bool>("update_priority_queue") || !while_stmt->getMetadata<bool>("update_priority_queue")) {
     printIndent();
     oss << "swarm_runtime::clear_frontier(" << frontier_name.getName() << ");" << std::endl;
@@ -1095,15 +1127,32 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
   if (!push_inserted && func_decl->result.isInitialized()) {
     if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
       if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
-
         // check to make sure the push wasn't already inserted in processing the function body.
         if (!push_inserted) {
 		printIndent();
 		oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
 		indent();
+		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
+			printIndent();
+			oss << "if (" << func_decl->getMetadata<mir::Var>("dedup_vector").getName() << "[dst]) {" <<std::endl;
+			indent();
+			printIndent();
+			oss << func_decl->getMetadata<mir::Var>("dedup_vector").getName() << "[dst] = ";
+			if (mir::to<mir::ScalarType>(func_decl->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
+				oss << "true";
+			}
+			oss << ";" << std::endl;
+
+			
+		}
 		// No increment VFL round, and we are queuing the next vertex which is the dst vertex.
 		printPushStatement(false, false, "dst");
 		push_inserted = true;
+		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+		}
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;
@@ -1152,7 +1201,13 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   oss << "{" << std::endl;
   indent();
   auto func_decl = mir_context_->functions_map_[esae->input_function_name];
+  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+    func_decl->setMetadata<mir::Var>("dedup_vector", esae->getMetadata<mir::Var>("dedup_vector"));
+  }
   func_decl->accept(this);
+  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+    func_decl->setMetadata<mir::Var>("dedup_vector", mir::Var("", std::make_shared<mir::ScalarType>()));
+  }
   dedent();
   printIndent();
   oss << "}" << std::endl;
@@ -1260,9 +1315,24 @@ void CodeGenSwarm::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
 // handles enqueueVertex's in while loops, where push statements must be inserted.
 // Checks to see if there is a push already inserted, as some cases insert pushes manually (e.g. min reductions)
 void CodeGenSwarmQueueEmitter::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
-    printPushStatement(false, false,
-        mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName());
+	std::string dst = mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName();
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		printIndent();
+		oss << "if (!" << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "]) {" <<std::endl;
+		indent();
+		printIndent();
+		oss << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "] = ";
+		if (mir::to<mir::ScalarType>(enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
+			oss << "true";
+		}
+		oss << ";" << std::endl;		
+	}
+    printPushStatement(false, false, dst);
     push_inserted = true;
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+	}
 }
-
 }

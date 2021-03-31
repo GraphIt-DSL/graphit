@@ -24,6 +24,10 @@ bool FrontierDedupLower::ReuseFrontierFinderVisitor::is_reflexive_expr(mir::Assi
   return false;
 }
 
+void FrontierDedupLower::DedupVectorAttacher::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
+	enqueue_vertex->setMetadata<mir::Var>("dedup_vector", dedup_vector_var);
+}
+
 void FrontierDedupLower::VertexDeduplicationVisitor::visit(mir::StmtBlock::Ptr stmt_block) {
   std::vector<mir::Stmt::Ptr> new_stmts;
   for (int i = 0; i < stmt_block->stmts->size(); i++) {
@@ -38,13 +42,14 @@ void FrontierDedupLower::VertexDeduplicationVisitor::visit(mir::StmtBlock::Ptr s
           frontier_name = esae->from_func;
           auto inFrontierType = std::make_shared<mir::ScalarType>();
           std::string array_name = "in_frontier_" + mir_context_->getUniqueNameCounterString();
-          esae->setMetadata<std::string>("dedup_vector", array_name);
+	  auto bool_type = std::make_shared<mir::ScalarType>();
+	  bool_type->type = mir::ScalarType::Type::BOOL;
+	  mir::Var vector_var = mir::Var(array_name, bool_type);
+          esae->setMetadata<mir::Var>("dedup_vector", vector_var);
 
           std::string new_reset_frontier_fxn_name = "reset_" + array_name;
           inFrontierType->type = mir::ScalarType::Type ::BOOL;
-          mir::VertexSetApplyExpr::Ptr dedup_vsae = std::make_shared<mir::VertexSetApplyExpr>(frontier_name,
-                                                                                              inFrontierType,
-                                                                                              new_reset_frontier_fxn_name);
+          mir::VertexSetApplyExpr::Ptr dedup_vsae = std::make_shared<mir::VertexSetApplyExpr>(frontier_name, inFrontierType, new_reset_frontier_fxn_name);
           dedup_vsae->setMetadata<bool>("requires_output", false);
           dedup_vsae->setMetadata<bool>("inline_function", true);
           auto new_expr_stmt = std::make_shared<mir::ExprStmt>();
@@ -68,6 +73,10 @@ void FrontierDedupLower::VertexDeduplicationVisitor::visit(mir::StmtBlock::Ptr s
           new_func_decl->setMetadata<bool>("inline_only", true);  // don't declare a global version in codegen
           mir_context_->addFunction(new_func_decl);
           new_stmts.push_back(new_expr_stmt);
+
+	  DedupVectorAttacher dedup_vector_attacher;
+	  dedup_vector_attacher.dedup_vector_var = vector_var;
+	  mir_context_->functions_map_[esae->input_function_name]->accept(&dedup_vector_attacher);
         }
       }
     }

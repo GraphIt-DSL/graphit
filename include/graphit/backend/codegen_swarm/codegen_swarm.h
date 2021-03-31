@@ -30,30 +30,41 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
   void visit(mir::VarDecl::Ptr);
 };
 
-//class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
-// public:
-//  CodeGenSwarmDedupFinder() {};
-//  int curr_dedup_counter = 0;
-//  std::vector<mir::Var> dedup_frontiers;
-//
-//  void visit(mir::PushEdgeSetApplyExpr::Ptr);
-//};
+class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
+ public:
+  CodeGenSwarmDedupFinder() {};
+  std::vector<mir::Var> vector_vars;
+  std::vector<mir::Expr::Ptr> vector_size_calls;
+
+  void visit(mir::PushEdgeSetApplyExpr::Ptr);
+
+  std::vector<mir::Var> get_vector_vars() {
+  	return vector_vars;
+  }
+
+  std::vector<mir::Expr::Ptr> get_vector_size_calls() {
+  	return vector_size_calls;
+  }
+};
 
 
 class CodeGenSwarm: public mir::MIRVisitor {
  private:
   CodeGenSwarmFrontierFinder* frontier_finder;
+  CodeGenSwarmDedupFinder* dedup_finder;
 
  public:
   CodeGenSwarm(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_):
       oss(input_oss), mir_context_(mir_context), module_name(module_name_) {
     indentLevel = 0;
     frontier_finder = new CodeGenSwarmFrontierFinder();
+    dedup_finder = new CodeGenSwarmDedupFinder();
   }
   int genSwarmCode(void);
   int genIncludeStmts(void);
   int genEdgeSets(void);
 //  int genSwarmFrontiers();
+  int genDedupVectors(void);
   int genConstants(void);
   int genMainFunction(void);
   int genSwarmStructs(void);
@@ -118,7 +129,6 @@ class CodeGenSwarm: public mir::MIRVisitor {
 // Generates code specific to swarm-convertible while loops that involve frontiers.
 class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
  private:
-//  CodeGenSwarmDedupFinder dedup_finder;
 
  public:
   enum QueueType {
@@ -130,6 +140,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   using CodeGenSwarm::visit;
   using CodeGenSwarm::visit_assign_stmt;
 
+  CodeGenSwarmDedupFinder* dedup_finder;
   mir::WhileStmt::Ptr current_while_stmt;
   int stmt_idx = 0;
   bool push_inserted = false;

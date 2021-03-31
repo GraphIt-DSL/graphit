@@ -33,6 +33,13 @@ class FrontierDedupLower {
     virtual void visit(mir::Call::Ptr) override;
   };
 
+  struct DedupVectorAttacher : public mir::MIRVisitor {
+  	using mir::MIRVisitor::visit;
+	mir::Var dedup_vector_var;
+
+	virtual void visit(mir::EnqueueVertex::Ptr) override;
+  };
+
   struct VertexDeduplicationVisitor: public mir::MIRVisitor {
     using mir::MIRVisitor::visit;
     MIRContext *mir_context_;
