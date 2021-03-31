@@ -67,12 +67,17 @@ bool BCVerifier(const Graph &g, NodeID source, NodeID num_iters,
 
     // Compare scores
     bool all_ok = true;
+    ScoreT max_diff = 0.0;
     for (NodeID n : g.vertices()) {
-        if (abs(scores[n] - scores_to_test[n]) > 0.001) {
-            cout << n << ": " << scores[n] << " != " << scores_to_test[n] << endl;
+        ScoreT diff = scores[n] - scores_to_test[n];
+        if (abs(diff) > 0.001) {
+            cout << n << ": " << scores[n] << " != " << scores_to_test[n]
+                 << " (diff: " << diff << ")" << endl;
+            if (abs(diff) > abs(max_diff) max_diff = diff;
             all_ok = false;
         }
     }
+    cout << "Largest diff was: " << max_diff << endl;
     return all_ok;
 };
 
