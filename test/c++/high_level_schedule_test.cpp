@@ -3029,7 +3029,6 @@ TEST_F(HighLevelScheduleTest, WhileStmtFrontierConvert_Swarm) {
   program->applySwarmSchedule("s1", s1);
   //generate swarm code successfully
 
-  //TODO(clhsu): check the while stmt metadata and number of stmts in the while body
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[1]);
@@ -3075,10 +3074,10 @@ TEST_F(HighLevelScheduleTest, WhileStmtFrontierSwitchConvert_Swarm) {
   mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
-  EXPECT_EQ (3,  while_stmt->body->stmts->size());
+  EXPECT_EQ (4,  while_stmt->body->stmts->size());
 
-  EXPECT_EQ(3, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
-  EXPECT_EQ(3, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
+  EXPECT_EQ(4, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
+  EXPECT_EQ(4, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
 
   auto global_vars = while_stmt->getMetadata<std::vector<mir::Var>>("global_vars");
   EXPECT_EQ(1, global_vars.size());
@@ -3116,6 +3115,28 @@ TEST_F(HighLevelScheduleTest, BC_Swarm) {
   EXPECT_EQ(1, while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars").size());
   EXPECT_EQ(true, while_stmt->hasMetadata<std::vector<mir::Var>>("global_vars"));
   EXPECT_EQ(2, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
+}
+
+TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bc_swarm_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::FuncDecl::Ptr forward_update_decl = mir_context_->getFunction("forward_update");
+  mir::IfStmt::Ptr if_stmt = mir::to<mir::IfStmt>((*(forward_update_decl->body->stmts))[2]);
+  mir::StmtBlock::Ptr if_stmt_body = mir::to<mir::StmtBlock>(if_stmt->ifBody);
+  mir::EnqueueVertex::Ptr enq_vertex = mir::to<mir::EnqueueVertex>((*(if_stmt_body->stmts))[0]);
+  EXPECT_EQ(true, enq_vertex->hasMetadata<mir::Var>("dedup_vector"));
 }
 
 TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
