@@ -146,7 +146,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   bool push_inserted = false;
   bool is_insert_call = false;
   QueueType swarm_queue_type = QueueType::BUCKETQUEUE;
-  int round = 0;
 
   // sets queue type to some QueueType. Probably can later use a scheduling parameter to change this
   void setQueueType(QueueType queue_type) {

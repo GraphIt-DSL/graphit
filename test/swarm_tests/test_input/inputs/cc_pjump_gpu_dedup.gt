@@ -34,7 +34,7 @@ func main()
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
     vertices.apply(init);
     while (frontier.getVertexSetSize() != 0)
-	#s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs, true);
+	#s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs, false);
 	delete frontier;
 	frontier = output;
 	update[0] = 1;

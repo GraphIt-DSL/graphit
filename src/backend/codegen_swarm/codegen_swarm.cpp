@@ -564,11 +564,22 @@ void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
   printIndent();
   oss << "case " << std::to_string(switch_stmt->round) << ": {" << std::endl;
   indent();
+
+  // print a push unless you're at the last frontier level stmt.
+  if (!switch_stmt->getMetadata<bool>("is_vertex_level") && current_while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size() - 1 == stmt_idx) {
+    push_inserted = true;
+  }
+  
   switch_stmt->stmt_block->accept(this);
   if (switch_stmt->getMetadata<bool>("is_vertex_level")) {
     if (!push_inserted) {
       // is_insert_call is analogous to whether we need to increment the VFL round or not.
       // enq same vertex.
+      printPushStatement(is_insert_call, true);
+      is_insert_call = false;
+    }
+  } else {
+    if (!push_inserted) {
       printPushStatement(is_insert_call, true);
       is_insert_call = false;
     }
@@ -801,12 +812,13 @@ void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
       
       oss << (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars") ? " src_struct" : " src");
 
-      oss << ") {" << std::endl;
+      oss << ", auto push) {" << std::endl;
       indent();
       if (while_stmt->getMetadata<bool>("swarm_switch_convert")) {
 	      int rounds = while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size();
 	      printIndent();
 	      oss << "switch (level % " << std::to_string(rounds) << ") {" << std::endl;
+  	      stmt_idx = 0;
 	      while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->accept(this);
       	      dedent();
 	      printIndent();
