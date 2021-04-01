@@ -343,8 +343,11 @@ namespace graphit {
         regular_edgeset_apply_expr->copyEdgesetApply(stmt->expr);
         regular_edgeset_apply_expr->setMetadata<bool>("enable_deduplication", true);
         regular_edgeset_apply_expr->tracking_field = mir_context_->getPriorityVectorName();
-        // convert it back to a normal edgeset apply expression but with a tracking variable
+        
+	// convert it back to a normal edgeset apply expression but with a tracking variable
         if (schedule_->backend_identifier == Schedule::BackendID::SWARM) {
+		// We don't need deduplication by default
+        	regular_edgeset_apply_expr->setMetadata<bool>("enable_deduplication", false);
 		// Create a new VarDecl statement that returns a frontier
 		mir::VarDecl::Ptr new_var_decl = std::make_shared<mir::VarDecl>();
 		new_var_decl->initVal = regular_edgeset_apply_expr;

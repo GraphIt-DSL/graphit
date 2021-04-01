@@ -119,7 +119,6 @@ class CodeGenSwarm: public mir::MIRVisitor {
   void indent() { ++indentLevel; }
   void dedent() { --indentLevel; }
   void printIndent() { oss << std::string(indentLevel, '\t'); }
-  virtual void visit_assign_stmt(mir::AssignStmt::Ptr);
   std::ostream &oss;
   std::string module_name;
   unsigned      indentLevel;
@@ -138,7 +137,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
 
   using CodeGenSwarm::CodeGenSwarm;
   using CodeGenSwarm::visit;
-  using CodeGenSwarm::visit_assign_stmt;
 
   CodeGenSwarmDedupFinder* dedup_finder;
   mir::WhileStmt::Ptr current_while_stmt;
@@ -251,7 +249,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::SwarmSwitchStmt::Ptr);
   void visit(mir::AssignStmt::Ptr) override;
   void visit(mir::FuncDecl::Ptr) override;
-  void visit(mir::ReduceStmt::Ptr) override;
   void visit(mir::Call::Ptr) override;
   void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
   void visit(mir::EnqueueVertex::Ptr) override;

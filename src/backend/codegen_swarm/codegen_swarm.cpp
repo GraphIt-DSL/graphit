@@ -331,7 +331,7 @@ void CodeGenSwarm::visit(mir::ListAllocExpr::Ptr alloc_expr) {
   oss << ">()";
 }
 
-void CodeGenSwarm::visit_assign_stmt(mir::AssignStmt::Ptr stmt) {
+void CodeGenSwarm::visit(mir::AssignStmt::Ptr stmt) {
   if (mir::isa<mir::PriorityQueueAllocExpr>(stmt->expr)) {
     mir::PriorityQueueAllocExpr::Ptr pqae = mir::to<mir::PriorityQueueAllocExpr>(stmt->expr);
     auto associated_element_type_size = mir_context_->getElementCount(pqae->element_type);
@@ -359,10 +359,6 @@ void CodeGenSwarm::visit_assign_stmt(mir::AssignStmt::Ptr stmt) {
   oss << " = ";
   stmt->expr->accept(this);
   oss << ";" << std::endl;
-}
-
-void CodeGenSwarm::visit(mir::AssignStmt::Ptr stmt) {
-	visit_assign_stmt(stmt);
 }
 void CodeGenSwarm::visit(mir::TensorArrayReadExpr::Ptr expr) {
   expr->target->accept(this);
@@ -557,7 +553,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::AssignStmt::Ptr stmt) {
       return;
     }
   }
-  visit_assign_stmt(stmt);
+  CodeGenSwarm::visit(stmt);
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::SwarmSwitchStmt::Ptr switch_stmt) {
@@ -620,14 +616,10 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
 
 
 void CodeGenSwarmQueueEmitter::visit(mir::VarExpr::Ptr expr) {
-  if (expr->var.getName() == "argc")
-    oss << "__argc";
-  else if (expr->var.getName() == "argv")
-    oss << "__argv";
-  else if (expr->var.getName() == current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName())
+  if (expr->var.getName() == current_while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName())
     printSrcVertex();
   else
-    oss << expr->var.getName();
+    CodeGenSwarm::visit(expr);
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::VertexSetType::Ptr vertexset_type) {
@@ -635,7 +627,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetType::Ptr vertexset_type) {
 }
 
 void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
-  if (!while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
+  if (!while_stmt->getMetadata<bool>("swarm_frontier_convert") || !while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
     printIndent();
     oss << "while (";
     while_stmt->cond->accept(this);
@@ -726,16 +718,10 @@ void CodeGenSwarmQueueEmitter::prepForEachPrioCall(mir::WhileStmt::Ptr while_stm
 }
 
 void CodeGenSwarmQueueEmitter::visit(mir::WhileStmt::Ptr while_stmt) {
-  if (!while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
-    printIndent();
-    oss << "while (";
-    while_stmt->cond->accept(this);
-    oss << ") {" << std::endl;
-    indent();
-    while_stmt->body->accept(this);
-    dedent();
-    printIndent();
-    oss << "}" << std::endl;
+  // Check if the while loop is a swarm frontier. In the case of while loops that happen inside while loops, we might run into a situation where
+  // we are in the QueueEmitter but we find non-frontier while loops inside larger frontier while loops. (e.g. CC)
+  if (!while_stmt->hasMetadata<mir::Var>("swarm_frontier_var") || !while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
+    CodeGenSwarm::visit(while_stmt);
     return;
   }
 
@@ -871,32 +857,6 @@ void CodeGenSwarm::visit(mir::ReduceStmt::Ptr stmt) {
 
 }
 
-void CodeGenSwarmQueueEmitter::visit(mir::ReduceStmt::Ptr stmt) {
-  switch(stmt->reduce_op_) {
-    case mir::ReduceStmt::ReductionOp::MIN:
-      printIndent();
-      if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
-        oss << stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
-      oss << "swarm_runtime::min_reduce(";
-      stmt->lhs->accept(this);
-      oss << ", ";
-      stmt->expr->accept(this);
-      oss << ");" << std::endl;
-      break;
-    case mir::ReduceStmt::ReductionOp ::ATOMIC_SUM:
-    case mir::ReduceStmt::ReductionOp::SUM:
-      printIndent();
-      if (stmt->hasMetadata<std::string>("tracking_var_name_") && stmt->getMetadata<std::string>("tracking_var_name_") != "")
-        oss << stmt->getMetadata<std::string>("tracking_var_name_") << " = ";
-      oss << "swarm_runtime::sum_reduce(";
-      stmt->lhs->accept(this);
-      oss << ", ";
-      stmt->expr->accept(this);
-      oss << ");" << std::endl;
-      break;
-  }
-}
-
 void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
 
@@ -967,29 +927,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::StmtBlock::Ptr stmts) {
 void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
   auto mir_var = mir::to<mir::VarExpr>(vsae->target);
   if (mir_context_->isConstVertexSet(mir_var->var.getName())) {
-    // This is iterating over all the vertices of the graph
-    auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
-    auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-    oss << "for (int _iter = 0; _iter < ";
-    associated_element_type_size->accept(this);
-    oss << "; _iter++) {" << std::endl;
-    if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
-      oss << "int v = _iter;" << std::endl;
-      printIndent();
-      oss << "{" << std::endl;
-      indent();
-      mir_context_->getFunction(vsae->input_function_name)->body->accept(this);
-      dedent();
-      printIndent();
-      oss << "}" << std::endl;
-    } else {
-      indent();
-      printIndent();
-      oss << vsae->input_function_name << "(_iter);" << std::endl;
-      dedent();
-    }
-    printIndent();
-    oss << "}";
+    // This is iterating over all the vertices of the graph. Same behavior expected as VSAE outside the swarm queue loop.
+    CodeGenSwarm::visit(vsae);
   } else {
     if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
       oss << "int v = ";
