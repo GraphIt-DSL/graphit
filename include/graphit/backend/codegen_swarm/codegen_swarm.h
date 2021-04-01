@@ -256,6 +256,8 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::Call::Ptr) override;
   void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
   void visit(mir::EnqueueVertex::Ptr) override;
+  void prepForEachPrioCall(mir::WhileStmt::Ptr);
+  void cleanUpForEachPrioCall(mir::WhileStmt::Ptr);
 };
 
 }
