@@ -9,7 +9,7 @@
 #include "verifier_utils.h"
 
 using namespace std;
-typedef float ScoreT;
+typedef double ScoreT;
 
 // Still uses Brandes algorithm, but has the following differences:
 // - serial (no need for atomics or dynamic scheduling)
@@ -25,7 +25,7 @@ bool BCVerifier(const Graph &g, NodeID source, NodeID num_iters,
         // BFS phase, only records depth & path_counts
         pvector<int> depths(g.num_nodes(), -1);
         depths[source] = 0;
-        vector<NodeID> path_counts(g.num_nodes(), 0);
+        vector<double> path_counts(g.num_nodes(), 0);
         path_counts[source] = 1;
         vector<NodeID> to_visit;
         to_visit.reserve(g.num_nodes());
@@ -81,9 +81,6 @@ bool BCVerifier(const Graph &g, NodeID source, NodeID num_iters,
     return all_ok;
 };
 
-
-
-
 int main(int argc, char* argv[]) {
     std::cout << "running BC verifier " << std::endl;
     CLAppVerifier cli(argc, argv, "betweenness-centrality");
@@ -97,7 +94,7 @@ int main(int argc, char* argv[]) {
     std::cout << "starting vertex  " << cli.start_vertex() << std::endl;
 
     std::string verifier_input_filename = cli.verifier_input_results();
-    pvector<float>* verifier_input_vector = readFileIntoVector<float>(verifier_input_filename);
+    pvector<double>* verifier_input_vector = readFileIntoVector<double>(verifier_input_filename);
     bool verification_flag = BCVerifier(g, cli.start_vertex(), 1, *verifier_input_vector);
     cout << "verification done" << endl;
     cout << verification_flag << endl;
