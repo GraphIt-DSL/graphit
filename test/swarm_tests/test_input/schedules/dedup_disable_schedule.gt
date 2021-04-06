@@ -1,0 +1,3 @@
+SimpleSwarmSchedule s1;
+s1.configDeduplication(DISABLED);
+program->applySwarmSchedule("s1", s1);

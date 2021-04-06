@@ -172,7 +172,10 @@ void CodeGenSwarm::visit(mir::IntLiteral::Ptr literal) {
   oss << literal->val;
 }
 void CodeGenSwarm::visit(mir::FloatLiteral::Ptr literal) {
+  oss << "(";
+  oss << "(float) ";
   oss << literal->val;
+  oss << ") ";
 }
 void CodeGenSwarm::visit(mir::BoolLiteral::Ptr literal) {
   oss << "(bool)" << literal->val;
@@ -678,7 +681,7 @@ void CodeGenSwarmQueueEmitter::prepForEachPrioCall(mir::WhileStmt::Ptr while_stm
   if (!while_stmt->hasMetadata<bool>("update_priority_queue") || !while_stmt->getMetadata<bool>("update_priority_queue")) {
     // Flush any vertices in the frontier into the swarm Queue. You don't need to do this for pq
     printIndent();
-    oss << "for (int i = 0; i < " << frontier_name.getName() << ".size(); i++){" << std::endl;
+    oss << "for (int i = 0, m = " << frontier_name.getName() << ".size(); i < m; i++){" << std::endl;
     indent();
     printIndent();
     oss << "swarm_" <<frontier_name.getName() << ".push_init(0, ";
@@ -820,8 +823,9 @@ void CodeGenSwarm::visit(mir::ForStmt::Ptr stmt) {
   printIndent();
   oss << "for(int " << stmt->loopVar << " = ";
   stmt->domain->lower->accept(this);
-  oss << "; " << stmt->loopVar << " < ";
+  oss << ", m = ";
   stmt->domain->upper->accept(this);
+  oss << "; " << stmt->loopVar << " < m";
   oss << "; " << stmt->loopVar << "++) {" << std::endl;
   indent();
   stmt->body->accept(this);
@@ -864,9 +868,9 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     // This is iterating over all the vertices of the graph
     auto associated_element_type = mir_context_->getElementTypeFromVectorOrSetName(mir_var->var.getName());
     auto associated_element_type_size = mir_context_->getElementCount(associated_element_type);
-    oss << "for (int _iter = 0; _iter < ";
+    oss << "for (int _iter = 0, m = ";
     associated_element_type_size->accept(this);
-    oss << "; _iter++) {" << std::endl;
+    oss << "; _iter < m; _iter++) {" << std::endl;
 
     if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
       oss << "int v = _iter;" << std::endl;
@@ -887,7 +891,7 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     printIndent();
     oss << "}";
   } else {
-    oss << "for (int i = 0; i < "<<mir_var->var.getName() << ".size(); i++) {" << std::endl;
+    oss << "for (int i = 0, m = " << mir_var->var.getName() << ".size(); i < m; i++) {" << std::endl;
     if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
       oss << "int v = " << mir_var->var.getName() << "[i];" << std::endl;
       printIndent();
@@ -952,7 +956,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   auto mir_var = mir::to<mir::VarExpr>(esae->target);
   if (esae->from_func == "") {
-    oss << "for (int _iter = 0; _iter < " << mir_var->var.getName() << ".num_edges; _iter++) {" << std::endl;
+    oss << "for (int _iter = 0, m = " << mir_var->var.getName() << ".num_edges; _iter < m; _iter++) {" << std::endl;
     indent();
     printIndent();
     oss << "int _src = " << mir_var->var.getName() << ".h_edge_src[_iter];" << std::endl;
@@ -971,7 +975,7 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     printIndent();
     oss << "}";
   } else {
-    oss << "for (int i = 0; i < "<< esae->from_func <<".size(); i++) {" << std::endl;
+    oss << "for (int i = 0, m = " << esae->from_func << ".size(); i < m; i++) {" << std::endl;
     indent();
     printIndent();
     oss << "int32_t current = " << esae->from_func << "[i];" << std::endl;
