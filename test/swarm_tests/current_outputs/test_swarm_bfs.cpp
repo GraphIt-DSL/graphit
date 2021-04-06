@@ -26,7 +26,7 @@ void swarm_main() {
 	int start_vertex = atoi(__argv[2]);
 	swarm_runtime::builtin_addVertex(frontier, start_vertex);
 	parent[start_vertex] = start_vertex;
-	for (int i = 0; i < frontier.size(); i++){
+	for (int i = 0, m = frontier.size(); i < m; i++){
 		swarm_frontier.push_init(0, frontier[i]);
 	}
 	swarm_frontier.for_each_prio([](unsigned level, int src, auto push) {
@@ -41,30 +41,29 @@ void swarm_main() {
 				}
 			}
 		}
-	}, [](unsigned level, int src) {
+	}, [](unsigned level, int src, auto push) {
 	});
 	swarm_runtime::clear_frontier(frontier);
-	deleteObject(frontier);
+	swarm_runtime::deleteObject(frontier);
 }
 
-#include <fstream>
 #include <iostream>
+#include <fstream>
 int main(int argc, char* argv[]) {
 	__argc = argc;
 	__argv = argv;
 	swarm_runtime::load_graph(edges, __argv[1]);
 	parent = new int[swarm_runtime::builtin_getVertices(edges)];
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		parent_generated_vector_op_apply_func_0(_iter);
 	};
 	SCC_PARALLEL( swarm_main(); );
 
-	std::ofstream f("bfs_parent.txt");
+	std::ofstream f("bfs_answers.txt");
         if (!f.is_open()) {
                 printf("file open failed.\n");
                 return -1;
         }
-
         for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
                 f << parent[i] << std::endl;
         }

@@ -37,12 +37,12 @@ void swarm_main() {
 	int n = swarm_runtime::builtin_getVertices(edges);
 	swarm::BucketQueue<int> swarm_frontier;
 	swarm_runtime::VertexFrontier frontier = swarm_runtime::create_new_vertex_set(swarm_runtime::builtin_getVertices(edges), n);
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
-		init(_iter);
-	};
-	for (int i = 0; i < frontier.size(); i++){
-		swarm_frontier.push_init(0, frontier[i]);
-	}
+	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
+                init(_iter);
+        };
+        for (int i = 0, m = frontier.size(); i < m; i++){
+                swarm_frontier.push_init(0, frontier[i]);
+        }	
 	swarm_frontier.for_each_prio([](unsigned level, int src, auto push) {
 		switch (level % 2) {
 		case 0: {
@@ -72,20 +72,22 @@ void swarm_main() {
 			break;
 		}
 		}
-	}, [](unsigned level, int src, auto push) {  // manually inserted the push
+	}, [](unsigned level, int src, auto push) {
 		switch (level % 2) {
 		case 0: {
 			update[0] = 1;
-			push(level+1, src);  // manually inserted
+			printf("Updating at level: %d\n", level);
+			push(level + 1, src);
 			break;
 		}
 		case 1: {
 			while ((update[0]) != (0)) {
 				update[0] = 0;
-				for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+				for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 					pjump(_iter);
 				};
 			}
+			printf("pjump at level: %d\n", level);
 			break;
 		}
 	}
@@ -93,6 +95,7 @@ void swarm_main() {
 swarm_runtime::clear_frontier(frontier);
 	swarm_runtime::deleteObject(frontier);
 }
+
 #include <iostream>
 #include <fstream>
 int main(int argc, char* argv[]) {
@@ -101,7 +104,7 @@ int main(int argc, char* argv[]) {
 	swarm_runtime::load_graph(edges, __argv[1]);
 	IDs = new int[swarm_runtime::builtin_getVertices(edges)];
 	update = new int[1];
-	for (int _iter = 0; _iter < swarm_runtime::builtin_getVertices(edges); _iter++) {
+	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		IDs_generated_vector_op_apply_func_0(_iter);
 	};
 	SCC_PARALLEL( swarm_main(); );
@@ -110,7 +113,6 @@ int main(int argc, char* argv[]) {
                 printf("file open failed.\n");
                 return -1;
         }
-
         for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
                 f << IDs[i] << std::endl;
         }
