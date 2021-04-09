@@ -74,17 +74,19 @@ void swarm_main() {
 	}
 	in_frontier_3 = new bool [swarm_runtime::builtin_getVertices(edges)]();
 	swarm_frontier.for_each_prio([&round, &frontier_list](unsigned level, frontier_struct src_struct, auto push) {
+		auto src = src_struct.src;
+		auto frontier_insert_round_0 = src_struct.frontier_insert_round_0;
 		switch (level % 5) {
 		case 0: {
-			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
+			push(level + 1, frontier_struct{src, frontier_insert_round_0});
 			break;
 		}
 		case 1: {
-			int32_t edgeZero = edges.h_src_offsets[src_struct.src];
-			int32_t edgeLast = edges.h_src_offsets[src_struct.src+1];
+			int32_t edgeZero = edges.h_src_offsets[src];
+			int32_t edgeLast = edges.h_src_offsets[src+1];
 			for (int i = edgeZero; i < edgeLast; i++) {
 				int dst = edges.h_edge_dst[i];
-				int src = src_struct.src;
+				int src = src;
 				if (visited_vertex_filter(dst)) {
 					{
 						bool result_var4 = (bool)0;
@@ -92,7 +94,7 @@ void swarm_main() {
 						if (result_var4) {
 							if (!in_frontier_3[dst]) {
 								in_frontier_3[dst] = true;
-								push(level + 1, frontier_struct{dst, src_struct.frontier_insert_round_0});
+								push(level + 1, frontier_struct{dst, frontier_insert_round_0});
 							}
 						}
 					}
@@ -101,23 +103,23 @@ void swarm_main() {
 			break;
 		}
 		case 2: {
-			int v = src_struct.src;
+			int v = src;
 			{
 				in_frontier_3[v] = (bool)0;
 			}
 ;
-			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
+			push(level + 1, frontier_struct{src, frontier_insert_round_0});
 			break;
 		}
 		case 3: {
-			mark_visited(src_struct.src);
+			mark_visited(src);
 ;
-			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0});
+			push(level + 1, frontier_struct{src, frontier_insert_round_0});
 			break;
 		}
 		case 4: {
-			swarm_runtime::builtin_insert(frontier_list, src_struct.src, src_struct.frontier_insert_round_0);
-			push(level + 1, frontier_struct{src_struct.src, src_struct.frontier_insert_round_0 + 1});
+			swarm_runtime::builtin_insert(frontier_list, src, frontier_insert_round_0);
+			push(level + 1, frontier_struct{src, frontier_insert_round_0 + 1});
 			break;
 		}
 		}
