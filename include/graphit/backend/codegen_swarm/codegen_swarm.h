@@ -11,19 +11,43 @@ namespace graphit {
 
 class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
  public:
+  enum QueueType {
+    BUCKETQUEUE,
+    PRIOQUEUE
+  };
+  
+  struct frontier {
+    std::string name;
+    QueueType queue_type;
+  };
+
   CodeGenSwarmFrontierFinder() {};
 
-  std::vector<std::string> swarm_frontier_prioq_vars;
-  std::vector<std::string> swarm_frontier_bucketq_vars;
   std::map<std::string, mir::VarDecl::Ptr> edgeset_var_map;
+  std::vector<frontier> swarm_frontier_vars;
 
   // helper to check if frontier is in either of the swarm frontier vectors.
   bool isa_frontier(std::string frontier_name) {
-    if (std::find(swarm_frontier_prioq_vars.begin(), swarm_frontier_prioq_vars.end(), frontier_name) != swarm_frontier_prioq_vars.end()) {
-      return true;
+    for (auto f : swarm_frontier_vars) {
+      if (f.name == frontier_name) {
+        return true;
+      }
     }
-    return std::find(swarm_frontier_bucketq_vars.begin(), swarm_frontier_bucketq_vars.end(), frontier_name)
-        != swarm_frontier_bucketq_vars.end();
+    return false;
+  }
+
+  std::string get_queue_string(std::string frontier_name) {
+    for (auto f : swarm_frontier_vars) {
+      if (f.name == frontier_name) {
+        if (f.queue_type == QueueType::BUCKETQUEUE) {
+	  return "BucketQueue";
+	}
+	if (f.queue_type == QueueType::PRIOQUEUE) {
+	  return "PrioQueue";
+	}
+      }
+    }
+    return "";
   }
 
   void visit(mir::WhileStmt::Ptr);
@@ -143,7 +167,7 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   int stmt_idx = 0;
   bool push_inserted = false;
   bool is_insert_call = false;
-  QueueType swarm_queue_type = QueueType::BUCKETQUEUE;
+  QueueType swarm_queue_type = QueueType::PRIOQUEUE;
 
   // sets queue type to some QueueType. Probably can later use a scheduling parameter to change this
   void setQueueType(QueueType queue_type) {

@@ -3,12 +3,6 @@
 
 namespace graphit {
 int CodeGenSwarm::genSwarmCode(void) {
-  genIncludeStmts();
-  oss << "int __argc;" << std::endl;
-  oss << "char **__argv;" << std::endl;
-
-  genEdgeSets();
-  genConstants();
   std::vector<mir::FuncDecl::Ptr> functions = mir_context_->getFunctionList();
 
   for (auto it = functions.begin(); it != functions.end(); it++) {
@@ -16,6 +10,12 @@ int CodeGenSwarm::genSwarmCode(void) {
     it->get()->accept(dedup_finder); // find deduplication vectors from the edgesetapplyexpr metadata.
   }
 
+  genIncludeStmts();
+  oss << "int __argc;" << std::endl;
+  oss << "char **__argv;" << std::endl;
+
+  genEdgeSets();
+  genConstants();
   genSwarmStructs();
   genDedupVectors();
 
@@ -79,6 +79,7 @@ int CodeGenSwarm::genSwarmStructs() {
 }
 
 void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
+  // Add a frontier to the map once declared.
   if (mir::isa<mir::VertexSetType>(var_decl->type)) {
     std::string name = var_decl->name;
     edgeset_var_map[name] = var_decl;
@@ -89,19 +90,43 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
   if (while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
     auto frontier_var = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
 
+    // Add frontiers to the list of frontiers in the Finder object. Determine queue type from any attached schedule, additional local variables, and default to PrioQueue
+    QueueType queue_type = QueueType::PRIOQUEUE;
     // if converting to switch statements, then you might need to use the BucketQueue.
     if (while_stmt->getMetadata<bool>("swarm_switch_convert")
         && while_stmt->hasMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")) {
       // why is this here
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
-        swarm_frontier_bucketq_vars.push_back(frontier_var.getName());
+        queue_type = QueueType::BUCKETQUEUE;
+	    if (while_stmt->hasApplySchedule()) {
+	      auto apply_schedule = while_stmt->getApplySchedule();
+	      if (!apply_schedule->isComposite()) {
+		auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+		if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::PRIOQUEUE) {
+		  assert (false && "Schedule specified PrioQueue, but frontier-level tasks found.");
+		} 
+	      }
+	    }
       }
     } else {
       // why is this here
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
-        swarm_frontier_prioq_vars.push_back(frontier_var.getName());
+        queue_type = QueueType::PRIOQUEUE;
+	    if (while_stmt->hasApplySchedule()) {
+	      auto apply_schedule = while_stmt->getApplySchedule();
+	      if (!apply_schedule->isComposite()) {
+		auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+		if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::BUCKETQUEUE) {
+		  queue_type = QueueType::BUCKETQUEUE;
+		}
+	      }
+	    }
       }
     }
+
+    swarm_frontier_vars.push_back(frontier{frontier_var.getName(), queue_type});
+    
+    // If there are additional local variables, store them in a map for easy access.
     if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
       if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
         auto add_src_vars = while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
@@ -162,7 +187,13 @@ int CodeGenSwarm::genConstants(void) {
       oss << " " << constant->name;
       oss << ";" << std::endl;
     } else if (mir::isa<mir::PriorityQueueType>(constant->type)) {
-      oss << "swarm::BucketQueue<int> swarm_" << constant->name << ";" << std::endl;
+      oss << "swarm::";
+      if (frontier_finder->isa_frontier(constant->name)) {
+        oss << frontier_finder->get_queue_string(constant->name);
+      } else {
+        oss << "DefaultQueue";
+      }
+      oss << "<int> swarm_" << constant->name << ";" << std::endl;
       oss << "int swarm_" << constant->name << "_delta;" << std::endl;
     }
   }
@@ -513,7 +544,8 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
       return;
     }
     printIndent();
-    oss << "swarm::BucketQueue<";
+    oss << "swarm::" << frontier_finder->get_queue_string(stmt->name) << "<";
+    // oss << "swarm::BucketQueue<";
 
     // The extra types that are passed task to task
     if (stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
@@ -645,6 +677,9 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
     swarm_queue_emitter.dedup_finder = dedup_finder;
     swarm_queue_emitter.current_while_stmt = while_stmt;
     swarm_queue_emitter.setIndentLevel(this->getIndentLevel());
+    if (frontier_finder->get_queue_string(while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName()) == "BucketQueue") {
+      swarm_queue_emitter.swarm_queue_type = CodeGenSwarmQueueEmitter::QueueType::BUCKETQUEUE;
+    } 
     while_stmt->accept(&swarm_queue_emitter);
   }
 }

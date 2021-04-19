@@ -10,7 +10,7 @@
 #include <vector>
 #include <graphit/frontend/gpu_schedule.h>
 #include <graphit/frontend/cpu_schedule.h>
-
+#include <graphit/frontend/swarm_schedule.h>
 namespace graphit {
 
     //TODO: move this into the FieldVectorPhysicalDataLayout class definition

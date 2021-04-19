@@ -20,7 +20,9 @@ enum swarm_schedule_options {
   EDGE_BASED,
   VERTEX_BASED,
   BITMAP,
-  BOOLMAP
+  BOOLMAP,
+  PRIOQUEUE,
+  BUCKETQUEUE
 };
 
 class SwarmSchedule {
@@ -52,12 +54,18 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     VERTEX_BASED,
     EDGE_BASED
   };
+  
+  enum class QueueType {
+    PRIOQUEUE,
+    BUCKETQUEUE
+  };
 
  public:
   direction_type direction;
   pull_frontier_rep_type pull_frontier_rep;
   deduplication_type deduplication;
   load_balancing_type load_balancing;
+  QueueType queue_type;
   int32_t delta;
   abstract_schedule::FlexIntVal flex_delta;
 
@@ -67,6 +75,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     deduplication = deduplication_type::DEDUP_DISABLED;
     load_balancing = load_balancing_type::VERTEX_BASED;
     delta = 1;
+    queue_type = QueueType::PRIOQUEUE;
     flex_delta = abstract_schedule::FlexIntVal(1);
   }
 
@@ -108,7 +117,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
         break;
     }
   }
-
+  
   abstract_schedule::FlexIntVal getDelta() override {
     return flex_delta;
   }
@@ -183,6 +192,17 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     }
     delta *= -1;
     flex_delta = abstract_schedule::FlexIntVal(d);
+  }
+
+  void configQueueType(enum swarm_schedule_options o) {
+    switch (o) {
+      case PRIOQUEUE: queue_type = QueueType::PRIOQUEUE;
+	break;
+      case BUCKETQUEUE: queue_type = QueueType::BUCKETQUEUE;
+	break;
+      default: assert(false && "Invalid option for configQueueType");
+	break;
+    }
   }
 };
 

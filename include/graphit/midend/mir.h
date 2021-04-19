@@ -17,7 +17,7 @@
 #include <graphit/midend/field_vector_property.h>
 #include <unordered_map>
 #include <graphit/frontend/gpu_schedule.h>
-
+#include <graphit/frontend/swarm_schedule.h>
 
 namespace graphit {
     namespace mir {

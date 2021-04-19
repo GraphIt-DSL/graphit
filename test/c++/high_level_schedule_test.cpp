@@ -67,6 +67,28 @@ protected:
 
 
 
+        const char* bfs_char_swarm = ("element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                "const parent : vector{Vertex}(int) = -1;\n"
+                                "func updateEdge(src : Vertex, dst : Vertex) "
+                                "  parent[dst] = src; "
+                                "end\n"
+                                "func toFilter(v : Vertex) -> output : bool "
+                                "  output = parent[v] == -1; "
+                                "end\n"
+                                "func main() "
+                                "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                                "  frontier.addVertex(1); "
+                                "  #s1# while (frontier.getVertexSetSize() != 0) "
+                                "      #s2# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true); \n"
+				"      delete frontier;\n"
+				"      frontier = output;\n"	
+                                "  end\n"
+                                "  print \"finished running BFS\"; \n"
+                                "end");
+
         const char*  pr_char = ("element Vertex end\n"
                                              "element Edge end\n"
                                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
@@ -906,6 +928,7 @@ protected:
 
         bfs_str_ =  string (bfs_char);
         bfs_str_gpu_ =  string (bfs_char_gpu);
+	bfs_str_swarm_ = string (bfs_char_swarm);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
         sssp_str_gpu_ = string  (sssp_char_gpu);
@@ -1014,6 +1037,7 @@ protected:
 
     string bfs_str_;
     string bfs_str_gpu_;
+    string bfs_str_swarm_;
     string pr_str_;
     string sssp_str_;
     string sssp_str_gpu_;
@@ -3216,6 +3240,28 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm) {
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
 
+TEST_F(HighLevelScheduleTest, BFS_Swarm_BucketQueue) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bfs_str_swarm_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(BUCKETQUEUE);
+  program->applySwarmSchedule("s1", s1);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
+  EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
+  EXPECT_EQ (1,  while_stmt->body->stmts->size());
+  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+}
 TEST_F(HighLevelScheduleTest, DS_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
