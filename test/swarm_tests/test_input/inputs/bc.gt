@@ -48,6 +48,7 @@ func reset(v : Vertex)
 end
 
 func main()
+    vertices.apply(reset);
     % transposing the edges
     var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);

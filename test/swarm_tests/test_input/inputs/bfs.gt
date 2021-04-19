@@ -18,13 +18,14 @@ func reset(v: Vertex)
 end
 
 func main()
+    vertices.apply(reset);
     var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
     var start_vertex : int = atoi(argv[2]);
     frontier.addVertex(start_vertex);
     parent[start_vertex] = start_vertex;
 
-    while (frontier.getVertexSetSize() != 0)
-        #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
+    #s1# while (frontier.getVertexSetSize() != 0)
+        #s2# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge,parent, true);
         delete frontier;
         frontier = output;
     end
