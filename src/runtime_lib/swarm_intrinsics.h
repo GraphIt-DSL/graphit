@@ -19,7 +19,7 @@ bool sum_reduce(T1& dst, T2 src) {
 }
 
 template <typename T>
-bool min_reduce(T& dst, T& src) {
+bool min_reduce(T& dst, T src) {
   if (dst > src) {
     dst = src;
     return true;
