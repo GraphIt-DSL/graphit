@@ -547,6 +547,7 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
   if (!frontier_finder->isa_frontier(stmt->name)) {
     if (mir::isa<mir::EdgeSetApplyExpr>(stmt->initVal)) {
       auto esae = mir::to<mir::EdgeSetApplyExpr>(stmt->initVal);
+      // this is like var output : vertexset{Vertex} = edges.from(frontier).applyModified(....
       if (frontier_finder->isa_frontier(esae->from_func)) {
 	// Divide into two nodes: an allocation for the stmt output var, which is the same as the input frontier, and the actual ESAE for the esae->from_func var.
 	auto new_output_decl = std::make_shared<mir::VarDecl>();
@@ -559,8 +560,32 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
 
         printIndent();
 	stmt->initVal->accept(this);
+        return;
+      } else if (esae->from_func == "") {
+	// this is like var output : vertexset{Vertex] = edges.applyModified(..... 
+	// Divide into two nodes: an allocation for the stmt output var, and the ESAE, which will run on the edges (constant) edgeset.
+	if (mir::isa<mir::VarExpr>(esae->target)) {
+	auto var_expr_target = mir::to<mir::VarExpr>(esae->target);
+	if (mir_context_->isEdgeSet(var_expr_target->var.getName())) {
+		auto new_output_decl = std::make_shared<mir::VarDecl>();
+		new_output_decl->name = stmt->name;
+		new_output_decl->type = stmt->type;
+		auto new_alloc = std::make_shared<mir::VertexSetAllocExpr>();
+		auto new_elem_type = std::make_shared<mir::ElementType>();
+		new_elem_type->ident = "Vertex";
+		new_alloc->element_type = new_elem_type;
+		new_output_decl->initVal = new_alloc;
+		frontier_finder->swarm_frontier_vars.push_back(CodeGenSwarmFrontierFinder::frontier{stmt->name, CodeGenSwarmFrontierFinder::QueueType::UNORDEREDQUEUE});
+		new_output_decl->accept(this);
+		stmt->initVal->setMetadata<std::string>("output_frontier", stmt->name);
+
+		printIndent();
+		stmt->initVal->accept(this);
+		oss << ";" << std::endl;
+		return;
+	}
+	}
       }
-      return;
     }
   }
   // don't need to reinitialize the frontiers declaration if already declared outside in swarm
@@ -1089,11 +1114,42 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
       printIndent();
       oss << "int _weight = " << mir_var->var.getName() << ".h_edge_weight[_iter];" << std::endl;
     }
-    printIndent();
-    oss << esae->input_function_name << "(_src, _dst";
-    if (esae->is_weighted)
-      oss << ", _weight";
-    oss << ");" << std::endl;
+    if (esae->hasMetadata<std::string>("output_frontier") && frontier_finder->isa_frontier(esae->getMetadata<std::string>("output_frontier")) && frontier_finder->get_queue_string(esae->getMetadata<std::string>("output_frontier")) == "UnorderedQueue") {
+          printIndent();
+	  oss << "{" << std::endl;
+	  indent();
+	  printIndent();
+	  oss << "int src = _src;" <<std::endl;
+	  printIndent();
+	  oss << "int dst = _dst;" << std::endl;
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	printIndent();
+	  	oss << "swarm::UnorderedQueue<int>* __output_frontier = " << esae->getMetadata<std::string>("output_frontier") << ";" << std::endl;
+	  }
+	  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
+	  // temporarily attach metadata to the function to produce the dedup vector if block.
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", esae->getMetadata<mir::Var>("dedup_vector"));
+	  }
+	  
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	inlineFunction(func_decl, esae->getMetadata<std::string>("output_frontier"));
+	  } else {
+	  	inlineFunction(func_decl, "");
+	  }
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", mir::Var("", std::make_shared<mir::ScalarType>()));
+	  }
+	  dedent();
+	  printIndent();
+	  oss << "}" << std::endl;
+    } else {
+    	printIndent();
+    	oss << esae->input_function_name << "(_src, _dst";
+    	if (esae->is_weighted)
+      	  oss << ", _weight";
+    	oss << ");" << std::endl;
+    }
     dedent();
     printIndent();
     oss << "}";
