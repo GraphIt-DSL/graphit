@@ -17,7 +17,10 @@ public:
 		}
 		using mir::MIRVisitor::visit;	
 		std::vector<mir::Stmt::Ptr> to_deletes;
+		bool remove_deletes = true;
+
 		bool is_frontier_reusable(mir::StmtBlock::Ptr, int index, std::string frontier_name); 
+		virtual void visit(mir::WhileStmt::Ptr) override;
 		virtual void visit(mir::StmtBlock::Ptr) override;
 	};
 	struct FrontierUseFinder: public mir::MIRVisitor {

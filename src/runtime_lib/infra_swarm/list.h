@@ -40,6 +40,22 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   }
 }
 
+template <typename T>
+static void builtin_insert(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
+  v1.current_level++;
+  int total = frontier->startMaterialize();
+  int32_t* a = new int32_t[total];
+  frontier->finishMaterialize(total, a);
+  
+  for (int i = 0; i < total; i++) {
+    v1.frontiers[v1.current_level].push(a[i]);
+  }
+
+  if (v1.current_level >= v1.frontiers.size() - 1) {
+    v1.extend_frontier_list();
+  }
+}
+
 // insert, given an explicit round to insert into.
 void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
   v1.frontiers[round].push(vertex);
@@ -60,6 +76,23 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   frontier.num_elems = total;
   
   //printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
+}
+
+// pop the last frontier
+template <typename T>
+static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
+  v1.current_level--;
+  
+  if (v1.current_level < 0) {
+    return;
+  }
+  frontier->clear();
+  int total = v1.frontiers[v1.current_level].startMaterialize();
+  int32_t* a = new int32_t[total];
+  v1.frontiers[v1.current_level].finishMaterialize(total, a);
+  for (int i = 0; i < total; i++) {
+    frontier->push(a[i]);
+  }
 }
 
 void builtin_update_size(VertexFrontierList &v1, int new_head) {

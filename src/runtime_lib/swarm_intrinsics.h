@@ -51,7 +51,10 @@ void deleteObject(VertexFrontier &frontier) {
 	frontier.num_elems = 0;
 }
 
-
+template <typename T>
+void deleteObject(swarm::UnorderedQueue<T> *frontier) {
+	delete frontier;
+}
 
 
 }

@@ -12,6 +12,7 @@ namespace graphit {
 class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
  public:
   enum QueueType {
+    UNORDEREDQUEUE,
     BUCKETQUEUE,
     PRIOQUEUE
   };
@@ -44,6 +45,9 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
 	}
 	if (f.queue_type == QueueType::PRIOQUEUE) {
 	  return "PrioQueue";
+	}
+	if (f.queue_type == QueueType::UNORDEREDQUEUE) {
+	  return "UnorderedQueue";
 	}
       }
     }
@@ -93,6 +97,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   int genMainFunction(void);
   int genSwarmStructs(void);
 
+  void inlineFunction(mir::FuncDecl::Ptr, std::string);
   void visitBinaryExpr(mir::BinaryExpr::Ptr, std::string);
   virtual void visit(mir::EdgeSetType::Ptr);
   virtual void visit(mir::ScalarType::Ptr);
