@@ -718,6 +718,9 @@ namespace graphit {
             }
 
             std::string getIndexNameStr() {
+		if (!mir::isa<mir::VarExpr>(index)) {
+			return "";
+		}
                 auto index_expr = mir::to<mir::VarExpr>(index);
                 auto index_name = index_expr->var.getName();
                 return index_name;
