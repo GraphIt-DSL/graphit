@@ -6,14 +6,27 @@ const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
 
-const update: vector[1](int);
+const update: vector[2](int);
 
 func updateEdge(src : Vertex, dst : Vertex)
     var src_id: Vertex = IDs[src];
     var dst_id: Vertex = IDs[dst];
 
-    IDs[dst_id] min= IDs[src_id];
-    IDs[src_id] min= IDs[dst_id];
+    var p_src_id: Vertex = IDs[src_id];
+    var p_dst_id: Vertex = IDs[dst_id];
+
+    IDs[dst_id] min= p_src_id;
+    IDs[src_id] min= p_dst_id;
+
+    if update[1] == 0
+          if p_dst_id != IDs[dst_id]
+                update[1] = 1;
+          end
+          if p_src_id != IDs[src_id]
+                update[1] = 1;
+          end 
+    end
+    
 end
 
 func init(v : Vertex)
@@ -31,25 +44,28 @@ end
 
 func main()
     var n : int = edges.getVertices();
-    for trail in 0:10
-        var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);
-        startTimer();
-        vertices.apply(init);
-        while (frontier.getVertexSetSize() != 0)
-            #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);
-	    delete frontier;
-	    frontier = output;
-            update[0] = 1;
-            while update[0] != 0
-		update[0] = 0;
-		vertices.apply(pjump);
-            end
+    startTimer();
+    vertices.apply(init);	
+    update[1] = 1;
+    while update[1] != 0
+        update[1] = 0;
+        #s1# edges.apply(updateEdge);
+        update[0] = 1;
+        #s0# while update[0] != 0
+	    update[0] = 0;
+	    vertices.apply(pjump);
         end
-        var elapsed_time : float = stopTimer();
-	delete frontier;
-        print "elapsed time: ";
-        print elapsed_time;
     end
+    var elapsed_time : float = stopTimer();
+    print "elapsed time: ";
+    print elapsed_time;
 end
+
+
+% specify schedules here or use a separate schedule file
+schedule:
+	SimpleGPUSchedule s1;
+	s1.configLoadBalance(EDGE_ONLY);
+	program->applyGPUSchedule("s1", s1);
 
 
