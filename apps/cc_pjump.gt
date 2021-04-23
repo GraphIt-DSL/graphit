@@ -44,21 +44,23 @@ end
 
 func main()
     var n : int = edges.getVertices();
-    startTimer();
-    vertices.apply(init);	
-    update[1] = 1;
-    while update[1] != 0
-        update[1] = 0;
-        #s1# edges.apply(updateEdge);
-        update[0] = 1;
-        #s0# while update[0] != 0
-	    update[0] = 0;
-	    vertices.apply(pjump);
+    for trial in 0:10
+        startTimer();
+        vertices.apply(init);	
+        update[1] = 1;
+        while update[1] != 0
+            update[1] = 0;
+            #s1# edges.apply(updateEdge);
+            update[0] = 1;
+            #s0# while update[0] != 0
+                update[0] = 0;
+                vertices.apply(pjump);
+            end
         end
+        var elapsed_time : float = stopTimer();
+        print "elapsed time: ";
+        print elapsed_time;
     end
-    var elapsed_time : float = stopTimer();
-    print "elapsed time: ";
-    print elapsed_time;
 end
 
 
