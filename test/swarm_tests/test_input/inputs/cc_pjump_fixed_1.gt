@@ -1,0 +1,47 @@
+element Vertex end
+element Edge end
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+const IDs : vector{Vertex}(int) = 1;
+const update: vector[2](int);
+func updateEdge(src : Vertex, dst : Vertex)
+    var src_id: Vertex = IDs[src];
+    var dst_id: Vertex = IDs[dst];
+    var p_src_id: Vertex = IDs[src_id];
+    var p_dst_id: Vertex = IDs[dst_id];
+    IDs[dst_id] min= p_src_id;
+    IDs[src_id] min= p_dst_id;
+    if update[1] == 0
+          if p_dst_id != IDs[dst_id]
+                update[1] = 1;
+          end
+          if p_src_id != IDs[src_id]
+                update[1] = 1;
+          end
+    end
+end
+func init(v : Vertex)
+     IDs[v] = v;
+end
+func pjump(v: Vertex)
+    var y: Vertex = IDs[v];
+    var x: Vertex = IDs[y];
+    if x != y
+        IDs[v] = x;
+        update[0] = 1;
+    end
+end
+func main()
+    var n : int = edges.getVertices();
+    vertices.apply(init);
+    update[1] = 1;
+    #s1# while update[1] != 0
+        update[1] = 0;
+        edges.apply(updateEdge);
+        update[0] = 1;
+        #s0# while update[0] != 0
+            update[0] = 0;
+            vertices.apply(pjump);
+        end
+    end
+end
