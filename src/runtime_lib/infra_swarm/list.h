@@ -14,8 +14,8 @@ class VertexFrontierList {
   std::vector<swarm::UnorderedQueue<int>> frontiers;
 
   void extend_frontier_list() {
-    for (int i = 0; i < 100; i++) {
-      frontiers.emplace_back();
+    for (int i = 0; i < 10; i++) {
+       frontiers.emplace_back();
     }
   }
 };
@@ -24,7 +24,6 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
   VertexFrontierList vl;
   vl.max_num_elems = max_elems;
   vl.current_level = -1; // Points at the current head. If there is one frontier in the VFL, then this will be 0.
-
   vl.extend_frontier_list();
   return vl;
 }
@@ -81,8 +80,6 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
 // pop the last frontier
 template <typename T>
 static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
-  v1.current_level--;
-  
   if (v1.current_level < 0) {
     return;
   }
@@ -93,6 +90,7 @@ static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *f
   for (int i = 0; i < total; i++) {
     frontier->push(a[i]);
   }
+  v1.current_level--;
 }
 
 void builtin_update_size(VertexFrontierList &v1, int new_head) {

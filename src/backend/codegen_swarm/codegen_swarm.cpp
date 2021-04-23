@@ -760,6 +760,15 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
 		}
 	}
     }
+  // check deduplication vectors "inFrontier"s to allocate them.
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << dedup_finder->get_vector_vars()[i].getName() << " = new ";
+    dedup_finder->get_vector_vars()[i].getType()->accept(this);
+    oss << " [";
+    dedup_finder->get_vector_size_calls()[i]->accept(this);
+    oss << "]();" << std::endl;
+  }
     printIndent();
     oss << "while (";
     while_stmt->cond->accept(this);
@@ -769,6 +778,10 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
     dedent();
     printIndent();
     oss << "}" << std::endl;
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << "delete[] " << dedup_finder->get_vector_vars()[i].getName() << ";" << std::endl;	
+  }
   } else {
     // PRIO OR BUCKET QUEUE CASE
     CodeGenSwarmQueueEmitter swarm_queue_emitter(oss, mir_context_, module_name);
@@ -1480,16 +1493,29 @@ void CodeGenSwarmQueueEmitter::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
 // This will not produce anything right now, probably need to push into the enqueue vertex frontier,
 // but not implemented yet bc nothing is using it, as most frontier pushes occur in the SwarmQueueEmitter while loops.
 void CodeGenSwarm::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
+	std::string dst = mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName();
+	// the if(inFrontier)... part
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		printIndent();
+		oss << "if (!" << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "]) {" <<std::endl;
+		indent();
+		printIndent();
+		oss << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "] = ";
+		if (mir::to<mir::ScalarType>(enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
+			oss << "true";
+		}
+		oss << ";" << std::endl;		
+	}
   printIndent();
-  /*
-  enqueue_vertex->vertex_frontier->accept(this);
-  oss << "->push(" << mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName();
-  oss << ");" << std::endl;
-  */
   oss << "swarm_runtime::builtin_addVertex(";
   enqueue_vertex->vertex_frontier->accept(this);
   oss << ", ";
   oss << mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName() << ");" << std::endl;
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+	}
 }
 
 // handles enqueueVertex's in while loops, where push statements must be inserted.

@@ -17,6 +17,13 @@ bool sum_reduce(T1& dst, T2 src) {
     });
   return true;
 }
+/*
+template <typename T1, typename T2>
+bool sum_reduce(T1& dst, T2 src) {
+  dst += src;
+  return true;
+}
+*/
 
 template <typename T>
 bool min_reduce(T& dst, T src) {
