@@ -47,7 +47,64 @@ void SwarmOptLower::CoarseningAttacher::visit(mir::PushEdgeSetApplyExpr::Ptr esa
 
 
 void SwarmOptLower::HintAttacher::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
-  return;
+  if (esae->hasApplySchedule()) {
+    auto apply_schedule = esae->getApplySchedule();
+    if (!apply_schedule->isComposite()) {
+      auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+      if (applied_simple_schedule->enable_hints == fir::swarm_schedule::SimpleSwarmSchedule::HintsEnabled::HINTS_ENABLED) {
+	  std::string possible_hint = "";
+	  if (esae->tracking_field != "") {
+	    possible_hint = esae->tracking_field;
+	  } else {
+	    HintCandidateFinder finder(mir_context_);
+	    std::string target_func = esae->input_function_name;
+	    mir::FuncDecl::Ptr func_ptr = mir_context_->functions_map_[target_func];
+	    func_ptr->accept(&finder);
+	    if (finder.tensor_found) {
+	      possible_hint = finder.tensor_name;
+	    }
+	  }
+	  if (possible_hint == "") return;
+
+	  mir::TensorArrayReadExpr::Ptr tare = std::make_shared<mir::TensorArrayReadExpr>();
+	  mir::VarExpr::Ptr target_expr = std::make_shared<mir::VarExpr>();
+	  mir::VectorType::Ptr vector_type = std::make_shared<mir::VectorType>();
+	  mir::Var target_var = mir::Var(possible_hint, vector_type);
+	  target_expr->var = target_var;
+	  tare->target = target_expr; 
+	  esae->setMetadata<mir::Expr::Ptr>("spatial_hint", tare);
+      }
+    }
+  }
+}
+
+void SwarmOptLower::HintCandidateFinder::visit(mir::AssignStmt::Ptr assign_stmt) {
+  if (mir::isa<mir::TensorArrayReadExpr>(assign_stmt->lhs)) {
+    if (mir::isa<mir::VarExpr>(assign_stmt->lhs)) {
+	    mir::VarExpr::Ptr target_expr = mir::to<mir::VarExpr>(assign_stmt->lhs);
+	    if (!tensor_found) {
+		    tensor_name = target_expr->var.getName();
+		    tensor_found = true;
+	    } else if (tensor_found && tensor_name != target_expr->var.getName()) {
+		    tensor_found = false;
+	    }
+    }
+  }
+}
+
+void SwarmOptLower::HintCandidateFinder::visit(mir::ReduceStmt::Ptr reduce_stmt) {
+  if (mir::isa<mir::TensorArrayReadExpr>(reduce_stmt->lhs)) {
+    auto target_expr = mir::to<mir::TensorArrayReadExpr>(reduce_stmt->lhs)->target;
+    if (mir::isa<mir::VarExpr>(target_expr)) {
+	    mir::VarExpr::Ptr target_var_expr = mir::to<mir::VarExpr>(target_expr);
+	    if (!tensor_found) {
+		    tensor_name = target_var_expr->var.getName();
+		    tensor_found = true;
+	    } else if (tensor_found && tensor_name != target_var_expr->var.getName()) {
+		    tensor_found = false;
+	    }
+    }
+  }
 }
 
 }

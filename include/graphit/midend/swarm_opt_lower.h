@@ -30,6 +30,20 @@ class SwarmOptLower {
 
     virtual void visit(mir::PushEdgeSetApplyExpr::Ptr) override;
   };
+
+  struct HintCandidateFinder : public mir::MIRVisitor {
+    MIRContext *mir_context_;
+    HintCandidateFinder(MIRContext* mir_context): mir_context_(mir_context) {
+    }
+    using mir::MIRVisitor::visit;
+
+    std::string tensor_name = "";
+    bool tensor_found = false;
+
+    virtual void visit(mir::AssignStmt::Ptr) override;
+    virtual void visit(mir::ReduceStmt::Ptr) override;
+  };
+
 };
 
 }

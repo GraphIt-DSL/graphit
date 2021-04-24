@@ -346,6 +346,10 @@ namespace graphit {
         
 	// convert it back to a normal edgeset apply expression but with a tracking variable
         if (schedule_->backend_identifier == Schedule::BackendID::SWARM) {
+		auto esae = mir::to<mir::UpdatePriorityEdgeSetApplyExpr>(stmt->expr);
+		if (esae->hasApplySchedule()) {
+			regular_edgeset_apply_expr->setMetadata<ScheduleObject::Ptr>("apply_schedule", esae->getApplySchedule());
+		}
 		// We don't need deduplication by default
         	regular_edgeset_apply_expr->setMetadata<bool>("enable_deduplication", false);
 		// Create a new VarDecl statement that returns a frontier

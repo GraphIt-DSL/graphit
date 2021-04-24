@@ -24,7 +24,9 @@ enum swarm_schedule_options {
   PRIOQUEUE,
   BUCKETQUEUE,
   COARSEN_ENABLED,
-  COARSEN_DISABLED
+  COARSEN_DISABLED,
+  HINTS_ENABLED,
+  HINTS_DISABLED
 };
 
 class SwarmSchedule {
@@ -66,6 +68,11 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     COARSENING_ENABLED,
     COARSENING_DISABLED
   };
+  
+  enum class HintsEnabled {
+    HINTS_ENABLED,
+    HINTS_DISABLED
+  };
 
  public:
   direction_type direction;
@@ -76,6 +83,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
   int32_t delta;
   abstract_schedule::FlexIntVal flex_delta;
   CoarseningEnabled enable_coarsening;
+  HintsEnabled enable_hints;
 
   SimpleSwarmSchedule() {
     direction = direction_type::DIR_PUSH;
@@ -85,7 +93,8 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     delta = 1;
     queue_type = QueueType::PRIOQUEUE;
     flex_delta = abstract_schedule::FlexIntVal(1);
-    enable_coarsening = CoarseningEnabled::COARSENING_DISABLED; 
+    enable_coarsening = CoarseningEnabled::COARSENING_DISABLED;
+    enable_hints = HintsEnabled::HINTS_DISABLED; 
   }
 
  public:
@@ -221,6 +230,17 @@ class SimpleSwarmSchedule : public SwarmSchedule,
       case COARSEN_DISABLED: enable_coarsening = CoarseningEnabled::COARSENING_DISABLED;
         break;
       default: assert(false && "Invalid option for configLoopCoarsening");
+        break;
+    }
+  }
+  
+  void configSpatialHint(enum swarm_schedule_options o) {
+    switch (o) {
+      case HINTS_ENABLED: enable_hints = HintsEnabled::HINTS_ENABLED;
+        break;
+      case HINTS_DISABLED: enable_hints = HintsEnabled::HINTS_DISABLED;
+        break;
+      default: assert(false && "Invalid option for configSpatialHint");
         break;
     }
   }

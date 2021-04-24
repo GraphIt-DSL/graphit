@@ -79,8 +79,22 @@ int CodeGenSwarm::genSwarmStructs() {
 }
 
 void CodeGenSwarm::printSpatialHint(mir::Expr::Ptr expr) {
-        printIndent();
-	oss << "SCC_OPT_CACHE_();" <<std::endl;
+        if (mir::isa<mir::TensorArrayReadExpr>(expr)) {
+		auto tare = mir::to<mir::TensorArrayReadExpr>(expr);
+		if (mir::isa<mir::VarExpr>(tare->target)) {
+			auto name = mir::to<mir::VarExpr>(tare->target)->var.getName();
+			auto index = mir::to<mir::VarExpr>(tare->index)->var.getName();
+			printIndent();
+			oss << "auto* hint_addr = &(" << name << "[" << index << "]);" << std::endl;
+			printIndent();
+			oss << "SCC_OPT_TASK();" << std::endl;
+			printIndent();
+			oss << "SCC_OPT_CACHELINEHINT(hint_addr);" << std::endl;
+		}
+	} else {
+		printIndent();
+		oss << "SCC_OPT_TASK();" << std::endl;
+	}
 }
 
 void CodeGenSwarm::printSpatialHint() {
@@ -1074,6 +1088,12 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 
     if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr") || esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
       if (esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+        mir::VarExpr::Ptr index_expr = std::make_shared<mir::VarExpr>();
+        mir::ScalarType::Ptr scalar_type = std::make_shared<mir::ScalarType>();
+        mir::Var index_var = mir::Var("ngh", scalar_type);
+        index_expr->var = index_var;
+        
+        mir::to<mir::TensorArrayReadExpr>(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"))->index = index_expr;
         printSpatialHint(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"));
       } else {
         printSpatialHint();
@@ -1189,6 +1209,12 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 
   if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr") || esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
     if (esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+      mir::VarExpr::Ptr index_expr = std::make_shared<mir::VarExpr>();
+      mir::ScalarType::Ptr scalar_type = std::make_shared<mir::ScalarType>();
+      mir::Var index_var = mir::Var("dst", scalar_type);
+      index_expr->var = index_var;
+      
+      mir::to<mir::TensorArrayReadExpr>(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"))->index = index_expr;
       printSpatialHint(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"));
     } else {
       printSpatialHint();
