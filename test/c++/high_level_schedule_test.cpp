@@ -3240,6 +3240,29 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm) {
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
 
+TEST_F(HighLevelScheduleTest, BFS_Swarm_Coarsening) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bfs_str_swarm_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s2;
+  s2.configLoopCoarsening(COARSEN_ENABLED);
+  program->applySwarmSchedule("s1:s2", s2);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
+  EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
+  EXPECT_EQ (1,  while_stmt->body->stmts->size());
+  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+}
+
 TEST_F(HighLevelScheduleTest, BFS_Swarm_BucketQueue) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;

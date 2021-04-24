@@ -93,6 +93,9 @@ class CodeGenSwarm: public mir::MIRVisitor {
   int genMainFunction(void);
   int genSwarmStructs(void);
 
+  void printSpatialHint(mir::Expr::Ptr);
+  void printSpatialHint(void);
+
   void visitBinaryExpr(mir::BinaryExpr::Ptr, std::string);
   virtual void visit(mir::EdgeSetType::Ptr);
   virtual void visit(mir::ScalarType::Ptr);

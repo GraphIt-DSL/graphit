@@ -78,6 +78,16 @@ int CodeGenSwarm::genSwarmStructs() {
   }
 }
 
+void CodeGenSwarm::printSpatialHint(mir::Expr::Ptr expr) {
+        printIndent();
+	oss << "SCC_OPT_CACHE_();" <<std::endl;
+}
+
+void CodeGenSwarm::printSpatialHint() {
+        printIndent();
+	oss << "SCC_OPT_TASK();" << std::endl;
+}
+
 void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
   // Add a frontier to the map once declared.
   if (mir::isa<mir::VertexSetType>(var_decl->type)) {
@@ -264,9 +274,25 @@ void CodeGenSwarm::visit(mir::VarExpr::Ptr expr) {
     oss << expr->var.getName();
 }
 void CodeGenSwarm::visit(mir::Call::Ptr call) {
+  if (call->name == "builtin_sizeOf") {
+    oss << "sizeof(";
+    if (call->generic_type != nullptr) {
+      call->generic_type->accept(this);
+    } else {
+      oss << "int";
+    }
+    oss << ")";
+    return;
+  }
   if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer" || call->name == "deleteObject")
     oss << "swarm_runtime::";
-  oss << call->name << "(";
+  oss << call->name;
+  if (call->generic_type != nullptr) {
+    oss << "<";
+    call->generic_type->accept(this);
+    oss << ">";
+  }
+  oss << "(";
   bool printDelimeter = false;
   for (auto expr: call->args) {
     if (printDelimeter)
@@ -629,9 +655,25 @@ void CodeGenSwarmQueueEmitter::visit(mir::Call::Ptr call) {
       is_insert_call = true;
     }
   }
+  if (call->name == "builtin_sizeOf") {
+    oss << "sizeof(";
+    if (call->generic_type != nullptr) {
+      call->generic_type->accept(this);
+    } else {
+      oss << "int";
+    }
+    oss << ")";
+    return;
+  }
   if (call->name.find("builtin_") == 0 || call->name == "startTimer" || call->name == "stopTimer" || call->name == "deleteObject")
     oss << "swarm_runtime::";
-  oss << call->name << "(";
+  oss << call->name;
+  if (call->generic_type != nullptr) {
+    oss << "<";
+    call->generic_type->accept(this);
+    oss << ">";
+  }
+  oss << "(";
   bool printDelimeter = false;
   for (auto expr: call->args) {
     if (printDelimeter)
@@ -1018,11 +1060,25 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[current];" << std::endl;
     printIndent();
     oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[current+1];" << std::endl;
+    if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")) {
+      printIndent();
+      oss << "SCC_OPT_LOOP_COARSEN_FACTOR(";
+      esae->getMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")->accept(this);
+      oss << ")" << std::endl;
+    }
     printIndent();
     oss << "for (int j = edgeZero; j < edgeLast; j++) {" << std::endl;
     indent();
     printIndent();
     oss << "int ngh = " << mir_var->var.getName() << ".h_edge_dst[j];" << std::endl;
+
+    if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr") || esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+      if (esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+        printSpatialHint(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"));
+      } else {
+        printSpatialHint();
+      }
+    }
     if (esae->to_func != "") {
       printIndent();
       oss << "if (" << esae->to_func << "(ngh)) {" << std::endl;
@@ -1107,6 +1163,12 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[";
   printSrcVertex();
   oss << "+1];" << std::endl;
+  if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")) {
+    printIndent();
+    oss << "SCC_OPT_LOOP_COARSEN_FACTOR(";
+    esae->getMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")->accept(this);
+    oss << ")" << std::endl;
+  }
   printIndent();
   oss << "for (int i = edgeZero; i < edgeLast; i++) {" << std::endl;
   indent();
@@ -1123,6 +1185,14 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     oss << "int src = ";
     printSrcVertex();
     oss << ";" << std::endl;
+  }
+
+  if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr") || esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+    if (esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
+      printSpatialHint(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"));
+    } else {
+      printSpatialHint();
+    }
   }
 
   if (esae->to_func != "") {

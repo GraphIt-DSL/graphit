@@ -1,0 +1,4 @@
+schedule:
+	SimpleSwarmSchedule s2;
+	s2.configLoopCoarsening(COARSEN_ENABLED);
+	program->applySwarmSchedule("s1:s2", s2);

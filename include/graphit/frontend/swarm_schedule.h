@@ -22,7 +22,9 @@ enum swarm_schedule_options {
   BITMAP,
   BOOLMAP,
   PRIOQUEUE,
-  BUCKETQUEUE
+  BUCKETQUEUE,
+  COARSEN_ENABLED,
+  COARSEN_DISABLED
 };
 
 class SwarmSchedule {
@@ -60,6 +62,11 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     BUCKETQUEUE
   };
 
+  enum class CoarseningEnabled {
+    COARSENING_ENABLED,
+    COARSENING_DISABLED
+  };
+
  public:
   direction_type direction;
   pull_frontier_rep_type pull_frontier_rep;
@@ -68,6 +75,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
   QueueType queue_type;
   int32_t delta;
   abstract_schedule::FlexIntVal flex_delta;
+  CoarseningEnabled enable_coarsening;
 
   SimpleSwarmSchedule() {
     direction = direction_type::DIR_PUSH;
@@ -77,6 +85,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     delta = 1;
     queue_type = QueueType::PRIOQUEUE;
     flex_delta = abstract_schedule::FlexIntVal(1);
+    enable_coarsening = CoarseningEnabled::COARSENING_DISABLED; 
   }
 
  public:
@@ -202,6 +211,17 @@ class SimpleSwarmSchedule : public SwarmSchedule,
 	break;
       default: assert(false && "Invalid option for configQueueType");
 	break;
+    }
+  }
+  
+  void configLoopCoarsening(enum swarm_schedule_options o) {
+    switch (o) {
+      case COARSEN_ENABLED: enable_coarsening = CoarseningEnabled::COARSENING_ENABLED;
+        break;
+      case COARSEN_DISABLED: enable_coarsening = CoarseningEnabled::COARSENING_DISABLED;
+        break;
+      default: assert(false && "Invalid option for configLoopCoarsening");
+        break;
     }
   }
 };

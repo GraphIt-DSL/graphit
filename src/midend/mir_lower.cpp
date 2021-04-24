@@ -19,6 +19,7 @@
 #include <graphit/midend/frontier_dedup_lower.h>
 #include <graphit/midend/frontier_reuse_analysis.h>
 #include <graphit/midend/swarm_frontier_convert.h>
+#include <graphit/midend/swarm_opt_lower.h>
 #include <graphit/midend/swarm_priority_features_lowering.h>
 
 namespace graphit {
@@ -103,6 +104,7 @@ namespace graphit {
 
       if (schedule != nullptr && schedule->backend_identifier == Schedule::BackendID::SWARM) {
         SwarmFrontierConvert(mir_context).analyze();
+          SwarmOptLower(mir_context).lower();
       }
 
     }
