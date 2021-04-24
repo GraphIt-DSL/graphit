@@ -65,9 +65,4 @@ end
 
 
 % specify schedules here or use a separate schedule file
-schedule:
-	SimpleGPUSchedule s1;
-	s1.configLoadBalance(EDGE_ONLY);
-	program->applyGPUSchedule("s1", s1);
-
 
