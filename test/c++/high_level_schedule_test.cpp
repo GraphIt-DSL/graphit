@@ -310,10 +310,62 @@ protected:
                                    "end\n"
                                    "func main()\n"
                                    "    var n : int = edges.getVertices();\n"
-                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(n);\n"
+                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+				   "    frontier.addVertex(0);\n"
                                    "    vertices.apply(init);\n"
-                                   "    while (frontier.getVertexSetSize() != 0)\n"
-                                   "        #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge,IDs);\n"
+                                   "    #s1# while (frontier.getVertexSetSize() != 0)\n"
+                                   "        #s2# var output: vertexset{Vertex} = edges.applyModified(updateEdge,IDs);\n"
+                                   "        delete frontier;\n"
+                                   "        frontier = output;\n"
+                                   "        update[0] = 1;\n"
+                                   "        while update[0] != 0\n"
+                                   "            update[0] = 0;\n"
+                                   "            vertices.apply(pjump);\n"
+                                   "        end\n"
+                                   "        delete frontier;\n"
+                                   "    end\n"
+                                   "end");
+
+      const char* cc_pjump_swarm_char_2 = ("element Vertex end\n"
+                                   "element Edge end\n"
+                                   "const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);\n"
+                                   "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                   "const IDs : vector{Vertex}(int) = 1;\n"
+                                   "const update: vector[1](int);\n"
+                                   "func updateEdge(src : Vertex, dst : Vertex)\n"
+                                   "    var src_id: Vertex = IDs[src];\n"
+                                   "    var dst_id: Vertex = IDs[dst];\n"
+                                   "    var p_src_id: Vertex = IDs[src_id];\n"
+                                   "    var p_dst_id: Vertex = IDs[dst_id];\n"
+                                   "    IDs[dst_id] min= IDs[src_id];\n"
+                                   "    IDs[src_id] min= IDs[dst_id];\n"
+				   "    if update[1] == 0\n"
+				   "        if p_dst_id != IDs[dst_id]\n"
+				   "            update[1] = 1;\n"
+                                   "        end\n"
+				   "        if p_src_id != IDs[src_id]\n"
+				   "            update[1] = 1;\n"
+                                   "        end\n"
+				   "    end\n"
+                                   "end\n"
+                                   "func init(v : Vertex)\n"
+                                   "     IDs[v] = v;\n"
+                                   "end\n"
+                                   "func pjump(v: Vertex)\n"
+                                   "    var y: Vertex = IDs[v];\n"
+                                   "    var x: Vertex = IDs[y];\n"
+                                   "    if x != y\n"
+                                   "        IDs[v] = x;\n"
+                                   "        update[0] = 1;\n"
+                                   "    end\n"
+                                   "end\n"
+                                   "func main()\n"
+                                   "    var n : int = edges.getVertices();\n"
+                                   "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+				   "    frontier.addVertex(0);\n"
+                                   "    vertices.apply(init);\n"
+                                   "    #s1# while (frontier.getVertexSetSize() != 0)\n"
+                                   "        #s2# var output: vertexset{Vertex} = edges.applyModified(updateEdge,IDs);\n"
                                    "        delete frontier;\n"
                                    "        frontier = output;\n"
                                    "        update[0] = 1;\n"
@@ -610,9 +662,9 @@ protected:
                              "    var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();\n"
                              "    frontier_list.insert(frontier);\n"
                              "    % foward pass to propagate num_paths\n"
-                             "    while (frontier.getVertexSetSize() != 0)\n"
+                             "    #s1# while (frontier.getVertexSetSize() != 0)\n"
                              "        round = round + 1;\n"
-                             "        #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);\n"
+                             "        #s2# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);\n"
                              "        delete frontier;\n"
                              "        output.apply(mark_visited);\n"
                              "        frontier_list.insert(output);\n"
@@ -626,7 +678,7 @@ protected:
                              "    round = round - 1;\n"
                              "    % backward pass to accumulate the dependencies\n"
                              "    while (round > 0)\n"
-                             "        #s2# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);\n"
+                             "        #s3# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);\n"
                              "        frontier_list.retrieve(frontier);\n"
                              "        frontier.apply(backward_vertex_f);\n"
                              "        round = round - 1;\n"
@@ -937,6 +989,7 @@ protected:
         cc_str_ = string  (cc_char);
         cc_pjump_str_ = string (cc_pjump_char);
         cc_pjump_swarm_str_ = string (cc_pjump_swarm_char);
+        cc_pjump_swarm_2_str_ = string (cc_pjump_swarm_char_2);
         prd_str_ = string  (prd_char);
         prd_double_str_ = string  (prd_double_char);
         pr_cc_str_ = string(pr_cc_char);
@@ -1045,6 +1098,7 @@ protected:
     string cf_str_;
     string cc_pjump_str_;
     string cc_pjump_swarm_str_;
+    string cc_pjump_swarm_2_str_;
     string cc_str_;
     string prd_str_;
     string prd_double_str_;
@@ -3163,6 +3217,24 @@ TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm) {
   EXPECT_EQ(true, enq_vertex->hasMetadata<mir::Var>("dedup_vector"));
 }
 
+TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm_UnorderedQueue) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bc_swarm_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(UNORDEREDQUEUE);
+  program->applySwarmSchedule("s1", s1);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+}
+
 TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
@@ -3309,6 +3381,30 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm_BucketQueue) {
   EXPECT_EQ (1,  while_stmt->body->stmts->size());
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
 }
+
+TEST_F(HighLevelScheduleTest, BFS_Swarm_UnorderedQueue) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bfs_str_swarm_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(UNORDEREDQUEUE);
+  program->applySwarmSchedule("s1", s1);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), false);
+  EXPECT_EQ(while_stmt->hasMetadata<mir::Var>("swarm_frontier_var"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
+  EXPECT_EQ (3,  while_stmt->body->stmts->size());
+  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+}
+
 TEST_F(HighLevelScheduleTest, DS_Swarm) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
@@ -3318,6 +3414,22 @@ TEST_F(HighLevelScheduleTest, DS_Swarm) {
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, DS_Swarm_BucketQueue) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(delta_stepping_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(BUCKETQUEUE);
   program->applySwarmSchedule("s1", s1);
 //generate swarm code successfully
 
@@ -3360,6 +3472,38 @@ TEST_F(HighLevelScheduleTest, CC_Swarm) {
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, CC_Swarm_2) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(cc_pjump_swarm_2_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(UNORDEREDQUEUE);
+  program->applySwarmSchedule("s1", s1);
+//generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+}
+
+TEST_F(HighLevelScheduleTest, CC_Swarm_UnorderedQueue) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(cc_pjump_swarm_str_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(UNORDEREDQUEUE);
   program->applySwarmSchedule("s1", s1);
 //generate swarm code successfully
 

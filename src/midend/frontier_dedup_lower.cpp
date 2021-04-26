@@ -89,6 +89,21 @@ void FrontierDedupLower::VertexDeduplicationVisitor::visit(mir::StmtBlock::Ptr s
   mir::MIRVisitor::visit(stmt_block);
 }
 
+// if using a unordered queue, then don't dedup frontiers (bc we still need the output intermediate frontier).
+void FrontierDedupLower::ReuseFrontierFinderVisitor::visit(mir::WhileStmt::Ptr while_stmt) {
+  if (while_stmt->hasApplySchedule()) {
+    auto apply_schedule = while_stmt->getApplySchedule();
+    if (!apply_schedule->isComposite()) {
+      auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+      if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::UNORDEREDQUEUE) {
+        return;
+      }
+    }
+  }
+  while_stmt->cond->accept(this);
+  while_stmt->body->accept(this);
+}
+
 void FrontierDedupLower::ReuseFrontierFinderVisitor::visit(mir::StmtBlock::Ptr stmt_block) {
   FrontierVarChangeVisitor visitor;
 

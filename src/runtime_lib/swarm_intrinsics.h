@@ -17,6 +17,13 @@ bool sum_reduce(T1& dst, T2 src) {
     });
   return true;
 }
+/*
+template <typename T1, typename T2>
+bool sum_reduce(T1& dst, T2 src) {
+  dst += src;
+  return true;
+}
+*/
 
 template <typename T>
 bool min_reduce(T& dst, T src) {
@@ -51,7 +58,10 @@ void deleteObject(VertexFrontier &frontier) {
 	frontier.num_elems = 0;
 }
 
-
+template <typename T>
+void deleteObject(swarm::UnorderedQueue<T> *frontier) {
+	delete frontier;
+}
 
 
 }

@@ -14,8 +14,8 @@ class VertexFrontierList {
   std::vector<swarm::UnorderedQueue<int>> frontiers;
 
   void extend_frontier_list() {
-    for (int i = 0; i < 100; i++) {
-      frontiers.emplace_back();
+    for (int i = 0; i < 10; i++) {
+       frontiers.emplace_back();
     }
   }
 };
@@ -24,7 +24,6 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
   VertexFrontierList vl;
   vl.max_num_elems = max_elems;
   vl.current_level = -1; // Points at the current head. If there is one frontier in the VFL, then this will be 0.
-
   vl.extend_frontier_list();
   return vl;
 }
@@ -38,6 +37,25 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   if (v1.current_level >= v1.frontiers.size() - 1) {
     v1.extend_frontier_list();
   }
+}
+
+template <typename T>
+static void builtin_insert(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
+  v1.current_level++;
+  /*
+  int total = frontier->startMaterialize();
+  int32_t* a = new int32_t[total];
+  frontier->finishMaterialize(total, a);
+  
+  for (int i = 0; i < total; i++) {
+    v1.frontiers[v1.current_level].push(a[i]);
+  }
+
+  if (v1.current_level >= v1.frontiers.size() - 1) {
+    v1.extend_frontier_list();
+  }
+  */
+  v1.frontiers[v1.current_level] = *frontier;
 }
 
 // insert, given an explicit round to insert into.
@@ -60,6 +78,25 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   frontier.num_elems = total;
   
   //printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
+}
+
+// pop the last frontier
+template <typename T>
+static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
+  if (v1.current_level < 0) {
+    return;
+  }
+  /*
+  frontier->clear();
+  int total = v1.frontiers[v1.current_level].startMaterialize();
+  int32_t* a = new int32_t[total];
+  v1.frontiers[v1.current_level].finishMaterialize(total, a);
+  for (int i = 0; i < total; i++) {
+    frontier->push(a[i]);
+  }
+  */
+  *frontier = std::move(v1.frontiers[v1.current_level]);
+  v1.current_level--;
 }
 
 void builtin_update_size(VertexFrontierList &v1, int new_head) {

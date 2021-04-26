@@ -1,4 +1,4 @@
-//#include "scc/queues.h"
+#include "scc/queues.h"
 //#include <scc/autoparallel.h>
 #include <vector>
 
@@ -36,6 +36,11 @@ int& VertexFrontier::operator[](int idx) {
   return elems[idx];
 }
 
+template <typename T>
+static void builtin_addVertex(swarm::UnorderedQueue<T> *frontier, int32_t vid) {
+  frontier->push(vid);
+}
+
 static void builtin_addVertex(VertexFrontier &frontier, int32_t vid) {
   frontier.elems.push_back(vid);
   frontier.num_elems++;
@@ -52,6 +57,12 @@ static void clear_frontier(VertexFrontier &frontier) {
 //  frontier.elems.push_back(vid);
 //  swarm_queue.push_init(vid);
 //}
+
+template <typename T>
+static int32_t builtin_getVertexSetSize(swarm::UnorderedQueue<T> *frontier) {
+  if (frontier->empty()) return 0;
+  return 1;
+}
 
 template <typename SwarmQueueType>
 static void populate_swarm_frontier(VertexFrontier &frontier, SwarmQueueType &swarm_queue, int tuple_elems) {

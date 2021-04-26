@@ -84,6 +84,17 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
         if (mir::isa<mir::VertexSetType>(var_expr->var.getType()) || mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
           // if the while stmt condition is tracking if a frontier is empty or not, then we are in a convertible
           // while loop.
+	  if (while_stmt->hasApplySchedule()) {
+	    auto apply_schedule = while_stmt->getApplySchedule();
+	    if (!apply_schedule->isComposite()) {
+	      auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+	      if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::UNORDEREDQUEUE) {
+		while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var);	
+		return;
+	      }
+	    }
+	  }
+
           while_stmt->setMetadata<bool>("swarm_frontier_convert", true);
 	  if (mir::isa<mir::PriorityQueueType>(var_expr->var.getType())) {
             while_stmt->setMetadata<bool>("update_priority_queue", true);

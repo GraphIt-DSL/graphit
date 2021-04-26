@@ -19,6 +19,7 @@ class FrontierDedupLower {
     std::vector<mir::Stmt::Ptr> to_deletes;
     bool is_reflexive_expr(mir::AssignStmt::Ptr assign_stmt);
     virtual void visit(mir::StmtBlock::Ptr) override;
+    virtual void visit(mir::WhileStmt::Ptr) override;
   };
 
   struct FrontierVarChangeVisitor: public mir::MIRVisitor {

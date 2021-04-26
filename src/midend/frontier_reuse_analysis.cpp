@@ -17,7 +17,7 @@ bool FrontierReuseAnalysis::ReuseFindingVisitor::is_frontier_reusable(mir::StmtB
 			if (mir::isa<mir::Call>(expr_stmt->expr)) {
 				mir::Call::Ptr call_expr = mir::to<mir::Call>(expr_stmt->expr);
 				if (call_expr->name == "deleteObject" && mir::isa<mir::VarExpr>(call_expr->args[0]) && mir::to<mir::VarExpr>(call_expr->args[0])->var.getName() == frontier_name) {
-					to_deletes.push_back(expr_stmt);
+					if (remove_deletes) to_deletes.push_back(expr_stmt);
 					return true;
 				}
 			}	
@@ -28,6 +28,22 @@ bool FrontierReuseAnalysis::ReuseFindingVisitor::is_frontier_reusable(mir::StmtB
 	}
 	return false;
 }
+
+// Slight hack to prevent this pass from removing the delete statements when we are using unordered queues.
+void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::WhileStmt::Ptr while_stmt) {
+	if (while_stmt->hasApplySchedule()) {
+	      auto apply_schedule = while_stmt->getApplySchedule();
+	      if (!apply_schedule->isComposite()) {
+		auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+		if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::UNORDEREDQUEUE) {
+		  remove_deletes = false;
+		}
+	      }
+	    }
+	while_stmt->cond->accept(this);
+	while_stmt->body->accept(this);
+}
+
 void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_block) {
 	std::vector<mir::Stmt::Ptr> new_stmts;	
 	to_deletes.clear();
@@ -66,6 +82,7 @@ void FrontierReuseAnalysis::ReuseFindingVisitor::visit(mir::StmtBlock::Ptr stmt_
 	}	
 	(*(stmt_block->stmts)) = new_stmts;
 	mir::MIRVisitor::visit(stmt_block);
+	remove_deletes = true;
 }
 void FrontierReuseAnalysis::FrontierUseFinder::visit(mir::VarExpr::Ptr var_expr) {
 	if (var_expr->var.getName() == frontier_name)

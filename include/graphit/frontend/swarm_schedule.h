@@ -21,6 +21,7 @@ enum swarm_schedule_options {
   VERTEX_BASED,
   BITMAP,
   BOOLMAP,
+  UNORDEREDQUEUE,
   PRIOQUEUE,
   BUCKETQUEUE,
   COARSEN_ENABLED,
@@ -60,6 +61,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
   };
   
   enum class QueueType {
+    UNORDEREDQUEUE,
     PRIOQUEUE,
     BUCKETQUEUE
   };
@@ -214,6 +216,8 @@ class SimpleSwarmSchedule : public SwarmSchedule,
 
   void configQueueType(enum swarm_schedule_options o) {
     switch (o) {
+      case UNORDEREDQUEUE: queue_type = QueueType::UNORDEREDQUEUE;
+	break;
       case PRIOQUEUE: queue_type = QueueType::PRIOQUEUE;
 	break;
       case BUCKETQUEUE: queue_type = QueueType::BUCKETQUEUE;

@@ -111,7 +111,8 @@ void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
 }
 
 void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
-  if (while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
+  if (while_stmt->hasMetadata<bool>("swarm_frontier_convert") && while_stmt->getMetadata<bool>("swarm_frontier_convert")) {
+    // HANDLES BUCKET AND PRIOQUEUE CASES bc swarm_frontier_convert is True.
     auto frontier_var = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
 
     // Add frontiers to the list of frontiers in the Finder object. Determine queue type from any attached schedule, additional local variables, and default to PrioQueue
@@ -119,21 +120,12 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
     // if converting to switch statements, then you might need to use the BucketQueue.
     if (while_stmt->getMetadata<bool>("swarm_switch_convert")
         && while_stmt->hasMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")) {
-      // why is this here
+      // BUCKETQUEUE - Check to make sure you've declared the frontier.
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
         queue_type = QueueType::BUCKETQUEUE;
-	    if (while_stmt->hasApplySchedule()) {
-	      auto apply_schedule = while_stmt->getApplySchedule();
-	      if (!apply_schedule->isComposite()) {
-		auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
-		if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::PRIOQUEUE) {
-		  assert (false && "Schedule specified PrioQueue, but frontier-level tasks found.");
-		} 
-	      }
-	    }
       }
     } else {
-      // why is this here
+      // default PRIOQUEUE, unless schedule wants a bucketqueue.
       if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
         queue_type = QueueType::PRIOQUEUE;
 	    if (while_stmt->hasApplySchedule()) {
@@ -150,7 +142,7 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
 
     swarm_frontier_vars.push_back(frontier{frontier_var.getName(), queue_type});
     
-    // If there are additional local variables, store them in a map for easy access.
+    // If there are additional local variables, store them in a map for easy access. Then store the frontier var as metadata in the edgeset_var_map
     if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
       if (while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
         auto add_src_vars = while_stmt->getMetadata<std::vector<mir::Var>>("add_src_vars");
@@ -158,6 +150,22 @@ void CodeGenSwarmFrontierFinder::visit(mir::WhileStmt::Ptr while_stmt) {
       }
       edgeset_var_map[frontier_var.getName()]->setMetadata<mir::Var>("swarm_frontier_var", while_stmt->getMetadata<mir::Var>("swarm_frontier_var"));
     }
+  } else {
+   // UNORDERED QUEUE CASE
+   if (while_stmt->hasApplySchedule()) {
+      auto apply_schedule = while_stmt->getApplySchedule();
+      if (!apply_schedule->isComposite()) {
+	auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+	if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::UNORDEREDQUEUE && while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
+	  QueueType queue_type = QueueType::UNORDEREDQUEUE;
+          auto frontier_var = while_stmt->getMetadata<mir::Var>("swarm_frontier_var");
+	  if (edgeset_var_map.find(frontier_var.getName()) != edgeset_var_map.end()) {
+            swarm_frontier_vars.push_back(frontier{frontier_var.getName(), queue_type});
+	    edgeset_var_map[frontier_var.getName()]->setMetadata<mir::Var>("swarm_frontier_var", while_stmt->getMetadata<mir::Var>("swarm_frontier_var"));
+	  }
+	}
+      }
+    } 
   }
 }
 
@@ -574,6 +582,52 @@ void CodeGenSwarm::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 }
 
 void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
+  // If an edgeset is found, but was not logged in the frontierfinder, and is set to an ESAE with a known frontier, it must be an intermdiate output.
+  // Allocate it into an UnorderedQueue, and then run the ESAE per usu, pushing into the intermediate output.
+  if (!frontier_finder->isa_frontier(stmt->name)) {
+    if (mir::isa<mir::EdgeSetApplyExpr>(stmt->initVal)) {
+      auto esae = mir::to<mir::EdgeSetApplyExpr>(stmt->initVal);
+      // this is like var output : vertexset{Vertex} = edges.from(frontier).applyModified(....
+      if (frontier_finder->isa_frontier(esae->from_func)) {
+	// Divide into two nodes: an allocation for the stmt output var, which is the same as the input frontier, and the actual ESAE for the esae->from_func var.
+	auto new_output_decl = std::make_shared<mir::VarDecl>();
+	new_output_decl->name = stmt->name;
+	new_output_decl->type = stmt->type;
+	new_output_decl->initVal = frontier_finder->edgeset_var_map[esae->from_func]->getMetadata<mir::Expr::Ptr>("alloc_expr");
+	frontier_finder->swarm_frontier_vars.push_back(CodeGenSwarmFrontierFinder::frontier{stmt->name, CodeGenSwarmFrontierFinder::QueueType::UNORDEREDQUEUE});
+        new_output_decl->accept(this);
+	stmt->initVal->setMetadata<std::string>("output_frontier", stmt->name);
+
+        printIndent();
+	stmt->initVal->accept(this);
+        return;
+      } else if (esae->from_func == "") {
+	// this is like var output : vertexset{Vertex] = edges.applyModified(..... 
+	// Divide into two nodes: an allocation for the stmt output var, and the ESAE, which will run on the edges (constant) edgeset.
+	if (mir::isa<mir::VarExpr>(esae->target)) {
+	auto var_expr_target = mir::to<mir::VarExpr>(esae->target);
+	if (mir_context_->isEdgeSet(var_expr_target->var.getName())) {
+		auto new_output_decl = std::make_shared<mir::VarDecl>();
+		new_output_decl->name = stmt->name;
+		new_output_decl->type = stmt->type;
+		auto new_alloc = std::make_shared<mir::VertexSetAllocExpr>();
+		auto new_elem_type = std::make_shared<mir::ElementType>();
+		new_elem_type->ident = "Vertex";
+		new_alloc->element_type = new_elem_type;
+		new_output_decl->initVal = new_alloc;
+		frontier_finder->swarm_frontier_vars.push_back(CodeGenSwarmFrontierFinder::frontier{stmt->name, CodeGenSwarmFrontierFinder::QueueType::UNORDEREDQUEUE});
+		new_output_decl->accept(this);
+		stmt->initVal->setMetadata<std::string>("output_frontier", stmt->name);
+
+		printIndent();
+		stmt->initVal->accept(this);
+		oss << ";" << std::endl;
+		return;
+	}
+	}
+      }
+    }
+  }
   // don't need to reinitialize the frontiers declaration if already declared outside in swarm
   // If a frontier is declared, then just declare the array version of the frontier.
   // Edgeset operations should be applied on the Swarm frontier, so no need to generate frontier array.
@@ -585,15 +639,37 @@ void CodeGenSwarm::visit(mir::VarDecl::Ptr stmt) {
     }
     printIndent();
     oss << "swarm::" << frontier_finder->get_queue_string(stmt->name) << "<";
-    // oss << "swarm::BucketQueue<";
 
     // The extra types that are passed task to task
     if (stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
       oss << stmt->name << "_struct";
     } else {
       oss << "int"; 
-    }    
-    oss << "> swarm_" << stmt->name << ";" << std::endl;
+    }
+    if (frontier_finder->get_queue_string(stmt->name) == "UnorderedQueue") {
+      oss << ">* " << stmt->name << " = new swarm::UnorderedQueue<";
+      if (stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars")) {
+        oss << stmt->name << "_struct";
+      } else {
+        oss << "int";
+      }
+      oss << ">();" << std::endl;
+      // Produce the initialization of the UnorderedQueue with the given size if its a VertexSetAlloc. Also store the initial vertices to push, optionally, which is later handled in the WhileStmt.
+      if (mir::isa<mir::VertexSetAllocExpr>(stmt->initVal)) {
+	auto vsae = mir::to<mir::VertexSetAllocExpr>(stmt->initVal);
+        printIndent();
+	oss << stmt->name << "->init(";
+        mir_context_->getElementCount(vsae->element_type)->accept(this);
+	oss << ");" << std::endl;
+	if (frontier_finder->edgeset_var_map.find(stmt->name) == frontier_finder->edgeset_var_map.end()) {
+	  frontier_finder->edgeset_var_map[stmt->name] = stmt;
+	}
+        frontier_finder->edgeset_var_map[stmt->name]->setMetadata<mir::Expr::Ptr>("alloc_expr", vsae);
+      }
+      return; 
+    } else {
+      oss << "> swarm_" << stmt->name << ";" << std::endl;
+    }
   }
   printIndent();
   stmt->type->accept(this);
@@ -718,7 +794,37 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetType::Ptr vertexset_type) {
 }
 
 void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
-  if (!while_stmt->getMetadata<bool>("swarm_frontier_convert") || !while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
+  // Either UnorderedQueue or just a regular While loop. regular while loops won't have the swarm_frontier_var metadata set, because they're not iterating on any frontiers.
+  if (!while_stmt->hasMetadata<bool>("swarm_frontier_convert") || !while_stmt->getMetadata<bool>("swarm_frontier_convert") || !while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
+    // UNORDEREDQUEUE CASE must push initial vertices before looping in the while loop.
+    if (while_stmt->hasMetadata<mir::Var>("swarm_frontier_var")) {
+	auto frontier_name = while_stmt->getMetadata<mir::Var>("swarm_frontier_var").getName();
+        // Initialize vertices in the UnorderedQueue case, if there are vertices to initialize.
+	if (frontier_finder->edgeset_var_map[frontier_name]->hasMetadata<mir::Expr::Ptr>("alloc_expr")) {
+		auto vsae =  mir::to<mir::VertexSetAllocExpr>(frontier_finder->edgeset_var_map[frontier_name]->getMetadata<mir::Expr::Ptr>("alloc_expr"));
+		if (vsae->size_expr != nullptr) {
+			printIndent();
+			oss << "for (int i = 0, m = ";
+			vsae->size_expr->accept(this);
+			oss << "; i < m; i++) {" << std::endl;
+			indent();
+			printIndent();
+			oss << frontier_name << "->push(i);" << std::endl;
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+		}
+	}
+    }
+  // check deduplication vectors "inFrontier"s to allocate them.
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << dedup_finder->get_vector_vars()[i].getName() << " = new ";
+    dedup_finder->get_vector_vars()[i].getType()->accept(this);
+    oss << " [";
+    dedup_finder->get_vector_size_calls()[i]->accept(this);
+    oss << "]();" << std::endl;
+  }
     printIndent();
     oss << "while (";
     while_stmt->cond->accept(this);
@@ -728,7 +834,12 @@ void CodeGenSwarm::visit(mir::WhileStmt::Ptr while_stmt) {
     dedent();
     printIndent();
     oss << "}" << std::endl;
+  for (int i = 0; i < dedup_finder->get_vector_vars().size(); i++) {
+    printIndent();
+    oss << "delete[] " << dedup_finder->get_vector_vars()[i].getName() << ";" << std::endl;	
+  }
   } else {
+    // PRIO OR BUCKET QUEUE CASE
     CodeGenSwarmQueueEmitter swarm_queue_emitter(oss, mir_context_, module_name);
     swarm_queue_emitter.dedup_finder = dedup_finder;
     swarm_queue_emitter.current_while_stmt = while_stmt;
@@ -982,9 +1093,17 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
     printIndent();
     oss << "}";
   } else {
-    oss << "for (int i = 0, m = " << mir_var->var.getName() << ".size(); i < m; i++) {" << std::endl;
+	  if (frontier_finder->isa_frontier(mir_var->var.getName()) && frontier_finder->get_queue_string(mir_var->var.getName()) == "UnorderedQueue") {
+	  	oss << mir_var->var.getName() << "->for_each([](int v) { " << std::endl;
+		indent();
+	  } else {
+    		oss << "for (int i = 0, m = " << mir_var->var.getName() << ".size(); i < m; i++) {" << std::endl;
+		indent();
+    	}
     if (vsae->hasMetadata<bool>("inline_function") && vsae->getMetadata<bool>("inline_function")) {
-      oss << "int v = " << mir_var->var.getName() << "[i];" << std::endl;
+      if (!(frontier_finder->isa_frontier(mir_var->var.getName()) && frontier_finder->get_queue_string(mir_var->var.getName()) == "UnorderedQueue")) {
+        oss << "int v = " << mir_var->var.getName() << "[i];" << std::endl;
+      }
       printIndent();
       oss << "{" << std::endl;
       indent();
@@ -993,15 +1112,22 @@ void CodeGenSwarm::visit(mir::VertexSetApplyExpr::Ptr vsae) {
       printIndent();
       oss << "}" << std::endl;
     } else {
-      indent();
+      if (!(frontier_finder->isa_frontier(mir_var->var.getName()) && frontier_finder->get_queue_string(mir_var->var.getName()) == "UnorderedQueue")) {
+        printIndent();
+        oss << "int32_t v = " << mir_var->var.getName() << "[i];" << std::endl;
+      }
       printIndent();
-      oss << "int32_t current = " << mir_var->var.getName() << "[i];" << std::endl;
-      printIndent();
-      oss << vsae->input_function_name << "(current);" << std::endl;
-      dedent();
+      oss << vsae->input_function_name << "(v);" << std::endl;
     }
-    printIndent();
-    oss << "}";
+    if (frontier_finder->isa_frontier(mir_var->var.getName()) && frontier_finder->get_queue_string(mir_var->var.getName()) == "UnorderedQueue") {
+      dedent();
+      printIndent();
+      oss << "})";
+    } else {
+      dedent();
+      printIndent();
+      oss << "}";
+    }
   }
 }
 
@@ -1046,7 +1172,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 
 void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   auto mir_var = mir::to<mir::VarExpr>(esae->target);
-  if (esae->from_func == "") {
+  if (esae->from_func == "") { // PAGERANK ESAE case
     oss << "for (int _iter = 0, m = " << mir_var->var.getName() << ".num_edges; _iter < m; _iter++) {" << std::endl;
     indent();
     printIndent();
@@ -1057,23 +1183,64 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
       printIndent();
       oss << "int _weight = " << mir_var->var.getName() << ".h_edge_weight[_iter];" << std::endl;
     }
-    printIndent();
-    oss << esae->input_function_name << "(_src, _dst";
-    if (esae->is_weighted)
-      oss << ", _weight";
-    oss << ");" << std::endl;
+    if (esae->hasMetadata<std::string>("output_frontier") && frontier_finder->isa_frontier(esae->getMetadata<std::string>("output_frontier")) && frontier_finder->get_queue_string(esae->getMetadata<std::string>("output_frontier")) == "UnorderedQueue") {
+          printIndent();
+	  oss << "{" << std::endl;
+	  indent();
+	  printIndent();
+	  oss << "int src = _src;" <<std::endl;
+	  printIndent();
+	  oss << "int dst = _dst;" << std::endl;
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	printIndent();
+	  	oss << "swarm::UnorderedQueue<int>* __output_frontier = " << esae->getMetadata<std::string>("output_frontier") << ";" << std::endl;
+	  }
+	  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
+	  // temporarily attach metadata to the function to produce the dedup vector if block.
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", esae->getMetadata<mir::Var>("dedup_vector"));
+	  }
+	  
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	inlineFunction(func_decl, esae->getMetadata<std::string>("output_frontier"));
+	  } else {
+	  	inlineFunction(func_decl, "");
+	  }
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", mir::Var("", std::make_shared<mir::ScalarType>()));
+	  }
+	  dedent();
+	  printIndent();
+	  oss << "}" << std::endl;
+    } else {
+    	printIndent();
+    	oss << esae->input_function_name << "(_src, _dst";
+    	if (esae->is_weighted)
+      	  oss << ", _weight";
+    	oss << ");" << std::endl;
+    }
     dedent();
     printIndent();
     oss << "}";
   } else {
-    oss << "for (int i = 0, m = " << esae->from_func << ".size(); i < m; i++) {" << std::endl;
-    indent();
+	  //UnorderedQueue ESAE case
+    if (frontier_finder->isa_frontier(esae->from_func) && frontier_finder->get_queue_string(esae->from_func) == "UnorderedQueue") {
+      oss << "frontier->for_each([";
+      if (esae->hasMetadata<std::string>("output_frontier")) {
+	      oss << esae->getMetadata<std::string>("output_frontier");
+      }
+      oss << "](int src) {" << std::endl;
+      indent();
+    } else {
+      oss << "for (int i = 0, m = " << esae->from_func << ".size(); i < m; i++) {" << std::endl;
+      indent();
+      printIndent();
+      oss << "int32_t src = " << esae->from_func << "[i];" << std::endl;
+    }
     printIndent();
-    oss << "int32_t current = " << esae->from_func << "[i];" << std::endl;
+    oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[src];" << std::endl;
     printIndent();
-    oss << "int32_t edgeZero = " << mir_var->var.getName() << ".h_src_offsets[current];" << std::endl;
-    printIndent();
-    oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[current+1];" << std::endl;
+    oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[src+1];" << std::endl;
     if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")) {
       printIndent();
       oss << "SCC_OPT_LOOP_COARSEN_FACTOR(";
@@ -1084,13 +1251,13 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     oss << "for (int j = edgeZero; j < edgeLast; j++) {" << std::endl;
     indent();
     printIndent();
-    oss << "int ngh = " << mir_var->var.getName() << ".h_edge_dst[j];" << std::endl;
+    oss << "int dst = " << mir_var->var.getName() << ".h_edge_dst[j];" << std::endl;
 
     if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr") || esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
       if (esae->hasMetadata<mir::Expr::Ptr>("spatial_hint")) {
         mir::VarExpr::Ptr index_expr = std::make_shared<mir::VarExpr>();
         mir::ScalarType::Ptr scalar_type = std::make_shared<mir::ScalarType>();
-        mir::Var index_var = mir::Var("ngh", scalar_type);
+        mir::Var index_var = mir::Var("dst", scalar_type);
         index_expr->var = index_var;
         
         mir::to<mir::TensorArrayReadExpr>(esae->getMetadata<mir::Expr::Ptr>("spatial_hint"))->index = index_expr;
@@ -1101,14 +1268,41 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     }
     if (esae->to_func != "") {
       printIndent();
-      oss << "if (" << esae->to_func << "(ngh)) {" << std::endl;
+      oss << "if (" << esae->to_func << "(dst)) {" << std::endl;
       indent();
     }
-    printIndent();
-    oss << esae->input_function_name << "(current, ngh";
-    if (esae->is_weighted)
-      oss << ", _weight";
-    oss << ");" << std::endl;
+    if (frontier_finder->isa_frontier(esae->from_func) && frontier_finder->get_queue_string(esae->from_func) == "UnorderedQueue") {
+          printIndent();
+	  oss << "{" << std::endl;
+	  indent();
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	printIndent();
+	  	oss << "swarm::UnorderedQueue<int>* __output_frontier = " << esae->getMetadata<std::string>("output_frontier") << ";" << std::endl;
+	  }
+	  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
+	  // temporarily attach metadata to the function to produce the dedup vector if block.
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", esae->getMetadata<mir::Var>("dedup_vector"));
+	  }
+	  
+	  if (esae->hasMetadata<std::string>("output_frontier")) {
+	  	inlineFunction(func_decl, esae->getMetadata<std::string>("output_frontier"));
+	  } else {
+	  	inlineFunction(func_decl, "");
+	  }
+	  if (esae->hasMetadata<mir::Var>("dedup_vector")) {
+	    func_decl->setMetadata<mir::Var>("dedup_vector", mir::Var("", std::make_shared<mir::ScalarType>()));
+	  }
+	  dedent();
+	  printIndent();
+	  oss << "}" << std::endl;
+    } else {
+      printIndent();
+      oss << esae->input_function_name << "(src, dst";
+      if (esae->is_weighted)
+        oss << ", _weight";
+      oss << ");" << std::endl;
+    }
     if (esae->to_func != "") {
       dedent();
       printIndent();
@@ -1120,6 +1314,59 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
     dedent();
     printIndent();
     oss << "}";
+    if (frontier_finder->isa_frontier(esae->from_func) && frontier_finder->get_queue_string(esae->from_func) == "UnorderedQueue") {
+      oss << ");" << std::endl;
+    }
+  }
+}
+
+void CodeGenSwarm::inlineFunction(mir::FuncDecl::Ptr func_decl, std::string output_frontier) {
+  // this prints the "bool output" thing
+  if (func_decl->result.isInitialized()) {
+    printIndent();
+    func_decl->result.getType()->accept(this);
+    oss << " " << func_decl->result.getName() << ";" << std::endl;
+  }
+
+  func_decl->body->accept(this);
+  
+  // this prints the "if(output) then {do something}" thing
+  if (func_decl->result.isInitialized()) {
+    if (mir::isa<mir::ScalarType>(func_decl->result.getType())) {
+      if (mir::to<mir::ScalarType>(func_decl->result.getType())->type == mir::ScalarType::Type::BOOL) {
+        // check to make sure the push wasn't already inserted in processing the function body.
+		printIndent();
+		oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
+		indent();
+
+		// this prints the "if(inFrontier) then push "
+		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
+			printIndent();
+			oss << "if (" << func_decl->getMetadata<mir::Var>("dedup_vector").getName() << "[dst]) {" <<std::endl;
+			indent();
+			printIndent();
+			oss << func_decl->getMetadata<mir::Var>("dedup_vector").getName() << "[dst] = ";
+			if (mir::to<mir::ScalarType>(func_decl->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
+				oss << "true";
+			}
+			oss << ";" << std::endl;			
+		}
+		if (output_frontier != "" ) {
+			printIndent();
+			oss << output_frontier << "->push(dst);" << std::endl;
+		}	
+
+		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
+			dedent();
+			printIndent();
+			oss << "}" << std::endl;
+		}
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+      
+      }
+    }
   }
 }
 
@@ -1142,6 +1389,8 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
 		printIndent();
 		oss << "if (" << func_decl->result.getName() << ") {" << std::endl;
 		indent();
+
+		// this prints the "if(inFrontier) then push "
 		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
 			printIndent();
 			oss << "if (" << func_decl->getMetadata<mir::Var>("dedup_vector").getName() << "[dst]) {" <<std::endl;
@@ -1151,13 +1400,13 @@ void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
 			if (mir::to<mir::ScalarType>(func_decl->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
 				oss << "true";
 			}
-			oss << ";" << std::endl;
-
-			
+			oss << ";" << std::endl;			
 		}
+
 		// No increment VFL round, and we are queuing the next vertex which is the dst vertex.
 		printPushStatement(false, false, "dst");
 		push_inserted = true;
+
 		if (func_decl->hasMetadata<mir::Var>("dedup_vector") && func_decl->getMetadata<mir::Var>("dedup_vector").getName() != "") {
 			dedent();
 			printIndent();
@@ -1340,7 +1589,29 @@ void CodeGenSwarmQueueEmitter::visit(mir::PriorityUpdateOperatorMin::Ptr puom) {
 // This will not produce anything right now, probably need to push into the enqueue vertex frontier,
 // but not implemented yet bc nothing is using it, as most frontier pushes occur in the SwarmQueueEmitter while loops.
 void CodeGenSwarm::visit(mir::EnqueueVertex::Ptr enqueue_vertex) {
-  return;
+	std::string dst = mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName();
+	// the if(inFrontier)... part
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		printIndent();
+		oss << "if (!" << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "]) {" <<std::endl;
+		indent();
+		printIndent();
+		oss << enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getName() << "[" << dst << "] = ";
+		if (mir::to<mir::ScalarType>(enqueue_vertex->getMetadata<mir::Var>("dedup_vector").getType())->type == mir::ScalarType::Type::BOOL) {
+			oss << "true";
+		}
+		oss << ";" << std::endl;		
+	}
+  printIndent();
+  oss << "swarm_runtime::builtin_addVertex(";
+  enqueue_vertex->vertex_frontier->accept(this);
+  oss << ", ";
+  oss << mir::to<mir::VarExpr>(enqueue_vertex->vertex_id)->var.getName() << ");" << std::endl;
+	if (enqueue_vertex->hasMetadata<mir::Var>("dedup_vector")) {
+		dedent();
+		printIndent();
+		oss << "}" << std::endl;
+	}
 }
 
 // handles enqueueVertex's in while loops, where push statements must be inserted.
