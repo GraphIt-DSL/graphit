@@ -1,6 +1,7 @@
 #ifndef SWARM_INTRINSICS_H
 #define SWARM_INTRINSICS_H
 #include <iostream>
+#include <numeric>
 
 #include "infra_swarm/graph.h"
 #include "infra_swarm/vertex_frontier.h"
@@ -33,6 +34,53 @@ bool min_reduce(T& dst, T src) {
   }
   return false;
 }
+
+
+// Integer logarithm utilities
+
+// log base 2, rounded down
+inline uint32_t log2_floor(uint64_t val) {
+    return val ? 63 - __builtin_clzl(val) : 0;
+}
+// log base 2, rounded up
+inline uint32_t log2_ceil(uint64_t val) {
+    return (val > 1) ? log2_floor(val - 1) + 1 : 0;
+}
+
+
+// Stride is used in the CC pointer jump implementation.
+// Stride accross a range to reduce conflicts.
+template<typename IntegerType>
+struct Stride {
+  IntegerType smallerRange;
+  IntegerType largerRange;
+  unsigned nbits;
+  unsigned nlsb;
+
+  Stride(IntegerType range) {
+    smallerRange = range;
+
+    // Calculate the number of bits needed to represent one element of the range
+    nbits = log2_ceil(range);
+    largerRange = 1ul << nbits;
+    assert(range <= largerRange);
+    assert(range > largerRange/2);
+
+    // What should be the period with which the stride wraps around?
+    // A larger period means more distinct cachelines will be in the working set,
+    // occupying more cache capacity but exposing more parallelism.
+    uint32_t wraparound_period = 8 * swarm::num_threads();
+
+    // Based on the number of active cache lines needed, we figure out
+    // which low-order bits to swap with the high order bits.
+    nlsb = log2_ceil(wraparound_period);
+  }
+
+  IntegerType operator()(IntegerType i) const {
+    uint64_t mask  = (1ul << nlsb) - 1ul;
+    return ((i & mask) << (nbits - nlsb)) | (i >> nlsb);
+  }
+};
 
 void startTimer() {
   // Currently left empty
