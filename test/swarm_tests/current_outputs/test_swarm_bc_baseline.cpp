@@ -4,6 +4,7 @@
 int __argc;
 char **__argv;
 swarm_runtime::GraphT<int> edges;
+swarm_runtime::GraphT<int> transposed_edges;
 double *num_paths;
 double *dependences;
 bool *visited;
@@ -21,7 +22,10 @@ void forward_update(int src, int dst, swarm_runtime::VertexFrontier __output_fro
 	bool result_var4 = (bool)0;
 	result_var4 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
 	if (result_var4) {
-		swarm_runtime::builtin_addVertex(__output_frontier, dst);
+		if (!in_frontier_3[dst]) {
+			in_frontier_3[dst] = true;
+			swarm_runtime::builtin_addVertex(__output_frontier, dst);
+		}
 	}
 }
 bool visited_vertex_filter(int v) {
@@ -59,7 +63,6 @@ void swarm_main() {
 	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		reset(_iter);
 	};
-	swarm_runtime::GraphT<int> transposed_edges = swarm_runtime::builtin_transpose(edges);
 	swarm::UnorderedQueue<int>* frontier = new swarm::UnorderedQueue<int>();
 	frontier->init(swarm_runtime::builtin_getVertices(edges));
 	int start_vertex = atoi(__argv[2]);
@@ -72,6 +75,7 @@ void swarm_main() {
 	for (int i = 0, m = 0; i < m; i++) {
 		frontier->push(i);
 	}
+	in_frontier_3 = new bool [swarm_runtime::builtin_getVertices(edges)]();
 	while ((swarm_runtime::builtin_getVertexSetSize(frontier)) != (0)) {
 		round = (round + 1);
 		swarm::UnorderedQueue<int>* output = new swarm::UnorderedQueue<int>();
@@ -87,7 +91,10 @@ void swarm_main() {
 						bool result_var4 = (bool)0;
 						result_var4 = swarm_runtime::sum_reduce(num_paths[dst], num_paths[src]);
 						if (result_var4) {
-							swarm_runtime::builtin_addVertex(__output_frontier, dst);
+							if (!in_frontier_3[dst]) {
+								in_frontier_3[dst] = true;
+								swarm_runtime::builtin_addVertex(__output_frontier, dst);
+							}
 						}
 					}
 				}
@@ -105,6 +112,7 @@ void swarm_main() {
 		swarm_runtime::builtin_insert(frontier_list, output);
 		frontier = output;
 	}
+	delete[] in_frontier_3;
 	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		mark_unvisited(_iter);
 	};
@@ -114,6 +122,7 @@ void swarm_main() {
 		backward_vertex_f(v);
 	});
 	round = (round - 1);
+	in_frontier_3 = new bool [swarm_runtime::builtin_getVertices(edges)]();
 	while ((round) > (0)) {
 		frontier->for_each([](int src) {
 			int32_t edgeZero = transposed_edges.h_src_offsets[src];
@@ -134,15 +143,21 @@ void swarm_main() {
 		});
 		round = (round - 1);
 	}
+	delete[] in_frontier_3;
 	swarm_runtime::deleteObject(frontier);
 	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		final_vertex_f(_iter);
 	};
 }
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
 int main(int argc, char* argv[]) {
 	__argc = argc;
 	__argv = argv;
 	swarm_runtime::load_graph(edges, __argv[1]);
+	
 	num_paths = new double[swarm_runtime::builtin_getVertices(edges)];
 	dependences = new double[swarm_runtime::builtin_getVertices(edges)];
 	visited = new bool[swarm_runtime::builtin_getVertices(edges)];
@@ -155,5 +170,16 @@ int main(int argc, char* argv[]) {
 	for (int _iter = 0, m = swarm_runtime::builtin_getVertices(edges); _iter < m; _iter++) {
 		visited_generated_vector_op_apply_func_2(_iter);
 	};
+	transposed_edges = swarm_runtime::builtin_transpose(edges);
 	SCC_PARALLEL( swarm_main(); );
+
+	std::ofstream f("bc_answers.txt");
+        if (!f.is_open()) {
+                printf("file open failed.\n");
+                return -1;
+        }
+        for (int i = 0; i < swarm_runtime::builtin_getVertices(edges); i++) {
+                f << std::setprecision(32) << dependences[i] << std::endl;
+        }
+        f.close();
 }
