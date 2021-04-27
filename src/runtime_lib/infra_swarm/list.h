@@ -9,7 +9,7 @@ namespace swarm_runtime {
 class VertexFrontierList {
  public:
   int32_t max_num_elems;
-  int32_t current_level;
+  int32_t current_level;   // Let's have this point to the last inserted frontier. If VFL is empty, then this is -1.
 
   std::vector<swarm::UnorderedQueue<int>> frontiers;
 
@@ -28,7 +28,7 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
   return vl;
 }
 
-
+// Inserts should increment the current_level to point to the next empty frontier to either swap or insert to.
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   v1.current_level++;
   for (int i = 0; i < frontier.elems.size(); i++) {
@@ -42,19 +42,6 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
 template <typename T>
 static void builtin_insert(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
   v1.current_level++;
-  /*
-  int total = frontier->startMaterialize();
-  int32_t* a = new int32_t[total];
-  frontier->finishMaterialize(total, a);
-  
-  for (int i = 0; i < total; i++) {
-    v1.frontiers[v1.current_level].push(a[i]);
-  }
-
-  if (v1.current_level >= v1.frontiers.size() - 1) {
-    v1.extend_frontier_list();
-  }
-  */
   v1.frontiers[v1.current_level] = *frontier;
 }
 
@@ -63,11 +50,8 @@ void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
   v1.frontiers[round].push(vertex);
 }
 
-// pop the last frontier
+// pop the last frontier. This is pointed to by current_level.
 void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
-  //printf("v1.current_level = %d\n", v1.current_level);
-  v1.current_level--;
-  
   if (v1.current_level < 0) {
     return;
   }
@@ -77,34 +61,26 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   v1.frontiers[v1.current_level].finishMaterialize(total, a);
   frontier.num_elems = total;
   
-  //printf("Decremented current level: v1.current_level = %d\n", v1.current_level);
+  v1.current_level--;
 }
 
-// pop the last frontier
+// pop the last frontier, pointed to by current_level
 template <typename T>
 static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
   if (v1.current_level < 0) {
     return;
   }
-  /*
-  frontier->clear();
-  int total = v1.frontiers[v1.current_level].startMaterialize();
-  int32_t* a = new int32_t[total];
-  v1.frontiers[v1.current_level].finishMaterialize(total, a);
-  for (int i = 0; i < total; i++) {
-    frontier->push(a[i]);
-  }
-  */
   *frontier = std::move(v1.frontiers[v1.current_level]);
   v1.current_level--;
 }
 
 void builtin_update_size(VertexFrontierList &v1, int new_head) {
-  v1.current_level = new_head;
+  v1.current_level = new_head - 1;  // new_head is a pointer to the next frontier to insert into. Since this doesn't really exist per say as a frontier, we set current_level to the one right before that.
   if (new_head >= v1.frontiers.size() - 1) v1.extend_frontier_list();
 }
 
 // v1.current_level points to the current head. So we have to add 1 to get the actual size.
+// For example, if there were two frontiers, then current_level would be 1 (frontier 0 and frontier 1).
 int builtin_get_size(VertexFrontierList &v1) {
   return v1.current_level + 1;
 }
