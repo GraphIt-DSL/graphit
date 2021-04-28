@@ -3202,7 +3202,7 @@ TEST_F(HighLevelScheduleTest, BC_Swarm) {
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[8]);
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[7]);
 
   EXPECT_EQ(5, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_single_bucket")->stmts->size());
   EXPECT_EQ(5, while_stmt->getMetadata<mir::StmtBlock::Ptr>("new_frontier_bucket")->stmts->size());
@@ -3243,11 +3243,11 @@ TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm) {
   EXPECT_EQ(true, enq_vertex->hasMetadata<mir::Var>("dedup_vector"));
 
   // Assert that the first while loop has 1 inFrontier associated with it, but the second while loop does not.
-  mir::WhileStmt::Ptr first_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[8]);
+  mir::WhileStmt::Ptr first_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[7]);
   EXPECT_EQ(true, first_while_stmt->hasMetadata<std::vector<mir::Var>>("dedup_vectors"));
   EXPECT_EQ(1, first_while_stmt->getMetadata<std::vector<mir::Var>>("dedup_vectors").size());
 
-  mir::WhileStmt::Ptr second_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[14]);
+  mir::WhileStmt::Ptr second_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[13]);
   EXPECT_EQ(false, second_while_stmt->hasMetadata<std::vector<mir::Var>>("dedup_vectors"));
 }
 
@@ -3285,7 +3285,7 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 
   mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-  mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[1]);
+  mir::VarDecl::Ptr frontier_decl = mir::to<mir::VarDecl>((*(main_func_decl->body->stmts))[0]);
   EXPECT_EQ(true, frontier_decl->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
   EXPECT_EQ(1, frontier_decl->getMetadata<std::vector<mir::Var>>("add_src_vars").size());
 }
