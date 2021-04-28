@@ -52,6 +52,11 @@ static void clear_frontier(VertexFrontier &frontier) {
 	//std::vector<int32_t>().swap(frontier.elems);
 }
 
+template <typename T>
+static void clear_frontier(swarm::UnorderedQueue<T> *frontier) {
+  frontier->clear();
+}
+
 //template <typename SwarmQueueType>
 //static void builtin_addVertex(VertexFrontier &frontier, SwarmQueueType &swarm_queue, int32_t vid) {
 //  frontier.elems.push_back(vid);
