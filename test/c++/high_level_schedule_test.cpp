@@ -89,6 +89,28 @@ protected:
                                 "  print \"finished running BFS\"; \n"
                                 "end");
 
+      const char* bfs_char_swarm_dedup = ("element Vertex end\n"
+                                    "element Edge end\n"
+                                    "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                    "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                    "const parent : vector{Vertex}(int) = -1;\n"
+                                    "func updateEdge(src : Vertex, dst : Vertex) "
+                                    "  parent[dst] = src; "
+                                    "end\n"
+                                    "func toFilter(v : Vertex) -> output : bool "
+                                    "  output = parent[v] == -1; "
+                                    "end\n"
+                                    "func main() "
+                                    "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                                    "  frontier.addVertex(1); "
+                                    "  #s1# while (frontier.getVertexSetSize() != 0) "
+                                    "      #s2# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent); \n"
+                                    "      delete frontier;\n"
+                                    "      frontier = output;\n"
+                                    "  end\n"
+                                    "  print \"finished running BFS\"; \n"
+                                    "end");
+
         const char*  pr_char = ("element Vertex end\n"
                                              "element Edge end\n"
                                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
@@ -981,6 +1003,7 @@ protected:
         bfs_str_ =  string (bfs_char);
         bfs_str_gpu_ =  string (bfs_char_gpu);
 	bfs_str_swarm_ = string (bfs_char_swarm);
+      bfs_str_swarm_dedup_ = string (bfs_char_swarm_dedup);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
         sssp_str_gpu_ = string  (sssp_char_gpu);
@@ -1091,6 +1114,7 @@ protected:
     string bfs_str_;
     string bfs_str_gpu_;
     string bfs_str_swarm_;
+    string bfs_str_swarm_dedup_;
     string pr_str_;
     string sssp_str_;
     string sssp_str_gpu_;
@@ -3171,6 +3195,7 @@ TEST_F(HighLevelScheduleTest, BC_Swarm) {
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
+  s1.configQueueType(BUCKETQUEUE);
   program->applySwarmSchedule("s1", s1);
   //generate swarm code successfully
 
@@ -3204,6 +3229,7 @@ TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm) {
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
+  s1.configQueueType(BUCKETQUEUE);
   program->applySwarmSchedule("s1", s1);
   //generate swarm code successfully
 
@@ -3215,6 +3241,14 @@ TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm) {
   mir::StmtBlock::Ptr if_stmt_body = mir::to<mir::StmtBlock>(if_stmt->ifBody);
   mir::EnqueueVertex::Ptr enq_vertex = mir::to<mir::EnqueueVertex>((*(if_stmt_body->stmts))[0]);
   EXPECT_EQ(true, enq_vertex->hasMetadata<mir::Var>("dedup_vector"));
+
+  // Assert that the first while loop has 1 inFrontier associated with it, but the second while loop does not.
+  mir::WhileStmt::Ptr first_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[8]);
+  EXPECT_EQ(true, first_while_stmt->hasMetadata<std::vector<mir::Var>>("dedup_vectors"));
+  EXPECT_EQ(1, first_while_stmt->getMetadata<std::vector<mir::Var>>("dedup_vectors").size());
+
+  mir::WhileStmt::Ptr second_while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[14]);
+  EXPECT_EQ(false, second_while_stmt->hasMetadata<std::vector<mir::Var>>("dedup_vectors"));
 }
 
 TEST_F(HighLevelScheduleTest, BC_DedupVector_Swarm_UnorderedQueue) {
@@ -3244,6 +3278,7 @@ TEST_F(HighLevelScheduleTest, FrontierDeclarationBC_Pair_Swarm) {
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
+  s1.configQueueType(BUCKETQUEUE);
   program->applySwarmSchedule("s1", s1);
   //generate swarm code successfully
 
@@ -3310,6 +3345,41 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm) {
   EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
   EXPECT_EQ (1,  while_stmt->body->stmts->size());
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+
+  // Test that the ESAE does not have an output frontier attached to it.
+  mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
+  mir::PushEdgeSetApplyExpr::Ptr pesae = mir::to<mir::PushEdgeSetApplyExpr>(var_decl->initVal);
+  EXPECT_EQ(false, pesae->hasMetadata<std::string>("output_frontier"));
+}
+
+TEST_F(HighLevelScheduleTest, BFS_Dedup_Swarm) {
+  using namespace fir::swarm_schedule;
+  using namespace fir::abstract_schedule;
+  using namespace fir;
+  istringstream is(bfs_str_swarm_dedup_);
+  fe_->parseStream(is, context_, errors_);
+  fir::high_level_schedule::ProgramScheduleNode::Ptr program
+      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+  SimpleSwarmSchedule s1;
+  s1.configQueueType(PRIOQUEUE);
+  program->applySwarmSchedule("s1", s1);
+  //generate swarm code successfully
+
+  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[2]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), true);
+  EXPECT_EQ(true, while_stmt->hasApplySchedule());
+
+  EXPECT_EQ (2,  while_stmt->body->stmts->size()); // adding the dedup reset
+  EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+
+  mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
+  mir::PushEdgeSetApplyExpr::Ptr pesae = mir::to<mir::PushEdgeSetApplyExpr>(var_decl->initVal);
+  EXPECT_EQ(true, pesae->hasMetadata<mir::Var>("dedup_vector"));
+  EXPECT_EQ(true, while_stmt->hasMetadata<std::vector<mir::Var>>("dedup_vectors"));
+  EXPECT_EQ(1, while_stmt->getMetadata<std::vector<mir::Var>>("dedup_vectors").size());
 }
 
 TEST_F(HighLevelScheduleTest, BFS_Swarm_Coarsening) {
@@ -3333,6 +3403,10 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm_Coarsening) {
   EXPECT_EQ(0, while_stmt->getMetadata<std::vector<mir::Var>>("global_vars").size());
   EXPECT_EQ (1,  while_stmt->body->stmts->size());
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+
+  mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
+  mir::PushEdgeSetApplyExpr::Ptr pesae = mir::to<mir::PushEdgeSetApplyExpr>(var_decl->initVal);
+  EXPECT_EQ(true, pesae->hasApplySchedule());
 }
 
 TEST_F(HighLevelScheduleTest, BFS_Swarm_Coarsening_Hints) {
@@ -3403,6 +3477,11 @@ TEST_F(HighLevelScheduleTest, BFS_Swarm_UnorderedQueue) {
   EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_switch_convert"), false);
   EXPECT_EQ (3,  while_stmt->body->stmts->size());
   EXPECT_EQ(false, while_stmt->hasMetadata<std::vector<mir::Var>>("add_src_vars"));
+
+  // Test that the ESAE has an output frontier attached to it.
+  mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>((*(while_stmt->body->stmts))[0]);
+  mir::PushEdgeSetApplyExpr::Ptr pesae = mir::to<mir::PushEdgeSetApplyExpr>(var_decl->initVal);
+  EXPECT_EQ(true, pesae->hasMetadata<std::string>("output_frontier"));
 }
 
 TEST_F(HighLevelScheduleTest, DS_Swarm) {
@@ -3418,6 +3497,11 @@ TEST_F(HighLevelScheduleTest, DS_Swarm) {
 //generate swarm code successfully
 
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
+  mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+  mir::WhileStmt::Ptr while_stmt = mir::to<mir::WhileStmt>((*(main_func_decl->body->stmts))[3]);
+  EXPECT_EQ(while_stmt->getMetadata<bool>("swarm_frontier_convert"), true);
+  EXPECT_EQ(while_stmt->hasMetadata<mir::Var>("swarm_frontier_var"), true);
+  EXPECT_EQ (1,  while_stmt->body->stmts->size());
 }
 
 TEST_F(HighLevelScheduleTest, DS_Swarm_BucketQueue) {
@@ -3452,33 +3536,7 @@ TEST_F(HighLevelScheduleTest, DS_Swarm_Hints) {
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 }
 
-TEST_F(HighLevelScheduleTest, CC_pjump_cpu) {
-  using namespace fir::swarm_schedule;
-  using namespace fir::abstract_schedule;
-  using namespace fir;
-  istringstream is(cc_pjump_str_);
-  fe_->parseStream(is, context_, errors_);
-  fir::high_level_schedule::ProgramScheduleNode::Ptr program
-      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-  EXPECT_EQ (0, basicTestWithSchedule(program));
-}
-
 TEST_F(HighLevelScheduleTest, CC_Swarm) {
-  using namespace fir::swarm_schedule;
-  using namespace fir::abstract_schedule;
-  using namespace fir;
-  istringstream is(cc_pjump_swarm_str_);
-  fe_->parseStream(is, context_, errors_);
-  fir::high_level_schedule::ProgramScheduleNode::Ptr program
-      = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-  SimpleSwarmSchedule s1;
-  program->applySwarmSchedule("s1", s1);
-//generate swarm code successfully
-
-  EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
-}
-
-TEST_F(HighLevelScheduleTest, CC_Swarm_2) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
   using namespace fir;

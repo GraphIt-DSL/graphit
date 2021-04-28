@@ -39,38 +39,7 @@ void SwarmFrontierConvert::GlobalVariableFinder::visit(mir::AssignStmt::Ptr assi
         }
     }
 }
-/*
-// searches for global variables in the while body to put in the metadata so they can be passed in thru
-// lambda in codegen
-void attachGlobalVarToMetadata(mir::WhileStmt::Ptr while_stmt, std::string frontier_name) {
-  std::vector<std::string> declared_vars;
-  std::vector<mir::Var> global_vars;
-  for (auto stmt: *(while_stmt->body->stmts)) {
-    if (mir::isa<mir::VarDecl>(stmt)) {
-      mir::VarDecl::Ptr var_decl = mir::to<mir::VarDecl>(stmt);
-      if (std::find(declared_vars.begin(), declared_vars.end(), var_decl->name) == declared_vars.end()) {
-        declared_vars.push_back(var_decl->name);
-      }
-    }
-    if (mir::isa<mir::AssignStmt>(stmt)) {
-      mir::AssignStmt::Ptr assign_stmt = mir::to<mir::AssignStmt>(stmt);
-      if (mir::isa<mir::VarExpr>(assign_stmt->lhs)) {
-        mir::VarExpr::Ptr lhs = mir::to<mir::VarExpr>(assign_stmt->lhs);
-        if (mir::isa<mir::ScalarType>(lhs->var.getType())) {
-          if (std::find(declared_vars.begin(), declared_vars.end(), lhs->var.getName()) == declared_vars.end()) {
-            if (lhs->var.getName() != frontier_name) {
-              global_vars.push_back(lhs->var);
-            }
-          }
-        }
-      }
-    }
-  }
-  if (!global_vars.empty()) {
-    while_stmt->setMetadata<std::vector<mir::Var>>("global_vars", global_vars);
-  }
-}
-*/
+
 void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
   while_stmt->setMetadata<bool>("swarm_frontier_convert", false);
   while_stmt->setMetadata<bool>("swarm_switch_convert", false);
@@ -89,8 +58,8 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
 	    if (!apply_schedule->isComposite()) {
 	      auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
 	      if (applied_simple_schedule->queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::UNORDEREDQUEUE) {
-		while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var);	
-		return;
+            while_stmt->setMetadata<mir::Var>("swarm_frontier_var", var_expr->var);
+            return;
 	      }
 	    }
 	  }
@@ -123,7 +92,6 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
             if (finder.can_switch) {
               // If it is, then we want to figure out how to push statements to the swarm queue
               // by separating vertex from frontier level operators/exprs.
-              while_stmt->setMetadata<bool>("swarm_switch_convert", true);
 
               // Figure out which statements are vertex vs frontier level.
               SwarmSwitchCaseSeparator separator;
@@ -134,10 +102,25 @@ void SwarmFrontierConvert::visit(mir::WhileStmt::Ptr while_stmt) {
               }
               separator.fill_frontier_stmts();
 
-              // Converts statements to switch statements and stores them in either the while body
-              // or in while stmt metadata
-              separator.setup_switch_cases();
+              fir::swarm_schedule::SimpleSwarmSchedule::QueueType queue_type = fir::swarm_schedule::SimpleSwarmSchedule::QueueType::BUCKETQUEUE;
+              if (while_stmt->hasApplySchedule()) {
+                auto apply_schedule = while_stmt->getApplySchedule();
+                if (!apply_schedule->isComposite()) {
+                  auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+                  queue_type = applied_simple_schedule->queue_type;
+                }
+              }
 
+              // you can't convert to a PrioQueue in this case. Check.
+              if (separator.swarm_single_level.size() != while_stmt->body->stmts->size() && queue_type == fir::swarm_schedule::SimpleSwarmSchedule::QueueType::PRIOQUEUE) {
+                assert (false && "This program cannot be converted to a PrioQueue because it contains both vertex and frontier level statements. If you meant to use a BucketQueue, please specify in the schedule.");
+              }
+
+              while_stmt->setMetadata<bool>("swarm_switch_convert", true);
+
+              // Converts statements to switch statements and stores them in either the while body
+              // or in while stmt metadata. This must happen for Bucket and PrioQueue.
+              separator.setup_switch_cases();
               mir::MIRVisitor::visit(while_stmt->body);
             }
           }

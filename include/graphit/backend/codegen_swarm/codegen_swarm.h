@@ -60,47 +60,78 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
 
 class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
  public:
-  CodeGenSwarmDedupFinder() {};
+  CodeGenSwarmDedupFinder(std::ostream &input_oss, MIRContext *mir_context, unsigned &indent_level) : oss(input_oss), mir_context_(mir_context), indentLevel(indent_level){};
   std::vector<mir::Var> vector_vars;
-  std::vector<mir::Expr::Ptr> vector_size_calls;
+  std::map<std::string, mir::Expr::Ptr> vector_size_calls_map;
+
 
   void visit(mir::PushEdgeSetApplyExpr::Ptr);
+  void visit(mir::WhileStmt::Ptr);
 
   std::vector<mir::Var> get_vector_vars() {
   	return vector_vars;
   }
 
-  std::vector<mir::Expr::Ptr> get_vector_size_calls() {
-  	return vector_size_calls;
+  mir::Expr::Ptr get_size_call(std::string vector_name) {
+    if (vector_size_calls_map.find(vector_name) == vector_size_calls_map.end()) {
+      assert(false && "Vector not found.");
+    }
+    return vector_size_calls_map[vector_name];
   }
+
+ protected:
+  std::ostream &oss;
+  unsigned &indentLevel;
+  MIRContext * mir_context_;
+  mir::WhileStmt::Ptr enclosing_while_stmt;
+  void indent() { ++indentLevel; }
+  void dedent() { --indentLevel; }
+  void printIndent() { oss << std::string(indentLevel, '\t'); }
 };
 
 
 class CodeGenSwarm: public mir::MIRVisitor {
  private:
   CodeGenSwarmFrontierFinder* frontier_finder;
-  CodeGenSwarmDedupFinder* dedup_finder;
 
  public:
+  CodeGenSwarmDedupFinder* dedup_finder;
   CodeGenSwarm(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_):
       oss(input_oss), mir_context_(mir_context), module_name(module_name_) {
     indentLevel = 0;
     frontier_finder = new CodeGenSwarmFrontierFinder();
-    dedup_finder = new CodeGenSwarmDedupFinder();
+    dedup_finder = new CodeGenSwarmDedupFinder(oss, mir_context, indentLevel);
+  }
+
+  CodeGenSwarm(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_, CodeGenSwarmDedupFinder *finder):
+      oss(input_oss), mir_context_(mir_context), module_name(module_name_), dedup_finder(finder) {
+    indentLevel = 0;
+    frontier_finder = new CodeGenSwarmFrontierFinder();
   }
   int genSwarmCode(void);
   int genIncludeStmts(void);
   int genEdgeSets(void);
-//  int genSwarmFrontiers();
+
   int genDedupVectors(void);
   int genConstants(void);
   int genMainFunction(void);
   int genSwarmStructs(void);
 
+  // Deduplication code gen
+  void beginDedupSection(mir::PushEdgeSetApplyExpr::Ptr);
+  void endDedupSection(mir::PushEdgeSetApplyExpr::Ptr);
+
+  void beginDedupSection(mir::EnqueueVertex::Ptr);
+  void endDedupSection(mir::EnqueueVertex::Ptr);
+
+  void beginDedupSection(mir::WhileStmt::Ptr);
+  void endDedupSection(mir::WhileStmt::Ptr);
+
+  // Spatial hint generation
   void printSpatialHint(mir::Expr::Ptr);
   void printSpatialHint(void);
+
   void inlineFunction(mir::FuncDecl::Ptr, std::string);
-  
   void visitBinaryExpr(mir::BinaryExpr::Ptr, std::string);
   virtual void visit(mir::EdgeSetType::Ptr);
   virtual void visit(mir::ScalarType::Ptr);
@@ -170,7 +201,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   using CodeGenSwarm::CodeGenSwarm;
   using CodeGenSwarm::visit;
 
-  CodeGenSwarmDedupFinder* dedup_finder;
   mir::WhileStmt::Ptr current_while_stmt;
   int stmt_idx = 0;
   bool push_inserted = false;
