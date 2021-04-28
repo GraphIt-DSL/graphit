@@ -8,6 +8,7 @@ int CodeGenSwarm::genSwarmCode(void) {
   for (auto it = functions.begin(); it != functions.end(); it++) {
     it->get()->accept(frontier_finder);
     it->get()->accept(dedup_finder); // find deduplication vectors from the edgesetapplyexpr metadata.
+    it->get()->accept(transpose_lifter);  // lift transposes out of the swarm main function, and into the global scope.
   }
 
   genIncludeStmts();
@@ -100,6 +101,31 @@ void CodeGenSwarm::printSpatialHint(mir::Expr::Ptr expr) {
 void CodeGenSwarm::printSpatialHint() {
         printIndent();
 	oss << "SCC_OPT_TASK();" << std::endl;
+}
+
+void CodeGenSwarmTransposeLifter::visit(mir::Call::Ptr call) {
+  if (call->name == "builtin_transpose") {
+    transpose_found = true;
+  }
+}
+
+void CodeGenSwarmTransposeLifter::visit(mir::VarDecl::Ptr var_decl) {
+  transpose_found = false;
+  if (var_decl->initVal != nullptr)
+	  var_decl->initVal->accept(this);
+  if (transpose_found) transpose_decls.push_back(var_decl);
+}
+
+void CodeGenSwarmTransposeLifter::visit(mir::StmtBlock::Ptr body) {
+  std::vector<mir::Stmt::Ptr> new_stmts;
+  for (auto stmt : *(body->stmts)) {
+    stmt->accept(this);
+    if (!transpose_found) {
+      new_stmts.push_back(stmt);
+    }
+    transpose_found = false;
+  }
+  (*(body->stmts)) = new_stmts;
 }
 
 void CodeGenSwarmFrontierFinder::visit(mir::VarDecl::Ptr var_decl) {
@@ -229,6 +255,13 @@ int CodeGenSwarm::genConstants(void) {
       oss << "<int> swarm_" << constant->name << ";" << std::endl;
       oss << "int swarm_" << constant->name << "_delta;" << std::endl;
     }
+  }
+
+// Globally init all the transpose edges vars.
+  for (auto var_decl : transpose_lifter->transpose_decls) {
+    printIndent();
+    var_decl->type->accept(this);
+    oss << " " << var_decl->name << ";" << std::endl; 
   }
 }
 
@@ -360,7 +393,14 @@ int CodeGenSwarm::genMainFunction(void) {
       }  
     oss << "];" << std::endl;
     }
+  }
 
+  // Lift the transpose calls up to the main, global scope.
+  for (mir::VarDecl::Ptr var_decl : transpose_lifter->transpose_decls) {
+    printIndent();
+    oss << var_decl->name << " = ";
+    var_decl->initVal->accept(this);
+    oss << ";" << std::endl;
   }
   for (auto stmt : mir_context_->field_vector_init_stmts) {
     stmt->accept(this);

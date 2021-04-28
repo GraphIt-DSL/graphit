@@ -58,6 +58,18 @@ class CodeGenSwarmFrontierFinder: public mir::MIRVisitor {
   void visit(mir::VarDecl::Ptr);
 };
 
+class CodeGenSwarmTransposeLifter: public mir::MIRVisitor {
+ public:
+  std::vector<mir::VarDecl::Ptr> transpose_decls;   
+  bool transpose_found = false;
+  CodeGenSwarmTransposeLifter() {
+  };
+
+  void visit(mir::Call::Ptr);
+  void visit(mir::VarDecl::Ptr);
+  void visit(mir::StmtBlock::Ptr);
+};
+
 class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
  public:
   CodeGenSwarmDedupFinder(std::ostream &input_oss, MIRContext *mir_context, unsigned &indent_level) : oss(input_oss), mir_context_(mir_context), indentLevel(indent_level){};
@@ -93,7 +105,7 @@ class CodeGenSwarmDedupFinder: public mir::MIRVisitor {
 class CodeGenSwarm: public mir::MIRVisitor {
  private:
   CodeGenSwarmFrontierFinder* frontier_finder;
-
+  CodeGenSwarmTransposeLifter* transpose_lifter;
  public:
   CodeGenSwarmDedupFinder* dedup_finder;
   CodeGenSwarm(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_):
@@ -101,6 +113,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
     indentLevel = 0;
     frontier_finder = new CodeGenSwarmFrontierFinder();
     dedup_finder = new CodeGenSwarmDedupFinder(oss, mir_context, indentLevel);
+    transpose_lifter = new CodeGenSwarmTransposeLifter();
   }
 
   CodeGenSwarm(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_, CodeGenSwarmDedupFinder *finder):
