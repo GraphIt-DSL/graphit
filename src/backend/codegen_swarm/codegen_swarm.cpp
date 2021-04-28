@@ -1313,13 +1313,7 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 	  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
 	  // temporarily attach metadata to the function to produce the dedup vector if block.
 	  beginDedupSection(esae);
-	  
-	  if (esae->hasMetadata<std::string>("output_frontier")) {
-	  	inlineFunction(func_decl, esae->getMetadata<std::string>("output_frontier"));
-	  } else {
-	  	inlineFunction(func_decl, "");
-	  }
-
+	  inlineFunction(func_decl);
 	  endDedupSection(esae);
 	  dedent();
 	  printIndent();
@@ -1397,12 +1391,7 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 	  auto func_decl = mir_context_->functions_map_[esae->input_function_name];
 	  // temporarily attach metadata to the function to produce the dedup vector if block.
 	  beginDedupSection(esae);
-	  
-	  if (esae->hasMetadata<std::string>("output_frontier")) {
-	  	inlineFunction(func_decl, esae->getMetadata<std::string>("output_frontier"));
-	  } else {
-	  	inlineFunction(func_decl, "");
-	  }
+	  inlineFunction(func_decl);
 	  endDedupSection(esae);
 
 	  dedent();
@@ -1432,7 +1421,7 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   }
 }
 
-void CodeGenSwarm::inlineFunction(mir::FuncDecl::Ptr func_decl, std::string output_frontier) {
+void CodeGenSwarm::inlineFunction(mir::FuncDecl::Ptr func_decl) {
   // this prints the "bool output" thing
   if (func_decl->result.isInitialized()) {
     printIndent();
@@ -1445,22 +1434,6 @@ void CodeGenSwarm::inlineFunction(mir::FuncDecl::Ptr func_decl, std::string outp
   // this prints the "if(output) then {do something}" thing
   if (func_decl->result.isInitialized()) {
     assert(false && "This should have been produced by the EnqueueVertex.....?");
-  }
-}
-
-void CodeGenSwarmQueueEmitter::visit(mir::FuncDecl::Ptr func_decl) {
-  // this prints the "bool output" thing
-  if (func_decl->result.isInitialized()) {
-    printIndent();
-    func_decl->result.getType()->accept(this);
-    oss << " " << func_decl->result.getName() << ";" << std::endl;
-  }
-
-  func_decl->body->accept(this);
-  
-  // this prints the "if(output) then {do something}" thing
-  if (!push_inserted && func_decl->result.isInitialized()) {
-    assert (false && "Push should have been inserted in the enqueue vertex step.");
   }
 }
 
@@ -1524,6 +1497,7 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   auto func_decl = mir_context_->functions_map_[esae->input_function_name];
   // temporarily attach metadata to the function to produce the dedup vector if block.
   beginDedupSection(esae);
+  inlineFunction(func_decl);
   func_decl->accept(this);
   endDedupSection(esae);
   dedent();

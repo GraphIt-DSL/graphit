@@ -144,7 +144,7 @@ class CodeGenSwarm: public mir::MIRVisitor {
   void printSpatialHint(mir::Expr::Ptr);
   void printSpatialHint(void);
 
-  void inlineFunction(mir::FuncDecl::Ptr, std::string);
+  void inlineFunction(mir::FuncDecl::Ptr);
   void visitBinaryExpr(mir::BinaryExpr::Ptr, std::string);
   virtual void visit(mir::EdgeSetType::Ptr);
   virtual void visit(mir::ScalarType::Ptr);
@@ -323,7 +323,6 @@ class CodeGenSwarmQueueEmitter: public CodeGenSwarm {
   void visit(mir::VertexSetType::Ptr) override;
   void visit(mir::SwarmSwitchStmt::Ptr);
   void visit(mir::AssignStmt::Ptr) override;
-  void visit(mir::FuncDecl::Ptr) override;
   void visit(mir::Call::Ptr) override;
   void visit(mir::PriorityUpdateOperatorMin::Ptr) override;
   void visit(mir::EnqueueVertex::Ptr) override;
