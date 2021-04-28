@@ -387,7 +387,7 @@ protected:
 				   "    frontier.addVertex(0);\n"
                                    "    vertices.apply(init);\n"
                                    "    #s1# while (frontier.getVertexSetSize() != 0)\n"
-                                   "        #s2# var output: vertexset{Vertex} = edges.applyModified(updateEdge,IDs);\n"
+                                   "        #s2# var output: vertexset{Vertex} = edges.apply(updateEdge);\n"
                                    "        delete frontier;\n"
                                    "        frontier = output;\n"
                                    "        update[0] = 1;\n"
@@ -3552,18 +3552,22 @@ TEST_F(HighLevelScheduleTest, CC_Swarm) {
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 }
 
-TEST_F(HighLevelScheduleTest, CC_Swarm_UnorderedQueue) {
+TEST_F(HighLevelScheduleTest, CC_Swarm_Stride) {
   using namespace fir::swarm_schedule;
   using namespace fir::abstract_schedule;
   using namespace fir;
-  istringstream is(cc_pjump_swarm_str_);
+  istringstream is(cc_pjump_swarm_2_str_);
   fe_->parseStream(is, context_, errors_);
   fir::high_level_schedule::ProgramScheduleNode::Ptr program
       = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
   SimpleSwarmSchedule s1;
   s1.configQueueType(UNORDEREDQUEUE);
   program->applySwarmSchedule("s1", s1);
-//generate swarm code successfully
+
+  SimpleSwarmSchedule s2;
+  s2.configStride(STRIDE_ON);
+  program->applySwarmSchedule("s1:s2", s2);
+  //generate swarm code successfully
 
   EXPECT_EQ (0, basicTestWithSwarmSchedule(program));
 }

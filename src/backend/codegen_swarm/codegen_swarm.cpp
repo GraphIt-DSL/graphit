@@ -1286,9 +1286,32 @@ void CodeGenSwarmQueueEmitter::visit(mir::VertexSetApplyExpr::Ptr vsae) {
 }
 
 void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
+  bool stride = false;
+  if (esae->hasApplySchedule()) {
+	  auto apply_schedule = esae->getApplySchedule();
+	  if (!apply_schedule->isComposite()) {
+	    auto applied_simple_schedule = apply_schedule->self<fir::swarm_schedule::SimpleSwarmSchedule>();
+	    if (applied_simple_schedule->stride == fir::swarm_schedule::SimpleSwarmSchedule::Stride::STRIDE_ON) {
+	      stride = true;
+	    }
+	  }
+  }
   auto mir_var = mir::to<mir::VarExpr>(esae->target);
-  if (esae->from_func == "") { // PAGERANK ESAE case
-    oss << "for (int _iter = 0, m = " << mir_var->var.getName() << ".num_edges; _iter < m; _iter++) {" << std::endl;
+  if (esae->from_func == "") { // ESAE case iterating on all edges, for example.
+    if (stride) {
+      // print Stride iteration options for iterating across edges.
+      oss << "swarm_runtime::Stride<int> stride(" << mir_var->var.getName() << ".num_edges);" << std::endl;
+      printIndent();
+      oss << "for (int i = 0, m = stride.largerRange; i < m; i++) {" << std::endl;
+      indent();
+      printIndent();
+      oss << "int _iter = stride(i);" << std::endl;
+      printIndent();
+      oss << "if (_iter < stride.smallerRange) {" << std::endl;
+    } else {
+      // no stride.
+      oss << "for (int _iter = 0, m = " << mir_var->var.getName() << ".num_edges; _iter < m; _iter++) {" << std::endl;
+    }
     indent();
     printIndent();
     oss << "int _src = " << mir_var->var.getName() << ".h_edge_src[_iter];" << std::endl;
@@ -1298,6 +1321,8 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
       printIndent();
       oss << "int _weight = " << mir_var->var.getName() << ".h_edge_weight[_iter];" << std::endl;
     }
+    
+    // If this ESAE has an output frontier specified in the metadata, and it's an UnorderedQueue, then alias it and inline the applied function.
     if (esae->hasMetadata<std::string>("output_frontier") && frontier_finder->isa_frontier(esae->getMetadata<std::string>("output_frontier")) && frontier_finder->get_queue_string(esae->getMetadata<std::string>("output_frontier")) == "UnorderedQueue") {
           printIndent();
 	  oss << "{" << std::endl;
@@ -1319,17 +1344,28 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
 	  printIndent();
 	  oss << "}" << std::endl;
     } else {
+	// Otherwise, it's safe to just call the applied function as normal.
     	printIndent();
     	oss << esae->input_function_name << "(_src, _dst";
     	if (esae->is_weighted)
       	  oss << ", _weight";
     	oss << ");" << std::endl;
     }
+    
+    // dedent an extra time for the stride case
+    if (stride) {
+      dedent();
+      printIndent();
+      oss << "}" << std::endl;
+    }
+
     dedent();
     printIndent();
     oss << "}";
   } else {
-    // UnorderedQueue ESAE case
+    // iterating on some non-constant edgeset (so p much anything that is not edges)
+
+    // UnorderedQueue ESAE case - if the ESAE is applied on an UnorderedQueue.
     // Now let's do this for any frontier, not just unordered queue.
     if (frontier_finder->isa_frontier(esae->from_func)) {
       oss << esae->from_func << "->for_each([";
@@ -1447,12 +1483,15 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   oss << "int32_t edgeLast = " << mir_var->var.getName() << ".h_src_offsets[";
   printSrcVertex();
   oss << "+1];" << std::endl;
+  
+  // print SCC_OPT coarsening options
   if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")) {
     printIndent();
     oss << "SCC_OPT_LOOP_COARSEN_FACTOR(";
     esae->getMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")->accept(this);
     oss << ")" << std::endl;
   }
+
   printIndent();
   oss << "for (int i = edgeZero; i < edgeLast; i++) {" << std::endl;
   indent();

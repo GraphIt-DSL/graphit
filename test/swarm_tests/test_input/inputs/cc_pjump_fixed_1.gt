@@ -3,7 +3,7 @@ element Edge end
 const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
 const vertices : vertexset{Vertex} = edges.getVertices();
 const IDs : vector{Vertex}(int) = 1;
-const update: vector[2](int);
+const update: vector[17](int);
 func updateEdge(src : Vertex, dst : Vertex)
     var src_id: Vertex = IDs[src];
     var dst_id: Vertex = IDs[dst];
@@ -11,12 +11,12 @@ func updateEdge(src : Vertex, dst : Vertex)
     var p_dst_id: Vertex = IDs[dst_id];
     IDs[dst_id] min= p_src_id;
     IDs[src_id] min= p_dst_id;
-    if update[1] == 0
+    if update[16] == 0
           if p_dst_id != IDs[dst_id]
-                update[1] = 1;
+                update[16] = 1;
           end
           if p_src_id != IDs[src_id]
-                update[1] = 1;
+                update[16] = 1;
           end
     end
 end
@@ -28,16 +28,18 @@ func pjump(v: Vertex)
     var x: Vertex = IDs[y];
     if x != y
         IDs[v] = x;
-        update[0] = 1;
+        if update[0] == 0
+            update[0] = 1;
+        end
     end
 end
 func main()
     var n : int = edges.getVertices();
     vertices.apply(init);
-    update[1] = 1;
-    #s1# while update[1] != 0
-        update[1] = 0;
-        edges.apply(updateEdge);
+    update[16] = 1;
+    #s1# while update[16] != 0
+        update[16] = 0;
+        #s2# edges.apply(updateEdge);
         update[0] = 1;
         #s0# while update[0] != 0
             update[0] = 0;

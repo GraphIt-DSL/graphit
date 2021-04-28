@@ -27,7 +27,9 @@ enum swarm_schedule_options {
   COARSEN_ENABLED,
   COARSEN_DISABLED,
   HINTS_ENABLED,
-  HINTS_DISABLED
+  HINTS_DISABLED,
+  STRIDE_ON,
+  STRIDE_OFF
 };
 
 class SwarmSchedule {
@@ -75,6 +77,11 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     HINTS_ENABLED,
     HINTS_DISABLED
   };
+  
+  enum class Stride {
+    STRIDE_ON,
+    STRIDE_OFF
+  };
 
  public:
   direction_type direction;
@@ -86,6 +93,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
   abstract_schedule::FlexIntVal flex_delta;
   CoarseningEnabled enable_coarsening;
   HintsEnabled enable_hints;
+  Stride stride;
 
   SimpleSwarmSchedule() {
     direction = direction_type::DIR_PUSH;
@@ -97,6 +105,7 @@ class SimpleSwarmSchedule : public SwarmSchedule,
     flex_delta = abstract_schedule::FlexIntVal(1);
     enable_coarsening = CoarseningEnabled::COARSENING_DISABLED;
     enable_hints = HintsEnabled::HINTS_DISABLED; 
+    stride = Stride::STRIDE_OFF;
   }
 
  public:
@@ -245,6 +254,17 @@ class SimpleSwarmSchedule : public SwarmSchedule,
       case HINTS_DISABLED: enable_hints = HintsEnabled::HINTS_DISABLED;
         break;
       default: assert(false && "Invalid option for configSpatialHint");
+        break;
+    }
+  }
+  
+  void configStride(enum swarm_schedule_options o) {
+    switch (o) {
+      case STRIDE_ON: stride = Stride::STRIDE_ON;
+        break;
+      case STRIDE_OFF: stride = Stride::STRIDE_OFF;
+        break;
+      default: assert(false && "Invalid option for configStride");
         break;
     }
   }
