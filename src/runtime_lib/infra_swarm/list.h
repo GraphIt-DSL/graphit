@@ -42,7 +42,11 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
 template <typename T>
 static void builtin_insert(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
   v1.current_level++;
+  
   v1.frontiers[v1.current_level] = *frontier;
+  if (v1.current_level >= v1.frontiers.size() - 2) {
+    v1.extend_frontier_list();
+  }
 }
 
 // insert, given an explicit round to insert into.
@@ -71,6 +75,15 @@ static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *f
     return;
   }
   *frontier = std::move(v1.frontiers[v1.current_level]);
+  /*
+  frontier->clear();
+  int total = v1.frontiers[v1.current_level].startMaterialize();
+  int32_t* a = new int32_t[total];
+  v1.frontiers[v1.current_level].finishMaterialize(total, a);
+  for (int i = 0; i < total; i++) {
+    frontier->push(a[i]);
+  } 
+  */
   v1.current_level--;
 }
 
