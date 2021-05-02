@@ -8,10 +8,33 @@
 namespace swarm_runtime {
 class VertexFrontierList {
  public:
-  int32_t max_num_elems;
-  int32_t current_level;   // Let's have this point to the last inserted frontier. If VFL is empty, then this is -1.
+  const int32_t max_num_elems;
+ private:
+  char _padding_0[SWARM_CACHE_LINE - sizeof(max_num_elems)];
 
-  std::vector<swarm::UnorderedQueue<int>> frontiers;
+ public:
+  int32_t current_level = -1; // Let's have this point to the last inserted frontier. If VFL is empty, then this is -1.
+ private:
+  char _padding_1[SWARM_CACHE_LINE - sizeof(current_level)];
+
+ public:
+  struct alignas(SWARM_CACHE_LINE) paddedUnorderedQueue {
+    swarm::UnorderedQueue<int> q;
+    char _padding[SWARM_CACHE_LINE - sizeof(q)];
+  };
+  static_assert(sizeof(paddedUnorderedQueue) == SWARM_CACHE_LINE, "");
+
+  std::vector<paddedUnorderedQueue> frontiers;
+
+  VertexFrontierList(int32_t max_elems) : max_num_elems(max_elems) {
+    // Ensure reallocation (which is expensive) is rare, by allocation space
+    // in large chunks.  Note: do NOT call frontiers.reserve() anywhere else.
+    // Instead, let push_back() or emplace_back() do all the work: they will
+    // double the allocated capacity when needed, ensuring that reallocations
+    // stay rare.  As no application uses many instances of VertexFrontierList,
+    // allocating 16k cachelines (1 MB) is acceptable.
+    frontiers.reserve(16 * 1024);
+  }
 
   void extend_frontier_list() {
     for (int i = 0; i < 10; i++) {
@@ -21,9 +44,7 @@ class VertexFrontierList {
 };
 
 VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
-  VertexFrontierList vl;
-  vl.max_num_elems = max_elems;
-  vl.current_level = -1; // Points at the current head. If there is one frontier in the VFL, then this will be 0.
+  VertexFrontierList vl(max_elems);
   vl.extend_frontier_list();
   return vl;
 }
@@ -32,7 +53,7 @@ VertexFrontierList create_new_vertex_frontier_list(int32_t max_elems) {
 void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
   v1.current_level++;
   for (int i = 0; i < frontier.elems.size(); i++) {
-    v1.frontiers[v1.current_level].push(frontier[i]);
+    v1.frontiers[v1.current_level].q.push(frontier[i]);
   }
   if (v1.current_level >= v1.frontiers.size() - 1) {
     v1.extend_frontier_list();
@@ -42,16 +63,16 @@ void builtin_insert(VertexFrontierList &v1, VertexFrontier &frontier) {
 template <typename T>
 static void builtin_insert(VertexFrontierList &v1, swarm::UnorderedQueue<T> *frontier) {
   v1.current_level++;
-  
-  v1.frontiers[v1.current_level] = *frontier;
-  if (v1.current_level >= v1.frontiers.size() - 2) {
+  v1.frontiers[v1.current_level].q = *frontier;
+
+  if (v1.current_level >= v1.frontiers.size() - 1) {
     v1.extend_frontier_list();
   }
 }
 
 // insert, given an explicit round to insert into.
 void builtin_insert(VertexFrontierList &v1, int vertex, int round) {
-  v1.frontiers[round].push(vertex);
+  v1.frontiers[round].q.push(vertex);
 }
 
 // pop the last frontier. This is pointed to by current_level.
@@ -59,10 +80,10 @@ void builtin_retrieve(VertexFrontierList &v1, VertexFrontier &frontier) {
   if (v1.current_level < 0) {
     return;
   }
-  int total = v1.frontiers[v1.current_level].startMaterialize();
+  int total = v1.frontiers[v1.current_level].q.startMaterialize();
   frontier.elems.resize(total);
   int32_t* a = frontier.elems.data();
-  v1.frontiers[v1.current_level].finishMaterialize(total, a);
+  v1.frontiers[v1.current_level].q.finishMaterialize(total, a);
   frontier.num_elems = total;
   
   v1.current_level--;
@@ -74,7 +95,7 @@ static void builtin_retrieve(VertexFrontierList &v1, swarm::UnorderedQueue<T> *f
   if (v1.current_level < 0) {
     return;
   }
-  *frontier = std::move(v1.frontiers[v1.current_level]);
+  *frontier = std::move(v1.frontiers[v1.current_level].q);
   /*
   frontier->clear();
   int total = v1.frontiers[v1.current_level].startMaterialize();
