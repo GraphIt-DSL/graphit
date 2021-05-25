@@ -1310,6 +1310,12 @@ void CodeGenSwarm::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
       oss << "if (_iter < stride.smallerRange) {" << std::endl;
     } else {
       // no stride.
+      if (esae->hasMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")) {
+        oss << "SCC_OPT_LOOP_COARSEN_FACTOR(";
+        esae->getMetadata<mir::Expr::Ptr>("swarm_coarsen_expr")->accept(this);
+        oss << ")" << std::endl;
+        printIndent();
+      }
       oss << "for (int _iter = 0, m = " << mir_var->var.getName() << ".num_edges; _iter < m; _iter++) {" << std::endl;
     }
     indent();
@@ -1537,7 +1543,6 @@ void CodeGenSwarmQueueEmitter::visit(mir::PushEdgeSetApplyExpr::Ptr esae) {
   // temporarily attach metadata to the function to produce the dedup vector if block.
   beginDedupSection(esae);
   inlineFunction(func_decl);
-  func_decl->accept(this);
   endDedupSection(esae);
   dedent();
   printIndent();
