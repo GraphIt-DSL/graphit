@@ -1,0 +1,14 @@
+schedule:
+	SimpleSwarmSchedule s1;
+	s1.configQueueType(BUCKETQUEUE);
+	program->applySwarmSchedule("s1", s1);
+
+	SimpleSwarmSchedule s2;
+	s2.configLoopCoarsening(COARSEN_ENABLED);
+	s2.configSpatialHint(HINTS_ENABLED);
+	program->applySwarmSchedule("s1:s2", s2);
+	
+	SimpleSwarmSchedule s3;
+	s3.configLoopCoarsening(COARSEN_ENABLED);
+	s3.configSpatialHint(HINTS_ENABLED);
+	program->applySwarmSchedule("s3", s3);

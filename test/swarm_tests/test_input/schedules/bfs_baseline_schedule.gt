@@ -1,0 +1,4 @@
+schedule:
+	SimpleSwarmSchedule s1;
+	s1.configQueueType(UNORDEREDQUEUE);
+	program->applySwarmSchedule("s1", s1);

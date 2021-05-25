@@ -1,0 +1,9 @@
+schedule:
+	SimpleSwarmSchedule s1;
+	s1.configQueueType(PRIOQUEUE);
+	program->applySwarmSchedule("s1", s1);
+
+	SimpleSwarmSchedule s2;
+	s2.configLoopCoarsening(COARSEN_ENABLED);
+	s2.configSpatialHint(HINTS_ENABLED);
+	program->applySwarmSchedule("s1:s2", s2);

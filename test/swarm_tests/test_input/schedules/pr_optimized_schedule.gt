@@ -1,0 +1,5 @@
+schedule:
+	SimpleSwarmSchedule s1;
+	s1.configLoopCoarsening(COARSEN_ENABLED);
+	s1.configSpatialHint(HINTS_ENABLED);
+	program->applySwarmSchedule("s1", s1);
