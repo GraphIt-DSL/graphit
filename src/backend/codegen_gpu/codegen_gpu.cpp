@@ -1467,12 +1467,22 @@ void CodeGenGPU::visit(mir::WhileStmt::Ptr while_stmt) {
 		}
 		return;
 	}
+
+	ExtractReadWriteSet extractor(mir_context_);
+	while_stmt->cond->accept(&extractor);
+	
 	printIndent();
 	oss << "while (";
 	while_stmt->cond->accept(this);
 	oss << ") {" << std::endl;
 	indent();
+	for (auto tare: extractor.write_set) {
+		generateHostToDeviceCopy(tare);
+	}
 	while_stmt->body->accept(this);
+	for (auto tare: extractor.read_set) {
+		generateDeviceToHostCopy(tare);
+	}
 	dedent();
 	printIndent();
 	oss << "}" << std::endl;
@@ -1690,7 +1700,7 @@ void CodeGenGPU::visit(mir::VertexSetAllocExpr::Ptr vsae) {
 		vsae->size_expr->accept(this);
 	oss << ")";
 }
-void CodeGenGPUHost::generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare) {
+void CodeGenGPU::generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare) {
 	printIndent();
 	mir::Var target = mir::to<mir::VarExpr>(tare->target)->var;
 	std::string var_name = target.getName();
@@ -1703,7 +1713,7 @@ void CodeGenGPUHost::generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare
 	oss << "), cudaMemcpyDeviceToHost);" << std::endl;	
 	
 }
-void CodeGenGPUHost::generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare) {
+void CodeGenGPU::generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare) {
 	printIndent();
 	mir::Var target = mir::to<mir::VarExpr>(tare->target)->var;
 	std::string var_name = target.getName();
