@@ -149,6 +149,8 @@ protected:
 	virtual void visit(mir::ListAllocExpr::Ptr) override;
 
 	void genPriorityUpdateOperator(mir::PriorityUpdateOperator::Ptr); 
+	void generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare);
+	void generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare);
 
 };
 class CodeGenGPUHost: public CodeGenGPU {
@@ -167,8 +169,6 @@ private:
 	virtual void visit(mir::VarExpr::Ptr) override;
 
 
-	void generateDeviceToHostCopy(mir::TensorArrayReadExpr::Ptr tare);
-	void generateHostToDeviceCopy(mir::TensorArrayReadExpr::Ptr tare);
 };
 
 
