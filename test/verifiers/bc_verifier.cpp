@@ -68,7 +68,7 @@ bool BCVerifier(const Graph &g, NodeID source, NodeID num_iters,
     // Compare scores
     bool all_ok = true;
     for (NodeID n : g.vertices()) {
-        if (abs(scores[n] - scores_to_test[n]) > 0.000001) {
+        if (abs(scores[n] - scores_to_test[n]) > 0.001) {
             cout << n << ": " << scores[n] << " != " << scores_to_test[n] << endl;
             all_ok = false;
         }

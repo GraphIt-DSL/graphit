@@ -49,10 +49,13 @@ namespace graphit {
             function->accept(&lower_update_priority_edge_set_apply_expr);
         }
 
-        // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
-        auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
-        for (auto function : functions) {
-            lower_ordered_processing_op.rewrite(function);
+        if (mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdateWithMerge ||
+                mir_context_->priority_update_type == mir::PriorityUpdateType::EagerPriorityUpdate){
+            // Detect pattern for OrderedProcessingOperator, and lower into the MIR node for OrderedProcessingOp
+            auto lower_ordered_processing_op = LowerIntoOrderedProcessingOperatorRewriter(schedule_, mir_context_);
+            for (auto function : functions) {
+                lower_ordered_processing_op.rewrite(function);
+            }
         }
 
         // Lowers into PriorityUpdateOperators (PriorityUpdateMin and PriorityUpdateSum)

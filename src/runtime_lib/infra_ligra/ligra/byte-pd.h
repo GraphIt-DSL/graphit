@@ -254,13 +254,8 @@ long compressEdge(uchar *start, long curOffset, uintE e) {
   Returns:
     The new offset into the edge array
 */
-<<<<<<< HEAD
 static long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree, 
 			       uintE vertexNum, uintE *savedEdges) {
-=======
-long sequentialCompressEdgeSet(uchar *edgeArray, long currentOffset, uintT degree,
-                               uintE vertexNum, uintE *savedEdges) {
->>>>>>> a903707a446090b4d992269fbbbd22c099f06b28
   if (degree > 0) {
     long startOffset = currentOffset;
     long numChunks = 1+(degree-1)/PARALLEL_DEGREE;

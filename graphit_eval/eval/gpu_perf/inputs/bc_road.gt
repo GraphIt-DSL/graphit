@@ -1,0 +1,126 @@
+element Vertex end
+element Edge end
+
+const edges : edgeset{Edge}(Vertex,Vertex) = load (argv[1]);
+const vertices : vertexset{Vertex} = edges.getVertices();
+
+const num_paths : vector{Vertex}(int) = 0;
+const dependences : vector{Vertex}(float) = 0;
+const visited : vector{Vertex}(bool) = false;
+
+func forward_update(src : Vertex, dst : Vertex)
+    num_paths[dst] +=  num_paths[src];
+end
+
+func visited_vertex_filter(v : Vertex) -> output : bool
+    output = (visited[v] == false);
+end
+
+func mark_visited(v : Vertex)
+    visited[v] = true;
+end
+
+func mark_unvisited(v : Vertex)
+    visited[v] = false;
+end
+
+func backward_vertex_f(v : Vertex)
+    visited[v] = true;
+    dependences[v] += 1.0 / num_paths[v];
+end
+
+func backward_update(src : Vertex, dst : Vertex)
+    dependences[dst] += dependences[src];
+end
+
+func final_vertex_f(v : Vertex)
+    if num_paths[v] != 0
+        dependences[v] = (dependences[v] - 1.0 / num_paths[v]) * num_paths[v];
+    else
+        dependences[v] = 0;
+    end
+end
+
+func reset(v : Vertex)
+    dependences[v] = 0;
+    num_paths[v] = 0;
+end
+
+
+
+
+func main()
+
+    % transposing the edges
+    var transposed_edges : edgeset{Edge}(Vertex, Vertex) = edges.transpose();
+    for trail in 0:1
+	 startTimer();
+    	 var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);
+    	 var start_vertex : int = atoi(argv[2]);
+
+    	 frontier.addVertex(start_vertex);
+    	 num_paths[start_vertex] = 1;
+    	 visited[start_vertex] = true;
+    	 var round : int = 0;
+    	 var frontier_list : list{vertexset{Vertex}} = new list{vertexset{Vertex}}();
+
+    	 frontier_list.insert(frontier);
+
+    	 % foward pass to propagate num_paths
+    	 #s0# while (frontier.getVertexSetSize() != 0)
+               round = round + 1;
+               #s1# var output : vertexset{Vertex} = edges.from(frontier).to(visited_vertex_filter).applyModified(forward_update, num_paths);
+	       delete frontier;
+               output.apply(mark_visited);
+               frontier_list.insert(output);
+               frontier = output;
+    	 end
+
+
+   	  % resetting the visited information for the backward pass
+    	  vertices.apply(mark_unvisited);
+
+    	  % pop off the empty frontier
+    	  frontier_list.retrieve(frontier);
+
+    	  frontier_list.retrieve(frontier);
+    	  frontier.apply(backward_vertex_f);
+    	  round = round - 1;
+
+    	  % backward pass to accumulate the dependencies
+    	  #s2# while (round > 0)
+          	#s3# transposed_edges.from(frontier).to(visited_vertex_filter).apply(backward_update);
+        	frontier_list.retrieve(frontier);
+        	frontier.apply(backward_vertex_f);
+        	round = round - 1;
+    	  end
+    	  delete frontier;
+
+    	  vertices.apply(final_vertex_f);
+	  var elapsed_time : float = stopTimer();
+          print "elapsed time: ";
+          print elapsed_time;
+	  vertices.apply(reset);
+    end
+    
+
+
+end
+
+
+schedule:
+
+	SimpleGPUSchedule s1;
+	s1.configLoadBalance(TWCE);
+	s1.configFrontierCreation(FUSED);
+	s1.configDeduplication(ENABLED, FUSED);
+	
+
+	program->applyGPUSchedule("s0:s1", s1);
+	program->applyGPUSchedule("s2:s3", s1);
+
+	SimpleGPUSchedule s0;
+	s0.configKernelFusion(ENABLED);
+	
+	program->applyGPUSchedule("s0", s0);
+	program->applyGPUSchedule("s2", s0);

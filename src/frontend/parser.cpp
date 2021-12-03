@@ -2796,6 +2796,9 @@ namespace graphit {
         intrinsics_.push_back("append");
         intrinsics_.push_back("pop");
         intrinsics_.push_back("transpose");
+        intrinsics_.push_back("insert");
+        intrinsics_.push_back("retrieve");
+
 
         // set up function call intrinsics
         decls.insert("fabs", IdentType::FUNCTION);

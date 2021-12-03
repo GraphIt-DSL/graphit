@@ -16,6 +16,8 @@
 #include <map>
 #include <regex>
 
+#include <graphit/frontend/gpu_schedule.h>
+
 
 namespace graphit {
     namespace fir {
@@ -52,6 +54,14 @@ namespace graphit {
                     if (schedule_ != nullptr)
                         delete(schedule_);
                 }
+                enum class backend_selection_type {
+			CODEGEN_CPU,
+                        CODEGEN_GPU,
+
+			CODEGEN_INVALID
+                };
+                
+                backend_selection_type backend_selection = backend_selection_type::CODEGEN_CPU; 
 
                 typedef std::shared_ptr<ProgramScheduleNode> Ptr;
 
@@ -213,6 +223,34 @@ namespace graphit {
                 Schedule * getSchedule() {
                     return  schedule_;
                 }
+
+
+		// New GPU Scheduling API
+		// We currently need two different functions to apply simple and hybrid schedules
+		// TODO: Abstract the simple and hybrid schedules into a single class
+		void applyGPUSchedule(std::string label_name, gpu_schedule::SimpleGPUSchedule &s1) {
+                	backend_selection = backend_selection_type::CODEGEN_GPU; 
+
+			if (schedule_ == nullptr)
+				schedule_ = new Schedule();
+
+			gpu_schedule::SimpleGPUSchedule *s1_copy = new gpu_schedule::SimpleGPUSchedule(s1);
+			
+			schedule_->apply_gpu_schedules[label_name] = s1_copy;
+			
+		}
+		void applyGPUSchedule(std::string label_name, gpu_schedule::HybridGPUSchedule &s2) {
+                	backend_selection = backend_selection_type::CODEGEN_GPU; 
+
+			if (schedule_ == nullptr)
+				schedule_ = new Schedule();
+
+			gpu_schedule::HybridGPUSchedule *s2_copy = new gpu_schedule::HybridGPUSchedule(s2);
+			*s2_copy = s2;
+			
+			schedule_->apply_gpu_schedules[label_name] = s2_copy;
+		}
+		
 
             private:
                 graphit::FIRContext * fir_context_;

@@ -424,6 +424,17 @@ namespace graphit {
 	void MIRVisitor::visit(std::shared_ptr<UpdatePriorityEdgeCountEdgeSetApplyExpr> op) {
 		visit(std::static_pointer_cast<EdgeSetApplyExpr>(op));
 	}
-
+	
+	void MIRVisitor::visit(std::shared_ptr<VertexSetDedupExpr> op) {
+		op->target->accept(this);
+	}
+	void MIRVisitor::visit(std::shared_ptr<HybridGPUStmt> op) {
+		op->stmt1->accept(this);
+		op->stmt2->accept(this);		
+	}
+	void MIRVisitor::visit(std::shared_ptr<EnqueueVertex> op) {
+		op->vertex_id->accept(this);
+		op->vertex_frontier->accept(this);
+	}
     }
 }

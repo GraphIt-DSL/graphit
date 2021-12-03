@@ -460,6 +460,22 @@ namespace graphit {
             ptr->target = rewrite<Expr>(ptr->target);
             node = ptr;
 	}
+	
+	void MIRRewriter::visit(VertexSetDedupExpr::Ptr ptr) {
+		ptr->target = rewrite<Expr>(ptr->target);
+		node = ptr;
+	}
+
+	void MIRRewriter::visit(HybridGPUStmt::Ptr stmt) {
+		stmt->stmt1 = rewrite<StmtBlock>(stmt->stmt1);
+		stmt->stmt2 = rewrite<StmtBlock>(stmt->stmt2);
+		node = stmt;
+	}
+	void MIRRewriter::visit(EnqueueVertex::Ptr stmt) {
+		stmt->vertex_id = rewrite<Expr>(stmt->vertex_id);
+		stmt->vertex_frontier = rewrite<Expr>(stmt->vertex_frontier);
+		node = stmt;
+	}
 
     }
 }

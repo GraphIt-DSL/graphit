@@ -59,19 +59,12 @@ int main(int argc, char* argv[]) {
     std::string python_module_path = cli.python_module_path();
     
         
-    be->emitCPP(output_file, python_module_name);
+    if (program->backend_selection == fir::high_level_schedule::ProgramScheduleNode::backend_selection_type::CODEGEN_GPU)
+    	be->emitGPU(output_file, python_module_name);
+    else
+    	be->emitCPP(output_file, python_module_name);
     output_file.close();
-/*
-    if (python_module_name != "") {
-	if (python_module_path == "")
-		python_module_path = "/tmp";
-	std::ofstream python_output_file;
-	python_output_file.open(python_module_path + "/" + python_module_name + ".py");
-	be->emitPython(python_output_file, python_module_name, python_module_path) ;
-	python_output_file.close();
-	
-    }
-*/
+
     delete be;
     return 0;
 

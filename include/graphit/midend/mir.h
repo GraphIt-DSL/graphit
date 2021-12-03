@@ -11,10 +11,13 @@
 #include <iostream>
 #include <unordered_set>
 #include <graphit/midend/mir_visitor.h>
+#include <graphit/midend/mir_metadata.h>
 #include <graphit/midend/var.h>
 #include <assert.h>
 #include <graphit/midend/field_vector_property.h>
 #include <unordered_map>
+#include <graphit/frontend/gpu_schedule.h>
+
 #include <graphit/frontend/schedule.h>
 
 namespace graphit {
@@ -53,6 +56,8 @@ namespace graphit {
                 return to<T>(cloneNode());
             }
 
+            // We use a single map to hold all metadata on the MIR Node
+            std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> metadata_map;
         protected:
             template<typename T = MIRNode>
             std::shared_ptr<T> self() {
@@ -67,6 +72,41 @@ namespace graphit {
                 // as I slowly add in support for copy functionalities
                 return nullptr;
             };
+        public:
+            // Functions to set and retrieve metadata of different types
+            template<typename T>
+            void setMetadata(std::string mdname, T val) {
+                typename MIRMetadataImpl<T>::Ptr mdnode = std::make_shared<MIRMetadataImpl<T>>(val);
+                metadata_map[mdname] = mdnode;
+            }
+            // This function is safe to be called even if the metadata with
+            // the specified name doesn't exist
+            template<typename T>
+            bool hasMetadata(std::string mdname) {
+                if (metadata_map.find(mdname) == metadata_map.end())
+		    return false;
+                typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
+                if (!mdnode->isa<T>())
+                    return false;
+                return true;
+            }
+            // This function should be called only after confirming that the 
+            // metadata with the given name exists
+            template <typename T>
+            T getMetadata(std::string mdname) {
+                assert(hasMetadata<T>(mdname));
+                typename MIRMetadata::Ptr mdnode = metadata_map[mdname];
+                return mdnode->to<T>()->val;
+            } 
+            std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> cloneMetadata(void) {
+                std::unordered_map<std::string, std::shared_ptr<MIRMetadata>> new_map;
+                for (auto iter = metadata_map.begin(); iter != metadata_map.end(); iter++) {
+                    auto key = iter->first;
+                    new_map[key] = metadata_map[key]->clone();
+                }
+               	return new_map;
+            }
+            
         };
 
         struct Expr : public MIRNode {
@@ -223,6 +263,11 @@ namespace graphit {
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<ScalarType>());
             }
+
+	    enum class BoolType {
+		BYTE, BIT
+	    };
+	    BoolType bool_type;
 
             std::string toString(){
                 std::string output_str = "";
@@ -434,6 +479,12 @@ namespace graphit {
 
             typedef std::shared_ptr<WhileStmt> Ptr;
 
+	    bool is_fused;
+	    std::string fused_kernel_name;
+	    std::vector<mir::Var> hoisted_vars;
+	    std::vector<std::shared_ptr<mir::VarDecl>> hoisted_decls;
+	    std::vector<mir::Var> used_priority_queues;
+
             virtual void accept(MIRVisitor *visitor) {
                 visitor->visit(self<WhileStmt>());
             }
@@ -614,6 +665,14 @@ namespace graphit {
             enum class Type {
                 INTERNAL, EXPORTED, EXTERNAL
             };
+	    enum function_context_type {
+		CONTEXT_NONE = 0x0,
+		CONTEXT_HOST = 0x1,
+		CONTEXT_DEVICE = 0x2,
+		CONTEXT_BOTH = 0x3,
+	    };
+
+	    enum function_context_type function_context = function_context_type::CONTEXT_HOST;
 
             std::string name;
             std::vector<mir::Var> functorArgs;
@@ -625,6 +684,7 @@ namespace graphit {
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
+	
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 
@@ -638,6 +698,17 @@ namespace graphit {
 
             virtual MIRNode::Ptr cloneNode();
         };
+	static inline FuncDecl::function_context_type operator | (FuncDecl::function_context_type a, FuncDecl::function_context_type b) {
+		return static_cast<FuncDecl::function_context_type>((int)a | (int)b);
+	}
+	static inline FuncDecl::function_context_type operator & (FuncDecl::function_context_type a, FuncDecl::function_context_type b) {
+		return static_cast<FuncDecl::function_context_type>((int)a & (int)b);
+	}
+	static inline FuncDecl::function_context_type& operator |= (FuncDecl::function_context_type &a, FuncDecl::function_context_type b) {
+		a = a | b;
+		return a;
+	}
+	
 
 
         struct FuncExpr : public Expr {
@@ -768,6 +839,8 @@ namespace graphit {
             Expr::Ptr destination_node_id;
             std::string tracking_var;
             bool is_atomic = false;
+
+	    std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> edgeset_apply_expr;
 
             typedef std::shared_ptr<PriorityUpdateOperator> Ptr;
 
@@ -918,6 +991,12 @@ namespace graphit {
             std::string tracking_field = "";
             typedef std::shared_ptr<ApplyExpr> Ptr;
 
+	    std::string device_function;
+	    std::string kernel_function;
+	
+	    fir::gpu_schedule::SimpleGPUSchedule applied_schedule;
+	    bool requires_output = false;
+
         protected:
             virtual void copy(MIRNode::Ptr);
 
@@ -981,7 +1060,8 @@ namespace graphit {
             std::string scope_label_name;
             MergeReduceField::Ptr merge_reduce;
 
-
+	    bool fused_dedup = false;
+	    bool fused_dedup_perfect = false;
             bool frontier_reusable = false;
 	
             std::string edgeset_apply_func_name;
@@ -1016,7 +1096,12 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
-                frontier_reusable = edgeset_apply->frontier_reusable;
+		
+		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
+		requires_output = edgeset_apply->requires_output;
+		fused_dedup = edgeset_apply->fused_dedup;
+		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1043,7 +1128,11 @@ namespace graphit {
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
                 enable_deduplication = edgeset_apply->enable_deduplication;
-                frontier_reusable = edgeset_apply->frontier_reusable;
+		applied_schedule = edgeset_apply->applied_schedule;
+		frontier_reusable = edgeset_apply->frontier_reusable;
+		requires_output = edgeset_apply->requires_output;
+		fused_dedup = edgeset_apply->fused_dedup;
+		fused_dedup_perfect = edgeset_apply->fused_dedup_perfect;
             }
 
             virtual void accept(MIRVisitor *visitor) {
@@ -1465,6 +1554,7 @@ namespace graphit {
             typedef std::shared_ptr<UpdatePriorityEdgeSetApplyExpr> Ptr;
 
             UpdatePriorityEdgeSetApplyExpr() {}
+	    mir::Var priority_queue_used;
 
             UpdatePriorityEdgeSetApplyExpr(EdgeSetApplyExpr::Ptr edgeset_apply) {
                 target = edgeset_apply->target;
@@ -1599,6 +1689,52 @@ namespace graphit {
 
         };
 
+
+	// GPU Specific operators
+	struct VertexSetDedupExpr: Expr {
+		Expr::Ptr target;
+		bool perfect_dedup;
+		typedef std::shared_ptr<VertexSetDedupExpr> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<VertexSetDedupExpr>());
+		}
+		protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();		
+	};
+	struct HybridGPUStmt: Stmt {
+		StmtBlock::Ptr stmt1;
+		StmtBlock::Ptr stmt2;
+		float threshold;
+		int32_t argv_index;
+		std::string threshold_var_name;
+		fir::gpu_schedule::HybridGPUSchedule::hybrid_criteria criteria;
+			
+		std::string input_frontier_name;
+
+		typedef std::shared_ptr<HybridGPUStmt> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<HybridGPUStmt>());
+		}
+	protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
+	struct EnqueueVertex: Stmt {
+		Expr::Ptr vertex_id;
+		Expr::Ptr vertex_frontier;
+		bool fused_dedup;
+		bool fused_dedup_perfect;
+		enum class Type {SPARSE, BOOLMAP, BITMAP};
+		Type type;
+		typedef std::shared_ptr<EnqueueVertex> Ptr;
+		virtual void accept(MIRVisitor *visitor) {
+			visitor->visit(self<EnqueueVertex>());
+		}
+	protected:
+		virtual void copy(MIRNode::Ptr);
+		virtual MIRNode::Ptr cloneNode();
+	};
     }
 
 }

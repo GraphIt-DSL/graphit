@@ -43,6 +43,29 @@ protected:
                                 "  print \"finished running BFS\"; \n"
                                 "end");
 
+        const char* bfs_char_gpu = ("element Vertex end\n"
+                                "element Edge end\n"
+                                "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"../../test/graphs/test.el\");\n"
+                                "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                "const parent : vector{Vertex}(int) = -1;\n"
+                                "func updateEdge(src : Vertex, dst : Vertex) "
+                                "  parent[dst] = src; "
+                                "end\n"
+                                "func toFilter(v : Vertex) -> output : bool "
+                                "  output = parent[v] == -1; "
+                                "end\n"
+                                "func main() "
+                                "  var frontier : vertexset{Vertex} = new vertexset{Vertex}(0); "
+                                "  frontier.addVertex(1); "
+                                "  while (frontier.getVertexSetSize() != 0) "
+                                "      #s1# var output : vertexset{Vertex} = edges.from(frontier).to(toFilter).applyModified(updateEdge, parent, true); \n"
+				"      delete frontier;\n"
+				"      frontier = output;\n"	
+                                "  end\n"
+                                "  print \"finished running BFS\"; \n"
+                                "end");
+
+
 
         const char*  pr_char = ("element Vertex end\n"
                                              "element Edge end\n"
@@ -128,6 +151,32 @@ protected:
                                                          "          end\n"
                                                          "     end\n"
                                                          "end";
+
+        const char * sssp_char_gpu =      "element Vertex end\n"
+                                                         "element Edge end\n"
+                                                         "const edges : edgeset{Edge}(Vertex,Vertex, int) = load (\"../test/graphs/test.wel\");\n"
+                                                         "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                                                         "const SP : vector{Vertex}(int) = 2147483647; %should be INT_MAX \n"
+                                                         "func updateEdge(src : Vertex, dst : Vertex, weight : int) -> output : bool\n"
+                                                         "    SP[dst] min= (SP[src] + weight);\n"
+                                                         "end\n"
+                                                         "func main() \n"
+                                                         "    var n : int = edges.getVertices();\n"
+                                                         "    var frontier : vertexset{Vertex} = new vertexset{Vertex}(0);\n"
+                                                         "    frontier.addVertex(0); %add source vertex \n"
+                                                         "    SP[0] = 0;\n"
+                                                         "    var rounds : int = 0;\n"
+                                                         "    while (frontier.getVertexSetSize() != 0)\n"
+                                                         "         #s1# var output: vertexset{Vertex} = edges.from(frontier).applyModified(updateEdge, SP);\n"
+							 "         delete frontier;\n"
+					                 "         frontier = output;\n"
+                                                         "         rounds = rounds + 1;\n"
+                                                         "         if rounds == n\n"
+                                                         "             print \"negative cycle\";\n"
+                                                         "          end\n"
+                                                         "     end\n"
+                                                         "end";
+
 
         const char * sssp_async_char =      "element Vertex end\n"
                 "element Edge end\n"
@@ -373,13 +422,13 @@ protected:
                                                               "        end\n"
                                                               "\n"
                                                               "    end\n"
-                                                              "end");	
-	
+                                                              "end");
+
         const char*  pr_cc_char = ("element Vertex end\n"
                                              "element Edge end\n"
                                              "const edges : edgeset{Edge}(Vertex,Vertex) = load (\"test.el\");\n"
                                              "const vertices : vertexset{Vertex} = edges.getVertices();\n"
-                                             "const IDs : vector{Vertex}(int) = 1;\n"				   
+                                             "const IDs : vector{Vertex}(int) = 1;\n"
                                              "const old_rank : vector{Vertex}(float) = 1.0;\n"
                                              "const new_rank : vector{Vertex}(float) = 0.0;\n"
                                              "const out_degrees : vector{Vertex}(int) = edges.getOutDegrees();\n"
@@ -912,8 +961,10 @@ protected:
                                                "end\n");
 
         bfs_str_ =  string (bfs_char);
+        bfs_str_gpu_ =  string (bfs_char_gpu);
         pr_str_ = string(pr_char);
         sssp_str_ = string  (sssp_char);
+        sssp_str_gpu_ = string  (sssp_char_gpu);
         sssp_async_str_ = string (sssp_async_char);
         cf_str_ = string  (cf_char);
         cc_str_ = string  (cc_char);
@@ -992,14 +1043,30 @@ protected:
         return be->emitCPP();
     }
 
+
+    int basicTestWithGPUSchedule(
+            fir::high_level_schedule::ProgramScheduleNode::Ptr program) {
+
+        graphit::Midend *me = new graphit::Midend(context_, program->getSchedule());
+        std::cout << "fir: " << std::endl;
+        std::cout << *(context_->getProgram());
+        std::cout << std::endl;
+
+        me->emitMIR(mir_context_);
+        graphit::Backend *be = new graphit::Backend(mir_context_);
+        return be->emitGPU();
+    }
+
     std::vector<ParseError> *errors_;
     graphit::FIRContext *context_;
     Frontend *fe_;
     graphit::MIRContext *mir_context_;
 
     string bfs_str_;
+    string bfs_str_gpu_;
     string pr_str_;
     string sssp_str_;
+    string sssp_str_gpu_;
     string sssp_async_str_;
     string cf_str_;
     string cc_str_;
@@ -2593,13 +2660,13 @@ TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushParallel){
 }
 
 TEST_F(HighLevelScheduleTest, UnorderedKCoreSparsePushDensePullParallel){
-istringstream is (unordered_kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    istringstream is (unordered_kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "SparsePush-DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    program->configApplyDirection("s1", "SparsePush-DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSumReduceBeforeUpdate){
@@ -2659,23 +2726,23 @@ EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreDensePullParallel){
-istringstream is (kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
-        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, KCoreSparsePushDensePullParallel){
-istringstream is (kcore_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
-        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-program->configApplyDirection("s1", "SparsePush-DensePull");
-program->configApplyParallelization("s1", "dynamic-vertex-parallel");
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    istringstream is (kcore_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    program->configApplyDirection("s1", "SparsePush-DensePull");
+    program->configApplyParallelization("s1", "dynamic-vertex-parallel");
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
 TEST_F(HighLevelScheduleTest, ParForSimpleSchedule){
@@ -2708,15 +2775,84 @@ TEST_F(HighLevelScheduleTest, ParForNestedSchedule){
 }
 
 TEST_F(HighLevelScheduleTest, SetCoverUintDefaultSchedule){
-istringstream is (setcover_uint_str_);
-fe_->parseStream(is, context_, errors_);
-fir::high_level_schedule::ProgramScheduleNode::Ptr program
+    istringstream is (setcover_uint_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
         = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
-EXPECT_EQ (0, basicTestWithSchedule(program));
+    EXPECT_EQ (0, basicTestWithSchedule(program));
 }
 
+TEST_F(HighLevelScheduleTest, BFSBasicSimpleGPUScheduleTest) {
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Now apply the GPU Schedule
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    s1.configDeduplication(fir::gpu_schedule::DISABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+    program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
 
+TEST_F(HighLevelScheduleTest, BFSBasicHybridGPUScheduleTest) {
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Now apply the GPU Schedule
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    fir::gpu_schedule::SimpleGPUSchedule s2;
+    s1.configDeduplication(fir::gpu_schedule::DISABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+    s2 = s1;
+    s2.configDirection(fir::gpu_schedule::PULL);
+    fir::gpu_schedule::HybridGPUSchedule h1 (fir::gpu_schedule::INPUT_VERTEXSET_SIZE, 0.2, s1, s2);
+    program->applyGPUSchedule("s1", h1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
 
+TEST_F(HighLevelScheduleTest, SSSP_LabelProp_GPUScheduleTest) {
+    istringstream is (sssp_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    s1.configDeduplication(fir::gpu_schedule::ENABLED);
+    s1.configDirection(fir::gpu_schedule::PUSH);
+    program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
 
+TEST_F(HighLevelScheduleTest, DeltaSteppingWithDefaultGPUSchedule) {
+    istringstream is (delta_stepping_str_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+        = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    fir::gpu_schedule::SimpleGPUSchedule s1;
+    program->applyGPUSchedule("s1", s1);
+    EXPECT_EQ (0, basicTestWithGPUSchedule(program));
+}
 
+TEST_F(HighLevelScheduleTest, BFSHybridPushPullScheduleTest) {
+    using namespace fir::gpu_schedule;
 
+    istringstream is (bfs_str_gpu_);
+    fe_->parseStream(is, context_, errors_);
+    fir::high_level_schedule::ProgramScheduleNode::Ptr program
+            = std::make_shared<fir::high_level_schedule::ProgramScheduleNode>(context_);
+    // Now apply the GPU Schedule
+    SimpleGPUSchedule s1;
+    s1.configDeduplication(ENABLED);
+    s1.configFrontierCreation(UNFUSED_BITMAP);
+    s1.configLoadBalance(TWCE);
+    s1.configDirection(PUSH);
+    
+    SimpleGPUSchedule s2 = s1;
+    s2.configLoadBalance(VERTEX_BASED);
+    s2.configDirection(PULL, BITMAP);
+    
+    HybridGPUSchedule h1 (INPUT_VERTEXSET_SIZE, 0.12, s1, s2);
+    program->applyGPUSchedule("s1", h1);
+    EXPECT_EQ(0, basicTestWithGPUSchedule(program));
+}
