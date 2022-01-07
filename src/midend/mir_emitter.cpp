@@ -666,6 +666,10 @@ namespace graphit {
                     auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->from_expr));
                     edgeset_apply_expr->from_func = funcExpr;
                 }
+                if (apply_expr->sample_from_expr) {
+                    auto funcExpr = mir::to<mir::FuncExpr>(emitExpr(apply_expr->sample_from_expr));
+                    edgeset_apply_expr->sample_from_func = funcExpr;
+                }
                 if (apply_expr->change_tracking_field != nullptr)
                     edgeset_apply_expr->tracking_field = fir::to<fir::Identifier>(
                             apply_expr->change_tracking_field)->ident;

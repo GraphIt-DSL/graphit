@@ -890,4 +890,8 @@ TEST_F(FrontendTest, LocalVectorOneElement) {
     EXPECT_EQ(0, basicTest(is));
 }
 
-
+TEST_F(FrontendTest, SimpleApplySampleFromFilterWithBoolExpression){
+    istringstream is("func from_filter (v: Vertex) -> output :bool output = (age[v] > 40); end\n"
+            "func main() var active_vertices : vertexset{Vertex} = edges.sample_from(from_filter).apply(foo); end");
+    EXPECT_EQ (0,  basicTest(is));
+}

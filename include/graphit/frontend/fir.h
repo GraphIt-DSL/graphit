@@ -1786,6 +1786,24 @@ namespace graphit {
         };
 
 
+        struct SampleFromExpr : public Expr {
+            //Identifier::Ptr input_func;
+
+            FuncExpr::Ptr input_func;
+
+            typedef std::shared_ptr<SampleFromExpr> Ptr;
+
+            virtual void accept(FIRVisitor *visitor) {
+                visitor->visit(self<SampleFromExpr>());
+            }
+
+
+        protected:
+            virtual void copy(FIRNode::Ptr);
+
+            virtual FIRNode::Ptr cloneNode();
+        };
+
         struct ToExpr : public Expr {
             //Identifier::Ptr input_func;
 
@@ -1816,6 +1834,7 @@ namespace graphit {
             FuncExpr::Ptr input_function;
             FromExpr::Ptr from_expr;
             ToExpr::Ptr to_expr;
+            SampleFromExpr::Ptr sample_from_expr;
             Identifier::Ptr change_tracking_field;
             bool disable_deduplication = false;
             Type type = Type::REGULAR_APPLY;

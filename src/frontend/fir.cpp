@@ -1193,6 +1193,9 @@ namespace graphit {
             if (apply_expr->from_expr){
                 from_expr = apply_expr->from_expr->clone<FromExpr>();
             }
+            if (apply_expr->sample_from_expr){
+                sample_from_expr = apply_expr->sample_from_expr->clone<SampleFromExpr>();
+            }
             if (apply_expr->to_expr){
                 to_expr = apply_expr->to_expr->clone<ToExpr>();
             }
@@ -1225,6 +1228,18 @@ namespace graphit {
 
         FIRNode::Ptr FromExpr::cloneNode() {
             const auto node = std::make_shared<FromExpr>();
+            node->copy(shared_from_this());
+            return node;
+        }
+
+        void SampleFromExpr::copy(FIRNode::Ptr node) {
+            const auto from_expr = to<SampleFromExpr>(node);
+            Expr::copy(from_expr);
+            input_func = from_expr->input_func->clone<FuncExpr>();
+       }
+
+        FIRNode::Ptr SampleFromExpr::cloneNode() {
+            const auto node = std::make_shared<SampleFromExpr>();
             node->copy(shared_from_this());
             return node;
         }

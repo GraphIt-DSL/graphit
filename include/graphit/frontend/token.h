@@ -105,6 +105,7 @@ namespace graphit {
             FILTER,
             LOAD,
             FROM,
+            SAMPLE_FROM,
             BREAK,
             NUMBER_SIGN,
             MODIFIED,

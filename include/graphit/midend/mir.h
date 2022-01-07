@@ -967,6 +967,9 @@ namespace graphit {
 
             FuncExpr::Ptr from_func = nullptr;
             FuncExpr::Ptr to_func = nullptr;
+            //Enum value for independent or fixed-size sampling
+            //And size for fixed sampling
+            FuncExpr::Ptr sample_from_func = nullptr;
 
             bool is_parallel = false;
             bool enable_deduplication = false;

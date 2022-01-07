@@ -64,6 +64,7 @@ namespace graphit {
         if (token == "where") return Token::Type::WHERE;
         if (token == "filter") return Token::Type::FILTER;
         if (token == "from") return Token::Type::FROM;
+        if (token == "sample_from") return Token::Type::SAMPLE_FROM;
         if (token == "srcFilter") return Token::Type::SRC_FILTER;
         if (token == "break") return Token::Type::BREAK;
         if (token == "#") return Token::Type::NUMBER_SIGN;

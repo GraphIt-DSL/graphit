@@ -275,3 +275,54 @@ TEST_F(MidendTest, UDFDuplicationBasicTestNoDup) {
     EXPECT_EQ(0, basicTest(is));
     EXPECT_EQ(2, mir_context_->getFunctionList().size());
 }
+
+TEST_F(MidendTest, SampledFromTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](src : Vertex, dst : Vertex)\n"
+                     "    simpleArray[src] += a;\n"
+                     "    simpleArray[dst] += a;\n"
+                     "end\n"
+                     "func sample_weights(v: Vertex) -> output:int output = 2; end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    edges.sample_from(sample_weights).apply(addStuff[test]);\n"
+                     "    addStuff[test](0); \n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+    //mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    //mir::AssignStmt::Ptr apply_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
+    //rhs of assign should be edgesetapplyexpr
+    //EXPECT_EQ(true, mir::isa<mir::App>(assign_stmt->expr));
+    //EXPECT_EQ(, fir_context_.get_program().)
+}
+
+TEST_F(MidendTest, SampledFromWithToFromTest) {
+
+    istringstream is("element Vertex end\n"
+                     "element Edge end\n"
+                     "const edges : edgeset{Edge}(Vertex, Vertex) = load (\"test.el\");\n"
+                     "const vertices : vertexset{Vertex} = edges.getVertices();\n"
+                     "const simpleArray: vector{Vertex}(int) = 0;\n"
+                     "func addStuff[a: int](src : Vertex, dst : Vertex)\n"
+                     "    simpleArray[src] += a;\n"
+                     "    simpleArray[dst] += a;\n"
+                     "end\n"
+                     "func sample_weights(v: Vertex) -> output:int output = 2; end\n"
+                     "func sample_bool(v: Vertex) -> output: bool output = true; end\n"
+                     "func main()\n"
+                     "    var test: int = 5;\n"
+                     "    edges.to(sample_bool).sample_from(sample_weights).from(sample_bool).apply(addStuff[test]);\n"
+                     "    addStuff[test](0); \n"
+                     "end\n"
+
+    );
+    EXPECT_EQ(0, basicTest(is));
+
+}

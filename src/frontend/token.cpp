@@ -180,6 +180,8 @@ namespace graphit {
                 return "'true'";
             case Token::Type::FALSE:
                 return "'false'";
+            case Token::Type::SAMPLE_FROM:
+                return "'sample_from'";
             default:
                 //unreachable;
                 return "";

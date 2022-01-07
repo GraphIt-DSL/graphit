@@ -123,6 +123,7 @@ namespace graphit {
         struct ApplyExpr;
         struct WhereExpr;
         struct FromExpr;
+        struct SampleFromExpr;
         struct ToExpr;
         struct BreakStmt;
 
@@ -320,6 +321,7 @@ namespace graphit {
             virtual void visit(std::shared_ptr<ApplyExpr>);
             virtual void visit(std::shared_ptr<WhereExpr>);
             virtual void visit(std::shared_ptr<FromExpr>);
+            virtual void visit(std::shared_ptr<SampleFromExpr>);
             virtual void visit(std::shared_ptr<ToExpr>);
 	
             // OG Additions

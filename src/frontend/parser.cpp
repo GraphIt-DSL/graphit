@@ -1274,6 +1274,7 @@ namespace graphit {
 
         fir::FromExpr::Ptr from_expr;
         fir::ToExpr::Ptr to_expr;
+        fir::SampleFromExpr::Ptr sample_from_expr;
 
         while (tryConsume(Token::Type::PERIOD)) {
 
@@ -1290,6 +1291,11 @@ namespace graphit {
                 to_expr = std::make_shared<fir::ToExpr>();
                 to_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
+            } else if (tryConsume(Token::Type::SAMPLE_FROM)) {
+                consume(Token::Type::LP);
+                sample_from_expr = std::make_shared<fir::SampleFromExpr>();
+                sample_from_expr->input_func = parseFunctorExpr();
+                consume(Token::Type::RP);
             } else if (tryConsume(Token::Type::APPLY)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
@@ -1301,6 +1307,7 @@ namespace graphit {
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
                 apply_expr->from_expr = from_expr;
                 apply_expr->to_expr = to_expr;
+                apply_expr->sample_from_expr = sample_from_expr;
             } else if (tryConsume(Token::Type::APPLYMODIFIED)) {
                 consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
@@ -1324,6 +1331,7 @@ namespace graphit {
                 consume(Token::Type::RP);
                 apply_expr->from_expr = from_expr;
                 apply_expr->to_expr = to_expr;
+                apply_expr->sample_from_expr = sample_from_expr;
                 apply_expr->type = fir::ApplyExpr::Type::REGULAR_APPLY;
                 expr = apply_expr;
 
@@ -1337,6 +1345,7 @@ namespace graphit {
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY;
                 apply_expr->from_expr = from_expr;
                 apply_expr->to_expr = to_expr;
+                apply_expr->sample_from_expr = sample_from_expr;
                 expr = apply_expr;
             } else if (tryConsume(Token::Type::APPLY_UPDATE_PRIORITY_EXTERN)) {
                 consume(Token::Type::LP);
@@ -1348,6 +1357,7 @@ namespace graphit {
                 apply_expr->type = fir::ApplyExpr::Type::UPDATE_PRIORITY_EXTERN_APPLY;
                 apply_expr->from_expr = from_expr;
                 apply_expr->to_expr = to_expr;
+                apply_expr->sample_from_expr = sample_from_expr;
                 expr = apply_expr;
             } else if (tryConsume(Token::Type::WHERE) || tryConsume(Token::Type::FILTER)) {
                 consume(Token::Type::LP);
