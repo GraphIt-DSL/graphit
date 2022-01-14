@@ -254,6 +254,10 @@ namespace graphit {
                 to_func = expr->to_func->clone<FuncExpr>();
             }
 
+            if (expr->sample_from_func) {
+                sample_from_func = expr->sample_from_func->clone<FuncExpr>();
+            }
+
             is_parallel = expr->is_parallel;
             enable_deduplication = expr->enable_deduplication;
             is_weighted = expr->is_weighted;

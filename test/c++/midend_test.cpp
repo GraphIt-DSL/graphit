@@ -296,11 +296,16 @@ TEST_F(MidendTest, SampledFromTest) {
 
     );
     EXPECT_EQ(0, basicTest(is));
-    //mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
-    //mir::AssignStmt::Ptr apply_stmt = mir::to<mir::AssignStmt>((*(while_stmt->body->stmts))[0]);
-    //rhs of assign should be edgesetapplyexpr
-    //EXPECT_EQ(true, mir::isa<mir::App>(assign_stmt->expr));
-    //EXPECT_EQ(, fir_context_.get_program().)
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(main_func_decl->body->stmts))[1]);
+    EXPECT_EQ(true, mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr));
+    mir::EdgeSetApplyExpr::Ptr apply_stmt = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
+
+    //std::cout<<"Sample_from_func in test: " << apply_stmt->sample_from_func<<endl;
+    EXPECT_EQ(true, mir::isa<mir::FuncExpr>(apply_stmt->sample_from_func));
+    EXPECT_NE(nullptr, apply_stmt->sample_from_func.get());
+    EXPECT_EQ(nullptr, apply_stmt->from_func.get());
+    EXPECT_EQ(nullptr, apply_stmt->to_func.get());
 }
 
 TEST_F(MidendTest, SampledFromWithToFromTest) {
@@ -324,5 +329,16 @@ TEST_F(MidendTest, SampledFromWithToFromTest) {
 
     );
     EXPECT_EQ(0, basicTest(is));
+    mir::FuncDecl::Ptr main_func_decl = mir_context_->getFunction("main");
+    mir::ExprStmt::Ptr expr_stmt = mir::to<mir::ExprStmt>((*(main_func_decl->body->stmts))[1]);
+    EXPECT_EQ(true, mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr));
+    mir::EdgeSetApplyExpr::Ptr apply_stmt = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
 
+    //std::cout<<"Sample_from_func in test: " << apply_stmt->sample_from_func<<endl;
+    EXPECT_EQ(true, mir::isa<mir::FuncExpr>(apply_stmt->sample_from_func));
+    EXPECT_EQ(true, mir::isa<mir::FuncExpr>(apply_stmt->from_func));
+    EXPECT_EQ(true, mir::isa<mir::FuncExpr>(apply_stmt->to_func));
+    EXPECT_NE(nullptr, apply_stmt->sample_from_func.get());
+    EXPECT_NE(nullptr, apply_stmt->from_func.get());
+    EXPECT_NE(nullptr, apply_stmt->to_func.get());
 }

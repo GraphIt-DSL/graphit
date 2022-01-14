@@ -1015,6 +1015,7 @@ namespace graphit {
                 input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                sample_from_func = edgeset_apply->sample_from_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1042,6 +1043,7 @@ namespace graphit {
                 input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                sample_from_func = edgeset_apply->sample_from_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1073,6 +1075,7 @@ namespace graphit {
                 input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                sample_from_func = edgeset_apply->sample_from_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
@@ -1102,6 +1105,7 @@ namespace graphit {
                 input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                sample_from_func = edgeset_apply->sample_from_func;
                 push_to_function_ = edgeset_apply->to_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
@@ -1474,6 +1478,7 @@ namespace graphit {
                 input_function = edgeset_apply->input_function;
                 from_func = edgeset_apply->from_func;
                 to_func = edgeset_apply->to_func;
+                sample_from_func = edgeset_apply->sample_from_func;
                 tracking_field = edgeset_apply->tracking_field;
                 is_weighted = edgeset_apply->is_weighted;
                 is_parallel = edgeset_apply->is_parallel;
