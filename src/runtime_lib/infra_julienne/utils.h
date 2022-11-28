@@ -111,6 +111,10 @@ namespace sequence {
 
 #define nblocks(_n,_bsize) (1 + ((_n)-1)/(_bsize))
 
+#ifdef blocked_for
+#undef blocked_for
+#endif
+
 #define blocked_for(_i, _s, _e, _bsize, _body)  {	\
     intT _ss = _s;					\
     intT _ee = _e;					\
