@@ -415,6 +415,7 @@ namespace graphit {
 
         std::vector<mir::Type::Ptr> types_requiring_typedef;
 
+	std::string source_filename;
 
     };
 

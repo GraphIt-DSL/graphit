@@ -45,6 +45,11 @@ namespace graphit {
         mir::ElementType::Ptr dst_vertex_type = (*(edgeset_type->vertex_element_type_list))[1];
         auto dst_vertices_range_expr = mir_context_->getElementCount(dst_vertex_type);
 
+
+	auto udf_func_decl = mir_context_->getFunction(edgeset_apply->input_function->function_name->name);
+	if (udf_func_decl != nullptr)
+		udf_func_decl->callsite = edgeset_apply;
+
         if (edgeset_type->weight_type != nullptr) {
             edgeset_apply->is_weighted = true;
         }

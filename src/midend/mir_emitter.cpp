@@ -8,13 +8,19 @@ namespace graphit {
 
 
     void MIREmitter::visit(fir::ConstDecl::Ptr const_decl) {
-
         addVarOrConst(const_decl, true);
     };
+
+    static void copySrcInfo(mir::MIRNode::Ptr x, fir::FIRNode::Ptr y) {
+	x->lineBegin = y->lineBegin;
+	x->lineEnd = y->lineEnd;
+    }
+
 
     void MIREmitter::visit(fir::VarDecl::Ptr var_decl) {
         addVarOrConst(var_decl, false);
         auto mir_var_decl = std::make_shared<mir::VarDecl>();
+	copySrcInfo(mir_var_decl, var_decl);
         mir_var_decl->name = var_decl->name->ident;
         if (var_decl->initVal != nullptr)
             mir_var_decl->initVal = emitExpr(var_decl->initVal);
@@ -22,6 +28,7 @@ namespace graphit {
             mir_var_decl->initVal = nullptr;
         mir_var_decl->type = emitType(var_decl->type);
         mir_var_decl->stmt_label = var_decl->stmt_label;
+        
 
         retStmt = mir_var_decl;
     };
@@ -30,6 +37,7 @@ namespace graphit {
         auto mir_expr_stmt = std::make_shared<mir::ExprStmt>();
         mir_expr_stmt->expr = emitExpr(expr_stmt->expr);
         mir_expr_stmt->stmt_label = expr_stmt->stmt_label;
+
         retStmt = mir_expr_stmt;
     }
 
@@ -672,6 +680,8 @@ namespace graphit {
                 if (apply_expr->disable_deduplication) edgeset_apply_expr->enable_deduplication = false;
                 else edgeset_apply_expr->enable_deduplication = true;
                 retExpr = edgeset_apply_expr;
+		
+        	copySrcInfo(edgeset_apply_expr, apply_expr);
 
             } else if (apply_expr->type == fir::ApplyExpr::Type::UPDATE_PRIORITY_APPLY) {
                 auto apply_update_priority_expr = std::make_shared<mir::UpdatePriorityEdgeSetApplyExpr>();
@@ -754,10 +764,13 @@ namespace graphit {
 
     void MIREmitter::visit(fir::FuncDecl::Ptr func_decl) {
         auto mir_func_decl = std::make_shared<mir::FuncDecl>();
+
+        copySrcInfo(mir_func_decl, func_decl); 
         ctx->scope();
         std::vector<mir::Var> arguments = emitArgumentVariables(func_decl->args);
         std::vector<mir::Var> functorArguments = emitArgumentVariables(func_decl->functorArgs);
 
+	
 
         //processing the arguments to the function declaration
 
@@ -841,6 +854,7 @@ namespace graphit {
 
         ptr->accept(this);
         const mir::Expr::Ptr ret = retExpr;
+	copySrcInfo(retExpr, ptr);
 
         retExpr = tmpExpr;
         return ret;
@@ -852,6 +866,7 @@ namespace graphit {
 
         ptr->accept(this);
         const mir::Stmt::Ptr ret = retStmt;
+	copySrcInfo(retStmt, ptr);
 
         retStmt = tmpStmt;
         return ret;
@@ -884,6 +899,7 @@ namespace graphit {
 
         ptr->accept(this);
         const mir::ForDomain::Ptr ret = retForDomain;
+	copySrcInfo(retForDomain, ptr);
 
         retForDomain = tmpDomain;
         return ret;
@@ -900,6 +916,7 @@ namespace graphit {
         //TODO: see if there is a cleaner way to do this, constructor may be???
         //construct a var decl variable
         const auto mir_var_decl = std::make_shared<mir::VarDecl>();
+	copySrcInfo(mir_var_decl, var_decl);
         if (var_decl->initVal)
             mir_var_decl->initVal = emitExpr(var_decl->initVal);
         mir_var_decl->name = var_decl->name->ident;

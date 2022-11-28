@@ -6,6 +6,11 @@
 
 namespace  graphit {
 
+    static void copySrcInfo(mir::MIRNode::Ptr x, mir::MIRNode::Ptr y) {
+	x->lineBegin = y->lineBegin;
+	x->lineEnd = y->lineEnd;
+    }
+
     void GlobalFieldVectorLower::lowerConstVectorVarDecl() {
 
         //a stmt block that contains the initilization of global field vectors (excluding the vertex and edge sets)
@@ -72,6 +77,8 @@ namespace  graphit {
 
                             auto mir_stmt_body = std::make_shared<mir::StmtBlock>();
                             auto assign_stmt = std::make_shared<mir::AssignStmt>();
+                            copySrcInfo(assign_stmt, var_decl);
+			    copySrcInfo(copy_over_apply_func, var_decl);
 
                             auto lhs = std::make_shared<mir::TensorReadExpr>(
                                     var_decl->name, "v",
@@ -107,6 +114,7 @@ namespace  graphit {
                                                                               global_vertex_set_var_decl->type,
                                                                               funcExprApply);
                             mir::ExprStmt::Ptr apply_stmt = std::make_shared<mir::ExprStmt>();
+                            copySrcInfo(apply_stmt, var_decl);
                             apply_stmt->expr = vertex_set_apply_expr;
 
                             //No longer directly add to the main function block
@@ -120,6 +128,7 @@ namespace  graphit {
 
 
                             auto tmp_var_assign_stmt = std::make_shared<mir::AssignStmt>();
+                            copySrcInfo(tmp_var_assign_stmt, var_decl);
                             auto tmp_var_expr = std::make_shared<mir::VarExpr>();
                             tmp_var_expr->var = mir::Var(tmp_var_decl->name, tmp_var_decl->type);
                             tmp_var_assign_stmt->lhs = tmp_var_expr;
@@ -156,7 +165,9 @@ namespace  graphit {
                         copy_over_apply_func->args = arg_var_list;
 
                         auto mir_stmt_body = std::make_shared<mir::StmtBlock>();
-                        auto assign_stmt = std::make_shared<mir::AssignStmt>();
+			auto assign_stmt = std::make_shared<mir::AssignStmt>();
+			copySrcInfo(assign_stmt, var_decl);
+			copySrcInfo(copy_over_apply_func, var_decl);
 
                         auto lhs = std::make_shared<mir::TensorReadExpr>(
                                 var_decl->name, "v",
@@ -188,6 +199,7 @@ namespace  graphit {
                                                                           global_vertex_set_var_decl->type,
                                                                           funcExprApply);
                         mir::ExprStmt::Ptr apply_stmt = std::make_shared<mir::ExprStmt>();
+                        copySrcInfo(apply_stmt, var_decl);
                         apply_stmt->expr = vertex_set_apply_expr;
 
                         //No longer directly add to the main function block

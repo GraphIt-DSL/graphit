@@ -5,6 +5,19 @@
 
 namespace graphit {
     using namespace std;
+/*
+    void EdgesetApplyFunctionDeclGenerator::gotoNextLine(void) {
+
+	auto loc = curr_loc;
+	if (loc.foffset == -1) {
+		loc.foffset = loc.line;
+		loc.fname = "<global>";	
+	}
+	xctx.push_source_loc(loc);
+	xctx.nextl();
+
+    }
+*/
 
     void EdgesetApplyFunctionDeclGenerator::visit(mir::PushEdgeSetApplyExpr::Ptr push_apply) {
         genEdgeApplyFunctionDeclaration(push_apply);
@@ -35,9 +48,12 @@ namespace graphit {
 
         genEdgeApplyFunctionSignature(apply);
         oss_ << "{ " << endl; //the end of the function declaration
+	xctx.nextl();
         genEdgeApplyFunctionDeclBody(apply);
         oss_ << "} //end of edgeset apply function " << endl; //the end of the function declaration
-
+        xctx.nextl();
+        xctx.emit_function_info(oss_);
+        xctx.end_section();
     }
 
     void EdgesetApplyFunctionDeclGenerator::genEdgeApplyFunctionDeclBody(mir::EdgeSetApplyExpr::Ptr apply) {
@@ -83,6 +99,7 @@ namespace graphit {
                                                                  bool apply_expr_gen_frontier,
                                                                  bool from_vertexset_specified) {
         oss_ << "    int64_t numVertices = g.num_nodes(), numEdges = g.num_edges();\n";
+        xctx.nextl();
 
 
         if (!mir::isa<mir::PullEdgeSetApplyExpr>(apply)) {
@@ -98,31 +115,51 @@ namespace graphit {
                     || (mir::isa<mir::PushEdgeSetApplyExpr>(apply) && apply_expr_gen_frontier)) {
                 if (from_vertexset_specified) {
                     oss_ << "    from_vertexset->toSparse();" << std::endl;
+		    xctx.nextl();
                     oss_ << "    long m = from_vertexset->size();\n";
+                    xctx.nextl();
 
                 } else {
                     oss_ << "    long m = numVertices; \n";
+                    xctx.nextl();
                 }
-                oss_ << "    // used to generate nonzero indices to get degrees\n"
-                        "    uintT *degrees = newA(uintT, m);\n"
-                        "    // We probably need this when we get something that doesn't have a dense set, not sure\n"
-                        "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n"
-                        "    //from_vertexset->toSparse();\n"
-                        "    {\n";
+                oss_ << "    // used to generate nonzero indices to get degrees\n";
+                	xctx.nextl();
+                oss_ << "    uintT *degrees = newA(uintT, m);\n";
+                        xctx.nextl();
+                oss_ << "    // We probably need this when we get something that doesn't have a dense set, not sure\n";
+                        xctx.nextl();
+                oss_ << "    // We can also write our own, the eixsting one doesn't quite work for bitvectors\n";
+                        xctx.nextl();
+                oss_ << "    //from_vertexset->toSparse();\n";
+                        xctx.nextl();
+                oss_ << "    {\n";
+                        xctx.nextl();
 
                 if (from_vertexset_specified){
-                    oss_ <<  "        ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {\n"
-                            "            NodeID v = from_vertexset->dense_vertex_set_[i];\n"
-                            "            degrees[i] = g.out_degree(v);\n"
-                            "         });\n"
-                            "    }\n"
-                            "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                    oss_ <<  "        ligra::parallel_for_lambda((long)0, (long)m, [&] (long i) {\n";
+                        xctx.nextl();
+                    oss_ << "            NodeID v = from_vertexset->dense_vertex_set_[i];\n";
+                        xctx.nextl();
+                    oss_ << "            degrees[i] = g.out_degree(v);\n";
+                        xctx.nextl();
+                    oss_ << "         });\n";
+                        xctx.nextl();
+                    oss_ << "    }\n";
+                        xctx.nextl();
+                    oss_ << "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                        xctx.nextl();
                 } else {
-                    oss_ << "        ligra::parallel_for_lambda((long)0, (long)numVertices, [&] (long i) {\n"
-                            "            degrees[i] = g.out_degree(i);\n"
-                            "        });\n"
-                            "    }\n"
-                            "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                    oss_ << "        ligra::parallel_for_lambda((long)0, (long)numVertices, [&] (long i) {\n";
+                        xctx.nextl();
+                    oss_ << "            degrees[i] = g.out_degree(i);\n";
+                        xctx.nextl();
+                    oss_ << "        });\n";
+                        xctx.nextl();
+                    oss_ << "    }\n";
+                        xctx.nextl();
+                    oss_ << "    uintT outDegrees = sequence::plusReduce(degrees, m);\n";
+                        xctx.nextl();
                 }
             }
             else if (mir::isa<mir::PushEdgeSetApplyExpr>(apply)){
@@ -130,10 +167,13 @@ namespace graphit {
                 // even when it does not return a frontier
                 if (from_vertexset_specified) {
                     oss_ << "    from_vertexset->toSparse();" << std::endl;
+                    xctx.nextl();
                     oss_ << "    long m = from_vertexset->size();\n";
+                    xctx.nextl();
 
                 } else {
                     oss_ << "    long m = numVertices; \n";
+                    xctx.nextl();
                 }
             }
         }
@@ -163,6 +203,7 @@ namespace graphit {
         if (apply->enable_deduplication && apply_expr_gen_frontier) {
 
             oss_ << "auto deduplication_flag = g.get_flags_atomic_();\n";
+            xctx.nextl();
 
         }
 
@@ -171,18 +212,26 @@ namespace graphit {
             // build an empty vertex subset if apply function returns
             //set up code for outputing frontier for push based edgeset apply operations
             oss_ << "    VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n";
+            xctx.nextl();
             if (from_vertexset_specified){
-                oss_ << "    if (numVertices != from_vertexset->getVerticesRange()) {\n"
-                        "        cout << \"edgeMap: Sizes Don't match\" << endl;\n"
-                        "        abort();\n"
-                        "    }\n";
+                oss_ << "    if (numVertices != from_vertexset->getVerticesRange()) {\n";
+            	xctx.nextl();
+                oss_ << "        cout << \"edgeMap: Sizes Don't match\" << endl;\n";
+            	xctx.nextl();
+                oss_ << "        abort();\n";
+            	xctx.nextl();
+                oss_ << "    }\n";
+            	xctx.nextl();
             }
 
-            oss_ <<
-                         "    if (outDegrees == 0) return next_frontier;\n"
-                         "    uintT *offsets = degrees;\n"
-                         "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n"
-                         "    uintE *outEdges = newA(uintE, outEdgeCount);\n";
+            oss_ << "    if (outDegrees == 0) return next_frontier;\n";
+            	xctx.nextl();
+            oss_ << "    uintT *offsets = degrees;\n";
+            	xctx.nextl();
+            oss_ << "    long outEdgeCount = sequence::plusScan(offsets, degrees, m);\n";
+            	xctx.nextl();
+            oss_ << "    uintE *outEdges = newA(uintE, outEdgeCount);\n";
+            	xctx.nextl();
         }
 
 
@@ -202,42 +251,55 @@ namespace graphit {
 
 
         if (apply->is_parallel) {
-            if (from_vertexset_specified)
+            if (from_vertexset_specified) {
                 oss_ << for_type << "(long)0, (long)m, [&] (long i) {" << std::endl;
-            else
+                xctx.nextl();
+            } else {
                 oss_ << for_type << "(NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+                xctx.nextl();
+	    }
         } else {
 
-            if (from_vertexset_specified)
+            if (from_vertexset_specified) {
                 oss_ << for_type << " (long i=0; i < m; i++) {" << std::endl;
-            else
+                xctx.nextl();
+	    } else {
                 oss_ << for_type << " (NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+                xctx.nextl();
+	    }
         }
 
         indent();
 
         if (from_vertexset_specified){
             oss_ << "    NodeID s = from_vertexset->dense_vertex_set_[i];\n";
+            xctx.nextl();
         }
 
         if (apply_expr_gen_frontier){
             oss_ <<  "    int j = 0;\n";
-            if (from_vertexset_specified)
+            xctx.nextl();
+            if (from_vertexset_specified) {
                 oss_ << "    uintT offset = offsets[i];\n";
-            else
+            	xctx.nextl();
+            } else {
                 oss_ << "    uintT offset = offsets[s];\n";
+            	xctx.nextl();
+	    }
         }
 
 
         if (apply->from_func && !from_vertexset_specified) {
             printIndent();
             oss_ << "if (from_func(s)){ " << std::endl;
+            xctx.nextl();
             indent();
         }
 
         printIndent();
 
         oss_ << "for(" << node_id_type << " d : g.out_neigh(s)){" << std::endl;
+        xctx.nextl();
 
 
         // print the checks on filtering on sources s
@@ -256,6 +318,7 @@ namespace graphit {
                 oss_ << " (to_vertexset->bool_map_[s] ";
             }
             oss_ << ") { " << std::endl;
+            xctx.nextl();
         }
 
         indent();
@@ -274,6 +337,7 @@ namespace graphit {
 
         if (!apply_expr_gen_frontier) {
             oss_ << ";" << std::endl;
+            xctx.nextl();
 
         } else {
 
@@ -289,11 +353,15 @@ namespace graphit {
             indent();
             //generate the code for adding destination to "next" frontier
             oss_ << " ) { " << std::endl;
+
+            xctx.nextl();
             printIndent();
             oss_ << "outEdges[offset + j] = " << dst_type << "; " << std::endl;
+            xctx.nextl();
             dedent();
             printIndent();
             oss_ << "} else { outEdges[offset + j] = UINT_E_MAX; }" << std::endl;
+            xctx.nextl();
 
 
 
@@ -309,10 +377,12 @@ namespace graphit {
             dedent();
             printIndent();
             oss_ << "} //end of to func" << std::endl;
+            xctx.nextl();
 
             if (apply_expr_gen_frontier){
                 printIndent();
                 oss_ << " else { outEdges[offset + j] = UINT_E_MAX;  }" << std::endl;
+                xctx.nextl();
             }
 
         }
@@ -321,17 +391,20 @@ namespace graphit {
         if (apply_expr_gen_frontier){
             printIndent();
             oss_ << "j++;" << std::endl;
+            xctx.nextl();
         }
 
         //end of for loop on the neighbors
         dedent();
         printIndent();
         oss_ << "} //end of for loop on neighbors" << std::endl;
+        xctx.nextl();
 
         if (apply->from_func && !from_vertexset_specified) {
             dedent();
             printIndent();
             oss_ << "} //end of from func " << std::endl;
+            xctx.nextl();
         }
 
 
@@ -342,38 +415,50 @@ namespace graphit {
 
             if (apply->grain_size != 1024){
                 oss_ << "}," << apply->grain_size << ");" << std::endl;
+                xctx.nextl();
 
             } else {
                 oss_ << "});" << std::endl;
+                xctx.nextl();
             }
 
         } else {
             oss_ << "}" << std::endl;
+            xctx.nextl();
         }
 
         //return a new vertexset if no subset vertexset is returned
         if (apply_expr_gen_frontier) {
-            oss_ << "  uintE *nextIndices = newA(uintE, outEdgeCount);\n"
-                    "  long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());\n"
-                    "  free(outEdges);\n"
-                    "  free(degrees);\n"
-                    "  next_frontier->num_vertices_ = nextM;\n"
-                    "  next_frontier->dense_vertex_set_ = nextIndices;\n";
+            oss_ << "  uintE *nextIndices = newA(uintE, outEdgeCount);\n";
+            xctx.nextl();	
+            oss_ << "  long nextM = sequence::filter(outEdges, nextIndices, outEdgeCount, nonMaxF());\n";
+            xctx.nextl();
+            oss_ << "  free(outEdges);\n";
+            xctx.nextl();
+            oss_ << "  free(degrees);\n";
+            xctx.nextl();
+            oss_ << "  next_frontier->num_vertices_ = nextM;\n";
+            xctx.nextl();
+            oss_ << "  next_frontier->dense_vertex_set_ = nextIndices;\n";
+            xctx.nextl();
 
 
             //set up logic fo enabling deduplication with CAS on flags (only if it returns a frontier)
             if (apply->enable_deduplication && from_vertexset_specified) {
                 //clear up the indices that are set
 
-                oss_ << "  ligra::parallel_for_lambda((int)0, (int)nextM, [&] (int i) {\n"
-                        "     deduplication_flag[nextIndices[i]] = 0;\n"
-                        "  });\n"
-                        "  g.return_flags_atomic_(deduplication_flag);\n";
-
-
+                oss_ << "  ligra::parallel_for_lambda((int)0, (int)nextM, [&] (int i) {\n";
+                xctx.nextl();
+                oss_ << "     deduplication_flag[nextIndices[i]] = 0;\n";
+                xctx.nextl();
+                oss_ << "  });\n";
+                xctx.nextl();
+                oss_ << "  g.return_flags_atomic_(deduplication_flag);\n";
+                xctx.nextl();
             }
 
             oss_ << "  return next_frontier;\n";
+            xctx.nextl();
         }
     }
 
@@ -391,6 +476,7 @@ namespace graphit {
         if (apply->to_func) {
             printIndent();
             oss_ << "if (to_func(d)){ " << std::endl;
+            xctx.nextl();
             indent();
         }
 
@@ -400,10 +486,13 @@ namespace graphit {
 
         if (cache_aware || numa_aware) {
             oss_ << "for (int64_t ngh = sg->vertexArray[localId]; ngh < sg->vertexArray[localId+1]; ngh++) {\n";
+            xctx.nextl();
             printIndent();
             oss_ << "  " << node_id_type << " s = sg->edgeArray[ngh];" << std::endl;
+            xctx.nextl();
         } else {
             oss_ << "for(" << node_id_type << " s : g.in_neigh(d)){" << std::endl;
+            xctx.nextl();
         }
 
 
@@ -431,6 +520,8 @@ namespace graphit {
                 }
             }
             oss_ << ") { " << std::endl;
+            xctx.nextl();
+
         }
 
         indent();
@@ -450,21 +541,26 @@ namespace graphit {
         if (!apply_expr_gen_frontier) {
             // no need to generate a frontier
             oss_ << ";" << std::endl;
+            xctx.nextl();
         } else {
             indent();
             //generate the code for adding destination to "next" frontier
             //TODO: fix later
             oss_ << " ) { " << std::endl;
+            xctx.nextl();
             printIndent();
             oss_ << "next[d] = 1; " << std::endl;
+            xctx.nextl();
             // generating code for early break
             if (apply->to_func) {
                 printIndent();
                 oss_ << "if (!to_func(d)) break; " << std::endl;
+                xctx.nextl();
             }
             dedent();
             printIndent();
             oss_ << "}" << std::endl;
+            xctx.nextl();
         }
 
 
@@ -474,50 +570,66 @@ namespace graphit {
             dedent();
             printIndent();
             oss_ << "}" << std::endl;
+            xctx.nextl();
         }
 
         //end of for loop on the neighbors
         dedent();
         printIndent();
         oss_ << "} //end of loop on in neighbors" << std::endl;
+        xctx.nextl();
 
         // end of to filtering (filtering on the destination)
         if (apply->to_func) {
             dedent();
             printIndent();
             oss_ << "} //end of to filtering " << std::endl;
+            xctx.nextl();
         }
     }
 
     // Iterate through per-socket local buffers and merge the result into the global buffer
     void EdgesetApplyFunctionDeclGenerator::printNumaMerge(mir::EdgeSetApplyExpr::Ptr apply) {
         oss_ << "}// end of per-socket parallel region\n\n";
+        xctx.nextl();
+        xctx.nextl();
         auto edgeset_name = mir::to<mir::VarExpr>(apply->target)->var.getName();
         auto merge_reduce = mir_context_->edgeset_to_label_to_merge_reduce[edgeset_name][apply->scope_label_name];
         oss_ << "  ligra::parallel_for_lambda ((int)0, (int)numVertices, [&] (int n) {\n";
+        xctx.nextl();
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        xctx.nextl();
         oss_ << "      " << apply->merge_reduce->field_name << "[n] ";
         switch (apply->merge_reduce->reduce_op) {
         case mir::ReduceStmt::ReductionOp::SUM:
             oss_ << "+= local_" << apply->merge_reduce->field_name  << "[socketId][n];\n";
+            xctx.nextl();
             break;
         case mir::ReduceStmt::ReductionOp::MIN:
             oss_ << "= min(" << apply->merge_reduce->field_name << "[n], local_"
                  << apply->merge_reduce->field_name  << "[socketId][n]);\n";
+            xctx.nextl();
             break;
         default:
             // TODO: fill in the missing operators when they are actually used
             abort();
         }
         oss_ << "    }\n  });" << std::endl;
+        xctx.nextl();
+        xctx.nextl();
     }
 
     void EdgesetApplyFunctionDeclGenerator::printNumaScatter(mir::EdgeSetApplyExpr::Ptr apply) {
         oss_ << "ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int n) {\n";
+        xctx.nextl();
         oss_ << "    for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+        xctx.nextl();
         oss_ << "      local_" << apply->merge_reduce->field_name  << "[socketId][n] = "
              << apply->merge_reduce->field_name << "[n];\n";
+        xctx.nextl();
         oss_ << "    }\n  });\n";
+        xctx.nextl();
+        xctx.nextl();
     }
 
     // Print the code for traversing the edges in the push direction and return the new frontier
@@ -538,6 +650,9 @@ namespace graphit {
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
                     "  ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
         }
 
         indent();
@@ -547,6 +662,7 @@ namespace graphit {
             if (!mir_context_->isFunction(apply->from_func->function_name->name)) {
                 printIndent();
                 oss_ << "from_vertexset->toDense();" << std::endl;
+                xctx.nextl();
             }
         }
 
@@ -562,6 +678,16 @@ namespace graphit {
                     "          bitmap.set_bit(j);\n"
                     "     }\n"
                     "  });" << std::endl;
+                    xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
         }
 
         printIndent();
@@ -599,18 +725,29 @@ namespace graphit {
             if (numa_aware) {
                 std::string num_segment_str = "g.getNumSegments(\"" + apply->scope_label_name + "\");";
                 oss_ << "  int numPlaces = omp_get_num_places();\n";
+            	xctx.nextl();
                 oss_ << "    int numSegments = g.getNumSegments(\"" + apply->scope_label_name + "\");\n";
+            	xctx.nextl();
                 oss_ << "    int segmentsPerSocket = (numSegments + numPlaces - 1) / numPlaces;\n";
+            	xctx.nextl();
                 oss_ << "#pragma omp parallel num_threads(numPlaces) proc_bind(spread)\n{\n";
+            	xctx.nextl();
+            	xctx.nextl();
                 oss_ << "    int socketId = omp_get_place_num();\n";
+            	xctx.nextl();
                 oss_ << "    for (int i = 0; i < segmentsPerSocket; i++) {\n";
+            	xctx.nextl();
                 oss_ << "      int segmentId = socketId + i * numPlaces;\n";
+            	xctx.nextl();
                 oss_ << "      if (segmentId >= numSegments) break;\n";
+            	xctx.nextl();
             } else {
                 oss_ << "  for (int segmentId = 0; segmentId < g.getNumSegments(\"" << apply->scope_label_name
                      << "\"); segmentId++) {\n";
+            	xctx.nextl();
             }
             oss_ << "      auto sg = g.getSegmentedGraph(std::string(\"" << apply->scope_label_name << "\"), segmentId);\n";
+            xctx.nextl();
             outer_end = "sg->numVertices";
             iter = "localId";
         }
@@ -620,19 +757,25 @@ namespace graphit {
             std::string for_type = "for";
             if (numa_aware) {
                 oss_ << "#pragma omp parallel num_threads(omp_get_place_num_procs(socketId)) proc_bind(close)\n{\n";
+            	xctx.nextl();
+            	xctx.nextl();
                 oss_ << "#pragma omp for schedule(dynamic, 1024)\n";
+            	xctx.nextl();
             }
 
             //printIndent();
             if (apply->is_parallel) {
               oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)" << outer_end << ", [&] (NodeID " << iter << ") {" << std::endl;
+              xctx.nextl();
             } else {
               oss_ << for_type << " ( NodeID " << iter << "=0; " << iter << " < " << outer_end << "; " << iter << "++) {" << std::endl;
+              xctx.nextl();
             }
             indent();
             if (cache_aware) {
                 printIndent();
                 oss_ << "NodeID d = sg->graphId[localId];" << std::endl;
+		xctx.nextl();
             }
         } else {
             // use edge based load balance
@@ -641,10 +784,13 @@ namespace graphit {
             //set up the edge index (in in edge array) for estimating number of edges
             oss_ << "  if (g.get_offsets_() == nullptr) g.SetUpOffsets(true);\n"
                     "  SGOffset * edge_in_index = g.get_offsets_();\n";
+            xctx.nextl();
+            xctx.nextl();
 
             oss_ << "    std::function<void(int,int,int)> recursive_lambda = \n"
                     "    [" << (apply->to_func ?  "&to_func, " : "")
                  << "&apply_func, &g,  &recursive_lambda, edge_in_index" << (cache_aware ? ", sg" : "");
+            xctx.nextl();
             // capture bitmap and next frontier if needed
             if (from_vertexset_specified) {
                 if(apply->use_pull_frontier_bitvector) oss_ << ", &bitmap ";
@@ -653,13 +799,20 @@ namespace graphit {
             if (apply_expr_gen_frontier) oss_ << ", &next ";
             oss_ <<"  ]\n"
                     "    (NodeID start, NodeID end, int grain_size){\n";
-            if (cache_aware)
+            xctx.nextl();
+            xctx.nextl();
+            if (cache_aware) {
                 oss_ << "         if ((start == end-1) || ((sg->vertexArray[end] - sg->vertexArray[start]) < grain_size)){\n"
                         "  for (NodeID localId = start; localId < end; localId++){\n"
                         "    NodeID d = sg->graphId[localId];\n";
-            else
+            	xctx.nextl();
+            	xctx.nextl();
+            	xctx.nextl();
+            } else {
                 oss_ << "         if ((start == end-1) || ((edge_in_index[end] - edge_in_index[start]) < grain_size)){\n"
                         "  for (NodeID d = start; d < end; d++){\n";
+            	xctx.nextl();
+            }
             indent();
 
         }
@@ -675,26 +828,37 @@ namespace graphit {
             printIndent();
             if (apply->is_parallel) {
               oss_ << "}); //end of outer for loop" << std::endl;
+	      xctx.nextl();
             } else {
               oss_ << "} //end of outer for loop" << std::endl;
+              xctx.nextl();
             }
         } else {
             dedent();
             printIndent();
             oss_ << " } //end of outer for loop" << std::endl;
+            xctx.nextl();
             oss_ << "        } else { // end of if statement on grain size, recursive case next\n"
                     "                  ligra::parallel_invoke([&] { recursive_lambda(start, start + ((end-start) >> 1), grain_size); },\n"
                     "                                         [&] { recursive_lambda(start + ((end-start)>>1), end, grain_size); });\n"
                     "        } \n"
                     "    }; //end of lambda function\n";
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
             oss_ << "    recursive_lambda(0, " << (cache_aware ? "sg->" : "") << "numVertices, "  <<  apply->pull_edge_based_load_balance_grain_size << ");\n";
+            xctx.nextl();
         }
 
         if (numa_aware) {
           oss_ << "} // end of per-socket parallel_for\n";
+            xctx.nextl();
         }
         if (cache_aware) {
             oss_ << "    } // end of segment for loop\n";
+            xctx.nextl();
         }
 
         if (numa_aware) {
@@ -707,6 +871,10 @@ namespace graphit {
                     "  next_frontier->bool_map_ = next;\n"
                     "  next_frontier->is_dense = true;\n"
                     "  return next_frontier;\n";
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
         }
 
     }
@@ -720,17 +888,20 @@ namespace graphit {
             std::string dst_type) {
 
         oss_ << "    if (m + outDegrees > numEdges / 20) {\n";
+        xctx.nextl();
         indent();
         //suppplies the pull based apply function
         printPullEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
         dedent();
         oss_ << "} else {\n";
+        xctx.nextl();
         indent();
         //uses a special "push_apply_func", which contains synchronizations for the push direction
         printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type,
                                              "push_apply_func");
         dedent();
         oss_ << "} //end of else\n";
+        xctx.nextl();
 
     }
 
@@ -750,6 +921,9 @@ namespace graphit {
             oss_ << "  VertexSubset<NodeID> *next_frontier = new VertexSubset<NodeID>(g.num_nodes(), 0);\n"
                     "  bool * next = newA(bool, g.num_nodes());\n"
                     "  ligra::parallel_for_lambda((int)0, (int)numVertices, [&] (int i) { next[i] = 0; });\n";
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
         }
 
         indent();
@@ -757,6 +931,7 @@ namespace graphit {
         if (from_vertexset_specified) {
             printIndent();
             oss_ << "from_vertexset->toDense();" << std::endl;
+            xctx.nextl();
         }
 
         printIndent();
@@ -770,8 +945,10 @@ namespace graphit {
 
         if (apply->is_parallel) {
             oss_ << "ligra::parallel_for_lambda((NodeID)0, (NodeID)g.num_nodes(), [&] (NodeID s) {" << std::endl;
+            xctx.nextl();
         } else {
             oss_ << "for ( NodeID s=0; s < g.num_nodes(); s++) {" << std::endl;
+            xctx.nextl();
         }
         indent();
 
@@ -791,12 +968,14 @@ namespace graphit {
                 oss_ << " (from_vertexset->bool_map_[s] ";
             }
             oss_ << ") { " << std::endl;
+            xctx.nextl();
         }
 
         indent();
         printIndent();
 
         oss_ << "for(" << node_id_type << " d : g.out_neigh(s)){" << std::endl;
+        xctx.nextl();
         indent();
         printIndent();
 
@@ -816,6 +995,7 @@ namespace graphit {
                 oss_ << " (to_vertexset->bool_map_[s] ";
             }
             oss_ << ") { " << std::endl;
+            xctx.nextl();
         }
 
         if (apply_expr_gen_frontier) {
@@ -832,17 +1012,21 @@ namespace graphit {
 
         if (!apply_expr_gen_frontier) {
             oss_ << ";" << std::endl;
+            xctx.nextl();
 
         } else {
             indent();
             //generate the code for adding destination to "next" frontier
             //TODO: fix later
             oss_ << " ) { " << std::endl;
+            xctx.nextl();
             printIndent();
             oss_ << "next[" << dst_type <<  "] = 1; " << std::endl;
+            xctx.nextl();
             dedent();
             printIndent();
             oss_ << "} //end of generating the next frontier" << std::endl;
+            xctx.nextl();
         }
 
 
@@ -852,25 +1036,30 @@ namespace graphit {
             dedent();
             printIndent();
             oss_ << "} // end of if to_func filtering" << std::endl;
+            xctx.nextl();
         }
 
 
         dedent();
         printIndent();
         oss_ << "} // end of inner for loop" << std::endl;
+        xctx.nextl();
 
         if (apply->from_func) {
             dedent();
             printIndent();
             oss_ << "} // end of if for from_func or from vertexset" << std::endl;
+            xctx.nextl();
         }
 
         dedent();
         printIndent();
         if (apply->is_parallel) {
             oss_ << "}); //end of outer for loop" << std::endl;
+            xctx.nextl();
         } else {
             oss_ << "} //end of outer for loop" << std::endl;
+            xctx.nextl();
         }
 
         //return a new vertexset if no subset vertexset is returned
@@ -878,6 +1067,9 @@ namespace graphit {
             oss_ << "  next_frontier->num_vertices_ = sequence::sum(next, numVertices);\n"
                     "  next_frontier->bool_map_ = next;\n"
                     "  return next_frontier;\n";
+            xctx.nextl();
+            xctx.nextl();
+            xctx.nextl();
         }
     }
 
@@ -886,17 +1078,20 @@ namespace graphit {
             std::string dst_type) {
 
         oss_ << "    if (m + outDegrees > numEdges / 20) {\n";
+            xctx.nextl();
         indent();
         //suppplies the pull based apply function
         printDenseForwardEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type);
         dedent();
         oss_ << "} else {\n";
+            xctx.nextl();
         indent();
         //uses a special "push_apply_func", which contains synchronizations for the push direction
         printPushEdgeTraversalReturnFrontier(apply, from_vertexset_specified, apply_expr_gen_frontier, dst_type
                                              );
         dedent();
         oss_ << "} //end of else\n";
+            xctx.nextl();
 
     }
 
@@ -999,6 +1194,8 @@ namespace graphit {
             arguments.push_back("PUSH_APPLY_FUNC push_apply_func");
         }
 
+	oss_ << xctx.begin_section();
+
         oss_ << "template <";
 
         bool first = true;
@@ -1023,7 +1220,8 @@ namespace graphit {
         }
 
         oss_ << ") " << endl;
-
+	xctx.nextl();
+	
 
     }
 

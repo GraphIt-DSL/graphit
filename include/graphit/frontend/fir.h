@@ -73,7 +73,7 @@ namespace graphit {
 
             virtual FIRNode::Ptr cloneNode() = 0;
 
-        private:
+        public:
             unsigned lineBegin;
             unsigned colBegin;
             unsigned lineEnd;

@@ -12,6 +12,8 @@
 #include <sstream>
 #include <string>
 
+#include "d2x/d2x.h"
+
 namespace graphit {
 
     /**
@@ -24,8 +26,8 @@ namespace graphit {
         virtual void visit (mir::HybridDenseEdgeSetApplyExpr::Ptr hybrid_dense_apply);
         virtual void visit (mir::HybridDenseForwardEdgeSetApplyExpr::Ptr hybrid_dense_forward_apply);
 
-        EdgesetApplyFunctionDeclGenerator(MIRContext* mir_context, std::ostream& oss)
-                : mir_context_(mir_context), oss_ (oss){
+        EdgesetApplyFunctionDeclGenerator(MIRContext* mir_context, std::ostream& oss, d2x::d2x_context &_xctx)
+                : mir_context_(mir_context), oss_ (oss), xctx(_xctx) {
             indentLevel = 0;
         }
 
@@ -47,6 +49,9 @@ namespace graphit {
     private:
         MIRContext* mir_context_;
         std::ostream &oss_;
+
+        d2x::d2x_context &xctx;
+	
 
         void genEdgeApplyFunctionSignature(mir::EdgeSetApplyExpr::Ptr apply);
         void genEdgeApplyFunctionDeclaration(mir::EdgeSetApplyExpr::Ptr apply);

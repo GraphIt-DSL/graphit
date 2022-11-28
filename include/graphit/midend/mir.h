@@ -53,6 +53,10 @@ namespace graphit {
                 return to<T>(cloneNode());
             }
 
+	    // Source debug info
+            unsigned lineBegin;
+            unsigned lineEnd;
+		
         protected:
             template<typename T = MIRNode>
             std::shared_ptr<T> self() {
@@ -610,6 +614,8 @@ namespace graphit {
         };
 
 
+	struct ApplyExpr;
+
         struct FuncDecl : public MIRNode {
             enum class Type {
                 INTERNAL, EXPORTED, EXTERNAL
@@ -625,6 +631,9 @@ namespace graphit {
 
             //TODO: replace this with a statement
             StmtBlock::Ptr body;
+
+	    // This is for providing extended info
+	    std::shared_ptr<ApplyExpr> callsite = nullptr;
 
             typedef std::shared_ptr<FuncDecl> Ptr;
 

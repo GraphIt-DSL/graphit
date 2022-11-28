@@ -4,8 +4,84 @@
 
 #include <graphit/backend/codegen_cpp.h>
 #include <graphit/midend/mir.h>
+#include "builder/dyn_var.h"
+
+using builder::dyn_var;
+constexpr char frontier_t_name[] = "VertexSubset<int>";
+using frontier_t = typename builder::name<frontier_t_name>;
+
+namespace builder {
+template <>
+	class dyn_var<frontier_t>: public dyn_var_impl<frontier_t> {
+	public:
+		typedef dyn_var_impl<frontier_t> super;
+		using super::super;
+		using super::operator=;
+		builder operator = (const dyn_var<frontier_t> &t) {
+			return (*this) = (builder)t;
+		}
+		dyn_var(const dyn_var& t): dyn_var_impl((builder)t) {}
+		dyn_var(): dyn_var_impl<frontier_t> () {}
+
+		dyn_var<int> is_dense = as_member_of(this, "is_dense");
+		dyn_var<int*> dense_vertex_set = as_member_of(this, "dense_vertex_set_");
+		dyn_var<char*> bool_map = as_member_of(this, "bool_map_");
+		dyn_var<int> num_vertices = as_member_of(this, "num_vertices_");
+		dyn_var<int> vertices_range = as_member_of(this, "vertices_range_");
+	};
+
+template <>
+	class dyn_var<frontier_t*>: public dyn_var_impl<frontier_t*> {
+	public:
+		typedef dyn_var_impl<frontier_t*> super;
+		using super::super;
+		using super::operator=;
+		builder operator = (const dyn_var<frontier_t*> &t) {
+			return (*this) = (builder)t;
+		}
+		dyn_var(const dyn_var& t): dyn_var_impl((builder)t) {}
+		dyn_var(): dyn_var_impl<frontier_t*> () {}
+
+		dyn_var<frontier_t> operator* () {
+			return (cast)this->operator[](0);
+		}  
+		dyn_var<frontier_t> _p = as_member_of(this, "_p");
+		dyn_var<frontier_t>* operator->() {
+			_p = (cast)this->operator[](0);
+			return _p.addr();
+		}
+	};
+}
+
 
 namespace graphit {
+    static builder::dyn_var<char*(int*)> to_str(builder::as_global("std::to_string")); 
+    d2x::runtime_value_resolver frontier_resolver([&] (auto v) -> auto {
+	dyn_var<frontier_t**> addr = d2x::rt::find_stack_var(v);
+        dyn_var<frontier_t*> frontier = addr[0]; 
+
+        dyn_var<d2x::rt::string> ret_val = "is_dense(" + to_str(frontier->is_dense) + ") [";
+
+	if (!frontier->is_dense) {
+
+		for (dyn_var<int> i = 0; i < frontier->num_vertices; i = i + 1) {
+			ret_val = ret_val + to_str(frontier->dense_vertex_set[i]) + ", ";
+		}
+
+        } else {
+
+		for (dyn_var<int> i = 0; i < frontier->vertices_range; i = i + 1) {
+			if (frontier->bool_map[i])
+				ret_val = ret_val + to_str(i) + ", ";
+		}
+
+	}
+
+	ret_val = ret_val + "]";
+        return ret_val;
+    });   
+
+
     int CodeGenCPP::genCPP() {
         genIncludeStmts();
         genEdgeSets();
@@ -51,7 +127,7 @@ namespace graphit {
 
         //Generates function declarations for various edgeset apply operations with different schedules
         // TODO: actually complete the generation, fow now we will use libraries to test a few schedules
-        auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
+        auto gen_edge_apply_function_visitor = EdgesetApplyFunctionDeclGenerator(mir_context_, oss, xctx);
         gen_edge_apply_function_visitor.genEdgeApplyFuncDecls();
 
         //Processing the functions
@@ -101,7 +177,8 @@ namespace graphit {
 	oss << "#include <pybind11/numpy.h>" << std::endl;
 	oss << "namespace py = pybind11;" << std::endl;
 	oss << "#endif" << std::endl;
-	
+
+	oss << "#include \"d2x_runtime/d2x_runtime.h\"" << std::endl;
 	
     }
 
@@ -109,8 +186,41 @@ namespace graphit {
         oss << ident->name;
     }
 
+    
+    void CodeGenCPP::printLineInfo(std::ostream& oss, mir::MIRNode::Ptr stmt) {
+	//oss << "\/\/ " << stmt->lineBegin << ":" << stmt->lineEnd << std::endl;
+	int linenumber = -1;
+	if (stmt->lineBegin != 0)
+		linenumber = stmt->lineBegin;
+	else if (stmt->lineEnd != 0)
+		linenumber = stmt->lineEnd;
+
+	//oss << "/* " << linenumber << " */ ";
+	if (linenumber != -1) {
+        	curr_loc.line = linenumber;
+		if (linenumber > function_start_line) 
+			curr_loc.foffset = linenumber - function_start_line;
+		else 
+			curr_loc.foffset = -1;
+	}
+    }
+    void CodeGenCPP::gotoNextLine(void) {
+	auto loc = curr_loc;
+	if (loc.foffset == -1) {
+		loc.foffset = loc.line;
+		loc.fname = "<global>";	
+	}
+	xctx.push_source_loc(loc);
+	auto cloc = context_curr_loc;
+	if (cloc.line != -1) {
+		xctx.push_source_loc(cloc);
+	}
+	xctx.nextl();
+    }
+
     void CodeGenCPP::visit(mir::ForStmt::Ptr for_stmt) {
         printIndent();
+	printLineInfo(oss, for_stmt);
         auto for_domain = for_stmt->domain;
         auto loop_var = for_stmt->loopVar;
         oss << "for ( int " << loop_var << " = ";
@@ -118,18 +228,20 @@ namespace graphit {
         oss << "; " << loop_var << " < ";
         for_domain->upper->accept(this);
         oss << "; " << loop_var << "++ )" << std::endl;
+        gotoNextLine();
         printBeginIndent();
         indent();
         for_stmt->body->accept(this);
         dedent();
         printEndIndent();
         oss << std::endl;
-
+        gotoNextLine();
     }
 
     void CodeGenCPP::visit(mir::ParForStmt::Ptr par_for_stmt) {
         mir_context_->scope();
         printIndent();
+	printLineInfo(oss, par_for_stmt);
         auto for_domain = par_for_stmt->domain;
         auto loop_var = par_for_stmt->loopVar;
 
@@ -139,44 +251,53 @@ namespace graphit {
         }
 
         oss << std::endl;
+        gotoNextLine();
         printIndent();
         oss << "cilk_for( int " << loop_var << " = ";
         for_domain->lower->accept(this);
         oss << "; " << loop_var << " < ";
         for_domain->upper->accept(this);
         oss << "; " << loop_var << "++ )" << std::endl;
+        gotoNextLine();
         printBeginIndent();
         indent();
         par_for_stmt->body->accept(this);
         dedent();
         printEndIndent();
         oss << std::endl;
+        gotoNextLine();
         mir_context_->unscope();
 
     }
 
     void CodeGenCPP::visit(mir::WhileStmt::Ptr while_stmt) {
+	printLineInfo(oss, while_stmt);
         printIndent();
         oss << "while ( ";
         while_stmt->cond->accept(this);
         oss << ")" << std::endl;
+        gotoNextLine();
         printBeginIndent();
         indent();
         while_stmt->body->accept(this);
         dedent();
         printEndIndent();
         oss << std::endl;
+        gotoNextLine();
 
     }
 
     void CodeGenCPP::visit(mir::IfStmt::Ptr stmt) {
         printIndent();
+	printLineInfo(oss, stmt);
         oss << "if (";
         stmt->cond->accept(this);
         oss << ")" << std::endl;
+        gotoNextLine();
 
         printIndent();
         oss << " { " << std::endl;
+        gotoNextLine();
 
         indent();
         stmt->ifBody->accept(this);
@@ -184,22 +305,27 @@ namespace graphit {
 
         printIndent();
         oss << " } " << std::endl;
+        gotoNextLine();
 
         if (stmt->elseBody) {
             printIndent();
             oss << "else" << std::endl;
+            gotoNextLine();
 
             printIndent();
             oss << " { " << std::endl;
+            gotoNextLine();
 
             indent();
             stmt->elseBody->accept(this);
             dedent();
 
             oss << std::endl;
+            gotoNextLine();
 
             printIndent();
             oss << " } " << std::endl;
+            gotoNextLine();
 
         }
 
@@ -210,11 +336,13 @@ namespace graphit {
 
     void CodeGenCPP::visit(mir::ExprStmt::Ptr expr_stmt) {
 	
+	printLineInfo(oss, expr_stmt);
         if (mir::isa<mir::EdgeSetApplyExpr>(expr_stmt->expr)) {
 	        if (mir::isa<mir::UpdatePriorityEdgeCountEdgeSetApplyExpr>(expr_stmt->expr)) {
                 printIndent();
 		    expr_stmt->expr->accept(this);
 		    oss << ";" << std::endl;
+                    gotoNextLine();
 	        } else {
                 printIndent();
                 auto edgeset_apply_expr = mir::to<mir::EdgeSetApplyExpr>(expr_stmt->expr);
@@ -229,14 +357,17 @@ namespace graphit {
             oss << tracking_var << " = ";
             priority_update_operator->accept(this);
             oss << ";" << std::endl;
+            gotoNextLine();
         } else {
             printIndent();
             expr_stmt->expr->accept(this);
             oss << ";" << std::endl;
+            gotoNextLine();
         }
     }
 
     void CodeGenCPP::visit(mir::AssignStmt::Ptr assign_stmt) {
+	printLineInfo(oss, assign_stmt);
         // Removing this special case because the filter is now handled by intrinsics
 /*
         if (mir::isa<mir::VertexSetWhereExpr>(assign_stmt->expr)) {
@@ -263,6 +394,7 @@ namespace graphit {
                     mir::PriorityUpdateType::ConstSumReduceBeforePriorityUpdate)) { // Add other checks here
             printIndent();
             oss << "{" << std::endl;
+            gotoNextLine();
             indent();
             printIndent();
             assign_stmt->lhs->accept(this);
@@ -293,6 +425,7 @@ namespace graphit {
             oss << "builtin_loadJulienneEdgesFromFile(";
             mir::to<mir::EdgeSetLoadExpr>(assign_stmt->expr)->file_name->accept(this);
             oss << ");" << std::endl;
+            gotoNextLine();
 
             printIndent();
             assign_stmt->lhs->accept(this);
@@ -301,10 +434,12 @@ namespace graphit {
             oss << ", std::make_tuple(UINT_E_MAX, 0), (size_t)";
             assign_stmt->lhs->accept(this);
             oss << ".m/5);" << std::endl;
+            gotoNextLine();
 
             dedent();
             printIndent();
             oss << "}" << std::endl;
+            gotoNextLine();
 
         } else {
             printIndent();
@@ -312,10 +447,13 @@ namespace graphit {
             oss << " = ";
             assign_stmt->expr->accept(this);
             oss << ";" << std::endl;
+            gotoNextLine();
         }
+
     }
 
     void CodeGenCPP::visit(mir::CompareAndSwapStmt::Ptr cas_stmt) {
+	printLineInfo(oss, cas_stmt);
         printIndent();
         oss << cas_stmt->tracking_var_ << " = compare_and_swap ( ";
         cas_stmt->lhs->accept(this);
@@ -324,9 +462,11 @@ namespace graphit {
         oss << ", ";
         cas_stmt->expr->accept(this);
         oss << ");" << std::endl;
+        gotoNextLine();
     }
 
     void CodeGenCPP::visit(mir::ReduceStmt::Ptr reduce_stmt) {
+	printLineInfo(oss, reduce_stmt);
 
         if (mir::isa<mir::VertexSetWhereExpr>(reduce_stmt->expr) ||
             mir::isa<mir::EdgeSetApplyExpr>(reduce_stmt->expr)) {
@@ -340,11 +480,13 @@ namespace graphit {
                     oss << " += ";
                     reduce_stmt->expr->accept(this);
                     oss << ";" << std::endl;
+        	    gotoNextLine();
 
                     if (reduce_stmt->tracking_var_name_ != "") {
                         // need to set the tracking variable
                         printIndent();
                         oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                        gotoNextLine();
                     }
 
                     break;
@@ -355,23 +497,27 @@ namespace graphit {
                     oss << ") > ( ";
                     reduce_stmt->expr->accept(this);
                     oss << ") ) { " << std::endl;
+                    gotoNextLine();
                     indent();
                     printIndent();
                     reduce_stmt->lhs->accept(this);
                     oss << "= ";
                     reduce_stmt->expr->accept(this);
                     oss << "; " << std::endl;
+                    gotoNextLine();
 
 
                     if (reduce_stmt->tracking_var_name_ != "") {
                         // need to generate a tracking variable
                         printIndent();
                         oss << reduce_stmt->tracking_var_name_ << " = true ; " << std::endl;
+                        gotoNextLine();
                     }
 
                     dedent();
                     printIndent();
                     oss << "} " << std::endl;
+                    gotoNextLine();
                     break;
                 case mir::ReduceStmt::ReductionOp::MAX:
                     //TODO: not supported yet
@@ -386,16 +532,20 @@ namespace graphit {
                     oss << ", ";
                     reduce_stmt->expr->accept(this);
                     oss << " ); " << std::endl;
+                    gotoNextLine();
                     break;
                 case mir::ReduceStmt::ReductionOp::ATOMIC_SUM:
                     printIndent();
-                    if (reduce_stmt->tracking_var_name_ != "")
+                    if (reduce_stmt->tracking_var_name_ != "") {
                         oss << reduce_stmt->tracking_var_name_ << " =  true;\n";
+                    	gotoNextLine();
+		    }
                     oss << "writeAdd( &";
                     reduce_stmt->lhs->accept(this);
                     oss << ", ";
                     reduce_stmt->expr->accept(this);
                     oss << " ); " << std::endl;
+                    gotoNextLine();
                     break;
             }
 
@@ -403,18 +553,23 @@ namespace graphit {
     }
 
     void CodeGenCPP::visit(mir::PrintStmt::Ptr print_stmt) {
+	printLineInfo(oss, print_stmt);
         printIndent();
         oss << "std::cout << ";
         print_stmt->expr->accept(this);
         oss << "<< std::endl;" << std::endl;
+        gotoNextLine();
     }
 
     void CodeGenCPP::visit(mir::BreakStmt::Ptr print_stmt) {
+	printLineInfo(oss, print_stmt);
         printIndent();
         oss << "break;" << std::endl;
+        gotoNextLine();
     }
 
     void CodeGenCPP::visit(mir::VarDecl::Ptr var_decl) {
+	printLineInfo(oss, var_decl);
         // Removing this special case because we want to generate intrinsics for filter
 /*
         if (mir::isa<mir::VertexSetWhereExpr>(var_decl->initVal)) {
@@ -459,6 +614,11 @@ namespace graphit {
                 var_decl->initVal->accept(this);
             }
             oss << ";" << std::endl;
+            if (mir::isa<mir::VertexSetType>(var_decl->type)) {
+                xctx.create_var(var_decl->name);
+                xctx.update_var(var_decl->name, frontier_resolver);
+            }
+            gotoNextLine();
 
         }
     }
@@ -504,8 +664,9 @@ namespace graphit {
         oss << "}";
     }
 
-
+    int anchor_counter = 0;
     void CodeGenCPP::visit(mir::FuncDecl::Ptr func_decl) {
+       
 
         if (func_decl->type == mir::FuncDecl::Type::EXTERNAL) {
             oss << "extern ";
@@ -532,14 +693,34 @@ namespace graphit {
             return;
         }
 
+	oss << xctx.begin_section();
+        
+
+        curr_loc.file = mir_context_->source_filename;
+        curr_loc.line = func_decl->lineBegin;
+	curr_loc.fname = func_decl->name;
+        curr_loc.foffset = 0;
+        function_start_line = func_decl->lineBegin;
+
+	context_curr_loc.line = -1;
+
+	if (func_decl->callsite != nullptr) {
+		// There is context to this function
+		context_curr_loc.file = mir_context_->source_filename;
+		context_curr_loc.line = func_decl->callsite->lineBegin;
+		context_curr_loc.fname = "main";
+		context_curr_loc.foffset = -1;		
+	}
+
         // Generate function signature
         if (func_decl->name == "main") {
-            func_decl->isFunctor = false;
             oss << "int " << func_decl->name << "(int argc, char * argv[])";
+	    func_decl->isFunctor = false;
         } else {
             // Use functors for better compiler inlining
-            func_decl->isFunctor = true;
+	    func_decl->isFunctor = true;
             oss << "struct " << func_decl->name << std::endl;
+	    gotoNextLine();
             printBeginIndent();
             indent();
             //oss << std::string(2 * indentLevel, ' ');
@@ -548,6 +729,7 @@ namespace graphit {
 
                 arg.getType()->accept(this);
                 oss << arg.getName() << ";\n";
+                gotoNextLine();
 
             }
 
@@ -624,7 +806,11 @@ namespace graphit {
         }
 
         oss << std::endl;
+        gotoNextLine();
+
+
         printBeginIndent();
+
         indent();
 
         if (func_decl->name == "main") {
@@ -656,11 +842,13 @@ namespace graphit {
                         oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
                             << "\", " << "atoi(argv[" << -1 * label_iter_second << "])"
                             << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
+                            gotoNextLine();
                     } else {
                         // just use the positive integer as argument to number of segments
                         oss << "  " << edgeset->name << ".buildPullSegmentedGraphs(\"" << label_iter_first
                             << "\", " << label_iter_second
                             << (numa_aware_flag ? ", true" : "") << ");" << std::endl;
+                            gotoNextLine();
                     }
                 }
             }
@@ -707,8 +895,10 @@ namespace graphit {
                         oss << "  " << local_field << " = new ";
                         merge_reduce->scalar_type->accept(this);
                         oss << "*[omp_get_num_places()];\n";
+                        gotoNextLine();
 
                         oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                        gotoNextLine();
                         oss << "    " << local_field << "[socketId] = (";
                         merge_reduce->scalar_type->accept(this);
                         oss << "*)numa_alloc_onnode(sizeof(";
@@ -718,14 +908,21 @@ namespace graphit {
                                 mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name));
                         count_expr->accept(this);
                         oss << ", socketId);\n";
+                        gotoNextLine();
 
                         oss << "    ligra::parallel_for_lambda((int)0, (int)";
                         count_expr->accept(this);
                         oss << ", [&] (int n) {\n";
+                        gotoNextLine();
                         oss << "      " << local_field << "[socketId][n] = " << merge_reduce->field_name << "[n];\n";
-                        oss << "    });\n  }\n";
+                        gotoNextLine();
+                        oss << "    });\n";
+                    	gotoNextLine();
+			oss << "}\n";
+                    	gotoNextLine();
 
                         oss << "  omp_set_nested(1);" << std::endl;
+                        gotoNextLine();
                     }
                 }
             }
@@ -752,6 +949,7 @@ namespace graphit {
             if (func_decl->result.isInitialized()) {
                 printIndent();
                 oss << "return " << func_decl->result.getName() << ";" << std::endl;
+                gotoNextLine();
             }
 
 
@@ -762,6 +960,7 @@ namespace graphit {
             printEndIndent();
             oss << ";";
             oss << std::endl;
+            gotoNextLine();
         }
 
         if (func_decl->name == "main") {
@@ -770,13 +969,17 @@ namespace graphit {
                     if (inner_iter.second->numa_aware) {
                         auto merge_reduce = inner_iter.second;
                         oss << "  for (int socketId = 0; socketId < omp_get_num_places(); socketId++) {\n";
+                    	gotoNextLine();
                         oss << "    numa_free(local_" << merge_reduce->field_name << "[socketId], sizeof(";
                         merge_reduce->scalar_type->accept(this);
                         oss << ") * ";
                         mir_context_->getElementCount(
                                 mir_context_->getElementTypeFromVectorOrSetName(merge_reduce->field_name))->accept(
                                 this);
-                        oss << ");\n  }\n";
+                        oss << ");\n";
+                    	gotoNextLine();
+			oss <<"  }\n";
+                    	gotoNextLine();
                     }
                 }
             }
@@ -786,6 +989,9 @@ namespace graphit {
         printEndIndent();
         oss << ";";
         oss << std::endl;
+        gotoNextLine();
+        xctx.emit_function_info(oss);
+        xctx.end_section();
 	if (func_decl-> type == mir::FuncDecl::Type::EXPORTED) {
 		generatePyBindWrapper(func_decl);
 	}
@@ -1324,19 +1530,21 @@ namespace graphit {
         //the declaration and the value are separate. The value is generated as a separate assign statement in the main function
         var_decl->type->accept(this);
         oss << var_decl->name << "; " << std::endl;
+        gotoNextLine();
     }
 
 
     void CodeGenCPP::genScalarAlloc(mir::VarDecl::Ptr var_decl) {
 
         printIndent();
-
+        printLineInfo(oss, var_decl);
         oss << var_decl->name << " ";
         if (var_decl->initVal != nullptr) {
             oss << "= ";
             var_decl->initVal->accept(this);
         }
         oss << ";" << std::endl;
+        gotoNextLine();
 
     }
 
@@ -1363,6 +1571,7 @@ namespace graphit {
         if (!mir::isa<mir::VectorType>(vector_element_type)) {
             vector_element_type->accept(this);
             oss << " * __restrict " << name << ";" << std::endl;
+            gotoNextLine();
         } else if (mir::isa<mir::VectorType>(vector_element_type)) {
             //if each element is a vector
             auto vector_vector_element_type = mir::to<mir::VectorType>(vector_element_type);
@@ -1380,6 +1589,7 @@ namespace graphit {
                 vector_vector_element_type->vector_element_type->accept(this);
                 oss << typedef_name <<  " ";
                 oss << "[ " << range << "]; " << std::endl;
+                gotoNextLine();
             }
 
             vector_vector_element_type->typedef_name_ = typedef_name;
@@ -1387,6 +1597,7 @@ namespace graphit {
 
             //use the typedef defined type to declare a new pointer
             oss << typedef_name << " * __restrict  " << name << ";" << std::endl;
+            gotoNextLine();
 
         } else {
             std::cout << "unsupported type for property: " << var_decl->name << std::endl;
@@ -1413,6 +1624,7 @@ namespace graphit {
                 oss << " = ";
                 call_expr->accept(this);
                 oss << ";" << std::endl;
+                gotoNextLine();
 
             } else if (mir::isa<mir::ConstantVectorExpr>(init_val)) {
                 auto const_expr = mir::to<mir::ConstantVectorExpr>(init_val);
@@ -1423,6 +1635,7 @@ namespace graphit {
                 oss << "]";
                 const_expr->accept(this);
                 oss << ";" << std::endl;
+                gotoNextLine();
 
             } else if (isLiteral(init_val)){
                 oss << " = new ";
@@ -1432,6 +1645,7 @@ namespace graphit {
                 oss << " [ ";
                 size_expr->accept(this);
                 oss << " ]; " << std::endl;
+                gotoNextLine();
                 printIndent();
                 oss << "ligra::parallel_for_lambda((int)0, (int)";
                 size_expr->accept(this);
@@ -1439,17 +1653,20 @@ namespace graphit {
                 oss << name << "[i]=";
                 init_val->accept(this);
                 oss << "; });" << std::endl;
+            	gotoNextLine();
 
             } else {
                 oss << " = ";
                 var_decl->initVal->accept(this);
                 oss << ";" << std::endl;
+            	gotoNextLine();
 
             }
 
         }
         else {
             oss << ";" << std::endl;
+            gotoNextLine();
         }
 
     }
@@ -1457,6 +1674,7 @@ namespace graphit {
     void CodeGenCPP::genPropertyArrayAlloc(mir::VarDecl::Ptr var_decl) {
         const auto name = var_decl->name;
         printIndent();
+        printLineInfo(oss, var_decl);
         oss << name;
         // read the size of the array
         mir::VectorType::Ptr vector_type = std::dynamic_pointer_cast<mir::VectorType>(var_decl->type);
@@ -1488,6 +1706,7 @@ namespace graphit {
         oss << "[ ";
         size_expr->accept(this);
         oss << "];" << std::endl;
+        gotoNextLine();
     }
 
     void CodeGenCPP::genPropertyArrayImplementationWithInitialization(mir::VarDecl::Ptr var_decl) {
@@ -1517,6 +1736,7 @@ namespace graphit {
             oss << " = ";
             call_expr->accept(this);
             oss << ";" << std::endl;
+            gotoNextLine();
 
         } else {
             oss << " ( ";
@@ -1527,6 +1747,7 @@ namespace graphit {
                 init_val->accept(this);
             }
             oss << " ); " << std::endl;
+            gotoNextLine();
 
         }
     }
@@ -1576,10 +1797,12 @@ namespace graphit {
                 oss << "ligra::parallel_for_lambda((int)0, (int)";
                 associated_element_type_size->accept(this);
                 oss << ", [&] (int vertexsetapply_iter) {" << std::endl;
+                gotoNextLine();
             } else {
                 oss << "for" << " (int vertexsetapply_iter = 0; vertexsetapply_iter < ";
                 associated_element_type_size->accept(this);
                 oss << "; vertexsetapply_iter++) {" << std::endl;
+                gotoNextLine();
             }
             indent();
             printIndent();
@@ -1589,9 +1812,11 @@ namespace graphit {
                 oss << "(";
                 apply_expr->input_function->accept(this);
                 oss << ")(vertexsetapply_iter);" << std::endl;
+                gotoNextLine();
             } else {
                 apply_expr->input_function->accept(this);
                 oss << "(vertexsetapply_iter);" << std::endl;
+                gotoNextLine();
             }
 
 
@@ -1608,6 +1833,7 @@ namespace graphit {
             oss << " builtin_vertexset_apply ( " << mir_var->var.getName() << ", ";
             apply_expr->input_function->accept(this);
             oss << " );" << std::endl;
+            gotoNextLine();
 
 
         }
@@ -1710,6 +1936,7 @@ namespace graphit {
             auto edge_set_type = mir::to<mir::EdgeSetType>(edgeset->type);
             edge_set_type->accept(this);
             oss << edgeset->name << ";" << std::endl;
+            gotoNextLine();
 
             // Deprecated code
 //            if (edge_set_type->weight_type != nullptr) {
@@ -1732,6 +1959,7 @@ namespace graphit {
             auto struct_type_decl = struct_type_decl_entry.second;
             oss << "typedef struct ";
             oss << struct_type_decl->name << " { " << std::endl;
+            gotoNextLine();
 
             for (auto var_decl : struct_type_decl->fields) {
                 indent();
@@ -1742,7 +1970,7 @@ namespace graphit {
                 oss << var_decl->name;
                 // << " = ";
                 //var_decl->initVal->accept(this);
-                oss << ";" << std::endl;
+            	gotoNextLine();
                 dedent();
             }
             oss << "} " << struct_type_decl->name << ";" << std::endl;
@@ -1845,6 +2073,7 @@ namespace graphit {
 
 
         oss << "); " << std::endl;
+        gotoNextLine();
     }
 
 
@@ -2128,6 +2357,7 @@ namespace graphit {
         ordered_op->optional_source_node->accept(this);
 
         oss << ");" << std::endl;
+        gotoNextLine();
     }
 
     void CodeGenCPP::visit(mir::PriorityUpdateOperatorMin::Ptr priority_update_op) {
@@ -2204,6 +2434,7 @@ namespace graphit {
 	oss << "( ";
 	extern_call->input_set->accept(this);
 	oss << ");" << std::endl;
+        gotoNextLine();
 	
 	printIndent();
 	oss << "auto ";
@@ -2215,6 +2446,7 @@ namespace graphit {
 
 	oss << "julienne::uintE";
 	oss << ">> {" << std::endl;
+        gotoNextLine();
 	
 	indent();
 
@@ -2222,6 +2454,7 @@ namespace graphit {
 	oss << "const julienne::uintE v = ";
 	extern_call->input_set->accept(this);
 	oss << ".vtx(i);" << std::endl;
+        gotoNextLine();
 	
 	printIndent();
 	oss << "const julienne::uintE bkt = ";
@@ -2235,13 +2468,16 @@ namespace graphit {
 
 	oss << mir_context_->priority_queue_alloc_list_[0]->vector_function;
 	oss << "[v]);" << std::endl;
+        gotoNextLine();
 
 	printIndent();
 	oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>(std::make_tuple(v, bkt));" << std::endl;
+        gotoNextLine();
 	
 	dedent();
 	printIndent();
 	oss << "};" << std::endl;
+        gotoNextLine();
 	
 	
 //	dedent();
@@ -2260,6 +2496,7 @@ namespace graphit {
             oss << ", ";
             oss << update_call->modified_vertexsubset_name;
             oss << ".size());" << std::endl;
+            gotoNextLine();
         } else if (mir_context_->priority_update_type == mir::ReduceBeforePriorityUpdate){
             oss << "updateBucketWithGraphItVertexSubset(";
             oss << update_call->lambda_name << ", ";
@@ -2271,6 +2508,7 @@ namespace graphit {
                 oss << "stoi(argv[" << -1*update_call->delta << "])";
             }
             oss << ");" << std::endl;
+            gotoNextLine();
         } else {
             std::cout << "UpdatePriorityUpdateBucketsCall not supported." << std::endl;
         }
@@ -2280,6 +2518,7 @@ namespace graphit {
     void CodeGenCPP::get_edge_count_lambda(mir::UpdatePriorityEdgeCountEdgeSetApplyExpr::Ptr call) {
         //oss <<  "place_holder_edge_count_lambda";
 	oss << "[&] (const tuple<julienne::uintE, julienne::uintE> &__p) {" << std::endl;
+        gotoNextLine();
 	indent();
 	//printIndent();
 
@@ -2319,6 +2558,7 @@ namespace graphit {
 		oss << " > ";
 		arg4->accept(this);
 		oss << ") {" << std::endl;
+                gotoNextLine();
 		indent();
 		printIndent();
 		oss << "auto __new_pri = std::max(";
@@ -2328,6 +2568,7 @@ namespace graphit {
 		oss << "  * std::get<1>(__p), (unsigned int)(";
 		arg4->accept(this);
 		oss << "));" << std::endl;
+                gotoNextLine();
 		printIndent();
 		oss << call->priority_queue_name;
 		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
@@ -2337,14 +2578,18 @@ namespace graphit {
 		oss << call->priority_queue_name;
 		if (mir_context_->nodes_init_in_buckets){
             oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+            	gotoNextLine();
 		} else {
             oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+            	gotoNextLine();
         }
 		dedent();
 		printIndent();
 		oss << "}" << std::endl;
+            	gotoNextLine();
 		printIndent();
 		oss << "return julienne::Maybe<std::tuple<julienne::uintE, julienne::uintE>>();" << std::endl;
+            	gotoNextLine();
 	} else {
 		printIndent();
 		
@@ -2353,23 +2598,28 @@ namespace graphit {
 		oss << "->get_tracking_variable()[std::get<0>(__p)] + ";
 		arg3->accept(this);
 		oss << "  * std::get<1>(__p);" << std::endl;
+                gotoNextLine();
 		printIndent();
 		oss << call->priority_queue_name;
 		oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
+                gotoNextLine();
 		//oss << "->get_tracking_variable()[std::get<0>(__p)] = __new_pri;" << std::endl;
 		printIndent();
 		oss << "return julienne::wrap(std::get<0>(__p), ";
 		oss << call->priority_queue_name;
         if (mir_context_->nodes_init_in_buckets){
             oss << "->get_bucket_no_overflow_insertion(__new_pri));" << std::endl;
+            gotoNextLine();
         } else {
             oss << "->get_bucket_with_overflow_insertion(__new_pri));" << std::endl;
+            gotoNextLine();
         }
 
 	}
 	
 
 	oss << std::endl;
+            gotoNextLine();
 	dedent();
 	printIndent();
 	oss << "}";
@@ -2408,6 +2658,7 @@ namespace graphit {
     }
 
     void CodeGenCPP::genScalarVectorAlloc(mir::VarDecl::Ptr constant, mir::VectorType::Ptr vector_type) {
+	printLineInfo(oss, constant);	
         oss << constant->name << " = new ";
 
         if (mir::isa<mir::ConstantVectorExpr>(constant->initVal)) {
@@ -2422,7 +2673,7 @@ namespace graphit {
             vector_type->vector_element_type->accept(this);
             oss << " ();" << std::endl;
         }
-
+        gotoNextLine();
     }
 
 

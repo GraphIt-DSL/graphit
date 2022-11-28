@@ -8,6 +8,8 @@
 #include <graphit/frontend/error.h>
 #include <fstream>
 #include <graphit/frontend/high_level_schedule.h>
+#include <limits.h>
+#include <cstdlib>
 
 using namespace graphit;
 
@@ -30,6 +32,12 @@ int main(int argc, char* argv[]) {
     
     //read input file into buffer
     std::ifstream file(cli.input_filename());
+
+    char actualpath [PATH_MAX+1];
+    char *ptr = realpath(cli.input_filename().c_str(), actualpath);
+    mir_context->source_filename = actualpath;
+
+
     std::stringstream buffer;
     if(!file) {
         std::cout << "error reading the input file" << std::endl;

@@ -5,6 +5,10 @@
 #include <graphit/midend/vertex_edge_set_lower.h>
 
 namespace graphit {
+    static void copySrcInfo(mir::MIRNode::Ptr x, mir::MIRNode::Ptr y) {
+	x->lineBegin = y->lineBegin;
+	x->lineEnd = y->lineEnd;
+    }
 
     void VertexEdgeSetLower::lower() {
 
@@ -16,6 +20,7 @@ namespace graphit {
         for (auto edgeset_decl : mir_context_->const_edge_sets_) {
             //replace vardecl with an assignment
             auto assign_stmt = std::make_shared<mir::AssignStmt>();
+	    copySrcInfo(assign_stmt, edgeset_decl);
             auto var_type = edgeset_decl->type;
             auto var_name = edgeset_decl->name;
             mir::Var mir_var = mir::Var(var_name, var_type);

@@ -12,17 +12,24 @@
 #include <sstream>
 #include <graphit/backend/gen_edge_apply_func_decl.h>
 
+#include "d2x/d2x.h"
+
 namespace graphit {
     class CodeGenCPP : mir::MIRVisitor{
     public:
         CodeGenCPP(std::ostream &input_oss, MIRContext *mir_context, std::string module_name_):
                 oss(input_oss), mir_context_(mir_context), module_name(module_name_) {
             indentLevel = 0;
-            edgeset_apply_func_gen_ = new EdgesetApplyFunctionDeclGenerator(mir_context_, oss);
+            edgeset_apply_func_gen_ = new EdgesetApplyFunctionDeclGenerator(mir_context_, oss, xctx);
         }
 
         int genCPP();
-
+        d2x::d2x_context xctx;
+      	d2x::source_loc curr_loc;  
+        d2x::source_loc context_curr_loc;
+        unsigned int function_start_line;
+	void gotoNextLine(void);
+        void printLineInfo(std::ostream& oss, mir::MIRNode::Ptr stmt);
     protected:
         virtual void visit(mir::IdentDecl::Ptr);
 
@@ -121,7 +128,7 @@ namespace graphit {
         void indent() { ++indentLevel; }
         void dedent() { --indentLevel; }
         void printIndent() { oss << std::string(2 * indentLevel, ' '); }
-        void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" << std::endl; }
+        void printBeginIndent() { oss << std::string(2 * indentLevel, ' ') << "{" << std::endl; gotoNextLine();}
         void printEndIndent() { oss << std::string(2 * indentLevel, ' ') << "}"; }
         std::ostream &oss;
 	std::string module_name;

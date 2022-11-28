@@ -1291,8 +1291,9 @@ namespace graphit {
                 to_expr->input_func = parseFunctorExpr();
                 consume(Token::Type::RP);
             } else if (tryConsume(Token::Type::APPLY)) {
-                consume(Token::Type::LP);
+                const Token tk = consume(Token::Type::LP);
                 auto apply_expr = std::make_shared<fir::ApplyExpr>();
+        	apply_expr->setBeginLoc(tk);
                 apply_expr->target = expr;
                 //apply_expr->input_function = parseIdent();
                 apply_expr->input_function = parseFunctorExpr();
