@@ -57,7 +57,7 @@ template <>
 namespace graphit {
     static builder::dyn_var<char*(int*)> to_str(builder::as_global("std::to_string")); 
     static builder::dyn_var<void*(void*)> to_frontier_t(builder::as_global("(VertexSubset<int>**)"));
-    d2x::runtime_value_resolver frontier_resolver([&] (auto v) -> auto {
+    d2x::runtime_value_resolver frontier_resolver([] (auto v) -> auto {
 	dyn_var<frontier_t**> addr = to_frontier_t(d2x::rt::find_stack_var(v));
         dyn_var<frontier_t*> frontier = addr[0]; 
 
