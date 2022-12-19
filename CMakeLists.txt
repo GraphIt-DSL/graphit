@@ -4,7 +4,6 @@ project(graphit)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -29,7 +28,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 file(GLOB_RECURSE SOURCE_FILES include/*.h include/graphit/midend/*.h src/*.cpp src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/utils/*.h include/utils/*.h)
 add_executable(graphitc ${SOURCE_FILES} src/default_schedule.cpp test/library_test_drivers/library_test_driver_cpp.txt src/midend/par_for_lower.cpp)
-target_link_libraries(graphitc d2x buildit dwarf unwind dl)
+target_link_libraries(graphitc d2x buildit dwarf unwind dl elf)
 
 # build a front end library used for unit testing
 file(GLOB_RECURSE LIB_SOURCE_FILES include/*.h src/frontend/*.cpp src/midend/*.cpp src/backend/*.cpp src/utils/*.cpp src/main.cpp)
@@ -49,7 +48,7 @@ add_executable(graphit_test ${TEST_SOURCE_FILES})
 target_link_libraries(graphit_test gtest)
 target_link_libraries(graphit_test pthread)
 target_link_libraries(graphit_test graphitlib)
-target_link_libraries(graphit_test d2x buildit dwarf unwind dl)
+target_link_libraries(graphit_test d2x buildit dwarf unwind dl elf)
 
 
 # Python tests
